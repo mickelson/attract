@@ -1,0 +1,3 @@
+This layout is adapted from the "Machines" 3D Arcade skin by PucPuc:
+
+http://www.mameworld.info/3darcade/skins/machines_pucpuc.zip

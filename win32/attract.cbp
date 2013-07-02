@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="attract" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../attract-dbg" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../obj/debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="sfml-audio-d" />
+					<Add library="sfml-graphics-d" />
+					<Add library="sfml-window-d" />
+					<Add library="sfml-system-d" />
+					<Add library="expat" />
+					<Add library="swscale" />
+					<Add library="avformat" />
+					<Add library="avcodec" />
+					<Add library="avutil" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="../attract" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../obj/release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add library="sfml-audio" />
+					<Add library="sfml-graphics" />
+					<Add library="sfml-window" />
+					<Add library="sfml-system" />
+					<Add library="expat" />
+					<Add library="swscale" />
+					<Add library="avformat" />
+					<Add library="avcodec" />
+					<Add library="avutil" />
+				</Linker>
+			</Target>
+			<Target title="Release Static">
+				<Option output="../attract" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../obj/release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-static" />
+					<Add option="-static-libgcc" />
+					<Add option="-DSFML_STATIC" />
+				</Compiler>
+				<Linker>
+					<Add library="sfml-audio-s" />
+					<Add library="sfml-graphics-s" />
+					<Add library="sfml-window-s" />
+					<Add library="sfml-system-s" />
+					<Add library="expat" />
+					<Add library="swscale" />
+					<Add library="avformat" />
+					<Add library="avcodec" />
+					<Add library="avutil" />
+				</Linker>
+			</Target>
+			<Target title="Release Static - NOMOVIE">
+				<Option output="../attract" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../obj/release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-static" />
+					<Add option="-static-libgcc" />
+					<Add option="-DSFML_STATIC" />
+					<Add option="-DXML_STATIC" />
+					<Add option="-DNO_MOVIE" />
+				</Compiler>
+				<Linker>
+					<Add library="sfml-audio-s" />
+					<Add library="sfml-graphics-s" />
+					<Add library="sfml-window-s" />
+					<Add library="sfml-system-s" />
+					<Add library="expat" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-DNO_FONTCONFIG" />
+			<Add directory="../../SFML/include" />
+			<Add directory="../../ffmpeg/include" />
+			<Add directory="../../expat/include" />
+		</Compiler>
+		<Linker>
+			<Add directory="../../SFML/lib" />
+			<Add directory="../../FFMPEG/lib" />
+			<Add directory="../../expat/lib" />
+		</Linker>
+		<Unit filename="../src/fe_base.cpp" />
+		<Unit filename="../src/fe_base.hpp" />
+		<Unit filename="../src/fe_build.cpp" />
+		<Unit filename="../src/fe_config.cpp" />
+		<Unit filename="../src/fe_config.hpp" />
+		<Unit filename="../src/fe_image.cpp" />
+		<Unit filename="../src/fe_image.hpp" />
+		<Unit filename="../src/fe_info.cpp" />
+		<Unit filename="../src/fe_info.hpp" />
+		<Unit filename="../src/fe_input.cpp" />
+		<Unit filename="../src/fe_input.hpp" />
+		<Unit filename="../src/fe_listxml.cpp" />
+		<Unit filename="../src/fe_listxml.hpp" />
+		<Unit filename="../src/fe_overlay.cpp" />
+		<Unit filename="../src/fe_overlay.hpp" />
+		<Unit filename="../src/fe_present.cpp" />
+		<Unit filename="../src/fe_present.hpp" />
+		<Unit filename="../src/fe_settings.cpp" />
+		<Unit filename="../src/fe_settings.hpp" />
+		<Unit filename="../src/fe_text.cpp" />
+		<Unit filename="../src/fe_text.hpp" />
+		<Unit filename="../src/fe_util.cpp" />
+		<Unit filename="../src/fe_util.hpp" />
+		<Unit filename="../src/main.cpp" />
+		<Unit filename="../src/media.cpp">
+			<Option target="Debug" />
+			<Option target="Release" />
+			<Option target="Release Static" />
+		</Unit>
+		<Unit filename="../src/media.hpp" />
+		<Unit filename="../src/tp.cpp" />
+		<Unit filename="../src/tp.hpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+			<envvars />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
