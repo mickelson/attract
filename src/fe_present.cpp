@@ -29,7 +29,8 @@ FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 	m_currentFont( NULL ), 
 	m_defaultFont( defaultfont ), 
 	m_moveState( MoveNone ), 
-	m_rotationState( FeSettings::RotateNone ), 
+	m_baseRotation( FeSettings::RotateNone ), 
+	m_toggleRotation( FeSettings::RotateNone ), 
 	m_play_movies( true ), 
 	m_currentConfigObject( NULL ), 
 	m_listBox( NULL ) 
@@ -44,11 +45,12 @@ FePresent::~FePresent()
 void FePresent::clear()
 {
 	//
-	// keep rotation state and mute state through clear
+	// keep toggle rotation state and mute state through clear
 	//
 	m_currentConfigObject=NULL;
 	m_listBox=NULL; // listbox gets deleted with the m_elements below
 	m_moveState = MoveNone;
+	m_baseRotation = FeSettings::RotateNone;
 	m_scaleTransform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 
@@ -87,6 +89,7 @@ int FePresent::process_setting( const std::string &setting,
 		"list",
 		"movie",
 		"animation",
+		"layout_rotation",
 		NULL
 	};
 
@@ -181,6 +184,26 @@ int FePresent::process_setting( const std::string &setting,
 		m_elements.push_back( ani );
 		m_movies.push_back( ani );
 		m_currentConfigObject = ani;
+	}
+	else if ( setting.compare( stokens[8] ) == 0 ) // layout_rotation
+	{
+		int i=0;
+		while ( FeSettings::rotationTokens[i] != NULL )
+		{
+			if ( value.compare( FeSettings::rotationTokens[i] ) == 0 )
+			{
+				m_baseRotation = (FeSettings::RotationState)i;
+				break;
+			}
+			i++;
+		}
+
+		if ( FeSettings::rotationTokens[i] == NULL )
+		{
+			invalid_setting( fn, stokens[8], setting, 
+				FeSettings::rotationTokens, NULL, "value" );
+			return 1;
+		}
 	}
 	else if ( m_currentConfigObject != NULL )
 	{
@@ -328,6 +351,7 @@ int FePresent::load_layout()
 		m_listBox = lb;
 	}
 
+	set_rotation_transform();
 	update( true );
 	return 0;
 }
@@ -451,19 +475,23 @@ void FePresent::set_default_font( sf::Font &f )
 
 void FePresent::toggle_rotate( FeSettings::RotationState r )
 {
-	if ( m_rotationState != FeSettings::RotateNone )
-		set_rotate( FeSettings::RotateNone );
+	if ( m_toggleRotation != FeSettings::RotateNone )
+		m_toggleRotation = FeSettings::RotateNone;
 	else
-		set_rotate( r );
+		m_toggleRotation = r;
+
+	set_rotation_transform();
 }
 
-void FePresent::set_rotate( FeSettings::RotationState r )
+void FePresent::set_rotation_transform()
 {
-	m_rotationTransform = sf::Transform();
-	m_rotationState = r;
 	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+	m_rotationTransform = sf::Transform();
 
-	switch ( m_rotationState )
+	FeSettings::RotationState actualRotation 
+		= (FeSettings::RotationState)(( m_baseRotation + m_toggleRotation ) % 4);
+
+	switch ( actualRotation )
 	{
 	case FeSettings::RotateNone:
 		// do nothing
@@ -497,10 +525,23 @@ void FePresent::perform_autorotate()
 	std::string rom_rot = m_feSettings->get_rom_info( 0, 
 													FeRomInfo::Rotation );
 
-	if (( rom_rot.empty() ) || ( rom_rot.compare( "0" ) == 0 ))
-		set_rotate( FeSettings::RotateNone );
-	else
-		set_rotate( autorotate );
+	m_toggleRotation = FeSettings::RotateNone;
+
+	switch ( m_baseRotation )
+	{
+	case FeSettings::RotateLeft:
+	case FeSettings::RotateRight:
+		if (( rom_rot.compare( "0" ) == 0 ) || ( rom_rot.compare( "180" ) == 0 ))
+			m_toggleRotation = autorotate;
+		break;
+	case FeSettings::RotateNone:
+	case FeSettings::RotateFlip:
+	default:
+		if (( rom_rot.compare( "90" ) == 0 ) || ( rom_rot.compare( "270" ) == 0 ))
+			m_toggleRotation = autorotate;
+	}
+
+	set_rotation_transform();
 }
 
 void FePresent::set_to_no_lists_message()

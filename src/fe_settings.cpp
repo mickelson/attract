@@ -103,8 +103,8 @@ const char *FeSettings::rotationTokens[] =
 {
 	"none",
 	"right",
-	"left",
 	"flip",
+	"left",
 	NULL
 };
 
@@ -112,8 +112,8 @@ const char *FeSettings::rotationDispTokens[] =
 {
 	"None",
 	"Right",
-	"Left",
 	"Flip",
+	"Left",
 	NULL
 };
 

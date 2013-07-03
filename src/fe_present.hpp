@@ -45,7 +45,8 @@ private:
    sf::Clock m_moveTimer;
    sf::Clock m_movieStartTimer;
 
-	FeSettings::RotationState m_rotationState;
+	FeSettings::RotationState m_baseRotation;
+	FeSettings::RotationState m_toggleRotation;
 	sf::Transform m_rotationTransform;
 	sf::Transform m_scaleTransform;
 
@@ -60,7 +61,7 @@ private:
 	void toggle_movie();
 
 	void toggle_rotate( FeSettings::RotationState ); // toggle between none and provided state
-	void set_rotate( FeSettings::RotationState );	
+	void set_rotation_transform();	
 
 	// Overrides from base classes:
 	//

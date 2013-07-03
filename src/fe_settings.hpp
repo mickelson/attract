@@ -39,7 +39,7 @@ extern const char *FE_EMULATOR_FILE_EXTENSION;
 class FeSettings : public FeFileConfigurable
 {
 public:
-   enum RotationState { RotateNone=0, RotateRight, RotateLeft, RotateFlip };
+   enum RotationState { RotateNone=0, RotateRight, RotateFlip, RotateLeft };
 	static const char *rotationTokens[];
 	static const char *rotationDispTokens[];
 
