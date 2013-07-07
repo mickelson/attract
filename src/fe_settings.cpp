@@ -914,6 +914,18 @@ bool FeSettings::get_font_file( std::string &fontpath,
 			return get_font_file( fontpath, m_default_font );
 	}
 
+	//
+	// First check if there is a matching font file in the
+	// layout directory
+	//
+	std::string test;
+	if ( search_for_file( get_current_layout_dir(), 
+				fontname, FE_FONT_EXTENSIONS, test ) )
+	{
+		fontpath = test;
+		return true;
+	}
+
 #ifndef NO_FONTCONFIG
 	FcConfig *config = FcInitLoadConfigAndFonts();
 
@@ -937,7 +949,6 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	FcPatternDestroy( pat );
 #endif
 
-	std::string test;
 	std::vector<std::string> path_list;
 	std::vector<std::string>::iterator its;
 
@@ -947,7 +958,6 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	//
 	for ( its=m_font_paths.begin(); its!=m_font_paths.end(); ++its )
 		path_list.push_back( clean_path( *its, true ) );
-	path_list.push_back( get_current_layout_dir() );
 
 	for ( its=path_list.begin(); its!= path_list.end(); ++its )
 	{

@@ -228,18 +228,17 @@ FeListBox::FeListBox(
 void FeListBox::init()
 {
 	const sf::Font *font = getFont();
-	unsigned int font_linespacing = getCharacterSize();;
+	unsigned int fls = getCharacterSize();;
 
-	if ( font )
-	{
-		font_linespacing = font->getLineSpacing( getCharacterSize() );
-//		linespacing += linespacing / 5;  // pad it
-	}
+	if (( font ) && ( font->getLineSpacing( fls ) > fls ))
+		fls = font->getLineSpacing( fls );
+
+	fls += fls / 5;  // pad it
 
 	sf::Vector2f size = getSize();
 	sf::Vector2f pos = getPosition();
 
-	int line_count = (int) size.y / font_linespacing;
+	int line_count = (int) size.y / fls;
 	int actual_spacing = (int) size.y / line_count;
 
 	int sel = line_count / 2;

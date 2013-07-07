@@ -187,9 +187,10 @@ sf::Vector2f FeTextPrimative::setString(
 void FeTextPrimative::set_positions()
 {
 	unsigned int spacing = getCharacterSize();
+
 	const sf::Font *font = getFont();
-	if ( font ) 
-		spacing = font->getLineSpacing( getCharacterSize() );
+	if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
+		spacing = font->getLineSpacing( spacing );
 
 	sf::Vector2f rectPos = m_bgRect.getPosition();
 	sf::FloatRect rectSize = m_bgRect.getLocalBounds();
