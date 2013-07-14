@@ -52,8 +52,8 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
 	if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
 		states.transform *= sf::Transform( 
-				1.f, (float)m_shear.y / (float)m_size.y, 0.f,
-				(float)m_shear.x / (float)m_size.x, 1.f, 0.f,
+				1.f, (float)m_shear.x / (float)m_size.x, 0.f,
+				(float)m_shear.y / (float)m_size.y, 1.f, 0.f,
 				0.f, 0.f, 1.f );
 
 	target.draw( m_sprite, states );
@@ -309,8 +309,8 @@ void FeMovie::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 	{
 		if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
 			states.transform *= sf::Transform( 
-				1.f, (float)m_shear.y / (float)m_size.y, 0.f,
-				(float)m_shear.x / (float)m_size.x, 1.f, 0.f,
+				1.f, (float)m_shear.x / (float)m_size.x, 0.f,
+				(float)m_shear.y / (float)m_size.y, 1.f, 0.f,
 				0.f, 0.f, 1.f );
 
 		target.draw( *m_movie, states );
@@ -344,8 +344,8 @@ void FeAnimate::draw(sf::RenderTarget& target, sf::RenderStates states) const
 	{
 		if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
 			states.transform *= sf::Transform( 
-				1.f, (float)m_shear.y / (float)m_size.y, 0.f,
-				(float)m_shear.x / (float)m_size.x, 1.f, 0.f,
+				1.f, (float)m_shear.x / (float)m_size.x, 0.f,
+				(float)m_shear.y / (float)m_size.y, 1.f, 0.f,
 				0.f, 0.f, 1.f );
 
 		target.draw( m_animate, states );
