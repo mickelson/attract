@@ -28,7 +28,7 @@
 #include <cstdlib>
 
 FeImage::FeImage()
-	: m_size( 0, 0 ), m_index_offset( 0 )
+	: m_index_offset( 0 ), m_size( 0, 0 ), m_shear( 0, 0 )
 {
 }
 
@@ -38,7 +38,7 @@ FeImage::~FeImage()
 
 void FeImage::loadFromFile( const std::string &filename )
 {
-   m_texture.loadFromFile( filename );
+	m_texture.loadFromFile( filename );
   	m_texture.setSmooth( true );
   	m_sprite.setTexture( m_texture, true );
 }
@@ -50,15 +50,21 @@ int FeImage::get_index_offset()
 
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
+	if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
+		states.transform *= sf::Transform( 
+				1.f, (float)m_shear.y / (float)m_size.y, 0.f,
+				(float)m_shear.x / (float)m_size.x, 1.f, 0.f,
+				0.f, 0.f, 1.f );
+
 	target.draw( m_sprite, states );
 }
 
 int FeImage::process_setting( const std::string &setting,
-                        const std::string &value,
+								const std::string &value,
 								const std::string &fn )
 {
-   size_t pos=0;
-   std::string val;
+	size_t pos=0;
+	std::string val;
 
 	const char *stokens[] =
 	{
@@ -67,42 +73,51 @@ int FeImage::process_setting( const std::string &setting,
 		"index_offset",
 		"rotation",
 		"colour",
+		"shear",
 		NULL
 	};
 
-   if ( setting.compare( stokens[0] ) == 0 ) // position
+	if ( setting.compare( stokens[0] ) == 0 ) // position
 	{
 		// position is XX,YY
-   	token_helper( value, pos, val, "," );
+		token_helper( value, pos, val, "," );
 		int left = as_int( val );
-   	token_helper( value, pos, val );
+		token_helper( value, pos, val );
 		int top = as_int( val );
 
 		m_sprite.setPosition( left, top );
 	}
-   else if ( setting.compare( stokens[1] ) == 0 ) // size
+	else if ( setting.compare( stokens[1] ) == 0 ) // size
 	{
 		// size is WW,HH
-   	token_helper( value, pos, val, ",x" );
+		token_helper( value, pos, val, ",x" );
 		m_size.x = as_int( val );
-   	token_helper( value, pos, val );
+		token_helper( value, pos, val );
 		m_size.y = as_int( val );
 
 		scale();
 	}
-   else if ( setting.compare( stokens[2] ) == 0 ) // index_offset
+	else if ( setting.compare( stokens[2] ) == 0 ) // index_offset
 		m_index_offset = as_int( value );
-   else if ( setting.compare( stokens[3] ) == 0 ) // rotation
+	else if ( setting.compare( stokens[3] ) == 0 ) // rotation
 	{
 		int rotation = as_int( value );
 		m_sprite.setRotation( rotation );
 	}
-   else if ( setting.compare( stokens[4] ) == 0 ) // colour
+	else if ( setting.compare( stokens[4] ) == 0 ) // colour
 		m_sprite.setColor( colour_helper( value ) );
+	else if ( setting.compare( stokens[5] ) == 0 ) // shear
+	{
+		// shear is XX,YY
+		token_helper( value, pos, val, "," );
+		m_shear.x = as_int( val );
+		token_helper( value, pos, val );
+		m_shear.y = as_int( val );
+	}
 	else
 	{
 		invalid_setting( fn, "image", setting, stokens );
-      return 1;
+		return 1;
 	}
 
 	return 0;
@@ -111,8 +126,8 @@ int FeImage::process_setting( const std::string &setting,
 void FeImage::scale()
 {
 	sf::Vector2u texture_size = m_texture.getSize();
-   bool scale=false;
-   float scale_x( 1.0 ), scale_y( 1.0 );
+	bool scale=false;
+	float scale_x( 1.0 ), scale_y( 1.0 );
 
 	if ( m_size.x > 0 )
 	{
@@ -177,9 +192,9 @@ void FeArtwork::on_new_selection( FeSettings *feSettings )
 {
   	std::vector<std::string> file_list;
   	feSettings->get_art_file( 
-						get_index_offset(), 	
-						m_artwork_label,
-						file_list );
+				get_index_offset(), 	
+				m_artwork_label,
+				file_list );
 
   	m_texture = sf::Texture();
 	for ( unsigned int i=0; i<file_list.size(); i++ )
@@ -291,7 +306,15 @@ bool FeMovie::tick( FeSettings *feSettings )
 void FeMovie::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 {
 	if (m_movie && ( m_status == Playing ) && ( m_movie->get_display_ready() ))
+	{
+		if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
+			states.transform *= sf::Transform( 
+				1.f, (float)m_shear.y / (float)m_size.y, 0.f,
+				(float)m_shear.x / (float)m_size.x, 1.f, 0.f,
+				0.f, 0.f, 1.f );
+
 		target.draw( *m_movie, states );
+	}
 	else
 		FeArtwork::draw( target, states );
 }
@@ -319,6 +342,12 @@ void FeAnimate::draw(sf::RenderTarget& target, sf::RenderStates states) const
 #ifndef NO_MOVIE
 	if ( m_playing && m_animate.get_display_ready() )
 	{
+		if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
+			states.transform *= sf::Transform( 
+				1.f, (float)m_shear.y / (float)m_size.y, 0.f,
+				(float)m_shear.x / (float)m_size.x, 1.f, 0.f,
+				0.f, 0.f, 1.f );
+
 		target.draw( m_animate, states );
 	}
 #endif

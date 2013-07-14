@@ -36,12 +36,13 @@ class FeSettings;
 class FeImage : public sf::Drawable, public FeBaseConfigurable, public FeBasePresentable
 {
 private:
-	sf::Vector2i m_size;
 	int m_index_offset;
 
 protected:
 	sf::Texture m_texture;  
 	sf::Sprite m_sprite;
+	sf::Vector2i m_size;
+	sf::Vector2i m_shear;
 
 	void scale();
 	int get_index_offset();
@@ -64,8 +65,8 @@ public:
 
 	// Overrides from base class:
 	//
-   int process_setting( const std::string &setting,
-                        const std::string &value,
+	int process_setting( const std::string &setting,
+								const std::string &value,
 								const std::string &fn );
 
    const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
@@ -123,7 +124,7 @@ public:
 	// Overrides from base class
 	//
 	bool tick( FeSettings * ); // returns true if display refresh required
-   void on_new_selection( FeSettings * );
+	void on_new_selection( FeSettings * );
 };
 
 #endif // NO_MOVIE
