@@ -3,8 +3,8 @@ Attract-Mode Frontend
 
 Attract-Mode is a graphical front-end for emulators such as MAME, 
 MESS, nestopia, etc.  It is designed to be run in an arcade cabinet 
-and controlled with a joystick or spin dial.  It is written in C++ 
-and uses SFML 2.0 (for graphics, sound and input). It uses ffmpeg / 
+setup and controlled with a joystick or spin dial.  It is written in 
+C++ and uses SFML 2.0 (for graphics, sound and input). It uses ffmpeg/  
 libav libraries for movie support.
 
 Attract-Mode was developed for use in Linux.  It is known to work 
@@ -19,8 +19,8 @@ mouse).
 information related to selected game.  
 
 - Supports screen rotation (including auto-rotation to match the 
-rotation of the last game played).  Layouts can further rotate, scale 
-and position images, videos and text.
+rotation of the last game played).  Layouts can further rotate, scale,
+shear and position images, videos and text.
 
 - Generates lists from directory contents, imports game info from 
 MAME and MESS -xmlinfo commands and from catver.ini files.
@@ -51,7 +51,7 @@ Compile
 2. Download the Attract-Mode source, extract it to your system.
 
 3. On Linux/OS-X: Run "make".  Edit the Makefile first if you 
-don't want to use ffmpeg and/or libfontconfig (see Makefile comments).  
+don't want to use ffmpeg and/or fontconfig (see Makefile comments).  
 
 On Windows: Load the Codeblocks project file located in the "win32" 
 subdirectory and compile in Codeblocks.  The Windows version of Attract
@@ -70,29 +70,72 @@ on Mac OS-X, and "~/attract" on Windows systems.
 then you need to specify your config location at the command line as 
 follows:
 
-   attract -config /my/config/location
+   attract --config /my/config/location
 
-If you have compiled Attract-Mode without libfontconfig support, it may
+If you have compiled Attract-Mode without fontconfig support, it may
 have difficulty finding a display font to use on your system.  If this
 occurs you can specify a font file to use at the command line as follows: 
 
-	attract -font <font_name>
+	attract --font <font_name>
 
 3. With Attract-Mode running, press "TAB" to enter configuration mode.
+By default, configuration mode can be navigated using the up/down arrows,
+enter to select an option, and escape to go back a menu.
 
 4. Select the "Emulators" option and edit/create a configuration for 
 an emulator that you wish to use.  Default configs are provided for 
 some popular emulators, however some settings will likely have to be 
 customized for your system (file locations etc).
 
-5. Once you have an Emulator configured correctly for your system, 
-select the "Generate Romlist" option from the Emulator's configuration 
+5. Once you have an emulator configured correctly for your system, 
+select the "Generate Romlist" option from the emulator's configuration 
 menu.  Attract-Mode will use the configured emulator settings to 
 generate a list of available games for the emulator.
 
 6. Now select the "Lists" configuration option from the main config menu
-and create a new list using the Romlist generated above in step 5.  
+and create a new list using the romlist generated above in step 5.  
 Select one of the included layouts for the layout to use.
 
 7.  Exit configuration mode by selecting the "Back" option a few times. 
 You should now have a usable front-end! 
+
+Further Customization
+=====================
+
+SOUND: To play sounds in your setup, place the sound file in the "sounds" 
+subdirectory of your Attract-Mode config directory.  The sound file can 
+then be selected in the Sound menu when in configuration mode and mapped
+to an input or event.
+
+ARTWORK: Attract-Mode supports PNG, JPEG, GIF, BMP and TGA image formats.
+When deciding what image file to use for a particular named artwork
+(default artwork names are "marquee" and "screen"), Attract-Mode will 
+use the artwork/movie selection order set out below.
+
+MOVIE: Attract-Mode supports any movie format supported by ffmpeg/libav.
+What movie to play is decided as follows:
+
+ARTWORK/MOVIE SELECTION ORDER:
+
+A. From the artwork path configured in the emulator setting (if any):
+  1. [romname].xxx  (i.e. "pacman.png")
+  2. [cloneof].xxx  (i.e. "puckman.gif")
+  3. [emulator].xxx (i.e. "mame.jpg")
+
+B. From the layout path for the current layout (layouts are located in
+the "layouts" subdirectory of your Attract-Mode config directory):
+  4. [emulator]-[artlabel].xxx  (i.e. "mame-marquee.png")
+  5. [artlabel].xxx  (i.e. "marquee.png")
+
+C. If no files are found matching the above rules, then the artwork/movie 
+is left blank.
+
+ROMLISTS: Romlists are saved in the "romlist" subdirectory of your 
+Attract-Mode config directory.  Each list is a semi-colon delimited text 
+file with one game/rom entry per line. The first line of each file 
+describes what each column represents.  In addition to the Romlist 
+generation function available in configuration mode, Attract-Mode can 
+generate a romlist for multiple emulators from the command line using the 
+following command: 
+
+	attract --build-rom-list [emulator names...]
