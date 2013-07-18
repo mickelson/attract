@@ -66,6 +66,8 @@ public:
 	bool operator< ( FeRomInfo );
 
 private:
+	std::string get_info_escaped( int ) const;
+
 	std::string m_info[LAST_INDEX];
 };
 

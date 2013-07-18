@@ -25,7 +25,7 @@
 #include <iostream>
 #include <fstream>
 
-#define FE_VERSION "version 0.9.0"
+#define FE_VERSION "version 0.9.1"
 #define FE_LABEL "Attract-Mode"
 
 const char *FE_NAME_AND_VERSION = FE_LABEL " " FE_VERSION;

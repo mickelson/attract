@@ -58,6 +58,18 @@ const std::string &FeRomInfo::get_info( int i ) const
 	return m_info[i];
 }
 
+std::string FeRomInfo::get_info_escaped( int i ) const
+{
+	if ( m_info[i].find_first_of( ';' ) != std::string::npos )
+	{
+		std::string temp = m_info[i];
+		perform_substitution( temp, "\"", "\\\"" );
+		return ( "\"" + temp + "\"" );
+	}
+	else
+		return m_info[i];
+}
+
 void FeRomInfo::set_info( Index i, const std::string &v )
 {
 	m_info[i] = v;
@@ -80,11 +92,11 @@ int FeRomInfo::process_setting( const std::string &,
 
 std::string FeRomInfo::as_output( void ) const
 {
-	std::string s = get_info( (Index)0 );
+	std::string s = get_info_escaped( (Index)0 );
 	for ( int i=1; i < LAST_INDEX; i++ )
 	{
-		s += ";";
-		s += get_info( (Index)i );
+		s += ';';
+		s += get_info_escaped( (Index)i );
 	}
 
 	return s;
@@ -181,19 +193,19 @@ int FeListInfo::process_setting( const std::string &setting,
 {
 	// name is igored here, it gets set directly
 	//
-   if ( setting.compare( indexStrings[Layout] ) == 0 ) // layout
+	if ( setting.compare( indexStrings[Layout] ) == 0 ) // layout
 		m_info[ Layout ] = value;
-   else if ( setting.compare( indexStrings[Romlist] ) == 0 ) // romlist
+	else if ( setting.compare( indexStrings[Romlist] ) == 0 ) // romlist
 		m_info[ Romlist ] = value;
-   else if ( setting.compare( indexStrings[Filter] ) == 0 ) // filter
+	else if ( setting.compare( indexStrings[Filter] ) == 0 ) // filter
 		return parse_filter( fn, value );
 	else
 	{
-      invalid_setting( fn, "list", setting, indexStrings + 1 );
+		invalid_setting( fn, "list", setting, indexStrings + 1 );
 		return 1;
 	}
 
-   return 0;
+	return 0;
 }
 
 int FeListInfo::process_state( const std::string &state_string )
@@ -231,46 +243,48 @@ int FeListInfo::parse_filter( const std::string &fn,
 		m_filter_what.clear();
 		return 0;
 	}
-   std::string token;
-   size_t pos=0;
 
-   token_helper( filter_str, pos, token, FE_WHITESPACE );
+	std::string token;
+	size_t pos=0;
 
-   int i=0;
-   while( FeRomInfo::indexStrings[i] != NULL )
-   {
-      if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
-         break;
-      i++;
-   }
+	token_helper( filter_str, pos, token, FE_WHITESPACE );
 
-   if ( i >= FeRomInfo::LAST_INDEX )
-   {
-      invalid_setting( fn, "filter", token, FeRomInfo::indexStrings, NULL, "target" );
-      return 1;
-   }
+	int i=0;
+	while( FeRomInfo::indexStrings[i] != NULL )
+	{
+		if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
+			break;
+		i++;
+	}
+
+	if ( i >= FeRomInfo::LAST_INDEX )
+	{
+		invalid_setting( fn, "filter", token, 
+				FeRomInfo::indexStrings, NULL, "target" );
+		return 1;
+	}
 
 	m_filter_target = (FeRomInfo::Index)i;
-   token_helper( filter_str, pos, token, FE_WHITESPACE );
+	token_helper( filter_str, pos, token, FE_WHITESPACE );
 
-   i=0;
-   while( filterCompStrings[i] != NULL )
+	i=0;
+	while( filterCompStrings[i] != NULL )
 	{
 		if ( token.compare( filterCompStrings[i] ) == 0 )
 			break;
 		i++;
 	}
 
-   if ( i >= LAST_COMPARISON )
-   {
-      invalid_setting( fn, "filter", token, filterCompStrings, 
-								NULL, "comparison" );
-      return 1;
-   }
+	if ( i >= LAST_COMPARISON )
+	{
+		invalid_setting( fn, "filter", token, filterCompStrings, 
+				NULL, "comparison" );
+		return 1;
+	}
 
 	m_filter_comp = (FilterComp)i;
 
-   token_helper( filter_str, pos, m_filter_what, FE_WHITESPACE );
+	token_helper( filter_str, pos, m_filter_what, FE_WHITESPACE );
 	return 0;
 }
 
@@ -361,8 +375,8 @@ void FeRomList::set_filter( FeRomInfo::Index i,
 }
 
 int FeRomList::process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &fn )
+				const std::string &value,
+				const std::string &fn )
 {
 	FeRomInfo next_rom( setting );
 	next_rom.process_setting( setting, value, fn );
@@ -499,18 +513,18 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 		}
 	}
 
-   if ( setting.compare( stokens[0] ) == 0 ) // artwork
-   {
-   	size_t pos=0;
-   	std::string label;
-		std::string path;
+	if ( setting.compare( stokens[0] ) == 0 ) // artwork
+	{
+		size_t pos=0;
+		std::string label, path;
   		token_helper( value, pos, label, FE_WHITESPACE );
   		token_helper( value, pos, path );
 		m_artwork[ label ] = path;
-   }
+	}
 	else
 	{
-      invalid_setting( fn, "emulator", setting, indexStrings + 1, stokens );
+		invalid_setting( fn, "emulator", setting, 
+				indexStrings + 1, stokens );
 		return 1;
 	}
 	return 0;
@@ -571,7 +585,7 @@ void FeResourceMap::get_resource( const std::string &token,
 	if ( token.empty() )
 		return;
 
-   std::map<std::string, std::string>::iterator it = m_map.find( token );
+	std::map<std::string, std::string>::iterator it = m_map.find( token );
 
 	if ( it != m_map.end() )
 		str = (*it).second;

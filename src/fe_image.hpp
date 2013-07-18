@@ -69,7 +69,7 @@ public:
 								const std::string &value,
 								const std::string &fn );
 
-   const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
+	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
 };
 
 //
@@ -114,7 +114,7 @@ private:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
 public:
-	FeMovie( const std::string & );
+	FeMovie();
 	FeMovie( const FeMovie & );
 	~FeMovie();
 

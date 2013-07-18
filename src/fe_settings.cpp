@@ -36,16 +36,16 @@
 
 #ifdef SFML_SYSTEM_WINDOWS
 
-const char *FE_DEFAULT_CFG_PATH			= "$HOME/attract/";
-const char *FE_DEFAULT_FONT				= "arial";
-const char *FE_DEFAULT_FONT_PATHS[] 	= { "%SYSTEMROOT%/Fonts/", NULL };
+const char *FE_DEFAULT_CFG_PATH		= "$HOME/attract/";
+const char *FE_DEFAULT_FONT			= "arial";
+const char *FE_DEFAULT_FONT_PATHS[]	= { "%SYSTEMROOT%/Fonts/", NULL };
 
 #else
 #ifdef SFML_SYSTEM_MACOS
 
-const char *FE_DEFAULT_CFG_PATH			= "$HOME/Library/Application Support/Attract/";
-const char *FE_DEFAULT_FONT				= "Arial";
-const char *FE_DEFAULT_FONT_PATHS[] 	=
+const char *FE_DEFAULT_CFG_PATH		= "$HOME/Library/Application Support/Attract/";
+const char *FE_DEFAULT_FONT			= "Arial";
+const char *FE_DEFAULT_FONT_PATHS[]	=
 {
 	"/Library/Fonts/",
 	"$HOME/Library/Fonts/",
@@ -54,9 +54,9 @@ const char *FE_DEFAULT_FONT_PATHS[] 	=
 
 #else
 
-const char *FE_DEFAULT_CFG_PATH			= "$HOME/.attract/";
-const char *FE_DEFAULT_FONT			 	= "FreeSans";
-const char *FE_DEFAULT_FONT_PATHS[] 	=
+const char *FE_DEFAULT_CFG_PATH		= "$HOME/.attract/";
+const char *FE_DEFAULT_FONT			= "FreeSans";
+const char *FE_DEFAULT_FONT_PATHS[]	=
 {
 	"/usr/share/fonts/",
 	"$HOME/.fonts/",
@@ -66,7 +66,7 @@ const char *FE_DEFAULT_FONT_PATHS[] 	=
 #endif
 #endif
 
-const char *FE_ART_EXTENSIONS[] 			=
+const char *FE_ART_EXTENSIONS[]		=
 {
 	".png",
 	".jpg",
@@ -77,7 +77,7 @@ const char *FE_ART_EXTENSIONS[] 			=
 	NULL
 };
 
-const char *FE_FONT_EXTENSIONS[] 		=
+const char *FE_FONT_EXTENSIONS[]		=
 {
 	".ttf",
 	".otf",
@@ -87,19 +87,19 @@ const char *FE_FONT_EXTENSIONS[] 		=
 	NULL
 };
 
-const char *FE_CFG_FILE						= "attract.cfg";
-const char *FE_STATE_FILE					= "attract.am";
-const char *FE_RESOURCE_BASEFILE			= "locale$1.msg";
+const char *FE_CFG_FILE					= "attract.cfg";
+const char *FE_STATE_FILE				= "attract.am";
+const char *FE_RESOURCE_BASEFILE		= "locale$1.msg";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".cfg";
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
-const char *FE_LAYOUT_SUBDIR				= "layouts/";
-const char *FE_ROMLIST_SUBDIR				= "romlists/";
-const char *FE_EMULATOR_SUBDIR			= "emulators/";
-const char *FE_SOUND_SUBDIR				= "sounds/";
+const char *FE_LAYOUT_SUBDIR			= "layouts/";
+const char *FE_ROMLIST_SUBDIR			= "romlists/";
+const char *FE_EMULATOR_SUBDIR		= "emulators/";
+const char *FE_SOUND_SUBDIR			= "sounds/";
 
 // NOTE: this has to remain aligned with the RotationState enum:
-const char *FeSettings::rotationTokens[] =
+const char *FeSettings::rotationTokens[]	=
 {
 	"none",
 	"right",
@@ -108,7 +108,7 @@ const char *FeSettings::rotationTokens[] =
 	NULL
 };
 
-const char *FeSettings::rotationDispTokens[] =
+const char *FeSettings::rotationDispTokens[]	=
 {
 	"None",
 	"Right",
@@ -116,7 +116,6 @@ const char *FeSettings::rotationDispTokens[] =
 	"Left",
 	NULL
 };
-
 
 FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font, bool disable_mousecap )
@@ -156,9 +155,7 @@ bool FeSettings::load()
 	filename += FE_CFG_FILE;
 
 	if ( load_from_file( filename ) == false )
-	{
-      std::cout << "Config file not found: " << filename << std::endl;
-	}
+	      std::cout << "Config file not found: " << filename << std::endl;
 
 	load_state();
 
@@ -674,13 +671,7 @@ int FeSettings::run()
 				emu->get_info( FeEmulatorInfo::Name ) );
 
 	command = clean_path( emu->get_info( FeEmulatorInfo::Executable ) );
-/*
-	commandln += " ";
-	commandln += args;
 
-	std::cout << "Running: \"" << commandln << "\"" << std::endl;
-	return system( commandln.c_str() );
-*/
 	return run_program( command, args );
 }
 
@@ -800,8 +791,8 @@ void FeSettings::delete_emulator( const std::string & emu )
 
 void FeSettings::internal_get_art_file(
 		std::vector<std::string> &result,
-		std::string &ap, 						// artwork/movie path
-		int curr_rom,							// rom index
+		std::string &ap,				// artwork/movie path
+		int curr_rom,				// rom index
 		const std::string &artlabel,
 		bool is_movie )
 {
@@ -887,11 +878,11 @@ void FeSettings::get_movie_file( int offset, std::vector<std::string> &filename_
 	{
 		artlabel = cur_emu_info->get_info( FeEmulatorInfo::Movie_artwork );
 		mpath = cur_emu_info->get_info( FeEmulatorInfo::Movie_path );
-	}
 
-	internal_get_art_file( filename_list, mpath,
+		internal_get_art_file( filename_list, mpath,
 							get_rom_index( offset ),
 							artlabel, true );
+	}
 }
 
 std::string FeSettings::get_movie_artwork()

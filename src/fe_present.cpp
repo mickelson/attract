@@ -93,10 +93,10 @@ int FePresent::process_setting( const std::string &setting,
 		NULL
 	};
 
-   if ( setting.compare( stokens[0] ) == 0 ) // layout_size
+	if ( setting.compare( stokens[0] ) == 0 ) // layout_size
 	{
-   	size_t pos=0;
-   	std::string val;
+		size_t pos=0;
+		std::string val;
 
 		// size is WW,HH
 		token_helper( value, pos, val, ",x" );
@@ -109,7 +109,7 @@ int FePresent::process_setting( const std::string &setting,
 		m_scaleTransform.scale( (float) vm.width / width, 
 						(float) vm.height / height );
 	}
-   else if ( setting.compare( stokens[1] ) == 0 ) // font
+	else if ( setting.compare( stokens[1] ) == 0 ) // font
 	{
 		std::string filename;
 		if ( m_feSettings->get_font_file( filename, value ) )
@@ -118,8 +118,8 @@ int FePresent::process_setting( const std::string &setting,
 				m_currentFont = &m_layoutFont;
 		}
 	}
-   else if ( setting.compare( stokens[2] ) == 0 ) // image
-   {
+	else if ( setting.compare( stokens[2] ) == 0 ) // image
+	{
 		FeImage *new_image = new FeImage();
 		std::string filename = m_feSettings->get_current_layout_dir();
 		filename += value;
@@ -127,7 +127,7 @@ int FePresent::process_setting( const std::string &setting,
 
 		m_currentConfigObject = new_image;
 		m_elements.push_back( new_image );
-   }
+	}
 	else if ( setting.compare( stokens[3] ) == 0 ) // artwork
 	{
 		FeArtwork *ae = new FeArtwork( value );
@@ -135,6 +135,7 @@ int FePresent::process_setting( const std::string &setting,
 		m_currentConfigObject = ae;
 		m_elements.push_back( ae );
 
+#ifdef FE_DEBUG
 		// print out a message if the artwork label 
 		//  is not defined for the current emulator
 		if ( m_feSettings->confirm_artwork( value ) == false )
@@ -143,6 +144,7 @@ int FePresent::process_setting( const std::string &setting,
 				<< "\" is used by layout but not configured for current emulator."
 				<< std::endl;
 		}
+#endif
 	}
 	else if ( setting.compare( stokens[4] ) == 0 ) // text
 	{
@@ -167,9 +169,9 @@ int FePresent::process_setting( const std::string &setting,
 	else if ( setting.compare( stokens[6] ) == 0 ) // movie
 	{
 #ifdef NO_MOVIE
-		FeArtwork *me = new FeArtwork( m_feSettings->get_movie_artwork() );
+		FeArtwork *me = new FeArtwork( "" );
 #else
-		FeMovie *me = new FeMovie( m_feSettings->get_movie_artwork() );
+		FeMovie *me = new FeMovie();
 #endif
 		m_currentConfigObject = me;
 		m_elements.push_back( me );
@@ -374,15 +376,15 @@ bool FePresent::tick()
 			else if ( m_moveEvent.type == sf::Event::JoystickButtonPressed )
 			{
 				if ( sf::Joystick::isButtonPressed( 
-									m_moveEvent.joystickButton.joystickId,
-									m_moveEvent.joystickButton.button ) )
+						m_moveEvent.joystickButton.joystickId,
+						m_moveEvent.joystickButton.button ) )
 					cont=true;
 			}
 			else if ( m_moveEvent.type == sf::Event::JoystickMoved )
 			{
 				float pos = sf::Joystick::getAxisPosition( 
-									m_moveEvent.joystickMove.joystickId,
-									m_moveEvent.joystickMove.axis );
+						m_moveEvent.joystickMove.joystickId,
+						m_moveEvent.joystickMove.axis );
 				if ( abs( pos ) > FeInputMap::JOY_THRESH )
 					cont=true;
 			}
@@ -523,7 +525,7 @@ void FePresent::perform_autorotate()
 		return;
 
 	std::string rom_rot = m_feSettings->get_rom_info( 0, 
-													FeRomInfo::Rotation );
+						FeRomInfo::Rotation );
 
 	m_toggleRotation = FeSettings::RotateNone;
 

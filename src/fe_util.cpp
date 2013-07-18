@@ -235,6 +235,9 @@ bool get_filename_from_base( std::vector<std::string> &list,
 	DIR *dir;
 	struct dirent *ent;
 
+	if ( base_list.empty() )
+		return false;
+
 	if ( (dir = opendir( path.c_str() )) != NULL )
 	{
 		for ( std::vector<std::string>::const_iterator itr = base_list.begin();
@@ -292,53 +295,69 @@ bool get_filename_from_base( std::vector<std::string> &list,
 
 
 bool token_helper( const std::string &from,
-				size_t &pos, std::string &token, const char *sep )
+	size_t &pos, std::string &token, const char *sep )
 {
-   std::string to;
-	bool retval=false;
-   size_t end;
-	bool in_quotes=false;
+	std::string to;
+	bool retval( false ), in_quotes( false ), escaped( false );
+	size_t end;
 
 	if ( from[pos] == '"' )
 	{
-		end = from.find_first_of( '"', pos + 1 );
 		in_quotes = true;
+		pos++;
+
+		//
+		// Find the next quote character that is not proceeded
+		// by a \ 
+		//
+		end = from.find_first_of( '"', pos );
+		while (( end != std::string::npos ) && 
+				( from[ end - 1 ] == '\\' ))
+		{
+			escaped = true;
+			end = from.find_first_of( '"', end + 1 );
+		}
 	}
 	else
 	{
 		end = from.find_first_of( sep, pos );
 	}
 
-   if ( end == std::string::npos )
-   {
-      to = from.substr( pos );
+
+	if ( end == std::string::npos )
+	{
+		to = from.substr( pos );
 		pos = from.size();
-   }
-   else
-   {
-		if ( in_quotes )
-			to = from.substr( pos, end - pos + 1 );
+	}
+	else
+	{
+		to = from.substr( pos, end - pos );
+
+		if ( in_quotes ) 
+			pos = end + 2; // skip over quote and sep
 		else
-			to = from.substr( pos, end - pos );
+			pos = end + 1; // skip over sep
 
-		pos = end + 1;
 		retval = true;
-   }
+	}
 
-   // clean out leading and trailing whitespace from token
-   //
-   size_t f= to.find_first_not_of( FE_WHITESPACE );
-   if ( f == std::string::npos )
-   {
-      token.clear();
-   }
-   else
-   {
-      size_t l = to.find_last_not_of( FE_WHITESPACE );
-      token = to.substr( f, l-f+1 );
-   }
+	// clean out leading and trailing whitespace from token
+	//
+	size_t f= to.find_first_not_of( FE_WHITESPACE );
+	if ( f == std::string::npos )
+	{
+		token.clear();
+	}
+	else
+	{
+		size_t l = to.find_last_not_of( FE_WHITESPACE );
+		token = to.substr( f, l-f+1 );
+	}
 
-   return retval;
+	if ( escaped )
+		perform_substitution( token, "\\\"", "\"" );
+
+	return retval;
 }
 
 sf::Color colour_helper( const std::string &value )
@@ -377,30 +396,21 @@ sf::Color colour_helper( const std::string &value )
 }
 
 int perform_substitution( std::string &target,
-                           const std::string &from,
-                           const std::string &to )
+					const std::string &from,
+					const std::string &to )
 {
-   bool done=false;
 	int count=0;
-   size_t loc;
-   std::string froms( from );
 
-   while ( !done )
-   {
-      done = true;
-      loc = target.find( froms );
-      if ( loc != std::string::npos )
-      {
-         std::string front = target.substr( 0, loc );
-         std::string back = target.substr( loc + froms.size()  );
-         target = front;
-         target += to;
-         target += back;
+	if ( from.empty() )
+		return count;
 
-         done=false;
-			count++;
-      }
-   }
+	size_t loc=0;
+	while ( (loc = target.find( from, loc )) != std::string::npos )
+	{
+		target.replace( loc, from.size(), to );
+		loc += to.size();
+		count++;
+	}
 
 	return count;
 }
@@ -412,17 +422,17 @@ std::string get_available_filename(
 			std::string &result )
 {
 	std::string base_name = base;
-   std::string test_name = base_name;
-   test_name += extension;
+	std::string test_name = base_name;
+	test_name += extension;
 
-   int i=0;
-   while ( file_exists( path + test_name ) )
-   {
-      std::ostringstream ss;
+	int i=0;
+	while ( file_exists( path + test_name ) )
+	{
+		std::ostringstream ss;
 		ss << base << ++i;
 		test_name = base_name = ss.str();
 		test_name += extension;
-   }
+	}
 
 	result = path;
 	result += test_name;

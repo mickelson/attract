@@ -190,28 +190,39 @@ FeArtwork::~FeArtwork()
 
 void FeArtwork::on_new_selection( FeSettings *feSettings )
 {
-  	std::vector<std::string> file_list;
-  	feSettings->get_art_file( 
-				get_index_offset(), 	
-				m_artwork_label,
-				file_list );
+	//
+	// if m_artwork_label is empty then check for the configured movie
+	// artwork
+	//
+	std::string label;
+	if ( m_artwork_label.empty() )
+		label = feSettings->get_movie_artwork();
+	else
+		label = m_artwork_label;
 
   	m_texture = sf::Texture();
-	for ( unsigned int i=0; i<file_list.size(); i++ )
-	{
-		if ( m_texture.loadFromFile( file_list[i] ) )
-			break;
-	}
-  	m_texture.setSmooth( true );
 
+	if ( !label.empty() )
+	{
+  		std::vector<std::string> file_list;
+  		feSettings->get_art_file( get_index_offset(), label, file_list );
+
+		for ( unsigned int i=0; i<file_list.size(); i++ )
+		{
+			if ( m_texture.loadFromFile( file_list[i] ) )
+				break;
+		}
+	}
+
+	m_texture.setSmooth( true );
 	m_sprite.setTexture( m_texture, true );
 	scale();
 }
 
 #ifndef NO_MOVIE 
 
-FeMovie::FeMovie( const std::string &label )
-	: FeArtwork( label ), m_movie( NULL ), m_status( NoPlay )
+FeMovie::FeMovie()
+	: FeArtwork( "" ), m_movie( NULL ), m_status( NoPlay )
 {
 }
 
