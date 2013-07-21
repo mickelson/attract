@@ -365,9 +365,9 @@ void FeVideoImp::video_thread()
 						};
 
 						if ( packet->pts != AV_NOPTS_VALUE )
-							my_new.pts = packet->pts * time_base;
+							my_new.pts = time_base * (sf::Int64)packet->pts;
 						else 
-							my_new.pts = packet->dts * time_base;
+							my_new.pts = time_base * (sf::Int64)packet->dts;
 
 						my_new.p = (AVPicture *)av_malloc( sizeof( AVPicture ) );
 						avpicture_alloc( my_new.p, PIX_FMT_RGBA, 
