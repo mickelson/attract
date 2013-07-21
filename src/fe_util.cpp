@@ -307,8 +307,8 @@ bool token_helper( const std::string &from,
 		pos++;
 
 		//
-		// Find the next quote character that is not proceeded
-		// by a \ 
+		// Find the next quote character that is not preceded
+		// by a backslash 
 		//
 		end = from.find_first_of( '"', pos );
 		while (( end != std::string::npos ) && 
