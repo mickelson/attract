@@ -24,6 +24,7 @@
 #include "fe_settings.hpp"
 #include "fe_config.hpp"
 #include "fe_util.hpp"
+#include "fe_text.hpp"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <fstream>
@@ -31,31 +32,31 @@
 class FeConfigContextImp : public FeConfigContext
 {
 private:
-   FeOverlay &m_feo;
+	FeOverlay &m_feo;
 
 public:
-   std::vector<std::string> left_list;
-   std::vector<std::string> right_list;
-   int exit_sel;
+	std::vector<std::string> left_list;
+	std::vector<std::string> right_list;
+	int exit_sel;
 
 	FeConfigContextImp( FeSettings &fes, FeOverlay &feo );
-   void edit_dialog( const std::string &m, std::string &t );
+	void edit_dialog( const std::string &m, std::string &t );
 
-   bool confirm_dialog( const std::string &m,
-					const std::string &rep );
+	bool confirm_dialog( const std::string &m,
+		const std::string &rep );
 
-   void splash_message( const std::string &msg,
-					const std::string &rep );
+	void splash_message( const std::string &msg,
+		const std::string &rep );
 
-   void input_map_dialog( const std::string &m,
-                  std::string &ms,
-						FeInputMap::Command &conflict );
+	void input_map_dialog( const std::string &m,
+		std::string &ms,
+		FeInputMap::Command &conflict );
 
 	void update_to_menu( FeBaseConfigMenu *m );
 };
 
 FeConfigContextImp::FeConfigContextImp( FeSettings &fes, FeOverlay &feo )
-         : FeConfigContext( fes ), m_feo( feo ) 
+	: FeConfigContext( fes ), m_feo( feo ) 
 {
 }
 
@@ -86,8 +87,8 @@ void FeConfigContextImp::splash_message(
 }
 
 void FeConfigContextImp::input_map_dialog( const std::string &m,
-                  std::string &ms,
-						FeInputMap::Command &conflict ) 
+		std::string &ms,
+		FeInputMap::Command &conflict ) 
 { 
 	std::string t;
 	fe_settings.get_resource( m, t );
@@ -115,17 +116,18 @@ void FeConfigContextImp::update_to_menu(
 
 
 FeOverlay::FeOverlay( sf::RenderWindow &wnd,
-								FeSettings &fes,
-								FePresent &fep )
+		FeSettings &fes,
+		FePresent &fep )
 	: m_wnd( wnd ), 
 	m_feSettings( fes ),
 	m_fePresent( fep ), 
-	m_characterSize( 64 ),
 	m_textColour( sf::Color::White ),
 	m_bgColour( sf::Color( 0, 0, 0, 200 ) ),
 	m_selColour( sf::Color::Yellow ),
 	m_selBgColour( sf::Color( 0, 0, 200, 200 ) )
 {
+	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+	m_characterSize = vm.height / 12; // 64 on a 1024x768 display
 }
 
 void FeOverlay::splash_message( const std::string &msg,
@@ -193,7 +195,6 @@ int FeOverlay::internal_dialog(
 	message.setString( msg_str );
 
 	dialog.setPosition( sf::Vector2f( 0, slice ));
-   dialog.setCharacterSize( m_characterSize );
 	dialog.setSize( sf::Vector2f( size.x, size.y - slice ) );
 	dialog.init();
 
@@ -228,7 +229,6 @@ void FeOverlay::edit_dialog(
 
 	tp.setPosition( sf::Vector2f( 0, slice ));
 	tp.setSize( sf::Vector2f( size.x, size.y - slice ) );
-   tp.setCharacterSize( m_characterSize );
 
 	std::vector<sf::Drawable *> draw_list;
 	draw_list.push_back( &message );
@@ -314,7 +314,7 @@ int FeOverlay::display_config_dialog(
 	bg.setOutlineThickness( -2 );
 	draw_list.push_back( &bg );
 
-	FeTextPrimative heading( font, m_selColour, sf::Color::Transparent );
+	FeTextPrimative heading( font, m_selColour, sf::Color::Transparent, m_characterSize / 2 );
 	heading.setSize( sf::Vector2f( size.x, slice ) );
 	heading.setOutlineColor( m_textColour );
 	heading.setOutlineThickness( -2 );
@@ -333,7 +333,8 @@ int FeOverlay::display_config_dialog(
 		m_textColour, 
 		sf::Color::Transparent, 
 		m_selColour,
-		sf::Color( 0, 0, 200, 200 ) );
+		sf::Color( 0, 0, 200, 200 ),
+		m_characterSize / 2 );
 
 	sdialog.setAlignment( FeTextPrimative::Centre );
 	sdialog.setPosition( sf::Vector2f( 2, slice ));
@@ -349,7 +350,8 @@ int FeOverlay::display_config_dialog(
 		m_textColour, 
 		sf::Color::Transparent, 
 		m_textColour,
-		sf::Color( 0, 0, 200, 200 ) );
+		sf::Color( 0, 0, 200, 200 ),
+		m_characterSize / 2 );
 
 	if ( ctx.style == FeConfigContext::EditList )
 	{
@@ -362,7 +364,10 @@ int FeOverlay::display_config_dialog(
 		draw_list.push_back( &vdialog );
 	}
 
-	FeTextPrimative footer( font, m_textColour, sf::Color::Transparent, 20 );
+	FeTextPrimative footer( font, 
+				m_textColour, 
+				sf::Color::Transparent, 
+				m_characterSize / 3 );
 	
 	footer.setPosition( sf::Vector2f( 0, size.y - slice ));
 	footer.setSize( sf::Vector2f( size.x, slice ) );
@@ -395,10 +400,10 @@ int FeOverlay::display_config_dialog(
 	while ( true )
 	{
 		while ( event_loop( 
-						draw_list, 
-						ctx.curr_sel, 
-						ctx.exit_sel, 
-						ctx.left_list.size() - 1 ) == false )
+				draw_list, 
+				ctx.curr_sel, 
+				ctx.exit_sel, 
+				ctx.left_list.size() - 1 ) == false )
 		{
 			footer.setString( ctx.curr_opt().help_msg );
 			sdialog.setText( ctx.curr_sel, ctx.left_list );

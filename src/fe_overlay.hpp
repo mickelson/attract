@@ -28,6 +28,7 @@
 
 class FeSettings;
 class FeBaseConfigMenu;
+class FeTextPrimative;
 
 class FeOverlay
 {
@@ -37,26 +38,26 @@ private:
 	sf::RenderWindow &m_wnd;
 	FeSettings &m_feSettings;
 	FePresent &m_fePresent;
-	const int m_characterSize;
+	int m_characterSize;
 	const sf::Color m_textColour;
 	const sf::Color m_bgColour;
 	const sf::Color m_selColour;
 	const sf::Color m_selBgColour;
 
 	int internal_dialog(
-         const std::string &msg_str,
+			const std::string &msg_str,
 			const std::vector<std::string> &list );
 
 	void input_map_dialog( const std::string &msg_str, std::string &map_str,
-				FeInputMap::Command &conflict );
+			FeInputMap::Command &conflict );
 	void edit_dialog( const std::string &msg_str, std::string &text );
 	int display_config_dialog( FeBaseConfigMenu *, bool & );
 
 	bool event_loop( std::vector<sf::Drawable *> draw_list,
-         int &sel, int default_sel, int max_sel );
+			int &sel, int default_sel, int max_sel );
 
 	bool edit_loop( std::vector<sf::Drawable *> draw_list,
-         std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
+			std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
 
 public:
 	FeOverlay( sf::RenderWindow &wnd,

@@ -25,6 +25,8 @@
 #include "fe_overlay.hpp"
 #include "fe_util.hpp"
 #include "fe_icon.hpp"
+#include "fe_image.hpp"
+#include "fe_text.hpp"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstring>

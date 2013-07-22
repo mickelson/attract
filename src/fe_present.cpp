@@ -22,6 +22,8 @@
 
 #include "fe_present.hpp"
 #include "fe_util.hpp"
+#include "fe_image.hpp"
+#include "fe_text.hpp"
 #include <iostream>
 
 FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
@@ -66,7 +68,7 @@ void FePresent::clear()
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 {
-	states = m_rotationTransform * m_scaleTransform;
+	states.transform = m_rotationTransform * m_scaleTransform;
 
 	for ( std::vector<FeBasePresentable *>::const_iterator itl=m_elements.begin();
                itl != m_elements.end(); ++itl )
@@ -355,6 +357,7 @@ int FePresent::load_layout()
 
 	set_rotation_transform();
 	update( true );
+
 	return 0;
 }
 

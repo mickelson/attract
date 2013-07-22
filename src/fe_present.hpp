@@ -25,10 +25,9 @@
 
 #include <SFML/Graphics.hpp>
 #include "fe_base.hpp"
-#include "fe_input.hpp"
-#include "fe_image.hpp"
-#include "fe_text.hpp"
 #include "fe_settings.hpp"
+
+class FeListBox;
 
 class FePresent 
 	: public sf::Drawable, public FeFileConfigurable
@@ -39,11 +38,11 @@ private:
 	sf::Font &m_defaultFont;
 	sf::Font m_layoutFont;
 
-   enum MoveState { MoveNone, MoveUp, MoveDown, MovePageUp, MovePageDown };
-   MoveState m_moveState;
-   sf::Event m_moveEvent;
-   sf::Clock m_moveTimer;
-   sf::Clock m_movieStartTimer;
+	enum MoveState { MoveNone, MoveUp, MoveDown, MovePageUp, MovePageDown };
+	MoveState m_moveState;
+	sf::Event m_moveEvent;
+	sf::Clock m_moveTimer;
+	sf::Clock m_movieStartTimer;
 
 	FeSettings::RotationState m_baseRotation;
 	FeSettings::RotationState m_toggleRotation;
@@ -66,9 +65,9 @@ private:
 	// Overrides from base classes:
 	//
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-   int process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn );
+	int process_setting( const std::string &setting,
+			const std::string &value,
+			const std::string &fn );
 
 	void set_to_no_lists_message();
 

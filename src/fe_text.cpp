@@ -47,10 +47,10 @@ FeTextConfigurable::FeTextConfigurable()
 }
 
 FeTextConfigurable::FeTextConfigurable( const sf::Font *font,
-         const sf::Color &colour,
-         const sf::Color &bgcolour,
-         unsigned int charactersize,
-         Alignment align )
+		const sf::Color &colour,
+		const sf::Color &bgcolour,
+		unsigned int charactersize,
+		Alignment align )
 	: FeTextPrimative( font, colour, bgcolour, charactersize, align )
 {
 }
@@ -62,27 +62,27 @@ int FeTextConfigurable::process_setting( const std::string &setting,
 	size_t pos=0;
 	std::string val;
 
-   if ( setting.compare( baseSettings[0] ) == 0 ) // position
-   {
-      // position is XX,YY
-      token_helper( value, pos, val, "," );
-      int left = as_int( val );
-      token_helper( value, pos, val );
-      int top = as_int( val );
+	if ( setting.compare( baseSettings[0] ) == 0 ) // position
+	{
+		// position is XX,YY
+		token_helper( value, pos, val, "," );
+		int left = as_int( val );
+		token_helper( value, pos, val );
+		int top = as_int( val );
 
 		setPosition( sf::Vector2f( left, top ));
-   }
-   else if ( setting.compare( baseSettings[1] ) == 0 ) // size
-   {
-      // size is WW,HH
-      token_helper( value, pos, val, ",x" );
+	}
+	else if ( setting.compare( baseSettings[1] ) == 0 ) // size
+	{
+		// size is WW,HH
+		token_helper( value, pos, val, ",x" );
 		sf::Vector2f size;
-      size.x = as_int( val );
-      token_helper( value, pos, val );
-      size.y = as_int( val );
+		size.x = as_int( val );
+		token_helper( value, pos, val );
+		size.y = as_int( val );
 		setSize( size );
-   }
-   else if ( setting.compare( baseSettings[2] ) == 0 )  // align
+	}
+	else if ( setting.compare( baseSettings[2] ) == 0 )  // align
 	{
 		const char *atokens[] = { "left", "right", "centre", NULL };
 
@@ -98,15 +98,15 @@ int FeTextConfigurable::process_setting( const std::string &setting,
 			return 1;
 		}
 	}
-   else if ( setting.compare( baseSettings[3] ) == 0 ) // textsize
+	else if ( setting.compare( baseSettings[3] ) == 0 ) // textsize
 	{
-      setCharacterSize( as_int( value ) );
+		setCharacterSize( as_int( value ) );
 	}
-   else if ( setting.compare( baseSettings[4] ) == 0 )  // colour
+	else if ( setting.compare( baseSettings[4] ) == 0 )  // colour
 		setColor( colour_helper( value ) );
-   else if ( setting.compare( baseSettings[5] ) == 0 )  // background
+	else if ( setting.compare( baseSettings[5] ) == 0 )  // background
 		setBgColor( colour_helper( value ) );
-   else if ( setting.compare( baseSettings[6] ) == 0 )  // style
+	else if ( setting.compare( baseSettings[6] ) == 0 )  // style
 	{
 		while ( pos < value.size() )
 		{
@@ -124,7 +124,7 @@ int FeTextConfigurable::process_setting( const std::string &setting,
 			}
 		}
 	}
-   else if ( setting.compare( baseSettings[7] ) == 0 )  // wrap
+	else if ( setting.compare( baseSettings[7] ) == 0 )  // wrap
 	{
 		if (( value.compare( "true" ) == 0 )
 				|| ( value.compare( "yes" ) == 0 )
@@ -146,8 +146,8 @@ FeText::FeText( const std::string &str )
 }
 
 int FeText::process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn )
+		const std::string &value,
+		const std::string &fn )
 {
 	const char *stokens[] =
 	{
@@ -158,10 +158,10 @@ int FeText::process_setting( const std::string &setting,
 
 	if ( FeTextConfigurable::process_setting( setting, value, fn ) != 0 )
 	{
-   	if ( setting.compare( stokens[0] ) == 0 )  // index_offset
-      	m_index_offset = as_int( value );
-   	else if ( setting.compare( stokens[1] ) == 0 )  // rotation
-      	setRotation( as_int( value ) );
+		if ( setting.compare( stokens[0] ) == 0 )  // index_offset
+			m_index_offset = as_int( value );
+		else if ( setting.compare( stokens[1] ) == 0 )  // rotation
+			setRotation( as_int( value ) );
 		else
 		{
 			invalid_setting( fn, "text", setting, stokens, baseSettings );
@@ -210,13 +210,13 @@ FeListBox::FeListBox()
 }
 
 FeListBox::FeListBox(
-			const sf::Font *font,
-         const sf::Color &colour,
-         const sf::Color &bgcolour,
-         const sf::Color &selcolour,
-         const sf::Color &selbgcolour,
-         unsigned int charactersize,
-         Alignment align )
+		const sf::Font *font,
+		const sf::Color &colour,
+		const sf::Color &bgcolour,
+		const sf::Color &selcolour,
+		const sf::Color &selbgcolour,
+		unsigned int charactersize,
+		Alignment align )
 	: FeTextConfigurable( font, colour, bgcolour, charactersize, align ),
 	m_selColour( selcolour ),
 	m_selBg( selbgcolour ),
@@ -228,7 +228,7 @@ FeListBox::FeListBox(
 void FeListBox::init()
 {
 	const sf::Font *font = getFont();
-	unsigned int fls = getCharacterSize();;
+	int fls = getCharacterSize();
 
 	if (( font ) && ( font->getLineSpacing( fls ) > fls ))
 		fls = font->getLineSpacing( fls );
@@ -334,8 +334,8 @@ void FeListBox::setRotation( float r )
 }
 
 int FeListBox::process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn )
+		const std::string &value,
+		const std::string &fn )
 {
 	const char *stokens[] =
 	{
@@ -348,18 +348,18 @@ int FeListBox::process_setting( const std::string &setting,
 
 	if ( FeTextConfigurable::process_setting( setting, value, fn ) != 0 )
 	{
-   	if ( setting.compare( stokens[0] ) == 0 )
+		if ( setting.compare( stokens[0] ) == 0 )
 			setSelColor( colour_helper( value ));
-   	else if ( setting.compare( stokens[1] ) == 0 )
+		else if ( setting.compare( stokens[1] ) == 0 )
 			setSelBgColor( colour_helper( value ));
-   	else if ( setting.compare( stokens[2] ) == 0 )
+		else if ( setting.compare( stokens[2] ) == 0 )
 		{
 			size_t pos=0;
 			std::string val;
 
 			while ( pos < value.size() )
 			{
-  		    	token_helper( value, pos, val, "," );
+				token_helper( value, pos, val, "," );
 				if ( val.compare( styleTokens[0] ) == 0 )
 					setSelStyle( sf::Text::Bold );
 				else if ( val.compare( styleTokens[1] ) == 0 )
@@ -375,7 +375,7 @@ int FeListBox::process_setting( const std::string &setting,
 		}
   		else if ( setting.compare( stokens[3] ) == 0 )  // rotation
 		{
-     		setRotation( as_int( value ) );
+			setRotation( as_int( value ) );
 		}
 		else
 		{

@@ -37,19 +37,19 @@ class FeTextConfigurable : public FeBaseConfigurable, public FeTextPrimative
 {
 protected:
 	FeTextConfigurable();
-   FeTextConfigurable( const sf::Font *font,
-         const sf::Color &colour,
-         const sf::Color &bgcolour,
-         unsigned int charactersize=30,
-         Alignment align=Centre );
+	FeTextConfigurable( const sf::Font *font,
+		const sf::Color &colour,
+		const sf::Color &bgcolour,
+		unsigned int charactersize,
+		Alignment align=Centre );
 
 	static const char *baseSettings[];
 	static const char *styleTokens[];
 
 public:
    int process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn );
+		const std::string &value,
+		const std::string &fn );
 };
 
 //
@@ -60,14 +60,14 @@ class FeText : public FeTextConfigurable, public FeBasePresentable
 public:
 	FeText( const std::string &str );
 
-   // Override from base class:
-   int process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn );
+	// Override from base class:
+	int process_setting( const std::string &setting,
+		const std::string &value,
+		const std::string &fn );
 
 	// Overrides from base class:
 	//
-   void on_new_selection( FeSettings * );
+	void on_new_selection( FeSettings * );
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
 
 private:
@@ -88,7 +88,7 @@ public:
 			const sf::Color &bgcolour,
 			const sf::Color &selcolour,
 			const sf::Color &selbgcolour, 
-			unsigned int characterSize=30,
+			unsigned int characterSize,
 			Alignment align=Centre );
 
 	void setSelColor( sf::Color );
@@ -106,11 +106,12 @@ public:
 
 	// Overrides from base class:
 	//
-   int process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn );
-   void on_new_list( FeSettings * );
-   void on_new_selection( FeSettings * );
+	int process_setting( const std::string &setting,
+		const std::string &value,
+		const std::string &fn );
+
+	void on_new_list( FeSettings * );
+	void on_new_selection( FeSettings * );
 
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
 
