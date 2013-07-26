@@ -32,9 +32,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-//#include <sys/wait.h>
 
-#ifndef SFML_SYSTEM_WINDOWS
+#ifdef SFML_SYSTEM_WINDOWS
+#include <windows.h>
+#else
 #include <pwd.h>
 #endif
 
@@ -308,10 +309,10 @@ bool token_helper( const std::string &from,
 
 		//
 		// Find the next quote character that is not preceded
-		// by a backslash 
+		// by a backslash
 		//
 		end = from.find_first_of( '"', pos );
-		while (( end != std::string::npos ) && 
+		while (( end != std::string::npos ) &&
 				( from[ end - 1 ] == '\\' ))
 		{
 			escaped = true;
@@ -333,7 +334,7 @@ bool token_helper( const std::string &from,
 	{
 		to = from.substr( pos, end - pos );
 
-		if ( in_quotes ) 
+		if ( in_quotes )
 			pos = end + 2; // skip over quote and sep
 		else
 			pos = end + 1; // skip over sep
@@ -481,14 +482,59 @@ int as_int( const std::string &s )
 
 bool run_program( const std::string &prog, const::std::string &args )
 {
-#if 1
 	std::string comstr( prog );
 	comstr += " ";
 	comstr += args;
 
 	std::cout << "Running: " << comstr << std::endl;
 
+#ifdef SFML_SYSTEM_WINDOWS
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	MSG msg;
+
+	ZeroMemory( &si, sizeof(si) );
+	ZeroMemory( &pi, sizeof(pi) );
+	si.cb = sizeof(si);
+
+	LPSTR ugh = const_cast<char *>(comstr.c_str());
+
+	if ( !CreateProcess( NULL, ugh, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+		return false;
+
+	bool keep_wait=true;
+	while (keep_wait)
+	{
+		switch (MsgWaitForMultipleObjects(1, &pi.hProcess,
+						FALSE, INFINITE, QS_ALLINPUT))
+		{
+		case WAIT_OBJECT_0:
+			keep_wait=false;
+			break;
+
+		case WAIT_OBJECT_0 + 1:
+			// we have a message - peek and dispatch it
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+			break;
+
+		default:
+			std::cout << "Unexpected failure waiting on process" << std::endl;
+			keep_wait=false;
+			break;
+		}
+	}
+	CloseHandle( pi.hProcess );
+	CloseHandle( pi.hThread );
+	return true;
+#else
+
+#if 1
 	return ( system( comstr.c_str() ) == 0 ) ? true : false;
+
 #else
 
 	std::vector < std::string > string_list;
@@ -537,5 +583,7 @@ bool run_program( const std::string &prog, const::std::string &args )
 		return true;
 	}
 #endif
+
+#endif // SFML_SYSTEM_WINDOWS
 }
 

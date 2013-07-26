@@ -32,6 +32,10 @@
 #include <cstring>
 #include "media.hpp"
 
+#ifdef SFML_SYSTEM_WINDOWS
+#include <windows.h>
+#endif // SFML_SYSTEM_WINDOWS
+
 template <class MyPlayer> void sound_event(
 		FeInputMap::Command c,
 		FeSettings &fes,
@@ -191,11 +195,25 @@ int main(int argc, char *argv[])
 
 	sound_event( FeInputMap::AmbientSound, feSettings, musicPlayer );
 
+	sf::VideoMode mode = sf::VideoMode::getDesktopMode();
+
 	// Create window
 	sf::RenderWindow window(
-			sf::VideoMode::getDesktopMode(),
+			mode,
 			"Attract-Mode",
 			sf::Style::None );
+
+#ifdef SFML_SYSTEM_WINDOWS
+	// The "WS_POPUP" style creates grief switching to MAME.  Use the "WS_BORDER" style to fix this...
+	//
+	sf::WindowHandle hw = window.getSystemHandle();
+	if ( ( GetWindowLong( hw, GWL_STYLE ) & WS_POPUP ) != 0 )
+	{
+		SetWindowLong( hw, GWL_STYLE, WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
+		SetWindowPos(hw, HWND_TOP, 0, 0, mode.width, mode.height, SWP_FRAMECHANGED);
+		ShowWindow(hw, SW_SHOW);
+	}
+#endif
 
 	window.setIcon( fe_icon.width, fe_icon.height, fe_icon.pixel_data );
 	window.setVerticalSyncEnabled(true);
@@ -262,14 +280,7 @@ int main(int argc, char *argv[])
 					musicPlayer.stop();
 					feOverlay.splash_message( "Loading..." );
 
-#ifdef SFML_SYSTEM_WINDOWS
-                    window.setVisible( false );
 					feSettings.run();
-                    window.setVisible( true );
-#else
-					feSettings.run();
-#endif // SFML_SYSTEM_WINDOWS
-
 					fePresent.perform_autorotate();
 
 					fePresent.play( true );
