@@ -50,7 +50,7 @@ FeMapping::FeMapping( FeInputMap::Command cmd )
 void FeMapping::add_input( const std::pair<int,FeInputMap::InputType> &index )
 {
    if ( index.second == FeInputMap::Keyboard )
-      input_list.push_back( FeInputMap::keyTable[ index.first ].label );
+      input_list.push_back( FeInputMap::keyStrings[ index.first ] );
    else
       input_list.push_back( FeInputMap::inputStrings[ index.second ] );
 }
@@ -160,8 +160,11 @@ FeInputMap::get_map_index( sf::Event e, bool config )
 	{
 
 		case sf::Event::KeyPressed:
-			index.first = e.key.code;
-			index.second = Keyboard;
+			if ( e.key.code != sf::Keyboard::Unknown )
+			{
+				index.first = e.key.code;
+				index.second = Keyboard;
+			}
 			break;
 
 		case sf::Event::JoystickButtonPressed:
@@ -379,10 +382,10 @@ bool FeInputMap::config_map_input( sf::Event e, std::string &s, Command &conflic
 	if ( index.second == LAST_INPUT )
 		return false;
 
-   if ( index.second == FeInputMap::Keyboard )
-      s = keyTable[ index.first ].label;
-   else
-      s = inputStrings[ index.second ];
+	if ( index.second == FeInputMap::Keyboard )
+		s = keyStrings[ index.first ];
+	else
+		s = inputStrings[ index.second ];
 
 	//
 	// Now find if there is a conflicting existing mapping
@@ -409,110 +412,112 @@ bool FeInputMap::config_map_input( sf::Event e, std::string &s, Command &conflic
 	return true;
 }
 
-const FeInputMap::KeyLookup FeInputMap::keyTable[] = 
+// Needs to stay aligned with sf::Keyboard
+//
+const char *FeInputMap::keyStrings[] = 
 {
-	{ "A", sf::Keyboard::A },
-	{ "B", sf::Keyboard::B },
-	{ "C", sf::Keyboard::C },
-	{ "D", sf::Keyboard::D },
-	{ "E", sf::Keyboard::E },
-	{ "F", sf::Keyboard::F },
-	{ "G", sf::Keyboard::G },
-	{ "H", sf::Keyboard::H },
-	{ "I", sf::Keyboard::I },
-	{ "J", sf::Keyboard::J },
-	{ "K", sf::Keyboard::K },
-	{ "L", sf::Keyboard::L },
-	{ "M", sf::Keyboard::M },
-	{ "N", sf::Keyboard::N },
-	{ "O", sf::Keyboard::O },
-	{ "P", sf::Keyboard::P },
-	{ "Q", sf::Keyboard::Q },
-	{ "R", sf::Keyboard::R },
-	{ "S", sf::Keyboard::S },
-	{ "T", sf::Keyboard::T },
-	{ "U", sf::Keyboard::U },
-	{ "V", sf::Keyboard::V },
-	{ "W", sf::Keyboard::W },
-	{ "X", sf::Keyboard::X },
-	{ "Y", sf::Keyboard::Y },
-	{ "Z", sf::Keyboard::Z },
-	{ "0", sf::Keyboard::Num0 },
-  	{ "1", sf::Keyboard::Num1 },
-	{ "2", sf::Keyboard::Num2 },
-	{ "3", sf::Keyboard::Num3 },
-	{ "4", sf::Keyboard::Num4 },
-	{ "5", sf::Keyboard::Num5 },
-	{ "6", sf::Keyboard::Num6 },
-	{ "7", sf::Keyboard::Num7 },
-	{ "8", sf::Keyboard::Num8 },
-	{ "9", sf::Keyboard::Num9 },
-	{ "Escape", sf::Keyboard::Escape },
-	{ "LControl", sf::Keyboard::LControl },
-	{ "LShift", sf::Keyboard::LShift },
-	{ "LAlt", sf::Keyboard::LAlt },
-	{ "LSystem", sf::Keyboard::LSystem },
-	{ "RControl", sf::Keyboard::RControl },
-	{ "RShift", sf::Keyboard::RShift },
-	{ "RAlt", sf::Keyboard::RAlt },
-	{ "RSystem", sf::Keyboard::RSystem },
-	{ "Menu", sf::Keyboard::Menu },
-	{ "[", sf::Keyboard::LBracket },
-	{ "]", sf::Keyboard::RBracket },
-	{ ";", sf::Keyboard::SemiColon },
-	{ ",", sf::Keyboard::Comma },
-	{ ".", sf::Keyboard::Period },
-	{ "'", sf::Keyboard::Quote },
-	{ "/", sf::Keyboard::Slash },
-	{ "\\", sf::Keyboard::BackSlash },
-	{ "~", sf::Keyboard::Tilde },
-	{ "=", sf::Keyboard::Equal },
-	{ "-", sf::Keyboard::Dash },
-	{ "Space", sf::Keyboard::Space },
-	{ "Return", sf::Keyboard::Return },
-	{ "Backspace", sf::Keyboard::BackSpace },
-	{ "Tab", sf::Keyboard::Tab },
-	{ "PageUp", sf::Keyboard::PageUp },
-	{ "PageDown", sf::Keyboard::PageDown },
-	{ "End", sf::Keyboard::End },
-	{ "Home", sf::Keyboard::Home },
-	{ "Insert", sf::Keyboard::Insert },
-	{ "Delete", sf::Keyboard::Delete },
-	{ "Add", sf::Keyboard::Add },
-	{ "Subtract", sf::Keyboard::Subtract },
-	{ "Multiply", sf::Keyboard::Multiply },
-	{ "Divide", sf::Keyboard::Divide },
-	{ "Left", sf::Keyboard::Left },
-	{ "Right", sf::Keyboard::Right },
-	{ "Up", sf::Keyboard::Up },
-	{ "Down", sf::Keyboard::Down },
-	{ "Numpad0", sf::Keyboard::Numpad0 },
-	{ "Numpad1", sf::Keyboard::Numpad1 },
-	{ "Numpad2", sf::Keyboard::Numpad2 },
-	{ "Numpad3", sf::Keyboard::Numpad3 },
-	{ "Numpad4", sf::Keyboard::Numpad4 },
-	{ "Numpad5", sf::Keyboard::Numpad5 },
-	{ "Numpad6", sf::Keyboard::Numpad6 },
-	{ "Numpad7", sf::Keyboard::Numpad7 },
-	{ "Numpad8", sf::Keyboard::Numpad8 },
-	{ "Numpad9", sf::Keyboard::Numpad9 },
-	{ "F1", sf::Keyboard::F1 },
-	{ "F2", sf::Keyboard::F2 },
-	{ "F3", sf::Keyboard::F3 },
-	{ "F4", sf::Keyboard::F4 },
-	{ "F5", sf::Keyboard::F5 },
-	{ "F6", sf::Keyboard::F6 },
-	{ "F7", sf::Keyboard::F7 },
-	{ "F8", sf::Keyboard::F8 },
-	{ "F9", sf::Keyboard::F9 },
-	{ "F10", sf::Keyboard::F10 },
-	{ "F11", sf::Keyboard::F11 },
-	{ "F12", sf::Keyboard::F12 },
-	{ "F13", sf::Keyboard::F13 },
-	{ "F14", sf::Keyboard::F14 },
-	{ "F15", sf::Keyboard::F15 },
-	{ "Pause", sf::Keyboard::Pause },
-	{ NULL, sf::Keyboard::Unknown } // needs to be last
+	"A",
+	"B",
+	"C",
+	"D",
+	"E",
+	"F",
+	"G",
+	"H",
+	"I",
+	"J",
+	"K",
+	"L",
+	"M",
+	"N",
+	"O",
+	"P",
+	"Q",
+	"R",
+	"S",
+	"T",
+	"U",
+	"V",
+	"W",
+	"X",
+	"Y",
+	"Z",
+	"0", // sf::Keyboard::Num0
+  	"1", // sf::Keyboard::Num1
+	"2", // sf::Keyboard::Num2
+	"3", // sf::Keyboard::Num3
+	"4", // sf::Keyboard::Num4
+	"5", // sf::Keyboard::Num5
+	"6", // sf::Keyboard::Num6
+	"7", // sf::Keyboard::Num7
+	"8", // sf::Keyboard::Num8
+	"9", // sf::Keyboard::Num9
+	"Escape",
+	"LControl",
+	"LShift",
+	"LAlt",
+	"LSystem",
+	"RControl",
+	"RShift",
+	"RAlt",
+	"RSystem",
+	"Menu",
+	"LBracket",
+	"RBracket",
+	"Semicolon",
+	"Comma",
+	"Period",
+	"Quote",
+	"Slash",
+	"Backslash",
+	"Tilde",
+	"Equal",
+	"Dash",
+	"Space",
+	"Return",
+	"Backspace",
+	"Tab",
+	"PageUp",
+	"PageDown",
+	"End",
+	"Home",
+	"Insert",
+	"Delete",
+	"Add",
+	"Subtract",
+	"Multiply",
+	"Divide",
+	"Left",
+	"Right",
+	"Up",
+	"Down",
+	"Numpad0",
+	"Numpad1",
+	"Numpad2",
+	"Numpad3",
+	"Numpad4",
+	"Numpad5",
+	"Numpad6",
+	"Numpad7",
+	"Numpad8",
+	"Numpad9",
+	"F1",
+	"F2",
+	"F3",
+	"F4",
+	"F5",
+	"F6",
+	"F7",
+	"F8",
+	"F9",
+	"F10",
+	"F11",
+	"F12",
+	"F13",
+	"F14",
+	"F15",
+	"Pause",
+	NULL // needs to be last
 };
 
 const char *FeInputMap::inputStrings[] = 
@@ -564,7 +569,7 @@ int FeInputMap::process_setting( const std::string &setting,
 	{
 		const char *valid[ sf::Keyboard::KeyCount + 1 ];
 		for ( int i=0; i< sf::Keyboard::KeyCount; i++ )
-			valid[i] = keyTable[i].label;
+			valid[i] = keyStrings[i];
 
 		valid[ sf::Keyboard::KeyCount ] = '\0';
 		
@@ -587,20 +592,20 @@ void FeInputMap::save( std::ofstream &f )
 
 	for ( it = m_map.begin(); it != m_map.end(); ++it )
 	{
-   	f << '\t' << std::setw(20) << std::left 
+		f << '\t' << std::setw(20) << std::left 
 			<< commandStrings[ (*it).second ] << ' ';
 
 		const std::pair< int, InputType > &index( (*it).first );
 
-   	if ( index.second == FeInputMap::Keyboard )
-      	f << keyTable[ index.first ].label;
-   	else
-     		f << inputStrings[ index.second ];
+		if ( index.second == FeInputMap::Keyboard )
+			f << keyStrings[ index.first ];
+		else
+			f << inputStrings[ index.second ];
 
 		if ( is_joystick( index.second  ) 
 				&& ( index.first > 0 )
 				&& ( index.first <= sf::Joystick::Count ))
-     		f << ' ' << index.first;
+			f << ' ' << index.first;
 
 		f << std::endl;
 	}
@@ -615,19 +620,19 @@ bool FeInputMap::is_mouse_move( InputType i )
 
 FeInputMap::Command FeInputMap::string_to_command( const std::string &s )
 {
-   Command cmd( LAST_COMMAND );
-   int i=0;
+	Command cmd( LAST_COMMAND );
+	int i=0;
 
-   while ( FeInputMap::commandStrings[i] != NULL )
-   {
-      if ( s.compare( commandStrings[i] ) == 0 )
-      {
-         cmd = (Command)i;
-         break;
-      }
-      i++;
-   }
-   return cmd;
+	while ( FeInputMap::commandStrings[i] != NULL )
+	{
+		if ( s.compare( commandStrings[i] ) == 0 )
+		{
+			cmd = (Command)i;
+			break;
+		}
+		i++;
+	}
+	return cmd;
 }
 
 void FeInputMap::string_to_index( const std::string &s,
@@ -657,11 +662,11 @@ void FeInputMap::string_to_index( const std::string &s,
 	
 	if (!match)
 	{
-		while ( keyTable[i].label != NULL )
+		while ( keyStrings[i] != NULL )
 		{
-			if ( val.compare( keyTable[i].label ) == 0 )
+			if ( val.compare( keyStrings[i] ) == 0 )
 			{
-				index.first = keyTable[i].key;
+				index.first = i;
 				index.second = Keyboard;
 				match=true;
 				break;

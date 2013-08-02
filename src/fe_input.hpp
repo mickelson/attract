@@ -124,8 +124,7 @@ private:
 		LAST_INPUT
 	};
 
-	struct KeyLookup { const char *label; sf::Keyboard::Key key; };
-	static const KeyLookup keyTable[];
+	static const char *keyStrings[];
 
 	std::map< std::pair< int, InputType >, Command> m_map;
 	FeMouseCapture m_cap;
@@ -151,8 +150,8 @@ public:
 	std::vector< std::string > input_list;
 
 	FeMapping( FeInputMap::Command cmd );
-   void add_input( const std::pair< int, FeInputMap::InputType > & );
-   bool operator< ( const FeMapping ) const;
+	void add_input( const std::pair< int, FeInputMap::InputType > & );
+	bool operator< ( const FeMapping ) const;
 };
 
 //
