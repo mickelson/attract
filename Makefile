@@ -27,12 +27,26 @@
 # Uncomment next line to disable movie support (i.e. don't use ffmpeg/libav):
 #DISABLE_MOVIE=1
 #
-# Uncomment next line to disable the use of libfontconfig:
+# By default, fontconfig is enabled on Linux/FreeBSD and disabled on Mac OS-X
+# Uncomment next line to disable fontconfig on Linux/FreeBSD:
 #DISABLE_FONTCONFIG=1
+#
+# Uncomment next line to enable fontconfig on Mac OS-X:
+#ENABLE_FONTCONFIG=1
 #
 ###############################
 
 #FE_DEBUG=1
+
+#
+# Test for Mac OS-X, so we can handle fontconfig differently
+#
+UNAME = $(shell uname -a)
+ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+ifneq ($(ENABLE_FONTCONFIG),1)
+DISABLE_FONTCONFIG=1
+endif
+endif
 
 CPP=g++
 CFLAGS=
