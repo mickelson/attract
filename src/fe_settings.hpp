@@ -138,7 +138,8 @@ public:
 	std::string get_current_layout_file();
 	std::string get_current_layout_dir();
 
-	std::string get_config_dir();
+	const std::string &get_config_dir();
+	bool config_file_exists() const;
 	bool get_font_file( std::string &fullpath, const std::string &filename="" );
 	
 	RotationState get_autorotate();

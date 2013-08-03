@@ -804,14 +804,14 @@ void FeSoundMenu::get_options( FeConfigContext &ctx )
 	// Get the list of available sound files
 	// Note the sound_list vector gets copied to each option!
 	//
-   std::vector<std::string> sound_list;
-   std::string path = ctx.fe_settings.get_config_dir();
-   path += FE_SOUND_SUBDIR;
+	std::vector<std::string> sound_list;
+	std::string path = ctx.fe_settings.get_config_dir();
+	path += FE_SOUND_SUBDIR;
 
-   get_basename_from_extension(
-         sound_list,
-         path,
-         "" );
+	get_basename_from_extension(
+		sound_list,
+		path,
+		"" );
 
 #ifndef NO_MOVIE
 	for ( std::vector<std::string>::iterator itr=sound_list.begin();
@@ -935,6 +935,12 @@ void FeConfigMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::SUBMENU, "Input", "", "_help_input" );
 	ctx.add_optl( Opt::SUBMENU, "Sound", "", "_help_sound" );
 	ctx.add_optl( Opt::SUBMENU, "General", "", "_help_misc" );
+
+	//
+	// Force save if there is no config file
+	//
+	if ( ctx.fe_settings.config_file_exists() == false )
+		ctx.save_req = true;
 
 	FeBaseConfigMenu::get_options( ctx );
 }
