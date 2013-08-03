@@ -517,9 +517,17 @@ std::string FeSettings::get_current_layout_dir()
 	return layout_dir;
 }
 
-std::string FeSettings::get_config_dir()
+const std::string &FeSettings::get_config_dir()
 {
 	return m_config_path;
+}
+
+bool FeSettings::config_file_exists() const 
+{
+	std::string config_file = m_config_path;
+	config_file += FE_CFG_FILE;
+
+	return file_exists( config_file );
 }
 
 bool FeSettings::next_list()
