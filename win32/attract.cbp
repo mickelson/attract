@@ -13,13 +13,13 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="-DFE_DEBUG" />
 				</Compiler>
 				<Linker>
 					<Add library="sfml-audio-d" />
 					<Add library="sfml-graphics-d" />
 					<Add library="sfml-window-d" />
 					<Add library="sfml-system-d" />
-					<Add library="expat" />
 					<Add library="swscale" />
 					<Add library="avformat" />
 					<Add library="avcodec" />
@@ -39,7 +39,6 @@
 					<Add library="sfml-graphics" />
 					<Add library="sfml-window" />
 					<Add library="sfml-system" />
-					<Add library="expat" />
 					<Add library="swscale" />
 					<Add library="avformat" />
 					<Add library="avcodec" />
@@ -62,7 +61,6 @@
 					<Add library="sfml-graphics-s" />
 					<Add library="sfml-window-s" />
 					<Add library="sfml-system-s" />
-					<Add library="expat" />
 					<Add library="swscale" />
 					<Add library="avformat" />
 					<Add library="avcodec" />
@@ -79,7 +77,6 @@
 					<Add option="-static" />
 					<Add option="-static-libgcc" />
 					<Add option="-DSFML_STATIC" />
-					<Add option="-DXML_STATIC" />
 					<Add option="-DNO_MOVIE" />
 				</Compiler>
 				<Linker>
@@ -87,22 +84,30 @@
 					<Add library="sfml-graphics-s" />
 					<Add library="sfml-window-s" />
 					<Add library="sfml-system-s" />
-					<Add library="expat" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-DNO_FONTCONFIG" />
+			<Add option="-DHAVE_MEMMOVE" />
 			<Add directory="../../SFML/include" />
 			<Add directory="../../ffmpeg/include" />
-			<Add directory="../../expat/include" />
 		</Compiler>
 		<Linker>
 			<Add directory="../../SFML/lib" />
 			<Add directory="../../FFMPEG/lib" />
-			<Add directory="../../expat/lib" />
 		</Linker>
+		<Unit filename="../extlibs/expat/expat.h" />
+		<Unit filename="../extlibs/expat/xmlparse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../extlibs/expat/xmlrole.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../extlibs/expat/xmltok.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../src/fe_base.cpp" />
 		<Unit filename="../src/fe_base.hpp" />
 		<Unit filename="../src/fe_build.cpp" />
@@ -139,6 +144,7 @@
 			<code_completion />
 			<debugger />
 			<envvars />
+			<editor_config active="1" use_tabs="1" tab_indents="1" tab_width="3" indent="3" eol_mode="0" />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
