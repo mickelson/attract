@@ -24,32 +24,29 @@
 #
 # BUILD CONFIGURATION OPTIONS:
 #
-# Uncomment next line to disable movie support (i.e. don't use ffmpeg/libav):
+# Uncomment next line to disable movie support (i.e. don't use ffmpeg).
 #DISABLE_MOVIE=1
 #
-# By default, fontconfig is enabled on Linux/FreeBSD and disabled on Mac OS-X
-# Uncomment next line to disable fontconfig on Linux/FreeBSD:
+# By default, fontconfig is enabled on Linux/FreeBSD and disabled on Mac OS-X.
+# Uncomment next line to disable fontconfig on Linux/FreeBSD ...
 #DISABLE_FONTCONFIG=1
-#
-# Uncomment next line to enable fontconfig on Mac OS-X:
+# ... or uncomment next line to enable fontconfig on Mac OS-X.
 #ENABLE_FONTCONFIG=1
 #
+# By default, if fontconfig is enabled we link against the system's expat 
+# library (because fontconfig uses expat too).  If fontconfig is disabled 
+# then Attract-Mode is statically linked to its own version of expat.
+# Uncomment next line to always link to Attract-Mode's version of expat.
+#BUILD_EXPAT=1
 ###############################
 
 #FE_DEBUG=1
 
-#
-# Test for Mac OS-X, so we can handle fontconfig differently
-#
-UNAME = $(shell uname -a)
-ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
-ifneq ($(ENABLE_FONTCONFIG),1)
-DISABLE_FONTCONFIG=1
-endif
-endif
-
+CC=gcc
 CPP=g++
 CFLAGS=
+AR=ar
+ARFLAGS=rc
 OBJ_DIR=obj
 SRC_DIR=src
 INSTALL_DIR=/usr/local/bin
@@ -89,9 +86,21 @@ LIBS =\
 	-lsfml-window \
 	-lsfml-graphics \
 	-lsfml-system \
-	-lsfml-audio \
-	-lexpat
+	-lsfml-audio
 
+#
+# Test for Mac OS-X, so we can set default disable for fontconfig
+#
+UNAME = $(shell uname -a)
+ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+ifneq ($(ENABLE_FONTCONFIG),1)
+DISABLE_FONTCONFIG=1
+endif
+endif
+
+#
+# Now process the various settings...
+#
 ifeq ($(FE_DEBUG),1)
 CFLAGS += -g -Wall -DFE_DEBUG
 else
@@ -112,8 +121,17 @@ endif
 
 ifeq ($(DISABLE_FONTCONFIG),1)
 CFLAGS += -DNO_FONTCONFIG
+BUILD_EXPAT=1
 else
 LIBS += -lfontconfig
+endif
+
+ifeq ($(BUILD_EXPAT),1)
+CFLAGS += -Iextlibs/expat
+EXPAT = $(OBJ_DIR)/libexpat.a
+else
+LIBS += -lexpat
+EXPAT =
 endif
 
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
@@ -122,13 +140,17 @@ DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP)
 	$(CPP) -c -o $@ $< $(CFLAGS)
 
-attract: $(OBJ)
+attract: $(OBJ) $(EXPAT)
 	g++ -o $@ $^ $(CFLAGS) $(LIBS)
 
 .PHONY: clean
+
+$(OBJ_DIR)/libexpat.a:
+	cd extlibs/expat; $(CC) -c xmlparse.c xmlrole.c xmltok.c -DHAVE_MEMMOVE $(CFLAGS); \
+	$(AR) $(ARFLAGS) ../../obj/libexpat.a *.o; rm *.o
 
 install: attract
 	cp attract $(INSTALL_DIR)
 
 clean:
-	rm -f $(OBJ_DIR)/*.o *~ core
+	rm -f $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core
