@@ -27,10 +27,10 @@
 # Uncomment next line to disable movie support (i.e. don't use ffmpeg).
 #DISABLE_MOVIE=1
 #
-# By default, fontconfig is enabled on Linux/FreeBSD and disabled on Mac OS-X.
-# Uncomment next line to disable fontconfig on Linux/FreeBSD ...
+# By default, fontconfig is enabled on Linux & FreeBSD and disabled on Mac OS-X
+# & Windows.  Uncomment next line to always disable fontconfig...
 #DISABLE_FONTCONFIG=1
-# ... or uncomment next line to enable fontconfig on Mac OS-X.
+# ...or uncomment next line to always enable fontconfig.
 #ENABLE_FONTCONFIG=1
 #
 # By default, if fontconfig is enabled we link against the system's expat 
@@ -47,9 +47,13 @@ CPP=g++
 CFLAGS=
 AR=ar
 ARFLAGS=rc
+RM=rm -f
+MD=mkdir
 OBJ_DIR=obj
 SRC_DIR=src
+EXTLIBS_DIR=extlibs
 INSTALL_DIR=/usr/local/bin
+FE_FLAGS=
 
 _DEP =\
 	fe_base.hpp \
@@ -89,12 +93,16 @@ LIBS =\
 	-lsfml-audio
 
 #
-# Test for Mac OS-X, so we can set default disable for fontconfig
+# Test OS to set defaults
 #
+ifeq ($(OS),Windows_NT)
+DISABLE_FONTCONFIG=1
+else
 UNAME = $(shell uname -a)
 ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
 ifneq ($(ENABLE_FONTCONFIG),1)
 DISABLE_FONTCONFIG=1
+endif
 endif
 endif
 
@@ -102,13 +110,14 @@ endif
 # Now process the various settings...
 #
 ifeq ($(FE_DEBUG),1)
-CFLAGS += -g -Wall -DFE_DEBUG
+CFLAGS += -g -Wall
+FE_FLAGS += -DFE_DEBUG
 else
 CFLAGS += -O2
 endif
 
 ifeq ($(DISABLE_MOVIE),1)
-CFLAGS += -DNO_MOVIE
+FE_FLAGS += -DNO_MOVIE
 else
 LIBS +=\
 	-lavformat \
@@ -120,14 +129,14 @@ _OBJ += media.o
 endif
 
 ifeq ($(DISABLE_FONTCONFIG),1)
-CFLAGS += -DNO_FONTCONFIG
+FE_FLAGS += -DNO_FONTCONFIG
 BUILD_EXPAT=1
 else
 LIBS += -lfontconfig
 endif
 
 ifeq ($(BUILD_EXPAT),1)
-CFLAGS += -Iextlibs/expat
+CFLAGS += -I$(EXTLIBS_DIR)/expat
 EXPAT = $(OBJ_DIR)/libexpat.a
 else
 LIBS += -lexpat
@@ -137,20 +146,43 @@ endif
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP)
-	$(CPP) -c -o $@ $< $(CFLAGS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
+	$(CPP) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
 attract: $(OBJ) $(EXPAT)
-	g++ -o $@ $^ $(CFLAGS) $(LIBS)
+	$(CPP) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
 
 .PHONY: clean
 
-$(OBJ_DIR)/libexpat.a:
-	cd extlibs/expat; $(CC) -c xmlparse.c xmlrole.c xmltok.c -DHAVE_MEMMOVE $(CFLAGS); \
-	$(AR) $(ARFLAGS) ../../obj/libexpat.a *.o; rm *.o
+.PHONY: install
+
+$(OBJ_DIR):
+	$(MD) $@
+
+#
+# Expat Library
+#
+EXPAT_OBJ_DIR = $(OBJ_DIR)/expat
+
+EXPATOBJS = \
+	$(EXPAT_OBJ_DIR)/xmlparse.o \
+	$(EXPAT_OBJ_DIR)/xmlrole.o \
+	$(EXPAT_OBJ_DIR)/xmltok.o
+
+$(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(OBJ_DIR)
+	$(AR) $(ARFLAGS) $@ $(EXPATOBJS)
+
+$(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
+	$(CC) -c $< -o $@ $(CFLAGS) -DHAVE_MEMMOVE
+
+$(EXPAT_OBJ_DIR):
+	$(MD) $@
 
 install: attract
 	cp attract $(INSTALL_DIR)
 
+print-%:
+	@echo '$*=$($*)'
+
 clean:
-	rm -f $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core
