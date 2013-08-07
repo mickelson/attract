@@ -4,11 +4,13 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Attract-Mode : Attract-Mode is a graphical front-end for command line emulators such as MAME, MESS and Nestopia.  It is designed to be run in an arcade cabinet setup and controlled with a joystick or spin dial.  Attract-Mode runs on Linux, Mac OS-X and Windows." />
+    <meta name="description" content="Attract-Mode is a graphical frontend for command line emulators such as MAME, MESS and Nestopia.  It is designed to be run in an arcade cabinet setup and controlled with a joystick or spin dial.  Attract-Mode is open source and runs on Linux, Mac OS-X and Windows." />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    
 
-    <title>Attract-Mode</title>
+    <title>Attract-Mode emulator frontend</title>
   </head>
 
   <body>
@@ -19,7 +21,7 @@
           <a id="forkme_banner" href="https://github.com/mickelson/attract">View on GitHub</a>
 
           <h1 id="project_title">Attract-Mode</h1>
-          <h2 id="project_tagline">Attract-Mode is a graphical front-end for command line emulators such as MAME, MESS and Nestopia.  It is designed to be run in an arcade cabinet setup and controlled with a joystick or spin dial.  Attract-Mode runs on Linux, Mac OS-X and Windows.</h2>
+          <h2 id="project_tagline">Attract-Mode is a graphical frontend for command line emulators such as MAME, MESS and Nestopia.  It is designed to be run in an arcade cabinet setup and controlled with a joystick or spin dial.  Attract-Mode is open source and runs on Linux, Mac OS-X and Windows.</h2>
 
             <section id="downloads">
               <a class="zip_download_link" href="https://github.com/mickelson/attract/zipball/master">Download this project as a .zip file</a>
@@ -31,9 +33,11 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
-<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features:</h3>
-
+        <h3><a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>About</h3>
+<p>
+Attract-Mode is written in C++98 and uses <a href="http://www.sfml-dev.org">SFML 2.x</a> for graphics/audio and the <a href="http://ffmpeg.org">FFMPEG libraries</a> (optionally) for video support.  It is known to compile and run on Ubuntu Linux (32 and 64-bit), Mac OS-X 10.6, and Windows 7 (MinGW).
+</p>
+        <h3><a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h3>
 <ul>
 <li>Fully customizable display, sounds, and input (joystick, keyboard, mouse).</li>
 <li>Display videos, artwork (marquees, screenshots, etc.) and information related to specific game.<br>
@@ -45,14 +49,24 @@ MAME -xmlinfo and MESS -listsoftware commands as well as from catver.ini files.<
 <li>Configuration menu for easy configuration of most settings.</li>
 <li>Configurable screensaver mode that uses random game artworks and videos.</li>
 </ul>
+
 <p><center><img src="images/screen.png" style="width:250px;height:188px"><img src="images/screen1.png" style="width:250px;height:188px"></center></p>
+        <h3><a name="download" class="anchor" href="#download"><span class="octicon octicon-link"></span></a>Download</h3>
+	<p>Download the Attract-Mode source code from <a href="https://github.com/mickelson/attract">GitHub</a>.</p>
+
+	<p>While quite usable in its current state, Attract-Mode is still in active development towards its first official release. Pre-compiled binaries are currently not available.</p>
+
+        <h3><a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h3>
+<p>
+Attract-Mode is distributed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License, version 3</a>.
+</p>
       </section>
     </div>
 
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      <p>Copyright &copy; 2013 <a href="mailto:andrew@attractmode.org">Andrew Mickelson</a>.  Published with <a href="http://pages.github.com">GitHub Pages</a>.</p>
       </footer>
     </div>
 
