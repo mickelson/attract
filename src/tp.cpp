@@ -186,7 +186,7 @@ sf::Vector2f FeTextPrimative::setString(
 
 void FeTextPrimative::set_positions()
 {
-	unsigned int spacing = getCharacterSize();
+	int spacing = getCharacterSize();
 
 	const sf::Font *font = getFont();
 	if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
