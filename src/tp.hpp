@@ -40,7 +40,7 @@ public:
 	FeTextPrimative( const sf::Font *font, 
 			const sf::Color &colour,
 			const sf::Color &bgcolour,
-			unsigned int charactersize=30,
+			unsigned int charactersize,
 			Alignment align=Centre );
 
 	FeTextPrimative( const FeTextPrimative & );
