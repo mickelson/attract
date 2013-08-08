@@ -36,7 +36,7 @@
 
 #ifdef SFML_SYSTEM_WINDOWS
 
-const char *FE_DEFAULT_CFG_PATH		= "$HOME/attract/";
+const char *FE_DEFAULT_CFG_PATH		= "./";
 const char *FE_DEFAULT_FONT			= "arial";
 const char *FE_DEFAULT_FONT_PATHS[]	= { "%SYSTEMROOT%/Fonts/", NULL };
 

@@ -10,7 +10,7 @@ ffmpeg/libav libraries for movie support.
 Attract-Mode was developed for use in Linux.  It is known to work 
 on Ubuntu Linux, Mac OS-X 10.6, and Windows 7.
 
-Please visit http://attractmode.org for more infomation.
+Please visit http://attractmode.org for more information.
 
 Download 
 ========
@@ -20,25 +20,24 @@ repository (https://github.com/mickelson/attract.git)
 Compile
 =======
 
-1. Install development versions of the the following:
+1. Install the following libraries and headers on your system:
 
    Required:
-      - SFML version 2.x 
-      - expat XML parser
+      - SFML SDK version 2.x 
 
    Optional:
-      - ffmpeg/libav's avformat, avcodec, swscale and avutil libs.
+      - FFMPEG's avformat, avcodec, swscale and avutil libs.
      	(for movie support).
-      - fontconfig (for font configuration).
+      - FontConfig (for font configuration on Linux/FreeBSD).
 
 2. Download the Attract-Mode source, extract it to your system.
 
-3. On Linux/OS-X: Run "make".  Edit the Makefile first if you 
-don't want to use ffmpeg and/or fontconfig (see Makefile comments).  
+3. On Linux/OS-X: Run the "make" command.  Edit the Makefile first if you 
+wish to change any build options  (i.e. to disable ffmpeg or fontconfig).  
 
-On Windows: Load the Codeblocks project file located in the "win32" 
-subdirectory and compile in Codeblocks.  The Windows version of Attract
-Mode is very experimental at this point.
+On Windows: Either use the Makefile with the MINGW make command or load
+the Codeblocks project file located in the "win32" subdirectory and 
+compile in Codeblocks.
 
 Basic Installation
 ==================
@@ -47,7 +46,7 @@ Basic Installation
 source to the directory that you will use for your Attract-Mode 
 configuration.  By default, the configuration is located in 
 "~/.attract" on Linux/FreeBSD, "~/Library/Application Support/Attract" 
-on Mac OS-X, and "~/attract" on Windows systems.
+on Mac OS-X, and "./" on Windows systems.
 
 2. Run Attract-Mode.  If you are not using the default config location 
 then you need to specify your config location at the command line as 
@@ -59,7 +58,7 @@ If you have compiled Attract-Mode without fontconfig support, it may
 have difficulty finding a display font to use on your system.  If this
 occurs you can specify a font file to use at the command line as follows: 
 
-	attract --font <font_name>
+   attract --font <font_name>
 
 3. With Attract-Mode running, press "TAB" to enter configuration mode.
 By default, configuration mode can be navigated using the up/down arrows,
@@ -95,8 +94,8 @@ When deciding what image file to use for a particular named artwork
 (default artwork names are "marquee" and "screen"), Attract-Mode will 
 use the artwork/movie selection order set out below.
 
-MOVIE: Attract-Mode supports any movie format supported by ffmpeg/libav.
-What movie to play is decided as follows:
+MOVIE: Attract-Mode supports any movie format supported by FFMPEG.  The 
+movie to play is decided as set out below:
 
 ARTWORK/MOVIE SELECTION ORDER:
 
@@ -121,4 +120,4 @@ generation function available in configuration mode, Attract-Mode can
 generate a romlist for multiple emulators from the command line using the 
 following command: 
 
-	attract --build-rom-list [emulator names...]
+   attract --build-rom-list [emulator names...]
