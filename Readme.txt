@@ -20,7 +20,11 @@ repository (https://github.com/mickelson/attract.git)
 Compile
 =======
 
-1. Install the following libraries and headers on your system:
+1. These instructions assume that you have the GNU C/C++ compilers and 
+basic build utilities (make, ar) on your system.  This means the "build-
+essential" package on Debian/Ubuntu, X-Code on OS-X, or MinGW on Windows. 
+
+2. Install the following libraries and headers on your system:
 
    Required:
       - SFML SDK version 2.x 
@@ -30,9 +34,9 @@ Compile
      	(for movie support).
       - FontConfig (for font configuration on Linux/FreeBSD).
 
-2. Download the Attract-Mode source, extract it to your system.
+3. Download the Attract-Mode source, extract it to your system.
 
-3. On Linux/OS-X: Run the "make" command.  Edit the Makefile first if you 
+4. On Linux/OS-X: Run the "make" command.  Edit the Makefile first if you 
 wish to change any build options  (i.e. to disable ffmpeg or fontconfig).  
 
 On Windows: Either use the Makefile with the MINGW make command or load
