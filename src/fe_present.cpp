@@ -1126,6 +1126,10 @@ void script_do_update( FeBasePresentable *bp )
 void script_do_update( FeTextureContainer *tc )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+
+	if ( !vm )
+		return;
+
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
 	if ( fep )
@@ -1135,6 +1139,10 @@ void script_do_update( FeTextureContainer *tc )
 void script_flag_redraw()
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+
+	if ( !vm )
+		return;
+
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
 	if ( fep )
