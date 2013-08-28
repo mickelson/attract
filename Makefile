@@ -38,6 +38,11 @@
 # then Attract-Mode is statically linked to its own version of expat.
 # Uncomment next line to always link to Attract-Mode's version of expat.
 #BUILD_EXPAT=1
+#
+# By default, layout scripts do not get access to the Squirrel std io or 
+# system libraries.  Uncomment the following to allow such access.  This 
+# could be useful for creating scripts to integrate with other programs...
+#ENABLE_SCRIPT_SYSTEM_ACCESS=1
 ###############################
 
 #FE_DEBUG=1
@@ -60,14 +65,16 @@ _DEP =\
 	fe_util.hpp \
 	fe_info.hpp \
 	fe_input.hpp \
+	fe_listxml.hpp \
 	fe_settings.hpp \
+	fe_config.hpp \
+	fe_presentable.hpp \
 	fe_present.hpp \
 	fe_image.hpp \
-	fe_config.hpp \
+	fe_sound.hpp \
 	fe_overlay.hpp \
 	tp.hpp \
 	fe_text.hpp \
-	fe_listxml.hpp \
 	fe_icon.hpp
 
 _OBJ =\
@@ -75,15 +82,17 @@ _OBJ =\
 	fe_util.o \
 	fe_info.o \
 	fe_input.o \
+	fe_listxml.o \
 	fe_settings.o \
 	fe_build.o \
+	fe_config.o \
+	fe_presentable.o \
 	fe_present.o \
 	fe_image.o \
-	fe_config.o \
+	fe_sound.o \
 	fe_overlay.o \
 	tp.o \
 	fe_text.o \
-	fe_listxml.o \
 	main.o
 
 LIBS =\
@@ -96,7 +105,9 @@ LIBS =\
 # Test OS to set defaults
 #
 ifeq ($(OS),Windows_NT)
+ifneq ($(ENABLE_FONTCONFIG),1)
 DISABLE_FONTCONFIG=1
+endif
 else
 UNAME = $(shell uname -a)
 ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
@@ -143,13 +154,20 @@ LIBS += -lexpat
 EXPAT =
 endif
 
+ifeq ($(ENABLE_SCRIPT_SYSTEM_ACCESS),1)
+FE_FLAGS += -DENABLE_SCRIPT_SYSTEM_ACCESS
+endif
+
+CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include
+SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
+
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 	$(CPP) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
-attract: $(OBJ) $(EXPAT)
+attract: $(OBJ) $(EXPAT) $(SQUIRREL)
 	$(CPP) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
 
 .PHONY: clean
@@ -178,6 +196,59 @@ $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
 $(EXPAT_OBJ_DIR):
 	$(MD) $@
 
+#
+# Squirrel Library
+#
+SQUIRREL_FLAGS = -fno-exceptions -fno-rtti -fno-strict-aliasing
+SQUIRREL_OBJ_DIR = $(OBJ_DIR)/squirrel
+
+SQUIRRELOBJS= \
+	$(SQUIRREL_OBJ_DIR)/sqapi.o \
+	$(SQUIRREL_OBJ_DIR)/sqbaselib.o \
+	$(SQUIRREL_OBJ_DIR)/sqfuncstate.o \
+	$(SQUIRREL_OBJ_DIR)/sqdebug.o \
+	$(SQUIRREL_OBJ_DIR)/sqlexer.o \
+	$(SQUIRREL_OBJ_DIR)/sqobject.o \
+	$(SQUIRREL_OBJ_DIR)/sqcompiler.o \
+	$(SQUIRREL_OBJ_DIR)/sqstate.o \
+	$(SQUIRREL_OBJ_DIR)/sqtable.o \
+	$(SQUIRREL_OBJ_DIR)/sqmem.o \
+	$(SQUIRREL_OBJ_DIR)/sqvm.o \
+	$(SQUIRREL_OBJ_DIR)/sqclass.o
+
+$(OBJ_DIR)/libsquirrel.a: $(SQUIRRELOBJS) | $(SQUIRREL_OBJ_DIR)
+	$(AR) $(ARFLAGS) $@ $(SQUIRRELOBJS)
+
+$(SQUIRREL_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/squirrel/%.cpp | $(SQUIRREL_OBJ_DIR)
+	$(CPP) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS) 
+
+$(SQUIRREL_OBJ_DIR):
+	$(MD) $@
+
+#
+# Squirrel libsqstdlib
+#
+SQSTDLIB_OBJ_DIR = $(OBJ_DIR)/sqstdlib
+
+SQSTDLIBOBJS= \
+	$(SQSTDLIB_OBJ_DIR)/sqstdblob.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdio.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdstream.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdmath.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdstring.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdsystem.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdaux.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdrex.o
+
+$(OBJ_DIR)/libsqstdlib.a: $(SQSTDLIBOBJS) | $(SQSTDLIB_OBJ_DIR)
+	$(AR) $(ARFLAGS) $@ $(SQSTDLIBOBJS)
+
+$(SQSTDLIB_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/sqstdlib/%.cpp | $(SQSTDLIB_OBJ_DIR)
+	$(CPP) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS) 
+
+$(SQSTDLIB_OBJ_DIR):
+	$(MD) $@
+
 install: attract
 	cp attract $(INSTALL_DIR)
 
@@ -185,4 +256,4 @@ print-%:
 	@echo '$*=$($*)'
 
 clean:
-	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core

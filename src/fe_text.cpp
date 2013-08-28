@@ -25,150 +25,93 @@
 #include "fe_util.hpp"
 #include <iostream>
 
-const char *FeTextConfigurable::baseSettings[] =
-{
-		"position",
-		"size",
-		"align",
-		"textsize",
-		"colour",
-		"background",
-		"style",
-		"wrap",
-		NULL
-};
-
-const char *FeTextConfigurable::styleTokens[] =
-		{ "bold", "italic", "underlined", NULL };
-
-FeTextConfigurable::FeTextConfigurable()
-	: FeTextPrimative()
+FeBaseText::FeBaseText()
 {
 }
 
-FeTextConfigurable::FeTextConfigurable( const sf::Font *font,
+FeBaseText::FeBaseText(
+		const sf::Font *font,
 		const sf::Color &colour,
 		const sf::Color &bgcolour,
 		unsigned int charactersize,
-		Alignment align )
-	: FeTextPrimative( font, colour, bgcolour, charactersize, align )
+		FeTextPrimative::Alignment align )
+	: m_base_text( font, colour, bgcolour, charactersize, align )
 {
 }
 
-int FeTextConfigurable::process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn )
+const sf::Font *FeBaseText::getFont() const
 {
-	size_t pos=0;
-	std::string val;
+	return m_base_text.getFont();
+}
 
-	if ( setting.compare( baseSettings[0] ) == 0 ) // position
-	{
-		// position is XX,YY
-		token_helper( value, pos, val, "," );
-		int left = as_int( val );
-		token_helper( value, pos, val );
-		int top = as_int( val );
+void FeBaseText::setFont( const sf::Font &f )
+{
+	m_base_text.setFont( f );
+}
 
-		setPosition( sf::Vector2f( left, top ));
-	}
-	else if ( setting.compare( baseSettings[1] ) == 0 ) // size
-	{
-		// size is WW,HH
-		token_helper( value, pos, val, ",x" );
-		sf::Vector2f size;
-		size.x = as_int( val );
-		token_helper( value, pos, val );
-		size.y = as_int( val );
-		setSize( size );
-	}
-	else if ( setting.compare( baseSettings[2] ) == 0 )  // align
-	{
-		const char *atokens[] = { "left", "right", "centre", NULL };
+const sf::Vector2f &FeBaseText::getPosition() const
+{
+	return m_base_text.getPosition();
+}
 
-		if ( value.compare( atokens[0] ) == 0 )
-			setAlignment( FeTextPrimative::Left );
-		else if ( value.compare( atokens[1] ) == 0 )
-			setAlignment( FeTextPrimative::Right );
-		else if ( value.compare( atokens[2] ) == 0 )
-			setAlignment( FeTextPrimative::Centre );
-		else
-		{
-			invalid_setting( fn, "align", value, atokens, NULL, "value" );
-			return 1;
-		}
-	}
-	else if ( setting.compare( baseSettings[3] ) == 0 ) // textsize
-	{
-		setCharacterSize( as_int( value ) );
-	}
-	else if ( setting.compare( baseSettings[4] ) == 0 )  // colour
-		setColor( colour_helper( value ) );
-	else if ( setting.compare( baseSettings[5] ) == 0 )  // background
-		setBgColor( colour_helper( value ) );
-	else if ( setting.compare( baseSettings[6] ) == 0 )  // style
-	{
-		while ( pos < value.size() )
-		{
-			token_helper( value, pos, val, "," );
-			if ( val.compare( styleTokens[0] ) == 0 )
-				setStyle( sf::Text::Bold );
-			else if ( val.compare( styleTokens[1] ) == 0 )
-				setStyle( sf::Text::Italic );
-			else if ( val.compare( styleTokens[2] ) == 0 )
-				setStyle( sf::Text::Underlined );
-			else
-			{
-				invalid_setting( fn, "style", val, styleTokens, NULL, "value" );
-				return 1;
-			}
-		}
-	}
-	else if ( setting.compare( baseSettings[7] ) == 0 )  // wrap
-	{
-		if (( value.compare( "true" ) == 0 )
-				|| ( value.compare( "yes" ) == 0 )
-				|| ( value.compare( "1" ) == 0 ))
-			setWordWrap( true );
-	}
-	else
-	{
-		// return 1 if nothing done
-		return 1;
-	}
+void FeBaseText::setPosition( const sf::Vector2f &p )
+{
+	m_base_text.setPosition( p );
+	script_flag_redraw();
+}
 
-	return 0;
+const sf::Vector2f &FeBaseText::getSize() const
+{
+	return m_base_text.getSize();
+}
+
+void FeBaseText::setSize( const sf::Vector2f &s )
+{
+	m_base_text.setSize( s );
+	script_flag_redraw();
+}
+
+float FeBaseText::getRotation() const
+{
+	return m_base_text.getRotation();
+}
+
+void FeBaseText::setRotation( float r )
+{
+	m_base_text.setRotation( r );
+	script_flag_redraw();
+}
+
+const sf::Color &FeBaseText::getColor() const
+{
+	return m_base_text.getColor();
+}
+
+void FeBaseText::setColor( const sf::Color &c )
+{
+	m_base_text.setColor( c );
+}
+
+unsigned int FeBaseText::getCharacterSize() const
+{
+	return m_base_text.getCharacterSize();
 }
 
 FeText::FeText( const std::string &str )
-	: m_string( str ), m_index_offset( 0 )
+	:  m_string( str ), 
+	m_index_offset( 0 )
 {
 }
 
-int FeText::process_setting( const std::string &setting,
-		const std::string &value,
-		const std::string &fn )
+void FeText::setIndexOffset( int io )
 {
-	const char *stokens[] =
-	{
-		"index_offset",
-		"rotation",
-		NULL
-	};
+	m_index_offset=io;
+	script_do_update( this );
+}
 
-	if ( FeTextConfigurable::process_setting( setting, value, fn ) != 0 )
-	{
-		if ( setting.compare( stokens[0] ) == 0 )  // index_offset
-			m_index_offset = as_int( value );
-		else if ( setting.compare( stokens[1] ) == 0 )  // rotation
-			setRotation( as_int( value ) );
-		else
-		{
-			invalid_setting( fn, "text", setting, stokens, baseSettings );
-			return 1;
-		}
-	}
-	return 0;
+int FeText::getIndexOffset() const
+{
+	return m_index_offset;
 }
 
 void FeText::on_new_selection( FeSettings *feSettings )
@@ -195,18 +138,120 @@ void FeText::on_new_selection( FeSettings *feSettings )
 				feSettings->get_current_list_title() );
 	}
 
-	setString( str );
+	m_base_text.setString( str );
+}
+
+void FeText::draw( sf::RenderTarget &target, sf::RenderStates states ) const
+{
+	target.draw( m_base_text, states );
+}
+
+
+const char *FeText::get_string()
+{
+	return m_string.c_str();
+}
+
+void FeText::set_string(const char *s)
+{
+	m_string=s;
+	script_flag_redraw();
+}
+
+int FeText::get_bgr()
+{
+	return m_base_text.getBgColor().r;
+}
+
+int FeText::get_bgg()
+{
+	return m_base_text.getBgColor().g;
+}
+
+int FeText::get_bgb()
+{
+	return m_base_text.getBgColor().b;
+}
+
+int FeText::get_bga()
+{
+	return m_base_text.getBgColor().a;
+}
+
+int FeText::get_charsize()
+{
+	return m_base_text.getCharacterSize();
+}
+
+int FeText::get_style()
+{
+	return m_base_text.getStyle();
+}
+
+int FeText::get_align()
+{
+	return (int)m_base_text.getAlignment();
+}
+
+void FeText::set_bgr(int r)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.r=r;
+	m_base_text.setBgColor(c);
+	script_flag_redraw();
+}
+
+void FeText::set_bgg(int g)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.g=g;
+	m_base_text.setBgColor(c);
+	script_flag_redraw();
+}
+
+void FeText::set_bgb(int b)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.b=b;
+	m_base_text.setBgColor(c);
+	script_flag_redraw();
+}
+
+void FeText::set_bga(int a)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.a=a;
+	m_base_text.setBgColor(c);
+	script_flag_redraw();
+}
+
+void FeText::set_charsize(int s)
+{
+	m_base_text.setCharacterSize(s);
+	script_flag_redraw();
+}
+
+void FeText::set_style(int s)
+{
+	m_base_text.setStyle(s);
+	script_flag_redraw();
+}
+
+void FeText::set_align(int a)
+{
+	m_base_text.setAlignment( (FeTextPrimative::Alignment)a);
+	script_flag_redraw();
 }
 
 FeListBox::FeListBox()
-	: FeTextConfigurable(),
-	m_selColour( sf::Color::Yellow ),
+	: m_selColour( sf::Color::Yellow ),
 	m_selBg( sf::Color::Blue ),
 	m_selStyle( sf::Text::Regular ),
-	m_rotation( 0.0 )
+	m_rotation( 0.0 ),
+	m_needs_init( true )
 {
-	setColor( sf::Color::White );
-	setBgColor( sf::Color::Transparent );
+	m_base_text.setColor( sf::Color::White );
+	m_base_text.setBgColor( sf::Color::Transparent );
 }
 
 FeListBox::FeListBox(
@@ -216,19 +261,27 @@ FeListBox::FeListBox(
 		const sf::Color &selcolour,
 		const sf::Color &selbgcolour,
 		unsigned int charactersize,
-		Alignment align )
-	: FeTextConfigurable( font, colour, bgcolour, charactersize, align ),
+		FeTextPrimative::Alignment align )
+	: FeBaseText( font, colour, bgcolour, charactersize, align ),
 	m_selColour( selcolour ),
 	m_selBg( selbgcolour ),
 	m_selStyle( sf::Text::Regular ),
-	m_rotation( 0.0 )
+	m_rotation( 0.0 ),
+	m_needs_init( true )
 {
 }
 
 void FeListBox::init()
 {
+	//
+	// Only do something if our needs_init flag is set
+	//
+	if ( !m_needs_init )
+		return;
+
 	const sf::Font *font = getFont();
 	int fls = getCharacterSize();
+	if ( fls < 10 ) fls = 8; // don't go smaller than 8
 
 	if (( font ) && ( font->getLineSpacing( fls ) > fls ))
 		fls = font->getLineSpacing( fls );
@@ -238,9 +291,12 @@ void FeListBox::init()
 	sf::Vector2f size = getSize();
 	sf::Vector2f pos = getPosition();
 
-	int line_count = (int) size.y / fls;
-	int actual_spacing = (int) size.y / line_count;
+	int line_count = (int)size.y / fls;
 
+	if ( line_count < 1 )
+		return;
+
+	int actual_spacing = (int)size.y / line_count;
 	int sel = line_count / 2;
 
 	m_texts.clear();
@@ -251,7 +307,7 @@ void FeListBox::init()
 
 	for ( int i=0; i< line_count; i++ )
 	{
-		FeTextPrimative t( *this );
+		FeTextPrimative t( m_base_text );
 		if ( i == sel )
 		{
 			t.setColor( m_selColour );
@@ -259,12 +315,14 @@ void FeListBox::init()
 			t.setStyle( m_selStyle );
 		}
 
-		t.setPosition( trans.transformPoint( pos.x, pos.y+(i*actual_spacing) ));
-		t.setSize( sf::Vector2f(size.x, actual_spacing ));
+		t.setPosition( trans.transformPoint( pos.x, pos.y+(i*actual_spacing)) );
+		t.setSize( size.x, actual_spacing );
 		t.setRotation( m_rotation );
 
 		m_texts.push_back( t );
 	}
+
+	m_needs_init=false;
 }
 
 void FeListBox::setSelColor( sf::Color c )
@@ -276,16 +334,29 @@ void FeListBox::setSelColor( sf::Color c )
 		int sel = m_texts.size() / 2;
 		m_texts[ sel ].setColor( m_selColour );
 	}
+	script_flag_redraw();
 }
 
 void FeListBox::setSelBgColor( sf::Color c )
 {
 	m_selBg = c;
+	if ( m_texts.size() > 0 )
+	{
+		int sel = m_texts.size() / 2;
+		m_texts[ sel ].setBgColor( m_selBg );
+	}
+	script_flag_redraw();
 }
 
 void FeListBox::setSelStyle( int s )
 {
 	m_selStyle = s;
+	if ( m_texts.size() > 0 )
+	{
+		int sel = m_texts.size() / 2;
+		m_texts[ sel ].setStyle( m_selStyle );
+	}
+	script_flag_redraw();
 }
 
 FeTextPrimative *FeListBox::setEditMode( bool e, sf::Color c )
@@ -331,59 +402,7 @@ void FeListBox::setText( const int index,
 void FeListBox::setRotation( float r )
 {
 	m_rotation = r;
-}
-
-int FeListBox::process_setting( const std::string &setting,
-		const std::string &value,
-		const std::string &fn )
-{
-	const char *stokens[] =
-	{
-		"sel_colour",
-		"sel_background",
-		"sel_style",
-		"rotation",
-		NULL
-	};
-
-	if ( FeTextConfigurable::process_setting( setting, value, fn ) != 0 )
-	{
-		if ( setting.compare( stokens[0] ) == 0 )
-			setSelColor( colour_helper( value ));
-		else if ( setting.compare( stokens[1] ) == 0 )
-			setSelBgColor( colour_helper( value ));
-		else if ( setting.compare( stokens[2] ) == 0 )
-		{
-			size_t pos=0;
-			std::string val;
-
-			while ( pos < value.size() )
-			{
-				token_helper( value, pos, val, "," );
-				if ( val.compare( styleTokens[0] ) == 0 )
-					setSelStyle( sf::Text::Bold );
-				else if ( val.compare( styleTokens[1] ) == 0 )
-					setSelStyle( sf::Text::Italic );
-				else if ( val.compare( styleTokens[2] ) == 0 )
-					setSelStyle( sf::Text::Underlined );
-				else
-				{
-					invalid_setting( fn, "sel_style", val, styleTokens, NULL, "value" );
-					return 1;
-				}
-			}
-		}
-  		else if ( setting.compare( stokens[3] ) == 0 )  // rotation
-		{
-			setRotation( as_int( value ) );
-		}
-		else
-		{
-			invalid_setting( fn, "list", setting, stokens, baseSettings );
-			return 1;
-		}
-	}
-	return 0;
+	m_needs_init = true;
 }
 
 void FeListBox::on_new_list( FeSettings *s )
@@ -414,4 +433,193 @@ void FeListBox::clear()
 int FeListBox::getRowCount()
 {
 	return m_texts.size();
+}
+
+void FeListBox::setIndexOffset( int io )
+{
+}
+
+int FeListBox::getIndexOffset() const
+{
+	return 0;
+}
+
+int FeListBox::get_bgr()
+{
+	return m_base_text.getBgColor().r;
+}
+
+int FeListBox::get_bgg()
+{
+	return m_base_text.getBgColor().g;
+}
+
+int FeListBox::get_bgb()
+{
+	return m_base_text.getBgColor().b;
+}
+
+int FeListBox::get_bga()
+{
+	return m_base_text.getBgColor().a;
+}
+
+int FeListBox::get_charsize()
+{
+	return m_base_text.getCharacterSize();
+}
+
+int FeListBox::get_style()
+{
+	return m_base_text.getStyle();
+}
+
+int FeListBox::get_align()
+{
+	return (int)m_base_text.getAlignment();
+}
+
+void FeListBox::set_bgr(int r)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.r=r;
+	m_base_text.setBgColor(c);
+	m_needs_init = true;
+	script_flag_redraw();
+}
+
+void FeListBox::set_bgg(int g)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.g=g;
+	m_base_text.setBgColor(c);
+	m_needs_init = true;
+	script_flag_redraw();
+}
+
+void FeListBox::set_bgb(int b)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.b=b;
+	m_base_text.setBgColor(c);
+	m_needs_init = true;
+	script_flag_redraw();
+}
+
+void FeListBox::set_bga(int a)
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.a=a;
+	m_base_text.setBgColor(c); 
+	m_needs_init = true;
+	script_flag_redraw();
+}
+
+void FeListBox::set_charsize(int s)
+{
+	m_base_text.setCharacterSize(s);
+	m_needs_init = true;
+	script_flag_redraw();
+}
+
+void FeListBox::set_style(int s)
+{
+	m_base_text.setStyle(s);
+	m_needs_init = true;
+	script_flag_redraw();
+}
+
+void FeListBox::set_align(int a)
+{
+	m_base_text.setAlignment( (FeTextPrimative::Alignment)a);
+	m_needs_init = true;
+	script_flag_redraw();
+}
+
+int FeListBox::get_selr()
+{
+	return m_selColour.r; 
+}
+
+int FeListBox::get_selg()
+{
+	return m_selColour.g;
+}
+
+int FeListBox::get_selb()
+{
+	return m_selColour.b;
+}
+
+int FeListBox::get_sela()
+{
+	return m_selColour.a;
+}
+
+void FeListBox::set_selr(int r)
+{
+	m_selColour.r=r;
+	setSelColor( m_selColour );
+}
+
+void FeListBox::set_selg(int g)
+{
+	m_selColour.g=g;
+	setSelColor( m_selColour );
+}
+
+void FeListBox::set_selb(int b)
+{
+	m_selColour.b=b;
+	setSelColor( m_selColour );
+}
+
+void FeListBox::set_sela(int a)
+{
+	m_selColour.a=a;
+	setSelColor( m_selColour );
+}
+
+int FeListBox::get_selbgr()
+{
+	return m_selBg.r;
+}
+
+int FeListBox::get_selbgg()
+{
+	return m_selBg.g;
+}
+
+int FeListBox::get_selbgb()
+{
+	return m_selBg.b;
+}
+
+int FeListBox::get_selbga()
+{
+	return m_selBg.a;
+}
+
+void FeListBox::set_selbgr(int r)
+{
+	m_selBg.r=r;
+	setSelBgColor( m_selBg );
+}
+
+void FeListBox::set_selbgg(int g)
+{
+	m_selBg.g=g;
+	setSelBgColor( m_selBg );
+}
+
+void FeListBox::set_selbgb(int b)
+{
+	m_selBg.b=b;
+	setSelBgColor( m_selBg );
+}
+
+void FeListBox::set_selbga(int a)
+{
+	m_selBg.a=a;
+	setSelBgColor( m_selBg );
 }

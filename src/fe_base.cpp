@@ -25,12 +25,14 @@
 #include <iostream>
 #include <fstream>
 
-#define FE_VERSION "version 0.9.1"
-#define FE_LABEL "Attract-Mode"
+#define FE_NAME_D					"Attract-Mode"
+#define FE_VERSION_D 			"1.0.0"
+const int FE_VERSION_NUM		= 100;
 
-const char *FE_NAME_AND_VERSION = FE_LABEL " " FE_VERSION;
-const char *FE_IDENTITY = FE_LABEL " " FE_VERSION \
-               ", Copyright (c) 2013 Andrew Mickelson";
+const char *FE_NAME				= FE_NAME_D;
+const char *FE_COPYRIGHT		= FE_NAME_D " " FE_VERSION_D \
+	" Copyright (c) 2013 Andrew Mickelson";
+const char *FE_VERSION 			= FE_VERSION_D;
 
 const char *FE_WHITESPACE=" \t\r";
 
@@ -101,29 +103,4 @@ bool FeFileConfigurable::load_from_file( const std::string &filename,
 
 	myfile.close();
 	return true;
-}
-
-FeBasePresentable::~FeBasePresentable()
-{
-}
-
-void FeBasePresentable::on_new_selection( FeSettings * )
-{
-}
-
-void FeBasePresentable::on_new_list( FeSettings * )
-{
-}
-
-bool FeBasePresentable::tick( FeSettings * )
-{
-	return false;
-}
-
-void FeBasePresentable::set_play_state( bool )
-{
-}
-
-void FeBasePresentable::set_vol( float )
-{
 }

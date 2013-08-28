@@ -52,23 +52,23 @@ FeTextPrimative::FeTextPrimative( const FeTextPrimative &c )
 {
 }
 
-void FeTextPrimative::setColor( sf::Color c )
+void FeTextPrimative::setColor( const sf::Color &c )
 {
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 		m_texts[i].setColor( c );	
 }
 
-sf::Color FeTextPrimative::getColor()
+const sf::Color &FeTextPrimative::getColor() const
 {
 	return m_texts[0].getColor();	
 }
 
-void FeTextPrimative::setBgColor( sf::Color c )
+void FeTextPrimative::setBgColor( const sf::Color &c )
 {
 	m_bgRect.setFillColor( c );
 }
 
-sf::Color FeTextPrimative::getBgColor()
+const sf::Color &FeTextPrimative::getBgColor() const
 {
 	return m_bgRect.getFillColor();
 }
@@ -234,7 +234,7 @@ void FeTextPrimative::setFont( const sf::Font &font )
 		m_texts[i].setFont( font );
 }
 
-const sf::Font *FeTextPrimative::getFont()
+const sf::Font *FeTextPrimative::getFont() const
 {
 	return m_texts[0].getFont();
 }
@@ -245,27 +245,27 @@ void FeTextPrimative::setCharacterSize( unsigned int size )
 		m_texts[i].setCharacterSize( size );
 }
 
-unsigned int FeTextPrimative::getCharacterSize()
+unsigned int FeTextPrimative::getCharacterSize() const
 {
 	return m_texts[0].getCharacterSize();
 }
 
-sf::Vector2f FeTextPrimative::getPosition()
+const sf::Vector2f &FeTextPrimative::getPosition() const
 {
 	return m_bgRect.getPosition();
 }
 
-sf::Vector2f FeTextPrimative::getSize()
+const sf::Vector2f &FeTextPrimative::getSize() const
 {
 	return m_bgRect.getSize();
 }
 
-void FeTextPrimative::setPosition( sf::Vector2f p )
+void FeTextPrimative::setPosition( const sf::Vector2f &p )
 {
 	m_bgRect.setPosition( p );
 }
 
-void FeTextPrimative::setSize( sf::Vector2f s )
+void FeTextPrimative::setSize( const sf::Vector2f &s )
 {
 	m_bgRect.setSize( s );
 	set_positions();
@@ -276,7 +276,7 @@ void FeTextPrimative::setAlignment( Alignment a )
 	m_align = a;
 }
 
-FeTextPrimative::Alignment FeTextPrimative::getAlignment()
+FeTextPrimative::Alignment FeTextPrimative::getAlignment() const
 {
 	return m_align;
 }
@@ -287,7 +287,7 @@ void FeTextPrimative::setStyle( int s )
 		m_texts[i].setStyle( s );
 }
 
-void FeTextPrimative::setOutlineColor( sf::Color c )
+void FeTextPrimative::setOutlineColor( const sf::Color &c )
 {
 	m_bgRect.setOutlineColor( c );
 }
@@ -302,9 +302,14 @@ void FeTextPrimative::setRotation( float r )
 	m_bgRect.setRotation( r );
 }
 
-float FeTextPrimative::getRotation()
+float FeTextPrimative::getRotation() const
 {
 	return m_bgRect.getRotation();
+}
+
+int FeTextPrimative::getStyle() const
+{
+	return m_texts[0].getStyle();
 }
 
 void FeTextPrimative::setWordWrap( bool w )

@@ -27,25 +27,266 @@
 #include <iostream>
 #include <cstdlib>
 
-FeImage::FeImage()
-	: m_index_offset( 0 ), m_size( 0, 0 ), m_shear( 0, 0 )
+FeTextureContainer::FeTextureContainer()
+	: m_index_offset( 0 ), 
+	m_is_artwork( false ),
+	m_movie( NULL ),
+	m_movie_status( NoPlay )
 {
+}
+
+FeTextureContainer::FeTextureContainer( 
+	bool is_artwork, 
+	const std::string &name )
+	: m_name( name ),
+	m_index_offset( 0 ),
+	m_is_artwork( is_artwork ),
+	m_movie( NULL ),
+	m_movie_status( NoPlay )
+{
+}
+
+FeTextureContainer::~FeTextureContainer()
+{
+#ifndef NO_MOVIE
+	if ( m_movie )
+	{
+		delete m_movie;
+		m_movie=NULL;
+	}
+#endif
+}
+
+const sf::Texture &FeTextureContainer::load( const std::string &name )
+{
+#ifndef NO_MOVIE
+	if ( m_movie )
+	{
+		delete m_movie;
+		m_movie=NULL;
+	}
+#endif
+
+	m_name = name;
+	m_is_artwork = false;
+	m_texture.loadFromFile( m_name );
+	m_texture.setSmooth( true );
+
+	return m_texture;
+}
+
+const sf::Texture &FeTextureContainer::get_texture()
+{
+#ifndef NO_MOVIE
+	if (( m_is_artwork ) && ( m_movie ))
+	{
+		const sf::Texture *t = m_movie->get_texture();
+		if ( t ) return *t;
+	}
+#endif
+
+	return m_texture;
+}
+
+void FeTextureContainer::on_new_selection( FeSettings *feSettings )
+{
+	// We only need to do anything if this is flagged as an artwork
+	//
+	if ( !m_is_artwork )
+		return;
+
+	// if m_name is empty then check for the configured movie
+	// artwork
+	//
+	std::string label;
+	if ( m_name.empty() )
+		label = feSettings->get_movie_artwork();
+	else
+		label = m_name;
+
+#ifndef NO_MOVIE
+	if ( ( m_movie_status != LockNoPlay )
+		&& ( label.compare( feSettings->get_movie_artwork() ) == 0 ) )
+	{
+		// If a movie is running, close it and reset movie status
+		//
+		if (m_movie)
+		{
+			if (m_movie->is_playing())
+				m_movie->stop();
+	
+			m_movie->close();
+		}
+		m_movie_status=Delayed;
+	}
+#endif
+
+	m_texture = sf::Texture();
+
+	if ( !label.empty() )
+	{
+		std::vector<std::string> file_list;
+		feSettings->get_art_file( m_index_offset, label, file_list );
+
+		for ( unsigned int i=0; i<file_list.size(); i++ )
+		{
+			if ( m_texture.loadFromFile( file_list[i] ) )
+				break;
+		}
+	}
+
+	m_texture.setSmooth( true );
+
+	for ( unsigned int i=0; i < m_images.size(); i++ )
+		m_images[i]->texture_changed();
+}
+
+bool FeTextureContainer::tick( FeSettings *feSettings )
+{
+#ifndef NO_MOVIE
+	if (( m_movie_status == Playing )
+		|| ( m_movie_status == Loading ))
+	{
+		bool ret = m_movie->tick();
+		if (( m_movie_status == Loading ) && ( ret ))
+		{
+			m_movie_status = Playing;
+
+			// Force a reload of the texture for all images that point to us
+			//
+			for ( unsigned int i=0; i < m_images.size(); i++ )
+				m_images[i]->texture_changed();
+		}
+		return ret;
+	}
+
+	// We only need to do anything if we have the configured movie
+	// artwork and movies are not running
+	//
+	if ( !m_is_artwork 
+		|| ( m_movie_status == LockNoPlay )
+		|| ( ( m_name.compare( feSettings->get_movie_artwork() ) != 0 ) 
+			&& !m_name.empty() ))
+		return false;
+
+	if ( m_movie_status == Delayed )
+	{
+		std::string movie_file;
+		std::vector <std::string> file_list;
+		feSettings->get_movie_file( m_index_offset, file_list );
+
+		for ( unsigned int i=0; i< file_list.size(); i++ )
+		{
+			if ( FeMedia::is_supported_media_file( file_list[i] ) )
+			{
+				movie_file = file_list[i];
+				break;
+			}
+		}
+
+		if ( movie_file.empty() )
+		{
+			m_movie_status = NoPlay;
+		}
+		else
+		{
+			if (m_movie == NULL)
+			{
+				//
+				// We only want sound for movies when they are the
+				// current selection.
+				//
+				if ( m_index_offset != 0 )
+					m_movie = new FeMedia(FeMedia::Video);
+				else
+					m_movie = new FeMedia(FeMedia::AudioVideo);
+			}
+
+			if (!m_movie->openFromFile( movie_file ))
+			{
+				std::cout << "ERROR loading movie: " << movie_file << std::endl;
+				m_movie_status = NoPlay;
+			}
+			else
+			{
+				m_movie->setVolume( feSettings->get_play_volume( FeSoundInfo::Movie ) );
+				m_movie->play();
+				m_movie_status = Loading;
+			}
+		}
+	}
+#endif
+
+	return false;
+}
+
+void FeTextureContainer::set_play_state( bool play )
+{
+#ifndef NO_MOVIE
+	if (m_movie && ( m_movie_status == Playing ))
+	{
+		if ( play )
+			m_movie->play();
+		else
+			m_movie->stop();
+	}
+#endif
+}
+
+void FeTextureContainer::set_vol( float vol )
+{
+#ifndef NO_MOVIE
+	if (m_movie)
+		m_movie->setVolume( vol );
+#endif
+}
+
+FeImage::FeImage( FeTextureContainer *tc )
+	: m_tex( tc ), 
+	m_size( 0, 0 ), 
+	m_shear( 0, 0 )
+{
+	ASSERT( m_tex );
+
+	if (!m_tex->m_is_artwork)
+		m_sprite.setTexture( m_tex->load( m_tex->m_name ), true );
+
+	m_tex->m_images.push_back( this );
+}
+
+FeImage::FeImage( FeImage *o )
+	: m_tex( o->m_tex ), 
+	m_sprite( o->m_sprite ),
+	m_size( o->m_size ), 
+	m_shear( o->m_shear )
+{
+	m_tex->m_images.push_back( this );
 }
 
 FeImage::~FeImage()
 {
 }
 
-void FeImage::loadFromFile( const std::string &filename )
+void FeImage::texture_changed()
 {
-	m_texture.loadFromFile( filename );
-  	m_texture.setSmooth( true );
-  	m_sprite.setTexture( m_texture, true );
+	m_sprite.setTexture( m_tex->get_texture(), true );
+	scale();
 }
 
-int FeImage::get_index_offset()
+void FeImage::loadFromFile( const std::string &file )
 {
-	return m_index_offset;
+  	m_sprite.setTexture( m_tex->load( file ), true );
+}
+
+int FeImage::getIndexOffset() const
+{
+	return m_tex->m_index_offset;
+}
+
+void FeImage::setIndexOffset( int io )
+{
+	m_tex->m_index_offset = io;
+	script_do_update( m_tex );
 }
 
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -59,84 +300,20 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 	target.draw( m_sprite, states );
 }
 
-int FeImage::process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &fn )
-{
-	size_t pos=0;
-	std::string val;
-
-	const char *stokens[] =
-	{
-		"position",
-		"size",	
-		"index_offset",
-		"rotation",
-		"colour",
-		"shear",
-		NULL
-	};
-
-	if ( setting.compare( stokens[0] ) == 0 ) // position
-	{
-		// position is XX,YY
-		token_helper( value, pos, val, "," );
-		int left = as_int( val );
-		token_helper( value, pos, val );
-		int top = as_int( val );
-
-		m_sprite.setPosition( left, top );
-	}
-	else if ( setting.compare( stokens[1] ) == 0 ) // size
-	{
-		// size is WW,HH
-		token_helper( value, pos, val, ",x" );
-		m_size.x = as_int( val );
-		token_helper( value, pos, val );
-		m_size.y = as_int( val );
-
-		scale();
-	}
-	else if ( setting.compare( stokens[2] ) == 0 ) // index_offset
-		m_index_offset = as_int( value );
-	else if ( setting.compare( stokens[3] ) == 0 ) // rotation
-	{
-		int rotation = as_int( value );
-		m_sprite.setRotation( rotation );
-	}
-	else if ( setting.compare( stokens[4] ) == 0 ) // colour
-		m_sprite.setColor( colour_helper( value ) );
-	else if ( setting.compare( stokens[5] ) == 0 ) // shear
-	{
-		// shear is XX,YY
-		token_helper( value, pos, val, "," );
-		m_shear.x = as_int( val );
-		token_helper( value, pos, val );
-		m_shear.y = as_int( val );
-	}
-	else
-	{
-		invalid_setting( fn, "image", setting, stokens );
-		return 1;
-	}
-
-	return 0;
-}
-
 void FeImage::scale()
 {
-	sf::Vector2u texture_size = m_texture.getSize();
+	sf::IntRect texture_rect = m_sprite.getTextureRect();
 	bool scale=false;
 	float scale_x( 1.0 ), scale_y( 1.0 );
 
-	if ( m_size.x > 0 )
+	if ( m_size.x > 0.0 )
 	{
-		scale_x = (float) m_size.x / texture_size.x;
+		scale_x = (float) m_size.x / texture_rect.width;
 		scale = true;
 	}
-	if ( m_size.y > 0 )
+	if ( m_size.y > 0.0 )
 	{
-		scale_y = (float) m_size.y / texture_size.y;
+		scale_y = (float) m_size.y / texture_rect.height;
 		scale = true;
 	}
 
@@ -144,387 +321,179 @@ void FeImage::scale()
 		m_sprite.setScale( scale_x, scale_y );
 }
 
-sf::Vector2f FeImage::getPosition()
+const sf::Vector2f &FeImage::getPosition() const
 {
 	return m_sprite.getPosition();
 }
 
-sf::Vector2f FeImage::getSize()
+const sf::Vector2f &FeImage::getSize() const
 {
-	return sf::Vector2f( m_size.x, m_size.y );
+	return m_size;
 }
 
-void FeImage::setSize( int x, int y )
+void FeImage::setSize( const sf::Vector2f &s )
 {
-	m_size = sf::Vector2i( x, y );
+	m_size = s;
 	scale();
-}
-void FeImage::setPosition( int x, int y )
-{
-	m_sprite.setPosition( x, y );
+	script_flag_redraw();
 }
 
-float FeImage::getRotation()
+void FeImage::setPosition( const sf::Vector2f &p )
+{
+	m_sprite.setPosition( p );
+	script_flag_redraw();
+}
+
+float FeImage::getRotation() const
 {
 	return m_sprite.getRotation();
 }
 
-sf::Color FeImage::getColor()
+void FeImage::setRotation( float r )
+{
+	m_sprite.setRotation( r );
+	script_flag_redraw();
+}
+
+const sf::Color &FeImage::getColor() const
 {
 	return m_sprite.getColor();
 }
 
-void FeImage::setColor( sf::Color c )
+void FeImage::setColor( const sf::Color &c )
 {
 	m_sprite.setColor( c );
+	script_flag_redraw();
 }
 
-FeArtwork::FeArtwork( const std::string &artwork )
-	: FeImage(), m_artwork_label( artwork )
+const sf::Vector2u FeImage::getTextureSize() const
 {
+	return m_tex->get_texture().getSize();
 }
 
-FeArtwork::~FeArtwork()
+const sf::IntRect &FeImage::getTextureRect() const
 {
+	return m_sprite.getTextureRect();
 }
 
-void FeArtwork::on_new_selection( FeSettings *feSettings )
+void FeImage::setTextureRect( const sf::IntRect &r )
 {
-	//
-	// if m_artwork_label is empty then check for the configured movie
-	// artwork
-	//
-	std::string label;
-	if ( m_artwork_label.empty() )
-		label = feSettings->get_movie_artwork();
-	else
-		label = m_artwork_label;
-
-  	m_texture = sf::Texture();
-
-	if ( !label.empty() )
-	{
-  		std::vector<std::string> file_list;
-  		feSettings->get_art_file( get_index_offset(), label, file_list );
-
-		for ( unsigned int i=0; i<file_list.size(); i++ )
-		{
-			if ( m_texture.loadFromFile( file_list[i] ) )
-				break;
-		}
-	}
-
-	m_texture.setSmooth( true );
-	m_sprite.setTexture( m_texture, true );
+	m_sprite.setTextureRect( r );
 	scale();
+	script_flag_redraw();
 }
 
-#ifndef NO_MOVIE 
-
-FeMovie::FeMovie()
-	: FeArtwork( "" ), m_movie( NULL ), m_status( NoPlay )
+bool FeImage::getMovieEnabled() const
 {
+	return ( (m_tex->m_movie_status != FeTextureContainer::LockNoPlay) 
+		? true : false );
 }
 
-FeMovie::FeMovie( const FeMovie &c )
-	: FeArtwork( c )
+void FeImage::setMovieEnabled( bool f )
 {
-	m_status = c.m_status;
-	m_movie = NULL; // don't copy the movie reference
-}
-
-FeMovie::~FeMovie()
-{
-	if (m_movie)
-		delete m_movie;
-}
-
-void FeMovie::on_new_selection( FeSettings *feSettings )
-{
-	if (m_movie)
+	if ( f == false )
 	{
-		if (m_movie->is_playing())
-			m_movie->stop();
-
-		m_movie->close();
-	}
-
-	m_status=Loading;
-	return FeArtwork::on_new_selection( feSettings );
-}
-
-bool FeMovie::tick( FeSettings *feSettings )
-{
-	bool ret_val = false;
-
-	if ( m_status == Loading )
-	{
-		std::string movie_file;
-		std::vector <std::string> file_list;
-		feSettings->get_movie_file( get_index_offset(), file_list );
-
-		for ( unsigned int i=0; i< file_list.size(); i++ )
+#ifndef NO_MOVIE
+		if ( m_tex->m_movie )
 		{
-			if ( FeMedia::is_supported_media_file( file_list[i] ) )
-			{
-				movie_file = file_list[i];
-				break;
-			}
+			delete m_tex->m_movie;
+			m_tex->m_movie=NULL;
 		}
-
-		if ( movie_file.empty() )
-		{
-			m_status = NoPlay;
-		}
-		else
-		{
-			if (m_movie == NULL)
-			{
-				//
-				// We only want sound for movies when they are the
-				// current selection. 
-				//
-				if ( get_index_offset() != 0 )
-					m_movie = new FeMedia(FeMedia::Video);
-				else
-					m_movie = new FeMedia(FeMedia::AudioVideo);
-			}
-
-			if (!m_movie->openFromFile( movie_file ))
-			{
-				std::cout << "ERROR loading movie: " << movie_file << std::endl;
-				m_status = NoPlay;
-			}
-			else
-			{
-				m_movie->setPosition( getPosition() );
-				m_movie->setSize( getSize() );
-				m_movie->setRotation( getRotation() );
-				m_movie->setColor( getColor() );
-				m_movie->setVolume( feSettings->get_play_volume( FeSoundInfo::Movie ) );
-				m_movie->play();
-				m_status = Playing;
-			}
-		}
-	}
-
-	if ( m_status == Playing )
-		ret_val = m_movie->tick();
-
-	return ret_val;
-}
-
-void FeMovie::draw( sf::RenderTarget &target, sf::RenderStates states ) const
-{
-	if (m_movie && ( m_status == Playing ) && ( m_movie->get_display_ready() ))
-	{
-		if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
-			states.transform *= sf::Transform( 
-				1.f, (float)m_shear.x / (float)m_size.x, 0.f,
-				(float)m_shear.y / (float)m_size.y, 1.f, 0.f,
-				0.f, 0.f, 1.f );
-
-		target.draw( *m_movie, states );
-	}
-	else
-		FeArtwork::draw( target, states );
-}
-
-void FeMovie::set_play_state( bool play )
-{
-	if (m_movie && ( m_status == Playing ))
-	{
-		if ( play )
-			m_movie->play();
-		else
-			m_movie->stop();
-	}
-}
-
-void FeMovie::set_vol( float vol )
-{
-	if (m_movie)
-		m_movie->setVolume( vol );
-}
 #endif
+		m_tex->m_movie_status = FeTextureContainer::LockNoPlay;
 
-void FeAnimate::draw(sf::RenderTarget& target, sf::RenderStates states) const
-{
-#ifndef NO_MOVIE
-	if ( m_playing && m_animate.get_display_ready() )
-	{
-		if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
-			states.transform *= sf::Transform( 
-				1.f, (float)m_shear.x / (float)m_size.x, 0.f,
-				(float)m_shear.y / (float)m_size.y, 1.f, 0.f,
-				0.f, 0.f, 1.f );
+		for ( unsigned int i=0; i < m_tex->m_images.size(); i++ )
+			m_tex->m_images[i]->texture_changed();
 
-		target.draw( m_animate, states );
-	}
-#endif
-}
-
-FeAnimate::FeAnimate( const std::string &filename )
-	: 
-#ifndef NO_MOVIE
-	m_animate( FeMedia::AudioVideo ), 
-#endif
-	m_freq( 100 ), m_playing( false )
-{
-#ifndef NO_MOVIE
-	m_animate.openFromFile( filename );
-#endif
-}
-
-void FeAnimate::set_play_state( bool play )
-{
-/*
-	m_playing = play;
-
-	if ( m_playing )
-		m_animate.play();
-	else
-		m_animate.stop();
-*/
-}
-
-void FeAnimate::set_vol( float vol )
-{
-#ifndef NO_MOVIE
-	m_animate.setVolume( vol );
-#endif
-}
-
-bool FeAnimate::tick( FeSettings *fes )
-{
-#ifndef NO_MOVIE
-	if ( m_playing == false )
-	{
-		// Determine if we want to start the animation.  m_freq is the
-		// % chance we will restart
-		//
-		bool restart=false;
-		if ( m_freq == 100 )
-			restart=true;
-		else
-			restart = (( rand() % 100 ) < m_freq );
-
-		if ( restart )
-		{
-			m_animate.setPosition( getPosition() );
-			m_animate.setSize( getSize() );
-			m_animate.setRotation( getRotation() );
-			m_animate.setColor( getColor() );
-			m_animate.setVolume( fes->get_play_volume( FeSoundInfo::Movie ) );
-			m_animate.setLoop( false );
-
-			m_animate.play();
-			m_playing = true;
-			return true;
-		}
-	}
-	else
-		return m_animate.tick(); // playing 
-
-#endif
-	return false;
-}
-
-
-FeScreenSaver::FeScreenSaver( FeSettings *fes )
-	: m_is_enabled( false ),
-#ifndef NO_MOVIE
-	m_show_movie( false ),
-	m_movie( FeMedia::AudioVideo ),
-#endif
-	m_feSettings( fes )
-{
-	srand( m_feSettings->get_rom_index() );
-}
-
-void FeScreenSaver::prep_next()
-{
-	m_timer.restart();
-
-#ifndef NO_MOVIE
-	m_show_movie = (( rand() % 100 ) < 15 );
-	if ( m_show_movie )
-	{
-		std::vector<std::string> mlist;
-		m_feSettings->get_movie_file( rand(), mlist );
-		if ( !mlist.empty() )
-		{
-			sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-
-			m_movie.openFromFile( mlist.front() );
-			m_movie.setSize( sf::Vector2f( vm.width, vm.height ) );
-			m_movie.setLoop( false );
-			m_movie.play();
-		}
-		return;
-	}
-#endif
-
-	std::vector<std::string> ilist;
-	m_feSettings->get_art_file( rand(),
-				m_feSettings->get_movie_artwork(), 
-				ilist );
-	if ( !ilist.empty() )
-	{
-		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-
-		m_image.loadFromFile( ilist.front() );
-		m_image.setSize( vm.width, vm.height );
-	}
-}
-
-void FeScreenSaver::enable( bool e )
-{
-	m_is_enabled = e;
-
-	if ( m_is_enabled )
-	{
-		prep_next();
+		script_flag_redraw();
 	}
 	else
 	{
-#ifndef NO_MOVIE
-		m_movie.stop();
-		m_show_movie = false;
-#endif
-	}
-}
-
-void FeScreenSaver::tick()
-{
-#ifndef NO_MOVIE
-	if ( m_show_movie )
-	{
-		m_movie.tick();
-
-		if ( m_movie.is_playing() == false )
+		if ( m_tex->m_movie_status == FeTextureContainer::LockNoPlay )
 		{
-			m_show_movie = false;
-			prep_next();
+			m_tex->m_movie_status = FeTextureContainer::NoPlay;
+			script_flag_redraw();
 		}
-		return;
 	}
-#endif
-
-	if ( m_timer.getElapsedTime().asSeconds() > 5 )
-		prep_next();
-	
 }
 
-void FeScreenSaver::draw( sf::RenderTarget &target, sf::RenderStates states ) const
+int FeImage::get_shear_x()
 {
-#ifndef NO_MOVIE
-	if ( m_show_movie && m_movie.get_display_ready() )
-	{
-		target.draw( m_movie, states );
-		return;
-	}
-#endif
-
-	target.draw( m_image, states );
+	return m_shear.x;
 }
+
+int FeImage::get_shear_y()
+{
+	return m_shear.y;
+}
+
+void FeImage::set_shear_x( int x )
+{
+	m_shear.x = x;
+	script_flag_redraw();
+}
+
+void FeImage::set_shear_y( int y )
+{
+	m_shear.y = y;
+	script_flag_redraw();
+}
+
+int FeImage::get_texture_width()
+{
+	return getTextureSize().x;
+}
+
+int FeImage::get_texture_height()
+{
+	return getTextureSize().y;
+}
+
+int FeImage::get_subimg_x()
+{
+	return getTextureRect().left;
+}
+
+int FeImage::get_subimg_y()
+{
+	return getTextureRect().top;
+}
+
+int FeImage::get_subimg_width()
+{
+	return getTextureRect().width;
+}
+
+int FeImage::get_subimg_height()
+{
+	return getTextureRect().height;
+}
+
+void FeImage::set_subimg_x( int x )
+{
+	sf::IntRect r = getTextureRect();
+	r.left=x;
+	setTextureRect( r );
+}
+
+void FeImage::set_subimg_y( int y )
+{
+	sf::IntRect r = getTextureRect();
+	r.top=y;
+	setTextureRect( r );
+}
+
+void FeImage::set_subimg_width( int w )
+{
+	sf::IntRect r = getTextureRect();
+	r.width=w;
+	setTextureRect( r );
+}
+
+void FeImage::set_subimg_height( int h )
+{
+	sf::IntRect r = getTextureRect();
+	r.height=h;
+	setTextureRect( r );
+}
+

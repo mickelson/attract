@@ -142,7 +142,7 @@ void FeOverlay::splash_message( const std::string &msg,
 	message.setWordWrap( true );
 
 	sf::Vector2u size = m_wnd.getSize();
-	message.setSize( sf::Vector2f( size ) );
+	message.setSize( size.x, size.y );
 
 	std::string msg_str;
 	m_feSettings.get_resource( msg, rep, msg_str );
@@ -191,11 +191,11 @@ int FeOverlay::internal_dialog(
 	sf::Vector2u size = m_wnd.getSize();
 	float slice = size.y / 3;
 
-	message.setSize( sf::Vector2f( size.x, slice ) );
+	message.setSize( size.x, slice );
 	message.setString( msg_str );
 
-	dialog.setPosition( sf::Vector2f( 0, slice ));
-	dialog.setSize( sf::Vector2f( size.x, size.y - slice ) );
+	dialog.setPosition( 0, slice );
+	dialog.setSize( size.x, size.y - slice );
 	dialog.init();
 
 	std::vector<sf::Drawable *> draw_list;
@@ -224,11 +224,11 @@ void FeOverlay::edit_dialog(
 	sf::Vector2u size = m_wnd.getSize();
 	float slice = size.y / 3;
 
-	message.setSize( sf::Vector2f( size.x, slice ) );
+	message.setSize( size.x, slice );
 	message.setString( msg_str );
 
-	tp.setPosition( sf::Vector2f( 0, slice ));
-	tp.setSize( sf::Vector2f( size.x, size.y - slice ) );
+	tp.setPosition( 0, slice );
+	tp.setSize( size.x, size.y - slice );
 
 	std::vector<sf::Drawable *> draw_list;
 	draw_list.push_back( &message );
@@ -253,7 +253,8 @@ void FeOverlay::input_map_dialog(
 		m_bgColour, m_characterSize );
 	message.setWordWrap( true );
 
-	message.setSize( sf::Vector2f( m_wnd.getSize() ) );
+	sf::Vector2u s = m_wnd.getSize();
+	message.setSize( s.x, s.y );
 	message.setString( msg_str );
 
 	m_feSettings.init_config_map_input();
@@ -315,7 +316,7 @@ int FeOverlay::display_config_dialog(
 	draw_list.push_back( &bg );
 
 	FeTextPrimative heading( font, m_selColour, sf::Color::Transparent, m_characterSize / 2 );
-	heading.setSize( sf::Vector2f( size.x, slice ) );
+	heading.setSize( size.x, slice );
 	heading.setOutlineColor( m_textColour );
 	heading.setOutlineThickness( -2 );
 	heading.setString( ctx.title );
@@ -336,9 +337,8 @@ int FeOverlay::display_config_dialog(
 		sf::Color( 0, 0, 200, 200 ),
 		m_characterSize / 2 );
 
-	sdialog.setAlignment( FeTextPrimative::Centre );
-	sdialog.setPosition( sf::Vector2f( 2, slice ));
-	sdialog.setSize( sf::Vector2f( width, size.y - slice * 2 ) );
+	sdialog.setPosition( 2, slice );
+	sdialog.setSize( width, size.y - slice * 2 );
 	sdialog.init();
 	draw_list.push_back( &sdialog );
 
@@ -358,8 +358,8 @@ int FeOverlay::display_config_dialog(
 		//	
 		// We only use the values listbox in the "EditList" mode
 		//
-		vdialog.setPosition( sf::Vector2f( width + 2, slice ));
-		vdialog.setSize( sf::Vector2f( width, size.y - slice * 2 ) );
+		vdialog.setPosition( width + 2, slice );
+		vdialog.setSize( width, size.y - slice * 2 );
 		vdialog.init();
 		draw_list.push_back( &vdialog );
 	}
@@ -369,8 +369,8 @@ int FeOverlay::display_config_dialog(
 				sf::Color::Transparent, 
 				m_characterSize / 3 );
 	
-	footer.setPosition( sf::Vector2f( 0, size.y - slice ));
-	footer.setSize( sf::Vector2f( size.x, slice ) );
+	footer.setPosition( 0, size.y - slice );
+	footer.setSize( size.x, slice );
 	footer.setOutlineColor( m_textColour );
 	footer.setOutlineThickness( -2 );
 	footer.setWordWrap( true );

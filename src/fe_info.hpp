@@ -60,10 +60,10 @@ public:
 	int process_setting( const std::string &setting, 
 								const std::string &value,
 								const std::string &fn );
-	void dump( void );
+	void dump( void ) const;
 	std::string as_output( void ) const;
 
-	bool operator< ( FeRomInfo );
+	bool operator< ( FeRomInfo ) const;
 
 private:
 	std::string get_info_escaped( int ) const;
@@ -109,20 +109,20 @@ public:
 								const std::string &fn );
 
 	int process_state( const std::string &state_string );
-	std::string state_as_output();
+	std::string state_as_output() const;
 
-	void dump( void );
+	void dump( void ) const;
 
-	bool get_filter( FeRomInfo::Index &i, FilterComp &c, std::string &w );
+	bool get_filter( FeRomInfo::Index &i, FilterComp &c, std::string &w ) const;
 	void set_filter( FeRomInfo::Index i, FilterComp c, const std::string &w );
 
-	std::string get_current_layout_file();
+	std::string get_current_layout_file() const;
 	void set_current_layout_file( const std::string & );
 
 	int get_current_rom_index() const;
 	void set_current_rom_index( int );
 
-	void save( std::ofstream & );
+	void save( std::ofstream & ) const;
 
 private:
 	int parse_filter( const std::string &fn, const std::string &filter );
@@ -143,7 +143,7 @@ private:
 	FeListInfo::FilterComp m_filter_comp;
 	std::string m_filter_what;
 
-	bool apply_filter( const FeRomInfo &rom );
+	bool apply_filter( const FeRomInfo &rom ) const;
 
 public:
 	std::deque<FeRomInfo> list;
@@ -192,17 +192,17 @@ public:
 	const std::string &get_info( int ) const;
 	void set_info( enum Index, const std::string & );
 
-	bool get_artwork( const std::string &, std::string & );
+	bool get_artwork( const std::string &, std::string & ) const;
 	void set_artwork( const std::string &, const std::string & );
-	void get_artwork_list( std::vector<std::pair<std::string,std::string> > & );
+	void get_artwork_list( std::vector<std::pair<std::string,std::string> > & ) const;
 	void delete_artwork( const std::string & );
 	
 	int process_setting( const std::string &setting, 
 								const std::string &value,
 								const std::string &filename );
-	void dump( void );
+	void dump( void ) const;
 
-	void save( const std::string &filename );
+	void save( const std::string &filename ) const;
 
 private:
 	std::string m_info[LAST_INDEX];
@@ -222,7 +222,7 @@ public:
 								const std::string &filename );
 
 	void get_resource( const std::string &token,
-				std::string &str );
+				std::string &str ) const;
 
 private:
 	std::map<std::string, std::string> m_map;

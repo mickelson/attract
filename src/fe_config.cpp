@@ -928,7 +928,7 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 void FeConfigMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::SelectionList, "Configure" );
-	ctx.help_msg = FE_IDENTITY;
+	ctx.help_msg = FE_COPYRIGHT;
 
 	ctx.add_optl( Opt::SUBMENU, "Emulators", "", "_help_emulators" );
 	ctx.add_optl( Opt::SUBMENU, "Lists", "", "_help_lists" );
