@@ -75,30 +75,30 @@ private:
 	void set_current_rom(int );
 
 	void internal_get_art_file( std::vector<std::string> &, 
-							std::string &, int, const std::string &, bool  );
+							std::string &, int, const std::string &, bool  ) const;
 
 public:
 	FeSettings( const std::string &config_dir, 
 				const std::string &cmdln_font, bool disable_mousecap );
 
 	bool load();
-	void save_state( void );
+	void save_state( void ) const;
 
-	FeInputMap::Command map( sf::Event );
+	FeInputMap::Command map( sf::Event ) const;
 
 	//
 	// config_map_input used in configuration mode.
 	//
    void init_config_map_input();
    bool config_map_input( sf::Event, std::string &, 
-					FeInputMap::Command &conflict );
+					FeInputMap::Command &conflict ) const;
   
 	void set_volume( FeSoundInfo::SoundType, const std::string & );
-	int get_set_volume( FeSoundInfo::SoundType );
-	int get_play_volume( FeSoundInfo::SoundType );
-	bool get_mute();
+	int get_set_volume( FeSoundInfo::SoundType ) const;
+	int get_play_volume( FeSoundInfo::SoundType ) const;
+	bool get_mute() const;
 	void set_mute( bool );
-	bool get_sound_file( FeInputMap::Command, std::string &s, bool full_path=true );
+	bool get_sound_file( FeInputMap::Command, std::string &s, bool full_path=true ) const;
 	void set_sound_file( FeInputMap::Command, const std::string &s );
 
 	void change_rom( int step, bool wrap=true );
@@ -116,11 +116,11 @@ public:
 	void init_list();
 
 	int run(); // run current selection
-	int exit_command(); // run configured exit command (if any)
+	int exit_command() const; // run configured exit command (if any)
 
 	void toggle_layout();
 
-	int get_current_display_list( std::vector<std::string> &list );
+	int get_current_display_list( std::vector<std::string> &list ) const;
 	int get_rom_index( int offset=0, bool wrap=true ) const;
 
 	std::string get_current_list_title() const;
@@ -133,19 +133,20 @@ public:
 	void get_movie_file( int offset, std::vector<std::string> &filenames );
 
 	std::string get_movie_artwork();
-	bool confirm_artwork( const std::string &artlabel );
 
-	std::string get_current_layout_file();
-	std::string get_current_layout_dir();
+	std::string get_screensaver_file() const;
+	std::string get_current_layout_file() const;
+	std::string get_layout_global_file() const;
+	std::string get_current_layout_dir() const;
 
-	const std::string &get_config_dir();
+	const std::string &get_config_dir() const;
 	bool config_file_exists() const;
-	bool get_font_file( std::string &fullpath, const std::string &filename="" );
+	bool get_font_file( std::string &fullpath, const std::string &filename="" ) const;
 	
-	RotationState get_autorotate();
-	int get_screen_saver_timeout();
+	RotationState get_autorotate() const;
+	int get_screen_saver_timeout() const;
 
-	void dump( void );
+	void dump( void ) const;
 
 	//
 	// This function implements the command-line romlist generation
@@ -168,22 +169,22 @@ public:
 	//
 	// Functions used for configuration
 	//
-	void get_list_names( std::vector<std::string> &list );
+	void get_list_names( std::vector<std::string> &list ) const;
    const std::string get_info( int index ) const; // see "ConfigSettingIndex"
    bool set_info( int index, const std::string & );
 	FeListInfo *get_list( const std::string &n );
 	FeListInfo *create_list( const std::string &n );
 	void delete_list( const std::string &n );
-   void get_mappings( std::vector< FeMapping > &mappings );
+   void get_mappings( std::vector< FeMapping > &mappings ) const;
    void set_mapping( const FeMapping &mapping );
 
-	void save();
+	void save() const;
 
-	void get_resource( const std::string &token, std::string &str );
+	void get_resource( const std::string &token, std::string &str ) const;
 	void get_resource( const std::string &token, const std::string &rep, 
-									std::string &str );
+									std::string &str ) const;
 
-	int lists_count();
+	int lists_count() const;
 };
 
 #endif

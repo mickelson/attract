@@ -24,7 +24,24 @@
 #include "fe_util.hpp"
 #include "fe_image.hpp"
 #include "fe_text.hpp"
+#include "fe_sound.hpp"
+#include "fe_input.hpp"
+
+#include <sqrat.h>
+
+#ifdef ENABLE_SCRIPT_SYSTEM_ACCESS
+#include <sqstdblob.h>
+#include <sqstdio.h>
+#include <sqstdsystem.h>
+#endif 
+
+#include <sqstdmath.h>
+#include <sqstdstring.h>
+
 #include <iostream>
+#include <stdio.h>
+#include <ctime>
+#include <stdarg.h>
 
 FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 	: m_feSettings( fesettings ), 
@@ -33,15 +50,19 @@ FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 	m_moveState( MoveNone ), 
 	m_baseRotation( FeSettings::RotateNone ), 
 	m_toggleRotation( FeSettings::RotateNone ), 
-	m_play_movies( true ), 
-	m_currentConfigObject( NULL ), 
-	m_listBox( NULL ) 
+	m_playMovies( true ), 
+	m_screenSaverActive( false ), 
+	m_listBox( NULL )
 {
+	Sqrat::DefaultVM::Set( NULL );
+
+	srand( time( NULL ) );
 }
 
 FePresent::~FePresent() 
 {
 	clear();
+	vm_close();
 }
 
 void FePresent::clear()
@@ -49,14 +70,13 @@ void FePresent::clear()
 	//
 	// keep toggle rotation state and mute state through clear
 	//
-	m_currentConfigObject=NULL;
 	m_listBox=NULL; // listbox gets deleted with the m_elements below
 	m_moveState = MoveNone;
 	m_baseRotation = FeSettings::RotateNone;
-	m_scaleTransform = sf::Transform();
+	m_scaleTransform = m_rotationTransform = sf::Transform();
 	m_currentFont = &m_defaultFont;
-
-	m_movies.clear();
+	m_layoutFontName.clear();
+	m_ticksList.clear();
 
 	while ( !m_elements.empty() )
 	{
@@ -64,167 +84,181 @@ void FePresent::clear()
 		m_elements.pop_back();
 		delete p;
 	}
+
+	while ( !m_texturePool.empty() )
+	{
+		FeTextureContainer *t = m_texturePool.back();
+		m_texturePool.pop_back();
+		delete t;
+	}
+
+	while ( !m_scriptSounds.empty() )
+	{
+		FeScriptSound *s = m_scriptSounds.back();
+		m_scriptSounds.pop_back();
+		delete s;
+	}
+
+	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+	m_layoutSize.x = vm.width;
+	m_layoutSize.y = vm.height;
 }
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 {
 	states.transform = m_rotationTransform * m_scaleTransform;
 
-	for ( std::vector<FeBasePresentable *>::const_iterator itl=m_elements.begin();
-               itl != m_elements.end(); ++itl )
-	{
+	std::vector<FeBasePresentable *>::const_iterator itl;
+	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 		target.draw( (*itl)->drawable(), states );
+}
+
+FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int y, int w, int h )
+{
+	std::string name;
+	if ( is_artwork )
+		name = n;
+	else
+		name = m_feSettings->get_current_layout_dir() + n;
+
+	FeTextureContainer *new_tex = new FeTextureContainer( is_artwork, name );
+	FeImage *new_image = new FeImage( new_tex );
+	new_image->setPosition( x, y );
+	new_image->setSize( w, h );
+
+	m_redrawTriggered = true;
+	m_texturePool.push_back( new_tex );
+	m_elements.push_back( new_image );
+
+	return new_image;
+}
+
+FeImage *FePresent::add_clone( FeImage *o )
+{
+	FeImage *new_image = new FeImage( o );
+	m_redrawTriggered = true;
+	m_elements.push_back( new_image );
+	return new_image;
+}
+
+FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h )
+{
+	FeText *new_text = new FeText( n );
+	new_text->setPosition( x, y );
+	new_text->setSize( w, h );
+
+	if ( m_currentFont )
+		new_text->setFont( *m_currentFont );
+
+	m_redrawTriggered = true;
+	m_elements.push_back( new_text );
+	return new_text;
+}
+
+FeListBox *FePresent::add_listbox( int x, int y, int w, int h )
+{
+	FeListBox *new_lb = new FeListBox();
+	new_lb->setPosition( x, y );
+	new_lb->setSize( w, h );
+
+	if ( m_currentFont )
+		new_lb->setFont( *m_currentFont );
+
+	m_redrawTriggered = true;
+	m_listBox = new_lb;
+	m_elements.push_back( new_lb );
+	return new_lb;
+}
+
+FeScriptSound *FePresent::add_sound( const std::string &n )
+{
+	std::string filename = m_feSettings->get_current_layout_dir();
+	filename += n;
+
+	FeScriptSound *new_sound = new FeScriptSound();
+	new_sound->load( filename );
+	new_sound->set_volume( m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
+
+	m_scriptSounds.push_back( new_sound );
+	return new_sound;
+}
+
+void FePresent::add_ticks_callback( const std::string &n )
+{
+	m_ticksList.push_back( n );	
+}
+
+int FePresent::get_layout_width() const
+{
+	return m_layoutSize.x;
+}
+
+int FePresent::get_layout_height() const
+{
+	return m_layoutSize.y;
+}
+
+void FePresent::set_layout_width( int w )
+{
+	m_layoutSize.x = w;
+	m_scaleTransform.scale( 
+		(float) sf::VideoMode::getDesktopMode().width / w, 1.0 );
+
+	m_redrawTriggered = true;
+}
+
+void FePresent::set_layout_height( int h )
+{
+	m_layoutSize.y = h;
+	m_scaleTransform.scale( 1.0,
+		(float) sf::VideoMode::getDesktopMode().height / h );
+
+	m_redrawTriggered = true;
+}
+
+void FePresent::set_layout_font( const char *n )
+{
+	m_layoutFontName = n;
+	std::string filename;
+	if ( m_feSettings->get_font_file( filename, m_layoutFontName ) )
+	{
+		if ( m_layoutFont.loadFromFile( filename ) )
+		{
+			m_currentFont = &m_layoutFont;
+			m_redrawTriggered = true;
+		}
 	}
 }
 
-int FePresent::process_setting( const std::string &setting,
-                        const std::string &value,
-								const std::string &fn )
+const char *FePresent::get_layout_font() const
 {
-	const char *stokens[] =
-	{
-		"layout_size",
-		"font",
-		"image",
-		"artwork",
-		"text",
-		"list",
-		"movie",
-		"animation",
-		"layout_rotation",
-		NULL
-	};
+	return m_layoutFontName.c_str();
+}
 
-	if ( setting.compare( stokens[0] ) == 0 ) // layout_size
-	{
-		size_t pos=0;
-		std::string val;
+void FePresent::set_layout_orient( int r )
+{
+	m_baseRotation = (FeSettings::RotationState)r;
+	set_rotation_transform();
+	m_redrawTriggered = true;
+}
 
-		// size is WW,HH
-		token_helper( value, pos, val, ",x" );
-		int width = as_int( val );
-		token_helper( value, pos, val );
-		int height = as_int( val );
-
-		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-
-		m_scaleTransform.scale( (float) vm.width / width, 
-						(float) vm.height / height );
-	}
-	else if ( setting.compare( stokens[1] ) == 0 ) // font
-	{
-		std::string filename;
-		if ( m_feSettings->get_font_file( filename, value ) )
-		{
-			if ( m_layoutFont.loadFromFile( filename ) )
-				m_currentFont = &m_layoutFont;
-		}
-	}
-	else if ( setting.compare( stokens[2] ) == 0 ) // image
-	{
-		FeImage *new_image = new FeImage();
-		std::string filename = m_feSettings->get_current_layout_dir();
-		filename += value;
-		new_image->loadFromFile( filename );
-
-		m_currentConfigObject = new_image;
-		m_elements.push_back( new_image );
-	}
-	else if ( setting.compare( stokens[3] ) == 0 ) // artwork
-	{
-		FeArtwork *ae = new FeArtwork( value );
-
-		m_currentConfigObject = ae;
-		m_elements.push_back( ae );
-
-#ifdef FE_DEBUG
-		// print out a message if the artwork label 
-		//  is not defined for the current emulator
-		if ( m_feSettings->confirm_artwork( value ) == false )
-		{
-			std::cout << "Note: artwork \"" << value
-				<< "\" is used by layout but not configured for current emulator."
-				<< std::endl;
-		}
-#endif
-	}
-	else if ( setting.compare( stokens[4] ) == 0 ) // text
-	{
-		FeText *te = new FeText( value );
-
-		if ( m_currentFont )
-			te->setFont( *m_currentFont );
-
-		m_currentConfigObject = te;
-		m_elements.push_back( te );
-	}
-	else if ( setting.compare( stokens[5] ) == 0 ) // list
-	{
-		FeListBox *lb = new FeListBox();
-
-		if ( m_currentFont )
-			lb->setFont( *m_currentFont );
-
-		m_currentConfigObject = m_listBox = lb;
-		m_elements.push_back( lb );
-	}
-	else if ( setting.compare( stokens[6] ) == 0 ) // movie
-	{
-#ifdef NO_MOVIE
-		FeArtwork *me = new FeArtwork( "" );
-#else
-		FeMovie *me = new FeMovie();
-#endif
-		m_currentConfigObject = me;
-		m_elements.push_back( me );
-		m_movies.push_back( me );
-	}
-	else if ( setting.compare( stokens[7] ) == 0 ) // animation
-	{
-		std::string filename = m_feSettings->get_current_layout_dir();
-		filename += value;
-
-		FeAnimate *ani = new FeAnimate( filename );
-		m_elements.push_back( ani );
-		m_movies.push_back( ani );
-		m_currentConfigObject = ani;
-	}
-	else if ( setting.compare( stokens[8] ) == 0 ) // layout_rotation
-	{
-		int i=0;
-		while ( FeSettings::rotationTokens[i] != NULL )
-		{
-			if ( value.compare( FeSettings::rotationTokens[i] ) == 0 )
-			{
-				m_baseRotation = (FeSettings::RotationState)i;
-				break;
-			}
-			i++;
-		}
-
-		if ( FeSettings::rotationTokens[i] == NULL )
-		{
-			invalid_setting( fn, stokens[8], setting, 
-				FeSettings::rotationTokens, NULL, "value" );
-			return 1;
-		}
-	}
-	else if ( m_currentConfigObject != NULL )
-	{
-		m_currentConfigObject->process_setting( setting, value, fn );
-	}
-	else
-	{
-		invalid_setting( fn, "layout", setting, stokens );
-		return 1;
-	}
-	return 0;
+int FePresent::get_layout_orient() const
+{
+	return m_baseRotation;
 }
 
 bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 {
 	m_moveState=MoveNone;
-	bool retval=false;
+	m_lastInput=m_layoutTimer.getElapsedTime();
+
+	if ( m_screenSaverActive )
+	{
+		// Reset from screen saver
+		//
+		load_layout();
+		return true;
+	}
 
 	switch( c )
 	{
@@ -234,7 +268,6 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveEvent = ev;
 		m_feSettings->change_rom( 1 );
 		update( false );
-		retval=true;
 		break;
 
 	case FeInputMap::Up:
@@ -243,7 +276,6 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveEvent = ev;
 		m_feSettings->change_rom( -1 );
 		update( false );
-		retval=true;
 		break;
 
 	case FeInputMap::PageDown:
@@ -252,7 +284,6 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveEvent = ev;
 		m_feSettings->change_rom( get_page_size(), false );
 		update( false );
-		retval=true;
 		break;
 
 	case FeInputMap::PageUp:
@@ -261,37 +292,57 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveEvent = ev;
 		m_feSettings->change_rom( -1 * get_page_size(), false );
 		update( false );
-		retval=true;
 		break;
 
 	case FeInputMap::ToggleRotateRight:
 		toggle_rotate( FeSettings::RotateRight );
-		retval=true;
 		break;
 
 	case FeInputMap::ToggleFlip:
 		toggle_rotate( FeSettings::RotateFlip );
-		retval=true;
 		break;
 
 	case FeInputMap::ToggleRotateLeft:
 		toggle_rotate( FeSettings::RotateLeft );
-		retval=true;
 		break;
 
 	case FeInputMap::ToggleMovie:
 		toggle_movie();
-		retval=true;
 		break;
 
-	case FeInputMap::Select:
-	case FeInputMap::ExitMenu:
-	default:
-		// dealt with elsewhere
+	case FeInputMap::NextList:
+		// next_list returns true if the layout changes with the new list
+		//
+		if ( m_feSettings->next_list() ) 
+			load_layout();
+		else
+			update( true );
+
 		break;
+
+	case FeInputMap::PrevList:
+		// prev_list returns true if the layout changes with the new list
+		//
+		if ( m_feSettings->prev_list() )
+			load_layout();
+		else
+			update( true );
+
+		break;
+
+	case FeInputMap::ToggleLayout:
+		m_feSettings->toggle_layout();
+		load_layout();
+		break;
+
+	case FeInputMap::LAST_COMMAND:
+	default:
+		// Not handled by us, return false so calling function knows
+		//
+		return false;
 	}
 
-	return retval;
+	return true;
 }
 
 int FePresent::update( bool new_list ) 
@@ -303,6 +354,10 @@ int FePresent::update( bool new_list )
 			(*itl)->on_new_list( m_feSettings );
 	}
 
+	std::vector<FeTextureContainer *>::iterator itc;
+	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
+		(*itc)->on_new_selection( m_feSettings );
+
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 		(*itl)->on_new_selection( m_feSettings );
 
@@ -311,54 +366,57 @@ int FePresent::update( bool new_list )
 	return 0;
 }
 
-
-int FePresent::load_layout() 
+void FePresent::load_screensaver() 
 {
 	clear();
+	set_rotation_transform();
+	m_screenSaverActive=true;
+
+	//
+	// Run the script which actually sets up the screensaver
+	//
+	vm_on_new_layout( m_feSettings->get_screensaver_file() );
+	m_layoutTimer.restart();
+
+	//
+	// if there is no screen saver script then do a blank screen
+	//
+	update( true );
+}
+
+void FePresent::load_layout() 
+{
+	clear();
+	set_rotation_transform();
+	m_screenSaverActive=false;
 
 	if ( m_feSettings->lists_count() < 1 )
 	{
 		set_to_no_lists_message();
 		update( true );
-		return 0;
+		return;
 	}
 
-	std::string layout_file = m_feSettings->get_current_layout_file();
-
-	if ( !layout_file.empty() )
-	{
-		if ( load_from_file( layout_file ) == false )
-	      std::cout << "Error, file not found: " << layout_file << std::endl;
-	}
+	//
+	// Run the script which actually sets up the layout
+	//
+	vm_on_new_layout( m_feSettings->get_current_layout_file() );
+	m_layoutTimer.restart();
 
 	// make things usable if the layout is empty
 	if ( m_elements.empty() )
 	{
-		// Nothing loaded, default to a full screen list
+		//
+		// Nothing loaded, default to a full screen list with the configured
+		// movie artwork as the background
 		//
 		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-
-		// Use the first artwork (if any are defined)
-		//
-		FeArtwork *art = new FeArtwork( "" ); 
-		art->setPosition( 0, 0 );
-		art->setSize( vm.width, vm.height );
-		art->setColor( sf::Color( 100, 100, 100, 180 ) );
-		m_elements.push_back( art );
-
-		FeListBox *lb = new FeListBox();
-		if ( m_currentFont ) lb->setFont( *m_currentFont );
-
-		lb->setPosition( sf::Vector2f( 0, 0 ) );
-		lb->setSize( sf::Vector2f( vm.width, vm.height ) );
-		m_elements.push_back( lb );
-		m_listBox = lb;
+		FeImage *img = cb_add_artwork( "", 0, 0, vm.width, vm.height );
+		img->setColor( sf::Color( 100, 100, 100, 180 ) );
+		cb_add_listbox( 0, 0, vm.width, vm.height );
 	}
 
-	set_rotation_transform();
 	update( true );
-
-	return 0;
 }
 
 bool FePresent::tick()
@@ -421,21 +479,35 @@ bool FePresent::tick()
 	//
 	// Start movies after a small delay
 	//
-	if (( m_movieStartTimer.getElapsedTime().asMilliseconds() > 500 )
-			&& ( m_play_movies ))
+	int time = m_movieStartTimer.getElapsedTime().asMilliseconds();
+	if (( time > 500 ) && ( m_playMovies ))
 	{
-		for ( std::vector<FeBasePresentable *>::iterator itm=m_movies.begin();
-				itm != m_movies.end(); ++itm )
+		for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
 		{
 			if ( (*itm)->tick( m_feSettings ) )
 				ret_val=true;
 		}
 	}
 
+	if ( vm_on_tick())
+		ret_val = true;
+
+	int saver_timeout = m_feSettings->get_screen_saver_timeout();
+	if (( !m_screenSaverActive ) && ( saver_timeout > 0 ))
+	{
+	 	if ( ( m_layoutTimer.getElapsedTime() - m_lastInput ) 
+				> sf::seconds( saver_timeout ) )
+		{
+			load_screensaver();
+			ret_val = true;
+		}
+	}
+
 	return ret_val;
 }
 
-int FePresent::get_page_size()
+int FePresent::get_page_size() const
 {
 	if ( m_listBox )
 		return m_listBox->getRowCount();
@@ -445,22 +517,26 @@ int FePresent::get_page_size()
 
 void FePresent::play( bool play_state )
 {
-	for ( std::vector<FeBasePresentable *>::iterator itm=m_movies.begin();
-				itm != m_movies.end(); ++itm )
+	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( play_state );
 }
 
 void FePresent::toggle_movie()
 {
-	m_play_movies = !m_play_movies;
-	play( m_play_movies );
+	m_playMovies = !m_playMovies;
+	play( m_playMovies );
 }
 
 void FePresent::toggle_mute()
 {
-	for ( std::vector<FeBasePresentable *>::iterator itm=m_movies.begin();
-				itm != m_movies.end(); ++itm )
+	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_vol( m_feSettings->get_play_volume( FeSoundInfo::Movie ) );
+
+	for ( std::vector<FeScriptSound *>::iterator its=m_scriptSounds.begin();
+				its != m_scriptSounds.end(); ++its )
+		(*its)->set_volume( m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
 }
 
 const sf::Transform &FePresent::get_rotation_transform() const
@@ -557,11 +633,510 @@ void FePresent::set_to_no_lists_message()
 	m_feSettings->get_resource( "No lists configured.", msg );
 
 	FeText *te = new FeText( msg );
-	te->setPosition( sf::Vector2f( 0, 0 ) );
-	te->setSize( sf::Vector2f( vm.width, vm.height ) );
+	te->setPosition( 0, 0 );
+	te->setSize( vm.width, vm.height );
 
 	if ( m_currentFont )
 		te->setFont( *m_currentFont );
 
 	m_elements.push_back( te );
+}
+
+//
+// Squirrel callback functions
+//
+void printFunc(HSQUIRRELVM v, const SQChar *s, ...)
+{
+	std::cout << "Script: ";
+
+	va_list vl;
+	va_start(vl, s);
+	vprintf(s, vl);
+	va_end(vl);
+
+	std::cout << std::endl;
+}
+
+FeImage* FePresent::cb_add_image(const char *n, int x, int y, int w, int h )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	FeImage *ret = fep->add_image( false, n, x, y, w, h );
+
+	// Add the image to the "fe.obj" table in Squirrel
+	//
+	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	obj.SetInstance( obj.GetSize(), ret );
+
+	return ret;
+}
+
+FeImage* FePresent::cb_add_image(const char *n, int x, int y )
+{
+	return cb_add_image( n, x, y, 0, 0 );
+}
+
+FeImage* FePresent::cb_add_image(const char *n )
+{
+	return cb_add_image( n, 0, 0, 0, 0 );
+}
+
+FeImage* FePresent::cb_add_artwork(const char *n, int x, int y, int w, int h )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	FeImage *ret = fep->add_image( true, n, x, y, w, h );
+
+	// Add the image to the "fe.obj" table in Squirrel
+	//
+	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	obj.SetInstance( obj.GetSize(), ret );
+
+	return ret;
+}
+
+FeImage* FePresent::cb_add_artwork(const char *n, int x, int y )
+{
+	return cb_add_artwork( n, x, y, 0, 0 );
+}
+
+FeImage* FePresent::cb_add_artwork(const char *n )
+{
+	return cb_add_artwork( n, 0, 0, 0, 0 );
+}
+
+FeImage* FePresent::cb_add_clone( FeImage *o )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	FeImage *ret = fep->add_clone( o );
+
+	// Add the image to the "fe.obj" table in Squirrel
+	//
+	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	obj.SetInstance( obj.GetSize(), ret );
+
+	return ret;
+}
+
+FeText* FePresent::cb_add_text(const char *n, int x, int y, int w, int h )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	FeText *ret = fep->add_text( n, x, y, w, h );
+
+	// Add the text to the "fe.obj" table in Squirrel
+	//
+	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	obj.SetInstance( obj.GetSize(), ret );
+
+	return ret;
+}
+
+FeText* FePresent::cb_add_text(const char *n, int x, int y )
+{
+	return cb_add_text( n, x, y, 0, 0 );
+}
+
+FeText* FePresent::cb_add_text(const char *n )
+{
+	return cb_add_text( n, 0, 0, 0, 0 );
+}
+
+FeListBox* FePresent::cb_add_listbox(int x, int y, int w, int h )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	FeListBox *ret = fep->add_listbox( x, y, w, h );
+
+	// Add the listbox to the "fe.obj" table in Squirrel
+	//
+	Sqrat::Object fe ( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	obj.SetInstance( obj.GetSize(), ret );
+
+	return ret;
+}
+
+FeScriptSound* FePresent::cb_add_sound( const char *s )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	return fep->add_sound( s );
+	//
+	// We assume the script will keep a reference to the sound
+	//
+}
+
+void FePresent::cb_add_ticks_callback( const char *n )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	fep->add_ticks_callback( n );
+}
+
+bool FePresent::cb_is_keypressed( int k )
+{
+	return sf::Keyboard::isKeyPressed( (sf::Keyboard::Key)k );
+}
+
+bool FePresent::cb_is_joybuttonpressed( int num, int b )
+{
+	return sf::Joystick::isButtonPressed( num, b );
+}
+
+float FePresent::cb_get_joyaxispos( int num, int a )
+{
+	return sf::Joystick::getAxisPosition( num, (sf::Joystick::Axis)a );
+}
+
+void FePresent::do_nut( const char *script_file )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FeSettings *fes = fep->get_fes();
+
+	std::string path = fes->get_current_layout_dir();
+	path += script_file;
+
+	if ( !file_exists( path ) )
+	{
+		std::cout << "File not found: " << path << std::endl;
+	}
+	else
+	{
+		try
+		{
+			Sqrat::Script sc;
+			sc.CompileFile( path );
+			sc.Run();
+		}
+		catch( Sqrat::Exception e )
+		{
+			std::cout << "Script Error in " << path
+				<< " - " << e.Message() << std::endl;
+		}
+	}
+}
+
+void FePresent::flag_redraw()
+{
+	m_redrawTriggered=true;
+}
+
+void FePresent::vm_close()
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	if ( vm )
+	{
+		sq_close( vm );
+		Sqrat::DefaultVM::Set( NULL );
+	}
+}
+
+void FePresent::vm_init()
+{
+	vm_close();
+	HSQUIRRELVM vm = sq_open( 1024 );
+	sq_setprintfunc( vm, printFunc, printFunc );
+	sq_pushroottable( vm );
+	sq_setforeignptr( vm, this );
+
+#ifdef ENABLE_SCRIPT_SYSTEM_ACCESS
+	sqstd_register_bloblib( vm );
+	sqstd_register_iolib( vm );
+	sqstd_register_systemlib( vm );
+#endif
+
+	sqstd_register_mathlib( vm );
+	sqstd_register_stringlib( vm );
+
+#ifdef FE_DEBUG
+	sqstd_seterrorhandlers( vm );
+#endif
+
+	Sqrat::DefaultVM::Set( vm );
+}
+
+
+void FePresent::vm_on_new_layout( const std::string &file )
+{
+	using namespace Sqrat;
+
+	vm_close();
+
+	// Squirrel VM gets reinitialized on each layout
+	//
+	vm_init();
+
+	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+
+	// Set fe-related constants
+	//
+	ConstTable()
+		.Const( _SC("FeVersion"), FE_VERSION)
+		.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
+		.Const( _SC("ScreenWidth"), (int)vm.width )
+		.Const( _SC("ScreenHeight"), (int)vm.height )
+		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
+		.Enum( _SC("Style"), Enumeration()
+			.Const( _SC("Regular"), sf::Text::Regular )
+			.Const( _SC("Bold"), sf::Text::Bold )
+			.Const( _SC("Italic"), sf::Text::Italic )
+			.Const( _SC("Underlined"), sf::Text::Underlined )
+			)
+		.Enum( _SC("Align"), Enumeration()
+			.Const( _SC("Left"), FeTextPrimative::Left )
+			.Const( _SC("Centre"), FeTextPrimative::Centre )
+			.Const( _SC("Right"), FeTextPrimative::Right )
+			)
+		.Enum( _SC("RotateScreen"), Enumeration()
+			.Const( _SC("None"), FeSettings::RotateNone )
+			.Const( _SC("Right"), FeSettings::RotateRight )
+			.Const( _SC("Flip"), FeSettings::RotateFlip )
+			.Const( _SC("Left"), FeSettings::RotateLeft )
+			)
+		.Enum( _SC("Axis"), Enumeration()
+			.Const( _SC("X"), sf::Joystick::X )
+			.Const( _SC("Y"), sf::Joystick::Y )
+			.Const( _SC("Z"), sf::Joystick::Z )
+			.Const( _SC("R"), sf::Joystick::R )
+			.Const( _SC("U"), sf::Joystick::U )
+			.Const( _SC("V"), sf::Joystick::V )
+			.Const( _SC("PovX"), sf::Joystick::PovX )
+			.Const( _SC("PovY"), sf::Joystick::PovY )
+			)
+		;
+
+	Enumeration keys;
+	int i=0;
+	while ( FeInputMap::keyStrings[i] != NULL )
+	{
+		keys.Const( FeInputMap::keyStrings[i], i );
+		i++;
+	}
+
+	ConstTable().Enum( _SC("Key"), keys);
+
+	//
+	// Define classes for fe objects that get exposed to squirrel
+	//
+
+	// Base Presentable Object Class
+	//
+	RootTable().Bind( _SC("Presentable"), 
+		Class<FeBasePresentable, NoConstructor>()
+		.Prop(_SC("x"), &FeBasePresentable::get_x, &FeBasePresentable::set_x )
+		.Prop(_SC("y"), &FeBasePresentable::get_y, &FeBasePresentable::set_y )
+		.Prop(_SC("width"), 
+			&FeBasePresentable::get_width, &FeBasePresentable::set_width )
+		.Prop(_SC("height"), 
+			&FeBasePresentable::get_height, &FeBasePresentable::set_height )
+		.Prop(_SC("rotation"), 
+			&FeBasePresentable::getRotation, &FeBasePresentable::setRotation )
+		.Prop(_SC("red"), &FeBasePresentable::get_r, &FeBasePresentable::set_r )
+		.Prop(_SC("green"), &FeBasePresentable::get_g, &FeBasePresentable::set_g )
+		.Prop(_SC("blue"), &FeBasePresentable::get_b, &FeBasePresentable::set_b )
+		.Prop(_SC("alpha"), &FeBasePresentable::get_a, &FeBasePresentable::set_a )
+		.Prop(_SC("index_offset"), &FeBasePresentable::getIndexOffset, &FeBasePresentable::setIndexOffset )
+	);
+
+	RootTable().Bind( _SC("Image"), 
+		DerivedClass<FeImage, FeBasePresentable, NoConstructor>()
+		.Prop(_SC("shear_x"), &FeImage::get_shear_x, &FeImage::set_shear_x )
+		.Prop(_SC("shear_y"), &FeImage::get_shear_y, &FeImage::set_shear_y )
+		.Prop(_SC("texture_width"), &FeImage::get_texture_width )
+		.Prop(_SC("texture_height"), &FeImage::get_texture_height )
+		.Prop(_SC("subimg_x"), &FeImage::get_subimg_x, &FeImage::set_subimg_x )
+		.Prop(_SC("subimg_y"), &FeImage::get_subimg_y, &FeImage::set_subimg_y )
+		.Prop(_SC("subimg_width"), &FeImage::get_subimg_width, &FeImage::set_subimg_width )
+		.Prop(_SC("subimg_height"), &FeImage::get_subimg_height, &FeImage::set_subimg_height )
+		.Prop(_SC("movie_enabled"), &FeImage::getMovieEnabled, &FeImage::setMovieEnabled )
+	);
+
+	RootTable().Bind( _SC("Text"), 
+		DerivedClass<FeText, FeBasePresentable, NoConstructor>()
+		.Prop(_SC("msg"), &FeText::get_string, &FeText::set_string )
+		.Prop(_SC("bg_red"), &FeText::get_bgr, &FeText::set_bgr )
+		.Prop(_SC("bg_green"), &FeText::get_bgg, &FeText::set_bgg )
+		.Prop(_SC("bg_blue"), &FeText::get_bgb, &FeText::set_bgb )
+		.Prop(_SC("bg_alpha"), &FeText::get_bga, &FeText::set_bga )
+		.Prop(_SC("charsize"), &FeText::get_charsize, &FeText::set_charsize )
+		.Prop(_SC("style"), &FeText::get_style, &FeText::set_style )
+		.Prop(_SC("align"), &FeText::get_align, &FeText::set_align )
+	);
+
+	RootTable().Bind( _SC("ListBox"), 
+		DerivedClass<FeListBox, FeBasePresentable, NoConstructor>()
+		.Prop(_SC("bg_red"), &FeListBox::get_bgr, &FeListBox::set_bgr )
+		.Prop(_SC("bg_green"), &FeListBox::get_bgg, &FeListBox::set_bgg )
+		.Prop(_SC("bg_blue"), &FeListBox::get_bgb, &FeListBox::set_bgb )
+		.Prop(_SC("bg_alpha"), &FeListBox::get_bga, &FeListBox::set_bga )
+		.Prop(_SC("sel_red"), &FeListBox::get_selr, &FeListBox::set_selr )
+		.Prop(_SC("sel_green"), &FeListBox::get_selg, &FeListBox::set_selg )
+		.Prop(_SC("sel_blue"), &FeListBox::get_selb, &FeListBox::set_selb )
+		.Prop(_SC("sel_alpha"), &FeListBox::get_sela, &FeListBox::set_sela )
+		.Prop(_SC("selbg_red"), &FeListBox::get_selbgr, &FeListBox::set_selbgr )
+		.Prop(_SC("selbg_green"), &FeListBox::get_selbgg, &FeListBox::set_selbgg )
+		.Prop(_SC("selbg_blue"), &FeListBox::get_selbgb, &FeListBox::set_selbgb )
+		.Prop(_SC("selbg_alpha"), &FeListBox::get_selbga, &FeListBox::set_selbga )
+		.Prop(_SC("charsize"), &FeListBox::get_charsize, &FeListBox::set_charsize )
+		.Prop(_SC("style"), &FeListBox::get_style, &FeListBox::set_style )
+		.Prop(_SC("align"), &FeListBox::get_align, &FeListBox::set_align )
+		// TODO: selstyle
+	);
+
+	RootTable().Bind( _SC("LayoutGlobals"), Class <FePresent, NoConstructor>()
+		.Prop( _SC("width"), &FePresent::get_layout_width, &FePresent::set_layout_width )
+		.Prop( _SC("height"), &FePresent::get_layout_height, &FePresent::set_layout_height )
+		.Prop( _SC("font"), &FePresent::get_layout_font, &FePresent::set_layout_font )
+		.Prop( _SC("orient"), &FePresent::get_layout_orient, &FePresent::set_layout_orient )
+	);
+
+	RootTable().Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
+		.Func( _SC("load"), &FeScriptSound::load )
+		.Func( _SC("play"), &FeScriptSound::play )
+	);
+
+	// All frontend functionality is in the "fe" table in Squirrel
+	//
+	Table fe;
+	fe.Overload<FeImage* (*)(const char *, int, int, int, int)>(_SC("add_image"), &FePresent::cb_add_image);
+	fe.Overload<FeImage* (*)(const char *, int, int)>(_SC("add_image"), &FePresent::cb_add_image);
+	fe.Overload<FeImage* (*)(const char *)>(_SC("add_image"), &FePresent::cb_add_image);
+
+	fe.Overload<FeImage* (*)(const char *, int, int, int, int)>(_SC("add_artwork"), &FePresent::cb_add_artwork);
+	fe.Overload<FeImage* (*)(const char *, int, int)>(_SC("add_artwork"), &FePresent::cb_add_artwork);
+	fe.Overload<FeImage* (*)(const char *)>(_SC("add_artwork"), &FePresent::cb_add_artwork);
+
+	fe.Overload<FeImage* (*)(const char *)>(_SC("add_artwork"), &FePresent::cb_add_artwork);
+	
+	fe.Func<FeImage* (*)(FeImage *)>(_SC("add_clone"), &FePresent::cb_add_clone);
+
+	fe.Overload<FeText* (*)(const char *, int, int, int, int)>(_SC("add_text"), &FePresent::cb_add_text);
+	fe.Overload<FeText* (*)(const char *, int, int)>(_SC("add_text"), &FePresent::cb_add_text);
+	fe.Overload<FeText* (*)(const char *)>(_SC("add_text"), &FePresent::cb_add_text);
+
+	fe.Func<FeListBox* (*)(int, int, int, int)>(_SC("add_listbox"), &FePresent::cb_add_listbox);
+	fe.Func<FeScriptSound* (*)(const char *)>(_SC("add_sound"), &FePresent::cb_add_sound);
+	fe.Func<void (*)(const char *)>(_SC("add_ticks_callback"), &FePresent::cb_add_ticks_callback);
+	fe.Func<bool (*)(int)>(_SC("is_keypressed"), &FePresent::cb_is_keypressed);
+	fe.Func<bool (*)(int, int)>(_SC("is_joybuttonpressed"), &FePresent::cb_is_joybuttonpressed);
+	fe.Func<float (*)(int, int)>(_SC("get_joyaxispos"), &FePresent::cb_get_joyaxispos);
+	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FePresent::do_nut);
+
+	fe.SetInstance( _SC("layout"), this );
+
+	// Each presentation object gets an instance in the
+	// "obj" table available in Squirrel
+	//
+	Table obj;
+	fe.Bind( _SC("obj"), obj );
+	RootTable().Bind( _SC("fe"),  fe );
+
+	//
+	// Now run the global script, followed by the layout script
+	//
+	std::string global = m_feSettings->get_layout_global_file();
+	if ( file_exists( global ) )
+	{
+		try
+		{
+			Script sc;
+			sc.CompileFile( global );
+			sc.Run();
+		}
+		catch( Exception e )
+		{
+			std::cout << "Script Error in " << global
+				<< " - " << e.Message() << std::endl;
+		}
+	}
+
+	if ( file_exists( file ) )
+	{
+		try
+		{
+			Script sc;
+			sc.CompileFile( file );
+			sc.Run();
+		}
+		catch( Exception e )
+		{
+			std::cout << "Script Error in " << file 
+				<< " - " << e.Message() << std::endl;
+		}
+	}
+}
+
+bool FePresent::vm_on_tick()
+{
+	using namespace Sqrat;
+	bool retval = false;
+
+	for ( std::vector<std::string>::iterator itr = m_ticksList.begin();
+		itr != m_ticksList.end(); ++itr )
+	{
+		try 
+		{
+			Function func( RootTable(), (*itr).c_str());
+
+			if ( !func.IsNull() )
+			{
+				m_redrawTriggered = false;
+				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
+				retval |= m_redrawTriggered;
+			}
+		}
+		catch( Exception e )
+		{
+			std::cout << "Script Error: " << e.Message() << std::endl;
+		}
+	}
+
+	// We may need to reinitialize the listbox based on what happened in
+	// the script.
+	//
+	if ( m_listBox )
+		m_listBox->init();
+
+	return retval;
+}
+
+void script_do_update( FeBasePresentable *bp )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	if ( fep )
+		bp->on_new_selection( fep->get_fes() );
+}
+
+void script_do_update( FeTextureContainer *tc )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	if ( fep )
+		tc->on_new_selection( fep->get_fes() );
+}
+
+void script_flag_redraw()
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	if ( fep )
+		fep->flag_redraw();
 }

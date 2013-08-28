@@ -20,39 +20,48 @@
  *
  */
 
-#ifndef FE_BASE_HPP
-#define FE_BASE_HPP
+#ifndef FE_SOUND_HPP
+#define FE_SOUND_HPP
 
+#include <SFML/Audio.hpp>
 #include <string>
+#include "media.hpp"
+#include "fe_input.hpp"
 
-extern const char *FE_NAME;
-extern const char *FE_COPYRIGHT;
-extern const char *FE_VERSION;
-extern const int FE_VERSION_NUM;
-extern const char *FE_WHITESPACE;
+class FeSettings;
 
-class FeBaseConfigurable
+class FeSoundSystem
 {
-protected:
-	void invalid_setting( 
-			const std::string &filename,
-			const char *base, 
-			const std::string &setting, 
-			const char **valid1,
-			const char **valid2=NULL,
-			const char *label="setting" );
+private:
+#ifdef NO_MOVIE
+	sf::Music m_music;
+#else
+	FeMedia m_music;
+#endif
+	sf::Music m_sound;
+	FeSettings *m_fes;
 
 public:
-	virtual int process_setting( const std::string &setting, 
-								const std::string &value,
-								const std::string &filename )=0;
+	FeSoundSystem( FeSettings * );
+	~FeSoundSystem();
+
+	void sound_event( FeInputMap::Command );
+	void play_ambient();
+	void update_volumes();
+	void stop();
+	void tick();
 };
 
-class FeFileConfigurable : public FeBaseConfigurable
+class FeScriptSound
 {
+private:
+   sf::SoundBuffer m_buffer;
+   sf::Sound m_sound;
+
 public:
-	bool load_from_file( const std::string &filename,
-								const char *sep=FE_WHITESPACE );
+   bool load( const std::string & );
+	void play();
+	void set_volume( int );
 };
 
 #endif

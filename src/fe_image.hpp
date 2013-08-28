@@ -24,161 +24,108 @@
 #define FE_IMAGE_HPP
 
 #include <SFML/Graphics.hpp>
-#include "fe_base.hpp"
-#include "media.hpp"
+#include "fe_presentable.hpp"
 
 class FeSettings;
+class FeMedia;
+class FeImage;
 
-//
-// Class representing a static image used in the presentation
-// This is a base class for artworks and for movies
-//
-class FeImage : public sf::Drawable, public FeBaseConfigurable, public FeBasePresentable
+class FeTextureContainer
 {
-private:
-	int m_index_offset;
+friend class FeImage;
 
+public:
+	enum MovieStatus
+	{
+		Delayed,			// short delay so that we don't play movie
+							// if the user is just scrolling past
+		Loading,			// processing first frames but display not ready
+		Playing,			// play movie
+		NoPlay,			// don't play this movie, show image instead
+		LockNoPlay		// don't ever play a movie
+	};
+
+	FeTextureContainer();
+	FeTextureContainer( bool is_artwork, const std::string &name );
+	~FeTextureContainer();
+
+	const sf::Texture &load( const std::string & );
+	const sf::Texture &get_texture();
+
+	void on_new_selection( FeSettings *feSettings );
+	bool tick( FeSettings *feSettings ); // returns true if redraw required
+	void set_play_state( bool play );
+	void set_vol( float vol );
+
+private:
+	sf::Texture m_texture;
+	std::string m_name;
+	int m_index_offset;
+	bool m_is_artwork;
+	FeMedia *m_movie;
+	MovieStatus m_movie_status;
+	std::vector< FeImage * > m_images;
+};
+
+class FeImage : public sf::Drawable, public FeBasePresentable
+{
 protected:
-	sf::Texture m_texture;  
+	FeTextureContainer *m_tex;
 	sf::Sprite m_sprite;
-	sf::Vector2i m_size;
+	sf::Vector2f m_size;
 	sf::Vector2i m_shear;
 
 	void scale();
-	int get_index_offset();
 
 	// Override from base class:
-	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
 public:
-	FeImage();
+	FeImage( FeTextureContainer * );
+	FeImage( FeImage * ); // clone the given image (texture is not copied)
 	~FeImage();
 
-	void loadFromFile( const std::string &filename );
-	sf::Vector2f getSize();
-	sf::Vector2f getPosition();
-	float getRotation();
-	sf::Color getColor();
-	void setSize( int, int );
-	void setPosition( int, int );
-	void setColor( sf::Color );
+	void loadFromFile( const std::string & );
+
+	const sf::Vector2f &getSize() const;
+	void setSize( const sf::Vector2f &s );
+	void setSize( int w, int h ) { setSize( sf::Vector2f( w, h ) ); };
+	const sf::Vector2f &getPosition() const;
+	void setPosition( const sf::Vector2f & );
+	void setPosition( int x, int y ) { setPosition( sf::Vector2f( x, y ));};
+	float getRotation() const;
+	void setRotation( float );
+	const sf::Color &getColor() const;
+	void setColor( const sf::Color & );
+	int getIndexOffset() const;
+	void setIndexOffset(int);
+	const sf::Vector2u getTextureSize() const;
+	const sf::IntRect &getTextureRect() const;
+	void setTextureRect( const sf::IntRect &);
+	bool getMovieEnabled() const;
+	void setMovieEnabled( bool );
 
 	// Overrides from base class:
 	//
-	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &fn );
-
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
+	void texture_changed();
+
+	int get_shear_x();
+	int get_shear_y();
+	void set_shear_x( int x );
+	void set_shear_y( int y );
+	int get_texture_width();
+	int get_texture_height();
+	int get_subimg_x();
+	int get_subimg_y();
+	int get_subimg_width();
+	int get_subimg_height();
+	void set_subimg_x( int x );
+	void set_subimg_y( int y );
+	void set_subimg_width( int w );
+	void set_subimg_height( int h );
 };
 
-//
-// Class representing an artwork
-//
-class FeArtwork : public FeImage
-{
-private:
-	std::string m_artwork_label;
-
-public:
-	FeArtwork( const std::string &artwork_label );
-	~FeArtwork();
-
-	// Overrides from base class:
-	//
-	void on_new_selection( FeSettings * );
-};
-
-#ifndef NO_MOVIE
-
-//
-// Class representing a movie
-//
-class FeMovie : public FeArtwork
-{
-private:
-	enum Status
-	{
-		Loading,		// short loading time so that we don't play movie 
-						// if the user is just scrolling past
-
-		Playing,		// play movie
-		NoPlay		// don't play this movie, show image instead
-	};
-
-	FeMedia *m_movie;
-	Status m_status;
-
-	// Overridden from base class
-	//
-	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-
-public:
-	FeMovie();
-	FeMovie( const FeMovie & );
-	~FeMovie();
-
-	void set_play_state( bool );
-	void set_vol( float );
-
-	// Overrides from base class
-	//
-	bool tick( FeSettings * ); // returns true if display refresh required
-	void on_new_selection( FeSettings * );
-};
-
-#endif // NO_MOVIE
-
-//
-// Class representing a layout animation
-//
-class FeAnimate : public FeImage
-{
-private:
-
-#ifndef NO_MOVIE
-	FeMedia m_animate;
-#endif
-
-	int m_freq;
-	bool m_playing;
-
-	// Overridden from base class
-	//
-	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-
-public:
-	FeAnimate( const std::string &filename );
-
-	void set_play_state( bool );
-	void set_vol( float );
-	bool tick( FeSettings * ); // returns true if display refresh required
-};
-
-
-class FeScreenSaver : public sf::Drawable
-{
-public:
-	FeScreenSaver( FeSettings *fes );
-
-	void tick();
-	void enable( bool );
-	bool is_enabled() { return m_is_enabled; }
-
-private:
-	bool m_is_enabled;
-	bool m_show_movie;
-	FeImage m_image;
-	sf::Clock m_timer;	
-#ifndef NO_MOVIE
-	FeMedia m_movie;
-#endif
-	FeSettings *m_feSettings;
-
-	void prep_next();
-
-	// override from base
-	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
-};
+void script_do_update( FeTextureContainer * );
 
 #endif

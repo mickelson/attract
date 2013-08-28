@@ -89,8 +89,10 @@ const char *FE_FONT_EXTENSIONS[]		=
 
 const char *FE_CFG_FILE					= "attract.cfg";
 const char *FE_STATE_FILE				= "attract.am";
+const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
+const char *FE_LAYOUT_GLOBAL_FILE 	= "global.nut";
 const char *FE_RESOURCE_BASEFILE		= "locale$1.msg";
-const char *FE_LAYOUT_FILE_EXTENSION	= ".cfg";
+const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
@@ -309,7 +311,7 @@ void FeSettings::init_list()
 		std::cout << "Error opening romlist: " << filename << std::endl;
 }
 
-void FeSettings::save_state()
+void FeSettings::save_state() const
 {
 	std::string filename( m_config_path );
 	confirm_directory( m_config_path, "" );
@@ -321,7 +323,7 @@ void FeSettings::save_state()
 	{
 		outfile << m_current_list << std::endl;
 
-		for ( std::deque<FeListInfo>::iterator itl=m_lists.begin();
+		for ( std::deque<FeListInfo>::const_iterator itl=m_lists.begin();
 					itl != m_lists.end(); ++itl )
 			outfile << (*itl).state_as_output() << std::endl;
 
@@ -417,16 +419,16 @@ void FeSettings::set_current_rom(int r)
 	m_lists[ m_current_list ].set_current_rom_index( r );
 }
 
-void FeSettings::dump()
+void FeSettings::dump() const
 {
 	std::cout << "*** Dump of available lists:" << std::endl;
 
-	for ( std::deque<FeListInfo>::iterator itl=m_lists.begin();
+	for ( std::deque<FeListInfo>::const_iterator itl=m_lists.begin();
 			itl != m_lists.end(); ++itl )
 			(*itl).dump();
 
 	std::cout << "*** Dump of available emulators:" << std::endl;
-	for ( std::deque<FeEmulatorInfo>::iterator ite=m_emulators.begin();
+	for ( std::deque<FeEmulatorInfo>::const_iterator ite=m_emulators.begin();
 			ite != m_emulators.end(); ++ite )
 			(*ite).dump();
 
@@ -434,13 +436,13 @@ void FeSettings::dump()
 	std::cout << "*** Dump of current rom list:" << std::endl;
 
 	if ( !m_rl.empty() )
-		for ( std::deque<FeRomInfo>::iterator itr=m_rl.list.begin();
+		for ( std::deque<FeRomInfo>::const_iterator itr=m_rl.list.begin();
 			itr != m_rl.list.end(); ++itr )
 			(*itr).dump();
 
 	std::cout << "*** Dump of font paths: " << std::endl;
 	if ( !m_font_paths.empty() )
-		for ( std::vector<std::string>::iterator its=m_font_paths.begin();
+		for ( std::vector<std::string>::const_iterator its=m_font_paths.begin();
 			its != m_font_paths.end(); ++its )
 			std::cout << "[" << (*its) << "]";
 	std::cout << std::endl;
@@ -469,7 +471,15 @@ std::string FeSettings::get_rom_info( int offset, FeRomInfo::Index index ) const
 	return m_rl[rom].get_info( index );
 }
 
-std::string FeSettings::get_current_layout_file()
+std::string FeSettings::get_screensaver_file() const
+{
+	std::string path = m_config_path;
+	path += FE_LAYOUT_SUBDIR;
+	path += FE_SCREENSAVER_FILE;
+	return path;
+}
+
+std::string FeSettings::get_current_layout_file() const
 {
 	if ( m_current_list < 0 )
 		return "";
@@ -504,7 +514,14 @@ std::string FeSettings::get_current_layout_file()
 	return path;
 }
 
-std::string FeSettings::get_current_layout_dir()
+std::string FeSettings::get_layout_global_file() const
+{
+	std::string path = get_current_layout_dir();
+	path += FE_LAYOUT_GLOBAL_FILE;
+	return path;
+}
+
+std::string FeSettings::get_current_layout_dir() const
 {
 	if ( m_current_list < 0 )
 		return "";
@@ -517,7 +534,7 @@ std::string FeSettings::get_current_layout_dir()
 	return layout_dir;
 }
 
-const std::string &FeSettings::get_config_dir()
+const std::string &FeSettings::get_config_dir() const
 {
 	return m_config_path;
 }
@@ -594,7 +611,7 @@ void FeSettings::toggle_layout()
 	m_lists[ m_current_list ].set_current_layout_file( layout_file );
 }
 
-FeInputMap::Command FeSettings::map( sf::Event e )
+FeInputMap::Command FeSettings::map( sf::Event e ) const
 {
 	return m_inputmap.map( e );
 }
@@ -605,7 +622,7 @@ void FeSettings::init_config_map_input()
 }
 
 bool FeSettings::config_map_input( sf::Event e, std::string &s,
-				FeInputMap::Command &conflict )
+				FeInputMap::Command &conflict ) const
 {
 	return m_inputmap.config_map_input( e, s, conflict );
 }
@@ -615,17 +632,17 @@ void FeSettings::set_volume( FeSoundInfo::SoundType t, const std::string &v )
 	m_sounds.set_volume( t, v );
 }
 
-int FeSettings::get_set_volume( FeSoundInfo::SoundType t )
+int FeSettings::get_set_volume( FeSoundInfo::SoundType t ) const
 {
 	return m_sounds.get_set_volume( t );
 }
 
-int FeSettings::get_play_volume( FeSoundInfo::SoundType t )
+int FeSettings::get_play_volume( FeSoundInfo::SoundType t ) const
 {
 	return m_sounds.get_play_volume( t );
 }
 
-bool FeSettings::get_mute()
+bool FeSettings::get_mute() const
 {
 	return m_sounds.get_mute();
 }
@@ -635,7 +652,7 @@ void FeSettings::set_mute( bool m )
 	m_sounds.set_mute( m );
 }
 
-bool FeSettings::get_sound_file( FeInputMap::Command c, std::string &s, bool full_path )
+bool FeSettings::get_sound_file( FeInputMap::Command c, std::string &s, bool full_path ) const
 {
 	std::string filename;
 	if ( m_sounds.get_sound( c, filename ) )
@@ -662,7 +679,7 @@ void FeSettings::set_sound_file( FeInputMap::Command c, const std::string &s )
 int FeSettings::run()
 {
 	std::string command, args, rom_path, rom;
-	FeEmulatorInfo *emu = get_current_emulator();
+	const FeEmulatorInfo *emu = get_current_emulator();
 
 	if (( emu == NULL ) || (m_rl.empty()))
 		return -1;
@@ -683,7 +700,7 @@ int FeSettings::run()
 	return run_program( command, args );
 }
 
-int FeSettings::exit_command()
+int FeSettings::exit_command() const
 {
 	int r( -1 );
 	if ( !m_exit_command.empty() )
@@ -692,12 +709,12 @@ int FeSettings::exit_command()
 	return r;
 }
 
-int FeSettings::get_current_display_list( std::vector<std::string> &l )
+int FeSettings::get_current_display_list( std::vector<std::string> &l ) const
 {
 	l.clear();
 	l.reserve( m_rl.size() );
 
-	for ( std::deque<FeRomInfo>::iterator itr=m_rl.list.begin();
+	for ( std::deque<FeRomInfo>::const_iterator itr=m_rl.list.begin();
 			itr != m_rl.list.end(); ++itr )
 	{
 		l.push_back( (*itr).get_info( FeRomInfo::Title ) );
@@ -802,7 +819,7 @@ void FeSettings::internal_get_art_file(
 		std::string &ap,				// artwork/movie path
 		int curr_rom,				// rom index
 		const std::string &artlabel,
-		bool is_movie )
+		bool is_movie ) const
 {
 	std::string layout_path = get_current_layout_dir();
 
@@ -853,16 +870,6 @@ void FeSettings::internal_get_art_file(
 	}
 }
 
-bool FeSettings::confirm_artwork( const std::string &artlabel )
-{
-	std::string artpath;
-	FeEmulatorInfo *cur_emu_info = get_current_emulator();
-	if ( cur_emu_info != NULL )
-		return cur_emu_info->get_artwork( artlabel, artpath );
-
-	return false;
-}
-
 void FeSettings::get_art_file( int offset,
 					const std::string &artlabel,
 					std::vector<std::string> &filelist )
@@ -903,7 +910,7 @@ std::string FeSettings::get_movie_artwork()
 }
 
 bool FeSettings::get_font_file( std::string &fontpath,
-				const std::string &fontname )
+				const std::string &fontname ) const
 {
 	if ( fontname.empty() )
 	{
@@ -949,7 +956,7 @@ bool FeSettings::get_font_file( std::string &fontpath,
 #endif
 
 	std::vector<std::string> path_list;
-	std::vector<std::string>::iterator its;
+	std::vector<std::string>::const_iterator its;
 
 	//
 	// m_font_paths contains the configured paths (which may need further
@@ -981,22 +988,22 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	return false;
 }
 
-FeSettings::RotationState FeSettings::get_autorotate()
+FeSettings::RotationState FeSettings::get_autorotate() const
 {
 	return m_autorotate;
 }
 
-int FeSettings::get_screen_saver_timeout()
+int FeSettings::get_screen_saver_timeout() const
 {
 	return m_ssaver_time;
 }
 
-void FeSettings::get_list_names( std::vector<std::string> &list )
+void FeSettings::get_list_names( std::vector<std::string> &list ) const
 {
 	list.clear();
 	list.reserve( m_lists.size() );
 
-	for ( std::deque<FeListInfo>::iterator itr=m_lists.begin();
+	for ( std::deque<FeListInfo>::const_iterator itr=m_lists.begin();
 			itr < m_lists.end(); ++itr )
 		list.push_back( (*itr).get_info( FeListInfo::Name ) );
 }
@@ -1133,7 +1140,7 @@ void FeSettings::delete_list( const std::string &n )
 	}
 }
 
-void FeSettings::get_mappings( std::vector< FeMapping > &mappings )
+void FeSettings::get_mappings( std::vector< FeMapping > &mappings ) const
 {
 	m_inputmap.get_mappings( mappings );
 }
@@ -1143,7 +1150,7 @@ void FeSettings::set_mapping( const FeMapping &mapping )
 	m_inputmap.set_mapping( mapping );
 }
 
-void FeSettings::save()
+void FeSettings::save() const
 {
 	confirm_directory( m_config_path, FE_ROMLIST_SUBDIR );
 	confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
@@ -1160,10 +1167,10 @@ void FeSettings::save()
 	std::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
-		outfile << "# Generated by " << FE_NAME_AND_VERSION << std::endl
+		outfile << "# Generated by " << FE_NAME << " " << FE_VERSION << std::endl
          << "#" << std::endl;
 
-		for ( std::deque<FeListInfo>::iterator it=m_lists.begin();
+		for ( std::deque<FeListInfo>::const_iterator it=m_lists.begin();
 						it != m_lists.end(); ++it )
 		{
 			(*it).save( outfile );
@@ -1188,13 +1195,13 @@ void FeSettings::save()
 	}
 }
 
-void FeSettings::get_resource( const std::string &token, std::string &str )
+void FeSettings::get_resource( const std::string &token, std::string &str ) const
 {
 	m_resourcemap.get_resource( token, str );
 }
 
 void FeSettings::get_resource( const std::string &token,
-					const std::string &rep, std::string &str )
+					const std::string &rep, std::string &str ) const
 {
 	m_resourcemap.get_resource( token, str );
 
@@ -1202,7 +1209,7 @@ void FeSettings::get_resource( const std::string &token,
 		perform_substitution( str, "$1", rep );
 }
 
-int FeSettings::lists_count()
+int FeSettings::lists_count() const
 {
 	return m_lists.size();
 }

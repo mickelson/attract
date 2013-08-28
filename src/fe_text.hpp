@@ -24,51 +24,76 @@
 #define FE_TEXT_HPP
 
 #include <SFML/Graphics.hpp>
-#include "fe_base.hpp"
-#include "fe_info.hpp"
+#include "fe_presentable.hpp"
 #include "tp.hpp"
 
 class FeSettings;
 
-//
-// Base class for FeText and FeListBox
-//
-class FeTextConfigurable : public FeBaseConfigurable, public FeTextPrimative
+class FeBaseText : public FeBasePresentable
 {
-protected:
-	FeTextConfigurable();
-	FeTextConfigurable( const sf::Font *font,
+public:
+	FeBaseText();
+	FeBaseText(
+		const sf::Font *font,
 		const sf::Color &colour,
 		const sf::Color &bgcolour,
 		unsigned int charactersize,
-		Alignment align=Centre );
+		FeTextPrimative::Alignment align );
 
-	static const char *baseSettings[];
-	static const char *styleTokens[];
+	const sf::Font *getFont() const;
+	void setFont( const sf::Font & );
+	const sf::Vector2f &getPosition() const;
+	void setPosition( const sf::Vector2f & );
+	void setPosition( int x, int y ) {return setPosition(sf::Vector2f(x,y));};
+	const sf::Vector2f &getSize() const;
+	void setSize( const sf::Vector2f & );
+	void setSize( int w, int h ) {return setSize(sf::Vector2f(w,h));};
+	float getRotation() const;
+	void setRotation( float );
+	const sf::Color &getColor() const;
+	void setColor( const sf::Color & );
+	unsigned int getCharacterSize() const;
 
-public:
-   int process_setting( const std::string &setting,
-		const std::string &value,
-		const std::string &fn );
+protected:
+	FeTextPrimative m_base_text;
 };
 
 //
 // Text (w/ background) to display info on screen
 //
-class FeText : public FeTextConfigurable, public FeBasePresentable
+class FeText : public FeBaseText, public sf::Drawable
 {
 public:
 	FeText( const std::string &str );
-
-	// Override from base class:
-	int process_setting( const std::string &setting,
-		const std::string &value,
-		const std::string &fn );
 
 	// Overrides from base class:
 	//
 	void on_new_selection( FeSettings * );
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
+
+	int getIndexOffset() const;
+	void setIndexOffset( int );
+
+	const char *get_string();
+	void set_string(const char *s);
+
+	int get_bgr();
+	int get_bgg();
+	int get_bgb();
+	int get_bga();
+	int get_charsize();
+	int get_style();
+	int get_align();
+	void set_bgr(int r);
+	void set_bgg(int g);
+	void set_bgb(int b);
+	void set_bga(int a);
+	void set_charsize(int s);
+	void set_style(int s);
+	void set_align(int a);
+
+protected:
+	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
 
 private:
 	std::string m_string;
@@ -78,7 +103,7 @@ private:
 //
 // The text game list
 //
-class FeListBox : public FeTextConfigurable, public FeBasePresentable
+class FeListBox : public FeBaseText, public sf::Drawable
 {
 public:
 	FeListBox();
@@ -89,8 +114,10 @@ public:
 			const sf::Color &selcolour,
 			const sf::Color &selbgcolour, 
 			unsigned int characterSize,
-			Alignment align=Centre );
+			FeTextPrimative::Alignment align=FeTextPrimative::Centre );
 
+	int getIndexOffset() const;
+	void setIndexOffset( int );
 	void setSelColor( sf::Color );
 	void setSelBgColor( sf::Color );
 	void setSelStyle( int );
@@ -106,14 +133,41 @@ public:
 
 	// Overrides from base class:
 	//
-	int process_setting( const std::string &setting,
-		const std::string &value,
-		const std::string &fn );
-
 	void on_new_list( FeSettings * );
 	void on_new_selection( FeSettings * );
 
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
+
+	int get_bgr();
+	int get_bgg();
+	int get_bgb();
+	int get_bga();
+	int get_charsize();
+	int get_style();
+	int get_align();
+	void set_bgr(int r);
+	void set_bgg(int g);
+	void set_bgb(int b);
+	void set_bga(int a);
+	void set_charsize(int s);
+	void set_style(int s);
+	void set_align(int a);
+	int get_selr();
+	int get_selg();
+	int get_selb();
+	int get_sela();
+	void set_selr(int r);
+	void set_selg(int g);
+	void set_selb(int b);
+	void set_sela(int a);
+	int get_selbgr();
+	int get_selbgg();
+	int get_selbgb();
+	int get_selbga();
+	void set_selbgr(int r);
+	void set_selbgg(int g);
+	void set_selbgb(int b);
+	void set_selbga(int a);
 
 private:
 	std::vector<std::string> m_displayList;
@@ -122,6 +176,7 @@ private:
 	sf::Color m_selBg;
 	int m_selStyle;
 	float m_rotation;
+	bool m_needs_init;
 
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
 };

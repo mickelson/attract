@@ -45,8 +45,8 @@ public:
 
 	FeTextPrimative( const FeTextPrimative & );
 
-	void setColor( sf::Color );
-	void setBgColor( sf::Color );
+	void setColor( const sf::Color & );
+	void setBgColor( const sf::Color & );
 
 	void setString( const std::string & );	// does utf-8 conversion!
 
@@ -63,22 +63,25 @@ public:
 	void setFont( const sf::Font & );
 	void setCharacterSize( unsigned int );
 	void setAlignment( Alignment );
-	void setPosition( sf::Vector2f );
-	void setSize( sf::Vector2f );
+	void setPosition( int x, int y ) {return setPosition(sf::Vector2f(x,y));};
+	void setPosition( const sf::Vector2f & );
+	void setSize( int w, int h ) {return setSize(sf::Vector2f(w,h));};
+	void setSize( const sf::Vector2f & );
 	void setStyle( int );
 	void setRotation( float );
-	void setOutlineColor( sf::Color );
+	void setOutlineColor( const sf::Color & );
 	void setOutlineThickness( int );
 	void setWordWrap( bool );
 
-	const sf::Font *getFont();
-	sf::Color getColor();
-	sf::Color getBgColor();
-	unsigned int getCharacterSize();
-	Alignment getAlignment();
-	sf::Vector2f getPosition();
-	sf::Vector2f getSize();
-	float getRotation();
+	const sf::Font *getFont() const;
+	const sf::Color &getColor() const;
+	const sf::Color &getBgColor() const;
+	unsigned int getCharacterSize() const;
+	Alignment getAlignment() const;
+	const sf::Vector2f &getPosition() const;
+	const sf::Vector2f &getSize() const;
+	float getRotation() const;
+	int getStyle() const;
 
 private:
 	Alignment m_align;

@@ -152,7 +152,7 @@ const char *FeInputMap::commandDispStrings[] =
 };
 
 std::pair< int, FeInputMap::InputType > 
-FeInputMap::get_map_index( sf::Event e, bool config )
+FeInputMap::get_map_index( sf::Event e, bool config ) const
 {
 	std::pair< int, InputType > index( 0, LAST_INPUT );
 
@@ -267,7 +267,7 @@ FeInputMap::get_map_index( sf::Event e, bool config )
 	return index;
 }
 
-FeInputMap::Command FeInputMap::map( sf::Event e )
+FeInputMap::Command FeInputMap::map( sf::Event e ) const
 {
 	if ( e.type == sf::Event::Closed )
 		return ExitNoMenu;
@@ -276,7 +276,7 @@ FeInputMap::Command FeInputMap::map( sf::Event e )
 	if ( index.second == LAST_INPUT )
 		return LAST_COMMAND;
 
-	std::map< std::pair< int, InputType>,Command>::iterator it;
+	std::map< std::pair< int, InputType>,Command>::const_iterator it;
 	it = m_map.find( index );
 
 	if ( it == m_map.end() )
@@ -297,7 +297,7 @@ FeInputMap::Command FeInputMap::map( sf::Event e )
 	return (*it).second;
 }
 
-void FeInputMap::get_mappings( std::vector< FeMapping > &mappings )
+void FeInputMap::get_mappings( std::vector< FeMapping > &mappings ) const
 {
 	//
 	// Make a mappings entry for each possible command mapping
@@ -310,7 +310,7 @@ void FeInputMap::get_mappings( std::vector< FeMapping > &mappings )
 	//
 	// Now populate the mappings vector with the various input mappings
 	//
-	std::map< std::pair< int, InputType>,Command>::iterator it;
+	std::map< std::pair< int, InputType>,Command>::const_iterator it;
 
 	for ( it=m_map.begin(); it!=m_map.end(); ++it )
 		mappings[ (*it).second ].add_input( (*it).first );
@@ -375,7 +375,7 @@ void FeInputMap::init_config_map_input()
 	sf::Mouse::setPosition( sf::Vector2i( m_cap.reset_x, m_cap.reset_y ) );
 }
 
-bool FeInputMap::config_map_input( sf::Event e, std::string &s, Command &conflict )
+bool FeInputMap::config_map_input( sf::Event e, std::string &s, Command &conflict ) const
 {
 	conflict = LAST_COMMAND;
 	std::pair< int, InputType > index = get_map_index( e, true );
@@ -390,7 +390,7 @@ bool FeInputMap::config_map_input( sf::Event e, std::string &s, Command &conflic
 	//
 	// Now find if there is a conflicting existing mapping
 	//
-	std::map< std::pair< int, InputType>,Command>::iterator it;
+	std::map< std::pair< int, InputType>,Command>::const_iterator it;
 	it = m_map.find( index );
 
 	if ( it == m_map.end() )
@@ -586,9 +586,9 @@ int FeInputMap::process_setting( const std::string &setting,
 	return 0;
 }
 
-void FeInputMap::save( std::ofstream &f )
+void FeInputMap::save( std::ofstream &f ) const
 {
-	std::map< std::pair < int, InputType >, Command >::iterator it;
+	std::map< std::pair < int, InputType >, Command >::const_iterator it;
 
 	for ( it = m_map.begin(); it != m_map.end(); ++it )
 	{
@@ -636,7 +636,7 @@ FeInputMap::Command FeInputMap::string_to_command( const std::string &s )
 }
 
 void FeInputMap::string_to_index( const std::string &s,
-				std::pair< int, InputType > &index )
+				std::pair< int, InputType > &index ) const
 {
 	index.first = 0;
 	index.second = LAST_INPUT;
@@ -753,7 +753,7 @@ void FeSoundInfo::set_volume( SoundType t, const std::string &str )
 	}
 }
 
-int FeSoundInfo::get_set_volume( SoundType t )
+int FeSoundInfo::get_set_volume( SoundType t ) const
 {
 	switch ( t )
 	{
@@ -767,7 +767,7 @@ int FeSoundInfo::get_set_volume( SoundType t )
 	}
 }
 
-int FeSoundInfo::get_play_volume( SoundType t )
+int FeSoundInfo::get_play_volume( SoundType t ) const
 {
 	if ( m_mute )
 		return 0;
@@ -775,7 +775,7 @@ int FeSoundInfo::get_play_volume( SoundType t )
 	return get_set_volume( t );
 }
 
-bool FeSoundInfo::get_mute()
+bool FeSoundInfo::get_mute() const
 {
 	return m_mute;
 }
@@ -819,11 +819,11 @@ int FeSoundInfo::process_setting( const std::string &setting,
 	return 0;
 }
 
-bool FeSoundInfo::get_sound( FeInputMap::Command c, std::string &name )
+bool FeSoundInfo::get_sound( FeInputMap::Command c, std::string &name ) const
 {
 	if (( !m_mute ) && ( m_sound_vol > 0 ))
 	{
-		std::map<FeInputMap::Command, std::string>::iterator it;
+		std::map<FeInputMap::Command, std::string>::const_iterator it;
 
    	it = m_sounds.find( c );
 
@@ -843,9 +843,9 @@ void FeSoundInfo::set_sound( FeInputMap::Command c, const std::string &name )
 		m_sounds[ c ] = name;
 }
 
-void FeSoundInfo::save( std::ofstream &f )
+void FeSoundInfo::save( std::ofstream &f ) const
 {
-	std::map<FeInputMap::Command, std::string>::iterator it;
+	std::map<FeInputMap::Command, std::string>::const_iterator it;
 
 	for ( int i=0; i< 3; i++ )
    	f << '\t' << std::setw(20) << std::left << settingStrings[i] << ' ' 

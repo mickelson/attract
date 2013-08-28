@@ -32,7 +32,7 @@ class FeVideoImp;
 class FeAnimateImp;
 class AVFormatContext;
 
-class FeMedia : private sf::SoundStream, public sf::Drawable
+class FeMedia : private sf::SoundStream
 {
 friend class FeVideoImp;
 
@@ -48,15 +48,8 @@ public:
 	~FeMedia();
 
 	bool openFromFile( const std::string &name );
-
-	//
-	// setSize and setPosition will only work if called after openFromFile()
-	//
-	void setSize( sf::Vector2f size ); 
-	void setPosition( sf::Vector2f size );
-	void setRotation( float r );
-	void setColor( const sf::Color &c );
-   using sf::SoundStream::setVolume;
+	sf::Texture *get_texture();
+	using sf::SoundStream::setVolume;
 
 	void play();
 	void stop();
@@ -79,14 +72,14 @@ public:
 	static bool is_supported_media_file( const std::string &filename );
 
 protected:
+	// overrides from base class
+	//
 	bool onGetData( Chunk &data );
 	void onSeek( sf::Time timeOffset );
 
 	bool read_packet();
 	bool end_of_file();
 	sf::Time get_video_time();
-
-	void draw(sf::RenderTarget& Target, sf::RenderStates states) const;
 
 private:
 	Type m_type;

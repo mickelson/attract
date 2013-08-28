@@ -97,7 +97,6 @@ private:
 public:
 	bool run_video_thread;
 	sf::Time time_base;
-	sf::Sprite display_sprite;
 	sf::Texture display_texture;
 	sf::Clock video_timer;
 
@@ -471,33 +470,11 @@ void FeMedia::init_av()
 	}
 }
 
-void FeMedia::setPosition( sf::Vector2f pos )
+sf::Texture *FeMedia::get_texture()
 {
 	if ( m_video )
-		m_video->display_sprite.setPosition( pos );
-}
-
-void FeMedia::setSize( sf::Vector2f size )
-{
-	if ( m_video )
-	{
-		float scale_x = (float)(size.x / m_video->codec_ctx->width);
-		float scale_y = (float)(size.y / m_video->codec_ctx->height);
-		
-		m_video->display_sprite.setScale( scale_x, scale_y );
-	}
-}
-
-void FeMedia::setRotation( float r )
-{
-	if ( m_video )
-		m_video->display_sprite.setRotation( r );
-}
-
-void FeMedia::setColor( const sf::Color &c )
-{
-	if ( m_video )
-		m_video->display_sprite.setColor( c );
+		return &(m_video->display_texture);
+	return NULL;
 }
 
 bool FeMedia::get_display_ready() const
@@ -519,7 +496,6 @@ sf::Time FeMedia::get_video_time()
 		return m_video->video_timer.getElapsedTime();
 	else
 		return sf::Time::Zero;
-
 }
 
 void FeMedia::play()
@@ -684,9 +660,6 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_video->display_texture.create( m_video->codec_ctx->width,
 											m_video->codec_ctx->height );
 				m_video->display_texture.setSmooth( true );
-				m_video->display_sprite.setTexture( 
-									m_video->display_texture, true );
-
 				m_format_ctx->flags |= AVFMT_FLAG_GENPTS;
 			}
 		}
@@ -817,12 +790,6 @@ void FeMedia::onSeek( sf::Time timeOffset )
 	// Not implemented
 }
 
-void FeMedia::draw(sf::RenderTarget& target, sf::RenderStates states) const
-{
-	if ( m_video )
-		target.draw( m_video->display_sprite, states );
-}
-
 bool FeMedia::is_supported_media_file( const std::string &filename )
 {
 	init_av();
@@ -831,4 +798,3 @@ bool FeMedia::is_supported_media_file( const std::string &filename )
 					filename.c_str(), 
 					NULL ) != NULL ) ? true : false;
 }
-

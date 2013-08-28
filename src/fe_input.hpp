@@ -92,23 +92,24 @@ public:
 
 	static const char *commandStrings[];
 	static const char *commandDispStrings[];
+	static const char *keyStrings[];
 	static const char *inputStrings[];
 	static const int JOY_THRESH=90;
 
 	FeInputMap( bool disable_mousecap );
-	Command map( sf::Event );
+	Command map( sf::Event ) const;
 
-	void get_mappings( std::vector< FeMapping > &mappings );
+	void get_mappings( std::vector< FeMapping > &mappings ) const;
 	void set_mapping( const FeMapping &mapping );
 	void init_config_map_input();
-	bool config_map_input( sf::Event e, std::string &s, Command &conflict );
+	bool config_map_input( sf::Event e, std::string &s, Command &conflict ) const;
 	void default_mappings();
 
 	int process_setting( const std::string &setting, 
-								const std::string &value,
-								const std::string &fn );
+		const std::string &value,
+		const std::string &fn );
 
-	void save( std::ofstream & );
+	void save( std::ofstream & ) const;
 
 	static Command string_to_command( const std::string &s );
 
@@ -124,17 +125,16 @@ private:
 		LAST_INPUT
 	};
 
-	static const char *keyStrings[];
-
 	std::map< std::pair< int, InputType >, Command> m_map;
 	FeMouseCapture m_cap;
 	bool m_disable_mousecap;
 
-	static bool is_joystick( InputType i ) { return ( i <= JoyB8 ); }
+	static bool is_joystick( InputType i )  { return ( i <= JoyB8 ); }
 	static bool is_mouse_move( InputType i );
-	std::pair< int, InputType > get_map_index( sf::Event e, bool config=false );
+	std::pair< int, InputType > get_map_index( 
+		sf::Event e, bool config=false ) const;
 	void string_to_index( const std::string &s,
-            std::pair< int, InputType > &index );
+		std::pair< int, InputType > &index ) const;
 };
 
 //
@@ -167,20 +167,20 @@ public:
 
 	enum SoundType { Sound=0, Ambient, Movie };
 	void set_volume( SoundType, const std::string & );
-	int get_set_volume( SoundType );
-	int get_play_volume( SoundType ); // takes mute state into account
+	int get_set_volume( SoundType ) const;
+	int get_play_volume( SoundType ) const; // takes mute state into account
 
-	bool get_mute();
+	bool get_mute() const;
 	void set_mute( bool );
 
 	int process_setting( const std::string &setting, 
-								const std::string &value,
-								const std::string &fn );
+		const std::string &value,
+		const std::string &fn );
 
-	bool get_sound( FeInputMap::Command c, std::string &name );
+	bool get_sound( FeInputMap::Command c, std::string &name ) const;
 	void set_sound( FeInputMap::Command c, const std::string &name );
 
-	void save( std::ofstream & );
+	void save( std::ofstream & ) const;
 
 private:
 	int m_sound_vol;
