@@ -511,8 +511,8 @@ void FeMedia::stop()
 {
 	if ( m_audio )
 	{
-		m_audio->stop();
 		sf::SoundStream::stop();
+		m_audio->stop();
 
 		av_seek_frame( m_format_ctx, m_audio->stream_id, 0,
 							AVSEEK_FLAG_BACKWARD );
@@ -535,6 +535,8 @@ void FeMedia::stop()
 
 void FeMedia::close()
 {
+	stop();
+
 	if (m_audio)
 	{
 		m_audio->close();
