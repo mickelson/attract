@@ -119,6 +119,7 @@ const char *FeInputMap::commandStrings[] =
 	"exit_no_menu",
 	"screenshot",
 	"configure",
+	"random_game",
 	NULL, // LAST_COMMAND... NULL required here
 	"ambient",
 	"startup",
@@ -144,6 +145,7 @@ const char *FeInputMap::commandDispStrings[] =
 	"Exit to Desktop",
 	"Screenshot",
 	"Configure",
+	"Random Game",
 	NULL, // LAST_COMMAND... NULL required here
 	"Ambient Sounds",
 	"Startup Sound",

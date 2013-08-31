@@ -78,6 +78,7 @@ public:
 		ExitNoMenu,
 		ScreenShot,
 		Configure,
+		RandomGame,
 		LAST_COMMAND,
 
 		//
