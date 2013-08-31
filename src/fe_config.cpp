@@ -503,7 +503,7 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 		path += FE_LAYOUT_SUBDIR;
 
 		std::vector<std::string> values;
-		get_basename_from_extension( values, path, "" );
+		get_subdirectories( values, path );
 		ctx.back_opt().append_vlist( values );
 
 		ctx.add_optl( Opt::LIST, "Rom List", 

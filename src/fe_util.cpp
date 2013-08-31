@@ -193,6 +193,30 @@ bool search_for_file( const std::string &base_path,
 	return false;
 }
 
+void get_subdirectories(
+			std::vector<std::string> &list,
+			const std::string &path )
+{
+#ifdef _DIRENT_HAVE_D_TYPE
+	DIR *dir;
+	struct dirent *ent;
+	if ( (dir = opendir( path.c_str() )) != NULL )
+	{
+		while ((ent = readdir( dir )) != NULL )
+		{
+			if (( ent->d_type == DT_DIR )
+					&& ( strcmp( ent->d_name, "." ) != 0 )
+					&& ( strcmp( ent->d_name, ".." ) != 0 ))
+			{
+				std::string subdir;
+				str_from_c( subdir, ent->d_name );
+				list.push_back( subdir );
+			}
+		}
+	}
+#endif
+}
+
 bool get_basename_from_extension(
 			std::vector<std::string> &list,
 			const std::string &path,
