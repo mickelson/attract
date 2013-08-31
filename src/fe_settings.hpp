@@ -124,7 +124,7 @@ public:
 	int get_rom_index( int offset=0, bool wrap=true ) const;
 
 	std::string get_current_list_title() const;
-	std::string get_rom_info( int offset, FeRomInfo::Index index ) const;
+	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
 
 	//
 	// Returns filenames to use for artwork. prefer the files earlier in the list
@@ -132,7 +132,7 @@ public:
 	void get_art_file( int offset, const std::string &artwork, std::vector<std::string> &filenames );
 	void get_movie_file( int offset, std::vector<std::string> &filenames );
 
-	std::string get_movie_artwork();
+	const std::string &get_movie_artwork();
 
 	std::string get_screensaver_file() const;
 	std::string get_current_layout_file() const;
