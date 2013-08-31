@@ -64,15 +64,6 @@ class Marquee {
 fe.add_artwork( "screen", 224, 59, 352, 264 );
 local frame = fe.add_image( "frame.png", 220, 55, 360, 270 );
 
-/*
-local games = [
-	Marquee(  2, 145, 150, 200, 0.1, 0.4, 0.7 ), 
-	Marquee( -2, 600, 650, 655, 0.7, 0.4, 0.1 ), 
-	Marquee(  1, 150, 200, 400, 0.4, 0.7, 1.0 ), 
-	Marquee( -1, 400, 600, 650, 1.0, 0.7, 0.4 ), 
-	Marquee(  0, 200, 400, 600, 0.7, 1.0, 0.7 )
-];
-*/
 local games = [
 	Marquee( -2, 200, 150, 145, 0.7, 0.4, 0.1 ), 
 	Marquee(  2, 655, 650, 600, 0.1, 0.4, 0.7 ), 
@@ -80,7 +71,6 @@ local games = [
 	Marquee(  1, 650, 600, 400, 0.4, 0.7, 1.0 ), 
 	Marquee(  0, 600, 400, 200, 0.7, 1.0, 0.7 )
 ];
-
 
 local l = fe.add_text( "[list_title]", 0, 0, 800, 55 );
 l.red = 180; l.green = 180; l.blue = 70; l.charsize = 26; l.style = Style.Bold;
