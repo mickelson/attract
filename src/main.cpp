@@ -145,9 +145,6 @@ int main(int argc, char *argv[])
 	sf::Font defaultFont;
 	defaultFont.loadFromFile( defaultFontFile );
 
-	FePresent fePresent( &feSettings, defaultFont );
-	fePresent.load_layout();
-
 	//
 	// Set up music/sound playing objects
 	//
@@ -183,6 +180,9 @@ int main(int argc, char *argv[])
 	window.setKeyRepeatEnabled(false);
 	window.setMouseCursorVisible(false);
 
+	FePresent fePresent( &feSettings, defaultFont );
+	fePresent.load_layout( &window );
+
 	FeOverlay feOverlay( window, feSettings, fePresent );
 
 	soundsys.sound_event( FeInputMap::EventStartup );
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 			FeInputMap::Command c = feSettings.map( ev );
 
 			soundsys.sound_event( c );
-			if ( fePresent.handle_event( c, ev ) )
+			if ( fePresent.handle_event( c, ev, &window ) )
 				redraw = true;
 			else
 			{
@@ -228,14 +228,18 @@ int main(int argc, char *argv[])
 					break;
 
 				case FeInputMap::Select:
-					fePresent.play( false );
+				case FeInputMap::RandomGame:
 					soundsys.stop();
-					feOverlay.splash_message( "Loading..." );
 
+					if ( c == FeInputMap::RandomGame )
+					{
+						feSettings.change_rom( rand() );
+						fePresent.update( false );
+					}
+
+					fePresent.pre_run( &window );
 					feSettings.run();
-					fePresent.perform_autorotate();
-
-					fePresent.play( true );
+					fePresent.post_run( &window );
 
 					soundsys.sound_event( FeInputMap::EventGameReturn );
 					soundsys.play_ambient();
@@ -273,7 +277,7 @@ int main(int argc, char *argv[])
 							fePresent.set_default_font( defaultFont );
 
 							feSettings.init_list();
-							fePresent.load_layout();
+							fePresent.load_layout( &window );
 						}
 
 						soundsys.stop();
@@ -288,7 +292,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if ( fePresent.tick() )
+		if ( fePresent.tick( &window ) )
 			redraw=true;
 
 		if ( redraw )
@@ -305,7 +309,7 @@ int main(int argc, char *argv[])
 		soundsys.tick();
 	}
 
-	fePresent.play( false );
+	fePresent.stop( &window );
 	soundsys.stop();
 	feSettings.save_state();
 	return 0;

@@ -120,3 +120,48 @@ void FeScriptSound::set_volume( int v )
 {
 	m_sound.setVolume( v );
 }
+
+bool FeScriptSound::is_playing()
+{
+	return ( m_sound.getStatus() == sf::Sound::Playing ) ? true : false;
+}
+
+float FeScriptSound::get_pitch()
+{
+	return m_sound.getPitch();
+}
+
+void FeScriptSound::set_pitch( float p )
+{
+	m_sound.setPitch( p );
+}
+
+float FeScriptSound::get_x()
+{
+	return m_sound.getPosition().x;
+}
+
+float FeScriptSound::get_y()
+{
+	return m_sound.getPosition().y;
+}
+
+float FeScriptSound::get_z()
+{
+	return m_sound.getPosition().z;
+}
+
+void FeScriptSound::set_x( float v )
+{
+	m_sound.setPosition( sf::Vector3f( v, get_y(), get_z() ) );
+}
+
+void FeScriptSound::set_y( float v )
+{
+	m_sound.setPosition( sf::Vector3f( get_x(), v, get_z() ) );
+}
+
+void FeScriptSound::set_z( float v )
+{
+	m_sound.setPosition( sf::Vector3f( get_x(), get_y(), v ) );
+}

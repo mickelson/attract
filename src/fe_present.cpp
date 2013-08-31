@@ -77,6 +77,7 @@ void FePresent::clear()
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName.clear();
 	m_ticksList.clear();
+	m_transitionList.clear();
 
 	while ( !m_elements.empty() )
 	{
@@ -110,7 +111,10 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 
 	std::vector<FeBasePresentable *>::const_iterator itl;
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
-		target.draw( (*itl)->drawable(), states );
+	{
+		if ( (*itl)->get_visible() )
+			target.draw( (*itl)->drawable(), states );
+	}
 }
 
 FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int y, int w, int h )
@@ -177,7 +181,8 @@ FeScriptSound *FePresent::add_sound( const std::string &n )
 
 	FeScriptSound *new_sound = new FeScriptSound();
 	new_sound->load( filename );
-	new_sound->set_volume( m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
+	new_sound->set_volume( 
+		m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
 
 	m_scriptSounds.push_back( new_sound );
 	return new_sound;
@@ -186,6 +191,11 @@ FeScriptSound *FePresent::add_sound( const std::string &n )
 void FePresent::add_ticks_callback( const std::string &n )
 {
 	m_ticksList.push_back( n );	
+}
+
+void FePresent::add_transition_callback( const std::string &n )
+{
+	m_transitionList.push_back( n );	
 }
 
 int FePresent::get_layout_width() const
@@ -247,7 +257,9 @@ int FePresent::get_layout_orient() const
 	return m_baseRotation;
 }
 
-bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
+bool FePresent::handle_event( FeInputMap::Command c, 
+	sf::Event ev,
+	sf::RenderWindow *wnd )
 {
 	m_moveState=MoveNone;
 	m_lastInput=m_layoutTimer.getElapsedTime();
@@ -256,7 +268,7 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 	{
 		// Reset from screen saver
 		//
-		load_layout();
+		load_layout( wnd );
 		return true;
 	}
 
@@ -266,6 +278,7 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveTimer.restart();
 		m_moveState=MoveDown;
 		m_moveEvent = ev;
+		vm_on_transition( ToNewSelection, 1, wnd );
 		m_feSettings->change_rom( 1 );
 		update( false );
 		break;
@@ -274,6 +287,7 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveTimer.restart();
 		m_moveState=MoveUp;
 		m_moveEvent = ev;
+		vm_on_transition( ToNewSelection, -1, wnd );
 		m_feSettings->change_rom( -1 );
 		update( false );
 		break;
@@ -282,7 +296,11 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveTimer.restart();
 		m_moveState=MovePageDown;
 		m_moveEvent = ev;
-		m_feSettings->change_rom( get_page_size(), false );
+		{
+			int page = get_page_size();
+			vm_on_transition( ToNewSelection, page, wnd );
+			m_feSettings->change_rom( page, false );
+		}
 		update( false );
 		break;
 
@@ -290,7 +308,11 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		m_moveTimer.restart();
 		m_moveState=MovePageUp;
 		m_moveEvent = ev;
-		m_feSettings->change_rom( -1 * get_page_size(), false );
+		{
+			int page = -1 * get_page_size();
+			vm_on_transition( ToNewSelection, page, wnd );
+			m_feSettings->change_rom( page, false );
+		}
 		update( false );
 		break;
 
@@ -314,7 +336,7 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		// next_list returns true if the layout changes with the new list
 		//
 		if ( m_feSettings->next_list() ) 
-			load_layout();
+			load_layout( wnd );
 		else
 			update( true );
 
@@ -324,7 +346,7 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 		// prev_list returns true if the layout changes with the new list
 		//
 		if ( m_feSettings->prev_list() )
-			load_layout();
+			load_layout( wnd );
 		else
 			update( true );
 
@@ -332,7 +354,7 @@ bool FePresent::handle_event( FeInputMap::Command c, sf::Event ev )
 
 	case FeInputMap::ToggleLayout:
 		m_feSettings->toggle_layout();
-		load_layout();
+		load_layout( wnd );
 		break;
 
 	case FeInputMap::LAST_COMMAND:
@@ -366,8 +388,10 @@ int FePresent::update( bool new_list )
 	return 0;
 }
 
-void FePresent::load_screensaver() 
+void FePresent::load_screensaver( sf::RenderWindow *wnd ) 
 {
+	bool from_screenSaver = m_screenSaverActive;
+	vm_on_transition( EndLayout, 1, wnd );
 	clear();
 	set_rotation_transform();
 	m_screenSaverActive=true;
@@ -375,24 +399,30 @@ void FePresent::load_screensaver()
 	//
 	// Run the script which actually sets up the screensaver
 	//
-	vm_on_new_layout( m_feSettings->get_screensaver_file() );
 	m_layoutTimer.restart();
+	vm_on_new_layout( m_feSettings->get_screensaver_file() );
 
 	//
 	// if there is no screen saver script then do a blank screen
 	//
 	update( true );
+	vm_on_transition( StartLayout, (from_screenSaver?1:0), wnd );
 }
 
-void FePresent::load_layout() 
+void FePresent::load_layout( sf::RenderWindow *wnd ) 
 {
+	bool from_screenSaver = m_screenSaverActive;
+	vm_on_transition( EndLayout, 0, wnd );
 	clear();
 	set_rotation_transform();
 	m_screenSaverActive=false;
 
+	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 	if ( m_feSettings->lists_count() < 1 )
 	{
-		set_to_no_lists_message();
+		std::string msg;
+		m_feSettings->get_resource( "No lists configured.", msg );
+		add_text( msg, 0, 0, vm.width, vm.height );
 		update( true );
 		return;
 	}
@@ -400,8 +430,8 @@ void FePresent::load_layout()
 	//
 	// Run the script which actually sets up the layout
 	//
-	vm_on_new_layout( m_feSettings->get_current_layout_file() );
 	m_layoutTimer.restart();
+	vm_on_new_layout( m_feSettings->get_current_layout_file() );
 
 	// make things usable if the layout is empty
 	if ( m_elements.empty() )
@@ -410,16 +440,16 @@ void FePresent::load_layout()
 		// Nothing loaded, default to a full screen list with the configured
 		// movie artwork as the background
 		//
-		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 		FeImage *img = cb_add_artwork( "", 0, 0, vm.width, vm.height );
 		img->setColor( sf::Color( 100, 100, 100, 180 ) );
 		cb_add_listbox( 0, 0, vm.width, vm.height );
 	}
 
 	update( true );
+	vm_on_transition( StartLayout, (from_screenSaver?1:0), wnd );
 }
 
-bool FePresent::tick()
+bool FePresent::tick( sf::RenderWindow *wnd )
 {
 	bool ret_val = false;
 	if ( m_moveState != MoveNone )
@@ -452,19 +482,18 @@ bool FePresent::tick()
 
 			if ( cont )
 			{
+				int offset( 0 );
 				switch ( m_moveState )
 				{
-					case MoveUp: m_feSettings->change_rom( -1, false ); break;
-					case MoveDown: m_feSettings->change_rom( 1, false ); break;
-					case MovePageUp: 
-						m_feSettings->change_rom( -1 * get_page_size(), false ); 
-						break;
-					case MovePageDown: 
-						m_feSettings->change_rom( get_page_size(), false ); 
-						break;
-					default:
-						break;
+					case MoveUp: offset = -1; break;
+					case MoveDown: offset = 1; break;
+					case MovePageUp: offset = -1 * get_page_size(); break;
+					case MovePageDown: offset = get_page_size(); break;
+					default: break;
 				}
+
+				vm_on_transition( ToNewSelection, offset, wnd );
+				m_feSettings->change_rom( offset, false ); 
 
 				ret_val=true;
 				update( false );
@@ -493,14 +522,22 @@ bool FePresent::tick()
 	if ( vm_on_tick())
 		ret_val = true;
 
-	int saver_timeout = m_feSettings->get_screen_saver_timeout();
-	if (( !m_screenSaverActive ) && ( saver_timeout > 0 ))
+	//
+	// Only check to switch to screensaver if wnd is not NULL
+	// we are given a NULL wnd value when the overlay (config menu)
+	// is being displayed
+	//
+	if ( wnd )
 	{
-	 	if ( ( m_layoutTimer.getElapsedTime() - m_lastInput ) 
-				> sf::seconds( saver_timeout ) )
+		int saver_timeout = m_feSettings->get_screen_saver_timeout();
+		if (( !m_screenSaverActive ) && ( saver_timeout > 0 ))
 		{
-			load_screensaver();
-			ret_val = true;
+		 	if ( ( m_layoutTimer.getElapsedTime() - m_lastInput ) 
+					> sf::seconds( saver_timeout ) )
+			{
+				load_screensaver( wnd );
+				ret_val = true;
+			}
 		}
 	}
 
@@ -515,17 +552,41 @@ int FePresent::get_page_size() const
 		return 5;
 }
 
-void FePresent::play( bool play_state )
+void FePresent::stop( sf::RenderWindow *wnd )
 {
 	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
-		(*itm)->set_play_state( play_state );
+		(*itm)->set_play_state( false );
+
+	vm_on_transition( EndLayout, 0, wnd );
+}
+
+void FePresent::pre_run( sf::RenderWindow *wnd )
+{
+	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
+		(*itm)->set_play_state( false );
+
+	vm_on_transition( ToGame, 0, wnd );
+}
+
+void FePresent::post_run( sf::RenderWindow *wnd )
+{
+	perform_autorotate();
+	vm_on_transition( FromGame, 0, wnd );
+
+	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
+		(*itm)->set_play_state( m_playMovies );
 }
 
 void FePresent::toggle_movie()
 {
 	m_playMovies = !m_playMovies;
-	play( m_playMovies );
+
+	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
+		(*itm)->set_play_state( m_playMovies );
 }
 
 void FePresent::toggle_mute()
@@ -623,23 +684,6 @@ void FePresent::perform_autorotate()
 	}
 
 	set_rotation_transform();
-}
-
-void FePresent::set_to_no_lists_message()
-{
-	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-
-	std::string msg;
-	m_feSettings->get_resource( "No lists configured.", msg );
-
-	FeText *te = new FeText( msg );
-	te->setPosition( 0, 0 );
-	te->setSize( vm.width, vm.height );
-
-	if ( m_currentFont )
-		te->setFont( *m_currentFont );
-
-	m_elements.push_back( te );
 }
 
 //
@@ -786,6 +830,14 @@ void FePresent::cb_add_ticks_callback( const char *n )
 	fep->add_ticks_callback( n );
 }
 
+void FePresent::cb_add_transition_callback( const char *n )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	fep->add_transition_callback( n );
+}
+
 bool FePresent::cb_is_keypressed( int k )
 {
 	return sf::Keyboard::isKeyPressed( (sf::Keyboard::Key)k );
@@ -828,6 +880,20 @@ void FePresent::do_nut( const char *script_file )
 				<< " - " << e.Message() << std::endl;
 		}
 	}
+}
+
+const char *FePresent::cb_game_info( int index, int offset )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FeSettings *fes = fep->get_fes();
+
+	return (fes->get_rom_info( offset, (FeRomInfo::Index)index )).c_str();
+}
+
+const char *FePresent::cb_game_info( int index )
+{
+	return cb_game_info( index, 0 );
 }
 
 void FePresent::flag_redraw()
@@ -890,6 +956,13 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Const( _SC("ScreenWidth"), (int)vm.width )
 		.Const( _SC("ScreenHeight"), (int)vm.height )
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
+		.Enum( _SC("Transition"), Enumeration()
+			.Const( _SC("StartLayout"), StartLayout )
+			.Const( _SC("EndLayout"), EndLayout )
+			.Const( _SC("ToNewSelection"), ToNewSelection )
+			.Const( _SC("ToGame"), ToGame )
+			.Const( _SC("FromGame"), FromGame )
+			)
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
 			.Const( _SC("Bold"), sf::Text::Bold )
@@ -929,6 +1002,15 @@ void FePresent::vm_on_new_layout( const std::string &file )
 
 	ConstTable().Enum( _SC("Key"), keys);
 
+	Enumeration info;
+	i=0;
+	while ( FeRomInfo::indexStrings[i] != NULL )
+	{
+		info.Const( FeRomInfo::indexStrings[i], i );
+		i++;
+	}
+	ConstTable().Enum( _SC("Info"), info);
+
 	//
 	// Define classes for fe objects that get exposed to squirrel
 	//
@@ -937,6 +1019,8 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	//
 	RootTable().Bind( _SC("Presentable"), 
 		Class<FeBasePresentable, NoConstructor>()
+		.Prop(_SC("visible"), 
+			&FeBasePresentable::get_visible, &FeBasePresentable::set_visible )
 		.Prop(_SC("x"), &FeBasePresentable::get_x, &FeBasePresentable::set_x )
 		.Prop(_SC("y"), &FeBasePresentable::get_y, &FeBasePresentable::set_y )
 		.Prop(_SC("width"), 
@@ -1007,6 +1091,11 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	RootTable().Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
 		.Func( _SC("load"), &FeScriptSound::load )
 		.Func( _SC("play"), &FeScriptSound::play )
+		.Prop( _SC("is_playing"), &FeScriptSound::is_playing )
+		.Prop( _SC("pitch"), &FeScriptSound::get_pitch, &FeScriptSound::set_pitch )
+		.Prop( _SC("x"), &FeScriptSound::get_x, &FeScriptSound::set_x )
+		.Prop( _SC("y"), &FeScriptSound::get_y, &FeScriptSound::set_y )
+		.Prop( _SC("z"), &FeScriptSound::get_z, &FeScriptSound::set_z )
 	);
 
 	// All frontend functionality is in the "fe" table in Squirrel
@@ -1031,10 +1120,13 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	fe.Func<FeListBox* (*)(int, int, int, int)>(_SC("add_listbox"), &FePresent::cb_add_listbox);
 	fe.Func<FeScriptSound* (*)(const char *)>(_SC("add_sound"), &FePresent::cb_add_sound);
 	fe.Func<void (*)(const char *)>(_SC("add_ticks_callback"), &FePresent::cb_add_ticks_callback);
+	fe.Func<void (*)(const char *)>(_SC("add_transition_callback"), &FePresent::cb_add_transition_callback);
 	fe.Func<bool (*)(int)>(_SC("is_keypressed"), &FePresent::cb_is_keypressed);
 	fe.Func<bool (*)(int, int)>(_SC("is_joybuttonpressed"), &FePresent::cb_is_joybuttonpressed);
 	fe.Func<float (*)(int, int)>(_SC("get_joyaxispos"), &FePresent::cb_get_joyaxispos);
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FePresent::do_nut);
+	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FePresent::cb_game_info);
+	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FePresent::cb_game_info);
 
 	fe.SetInstance( _SC("layout"), this );
 
@@ -1096,7 +1188,64 @@ bool FePresent::vm_on_tick()
 			{
 				m_redrawTriggered = false;
 				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
-				retval |= m_redrawTriggered;
+				if ( m_redrawTriggered )
+					retval = true;
+			}
+		}
+		catch( Exception e )
+		{
+			std::cout << "Script Error: " << e.Message() << std::endl;
+		}
+	}
+
+	// We may need to reinitialize the listbox based on what happened in
+	// the script.
+	//
+	if ( m_listBox )
+		m_listBox->init();
+
+	return retval;
+}
+
+bool FePresent::vm_on_transition( 
+	FeTransitionType t, 
+	int var,
+	sf::RenderWindow *wnd )
+{
+	using namespace Sqrat;
+	bool retval = false;
+
+	sf::Time tstart = m_layoutTimer.getElapsedTime();
+
+	// Assumption: Transition list is empty if no vm is active
+	//
+	for ( std::vector<std::string>::iterator itr = m_transitionList.begin();
+		itr != m_transitionList.end(); ++itr )
+	{
+		try 
+		{
+			Function func( RootTable(), (*itr).c_str());
+
+			if ( !func.IsNull() )
+			{
+				sf::Time ttime = m_layoutTimer.getElapsedTime() - tstart;
+				m_redrawTriggered = false;
+
+				while (( func.Evaluate<bool>( (int)t,
+					var,
+					ttime.asMilliseconds() ) == true ) && ( wnd ))
+				{
+					// redraw and reevaluate function if it returns true
+					//
+					wnd->clear();
+					wnd->draw( *this );
+					wnd->display();
+
+					ttime = m_layoutTimer.getElapsedTime() - tstart;
+				}
+				
+				if ( m_redrawTriggered )
+					retval = true;
 			}
 		}
 		catch( Exception e )

@@ -28,7 +28,11 @@
 class FeSettings;
 class FeBasePresentable
 {
+protected:
+	bool m_visible;
+
 public:
+	FeBasePresentable();
 	virtual ~FeBasePresentable();
 
 	virtual void on_new_selection( FeSettings * );
@@ -67,6 +71,9 @@ public:
 	void set_g(int g);
 	void set_b(int b);
 	void set_a(int a);
+
+	bool get_visible();
+	void set_visible( bool );
 };
 
 void script_do_update( FeBasePresentable * );

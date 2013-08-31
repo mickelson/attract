@@ -272,7 +272,7 @@ void FeOverlay::input_map_dialog(
 				return;
 		}
 
-		m_fePresent.tick();
+		m_fePresent.tick( NULL );
 		m_wnd.clear();
 		m_wnd.draw( m_fePresent, t );
 		m_wnd.draw( message, t );
@@ -590,7 +590,7 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 			}
 		}
 
-		m_fePresent.tick();
+		m_fePresent.tick( NULL );
 		m_wnd.clear();
 		m_wnd.draw( m_fePresent, t );
 
@@ -686,7 +686,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			cursor.setPosition( tp->setString( str, cursor_pos ) );
 		}
 
-		m_fePresent.tick();
+		m_fePresent.tick( NULL );
 		m_wnd.clear();
 		m_wnd.draw( m_fePresent, t );
 

@@ -62,6 +62,17 @@ public:
    bool load( const std::string & );
 	void play();
 	void set_volume( int );
+
+	bool is_playing();
+	float get_pitch();
+	void set_pitch( float );
+
+	float get_x();
+	float get_y();
+	float get_z();
+	void set_x( float );
+	void set_y( float );
+	void set_z( float );
 };
 
 #endif
