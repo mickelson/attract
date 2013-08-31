@@ -22,6 +22,11 @@
 
 #include "fe_presentable.hpp"
 
+FeBasePresentable::FeBasePresentable() 
+	: m_visible( true )
+{
+}
+
 FeBasePresentable::~FeBasePresentable() 
 {
 }
@@ -120,4 +125,14 @@ void FeBasePresentable::set_a(int a)
 	sf::Color c=getColor();
 	c.a=a;
 	setColor(c);
+}
+
+bool FeBasePresentable::get_visible()
+{
+	return m_visible;
+}
+
+void FeBasePresentable::set_visible( bool v )
+{
+	m_visible = v;
 }
