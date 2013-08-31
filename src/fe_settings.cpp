@@ -100,6 +100,9 @@ const char *FE_ROMLIST_SUBDIR			= "romlists/";
 const char *FE_EMULATOR_SUBDIR		= "emulators/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
 
+const std::string FE_EMPTY_STRING = "";
+
+
 // NOTE: this has to remain aligned with the RotationState enum:
 const char *FeSettings::rotationTokens[]	=
 {
@@ -174,7 +177,7 @@ bool FeSettings::load()
 	// Load locale strings - default filename is "locale.msg"
 	//
 	std::string test( FE_RESOURCE_BASEFILE );
-	perform_substitution( test, "$1", "" );
+	perform_substitution( test, "$1", FE_EMPTY_STRING );
 	filename = m_config_path;
 	filename += test;
 
@@ -314,7 +317,7 @@ void FeSettings::init_list()
 void FeSettings::save_state() const
 {
 	std::string filename( m_config_path );
-	confirm_directory( m_config_path, "" );
+	confirm_directory( m_config_path, FE_EMPTY_STRING );
 
 	filename += FE_STATE_FILE;
 
@@ -457,15 +460,15 @@ void FeSettings::dump() const
 std::string FeSettings::get_current_list_title() const
 {
 	if ( m_current_list < 0 )
-		return "";
+		return FE_EMPTY_STRING;
 
 	return m_lists[m_current_list].get_info( FeListInfo::Name );
 }
 
-std::string FeSettings::get_rom_info( int offset, FeRomInfo::Index index ) const
+const std::string &FeSettings::get_rom_info( int offset, FeRomInfo::Index index ) const
 {
 	if ( m_rl.empty() )
-		return "";
+		return FE_EMPTY_STRING;
 
 	int rom = get_rom_index( offset );
 	return m_rl[rom].get_info( index );
@@ -482,7 +485,7 @@ std::string FeSettings::get_screensaver_file() const
 std::string FeSettings::get_current_layout_file() const
 {
 	if ( m_current_list < 0 )
-		return "";
+		return FE_EMPTY_STRING;
 
 	std::string path = get_current_layout_dir();
 	std::string file = m_lists[m_current_list].get_current_layout_file();
@@ -493,7 +496,7 @@ std::string FeSettings::get_current_layout_file() const
 				list, path, FE_LAYOUT_FILE_EXTENSION );
 
 		if ( list.empty() )
-			return "";
+			return FE_EMPTY_STRING;
 
 		for ( unsigned int i=0; i< list.size(); i++ )
 		{
@@ -524,7 +527,7 @@ std::string FeSettings::get_layout_global_file() const
 std::string FeSettings::get_current_layout_dir() const
 {
 	if ( m_current_list < 0 )
-		return "";
+		return FE_EMPTY_STRING;
 
 	std::string layout_dir = m_config_path;
 	layout_dir += FE_LAYOUT_SUBDIR;
@@ -900,13 +903,13 @@ void FeSettings::get_movie_file( int offset, std::vector<std::string> &filename_
 	}
 }
 
-std::string FeSettings::get_movie_artwork()
+const std::string &FeSettings::get_movie_artwork()
 {
 	FeEmulatorInfo *cur_emu_info = get_current_emulator();
 	if ( cur_emu_info != NULL )
 		return cur_emu_info->get_info( FeEmulatorInfo::Movie_artwork );
 
-	return "";
+	return FE_EMPTY_STRING;
 }
 
 bool FeSettings::get_font_file( std::string &fontpath,
@@ -925,7 +928,8 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	// layout directory
 	//
 	std::string test;
-	if ( search_for_file( get_current_layout_dir(), 
+	std::string layout_dir = get_current_layout_dir();
+	if ( !layout_dir.empty() && search_for_file( layout_dir, 
 				fontname, FE_FONT_EXTENSIONS, test ) )
 	{
 		fontpath = test;
@@ -1035,7 +1039,7 @@ const std::string FeSettings::get_info( int index ) const
 	default:
 		break;
 	}
-	return "";
+	return FE_EMPTY_STRING;
 }
 
 bool FeSettings::set_info( int index, const std::string &value )
