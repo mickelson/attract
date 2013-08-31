@@ -76,6 +76,12 @@ bool search_for_file( const std::string &base_path,
 						const char **valid_extensions,
                   std::string &result );
 
+//
+// Return list of subdirectories in path
+//
+void get_subdirectories( 
+			std::vector<std::string> &list, 
+			const std::string &path );
 //       
 // Return "list" of the base filenames in "path" where the file extension 
 // is "ext"
