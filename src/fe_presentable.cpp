@@ -127,6 +127,15 @@ void FeBasePresentable::set_a(int a)
 	setColor(c);
 }
 
+void FeBasePresentable::set_rgb(int r, int g, int b)
+{
+	sf::Color c=getColor();
+	c.r=r;
+	c.g=g;
+	c.b=b;
+	setColor(c);
+}
+
 bool FeBasePresentable::get_visible()
 {
 	return m_visible;

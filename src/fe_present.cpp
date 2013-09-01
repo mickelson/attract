@@ -1034,6 +1034,7 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Prop(_SC("blue"), &FeBasePresentable::get_b, &FeBasePresentable::set_b )
 		.Prop(_SC("alpha"), &FeBasePresentable::get_a, &FeBasePresentable::set_a )
 		.Prop(_SC("index_offset"), &FeBasePresentable::getIndexOffset, &FeBasePresentable::setIndexOffset )
+		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
 	);
 
 	RootTable().Bind( _SC("Image"), 
@@ -1059,6 +1060,7 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Prop(_SC("charsize"), &FeText::get_charsize, &FeText::set_charsize )
 		.Prop(_SC("style"), &FeText::get_style, &FeText::set_style )
 		.Prop(_SC("align"), &FeText::get_align, &FeText::set_align )
+		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
 
 	RootTable().Bind( _SC("ListBox"), 
@@ -1078,7 +1080,10 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Prop(_SC("charsize"), &FeListBox::get_charsize, &FeListBox::set_charsize )
 		.Prop(_SC("style"), &FeListBox::get_style, &FeListBox::set_style )
 		.Prop(_SC("align"), &FeListBox::get_align, &FeListBox::set_align )
-		// TODO: selstyle
+		.Prop(_SC("sel_style"), &FeListBox::getSelStyle, &FeListBox::setSelStyle )
+		.Func( _SC("set_bg_rgb"), &FeListBox::set_bg_rgb )
+		.Func( _SC("set_sel_rgb"), &FeListBox::set_sel_rgb )
+		.Func( _SC("set_selbg_rgb"), &FeListBox::set_selbg_rgb )
 	);
 
 	RootTable().Bind( _SC("LayoutGlobals"), Class <FePresent, NoConstructor>()
@@ -1198,12 +1203,6 @@ bool FePresent::vm_on_tick()
 		}
 	}
 
-	// We may need to reinitialize the listbox based on what happened in
-	// the script.
-	//
-	if ( m_listBox )
-		m_listBox->init();
-
 	return retval;
 }
 
@@ -1253,12 +1252,6 @@ bool FePresent::vm_on_transition(
 			std::cout << "Script Error: " << e.Message() << std::endl;
 		}
 	}
-
-	// We may need to reinitialize the listbox based on what happened in
-	// the script.
-	//
-	if ( m_listBox )
-		m_listBox->init();
 
 	return retval;
 }

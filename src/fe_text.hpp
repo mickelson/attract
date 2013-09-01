@@ -88,6 +88,7 @@ public:
 	void set_bgg(int g);
 	void set_bgb(int b);
 	void set_bga(int a);
+	void set_bg_rgb( int, int, int );
 	void set_charsize(int s);
 	void set_style(int s);
 	void set_align(int a);
@@ -118,15 +119,19 @@ public:
 
 	int getIndexOffset() const;
 	void setIndexOffset( int );
-	void setSelColor( sf::Color );
-	void setSelBgColor( sf::Color );
+
+	void setColor( const sf::Color & );
+	void setBgColor( const sf::Color & );
+	void setSelColor( const sf::Color & );
+	void setSelBgColor( const sf::Color & );
 	void setSelStyle( int );
+	int getSelStyle();
 
 	FeTextPrimative *setEditMode( bool, sf::Color );
 
 	void setRotation( float );
 	void setText( const int index, const std::vector<std::string> &list );
-	int getRowCount();
+	int getRowCount() const;
 
 	void clear();
 	void init();
@@ -149,6 +154,7 @@ public:
 	void set_bgg(int g);
 	void set_bgb(int b);
 	void set_bga(int a);
+	void set_bg_rgb( int, int, int );
 	void set_charsize(int s);
 	void set_style(int s);
 	void set_align(int a);
@@ -160,6 +166,7 @@ public:
 	void set_selg(int g);
 	void set_selb(int b);
 	void set_sela(int a);
+	void set_sel_rgb( int, int, int );
 	int get_selbgr();
 	int get_selbgg();
 	int get_selbgb();
@@ -168,6 +175,7 @@ public:
 	void set_selbgg(int g);
 	void set_selbgb(int b);
 	void set_selbga(int a);
+	void set_selbg_rgb( int, int, int );
 
 private:
 	std::vector<std::string> m_displayList;

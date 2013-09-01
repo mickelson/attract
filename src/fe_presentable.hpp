@@ -71,6 +71,7 @@ public:
 	void set_g(int g);
 	void set_b(int b);
 	void set_a(int a);
+	void set_rgb(int r, int g, int b);
 
 	bool get_visible();
 	void set_visible( bool );
