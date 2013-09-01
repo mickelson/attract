@@ -4,11 +4,13 @@ Attract-Mode Frontend
 Attract-Mode is a graphical front-end for command line emulators such 
 as MAME, MESS, and Nestopia.  It is designed to be run in an arcade 
 cabinet setup and controlled with a joystick or spin dial.  Attract-
-Mode is written in C++ and requires SFML 2.x to run.  It can use the
-ffmpeg/libav libraries for movie support.
+Mode is written in C++ and requires SFML 2.x to run.  
 
 Attract-Mode was developed for use in Linux.  It is known to work 
 on Ubuntu Linux, Mac OS-X 10.6, and Windows 7.
+
+Attract-Mode's layouts are actually scripts written in the Squirrel
+programming language. FFMPEG is used for (optional) movie support.
 
 Please visit http://attractmode.org for more information.
 
@@ -32,12 +34,12 @@ essential" package on Debian/Ubuntu, X-Code on OS-X, or MinGW on Windows.
    Optional:
       - FFMPEG's avformat, avcodec, swscale and avutil libs.
      	(for movie support).
-      - FontConfig (for font configuration on Linux/FreeBSD).
+      - Fontconfig (for font configuration on Linux/FreeBSD).
 
 3. Download the Attract-Mode source, extract it to your system.
 
 4. On Linux/OS-X: Run the "make" command.  Edit the Makefile first if you 
-wish to change any build options  (i.e. to disable ffmpeg or fontconfig).  
+wish to change any build options  (i.e. to disable FFMPEG or Fontconfig).  
 
 On Windows: Either use the Makefile with the MINGW make command or load
 the Codeblocks project file located in the "win32" subdirectory and 
@@ -47,10 +49,10 @@ Basic Installation
 ==================
 
 1. Copy the contents of the "config" directory from the Attract-Mode 
-source to the directory that you will use for your Attract-Mode 
-configuration.  By default, the configuration is located in 
-"~/.attract" on Linux/FreeBSD, "~/Library/Application Support/Attract" 
-on Mac OS-X, and "./" on Windows systems.
+source to the directory that you will use for your Attract-Mode config.
+By default, the configuration is located in "$HOME/.attract" on Linux,
+"$HOME/Library/Application Support/Attract" on Mac OS-X or in the current
+working directory on Windows systems.
 
 2. Run Attract-Mode.  If you are not using the default config location 
 then you need to specify your config location at the command line as 
@@ -58,7 +60,7 @@ follows:
 
    attract --config /my/config/location
 
-If you have compiled Attract-Mode without fontconfig support, it may
+If you have compiled Attract-Mode without Fontconfig support, it may
 have difficulty finding a display font to use on your system.  If this
 occurs you can specify a font file to use at the command line as follows: 
 
@@ -94,12 +96,12 @@ then be selected in the Sound menu when in configuration mode and mapped
 to an input or event.
 
 ARTWORK: Attract-Mode supports PNG, JPEG, GIF, BMP and TGA image formats.
-When deciding what image file to use for a particular named artwork
-(default artwork names are "marquee" and "screen"), Attract-Mode will 
-use the artwork/movie selection order set out below.
+When deciding what image file to use for a particular artwork type
+(default artworks are "marquee" and "screen"), Attract-Mode will use the
+artwork/movie selection order set out below.
 
-MOVIE: Attract-Mode supports any movie format supported by FFMPEG.  The 
-movie to play is decided as set out below:
+MOVIE: Attract-Mode should support any movie format supported by FFMPEG.
+The movie to play is decided as set out below:
 
 ARTWORK/MOVIE SELECTION ORDER:
 
