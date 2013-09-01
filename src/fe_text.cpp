@@ -90,6 +90,7 @@ const sf::Color &FeBaseText::getColor() const
 void FeBaseText::setColor( const sf::Color &c )
 {
 	m_base_text.setColor( c );
+	script_flag_redraw();
 }
 
 unsigned int FeBaseText::getCharacterSize() const
@@ -225,6 +226,16 @@ void FeText::set_bga(int a)
 	script_flag_redraw();
 }
 
+void FeText::set_bg_rgb(int r, int g, int b )
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.r=r;
+	c.g=g;
+	c.b=b;
+	m_base_text.setBgColor(c);
+	script_flag_redraw();
+}
+
 void FeText::set_charsize(int s)
 {
 	m_base_text.setCharacterSize(s);
@@ -247,8 +258,7 @@ FeListBox::FeListBox()
 	: m_selColour( sf::Color::Yellow ),
 	m_selBg( sf::Color::Blue ),
 	m_selStyle( sf::Text::Regular ),
-	m_rotation( 0.0 ),
-	m_needs_init( true )
+	m_rotation( 0.0 )
 {
 	m_base_text.setColor( sf::Color::White );
 	m_base_text.setBgColor( sf::Color::Transparent );
@@ -266,19 +276,12 @@ FeListBox::FeListBox(
 	m_selColour( selcolour ),
 	m_selBg( selbgcolour ),
 	m_selStyle( sf::Text::Regular ),
-	m_rotation( 0.0 ),
-	m_needs_init( true )
+	m_rotation( 0.0 )
 {
 }
 
 void FeListBox::init()
 {
-	//
-	// Only do something if our needs_init flag is set
-	//
-	if ( !m_needs_init )
-		return;
-
 	const sf::Font *font = getFont();
 	int fls = getCharacterSize();
 	if ( fls < 10 ) fls = 8; // don't go smaller than 8
@@ -321,11 +324,22 @@ void FeListBox::init()
 
 		m_texts.push_back( t );
 	}
-
-	m_needs_init=false;
 }
 
-void FeListBox::setSelColor( sf::Color c )
+void FeListBox::setColor( const sf::Color &c )
+{
+	m_base_text.setColor( c );
+
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+	{
+		if ( i != ( m_texts.size() / 2 ) )
+			m_texts[i].setColor( c );
+	}
+
+	script_flag_redraw();
+}
+
+void FeListBox::setSelColor( const sf::Color &c )
 {
 	m_selColour = c;
 
@@ -337,7 +351,7 @@ void FeListBox::setSelColor( sf::Color c )
 	script_flag_redraw();
 }
 
-void FeListBox::setSelBgColor( sf::Color c )
+void FeListBox::setSelBgColor( const sf::Color &c )
 {
 	m_selBg = c;
 	if ( m_texts.size() > 0 )
@@ -357,6 +371,11 @@ void FeListBox::setSelStyle( int s )
 		m_texts[ sel ].setStyle( m_selStyle );
 	}
 	script_flag_redraw();
+}
+
+int FeListBox::getSelStyle()
+{
+	return m_selStyle;
 }
 
 FeTextPrimative *FeListBox::setEditMode( bool e, sf::Color c )
@@ -402,7 +421,11 @@ void FeListBox::setText( const int index,
 void FeListBox::setRotation( float r )
 {
 	m_rotation = r;
-	m_needs_init = true;
+
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+		m_texts[i].setRotation( m_rotation );
+
+	script_flag_redraw();
 }
 
 void FeListBox::on_new_list( FeSettings *s )
@@ -430,7 +453,7 @@ void FeListBox::clear()
 	m_texts.clear();
 }
 
-int FeListBox::getRowCount()
+int FeListBox::getRowCount() const
 {
 	return m_texts.size();
 }
@@ -479,60 +502,86 @@ int FeListBox::get_align()
 	return (int)m_base_text.getAlignment();
 }
 
+void FeListBox::setBgColor( const sf::Color &c )
+{
+	m_base_text.setBgColor(c);
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+	{
+		if ( i != ( m_texts.size() / 2 ) )
+			m_texts[i].setBgColor( c );
+	}
+	script_flag_redraw();
+}
+
 void FeListBox::set_bgr(int r)
 {
 	sf::Color c=m_base_text.getBgColor();
 	c.r=r;
-	m_base_text.setBgColor(c);
-	m_needs_init = true;
-	script_flag_redraw();
+	setBgColor( c );
 }
 
 void FeListBox::set_bgg(int g)
 {
 	sf::Color c=m_base_text.getBgColor();
 	c.g=g;
-	m_base_text.setBgColor(c);
-	m_needs_init = true;
-	script_flag_redraw();
+	setBgColor( c );
 }
 
 void FeListBox::set_bgb(int b)
 {
 	sf::Color c=m_base_text.getBgColor();
 	c.b=b;
-	m_base_text.setBgColor(c);
-	m_needs_init = true;
-	script_flag_redraw();
+	setBgColor( c );
 }
 
 void FeListBox::set_bga(int a)
 {
 	sf::Color c=m_base_text.getBgColor();
 	c.a=a;
-	m_base_text.setBgColor(c); 
-	m_needs_init = true;
+	setBgColor( c );
+}
+
+// duplicate of FeText version, it's the only way I could get
+// Sqrat to take it... (?)
+//
+void FeListBox::set_bg_rgb(int r, int g, int b )
+{
+	sf::Color c=m_base_text.getBgColor();
+	c.r=r;
+	c.g=g;
+	c.b=b;
+	m_base_text.setBgColor(c);
 	script_flag_redraw();
 }
 
 void FeListBox::set_charsize(int s)
 {
 	m_base_text.setCharacterSize(s);
-	m_needs_init = true;
+
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+		m_texts[i].setCharacterSize( s );
+
 	script_flag_redraw();
 }
 
 void FeListBox::set_style(int s)
 {
 	m_base_text.setStyle(s);
-	m_needs_init = true;
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+	{
+		if ( i != ( m_texts.size() / 2 ) )
+			m_texts[i].setStyle( s );
+	}
 	script_flag_redraw();
 }
 
 void FeListBox::set_align(int a)
 {
 	m_base_text.setAlignment( (FeTextPrimative::Alignment)a);
-	m_needs_init = true;
+
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+		m_texts[i].setAlignment( (FeTextPrimative::Alignment)a );
+
 	script_flag_redraw();
 }
 
@@ -580,6 +629,14 @@ void FeListBox::set_sela(int a)
 	setSelColor( m_selColour );
 }
 
+void FeListBox::set_sel_rgb(int r, int g, int b )
+{
+	m_selColour.r = r;
+	m_selColour.g = g;
+	m_selColour.b = b;
+	setSelColor( m_selColour );
+}
+
 int FeListBox::get_selbgr()
 {
 	return m_selBg.r;
@@ -621,5 +678,13 @@ void FeListBox::set_selbgb(int b)
 void FeListBox::set_selbga(int a)
 {
 	m_selBg.a=a;
+	setSelBgColor( m_selBg );
+}
+
+void FeListBox::set_selbg_rgb(int r, int g, int b )
+{
+	m_selBg.r = r;
+	m_selBg.g = g;
+	m_selBg.b = b;
 	setSelBgColor( m_selBg );
 }
