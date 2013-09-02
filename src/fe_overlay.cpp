@@ -189,7 +189,7 @@ int FeOverlay::internal_dialog(
 		m_characterSize );
 
 	sf::Vector2u size = m_wnd.getSize();
-	float slice = size.y / 3;
+	float slice = size.y / 2;
 
 	message.setSize( size.x, slice );
 	message.setString( msg_str );
