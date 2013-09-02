@@ -273,6 +273,29 @@ bool FeEmulatorEditMenu::on_option_select(
 				ctx.save_req = false;
 			}
 
+			// Do some checks and confirmation before launching the Generator 
+			//
+			std::string command = clean_path( 
+				m_emulator->get_info( FeEmulatorInfo::Executable ) );
+
+			if ( !file_exists( command ) )
+
+			{
+				if ( ctx.confirm_dialog( "Executable '$1' not found, proceed anyways?", 
+									command ) == false )
+					return false;
+			}
+
+			std::string rom_path = clean_path( 
+				m_emulator->get_info( FeEmulatorInfo::Rom_path ) );
+
+			if ( !file_exists( rom_path ) )
+			{
+				if ( ctx.confirm_dialog( "Rom path '$1' not found, proceed anyways?", 
+									rom_path ) == false )
+					return false;
+			}
+
 			std::string emu_name = m_emulator->get_info( FeEmulatorInfo::Name );
 
 			if ( m_romlist_exists )
