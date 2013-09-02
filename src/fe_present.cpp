@@ -1180,22 +1180,21 @@ void FePresent::vm_on_new_layout( const std::string &file )
 bool FePresent::vm_on_tick()
 {
 	using namespace Sqrat;
-	bool retval = false;
+	m_redrawTriggered = false;
 
 	for ( std::vector<std::string>::iterator itr = m_ticksList.begin();
 		itr != m_ticksList.end(); ++itr )
 	{
+		// Assumption: Ticks list is empty if no vm is active
+		//
+		ASSERT( Sqrat::DefaultVM::Get() );
+
 		try 
 		{
 			Function func( RootTable(), (*itr).c_str());
 
 			if ( !func.IsNull() )
-			{
-				m_redrawTriggered = false;
 				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
-				if ( m_redrawTriggered )
-					retval = true;
-			}
 		}
 		catch( Exception e )
 		{
@@ -1203,7 +1202,7 @@ bool FePresent::vm_on_tick()
 		}
 	}
 
-	return retval;
+	return m_redrawTriggered;
 }
 
 bool FePresent::vm_on_transition( 
@@ -1212,23 +1211,23 @@ bool FePresent::vm_on_transition(
 	sf::RenderWindow *wnd )
 {
 	using namespace Sqrat;
-	bool retval = false;
 
 	sf::Time tstart = m_layoutTimer.getElapsedTime();
+	m_redrawTriggered = false;
 
-	// Assumption: Transition list is empty if no vm is active
-	//
 	for ( std::vector<std::string>::iterator itr = m_transitionList.begin();
 		itr != m_transitionList.end(); ++itr )
 	{
+		// Assumption: Transition list is empty if no vm is active
+		//
+		ASSERT( Sqrat::DefaultVM::Get() );
+
 		try 
 		{
 			Function func( RootTable(), (*itr).c_str());
-
 			if ( !func.IsNull() )
 			{
 				sf::Time ttime = m_layoutTimer.getElapsedTime() - tstart;
-				m_redrawTriggered = false;
 
 				while (( func.Evaluate<bool>( (int)t,
 					var,
@@ -1239,12 +1238,10 @@ bool FePresent::vm_on_transition(
 					wnd->clear();
 					wnd->draw( *this );
 					wnd->display();
+					m_redrawTriggered = false; // clear redraw flag
 
 					ttime = m_layoutTimer.getElapsedTime() - tstart;
 				}
-				
-				if ( m_redrawTriggered )
-					retval = true;
 			}
 		}
 		catch( Exception e )
@@ -1253,13 +1250,25 @@ bool FePresent::vm_on_transition(
 		}
 	}
 
-	return retval;
+	return m_redrawTriggered;
 }
+
+namespace 
+{
+	FePresent *helper_get_fep()
+	{
+		HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+
+		if ( !vm )
+			return NULL;
+
+		return (FePresent *)sq_getforeignptr( vm );
+	}
+};
 
 void script_do_update( FeBasePresentable *bp )
 {
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FePresent *fep = helper_get_fep();
 
 	if ( fep )
 		bp->on_new_selection( fep->get_fes() );
@@ -1267,12 +1276,7 @@ void script_do_update( FeBasePresentable *bp )
 
 void script_do_update( FeTextureContainer *tc )
 {
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-
-	if ( !vm )
-		return;
-
-	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FePresent *fep = helper_get_fep();
 
 	if ( fep )
 		tc->on_new_selection( fep->get_fes() );
@@ -1280,12 +1284,7 @@ void script_do_update( FeTextureContainer *tc )
 
 void script_flag_redraw()
 {
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-
-	if ( !vm )
-		return;
-
-	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FePresent *fep = helper_get_fep();
 
 	if ( fep )
 		fep->flag_redraw();
