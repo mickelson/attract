@@ -87,10 +87,13 @@ void FeTextPrimative::fit_string(
 	const sf::Font *font = getFont();
 	unsigned int charsize = getCharacterSize();
 	float width = m_bgRect.getLocalBounds().width;
-	int running_total( charsize * 2 );
+	int running_total( charsize * 2 ); // measure of line's pixel width
+
+	// start from "position", "i" measures to right, "j" to the left
 	int i( (position == (int)s.size()) ? position : position + 1 );
 	int j( position );
 	int last_space( i );
+	bool found_space( false );
 
 	while (( running_total < width )
 			&& (( i < (int)s.size() ) || ( !m_wrap && ( j > 0 ))))
@@ -101,7 +104,10 @@ void FeTextPrimative::fit_string(
 			running_total += g.advance;
 
 			if ( s[i] == L' ' )
+			{
+				found_space = true;
 				last_space = i;
+			}
 
 			i++;
 		}
@@ -116,7 +122,11 @@ void FeTextPrimative::fit_string(
 
 	first_char = j;
 
-	if (( m_wrap ) && ( i != (int)s.size() ))
+	//
+	// If we are word wrapping and found a space, then break at the space.
+	// Otherwise, fit as much on this line as we can
+	//
+	if ( m_wrap && found_space && ( i != (int)s.size() ))
 		len = last_space - j + 1;
 	else
 		len = i - j + 1;
