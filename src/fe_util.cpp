@@ -98,6 +98,17 @@ namespace {
 
 		return true;
 	}
+
+	bool split_out_path( const std::string &src, std::string &path )
+	{
+		size_t pos = src.find_last_of( "/\\" );
+		if ( pos != std::string::npos )
+		{
+			path = src.substr( 0, pos );
+			return true;
+		}
+		return false;
+	}
 } // end namespace
 
 bool file_exists( const std::string &file )
@@ -522,8 +533,13 @@ bool run_program( const std::string &prog, const::std::string &args )
 	si.cb = sizeof(si);
 
 	LPSTR ugh = const_cast<char *>(comstr.c_str());
+	LPSTR current_dir( NULL );
 
-	if ( !CreateProcess( NULL, ugh, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+	std::string path;
+	if ( split_out_path( comstr, path ))
+		current_dir = const_cast<char *>(path.c_str());
+
+	if ( !CreateProcess( NULL, ugh, NULL, NULL, FALSE, 0, NULL, current_dir, &si, &pi ))
 		return false;
 
 	bool keep_wait=true;
