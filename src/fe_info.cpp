@@ -30,17 +30,17 @@
 
 const char *FeRomInfo::indexStrings[] = 
 {
-	"name",
-	"title",
-	"emulator",
-	"cloneof",
-	"year",
-	"manufacturer",
-	"category",
-	"players",
-	"rotation",
-	"control",
-	"status",
+	"Name",
+	"Title",
+	"Emulator",
+	"CloneOf",
+	"Year",
+	"Manufacturer",
+	"Category",
+	"Players",
+	"Rotation",
+	"Control",
+	"Status",
 	NULL
 };
 

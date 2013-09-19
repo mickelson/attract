@@ -12,9 +12,7 @@ function get_y( x ) {
 }
 
 function set_bright( x, o ) {
-	o.red = x;
-	o.green = x;
-	o.blue = x;
+	o.set_rgb( x, x, x );
 }
 
 class Marquee {
@@ -72,11 +70,13 @@ local games = [
 	Marquee(  0, 600, 400, 200, 0.7, 1.0, 0.7 )
 ];
 
-local l = fe.add_text( "[list_title]", 0, 0, 800, 55 );
-l.red = 180; l.green = 180; l.blue = 70; l.charsize = 26; l.style = Style.Bold;
 
-l = fe.add_text( "[title], [manufacturer] [year]", 0, 570, 800, 30 );
-l.red = 255; l.green = 255; l.blue = 255; l.charsize = 16;
+local l = fe.add_text( "[ListTitle]", 0, 0, 800, 55 );
+l.set_rgb( 180, 180, 70 ); 
+l.style = Style.Bold;
+
+l = fe.add_text( "[Title], [Manufacturer] [Year]", 0, 570, 800, 30 );
+l.set_rgb( 255, 255, 255 );
 
 fe.add_transition_callback( "transition" );
 

@@ -45,6 +45,7 @@ enum FeTransitionType
 class FePresent 
 	: public sf::Drawable
 {
+	friend void script_do_update( FeBasePresentable * );
 private:
 
 	FeSettings *m_feSettings;
@@ -81,6 +82,9 @@ private:
 
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
+
+	FePresent( const FePresent & );
+	FePresent &operator=( const FePresent & );
 
 	void clear();
 	void toggle_movie();
