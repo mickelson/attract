@@ -107,13 +107,17 @@ void FePresent::clear()
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 {
-	states.transform = m_rotationTransform * m_scaleTransform;
+	states.transform = m_rotationTransform;
+
+	sf::RenderStates scaled_states( states );
+	scaled_states.transform *= m_scaleTransform;
 
 	std::vector<FeBasePresentable *>::const_iterator itl;
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 	{
 		if ( (*itl)->get_visible() )
-			target.draw( (*itl)->drawable(), states );
+			target.draw( (*itl)->drawable(), 
+				(*itl)->get_draw_apply_scale() ? scaled_states : states );
 	}
 }
 
@@ -372,8 +376,14 @@ int FePresent::update( bool new_list )
 	std::vector<FeBasePresentable *>::iterator itl;
 	if ( new_list )
 	{
+		float scale_x = 
+			(float) sf::VideoMode::getDesktopMode().width / m_layoutSize.x;
+
+		float scale_y = 
+			(float) sf::VideoMode::getDesktopMode().height / m_layoutSize.y;
+
 		for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
-			(*itl)->on_new_list( m_feSettings );
+			(*itl)->on_new_list( m_feSettings, scale_x, scale_y );
 	}
 
 	std::vector<FeTextureContainer *>::iterator itc;
@@ -591,13 +601,16 @@ void FePresent::toggle_movie()
 
 void FePresent::toggle_mute()
 {
+	int movie_vol = m_feSettings->get_play_volume( FeSoundInfo::Movie );
+	int sound_vol = m_feSettings->get_play_volume( FeSoundInfo::Sound );
+
 	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
-		(*itm)->set_vol( m_feSettings->get_play_volume( FeSoundInfo::Movie ) );
+		(*itm)->set_vol( movie_vol );
 
 	for ( std::vector<FeScriptSound *>::iterator its=m_scriptSounds.begin();
 				its != m_scriptSounds.end(); ++its )
-		(*its)->set_volume( m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
+		(*its)->set_volume( sound_vol );
 }
 
 const sf::Transform &FePresent::get_rotation_transform() const
@@ -927,10 +940,7 @@ void FePresent::vm_init()
 
 	sqstd_register_mathlib( vm );
 	sqstd_register_stringlib( vm );
-
-#ifdef FE_DEBUG
 	sqstd_seterrorhandlers( vm );
-#endif
 
 	Sqrat::DefaultVM::Set( vm );
 }
@@ -1077,6 +1087,7 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Prop(_SC("selbg_green"), &FeListBox::get_selbgg, &FeListBox::set_selbgg )
 		.Prop(_SC("selbg_blue"), &FeListBox::get_selbgb, &FeListBox::set_selbgb )
 		.Prop(_SC("selbg_alpha"), &FeListBox::get_selbga, &FeListBox::set_selbga )
+		.Prop(_SC("rows"), &FeListBox::get_rows, &FeListBox::set_rows )
 		.Prop(_SC("charsize"), &FeListBox::get_charsize, &FeListBox::set_charsize )
 		.Prop(_SC("style"), &FeListBox::get_style, &FeListBox::set_style )
 		.Prop(_SC("align"), &FeListBox::get_align, &FeListBox::set_align )
@@ -1271,7 +1282,17 @@ void script_do_update( FeBasePresentable *bp )
 	FePresent *fep = helper_get_fep();
 
 	if ( fep )
+	{
+		float scale_x = (float) 
+			sf::VideoMode::getDesktopMode().width / fep->get_layout_width();
+
+		float scale_y = (float) 
+			sf::VideoMode::getDesktopMode().height / fep->get_layout_height();
+
+		bp->on_new_list( fep->get_fes(), scale_x, scale_y );
 		bp->on_new_selection( fep->get_fes() );
+		fep->flag_redraw();
+	}
 }
 
 void script_do_update( FeTextureContainer *tc )
@@ -1279,7 +1300,10 @@ void script_do_update( FeTextureContainer *tc )
 	FePresent *fep = helper_get_fep();
 
 	if ( fep )
+	{
 		tc->on_new_selection( fep->get_fes() );
+		fep->flag_redraw();
+	}
 }
 
 void script_flag_redraw()

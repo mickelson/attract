@@ -26,6 +26,7 @@
 #include <iostream>
 
 FeBaseText::FeBaseText()
+	: FeBasePresentable( false )
 {
 }
 
@@ -35,7 +36,8 @@ FeBaseText::FeBaseText(
 		const sf::Color &bgcolour,
 		unsigned int charactersize,
 		FeTextPrimative::Alignment align )
-	: m_base_text( font, colour, bgcolour, charactersize, align )
+	: FeBasePresentable( false ),
+	m_base_text( font, colour, bgcolour, charactersize, align )
 {
 }
 
@@ -93,14 +95,10 @@ void FeBaseText::setColor( const sf::Color &c )
 	script_flag_redraw();
 }
 
-unsigned int FeBaseText::getCharacterSize() const
-{
-	return m_base_text.getCharacterSize();
-}
-
 FeText::FeText( const std::string &str )
 	:  m_string( str ), 
-	m_index_offset( 0 )
+	m_index_offset( 0 ),
+	m_user_charsize( false )
 {
 }
 
@@ -113,6 +111,29 @@ void FeText::setIndexOffset( int io )
 int FeText::getIndexOffset() const
 {
 	return m_index_offset;
+}
+
+void FeText::on_new_list( FeSettings *s, float scale_x, float scale_y )
+{
+	//	
+	// Apply the scale factors using m_base_text to get m_draw_text
+	//
+	sf::Transform scaler;
+	scaler.scale( scale_x, scale_y );
+
+	sf::Vector2f pos = scaler.transformPoint( getPosition() );
+	sf::Vector2f size = scaler.transformPoint( getSize() );
+
+	int char_size = 10;
+	if ( m_user_charsize )
+		char_size = m_base_text.getCharacterSize() * scale_y;
+	else if ( size.y > 14 )
+		char_size = size.y - 4;
+
+	m_draw_text = m_base_text;
+	m_draw_text.setPosition( pos );
+	m_draw_text.setSize( size );
+	m_draw_text.setCharacterSize( char_size );
 }
 
 void FeText::on_new_selection( FeSettings *feSettings )
@@ -135,16 +156,16 @@ void FeText::on_new_selection( FeSettings *feSettings )
 
 	if ( n > 0 )
 	{
-		n -= perform_substitution( str, "[list_title]",
+		n -= perform_substitution( str, "[ListTitle]",
 				feSettings->get_current_list_title() );
 	}
 
-	m_base_text.setString( str );
+	m_draw_text.setString( str );
 }
 
 void FeText::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 {
-	target.draw( m_base_text, states );
+	target.draw( m_draw_text, states );
 }
 
 
@@ -238,7 +259,8 @@ void FeText::set_bg_rgb(int r, int g, int b )
 
 void FeText::set_charsize(int s)
 {
-	m_base_text.setCharacterSize(s);
+	m_base_text.setCharacterSize( s );
+	m_user_charsize = true;
 	script_flag_redraw();
 }
 
@@ -258,6 +280,8 @@ FeListBox::FeListBox()
 	: m_selColour( sf::Color::Yellow ),
 	m_selBg( sf::Color::Blue ),
 	m_selStyle( sf::Text::Regular ),
+	m_rows( 11 ),
+	m_userCharSize( 0 ),
 	m_rotation( 0.0 )
 {
 	m_base_text.setColor( sf::Color::White );
@@ -271,54 +295,54 @@ FeListBox::FeListBox(
 		const sf::Color &selcolour,
 		const sf::Color &selbgcolour,
 		unsigned int charactersize,
-		FeTextPrimative::Alignment align )
-	: FeBaseText( font, colour, bgcolour, charactersize, align ),
+		int rows )
+	: FeBaseText( font, colour, bgcolour, charactersize, FeTextPrimative::Centre ),
 	m_selColour( selcolour ),
 	m_selBg( selbgcolour ),
 	m_selStyle( sf::Text::Regular ),
+	m_rows( rows ),
+	m_userCharSize( 0 ),
 	m_rotation( 0.0 )
 {
 }
 
-void FeListBox::init()
+void FeListBox::init( float scale_x, float scale_y )
 {
-	const sf::Font *font = getFont();
-	int fls = getCharacterSize();
-	if ( fls < 10 ) fls = 8; // don't go smaller than 8
+	sf::Transform scaler;
+	scaler.scale( scale_x, scale_y );
 
-	if (( font ) && ( font->getLineSpacing( fls ) > fls ))
-		fls = font->getLineSpacing( fls );
+	sf::Vector2f size = scaler.transformPoint( getSize() );
+	sf::Vector2f pos = scaler.transformPoint( getPosition() );
 
-	fls += fls / 5;  // pad it
+	int actual_spacing = (int)size.y / m_rows;
+	int char_size = 10;
+	
+	// Set the character size now
+	//
+	if ( m_userCharSize > 0 ) 
+		char_size = m_userCharSize * scale_y;
+	else if ( actual_spacing > 14 )
+		char_size = actual_spacing - 4;
 
-	sf::Vector2f size = getSize();
-	sf::Vector2f pos = getPosition();
-
-	int line_count = (int)size.y / fls;
-
-	if ( line_count < 1 )
-		return;
-
-	int actual_spacing = (int)size.y / line_count;
-	int sel = line_count / 2;
-
+	m_base_text.setCharacterSize( char_size );
+		
 	m_texts.clear();
-	m_texts.reserve( line_count );
+	m_texts.reserve( m_rows );
 
-	sf::Transform trans;
-	trans.rotate( m_rotation, pos.x, pos.y );
+	sf::Transform rotater;
+	rotater.rotate( m_rotation, pos.x, pos.y );
 
-	for ( int i=0; i< line_count; i++ )
+	for ( int i=0; i< m_rows; i++ )
 	{
 		FeTextPrimative t( m_base_text );
-		if ( i == sel )
+		if ( i == m_rows / 2 )
 		{
 			t.setColor( m_selColour );
 			t.setBgColor( m_selBg );
 			t.setStyle( m_selStyle );
 		}
 
-		t.setPosition( trans.transformPoint( pos.x, pos.y+(i*actual_spacing)) );
+		t.setPosition( rotater.transformPoint( pos.x, pos.y+(i*actual_spacing)) );
 		t.setSize( size.x, actual_spacing );
 		t.setRotation( m_rotation );
 
@@ -428,9 +452,9 @@ void FeListBox::setRotation( float r )
 	script_flag_redraw();
 }
 
-void FeListBox::on_new_list( FeSettings *s )
+void FeListBox::on_new_list( FeSettings *s, float scale_x, float scale_y )
 {
-	init();
+	init( scale_x, scale_y );
 
 	s->get_current_display_list( m_displayList );
 	setText( s->get_rom_index(), m_displayList );
@@ -489,7 +513,12 @@ int FeListBox::get_bga()
 
 int FeListBox::get_charsize()
 {
-	return m_base_text.getCharacterSize();
+	return m_userCharSize;
+}
+
+int FeListBox::get_rows()
+{
+	return m_rows;
 }
 
 int FeListBox::get_style()
@@ -556,12 +585,24 @@ void FeListBox::set_bg_rgb(int r, int g, int b )
 
 void FeListBox::set_charsize(int s)
 {
-	m_base_text.setCharacterSize(s);
+	m_userCharSize = s;
 
-	for ( unsigned int i=0; i < m_texts.size(); i++ )
-		m_texts[i].setCharacterSize( s );
+	// We call script_do_update to trigger a call to our init() function
+	// with the appropriate parameters
+	//
+	script_do_update( this );
+}
 
-	script_flag_redraw();
+void FeListBox::set_rows(int r)
+{
+	//
+	// Don't allow m_rows to ever be zero or negative
+	//
+	if ( m_rows > 0 )
+	{
+		m_rows = r;
+		script_flag_redraw();
+	}
 }
 
 void FeListBox::set_style(int s)

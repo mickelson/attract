@@ -28,15 +28,19 @@
 class FeSettings;
 class FeBasePresentable
 {
-protected:
+private:
+	const bool m_draw_apply_scale; // true for images, false for texts
 	bool m_visible;
 
+	FeBasePresentable( const FeBasePresentable & );
+	FeBasePresentable &operator=( const FeBasePresentable & );
+
 public:
-	FeBasePresentable();
+	FeBasePresentable( const bool draw_apply_scale );
 	virtual ~FeBasePresentable();
 
 	virtual void on_new_selection( FeSettings * );
-	virtual void on_new_list( FeSettings * );
+	virtual void on_new_list( FeSettings *, float, float );
 
 	virtual const sf::Drawable &drawable()=0;
 	virtual const sf::Vector2f &getPosition() const=0;
@@ -75,6 +79,8 @@ public:
 
 	bool get_visible();
 	void set_visible( bool );
+
+	bool get_draw_apply_scale() const { return m_draw_apply_scale; };
 };
 
 void script_do_update( FeBasePresentable * );

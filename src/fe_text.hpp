@@ -52,9 +52,11 @@ public:
 	void setRotation( float );
 	const sf::Color &getColor() const;
 	void setColor( const sf::Color & );
-	unsigned int getCharacterSize() const;
 
 protected:
+	FeBaseText( const FeBaseText & );
+	FeBaseText &operator=( const FeBaseText & );
+
 	FeTextPrimative m_base_text;
 };
 
@@ -68,6 +70,7 @@ public:
 
 	// Overrides from base class:
 	//
+	void on_new_list( FeSettings *, float, float );
 	void on_new_selection( FeSettings * );
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
 
@@ -97,8 +100,14 @@ protected:
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
 
 private:
+	FeText( const FeText & );
+	FeText &operator=( const FeText & );
+
+	FeTextPrimative m_draw_text;
 	std::string m_string;
 	int m_index_offset;
+	bool m_user_charsize; 	// set to true if the layout has set a specific
+									// charsize
 };
 
 //
@@ -115,7 +124,7 @@ public:
 			const sf::Color &selcolour,
 			const sf::Color &selbgcolour, 
 			unsigned int characterSize,
-			FeTextPrimative::Alignment align=FeTextPrimative::Centre );
+			int rows );
 
 	int getIndexOffset() const;
 	void setIndexOffset( int );
@@ -134,11 +143,11 @@ public:
 	int getRowCount() const;
 
 	void clear();
-	void init();
+	void init( float scale_x = 1.0, float scale_y = 1.0 );
 
 	// Overrides from base class:
 	//
-	void on_new_list( FeSettings * );
+	void on_new_list( FeSettings *, float, float );
 	void on_new_selection( FeSettings * );
 
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
@@ -148,6 +157,7 @@ public:
 	int get_bgb();
 	int get_bga();
 	int get_charsize();
+	int get_rows();
 	int get_style();
 	int get_align();
 	void set_bgr(int r);
@@ -156,6 +166,7 @@ public:
 	void set_bga(int a);
 	void set_bg_rgb( int, int, int );
 	void set_charsize(int s);
+	void set_rows(int r);
 	void set_style(int s);
 	void set_align(int a);
 	int get_selr();
@@ -178,13 +189,17 @@ public:
 	void set_selbg_rgb( int, int, int );
 
 private:
+	FeListBox( const FeListBox & );
+	FeListBox &operator=( const FeListBox & );
+
 	std::vector<std::string> m_displayList;
 	std::vector<FeTextPrimative> m_texts;
 	sf::Color m_selColour;
 	sf::Color m_selBg;
 	int m_selStyle;
+	int m_rows;
+	int m_userCharSize;
 	float m_rotation;
-	bool m_needs_init;
 
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
 };

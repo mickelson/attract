@@ -173,6 +173,9 @@ int FeOverlay::internal_dialog(
 			const std::string &msg_str,
 			const std::vector<std::string> &list )
 {
+	sf::Vector2u size = m_wnd.getSize();
+	float slice = size.y / 2;
+
 	FeTextPrimative message(
 		m_fePresent.get_font(),
 		m_textColour,
@@ -186,10 +189,8 @@ int FeOverlay::internal_dialog(
 		m_bgColour,
 		m_selColour,
 		m_selBgColour,
-		m_characterSize );
-
-	sf::Vector2u size = m_wnd.getSize();
-	float slice = size.y / 2;
+		m_characterSize,
+		( size.y - slice ) / m_characterSize );
 
 	message.setSize( size.x, slice );
 	message.setString( msg_str );
@@ -326,6 +327,8 @@ int FeOverlay::display_config_dialog(
 	if ( ctx.style == FeConfigContext::EditList )
 		width = size.x / 2 - 2;
 
+	int rows = ( size.y - slice * 2 ) / ( m_characterSize / 2 );
+
 	//
 	// The "settings" (left) list, also used to list submenu and exit options...
 	//
@@ -335,7 +338,8 @@ int FeOverlay::display_config_dialog(
 		sf::Color::Transparent, 
 		m_selColour,
 		sf::Color( 0, 0, 200, 200 ),
-		m_characterSize / 2 );
+		m_characterSize / 2,
+		rows );
 
 	sdialog.setPosition( 2, slice );
 	sdialog.setSize( width, size.y - slice * 2 );
@@ -351,7 +355,8 @@ int FeOverlay::display_config_dialog(
 		sf::Color::Transparent, 
 		m_textColour,
 		sf::Color( 0, 0, 200, 200 ),
-		m_characterSize / 2 );
+		m_characterSize / 2,
+		rows );
 
 	if ( ctx.style == FeConfigContext::EditList )
 	{

@@ -242,7 +242,8 @@ void FeTextureContainer::set_vol( float vol )
 }
 
 FeImage::FeImage( FeTextureContainer *tc )
-	: m_tex( tc ), 
+	: FeBasePresentable( true ),
+	m_tex( tc ), 
 	m_size( 0, 0 ), 
 	m_shear( 0, 0 )
 {
@@ -255,7 +256,8 @@ FeImage::FeImage( FeTextureContainer *tc )
 }
 
 FeImage::FeImage( FeImage *o )
-	: m_tex( o->m_tex ), 
+	: FeBasePresentable( true ),
+	m_tex( o->m_tex ), 
 	m_sprite( o->m_sprite ),
 	m_size( o->m_size ), 
 	m_shear( o->m_shear )

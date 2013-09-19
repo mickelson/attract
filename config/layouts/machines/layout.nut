@@ -11,33 +11,18 @@ fe.layout.font = "slicker";
 // Set out the various artwork, image and text elements
 //
 fe.add_artwork( "marquee", 312, 30, 400, 115 );
-
-local l = fe.add_listbox( 43, 261, 490, 417 );
-l.charsize = 19;
-l.align = Align.Centre;
-
+local lb = fe.add_listbox( 43, 261, 490, 417 );
+lb.charsize = 22;
 fe.add_artwork( "screen", 577, 263, 412, 412 );
 fe.add_image( "machinesselbg.png", 0, 0, 1024, 768 );
 
-l = fe.add_text( "[list_title]", 45, 195, 940, 31 );
-l.red = 180;
-l.green = 180;
-l.blue = 70;
-l.charsize = 26;
-l.align = Align.Centre;
+local l = fe.add_text( "[ListTitle]", 45, 195, 940, 25 );
+l.set_rgb( 180, 180, 70 );
 l.style = Style.Bold;
 
-l = fe.add_text( "[manufacturer]", 70, 714, 280, 30 );
-l.charsize = 18;
-l.align = Align.Centre;
-
-l = fe.add_text( "[year]", 362, 714, 160, 31 );
-l.charsize = 18;
-l.align = Align.Centre;
-
-l = fe.add_text( "[category]", 588, 714, 370, 31 );
-l.charsize = 18;
-l.align = Align.Centre;
+fe.add_text( "[Manufacturer]", 70, 714, 280, 22 );
+fe.add_text( "[Year]", 362, 714, 160, 22 );
+fe.add_text( "[Category]", 588, 714, 370, 22 );
 
 // Class to encapsulate each machine animation:
 //

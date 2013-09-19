@@ -22,8 +22,9 @@
 
 #include "fe_presentable.hpp"
 
-FeBasePresentable::FeBasePresentable() 
-	: m_visible( true )
+FeBasePresentable::FeBasePresentable( const bool draw_apply_scale ) 
+	: m_draw_apply_scale( draw_apply_scale ),
+	m_visible( true )
 {
 }
 
@@ -35,7 +36,7 @@ void FeBasePresentable::on_new_selection( FeSettings * )
 {
 }
 
-void FeBasePresentable::on_new_list( FeSettings * )
+void FeBasePresentable::on_new_list( FeSettings *, float, float )
 {
 }
 
@@ -144,4 +145,5 @@ bool FeBasePresentable::get_visible()
 void FeBasePresentable::set_visible( bool v )
 {
 	m_visible = v;
+	script_flag_redraw();
 }
