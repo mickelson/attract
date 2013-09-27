@@ -65,7 +65,6 @@ private:
 	FeSettings::RotationState m_baseRotation;
 	FeSettings::RotationState m_toggleRotation;
 	sf::Transform m_rotationTransform;
-	sf::Transform m_scaleTransform;
 
 	std::vector<FeBasePresentable *> m_elements;
 	std::vector<FeTextureContainer *> m_texturePool;
@@ -82,6 +81,7 @@ private:
 
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
+	sf::Vector2f m_layoutScale;
 
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );
@@ -95,6 +95,9 @@ private:
 	// Overrides from base classes:
 	//
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+
+	float get_layout_scale_x() const;
+	float get_layout_scale_y() const;
 
 	// Scripting functionality
 	//
