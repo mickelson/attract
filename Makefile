@@ -252,8 +252,8 @@ $(SQSTDLIB_OBJ_DIR):
 install: attract
 	cp attract $(INSTALL_DIR)
 
-print-%:
-	@echo '$*=$($*)'
+smallclean:
+	-$(RM) $(OBJ_DIR)/*.o *~ core
 
 clean:
 	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core
