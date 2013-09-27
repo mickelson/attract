@@ -75,6 +75,7 @@ _DEP =\
 	fe_overlay.hpp \
 	tp.hpp \
 	fe_text.hpp \
+	fe_listbox.hpp \
 	fe_icon.hpp
 
 _OBJ =\
@@ -93,6 +94,7 @@ _OBJ =\
 	fe_overlay.o \
 	tp.o \
 	fe_text.o \
+	fe_listbox.o \
 	main.o
 
 LIBS =\

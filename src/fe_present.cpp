@@ -24,6 +24,7 @@
 #include "fe_util.hpp"
 #include "fe_image.hpp"
 #include "fe_text.hpp"
+#include "fe_listbox.hpp"
 #include "fe_sound.hpp"
 #include "fe_input.hpp"
 
@@ -73,7 +74,7 @@ void FePresent::clear()
 	m_listBox=NULL; // listbox gets deleted with the m_elements below
 	m_moveState = MoveNone;
 	m_baseRotation = FeSettings::RotateNone;
-	m_scaleTransform = m_rotationTransform = sf::Transform();
+	m_rotationTransform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName.clear();
 	m_ticksList.clear();
@@ -103,6 +104,8 @@ void FePresent::clear()
 	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 	m_layoutSize.x = vm.width;
 	m_layoutSize.y = vm.height;
+	m_layoutScale.x = 1.0;
+	m_layoutScale.y = 1.0;
 }
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
@@ -110,7 +113,7 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 	states.transform = m_rotationTransform;
 
 	sf::RenderStates scaled_states( states );
-	scaled_states.transform *= m_scaleTransform;
+	scaled_states.transform.scale( m_layoutScale.x, m_layoutScale.y );
 
 	std::vector<FeBasePresentable *>::const_iterator itl;
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
@@ -151,9 +154,7 @@ FeImage *FePresent::add_clone( FeImage *o )
 
 FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h )
 {
-	FeText *new_text = new FeText( n );
-	new_text->setPosition( x, y );
-	new_text->setSize( w, h );
+	FeText *new_text = new FeText( n, x, y, w, h );
 
 	if ( m_currentFont )
 		new_text->setFont( *m_currentFont );
@@ -165,9 +166,7 @@ FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h )
 
 FeListBox *FePresent::add_listbox( int x, int y, int w, int h )
 {
-	FeListBox *new_lb = new FeListBox();
-	new_lb->setPosition( x, y );
-	new_lb->setSize( w, h );
+	FeListBox *new_lb = new FeListBox( x, y, w, h );
 
 	if ( m_currentFont )
 		new_lb->setFont( *m_currentFont );
@@ -212,21 +211,27 @@ int FePresent::get_layout_height() const
 	return m_layoutSize.y;
 }
 
+float FePresent::get_layout_scale_x() const
+{
+	return m_layoutScale.x;
+}
+
+float FePresent::get_layout_scale_y() const
+{
+	return m_layoutScale.y;
+}
+
 void FePresent::set_layout_width( int w )
 {
 	m_layoutSize.x = w;
-	m_scaleTransform.scale( 
-		(float) sf::VideoMode::getDesktopMode().width / w, 1.0 );
-
+	m_layoutScale.x = (float) sf::VideoMode::getDesktopMode().width / w;
 	m_redrawTriggered = true;
 }
 
 void FePresent::set_layout_height( int h )
 {
 	m_layoutSize.y = h;
-	m_scaleTransform.scale( 1.0,
-		(float) sf::VideoMode::getDesktopMode().height / h );
-
+	m_layoutScale.y = (float) sf::VideoMode::getDesktopMode().height / h;
 	m_redrawTriggered = true;
 }
 
@@ -376,14 +381,10 @@ int FePresent::update( bool new_list )
 	std::vector<FeBasePresentable *>::iterator itl;
 	if ( new_list )
 	{
-		float scale_x = 
-			(float) sf::VideoMode::getDesktopMode().width / m_layoutSize.x;
-
-		float scale_y = 
-			(float) sf::VideoMode::getDesktopMode().height / m_layoutSize.y;
-
 		for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
-			(*itl)->on_new_list( m_feSettings, scale_x, scale_y );
+			(*itl)->on_new_list( m_feSettings, 
+				m_layoutScale.x, 
+				m_layoutScale.y );
 	}
 
 	std::vector<FeTextureContainer *>::iterator itc;
@@ -427,12 +428,11 @@ void FePresent::load_layout( sf::RenderWindow *wnd )
 	set_rotation_transform();
 	m_screenSaverActive=false;
 
-	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 	if ( m_feSettings->lists_count() < 1 )
 	{
 		std::string msg;
 		m_feSettings->get_resource( "No lists configured.", msg );
-		add_text( msg, 0, 0, vm.width, vm.height );
+		add_text( msg, 0, 0, m_layoutSize.x, m_layoutSize.y );
 		update( true );
 		return;
 	}
@@ -447,12 +447,14 @@ void FePresent::load_layout( sf::RenderWindow *wnd )
 	if ( m_elements.empty() )
 	{
 		//
-		// Nothing loaded, default to a full screen list with the configured
-		// movie artwork as the background
+		// Nothing loaded, default to a full screen list with the 
+		// configured movie artwork as the background
 		//
-		FeImage *img = cb_add_artwork( "", 0, 0, vm.width, vm.height );
+		FeImage *img = cb_add_artwork( "", 0, 0, 
+			m_layoutSize.x, m_layoutSize.y );
+
 		img->setColor( sf::Color( 100, 100, 100, 180 ) );
-		cb_add_listbox( 0, 0, vm.width, vm.height );
+		cb_add_listbox( 0, 0, m_layoutSize.x, m_layoutSize.y );
 	}
 
 	update( true );
@@ -1312,14 +1314,12 @@ void script_do_update( FeBasePresentable *bp )
 
 	if ( fep )
 	{
-		float scale_x = (float) 
-			sf::VideoMode::getDesktopMode().width / fep->get_layout_width();
+		bp->on_new_list( fep->get_fes(), 
+			fep->get_layout_scale_x(),
+			fep->get_layout_scale_y() );
 
-		float scale_y = (float) 
-			sf::VideoMode::getDesktopMode().height / fep->get_layout_height();
-
-		bp->on_new_list( fep->get_fes(), scale_x, scale_y );
 		bp->on_new_selection( fep->get_fes() );
+
 		fep->flag_redraw();
 	}
 }
