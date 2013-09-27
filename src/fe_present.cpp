@@ -704,14 +704,10 @@ void FePresent::perform_autorotate()
 //
 void printFunc(HSQUIRRELVM v, const SQChar *s, ...)
 {
-	std::cout << "Script: ";
-
 	va_list vl;
 	va_start(vl, s);
 	vprintf(s, vl);
 	va_end(vl);
-
-	std::cout << std::endl;
 }
 
 FeImage* FePresent::cb_add_image(const char *n, int x, int y, int w, int h )
@@ -1021,13 +1017,17 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	}
 	ConstTable().Enum( _SC("Info"), info);
 
+	// All frontend functionality is in the "fe" table in Squirrel
 	//
-	// Define classes for fe objects that get exposed to squirrel
+	Table fe;
+
+	//
+	// Define classes for fe objects that get exposed to Squirrel
 	//
 
 	// Base Presentable Object Class
 	//
-	RootTable().Bind( _SC("Presentable"), 
+	fe.Bind( _SC("Presentable"), 
 		Class<FeBasePresentable, NoConstructor>()
 		.Prop(_SC("visible"), 
 			&FeBasePresentable::get_visible, &FeBasePresentable::set_visible )
@@ -1047,7 +1047,7 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
 	);
 
-	RootTable().Bind( _SC("Image"), 
+	fe.Bind( _SC("Image"), 
 		DerivedClass<FeImage, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("shear_x"), &FeImage::get_shear_x, &FeImage::set_shear_x )
 		.Prop(_SC("shear_y"), &FeImage::get_shear_y, &FeImage::set_shear_y )
@@ -1060,7 +1060,7 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Prop(_SC("movie_enabled"), &FeImage::getMovieEnabled, &FeImage::setMovieEnabled )
 	);
 
-	RootTable().Bind( _SC("Text"), 
+	fe.Bind( _SC("Text"), 
 		DerivedClass<FeText, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("msg"), &FeText::get_string, &FeText::set_string )
 		.Prop(_SC("bg_red"), &FeText::get_bgr, &FeText::set_bgr )
@@ -1073,7 +1073,7 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
 
-	RootTable().Bind( _SC("ListBox"), 
+	fe.Bind( _SC("ListBox"), 
 		DerivedClass<FeListBox, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("bg_red"), &FeListBox::get_bgr, &FeListBox::set_bgr )
 		.Prop(_SC("bg_green"), &FeListBox::get_bgg, &FeListBox::set_bgg )
@@ -1097,14 +1097,14 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Func( _SC("set_selbg_rgb"), &FeListBox::set_selbg_rgb )
 	);
 
-	RootTable().Bind( _SC("LayoutGlobals"), Class <FePresent, NoConstructor>()
+	fe.Bind( _SC("LayoutGlobals"), Class <FePresent, NoConstructor>()
 		.Prop( _SC("width"), &FePresent::get_layout_width, &FePresent::set_layout_width )
 		.Prop( _SC("height"), &FePresent::get_layout_height, &FePresent::set_layout_height )
 		.Prop( _SC("font"), &FePresent::get_layout_font, &FePresent::set_layout_font )
 		.Prop( _SC("orient"), &FePresent::get_layout_orient, &FePresent::set_layout_orient )
 	);
 
-	RootTable().Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
+	fe.Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
 		.Func( _SC("load"), &FeScriptSound::load )
 		.Func( _SC("play"), &FeScriptSound::play )
 		.Prop( _SC("is_playing"), &FeScriptSound::is_playing )
@@ -1114,9 +1114,10 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Prop( _SC("z"), &FeScriptSound::get_z, &FeScriptSound::set_z )
 	);
 
-	// All frontend functionality is in the "fe" table in Squirrel
 	//
-	Table fe;
+	// Define functions that get exposed to Squirrel
+	//
+
 	fe.Overload<FeImage* (*)(const char *, int, int, int, int)>(_SC("add_image"), &FePresent::cb_add_image);
 	fe.Overload<FeImage* (*)(const char *, int, int)>(_SC("add_image"), &FePresent::cb_add_image);
 	fe.Overload<FeImage* (*)(const char *)>(_SC("add_image"), &FePresent::cb_add_image);
@@ -1143,6 +1144,10 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FePresent::do_nut);
 	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FePresent::cb_game_info);
 	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FePresent::cb_game_info);
+
+	//
+	// Define variables that get exposed to Squirrel
+	//
 
 	fe.SetInstance( _SC("layout"), this );
 
@@ -1194,23 +1199,35 @@ bool FePresent::vm_on_tick()
 	m_redrawTriggered = false;
 
 	for ( std::vector<std::string>::iterator itr = m_ticksList.begin();
-		itr != m_ticksList.end(); ++itr )
+		itr != m_ticksList.end(); )
 	{
 		// Assumption: Ticks list is empty if no vm is active
 		//
 		ASSERT( Sqrat::DefaultVM::Get() );
 
+		bool remove=false;
 		try 
 		{
-			Function func( RootTable(), (*itr).c_str());
+			Function func( RootTable(), (*itr).c_str() );
 
 			if ( !func.IsNull() )
 				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error: " << e.Message() << std::endl;
+			std::cout << "Script Error in " << (*itr) 
+				<< "(): " << e.Message() << std::endl;
+
+			// Knock out this entry.   If it causes a script error, we don't
+			// want to call it anymore
+			//
+			remove=true;
 		}
+
+		if ( remove )
+			itr = m_ticksList.erase( itr );
+		else
+			itr++;
 	}
 
 	return m_redrawTriggered;
@@ -1227,12 +1244,13 @@ bool FePresent::vm_on_transition(
 	m_redrawTriggered = false;
 
 	for ( std::vector<std::string>::iterator itr = m_transitionList.begin();
-		itr != m_transitionList.end(); ++itr )
+		itr != m_transitionList.end(); )
 	{
 		// Assumption: Transition list is empty if no vm is active
 		//
 		ASSERT( Sqrat::DefaultVM::Get() );
 
+		bool remove=false;
 		try 
 		{
 			Function func( RootTable(), (*itr).c_str());
@@ -1257,8 +1275,19 @@ bool FePresent::vm_on_transition(
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error: " << e.Message() << std::endl;
+			std::cout << "Script Error in " << (*itr)
+				<< "(): " << e.Message() << std::endl;
+
+			// Knock out this entry.   If it causes a script error, we don't
+			// want to call it anymore
+			//
+			remove = true;
 		}
+
+		if ( remove )
+			itr = m_transitionList.erase( itr );
+		else
+			itr++;
 	}
 
 	return m_redrawTriggered;
