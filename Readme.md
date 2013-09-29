@@ -3,14 +3,14 @@ Attract-Mode Frontend
 
 Attract-Mode is a graphical front-end for command line emulators such 
 as MAME, MESS, and Nestopia.  It is designed to be run in an arcade 
-cabinet setup and controlled with a joystick or spin dial.  Attract-
-Mode is written in C++ and uses [SFML][].  
+cabinet setup and controlled with a joystick or spin dial.  Attract-Mode 
+is written in C++ and uses [SFML][].  
 
-Attract-Mode was developed for use in Linux.  It is known to work 
-on Ubuntu Linux, Mac OS-X 10.6, and Windows 7.
+Attract-Mode was developed for use in Linux.  It is known to work on
+Ubuntu Linux, Mac OS-X 10.6, and Windows 7.
 
 Attract-Mode's layouts are actually scripts written in the [Squirrel][]
-programming language. [FFMPEG][] is used for (optional) movie support.
+programming language. [FFmpeg][] is used for (optional) movie support.
 
 Please visit <http://attractmode.org> for more information.
 
@@ -33,14 +33,14 @@ essential" package on Debian/Ubuntu, X-Code on OS-X, or MinGW on Windows.
       - SFML SDK version 2.x 
 
    * Optional:
-      - FFMPEG's avformat, avcodec, swscale and avutil libs.
+      - FFmpeg's avformat, avcodec, swscale and avutil libs.
      	(for movie support).
       - Fontconfig (for font configuration on Linux/FreeBSD).
 
 3. Download the Attract-Mode source, extract it to your system.
 
 4. On Linux/OS-X: Run the "make" command.  Edit the Makefile first if you 
-wish to change any build options  (i.e. to disable FFMPEG or Fontconfig).  
+wish to change any build options  (i.e. to disable FFmpeg or Fontconfig).  
 
 	On Windows: Either use the Makefile with the MINGW make command or load
 the Codeblocks project file located in the "win32" subdirectory and 
@@ -94,7 +94,7 @@ Further Customization
 ---------------------
 
 **INPUT:** The inputs used to control Attract-Mode can be configured from
-from the "Input" menu in configuration mode.  Attract-Mode actions can
+from the "Input" menu in configuration mode.  Attract-Mode actions can be
 mapped to most keyboard, mouse and joystick inputs.
 
 **LIST FILTERS:** List filters can be configured from the "Lists" menu 
@@ -111,36 +111,41 @@ When deciding what image file to use for a particular artwork type
 (default artworks are "marquee" and "screen"), Attract-Mode will use the
 artwork/movie selection order set out below.
 
-**MOVIE:** Attract-Mode should support any movie format supported by FFMPEG.
+**MOVIE:** Attract-Mode should support any movie format supported by FFmpeg.
 The movie to play is decided in the order set out below.
 
 **ARTWORK/MOVIE SELECTION ORDER:**
 
-1. From the artwork path configured in the emulator setting (if any):
+   * From the artwork path configured in the emulator setting (if any):
 
-   * [romname].xxx  (i.e. "pacman.png")  
-   * [cloneof].xxx  (i.e. "puckman.gif")  
-   * [emulator].xxx (i.e. "mame.jpg")  
+      - [Name].xxx  (i.e. "pacman.png")  
+      - [CloneOf].xxx  (i.e. "puckman.gif")  
+      - [Emulator].xxx (i.e. "mame.jpg")  
 
-2. From the layout path for the current layout (layouts are located in
-the "layouts" subdirectory of your Attract-Mode config directory):
+   * From the layout path for the current layout (layouts are located in
+   the "layouts" subdirectory of your Attract-Mode config directory):
 
-   * [emulator]-[artlabel].xxx  (i.e. "mame-marquee.png")  
-   * [artlabel].xxx  (i.e. "marquee.png")  
+      - [Emulator]-[ArtLabel].xxx  (i.e. "mame-marquee.png")  
+      - [ArtLabel].xxx  (i.e. "marquee.png")  
 
-3. If no files are found matching the above rules, then the artwork/movie 
-is left blank.
+   * If no files are found matching the above rules, then the artwork/movie 
+   is left blank.
+
+**LAYOUTS:** See: [Layouts.md][]
 
 **ROMLISTS:** Romlists are saved in the "romlist" subdirectory of your 
 Attract-Mode config directory.  Each list is a semi-colon delimited text 
-file with one game/rom entry per line. The first line of each file 
-describes what each column represents.  In addition to the Romlist 
-generation function available in configuration mode, Attract-Mode can 
-generate a romlist for multiple emulators from the command line using the 
-following command: 
+file that can be edited by most common spreadsheet programs (be sure to
+load it as "Text CSV").  The file has one game entry per line, with the 
+first line describing what each column represents.
+
+In addition to the Romlist generation function available in configuration 
+mode, Attract-Mode can generate a romlist for multiple emulators from the 
+command line using the following command: 
 
 		attract --build-rom-list [emulator names...]
 
+[Layouts.md]: Layouts.md
 [SFML]: http://www.sfml-dev.org
-[SQUIRREL]: http://www.squirrel-lang.org
-[FFMPEG]: http://www.ffmpeg.org
+[Squirrel]: http://www.squirrel-lang.org
+[FFmpeg]: http://www.ffmpeg.org
