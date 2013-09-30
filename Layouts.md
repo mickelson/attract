@@ -7,13 +7,17 @@ Layouts and Screen Savers Reference
 Overview
 --------
 
-Layouts are stored under the "layouts" subdirectory of you Attract-Mode 
+The Attract-mode layout sets out what gets displayed to the user. Layouts
+consist of at least one script file and a collection of related resources
+(images, etc.) used by the script.
+
+Layouts are stored under the "layouts" subdirectory of the Attract-Mode 
 config directory.  Each layout gets its own separate subdirectory.  Each
 layout can have one or more ".nut" script files in it.  The "Toggle Layout" 
-command in Attract-Mode allows you to cycle between each of the ".nut" script 
-files located in the layout's directory.  Attract-Mode remembers the last 
-file toggled to for each layout and will go back to that same file the next 
-time the layout is loaded.  This allows for variations of a particular 
+command in Attract-Mode allows users to cycle between each of the ".nut" 
+script files located in the layout's directory.  Attract-Mode remembers the 
+last file toggled to for each layout and will go back to that same file the 
+next time the layout is loaded.  This allows for variations of a particular 
 layout to be implemented and easily selected by the user (for example, a 
 layout could provide "landscape" and "portrait" versions).
 
@@ -643,7 +647,7 @@ Classes
 >       - `Style.Underlined`
 >    * `align` - Get/set the text alignment.  Can be one of the following 
 >
-> Functions:   
+> Functions:
 >
 >    * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the 
 >      text.  Range is [0 ... 255].
@@ -653,6 +657,26 @@ Classes
 >      for the selection text.  Range is [0 ... 255].
 >    * `set_selbg_rgb( r, g, b )` - Set the red, green and blue colour values 
 >      for the selection background.  Range is [0 ... 255].
+>
+
+#### `fe.Sound` ####
+
+> The class representing a simple sound in Attract-Mode.  Instances of this 
+> class are returned by the `fe.add_sound()` function.  This class cannot be 
+> otherwise instantiated in a script.
+> 
+> Attributes:   
+>
+>    * `is_playing` - Get the sound's playing status (boolean). 
+>    * `pitch` - Get/set the sound's pitch (float). Default value is 1.
+>    * `x` - Get/set the x position of the sound.  Default value is 0.
+>    * `y` - Get/set the y position of the sound.  Default value is 0.
+>    * `z` - Get/set the z position of the sound.  Default value is 0.
+>
+> Functions:
+>
+>    * `play()` - Play the sound.
+>
 
 Constants
 ---------
