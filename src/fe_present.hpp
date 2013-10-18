@@ -157,8 +157,6 @@ public:
 	static FeImage *cb_add_artwork(const char *);
 	static FeImage *cb_add_clone(FeImage *);
 	static FeText *cb_add_text(const char *,int, int, int, int);
-	static FeText *cb_add_text(const char *, int, int);
-	static FeText *cb_add_text(const char *);
 	static FeListBox *cb_add_listbox(int, int, int, int);
 	static FeScriptSound *cb_add_sound(const char *);
 	static void cb_add_ticks_callback(const char *);

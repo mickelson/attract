@@ -796,16 +796,6 @@ FeText* FePresent::cb_add_text(const char *n, int x, int y, int w, int h )
 	return ret;
 }
 
-FeText* FePresent::cb_add_text(const char *n, int x, int y )
-{
-	return cb_add_text( n, x, y, 0, 0 );
-}
-
-FeText* FePresent::cb_add_text(const char *n )
-{
-	return cb_add_text( n, 0, 0, 0, 0 );
-}
-
 FeListBox* FePresent::cb_add_listbox(int x, int y, int w, int h )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
@@ -1107,7 +1097,6 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	);
 
 	fe.Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
-		.Func( _SC("load"), &FeScriptSound::load )
 		.Func( _SC("play"), &FeScriptSound::play )
 		.Prop( _SC("is_playing"), &FeScriptSound::is_playing )
 		.Prop( _SC("pitch"), &FeScriptSound::get_pitch, &FeScriptSound::set_pitch )
@@ -1128,14 +1117,9 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	fe.Overload<FeImage* (*)(const char *, int, int)>(_SC("add_artwork"), &FePresent::cb_add_artwork);
 	fe.Overload<FeImage* (*)(const char *)>(_SC("add_artwork"), &FePresent::cb_add_artwork);
 
-	fe.Overload<FeImage* (*)(const char *)>(_SC("add_artwork"), &FePresent::cb_add_artwork);
-	
 	fe.Func<FeImage* (*)(FeImage *)>(_SC("add_clone"), &FePresent::cb_add_clone);
 
 	fe.Overload<FeText* (*)(const char *, int, int, int, int)>(_SC("add_text"), &FePresent::cb_add_text);
-	fe.Overload<FeText* (*)(const char *, int, int)>(_SC("add_text"), &FePresent::cb_add_text);
-	fe.Overload<FeText* (*)(const char *)>(_SC("add_text"), &FePresent::cb_add_text);
-
 	fe.Func<FeListBox* (*)(int, int, int, int)>(_SC("add_listbox"), &FePresent::cb_add_listbox);
 	fe.Func<FeScriptSound* (*)(const char *)>(_SC("add_sound"), &FePresent::cb_add_sound);
 	fe.Func<void (*)(const char *)>(_SC("add_ticks_callback"), &FePresent::cb_add_ticks_callback);
