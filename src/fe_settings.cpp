@@ -148,7 +148,7 @@ void FeSettings::clear()
 	m_current_list = -1;
 
 	m_lists.clear();
-	m_rl.list.clear();
+	m_rl.clear();
 	m_emulators.clear();
 }
 
@@ -288,7 +288,7 @@ int FeSettings::process_setting( const std::string &setting,
 
 void FeSettings::init_list()
 {
-	m_rl.list.clear();
+	m_rl.clear();
 
 	if ( m_current_list < 0 )
 		return;
@@ -438,10 +438,8 @@ void FeSettings::dump() const
 
 	std::cout << "*** Dump of current rom list:" << std::endl;
 
-	if ( !m_rl.empty() )
-		for ( std::deque<FeRomInfo>::const_iterator itr=m_rl.list.begin();
-			itr != m_rl.list.end(); ++itr )
-			(*itr).dump();
+	for ( int i=0; i < m_rl.size(); i++ )
+		m_rl[i].dump();
 
 	std::cout << "*** Dump of font paths: " << std::endl;
 	if ( !m_font_paths.empty() )
@@ -717,11 +715,8 @@ int FeSettings::get_current_display_list( std::vector<std::string> &l ) const
 	l.clear();
 	l.reserve( m_rl.size() );
 
-	for ( std::deque<FeRomInfo>::const_iterator itr=m_rl.list.begin();
-			itr != m_rl.list.end(); ++itr )
-	{
-		l.push_back( (*itr).get_info( FeRomInfo::Title ) );
-	}
+	for ( int i=0; i < m_rl.size(); i++ )
+		l.push_back( m_rl[i].get_info( FeRomInfo::Title ) );
 
 	return 0;
 }

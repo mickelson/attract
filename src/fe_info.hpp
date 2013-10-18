@@ -28,6 +28,8 @@
 #include <vector>
 #include <deque>
 
+struct SQRex;
+
 //
 // Class for storing information regarding a specific rom
 //
@@ -66,6 +68,8 @@ public:
 	bool operator< ( FeRomInfo ) const;
 
 private:
+	FeRomInfo &operator=( const FeRomInfo & );
+
 	std::string get_info_escaped( int ) const;
 
 	std::string m_info[LAST_INDEX];
@@ -91,8 +95,6 @@ public:
 		FilterNotEquals,
 		FilterContains,
 		FilterNotContains,
-		FilterGt,
-		FilterLt,
 		LAST_COMPARISON
 	};
 
@@ -139,27 +141,35 @@ private:
 class FeRomList : public FeFileConfigurable
 {
 private:
+	std::deque<FeRomInfo> m_list;
 	FeRomInfo::Index m_filter_target;
 	FeListInfo::FilterComp m_filter_comp;
 	std::string m_filter_what;
+	SQRex *m_rex;
+
+	FeRomList( const FeRomList & );
+	FeRomList &operator=( const FeRomList & );
 
 	bool apply_filter( const FeRomInfo &rom ) const;
 
 public:
-	std::deque<FeRomInfo> list;
+	FeRomList();
+	~FeRomList();
+
+	void clear();
 
 	void set_filter( FeRomInfo::Index i, 
-				FeListInfo::FilterComp c, 
-				const std::string &w );
+		FeListInfo::FilterComp c, 
+		const std::string &w );
 
 	int process_setting( const std::string &setting, 
-								const std::string &value,
-								const std::string &fn );
+		const std::string &value,
+		const std::string &fn );
 
-	bool empty() const { return list.empty(); };
-	int size() const { return (int)list.size(); };
-	const FeRomInfo &operator[](int idx) const { return list[idx]; };
-	FeRomInfo &operator[](int idx) { return list[idx]; };
+	bool empty() const { return m_list.empty(); };
+	int size() const { return (int)m_list.size(); };
+	const FeRomInfo &operator[](int idx) const { return m_list[idx]; };
+	FeRomInfo &operator[](int idx) { return m_list[idx]; };
 };
 
 
@@ -225,6 +235,9 @@ public:
 				std::string &str ) const;
 
 private:
+	FeResourceMap( const FeResourceMap & );
+	FeResourceMap &operator=( const FeResourceMap & );
+
 	std::map<std::string, std::string> m_map;
 };
 

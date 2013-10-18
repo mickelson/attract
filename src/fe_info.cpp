@@ -28,6 +28,9 @@
 #include <fstream>
 #include <iomanip>
 
+#include <squirrel.h>
+#include <sqstdstring.h>
+
 const char *FeRomInfo::indexStrings[] = 
 {
 	"Name",
@@ -134,8 +137,6 @@ const char *FeListInfo::filterCompStrings[] =
 	"not_equals",
 	"contains",
 	"not_contains",
-	"gt",
-	"lt",
 	NULL 
 };
 
@@ -337,29 +338,72 @@ void FeListInfo::save( std::ofstream &f ) const
 	}
 }
 
+FeRomList::FeRomList()
+	: m_filter_target( FeRomInfo::LAST_INDEX ),
+	m_filter_comp( FeListInfo::LAST_COMPARISON ),
+	m_rex( NULL )
+{
+}
+
+FeRomList::~FeRomList()
+{
+	// need to free m_rex
+	clear();
+}
+
+void FeRomList::clear()
+{
+	if ( m_rex )
+		sqstd_rex_free( m_rex );
+
+	m_list.clear();
+	m_filter_target = FeRomInfo::LAST_INDEX;
+	m_filter_comp = FeListInfo::LAST_COMPARISON;
+	m_rex = NULL;
+}
+
 bool FeRomList::apply_filter( const FeRomInfo &rom ) const
 {
 	
 	if (( m_filter_target == FeRomInfo::LAST_INDEX )
-		|| ( m_filter_comp == FeListInfo::LAST_COMPARISON ))
+		|| ( m_filter_comp == FeListInfo::LAST_COMPARISON )
+		|| ( m_rex == NULL ))
 		return true;
 
-	std::string target = rom.get_info( m_filter_target );
+	const SQChar *begin( NULL );
+	const SQChar *end( NULL );
+	const std::string &target = rom.get_info( m_filter_target );
 
 	switch ( m_filter_comp )
 	{
 	case FeListInfo::FilterEquals:
-		return ((target.compare( m_filter_what ) == 0) ? true : false);
+		return (( sqstd_rex_match( 
+					m_rex, 
+					(const SQChar *)target.c_str() 
+					) == SQTrue ) ? true : false );
+
 	case FeListInfo::FilterNotEquals:
-		return ((target.compare( m_filter_what ) == 0) ? false : true);
+		return (( sqstd_rex_match( 
+					m_rex, 
+					(const SQChar *)target.c_str() 
+					) == SQTrue ) ? false : true );
+
 	case FeListInfo::FilterContains:
-		return ((target.find( m_filter_what ) != std::string::npos) ? true : false);
+		return (( sqstd_rex_search( 
+					m_rex, 
+					(const SQChar *)target.c_str(),
+					&begin,
+					&end
+					) == SQTrue ) ? true : false );
+
 	case FeListInfo::FilterNotContains:
-		return ((target.find( m_filter_what ) != std::string::npos) ? false : true);
-	case FeListInfo::FilterGt:
-		return ((target.compare( m_filter_what ) > 0) ? true : false);
-	case FeListInfo::FilterLt:
-		return ((target.compare( m_filter_what ) < 0) ? true : false);
+		return (( sqstd_rex_search( 
+					m_rex, 
+					(const SQChar *)target.c_str(),
+					&begin,
+					&end
+					) == SQTrue ) ? false : true );
+
 	default:
 		return true;
 	}
@@ -369,9 +413,26 @@ void FeRomList::set_filter( FeRomInfo::Index i,
             FeListInfo::FilterComp c,
             const std::string &w )
 {
+	clear();
+
 	m_filter_target = i;
 	m_filter_comp = c;
 	m_filter_what = w;
+
+	if ( !m_filter_what.empty() )
+	{
+		//
+		// Compile the regular expression now
+		//
+		const SQChar *err( NULL );
+		m_rex = sqstd_rex_compile( 
+			(const SQChar *)m_filter_what.c_str(),
+			&err );
+
+		if ( !m_rex )
+			std::cout << "Error compiling regular expression: " 
+				<< err << std::endl;
+	}
 }
 
 int FeRomList::process_setting( const std::string &setting,
@@ -382,11 +443,10 @@ int FeRomList::process_setting( const std::string &setting,
 	next_rom.process_setting( setting, value, fn );
 
 	if ( apply_filter( next_rom ) == true )
-		list.push_back( next_rom );
+		m_list.push_back( next_rom );
 
    return 0;
 }
-
 
 const char *FeEmulatorInfo::indexStrings[] =
 {
