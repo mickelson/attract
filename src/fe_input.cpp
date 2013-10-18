@@ -444,16 +444,16 @@ const char *FeInputMap::keyStrings[] =
 	"X",
 	"Y",
 	"Z",
-	"0", // sf::Keyboard::Num0
-  	"1", // sf::Keyboard::Num1
-	"2", // sf::Keyboard::Num2
-	"3", // sf::Keyboard::Num3
-	"4", // sf::Keyboard::Num4
-	"5", // sf::Keyboard::Num5
-	"6", // sf::Keyboard::Num6
-	"7", // sf::Keyboard::Num7
-	"8", // sf::Keyboard::Num8
-	"9", // sf::Keyboard::Num9
+	"Num0", // sf::Keyboard::Num0
+  	"Num1", // sf::Keyboard::Num1
+	"Num2", // sf::Keyboard::Num2
+	"Num3", // sf::Keyboard::Num3
+	"Num4", // sf::Keyboard::Num4
+	"Num5", // sf::Keyboard::Num5
+	"Num6", // sf::Keyboard::Num6
+	"Num7", // sf::Keyboard::Num7
+	"Num8", // sf::Keyboard::Num8
+	"Num9", // sf::Keyboard::Num9
 	"Escape",
 	"LControl",
 	"LShift",
