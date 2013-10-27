@@ -50,6 +50,13 @@ int perform_substitution( std::string &target,
                            const std::string &to );
 
 //
+// Case insensitive check if filename has the specified extension/ending.
+//
+bool tail_compare(
+         const std::string &filename,
+         const char *extension );
+
+//
 // Run the specified program, blocks while program running
 //
 bool run_program( const std::string &prog, const::std::string &args );

@@ -285,7 +285,12 @@ int FeListInfo::parse_filter( const std::string &fn,
 
 	m_filter_comp = (FilterComp)i;
 
-	token_helper( filter_str, pos, m_filter_what, FE_WHITESPACE );
+	// Remainder of the line is filter regular expression (which may contain
+	// spaces...)
+	//
+	if ( pos < filter_str.size() )
+		m_filter_what = filter_str.substr( pos );
+
 	return 0;
 }
 
@@ -455,7 +460,7 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"args",
 	"rompath",
 	"romext",
-	"catver_file",	
+	"import_extras",	
 	"listxml",	
 	"movie_path",
 	"movie_artwork",
@@ -469,7 +474,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Command Arguments",
 	"Rom Path",
 	"Rom Extension",
-	"Catver.ini File",	
+	"Additional Import Files",	
 	"XML Mode",	
 	"Movie Path",
 	"Movie Fallback Artwork",

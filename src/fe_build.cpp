@@ -142,15 +142,11 @@ void write_romlist( const std::string &filename,
 	}
 }
 
-void apply_catver( const FeEmulatorInfo &emulator, 
-				std::list<FeRomInfo> &romlist )
+void ini_import( const std::string &filename, 
+				std::list<FeRomInfo> &romlist,
+				FeRomInfo::Index index,
+				const std::string &init_tag )
 {
-	std::string catver = clean_path( emulator.get_info( 
-									FeEmulatorInfo::Catver_file ));
-
-	if ( catver.empty() )
-		return;
-
 	std::map <std::string, std::string> my_map;
 
 	// create entries in the map for each name we want to find
@@ -164,17 +160,19 @@ void apply_catver( const FeEmulatorInfo &emulator,
 			my_map[ key ] = "";
 	}
 
-	std::ifstream myfile( catver.c_str() );
+	std::ifstream myfile( filename.c_str() );
 
 	if ( myfile.is_open() )
 	{
 		std::string line;
 
-		// First, find the [Category] tag
+		// Jump forward to the init_tag (if provided)
 		//
-		while (( myfile.good() ) && ( line.compare(0, 10, "[Category]" ) != 0 ))
+		if ( !init_tag.empty() )
 		{
-			getline( myfile, line );
+			while (( myfile.good() ) 
+					&& ( line.compare(0, init_tag.size(), init_tag ) != 0 ))
+				getline( myfile, line );
 		}
 
 		// Now read until the next tag is found	
@@ -196,9 +194,9 @@ void apply_catver( const FeEmulatorInfo &emulator,
 			itr = my_map.find( name );
 			if ( itr != my_map.end() )
 			{
-				std::string category;	
-				token_helper( line, pos, category, "=" );
-				my_map[ name ] = category;
+				std::string val;	
+				token_helper( line, pos, val, "=" );
+				my_map[ name ] = val;
 			}
 			getline( myfile, line );
 		}
@@ -209,19 +207,50 @@ void apply_catver( const FeEmulatorInfo &emulator,
 	for ( std::list<FeRomInfo>::iterator itr=romlist.begin(); 
 			itr!=romlist.end(); ++itr )
 	{
-		std::string cat = my_map[ (*itr).get_info( FeRomInfo::Romname ) ];
-		if ( cat.empty() )
-			cat = my_map[ (*itr).get_info( FeRomInfo::Cloneof ) ];
+		std::string val = my_map[ (*itr).get_info( FeRomInfo::Romname ) ];
+		if ( val.empty() )
+			val = my_map[ (*itr).get_info( FeRomInfo::Cloneof ) ];
 
-		if ( !cat.empty() )
+		if ( !val.empty() )
 		{
 			count++;
-			(*itr).set_info( FeRomInfo::Category, cat );
+			(*itr).set_info( index, val );
 		}
 	}
 
-	std::cout << "Found catver info for " << count << " files.  File: " 
-					<< catver << std::endl;
+	std::cout << "Found info for " << count << " entries.  File: " 
+					<< filename << std::endl;
+}
+
+void apply_import_extras( const FeEmulatorInfo &emulator, 
+				std::list<FeRomInfo> &romlist )
+{
+	std::string iextras = emulator.get_info( FeEmulatorInfo::Import_extras );
+
+	if ( iextras.empty() )
+		return;
+
+	size_t pos=0;
+	do 
+	{
+		std::string val, path;
+		token_helper( iextras, pos, val );
+		path = clean_path( val );
+
+		if ( tail_compare( path, "catver.ini" ) )
+		{
+			ini_import( path, romlist, FeRomInfo::Category, "[Category]" );
+		}
+		else if ( tail_compare( val, "nplayers.ini" ) )
+		{
+			ini_import( path, romlist, FeRomInfo::Players, "[NPlayers]" );
+		}
+		else
+		{
+			std::cout << "Unsupported import_extras file: " << path << std::endl;
+		}
+
+	} while ( pos < iextras.size() );
 }
 
 }; // end namespace
@@ -249,7 +278,7 @@ bool FeSettings::build_romlist( const std::vector <std::string> &emu_names )
 			romlist.sort();
 
 			apply_listxml( *emu, romlist );
-			apply_catver( *emu, romlist );
+			apply_import_extras( *emu, romlist );
 
 			total_romlist.merge( romlist );
 		}
@@ -281,7 +310,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	romlist.sort();
 
 	apply_listxml( *emu, romlist, uiu, uid );
-	apply_catver( *emu, romlist );
+	apply_import_extras( *emu, romlist );
 
 	size = romlist.size();
 

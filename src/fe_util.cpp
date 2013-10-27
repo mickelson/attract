@@ -77,28 +77,6 @@ namespace {
 
 #endif
 
-	//
-	// Case insensitive check if filename has the given extension.
-	//
-	bool extension_compare(
-				const std::string &filename,
-				const char *extension )
-	{
-		unsigned int extlen = strlen( extension );
-
-		if ( extlen >= filename.size() )
-			return false;
-
-		for ( unsigned int i=0; i < extlen; i++ )
-		{
-			if ( std::tolower( filename[ filename.size() - extlen + i ] )
-						!= std::tolower( extension[i] ) )
-				return false;
-		}
-
-		return true;
-	}
-
 	bool split_out_path( const std::string &src, std::string &path )
 	{
 		size_t pos = src.find_last_of( "/\\" );
@@ -110,6 +88,28 @@ namespace {
 		return false;
 	}
 } // end namespace
+
+//
+// Case insensitive check if filename has the specified extension/ending.
+//
+bool tail_compare(
+			const std::string &filename,
+			const char *extension )
+{
+	unsigned int extlen = strlen( extension );
+
+	if ( extlen >= filename.size() )
+		return false;
+
+	for ( unsigned int i=0; i < extlen; i++ )
+	{
+		if ( std::tolower( filename[ filename.size() - extlen + i ] )
+					!= std::tolower( extension[i] ) )
+			return false;
+	}
+
+	return true;
+}
 
 bool file_exists( const std::string &file )
 {
@@ -244,7 +244,7 @@ bool get_basename_from_extension(
 			std::string what;
 			str_from_c( what, ent->d_name );
 			if ( ( what.compare( "." ) != 0 ) && ( what.compare( ".." ) != 0 )
-				&& ( extension_compare( what, extension.c_str() ) ) )
+				&& ( tail_compare( what, extension.c_str() ) ) )
 			{
 				if ( strip_extension && ( what.size() > extension.size() ))
 					list.push_back( what.substr( 0, what.size() - extension.size() ) );
@@ -298,7 +298,7 @@ bool get_filename_from_base( std::vector<std::string> &list,
 						int i=0;
 						while ( filter[i] != NULL )
 						{
-							if ( extension_compare( what, filter[i] ) )
+							if ( tail_compare( what, filter[i] ) )
 							{
 								if ( !filter_excludes )
 									add=true;

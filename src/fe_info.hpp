@@ -187,7 +187,7 @@ public:
 		Command,
 		Rom_path,
 		Rom_extension,
-		Catver_file, 
+		Import_extras, 
 		Listxml, 
 		Movie_path,
 		Movie_artwork,
