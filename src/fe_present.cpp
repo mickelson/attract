@@ -719,10 +719,10 @@ FeImage* FePresent::cb_add_image(const char *n, int x, int y, int w, int h )
 
 	FeImage *ret = fep->add_image( false, n, x, y, w, h );
 
-	// Add the image to the "fe.obj" table in Squirrel
+	// Add the image to the "fe.obj" array in Squirrel
 	//
 	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
-	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	Sqrat::Array obj( fe.GetSlot( _SC("obj") ) );
 	obj.SetInstance( obj.GetSize(), ret );
 
 	return ret;
@@ -745,10 +745,10 @@ FeImage* FePresent::cb_add_artwork(const char *n, int x, int y, int w, int h )
 
 	FeImage *ret = fep->add_image( true, n, x, y, w, h );
 
-	// Add the image to the "fe.obj" table in Squirrel
+	// Add the image to the "fe.obj" array in Squirrel
 	//
 	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
-	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	Sqrat::Array obj( fe.GetSlot( _SC("obj") ) );
 	obj.SetInstance( obj.GetSize(), ret );
 
 	return ret;
@@ -771,10 +771,10 @@ FeImage* FePresent::cb_add_clone( FeImage *o )
 
 	FeImage *ret = fep->add_clone( o );
 
-	// Add the image to the "fe.obj" table in Squirrel
+	// Add the image to the "fe.obj" array in Squirrel
 	//
 	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
-	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	Sqrat::Array obj( fe.GetSlot( _SC("obj") ) );
 	obj.SetInstance( obj.GetSize(), ret );
 
 	return ret;
@@ -787,10 +787,10 @@ FeText* FePresent::cb_add_text(const char *n, int x, int y, int w, int h )
 
 	FeText *ret = fep->add_text( n, x, y, w, h );
 
-	// Add the text to the "fe.obj" table in Squirrel
+	// Add the text to the "fe.obj" array in Squirrel
 	//
 	Sqrat::Object fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
-	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	Sqrat::Array obj( fe.GetSlot( _SC("obj") ) );
 	obj.SetInstance( obj.GetSize(), ret );
 
 	return ret;
@@ -803,10 +803,10 @@ FeListBox* FePresent::cb_add_listbox(int x, int y, int w, int h )
 
 	FeListBox *ret = fep->add_listbox( x, y, w, h );
 
-	// Add the listbox to the "fe.obj" table in Squirrel
+	// Add the listbox to the "fe.obj" array in Squirrel
 	//
 	Sqrat::Object fe ( Sqrat::RootTable().GetSlot( _SC("fe") ) );
-	Sqrat::Table obj( fe.GetSlot( _SC("obj") ) );
+	Sqrat::Array obj( fe.GetSlot( _SC("obj") ) );
 	obj.SetInstance( obj.GetSize(), ret );
 
 	return ret;
