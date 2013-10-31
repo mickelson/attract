@@ -89,12 +89,6 @@ public:
         return *this;
     }
 
-    template<class V>
-    TableBase& SetInstance(const SQInteger index, V* val) {
-        BindInstance<V>(index, val, false);
-        return *this;
-    }
-
     template<class F>
     TableBase& Func(const SQChar* name, F method) {
         BindFunc(name, &method, sizeof(method), SqGlobalFunc(method));

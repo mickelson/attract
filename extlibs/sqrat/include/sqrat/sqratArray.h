@@ -85,7 +85,7 @@ namespace Sqrat {
 
         template<class V>
         ArrayBase& SetInstance(const SQInteger index, V* val) {
-            BindInstance<V>(index, false);
+            BindInstance<V>(index, val, false);
             return *this;
         }
 
