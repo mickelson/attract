@@ -68,6 +68,7 @@ public:
 		PageDown,
 		PrevList,
 		NextList,
+		ListsMenu,
 		ToggleLayout,
 		ToggleMovie,
 		ToggleMute,

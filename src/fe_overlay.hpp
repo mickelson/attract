@@ -67,6 +67,7 @@ public:
 	void splash_message( const std::string &, const std::string &rep="" );
 	int exit_dialog();
 	bool config_dialog(); 
+	int lists_dialog(); 
 };
 
 #endif

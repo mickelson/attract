@@ -128,7 +128,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_current_list( -1 ),
 	m_autorotate( RotateNone ),
 	m_current_config_object( NULL ),
-	m_ssaver_time( 600 )
+	m_ssaver_time( 600 ),
+	m_lists_menu_exit( true )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -224,6 +225,7 @@ const char *FeSettings::configSettingStrings[] =
 	"default_font",
 	"font_path",
 	"screen_saver_timeout",
+	"lists_menu_exit",
 	NULL
 };
 
@@ -269,8 +271,10 @@ int FeSettings::process_setting( const std::string &setting,
 	}
 	else if ( setting.compare( configSettingStrings[3] ) == 0 ) // font_path
 		set_info( FontPath, value );
-	else if ( setting.compare( configSettingStrings[4] ) == 0 ) // ssaver_timeout
+	else if ( setting.compare( configSettingStrings[4] ) == 0 ) // screen_saver_timeout
 		set_info( ScreenSaverTimeout, value );
+	else if ( setting.compare( configSettingStrings[5] ) == 0 ) // lists_menu_exit 
+		set_info( ListsMenuExit, value );
 	else if ( m_current_config_object != NULL )
 	{
 		// otherwise setting belongs to the most recently declared
@@ -548,36 +552,37 @@ bool FeSettings::config_file_exists() const
 	return file_exists( config_file );
 }
 
-bool FeSettings::next_list()
+bool FeSettings::set_list( int index )
 {
 	if ( m_current_list < 0 )
 		return false;
 
 	std::string old = get_current_layout_file();
-	m_current_list++;
 
-	if ( m_current_list >= (int)m_lists.size() )
+	if ( index >= (int)m_lists.size() )
 		m_current_list = 0;
+	else if ( index < 0 )
+		m_current_list = m_lists.size() - 1;
+	else	
+		m_current_list = index;
 
 	init_list();
-
 	return ( old.compare( get_current_layout_file() ) == 0 ) ? false : true;
+}
+
+bool FeSettings::next_list()
+{
+	return set_list( m_current_list + 1 );
 }
 
 bool FeSettings::prev_list()
 {
-	if ( m_current_list < 0 )
-		return false;
+	return set_list( m_current_list - 1 );
+}
 
-	std::string old = get_current_layout_file();
-	m_current_list--;
-
-	if ( m_current_list < 0 )
-		m_current_list = m_lists.size() - 1;
-
-	init_list();
-
-	return ( old.compare( get_current_layout_file() ) == 0 ) ? false : true;
+int FeSettings::get_current_list_index() const
+{
+	return m_current_list;
 }
 
 void FeSettings::change_rom( int step, bool wrap )
@@ -997,6 +1002,11 @@ int FeSettings::get_screen_saver_timeout() const
 	return m_ssaver_time;
 }
 
+bool FeSettings::get_lists_menu_exit() const
+{
+	return m_lists_menu_exit;
+}
+
 void FeSettings::get_list_names( std::vector<std::string> &list ) const
 {
 	list.clear();
@@ -1031,6 +1041,8 @@ const std::string FeSettings::get_info( int index ) const
 		break;
 	case ScreenSaverTimeout:
 		return as_str( m_ssaver_time);
+	case ListsMenuExit:
+		return ( m_lists_menu_exit ? "yes" : "no" );
 	default:
 		break;
 	}
@@ -1082,6 +1094,14 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ScreenSaverTimeout:
 		m_ssaver_time = as_int( value );
+		break;
+
+	case ListsMenuExit:
+		if (( value.compare( "yes" ) == 0 ) 
+				|| ( value.compare( "true" ) == 0 ))
+			m_lists_menu_exit = true;
+		else
+			m_lists_menu_exit = false;
 		break;
 
 	default:

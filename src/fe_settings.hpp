@@ -43,7 +43,17 @@ public:
 	static const char *rotationTokens[];
 	static const char *rotationDispTokens[];
 
-	enum ConfigSettingIndex { AutoRotate=0, ExitCommand, DefaultFont, FontPath, ScreenSaverTimeout, LAST_INDEX };
+	enum ConfigSettingIndex 
+	{ 
+		AutoRotate=0, 
+		ExitCommand, 
+		DefaultFont, 
+		FontPath, 
+		ScreenSaverTimeout, 
+		ListsMenuExit,
+		LAST_INDEX 
+	};
+
 	static const char *configSettingStrings[];
 
 private:
@@ -64,6 +74,7 @@ private:
 	RotationState m_autorotate;
 	FeBaseConfigurable *m_current_config_object;
 	int m_ssaver_time;
+	bool m_lists_menu_exit;
 
 	int process_setting( const std::string &, 
 						const std::string &,
@@ -103,15 +114,13 @@ public:
 
 	void change_rom( int step, bool wrap=true );
 
-	// Switches to the next configured list
+	// Switches the display list
 	// returns true if the list change results in a new layout, false otherwise
 	//
+	bool set_list( int index );
 	bool next_list();
-
-	// Switches to the previously configured list
-	// returns true if the list change results in a new layout, false otherwise
-	//
 	bool prev_list();
+	int get_current_list_index() const;
 
 	void init_list();
 
@@ -145,6 +154,7 @@ public:
 	
 	RotationState get_autorotate() const;
 	int get_screen_saver_timeout() const;
+	bool get_lists_menu_exit() const;
 
 	void dump( void ) const;
 

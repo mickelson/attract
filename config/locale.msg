@@ -1,3 +1,7 @@
+Exit Attract-Mode;Exit Attract-Mode
+Exit Attract-Mode?;Exit Attract-Mode?
+Yes;Yes
+No;No
 _help_back;Exit menu
 _help_emulators;Configure available emulators
 _help_art_label;The label that identifies this artwork resource (used by layouts)
@@ -36,6 +40,8 @@ _help_autorot;Autorotate to match the rotation of the last game played
 _help_exit_command;Command to execute when Exit (Confirm) is selected [i.e. "sudo shutdown"]
 _help_default_font;The name of the default font to use
 _help_font_path;The directories containing fonts (semicolon separates multiple entries)
+_help_screen_saver_timeout;The amount of time in seconds to wait before switching to the screen saver.  0 to disable
+_help_lists_menu_exit;Configure whether an Exit option should be provided in the"Lists Menu"
 _help_emulators;Configure emulator settings
 _help_lists;Configure display lists
 _help_input;Configure input mappings

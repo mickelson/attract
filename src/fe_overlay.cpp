@@ -169,6 +169,52 @@ int FeOverlay::exit_dialog()
 	return internal_dialog(	exit_str, list );
 }
 
+int FeOverlay::lists_dialog()
+{
+	sf::Vector2u size = m_wnd.getSize();
+	std::vector<std::string> list;
+	m_feSettings.get_list_names( list );
+
+	FeListBox dialog(
+		m_fePresent.get_font(),
+		m_textColour,
+		m_bgColour,
+		m_selColour,
+		m_selBgColour,
+		m_characterSize,
+		size.y / m_characterSize );
+
+	dialog.setPosition( 0, 0 );
+	dialog.setSize( size.x, size.y );
+	dialog.init();
+
+	std::vector<sf::Drawable *> draw_list( 1, &dialog );
+
+	int last_list = list.size() - 1;
+
+	if ( m_feSettings.get_lists_menu_exit() )
+	{
+		//
+		// Add an exit option at the end of the lists menu
+		//
+		std::string exit_str;
+		m_feSettings.get_resource( "Exit Attract-Mode", exit_str );
+		list.push_back( exit_str );
+	}
+
+	int current_i = m_feSettings.get_current_list_index();
+	int sel = current_i;
+	dialog.setText( sel, list );
+	while ( event_loop( draw_list, sel, current_i, list.size() - 1 ) == false )
+		dialog.setText( sel, list );
+
+	// test if the exit option selected, return -2 if it has been
+	if ( sel > last_list )
+		sel = -2;
+
+	return sel;
+}
+
 int FeOverlay::internal_dialog( 
 			const std::string &msg_str,
 			const std::vector<std::string> &list )

@@ -286,6 +286,32 @@ int main(int argc, char *argv[])
 					redraw=true;
 					break;
 
+				case FeInputMap::ListsMenu:
+					{
+						int list_index = feOverlay.lists_dialog();
+						if ( list_index < 0 )
+						{
+							// list index is -1 if user pressed the "exit no dialog"
+							// button, and -2 if they selected the "exit" menu
+							// option.  We only want to run the exit command if the
+							// menu option was selected
+							//
+							window.close();
+							if ( list_index < -1 ) 
+								feSettings.exit_command();
+						}
+						else
+						{
+							if ( feSettings.set_list( list_index ) )
+								fePresent.load_layout( &window );
+							else
+								fePresent.update( true );
+
+							redraw=true;
+						}
+					}
+					break;
+
 				default:
 					break;
 				}

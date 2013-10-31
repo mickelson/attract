@@ -899,6 +899,11 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Configure / Miscellaneous" );
 
+	ctx.add_optl( Opt::EDIT, 
+			"Screen Saver Timeout", 
+			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ), 
+			"_help_screen_saver_timeout" );
+
 	ctx.add_optl( Opt::LIST, 
 			"Auto Rotate", 
 			FeSettings::rotationDispTokens[ ctx.fe_settings.get_autorotate() ], 
@@ -920,30 +925,38 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::FontPath ), 
 			"_help_font_path" );
 
-	ctx.add_optl( Opt::EDIT, 
-			"Screen Saver Timeout", 
-			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ), 
-			"_help_ssaver_timeout" );
+	std::vector<std::string> exit_opts( 2 );
+	ctx.fe_settings.get_resource( "Yes", exit_opts[0] );
+	ctx.fe_settings.get_resource( "No", exit_opts[1] );
+
+	ctx.add_optl( Opt::LIST, 
+			"Exit Option in Lists Menu", 
+			ctx.fe_settings.get_lists_menu_exit() ? exit_opts[0] : exit_opts[1], 
+			"_help_lists_menu_exit" );
+	ctx.back_opt().append_vlist( exit_opts );
 
 	FeBaseConfigMenu::get_options( ctx );
 }
 
 bool FeMiscMenu::save( FeConfigContext &ctx )
 {
+	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout, 
+			ctx.opt_list[0].get_value() );
+
 	ctx.fe_settings.set_info( FeSettings::AutoRotate, 
-			FeSettings::rotationTokens[ ctx.opt_list[0].get_vindex() ] );
+			FeSettings::rotationTokens[ ctx.opt_list[1].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand, 
-			ctx.opt_list[1].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
 			ctx.opt_list[2].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath, 
+	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
 			ctx.opt_list[3].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout, 
+	ctx.fe_settings.set_info( FeSettings::FontPath, 
 			ctx.opt_list[4].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::ListsMenuExit, 
+			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
 
 	return true;
 }
