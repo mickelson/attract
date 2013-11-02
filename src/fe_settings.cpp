@@ -937,6 +937,7 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	}
 
 #ifndef NO_FONTCONFIG
+	bool fc_found = false;
 	FcConfig *config = FcInitLoadConfigAndFonts();
 
 	FcPattern *pat = FcNameParse( (const FcChar8 *)(fontname.c_str()) );
@@ -950,13 +951,15 @@ bool FeSettings::get_font_file( std::string &fontpath,
 		if ( FcPatternGetString( font, FC_FILE, 0, &file ) == FcResultMatch )
 		{
 			fontpath = (char *)file;
-			FcPatternDestroy( font );
-			FcPatternDestroy( pat );
-			return true;
+			fc_found = true;
 		}
 		FcPatternDestroy( font );
 	}
 	FcPatternDestroy( pat );
+	FcConfigDestroy( config );
+
+	if ( fc_found )
+		return true;
 #endif
 
 	std::vector<std::string> path_list;
