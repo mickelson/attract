@@ -176,31 +176,21 @@ bool search_for_file( const std::string &base_path,
 		return true;
 	}
 
-#ifdef _DIRENT_HAVE_D_TYPE
+	std::vector<std::string> subs;
+	get_subdirectories( subs, base_path );
 
-	DIR *dir;
-	struct dirent *ent;
-
-	if ( (dir = opendir( base_path.c_str() )) != NULL )
+	std::vector<std::string>::iterator itr;
+	for ( itr = subs.begin(); itr != subs.end(); ++itr )
 	{
-		while ((ent = readdir( dir )) != NULL )
+		if ( search_for_file( base_path + "/" + (*itr), 
+				base_name, 
+				valid_exts,
+				result ) )
 		{
-			if (( ent->d_type == DT_DIR )
-					&& ( strcmp( ent->d_name, "." ) != 0 )
-					&& ( strcmp( ent->d_name, ".." ) != 0 ))
-			{
-				std::string subdir(base_path);
-				str_from_c( subdir, ent->d_name );
-				subdir += "/";
-
-				if ( search_for_file( subdir, base_name, valid_exts, result ) )
-					return true;
-			}
+			return true;
 		}
-		closedir( dir );
 	}
 
-#endif
 	return false;
 }
 
@@ -208,24 +198,31 @@ void get_subdirectories(
 			std::vector<std::string> &list,
 			const std::string &path )
 {
-#ifdef _DIRENT_HAVE_D_TYPE
 	DIR *dir;
 	struct dirent *ent;
 	if ( (dir = opendir( path.c_str() )) != NULL )
 	{
 		while ((ent = readdir( dir )) != NULL )
 		{
-			if (( ent->d_type == DT_DIR )
-					&& ( strcmp( ent->d_name, "." ) != 0 )
-					&& ( strcmp( ent->d_name, ".." ) != 0 ))
-			{
-				std::string subdir;
-				str_from_c( subdir, ent->d_name );
-				list.push_back( subdir );
-			}
+			if (( strcmp( ent->d_name, "." ) == 0 )
+					|| ( strcmp( ent->d_name, ".." ) == 0 ))
+				continue;
+
+			std::string name;
+			str_from_c( name, ent->d_name );
+
+			struct stat st;
+			stat( (path + "/" + name).c_str(), &st );
+
+			if ( S_ISDIR( st.st_mode ) )
+				list.push_back( name );
 		}
+		closedir( dir );
 	}
-#endif
+	else
+	{
+		std::cout << "Error opening directory: " << path << std::endl;
+	}
 }
 
 bool get_basename_from_extension(
