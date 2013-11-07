@@ -149,6 +149,15 @@ void FeText::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 	target.draw( m_draw_text, states );
 }
 
+void FeText::set_word_wrap( bool w )
+{
+	m_draw_text.setWordWrap( w );
+}
+
+bool FeText::get_word_wrap()
+{
+	return m_draw_text.getWordWrap();
+}
 
 const char *FeText::get_string()
 {

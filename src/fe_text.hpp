@@ -58,6 +58,9 @@ public:
 	int getIndexOffset() const;
 	void setIndexOffset( int );
 
+	void set_word_wrap( bool );
+	bool get_word_wrap();
+
 	const char *get_string();
 	void set_string(const char *s);
 

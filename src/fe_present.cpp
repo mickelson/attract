@@ -1062,6 +1062,7 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Prop(_SC("charsize"), &FeText::get_charsize, &FeText::set_charsize )
 		.Prop(_SC("style"), &FeText::get_style, &FeText::set_style )
 		.Prop(_SC("align"), &FeText::get_align, &FeText::set_align )
+		.Prop(_SC("word_wrap"), &FeText::get_word_wrap, &FeText::set_word_wrap )
 		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
 

@@ -327,6 +327,11 @@ void FeTextPrimative::setWordWrap( bool w )
 	m_wrap = w;
 }
 
+bool FeTextPrimative::getWordWrap() const
+{
+	return m_wrap;
+}
+
 void FeTextPrimative::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 {
 	target.draw( m_bgRect, states );

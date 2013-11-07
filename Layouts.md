@@ -570,6 +570,8 @@ Attributes:
       - `Align.Centre` (default)
       - `Align.Left`
       - `Align.Right`
+   * `word_wrap` - Get/set whether word wrapping is enabled in this text
+     (boolean).  Default is `false`.
 
 Functions:   
 

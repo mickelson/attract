@@ -82,6 +82,7 @@ public:
 	const sf::Vector2f &getSize() const;
 	float getRotation() const;
 	int getStyle() const;
+	bool getWordWrap() const;
 
 private:
 	Alignment m_align;
