@@ -95,15 +95,9 @@ public:
 	bool load();
 	void save_state( void ) const;
 
-	FeInputMap::Command map( sf::Event ) const;
+	FeInputMap::Command map( sf::Event e ) const { return m_inputmap.map( e ); };
+	FeInputMap &get_input_map() { return m_inputmap; };
 
-	//
-	// config_map_input used in configuration mode.
-	//
-   void init_config_map_input();
-   bool config_map_input( sf::Event, std::string &, 
-					FeInputMap::Command &conflict ) const;
-  
 	void set_volume( FeSoundInfo::SoundType, const std::string & );
 	int get_set_volume( FeSoundInfo::SoundType ) const;
 	int get_play_volume( FeSoundInfo::SoundType ) const;
@@ -185,8 +179,10 @@ public:
 	FeListInfo *get_list( const std::string &n );
 	FeListInfo *create_list( const std::string &n );
 	void delete_list( const std::string &n );
-   void get_mappings( std::vector< FeMapping > &mappings ) const;
-   void set_mapping( const FeMapping &mapping );
+
+	// return true if specified romlist name is configured for use as a display 
+	// list
+	bool check_romlist_configured( const std::string &n ) const;
 
 	void save() const;
 

@@ -304,7 +304,8 @@ void FeOverlay::input_map_dialog(
 	message.setSize( s.x, s.y );
 	message.setString( msg_str );
 
-	m_feSettings.init_config_map_input();
+	FeInputMap &im = m_feSettings.get_input_map();
+	im.init_config_map_input();
 
 	const sf::Transform &t = m_fePresent.get_rotation_transform();
 	while ( m_wnd.isOpen() )
@@ -315,7 +316,7 @@ void FeOverlay::input_map_dialog(
 			if ( ev.type == sf::Event::Closed )
 				return;
 
-			if ( m_feSettings.config_map_input( ev, map_str, conflict ) )
+			if ( im.config_map_input( ev, map_str, conflict ) )
 				return;
 		}
 

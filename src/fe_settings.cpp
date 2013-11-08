@@ -27,6 +27,7 @@
 #include <fstream>
 #include <cstring>
 #include <iomanip>
+#include <algorithm>
 #include <stdlib.h>
 #include <SFML/Config.hpp>
 
@@ -43,7 +44,7 @@ const char *FE_DEFAULT_FONT_PATHS[]	= { "%SYSTEMROOT%/Fonts/", NULL };
 #else
 #ifdef SFML_SYSTEM_MACOS
 
-const char *FE_DEFAULT_CFG_PATH		= "$HOME/Library/Application Support/Attract/";
+const char *FE_DEFAULT_CFG_PATH		= "$HOME/.attract/";
 const char *FE_DEFAULT_FONT			= "Arial";
 const char *FE_DEFAULT_FONT_PATHS[]	=
 {
@@ -528,8 +529,11 @@ std::string FeSettings::get_layout_global_file() const
 
 std::string FeSettings::get_current_layout_dir() const
 {
-	if ( m_current_list < 0 )
+	if (( m_current_list < 0 ) 
+		|| ( m_lists[ m_current_list ].get_info( FeListInfo::Layout ).empty() ))
+	{
 		return FE_EMPTY_STRING;
+	}
 
 	std::string layout_dir = m_config_path;
 	layout_dir += FE_LAYOUT_SUBDIR;
@@ -615,22 +619,6 @@ void FeSettings::toggle_layout()
 
 	layout_file = list[ ( index + 1 ) % list.size() ];
 	m_lists[ m_current_list ].set_current_layout_file( layout_file );
-}
-
-FeInputMap::Command FeSettings::map( sf::Event e ) const
-{
-	return m_inputmap.map( e );
-}
-
-void FeSettings::init_config_map_input()
-{
-	m_inputmap.init_config_map_input();
-}
-
-bool FeSettings::config_map_input( sf::Event e, std::string &s,
-				FeInputMap::Command &conflict ) const
-{
-	return m_inputmap.config_map_input( e, s, conflict );
 }
 
 void FeSettings::set_volume( FeSoundInfo::SoundType t, const std::string &v )
@@ -1131,17 +1119,35 @@ FeListInfo *FeSettings::create_list( const std::string &n )
 	if ( m_current_list == -1 )
 		m_current_list=0;
 
-	m_lists.push_back( FeListInfo( n ) );
+	FeListInfo new_list( n );
+
+	if ( !m_lists.empty() )
+	{
+		// If other lists are configured, give the new list the same layout as
+		// the last configured list
+		//
+		new_list.set_info( FeListInfo::Layout, 
+			m_lists.back().get_info( FeListInfo::Layout ) );
+	}
+	else
+	{
+		// Pick an available layout, use the first one alphabetically
+		//
+		std::vector<std::string> layouts;
+		get_subdirectories( layouts, m_config_path + FE_LAYOUT_SUBDIR );
+		if ( !layouts.empty() )
+		{
+			std::sort( layouts.begin(), layouts.end() );
+			new_list.set_info( FeListInfo::Layout, layouts.front() );
+		}
+	}
+
+	m_lists.push_back( new_list );
 	return &(m_lists.back());
 }
 
 void FeSettings::delete_list( const std::string &n )
 {
-	// We have to have at least one list
-	//
-	if ( m_lists.size() == 1 )
-		return;
-
 	int i=0;
 	for ( std::deque<FeListInfo>::iterator itr=m_lists.begin();
 			itr < m_lists.end(); ++itr )
@@ -1162,14 +1168,16 @@ void FeSettings::delete_list( const std::string &n )
 	}
 }
 
-void FeSettings::get_mappings( std::vector< FeMapping > &mappings ) const
+bool FeSettings::check_romlist_configured( const std::string &n ) const
 {
-	m_inputmap.get_mappings( mappings );
-}
+	for ( std::deque<FeListInfo>::const_iterator itr=m_lists.begin();
+			itr!=m_lists.end(); ++itr )
+	{
+		if ( n.compare( (*itr).get_info( FeListInfo::Romlist ) ) == 0 )
+			return true;
+	}
 
-void FeSettings::set_mapping( const FeMapping &mapping )
-{
-	m_inputmap.set_mapping( mapping );
+	return false;
 }
 
 void FeSettings::save() const

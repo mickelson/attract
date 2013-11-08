@@ -429,13 +429,7 @@ void FePresent::load_layout( sf::RenderWindow *wnd )
 	m_screenSaverActive=false;
 
 	if ( m_feSettings->lists_count() < 1 )
-	{
-		std::string msg;
-		m_feSettings->get_resource( "No lists configured.", msg );
-		add_text( msg, 0, 0, m_layoutSize.x, m_layoutSize.y );
-		update( true );
 		return;
-	}
 
 	//
 	// Run the script which actually sets up the layout
@@ -444,6 +438,7 @@ void FePresent::load_layout( sf::RenderWindow *wnd )
 	vm_on_new_layout( m_feSettings->get_current_layout_file() );
 
 	// make things usable if the layout is empty
+	//
 	if ( m_elements.empty() )
 	{
 		//

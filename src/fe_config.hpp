@@ -135,6 +135,11 @@ public:
 
 class FeBaseConfigMenu
 {
+protected:
+	FeBaseConfigMenu();
+	FeBaseConfigMenu( const FeBaseConfigMenu & );
+	FeBaseConfigMenu &operator=( const FeBaseConfigMenu & );
+
 public:
 	// Called to populate the list of options for this menu (ctx.opt_list)
 	// and to set the style and title
@@ -178,6 +183,7 @@ private:
 	FeEmulatorInfo *m_emulator;
 	bool m_is_new;
 	bool m_romlist_exists;
+	bool m_parent_save;
 
 public:
 	FeEmulatorEditMenu();

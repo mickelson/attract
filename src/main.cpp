@@ -184,14 +184,45 @@ int main(int argc, char *argv[])
 	fePresent.load_layout( &window );
 
 	FeOverlay feOverlay( window, feSettings, fePresent );
-
 	soundsys.sound_event( FeInputMap::EventStartup );
 
 	sf::Event ev;
 	bool redraw=true;
 
+	// go straight into config mode if there are no lists configured for
+	// display
+	//
+	bool config_mode = ( feSettings.lists_count() < 1 ) ? true : false;
+
 	while (window.isOpen())
 	{
+		if ( config_mode )
+		{
+			//
+			// Enter config mode
+			//
+			if ( feOverlay.config_dialog() )
+			{
+				// Settings changed, reload
+				//
+				soundsys.update_volumes();
+
+				if ( feSettings.get_font_file( defaultFontFile ) )
+				{
+					defaultFont.loadFromFile( defaultFontFile );
+					fePresent.set_default_font( defaultFont );
+
+					feSettings.init_list();
+					fePresent.load_layout( &window );
+				}
+
+				soundsys.stop();
+				soundsys.play_ambient();
+			}
+			redraw=true;
+			config_mode=false;
+		}
+
 		while (window.pollEvent(ev))
 		{
 			FeInputMap::Command c = feSettings.map( ev );
@@ -265,25 +296,7 @@ int main(int argc, char *argv[])
 					break;
 
 				case FeInputMap::Configure:
-					if ( feOverlay.config_dialog() )
-					{
-						// Settings changed, reload
-						//
-						soundsys.update_volumes();
-
-						if ( feSettings.get_font_file( defaultFontFile ) )
-						{
-							defaultFont.loadFromFile( defaultFontFile );
-							fePresent.set_default_font( defaultFont );
-
-							feSettings.init_list();
-							fePresent.load_layout( &window );
-						}
-
-						soundsys.stop();
-						soundsys.play_ambient();
-					}
-					redraw=true;
+					config_mode = true;
 					break;
 
 				case FeInputMap::ListsMenu:

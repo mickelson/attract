@@ -122,6 +122,10 @@ void FeConfigContext::set_style( Style s, const std::string &t )
 	fe_settings.get_resource( t, title );
 }
 
+FeBaseConfigMenu::FeBaseConfigMenu()
+{
+}
+
 void FeBaseConfigMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.add_optl( Opt::DEFAULTEXIT, "Back", "", "_help_back" );
@@ -180,7 +184,10 @@ void FeEmuArtEditMenu::set_art( FeEmulatorInfo *emu,
 }
 
 FeEmulatorEditMenu::FeEmulatorEditMenu()
-	: m_emulator( NULL ), m_is_new( false ), m_romlist_exists( false )
+	: m_emulator( NULL ),
+	m_is_new( false ),
+	m_romlist_exists( false ),
+	m_parent_save( false )
 {
 }
 
@@ -264,28 +271,14 @@ bool FeEmulatorEditMenu::on_option_select(
 	
 	case 3: // Generate Romlist
 		{
-			// Need to save now so that we have the appropriate emulator
-			// settings to generate the rom list with
+			// Make sure m_emulator is set with all the configured info
 			//
-			if ( ctx.save_req )
-			{
-				save( ctx );
-				ctx.save_req = false;
-			}
+			for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
+				m_emulator->set_info( (FeEmulatorInfo::Index)i, 
+					ctx.opt_list[i].get_value() );
 
 			// Do some checks and confirmation before launching the Generator 
 			//
-			std::string command = clean_path( 
-				m_emulator->get_info( FeEmulatorInfo::Executable ) );
-
-			if ( !file_exists( command ) )
-
-			{
-				if ( ctx.confirm_dialog( "Executable '$1' not found, proceed anyways?", 
-									command ) == false )
-					return false;
-			}
-
 			std::string rom_path = clean_path( 
 				m_emulator->get_info( FeEmulatorInfo::Rom_path ) );
 
@@ -311,6 +304,18 @@ bool FeEmulatorEditMenu::on_option_select(
 
 			ctx.fe_settings.get_resource( "Wrote $1 entries to romlist.", 
 											as_str(list_size), ctx.help_msg );
+
+			//
+			// If we don't have a display list configured for this romlist, 
+			// configure one now
+			//
+			if ( !ctx.fe_settings.check_romlist_configured( emu_name ) )
+			{
+				FeListInfo *new_list = ctx.fe_settings.create_list( emu_name );
+				new_list->set_info( FeListInfo::Romlist, emu_name );
+				ctx.save_req = true;
+				m_parent_save = true;
+			}
 		}
 		break;
 
@@ -336,7 +341,7 @@ bool FeEmulatorEditMenu::on_option_select(
 bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 {
 	if ( !m_emulator )
-		return false;
+		return m_parent_save; 
 
 	for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
 		m_emulator->set_info( (FeEmulatorInfo::Index)i, 
@@ -350,7 +355,7 @@ bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 	filename += FE_EMULATOR_FILE_EXTENSION;
 	m_emulator->save( filename );
 
-	return false;
+	return m_parent_save;
 }
 
 void FeEmulatorEditMenu::set_emulator( 
@@ -358,6 +363,7 @@ void FeEmulatorEditMenu::set_emulator(
 {
 	m_emulator=emu;
 	m_is_new=is_new;
+	m_parent_save=false;
 
 	if ( emu )
 	{
@@ -744,7 +750,7 @@ bool FeInputEditMenu::save( FeConfigContext &ctx )
 {
 	if ( m_mapping )
 	{
-		ctx.fe_settings.set_mapping( *m_mapping );
+		ctx.fe_settings.get_input_map().set_mapping( *m_mapping );
 	}
 
 	return true;
@@ -758,7 +764,7 @@ void FeInputEditMenu::set_mapping( FeMapping *mapping )
 void FeInputSelMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Configure / Input" );
-	ctx.fe_settings.get_mappings( m_mappings );
+	ctx.fe_settings.get_input_map().get_mappings( m_mappings );
 
 	std::vector < FeMapping >::iterator it;
 	for ( it=m_mappings.begin(); it != m_mappings.end(); ++it )
@@ -930,7 +936,7 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_resource( "No", exit_opts[1] );
 
 	ctx.add_optl( Opt::LIST, 
-			"Exit Option in Lists Menu", 
+			"Allow exit from 'Lists Menu'", 
 			ctx.fe_settings.get_lists_menu_exit() ? exit_opts[0] : exit_opts[1], 
 			"_help_lists_menu_exit" );
 	ctx.back_opt().append_vlist( exit_opts );

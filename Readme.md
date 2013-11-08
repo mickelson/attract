@@ -2,12 +2,13 @@ Attract-Mode Frontend
 ---------------------
 
 Attract-Mode is a graphical front-end for command line emulators such 
-as MAME, MESS, and Nestopia.  It is designed to be run in an arcade 
-cabinet setup and controlled with a joystick or spin dial.  Attract-Mode 
-is written in C++ and uses [SFML][].  
+as MAME, MESS, and Nestopia.  It hides the underlying operating system and 
+is intended to be controlled with a joystick, gamepad or spin dial, making 
+it ideal for use in arcade cabinet setups.  Attract-Mode is written in C++ 
+and uses [SFML][].  
 
-Attract-Mode was developed for use in Linux.  It is known to work on
-Ubuntu Linux, Mac OS-X 10.6, and Windows 7.
+Attract-Mode was developed for use in Linux.  It is known to work on Ubuntu 
+Linux (x86), Mac OS-X 10.6, and Windows 7.
 
 Attract-Mode's layouts are actually scripts written in the [Squirrel][]
 programming language. [FFmpeg][] is used for (optional) movie support.
@@ -43,21 +44,20 @@ essential" package on Debian/Ubuntu, X-Code on OS-X, or MinGW on Windows.
 wish to change any build options  (i.e. to disable FFmpeg or Fontconfig).  
 
 	On Windows: Either use the Makefile with the MINGW make command or load
-the Codeblocks project file located in the "win32" subdirectory and 
-compile in Codeblocks.
+the Codeblocks project file (attract.cbp) and compile in Codeblocks.
 
-Basic Installation
-------------------
+Initial Setup
+-------------
 
 1. Copy the contents of the "config" directory from the Attract-Mode 
 source to the location that you will use as your Attract-Mode config
 directory.  By default, this config directory is located in "$HOME/.attract" 
-on Linux, "$HOME/Library/Application Support/Attract" on Mac OS-X or the 
-current working directory on Windows systems.
+on Linux and Mac OS-X, and in the current working directory on Windows-based
+systems.
 
-2. Run Attract-Mode.  If you are not using the default config directory
-location then you need to specify a config directory location at the command 
-line as follows:
+2. Run Attract-Mode.  If you are not using a default config directory
+location (see above) then you need to specify a config directory location at
+the command line as follows:
 
 		attract --config /my/config/location
 
@@ -67,28 +67,24 @@ occurs you can specify a font to use at the command line as follows:
 
 		attract --font <font_name>
 
-3. With Attract-Mode running, press "TAB" to enter configuration mode.
-By default, configuration mode can be navigated using the up/down arrows,
-enter to select an option, and escape to go back a menu.
+3. If you are running Attract-Mode for the first time, it will load directly 
+to its configuration mode.  If you are not in configuration mode, press "TAB" 
+to enter configuration mode.  By default, configuration mode can be navigated
+using the up/down arrows, enter to select an option, and escape to go back a 
+menu.
 
-4. Select the "Emulators" menu and edit/create a configuration for 
-an emulator that you wish to use.  Default configurations are provided 
-for some popular emulators, however some settings will likely have to be 
-customized for your system (file locations etc).
+4. Select the "Emulators" menu and edit/create a configuration for an 
+emulator that you wish to use.  Default configurations are provided for some 
+popular emulators, however some settings will likely have to be customized 
+for your system (file locations etc).
 
-5. Once you have an emulator configured correctly for your system, 
-select the "Generate Romlist" option from the emulator's configuration 
-menu.  Attract-Mode will use the configured emulator settings to 
-generate a list of available games for the emulator.
+5. Once you have an emulator configured correctly for your system, select 
+the "Generate Romlist" option from the emulator's configuration menu.  
+Attract-Mode will use the configured emulator settings to generate a list of 
+available games for the emulator.
 
-6. Now select the "Lists" menu from the main config menu and create a new 
-display list.  Select the romlist generated above in step 5 as the romlist 
-to use for the display list.  Select one of the included layouts as the 
-layout to use.  If you don't set a filter then every game in the romlist 
-available from the display menu.
-
-7.  Exit configuration mode by selecting the "Back" option a few times. 
-You should now have a usable front-end! 
+6.  Exit configuration mode by selecting the "Back" option a few times. 
+You should now have a usable front-end!
 
 Further Customization
 ---------------------
