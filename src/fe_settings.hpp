@@ -26,7 +26,6 @@
 #include "fe_base.hpp"
 #include "fe_info.hpp"
 #include "fe_input.hpp"
-#include <deque>
 
 extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_EMULATOR_SUBDIR;
@@ -62,8 +61,8 @@ private:
 	std::string m_exit_command;
 
 	std::vector<std::string> m_font_paths;
-	std::deque<FeListInfo> m_lists;
-	std::deque<FeEmulatorInfo> m_emulators;
+	std::vector<FeListInfo> m_lists;
+	std::vector<FeEmulatorInfo> m_emulators;
 	FeRomList m_rl;
 
 	FeInputMap m_inputmap;
