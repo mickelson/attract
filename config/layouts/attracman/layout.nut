@@ -8,15 +8,15 @@
 //
 // Define the keys that control the Attrac-Man character:
 //
-::PM_UP    <- Key.W;
-::PM_DOWN  <- Key.S;
-::PM_LEFT  <- Key.A;
-::PM_RIGHT <- Key.D;
+::PM_UP    <- Key.R;
+::PM_DOWN  <- Key.F;
+::PM_LEFT  <- Key.D;
+::PM_RIGHT <- Key.G;
 
 // Define the keys that speed up/slow down game:
 //
-::SPEED_UP 		<- Key.Num3;
-::SPEED_DOWN 	<- Key.Num2;
+::SPEED_UP 		<- Key.A;
+::SPEED_DOWN 	<- Key.S;
 
 // Define the default game speed, should be between 0.5 and 2.0
 //
