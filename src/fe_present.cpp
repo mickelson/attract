@@ -1225,51 +1225,61 @@ bool FePresent::vm_on_transition(
 	sf::Time tstart = m_layoutTimer.getElapsedTime();
 	m_redrawTriggered = false;
 
-	for ( std::vector<std::string>::iterator itr = m_transitionList.begin();
-		itr != m_transitionList.end(); )
+	std::vector<const char *> worklist( m_transitionList.size() );
+	for ( int i=0; i< m_transitionList.size(); i++ )
+		worklist[i] = m_transitionList[i].c_str();
+
+	//
+	// A registered transition callback stays in the worklist for as long
+	// as it keeps returning true.
+	//
+	while ( !worklist.empty() )
 	{
 		// Assumption: Transition list is empty if no vm is active
 		//
 		ASSERT( Sqrat::DefaultVM::Get() );
 
-		bool remove=false;
-		try 
+		//
+		// Call each remaining transition callback on each pass through
+		// the worklist
+		//
+		for ( std::vector<const char *>::iterator itr=worklist.begin();
+			itr != worklist.end(); )
 		{
-			Function func( RootTable(), (*itr).c_str());
-			if ( !func.IsNull() )
+			bool keep=false;
+			try 
 			{
-				sf::Time ttime = m_layoutTimer.getElapsedTime() - tstart;
-
-				while (( func.Evaluate<bool>( (int)t,
-					var,
-					ttime.asMilliseconds() ) == true ) && ( wnd ))
+				Function func( RootTable(), (*itr) );
+				if ( !func.IsNull() ) 
 				{
-					// redraw and reevaluate function if it returns true
-					//
-					wnd->clear();
-					wnd->draw( *this );
-					wnd->display();
-					m_redrawTriggered = false; // clear redraw flag
-
-					ttime = m_layoutTimer.getElapsedTime() - tstart;
+					sf::Time ttime = m_layoutTimer.getElapsedTime() - tstart;
+					keep = func.Evaluate<bool>( 
+						(int)t, 
+						var, 
+						ttime.asMilliseconds() );
 				}
 			}
+			catch( Exception e )
+			{
+				std::cout << "Script Error in " << (*itr)
+					<< "(): " << e.Message() << std::endl;
+			}
+
+			if ( !keep )
+				itr = worklist.erase( itr );
+			else
+				itr++;
 		}
-		catch( Exception e )
+
+		// redraw now if we are doing another pass...
+		//
+		if ( !worklist.empty() )
 		{
-			std::cout << "Script Error in " << (*itr)
-				<< "(): " << e.Message() << std::endl;
-
-			// Knock out this entry.   If it causes a script error, we don't
-			// want to call it anymore
-			//
-			remove = true;
+			wnd->clear();
+			wnd->draw( *this );
+			wnd->display();
+			m_redrawTriggered = false; // clear redraw flag
 		}
-
-		if ( remove )
-			itr = m_transitionList.erase( itr );
-		else
-			itr++;
 	}
 
 	return m_redrawTriggered;
