@@ -1139,20 +1139,20 @@ fe.add_ticks_callback( "tick" );
 //
 function tick( ttime )
 {
-	local frame = ttime / 16.6;
+	local frame = ttime / 8.3; // 8.3=1000/120
 
 	::pman.update_direction( ttime );
 	speed_adjust();
 
-	if ( frame > ::last_frame )
+	if ( frame > ::last_frame + 1 )
 	{
-		::last_frame = frame;
-		local animate_frame = ( frame / 3 ).tointeger();
+		local animate_frame = ( frame / 6 ).tointeger();
 
 		//
 		// Do movements
 		//
-		local advance_stock = 2.0 * ::speed;
+		local advance_stock = ( frame - ::last_frame ) * ::speed;
+
 		while ( advance_stock > 2.0 )
 		{
 			::pman.move( 2.0 );
@@ -1161,6 +1161,8 @@ function tick( ttime )
 
 			advance_stock -= 2.0;
 		}
+
+		::last_frame = frame;
 
 		::pman.move( advance_stock );
 		foreach ( g in ::ghosts )
