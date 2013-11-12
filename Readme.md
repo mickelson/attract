@@ -4,14 +4,14 @@ Attract-Mode Frontend
 Attract-Mode is a graphical front-end for command line emulators such 
 as MAME, MESS, and Nestopia.  It hides the underlying operating system and 
 is intended to be controlled with a joystick, gamepad or spin dial, making 
-it ideal for use in arcade cabinet setups.  Attract-Mode is written in C++ 
-and uses [SFML][].  
+it ideal for use in arcade cabinet setups.
 
 Attract-Mode was developed for use in Linux.  It is known to work on Ubuntu 
 Linux (x86), Mac OS-X 10.6, and Windows 7.
 
 Attract-Mode's layouts are actually scripts written in the [Squirrel][]
-programming language. [FFmpeg][] is used for (optional) movie support.
+programming language. Attract-Mode itself is written in C++ and uses
+[SFML][].  [FFmpeg][] is used for (optional) movie support.
 
 Please visit <http://attractmode.org> for more information.
 
