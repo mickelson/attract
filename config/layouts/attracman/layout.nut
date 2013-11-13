@@ -20,7 +20,7 @@
 
 // Define the default game speed, should be between 0.5 and 2.0
 //
-const DEFAULT_SPEED = 1.0;
+const DEFAULT_SPEED = 0.8;
 
 // Define size of speed change when SPEED_UP/SPEED_DOWN pressed
 //
