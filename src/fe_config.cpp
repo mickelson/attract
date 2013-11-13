@@ -243,10 +243,12 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-void my_ui_update( void *d, int i )
+bool my_ui_update( void *d, int i )
 {
-	((FeConfigContext *)d)->splash_message( "Generating Rom List: $1%", 
-					as_str( i ) );
+	FeConfigContext *od = (FeConfigContext *)d;
+
+	od->splash_message( "Generating Rom List: $1%", as_str( i ) );
+	return !od->check_for_cancel();
 }
 
 bool FeEmulatorEditMenu::on_option_select( 

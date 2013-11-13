@@ -75,6 +75,9 @@ private:
 	int m_ssaver_time;
 	bool m_lists_menu_exit;
 
+	FeSettings( const FeSettings & );
+	FeSettings &operator=( const FeSettings & );
+
 	int process_setting( const std::string &, 
 						const std::string &,
 						const std::string & );
@@ -161,7 +164,7 @@ public:
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,
 	// overwriting any previous list of this name.
 	//
-	typedef void (*UiUpdate) ( void *, int );
+	typedef bool (*UiUpdate) ( void *, int );
 	bool build_romlist( const std::string &emu_name, UiUpdate, void *, int & );
 
 	FeEmulatorInfo *get_current_emulator();

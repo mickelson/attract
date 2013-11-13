@@ -79,6 +79,10 @@ public:
 //
 class FeConfigContext
 {
+private:
+	FeConfigContext( const FeConfigContext & );
+	FeConfigContext &operator=( const FeConfigContext & );
+
 public:
 	enum Style 
 	{ 
@@ -131,6 +135,8 @@ public:
 	virtual void input_map_dialog( const std::string &msg, 
 						std::string &map_str,
 						FeInputMap::Command &conflict )=0;
+
+	virtual bool check_for_cancel()=0;
 };
 
 class FeBaseConfigMenu

@@ -311,7 +311,7 @@ void FeListXMLParse::end_element_mess( const char *element )
 	}
 }
 
-void FeListXMLParse::parse_mame( const std::string &c )
+bool FeListXMLParse::parse_mame( const std::string &c )
 {
 	std::vector< std::string > discarded;
 
@@ -344,7 +344,10 @@ void FeListXMLParse::parse_mame( const std::string &c )
 		int percent = count * 100 / total;
 		std::cout << "\b\b\b\b" << std::setw(3) << percent << '%' << std::flush;
 		if ( m_ui_update )
-			m_ui_update( m_ui_update_data, percent );
+		{
+			if ( m_ui_update( m_ui_update_data, percent ) == false )
+				return false;  // false if user has cancelled
+		}
 	}
 
 	std::cout << std::endl;
@@ -360,11 +363,13 @@ void FeListXMLParse::parse_mame( const std::string &c )
 		}
 		std::cout << std::endl;
 	}
+
+	return true;
 }
 
-void FeListXMLParse::parse_mess( const std::string &c )
+bool FeListXMLParse::parse_mess( const std::string &c )
 {
-	parse_internal( exp_start_element_mess, exp_end_element_mess, c );
+	return parse_internal( exp_start_element_mess, exp_end_element_mess, c );
 }
 
 bool FeListXMLParse::parse_internal( StartElementHandler s, EndElementHandler e, const std::string &c )

@@ -53,6 +53,8 @@ public:
 		FeInputMap::Command &conflict );
 
 	void update_to_menu( FeBaseConfigMenu *m );
+
+	bool check_for_cancel();
 };
 
 FeConfigContextImp::FeConfigContextImp( FeSettings &fes, FeOverlay &feo )
@@ -114,6 +116,10 @@ void FeConfigContextImp::update_to_menu(
 	}
 }
 
+bool FeConfigContextImp::check_for_cancel()
+{
+	return m_feo.check_for_cancel();
+}
 
 FeOverlay::FeOverlay( sf::RenderWindow &wnd,
 		FeSettings &fes,
@@ -150,6 +156,8 @@ void FeOverlay::splash_message( const std::string &msg,
 	message.setString( msg_str );
 
 	const sf::Transform &t = m_fePresent.get_rotation_transform();
+
+	m_fePresent.tick( NULL );
 
 	m_wnd.clear();
 	m_wnd.draw( m_fePresent, t );
@@ -593,6 +601,21 @@ int FeOverlay::display_config_dialog(
 		}
 	}
 	return ctx.curr_sel;
+}
+
+bool FeOverlay::check_for_cancel()
+{
+	sf::Event ev;
+	while (m_wnd.pollEvent(ev))
+	{
+		FeInputMap::Command c = m_feSettings.map( ev );
+
+		if (( c == FeInputMap::ExitMenu )
+				|| ( c == FeInputMap::ExitNoMenu ))
+			return true;
+	}
+
+	return false;	
 }
 
 //

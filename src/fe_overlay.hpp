@@ -44,6 +44,9 @@ private:
 	const sf::Color m_selColour;
 	const sf::Color m_selBgColour;
 
+	FeOverlay( const FeOverlay & );
+	FeOverlay &operator=( const FeOverlay & );
+
 	int internal_dialog(
 			const std::string &msg_str,
 			const std::vector<std::string> &list );
@@ -58,6 +61,8 @@ private:
 
 	bool edit_loop( std::vector<sf::Drawable *> draw_list,
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
+
+	bool check_for_cancel();
 
 public:
 	FeOverlay( sf::RenderWindow &wnd,

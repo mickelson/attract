@@ -33,7 +33,7 @@ public:
 	typedef void (*StartElementHandler) (void *, const char *, const char ** );
 	typedef void (*EndElementHandler) (void *, const char * );
 
-	typedef void (*UiUpdate) (void *, int);
+	typedef bool (*UiUpdate) (void *, int);
 
 private:
 	friend void exp_start_element_mame( void *, const char *, const char ** );
@@ -70,11 +70,13 @@ private:
 	bool parse_internal( StartElementHandler, EndElementHandler, 
 						const std::string & );
 
+	FeListXMLParse( const FeListXMLParse & );
+	FeListXMLParse &operator=( const FeListXMLParse & );
 public:
 	FeListXMLParse( std::list<FeRomInfo> &, UiUpdate u=NULL, void *d=NULL );
 
-	void parse_mame( const std::string &base_command );
-	void parse_mess( const std::string &command );
+	bool parse_mame( const std::string &base_command );
+	bool parse_mess( const std::string &command );
 };
 
 #endif
