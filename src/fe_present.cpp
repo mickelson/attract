@@ -1226,7 +1226,7 @@ bool FePresent::vm_on_transition(
 	m_redrawTriggered = false;
 
 	std::vector<const char *> worklist( m_transitionList.size() );
-	for ( int i=0; i< m_transitionList.size(); i++ )
+	for ( unsigned int i=0; i< m_transitionList.size(); i++ )
 		worklist[i] = m_transitionList[i].c_str();
 
 	//
