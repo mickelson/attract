@@ -43,14 +43,18 @@
 # system libraries.  Uncomment the following to allow such access.  This 
 # could be useful for creating scripts to integrate with other programs...
 #ENABLE_SCRIPT_SYSTEM_ACCESS=1
+#
+# Uncomment next line for Windows static build
+#WINDOWS_STATIC=1
 ###############################
 
 #FE_DEBUG=1
 
-CC=gcc
-CPP=g++
+CC=$(CROSS)gcc
+CPP=$(CROSS)g++
 CFLAGS=
-AR=ar
+PKG_CONFIG=$(CROSS)pkg-config
+AR=$(CROSS)ar
 ARFLAGS=rc
 RM=rm -f
 MD=mkdir
@@ -97,26 +101,50 @@ _OBJ =\
 	fe_listbox.o \
 	main.o
 
-LIBS =\
-	-lsfml-window \
+ifneq ($(WINDOWS_STATIC),1)
+LIBS = -lsfml-audio \
 	-lsfml-graphics \
-	-lsfml-system \
-	-lsfml-audio
+	-lsfml-window \
+	-lsfml-system
+else
+LIBS = -lsfml-audio-s \
+	-lsfml-graphics-s \
+	-lsfml-window-s \
+	-lsfml-system-s \
+	$(shell $(PKG_CONFIG) --libs sndfile openal glew freetype2) \
+	-ljpeg \
+	-lws2_32 \
+	-lgdi32 \
+	-lopengl32 \
+	-lwinmm
+
+CFLAGS += -mconsole -DSFML_STATIC \
+	$(shell $(PKG_CONFIG) --cflags sndfile openal glew freetype2) \
+
+ifneq ($(ENABLE_FONTCONFIG),1)
+DISABLE_FONTCONFIG=1
+endif
+endif
 
 #
 # Test OS to set defaults
 #
 ifeq ($(OS),Windows_NT)
+
+CFLAGS+=-mconsole
 ifneq ($(ENABLE_FONTCONFIG),1)
 DISABLE_FONTCONFIG=1
 endif
+
 else
+
 UNAME = $(shell uname -a)
 ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
 ifneq ($(ENABLE_FONTCONFIG),1)
 DISABLE_FONTCONFIG=1
 endif
 endif
+
 endif
 
 #
@@ -132,11 +160,20 @@ endif
 ifeq ($(DISABLE_MOVIE),1)
 FE_FLAGS += -DNO_MOVIE
 else
+
+ifeq ($(WINDOWS_STATIC),1)
+LIBS += $(shell $(PKG_CONFIG) --libs libavformat) \
+	$(shell $(PKG_CONFIG) --libs libavcodec) \
+	$(shell $(PKG_CONFIG) --libs libavutil) \
+	$(shell $(PKG_CONFIG) --libs libswscale)
+else
 LIBS +=\
 	-lavformat \
 	-lavcodec \
 	-lavutil \
 	-lswscale
+endif
+
 _DEP += media.hpp
 _OBJ += media.o
 endif
