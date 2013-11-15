@@ -7,7 +7,7 @@ is intended to be controlled with a joystick, gamepad or spin dial, making
 it ideal for use in arcade cabinet setups.
 
 Attract-Mode was developed for use in Linux.  It is known to work on Ubuntu 
-Linux (x86), Mac OS-X 10.6, and Windows 7.
+Linux (x86), Mac OS-X (10.6.8), and Windows (XP and 7).
 
 Attract-Mode's layouts are actually scripts written in the [Squirrel][]
 programming language. Attract-Mode itself is written in C++ and uses
