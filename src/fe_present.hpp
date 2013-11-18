@@ -65,6 +65,7 @@ private:
 	FeSettings::RotationState m_baseRotation;
 	FeSettings::RotationState m_toggleRotation;
 	sf::Transform m_rotationTransform;
+	sf::Transform m_scaledTransform;
 
 	std::vector<FeBasePresentable *> m_elements;
 	std::vector<FeTextureContainer *> m_texturePool;
@@ -78,7 +79,6 @@ private:
 	//
 	bool m_redrawTriggered;
 	
-
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
 	sf::Vector2f m_layoutScale;
@@ -90,7 +90,7 @@ private:
 	void toggle_movie();
 
 	void toggle_rotate( FeSettings::RotationState ); // toggle between none and provided state
-	void set_rotation_transform();	
+	void set_transforms();	
 
 	// Overrides from base classes:
 	//

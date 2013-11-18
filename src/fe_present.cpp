@@ -74,7 +74,7 @@ void FePresent::clear()
 	m_listBox=NULL; // listbox gets deleted with the m_elements below
 	m_moveState = MoveNone;
 	m_baseRotation = FeSettings::RotateNone;
-	m_rotationTransform = sf::Transform();
+	m_scaledTransform = m_rotationTransform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName.clear();
 	m_ticksList.clear();
@@ -110,10 +110,10 @@ void FePresent::clear()
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 {
-	states.transform = m_rotationTransform;
-
 	sf::RenderStates scaled_states( states );
-	scaled_states.transform.scale( m_layoutScale.x, m_layoutScale.y );
+	scaled_states.transform = m_scaledTransform;
+
+	states.transform = m_rotationTransform;
 
 	std::vector<FeBasePresentable *>::const_iterator itl;
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
@@ -225,6 +225,7 @@ void FePresent::set_layout_width( int w )
 {
 	m_layoutSize.x = w;
 	m_layoutScale.x = (float) sf::VideoMode::getDesktopMode().width / w;
+	set_transforms();
 	m_redrawTriggered = true;
 }
 
@@ -232,6 +233,7 @@ void FePresent::set_layout_height( int h )
 {
 	m_layoutSize.y = h;
 	m_layoutScale.y = (float) sf::VideoMode::getDesktopMode().height / h;
+	set_transforms();
 	m_redrawTriggered = true;
 }
 
@@ -257,7 +259,7 @@ const char *FePresent::get_layout_font() const
 void FePresent::set_layout_orient( int r )
 {
 	m_baseRotation = (FeSettings::RotationState)r;
-	set_rotation_transform();
+	set_transforms();
 	m_redrawTriggered = true;
 }
 
@@ -404,7 +406,7 @@ void FePresent::load_screensaver( sf::RenderWindow *wnd )
 	bool from_screenSaver = m_screenSaverActive;
 	vm_on_transition( EndLayout, 1, wnd );
 	clear();
-	set_rotation_transform();
+	set_transforms();
 	m_screenSaverActive=true;
 
 	//
@@ -425,7 +427,7 @@ void FePresent::load_layout( sf::RenderWindow *wnd )
 	bool from_screenSaver = m_screenSaverActive;
 	vm_on_transition( EndLayout, 0, wnd );
 	clear();
-	set_rotation_transform();
+	set_transforms();
 	m_screenSaverActive=false;
 
 	if ( m_feSettings->lists_count() < 1 )
@@ -632,10 +634,10 @@ void FePresent::toggle_rotate( FeSettings::RotationState r )
 	else
 		m_toggleRotation = r;
 
-	set_rotation_transform();
+	set_transforms();
 }
 
-void FePresent::set_rotation_transform()
+void FePresent::set_transforms()
 {
 	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 	m_rotationTransform = sf::Transform();
@@ -665,6 +667,9 @@ void FePresent::set_rotation_transform()
 		m_rotationTransform.rotate(270);
 		break;
 	}
+
+	m_scaledTransform = m_rotationTransform;
+	m_scaledTransform.scale( m_layoutScale.x, m_layoutScale.y );
 }
 
 void FePresent::perform_autorotate()
@@ -693,7 +698,7 @@ void FePresent::perform_autorotate()
 			m_toggleRotation = autorotate;
 	}
 
-	set_rotation_transform();
+	set_transforms();
 }
 
 //
