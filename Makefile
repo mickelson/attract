@@ -27,7 +27,7 @@
 # Uncomment next line to disable movie support (i.e. don't use ffmpeg).
 #DISABLE_MOVIE=1
 #
-# By default, fontconfig is enabled on Linux & FreeBSD and disabled on Mac OS-X
+# By default, fontconfig is enabled on Linux & FreeBSD and disabled on Mac OS X
 # & Windows.  Uncomment next line to always disable fontconfig...
 #DISABLE_FONTCONFIG=1
 # ...or uncomment next line to always enable fontconfig.

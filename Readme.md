@@ -7,7 +7,7 @@ is intended to be controlled with a joystick, gamepad or spin dial, making
 it ideal for use in arcade cabinet setups.
 
 Attract-Mode was developed for use in Linux.  It is known to work on Ubuntu 
-Linux (x86), Mac OS-X (10.6.8), and Windows (XP and 7).
+Linux (x86), Mac OS X (10.6.8), and Windows (XP and 7).
 
 Attract-Mode's layouts are actually scripts written in the [Squirrel][]
 programming language. Attract-Mode itself is written in C++ and uses
@@ -26,13 +26,11 @@ Compile
 
 1. These instructions assume that you have the GNU C/C++ compilers and 
 basic build utilities (make, ar) on your system.  This means the "build-
-essential" package on Debian/Ubuntu, X-Code on OS-X, or MinGW on Windows. 
+essential" package on Debian/Ubuntu, X-Code on OS X, or MinGW on Windows. 
 
 2. Install the following libraries and headers on your system:
-
    * Required:
       - SFML SDK version 2.x 
-
    * Optional:
       - FFmpeg's avformat, avcodec, swscale and avutil libs.
      	(for movie support).
@@ -40,7 +38,7 @@ essential" package on Debian/Ubuntu, X-Code on OS-X, or MinGW on Windows.
 
 3. Download the Attract-Mode source, extract it to your system.
 
-4. On Linux/OS-X: Run the "make" command.  Edit the Makefile first if you 
+4. On Linux/OS X: Run the "make" command.  Edit the Makefile first if you 
 wish to change any build options  (i.e. to disable FFmpeg or Fontconfig).  
 
 	On Windows: Either use the Makefile with the MINGW make command or load
@@ -52,7 +50,7 @@ Initial Setup
 1. Copy the contents of the "config" directory from the Attract-Mode 
 source to the location that you will use as your Attract-Mode config
 directory.  By default, this config directory is located in "$HOME/.attract" 
-on Linux and Mac OS-X, and in the current working directory on Windows-based
+on Linux and Mac OS X, and in the current working directory on Windows-based
 systems.
 
 2. Run Attract-Mode.  If you are not using a default config directory
@@ -100,7 +98,7 @@ categories, years, manufacturers, etc.
 **SOUND:** To play sounds in your setup, place the sound file in the "sounds" 
 subdirectory of your Attract-Mode config directory.  The sound file can 
 then be selected from the "Sound" menu when in configuration mode and mapped
-to an input or event.
+to an action or event.
 
 **ARTWORK:** Attract-Mode supports PNG, JPEG, GIF, BMP and TGA image formats.
 When deciding what image file to use for a particular artwork type
