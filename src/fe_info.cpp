@@ -624,9 +624,17 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 
 		for ( std::map<string, string>::const_iterator itr=m_artwork.begin();
 					itr != m_artwork.end(); ++itr )
+		{
+			std::string label;
+			if ( (*itr).first.find_first_of( ' ' ) != std::string::npos )
+				label = '"' + (*itr).first + '"';
+			else
+				label = (*itr).first;
+
 			outfile << setw(10) << left << "artwork" 
-						<< ' ' << setw(15) << left << (*itr).first 
+						<< ' ' << setw(15) << left << label 
 						<< ' ' << (*itr).second << endl;
+		}
 
 		outfile.close();
    }
