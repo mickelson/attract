@@ -23,9 +23,13 @@
 #ifndef FE_SOUND_HPP
 #define FE_SOUND_HPP
 
-#include <SFML/Audio.hpp>
-#include <string>
+#ifdef NO_MOVIE
+#include <SFML/Audio/Music.hpp>
+#else
 #include "media.hpp"
+#endif
+
+#include <string>
 #include "fe_input.hpp"
 
 class FeSettings;
@@ -33,12 +37,16 @@ class FeSettings;
 class FeSoundSystem
 {
 private:
+	FeSoundSystem( const FeSoundSystem & );
+	FeSoundSystem &operator=( const FeSoundSystem & );
+
 #ifdef NO_MOVIE
 	sf::Music m_music;
+	sf::Music m_sound;
 #else
 	FeMedia m_music;
+	FeMedia m_sound;
 #endif
-	sf::Music m_sound;
 	FeSettings *m_fes;
 
 public:
@@ -55,11 +63,19 @@ public:
 class FeScriptSound
 {
 private:
-   sf::SoundBuffer m_buffer;
-   sf::Sound m_sound;
+	FeScriptSound( const FeScriptSound & );
+	FeScriptSound &operator=( const FeScriptSound & );
+
+#ifdef NO_MOVIE
+	sf::Music m_sound;
+#else
+	FeMedia m_sound;
+#endif
 
 public:
-   bool load( const std::string & );
+	FeScriptSound();
+
+	bool load( const std::string & );
 	void play();
 	void set_volume( int );
 

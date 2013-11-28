@@ -27,10 +27,11 @@
 FeSoundSystem::FeSoundSystem( FeSettings *fes )
 #ifdef NO_MOVIE
 	: m_music(),
+	m_sound(),
 #else
 	: m_music( FeMedia::Audio ),
+	m_sound( FeMedia::Audio ),
 #endif
-	m_sound(),
 	m_fes( fes )
 {
 	m_music.setLoop( true );
@@ -90,6 +91,7 @@ void FeSoundSystem::tick()
 {
 #ifndef NO_MOVIE
 	m_music.tick();
+	m_sound.tick();
 #endif
 }
 
@@ -99,20 +101,32 @@ void FeSoundSystem::update_volumes()
 	m_sound.setVolume( m_fes->get_play_volume( FeSoundInfo::Sound ) );
 }
 
+FeScriptSound::FeScriptSound()
+#ifdef NO_MOVIE
+	: m_sound()
+#else
+	: m_sound( FeMedia::Audio )
+#endif
+{
+}
+
 bool FeScriptSound::load( const std::string &n )
 {
-	if ( !m_buffer.loadFromFile( n ))
+	if ( !m_sound.openFromFile( n ) )
 	{
 		std::cout << "Error loading sound file: " << n << std::endl;
 		return false;
 	}
 
-	m_sound.setBuffer( m_buffer );
+	m_sound.setLoop( false );
 	return true;
 }
 
 void FeScriptSound::play()
 {
+	// call stop to reset to the beginning (if sound has previously been played)
+	//
+	m_sound.stop();
 	m_sound.play();
 }
 
@@ -123,7 +137,7 @@ void FeScriptSound::set_volume( int v )
 
 bool FeScriptSound::is_playing()
 {
-	return ( m_sound.getStatus() == sf::Sound::Playing ) ? true : false;
+	return ( m_sound.getStatus() == sf::SoundSource::Playing ) ? true : false;
 }
 
 float FeScriptSound::get_pitch()

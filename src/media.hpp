@@ -25,11 +25,10 @@
 
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
+#include <SFML/Audio/SoundStream.hpp>
 
 class FeAudioImp;
 class FeVideoImp;
-class FeAnimateImp;
 class AVFormatContext;
 
 class FeMedia : private sf::SoundStream
@@ -49,7 +48,13 @@ public:
 
 	bool openFromFile( const std::string &name );
 	sf::Texture *get_texture();
+
 	using sf::SoundStream::setVolume;
+	using sf::SoundStream::setPosition;
+	using sf::SoundStream::getPosition;
+	using sf::SoundStream::setPitch;
+	using sf::SoundStream::getPitch;
+	using sf::SoundStream::getStatus;
 
 	void play();
 	void stop();
@@ -90,8 +95,9 @@ private:
 
 	FeAudioImp *m_audio;
 	FeVideoImp *m_video;
-	FeAnimateImp *m_animate;
 
+	FeMedia( const FeMedia & );
+	FeMedia &operator=( const FeMedia & );
 	static void init_av();
 };
 
