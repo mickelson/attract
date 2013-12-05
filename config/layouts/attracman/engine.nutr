@@ -26,6 +26,7 @@ const G2HomeX = 45; const G2HomeY = 37;
 const G3HomeX = 9; const G3HomeY = 37;
 
 const GridWidth = 56;
+const GridHeight = 42;
 const MinimumMove	= 0.1;
 
 enum Direction
@@ -162,7 +163,14 @@ class Sprite
 		}
 
 		if ( yf )
+		{
 			new_y += new_sub * yf;
+
+			if ( new_y < 0 )
+				new_y = fe.layout.height - advance * yf;
+			else if ( new_y > fe.layout.height )
+				new_y = advance * yf;
+		}
 
 		set_pos( new_x, new_y );
 		return ret_val;
@@ -368,7 +376,7 @@ class Player extends Sprite
 	die=0; // The frame number that the player died on, 0 if alive
 	direction=Direction.None;
 	speed=0.8;
-	cruise_control=true; // false if user provided input during this life
+	cruise_control=false; // false if user provided input during this life
 	cruise_x=-1;
 	cruise_y=-1;
 
@@ -376,15 +384,19 @@ class Player extends Sprite
 	{
 		base.constructor()
 		obj.subimg_y=0;
-		direction=Direction.Left;
 	}
 
 	function init()
 	{
 		die=0;
-		direction=Direction.Left;
 		speed = 0.8;
 		set_pos( g2p( StartX ), g2p( StartY ) );
+
+		if ( cruise_control )
+			direction = get_best_direction( -1, -1, Direction.None );
+		else
+			direction = Direction.Left;
+
 		cruise_control = true;
 		cruise_x=cruise_y=-1;
 	}
@@ -671,8 +683,16 @@ class Player extends Sprite
 			}
 		}
 
-		if (( gx > 0 ) && ( gx < GridWidth ))
-			direction = get_best_direction( cruise_x, cruise_y, direction );
+		// otherwise pick a direction if we are at a ghost decision point
+		if (( gx >= 0 ) && ( gx < GridWidth )
+				&& ( gy >= 0 ) && ( gy < GridHeight ) 
+				&& ( ::field[gy][gx] & 4 )) 
+		{
+			if ( ::field[gy][gx] == 7 )
+				direction = get_best_direction( -1, -1, direction );
+			else
+				direction = get_best_direction( cruise_x, cruise_y, direction );
+		}
 
 		return retval;
 	}
@@ -704,8 +724,6 @@ class Ghost extends Sprite
 		reverse=false;
 		collided=false;
 		speed=0.75;
-
-		set_pos( g2p( GhostHouseX ), g2p( GhostHouseY + 1 ) );
 	}
 
 	function eaten( frame, number )
@@ -782,7 +800,10 @@ class Ghost extends Sprite
 			//
 			if (( p2g( pos_x() ) == GhostHouseX )
 					&& ( p2g( pos_y() ) == GhostHouseY ))
+			{
 				gstate = GhostState.Hidden;
+				set_pos( g2p( GhostHouseX ), g2p( GhostHouseY + 1 ) );
+			}
 		}
 
 		if ( gstate == GhostState.Hidden )
@@ -913,7 +934,10 @@ function state_update( ttime, animate_frame )
 	{
 		::pman.init();
 		foreach ( g in ::ghosts )
+		{
 			g.gstate = GhostState.Hidden;
+			g.set_pos( g2p( GhostHouseX ), g2p( GhostHouseY + 1 ) );
+		}
 
 		::last_ghost = ttime - 3000;
 		::reset_actors = false;
@@ -1039,6 +1063,7 @@ function maze_init()
 			{
 			case 2:		// dot
 			case 6:
+			case 7:
 				if ( !::dots.rawin( r ) )
 					::dots[r] <- {};
 
@@ -1146,7 +1171,13 @@ function tick( ttime )
 
 	if ( frame > ::last_frame + 1 )
 	{
+		// cap catch up for gaps greater than 0.5 seconds
+		if (( frame - ::last_frame ) > 60 )
+			::last_frame = frame - 60;
+
 		local animate_frame = ( frame / 6 ).tointeger();
+
+		state_update( ttime, animate_frame );
 
 		//
 		// Do movements
@@ -1172,8 +1203,6 @@ function tick( ttime )
 		// Do animation and state updates
 		//
 		::pman.animate( animate_frame );
-
-		state_update( ttime, animate_frame );
 
 		foreach ( g in ::ghosts )
 		{
