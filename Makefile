@@ -39,11 +39,6 @@
 # Uncomment next line to always link to Attract-Mode's version of expat.
 #BUILD_EXPAT=1
 #
-# By default, layout scripts do not get access to the Squirrel std io or 
-# system libraries.  Uncomment the following to allow such access.  This 
-# could be useful for creating scripts to integrate with other programs...
-#ENABLE_SCRIPT_SYSTEM_ACCESS=1
-#
 # Uncomment next line for Windows static build
 #WINDOWS_STATIC=1
 ###############################
@@ -193,10 +188,6 @@ LIBS += -lexpat
 EXPAT =
 endif
 
-ifeq ($(ENABLE_SCRIPT_SYSTEM_ACCESS),1)
-FE_FLAGS += -DENABLE_SCRIPT_SYSTEM_ACCESS
-endif
-
 CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include
 SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
 
@@ -275,7 +266,6 @@ SQSTDLIBOBJS= \
 	$(SQSTDLIB_OBJ_DIR)/sqstdstream.o \
 	$(SQSTDLIB_OBJ_DIR)/sqstdmath.o \
 	$(SQSTDLIB_OBJ_DIR)/sqstdstring.o \
-	$(SQSTDLIB_OBJ_DIR)/sqstdsystem.o \
 	$(SQSTDLIB_OBJ_DIR)/sqstdaux.o \
 	$(SQSTDLIB_OBJ_DIR)/sqstdrex.o
 

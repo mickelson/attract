@@ -68,7 +68,7 @@ private:
 	void end_element_mess( const char * );
 
 	bool parse_internal( StartElementHandler, EndElementHandler, 
-						const std::string & );
+						const std::string &, const std::string & );
 
 	FeListXMLParse( const FeListXMLParse & );
 	FeListXMLParse &operator=( const FeListXMLParse & );
@@ -76,7 +76,7 @@ public:
 	FeListXMLParse( std::list<FeRomInfo> &, UiUpdate u=NULL, void *d=NULL );
 
 	bool parse_mame( const std::string &base_command );
-	bool parse_mess( const std::string &command );
+	bool parse_mess( const std::string &command, const std::string &args );
 };
 
 #endif

@@ -34,6 +34,10 @@ _help_input_action;
 _help_input_delete;Remove this input mapping
 _help_input_add;Add a new input mapping
 _help_input_sel;Configure input mappings
+_help_plugin_label;The plug-in label needs to match the name (not including the extension) of the plug-in's script file
+_help_plugin_command;The full path to the executable associated with this plug-in
+_help_plugin_add;Add a new plug-in
+_help_plugin_sel;Configure plug-in
 _help_volume;Valid volume settings are from 0 (mute) to 100 
 _help_sound;Assign a sound to this event/action
 _help_autorot;Autorotate to match the rotation of the last game played
@@ -46,4 +50,5 @@ _help_emulators;Configure emulator settings
 _help_lists;Configure display lists
 _help_input;Configure input mappings
 _help_sound;Configure sound volumes and sound mappings
+_help_plugins;Configure plug-ins
 _help_misc;Configure Miscellaneous settings

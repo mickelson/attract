@@ -33,6 +33,7 @@
 #include <cstring>
 
 #ifdef SFML_SYSTEM_WINDOWS
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif // SFML_SYSTEM_WINDOWS
 
@@ -58,8 +59,8 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cout << "Error, no config directory specified with --config option." << std::endl;
-				exit(1);
+				std::cerr << "Error, no config directory specified with --config option." << std::endl;
+				_exit(1);
 			}
 		}
 		else if ( strcmp( argv[next_arg], "--font" ) == 0 )
@@ -72,8 +73,8 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cout << "Error, no font name specified with --font optoin." << std::endl;
-				exit(1);
+				std::cerr << "Error, no font name specified with --font option." << std::endl;
+				_exit(1);
 			}
 		}
 		else if ( strcmp( argv[next_arg], "--build-rom-list" ) == 0 )
@@ -89,9 +90,9 @@ void process_args( int argc, char *argv[],
 
 			if ( romlist_emulators.empty() )
 			{
-				std::cout << "Error, no target emulators specified with --build-rom-list option."
+				std::cerr << "Error, no target emulators specified with --build-rom-list option."
 							<<  std::endl;
-				exit(1);
+				_exit(1);
 			}
 
 		}
@@ -100,7 +101,7 @@ void process_args( int argc, char *argv[],
 			int retval=1;
 			if ( strcmp( argv[next_arg], "--help" ) != 0 )
 			{
-				std::cout << "Unrecognized command line option: "
+				std::cerr << "Unrecognized command line option: "
 					<< argv[next_arg] <<  std::endl;
 				retval=0;
 			}
@@ -112,7 +113,7 @@ void process_args( int argc, char *argv[],
 				<< "\t--font [font_name]: specify default font name" << std::endl
 				<< "\t--build-rom-list [emulator...]: build rom list for specified emulators" << std::endl
 				<< "\t--help: show this message" << std::endl;
-			exit( retval );
+			_exit( retval );
 		}
 	}
 
@@ -120,7 +121,7 @@ void process_args( int argc, char *argv[],
 	{
 		FeSettings feSettings( config_path, cmdln_font, false );
 		int retval = feSettings.build_romlist( romlist_emulators );
-		exit( retval );
+		_exit( retval );
 	}
 }
 
@@ -181,7 +182,7 @@ int main(int argc, char *argv[])
 	window.setMouseCursorVisible(false);
 
 	FePresent fePresent( &feSettings, defaultFont );
-	fePresent.load_layout( &window );
+	fePresent.load_layout( &window, true );
 
 	FeOverlay feOverlay( window, feSettings, fePresent );
 	soundsys.sound_event( FeInputMap::EventStartup );
@@ -318,7 +319,7 @@ int main(int argc, char *argv[])
 							if ( feSettings.set_list( list_index ) )
 								fePresent.load_layout( &window );
 							else
-								fePresent.update( true );
+								fePresent.update_to_new_list( &window );
 
 							redraw=true;
 						}
@@ -348,7 +349,7 @@ int main(int argc, char *argv[])
 		soundsys.tick();
 	}
 
-	fePresent.stop( &window );
+	fePresent.on_stop_frontend( &window );
 	soundsys.stop();
 	feSettings.save_state();
 	return 0;

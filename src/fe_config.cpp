@@ -969,6 +969,74 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
+void FePluginEditMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Edit Plug-in" );
+
+	std::string command = ctx.fe_settings.get_plugin_command( m_plugin_label );
+
+	ctx.add_optl( Opt::EDIT, "Plug-in Label", m_plugin_label, 
+		"_help_plugin_label" );
+
+	ctx.add_optl( Opt::EDIT, "Plug-in Command", command, 
+		"_help_plugin_command" );
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FePluginEditMenu::save( FeConfigContext &ctx )
+{
+	if ( !m_plugin_label.empty() )
+		ctx.fe_settings.delete_plugin( m_plugin_label );
+
+	std::string label = ctx.opt_list[0].get_value();
+	if ( !label.empty() )
+		ctx.fe_settings.create_plugin( label, ctx.opt_list[1].get_value() );
+
+	return true;
+}
+
+void FePluginEditMenu::set_plugin( const std::string &plugin_label )
+{
+	m_plugin_label = plugin_label;
+}
+
+void FePluginSelMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::SelectionList, "Configure / Plug-ins" );
+
+	std::vector<std::string> plugin_list;
+	ctx.fe_settings.get_plugins( plugin_list );
+
+	for ( std::vector<std::string>::iterator itr=plugin_list.begin();
+			itr < plugin_list.end(); ++itr )
+		ctx.add_opt( Opt::MENU, (*itr), "", "_help_plugin_sel" );
+
+	ctx.add_opt( Opt::MENU, "Add New Plug-in", "", "_help_plugin_add" );
+	ctx.back_opt().opaque = 1;
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FePluginSelMenu::on_option_select( 
+		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+{
+	FeMenuOpt &o = ctx.curr_opt();
+
+	if ( o.opaque == 0 )
+	{
+		m_edit_menu.set_plugin( o.setting );
+		submenu = &m_edit_menu;
+	}
+	else if ( o.opaque == 1 )
+	{
+		m_edit_menu.set_plugin( "" );
+		submenu = &m_edit_menu;
+	}
+
+	return true;
+}
+
 void FeConfigMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::SelectionList, "Configure" );
@@ -978,6 +1046,7 @@ void FeConfigMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::SUBMENU, "Lists", "", "_help_lists" );
 	ctx.add_optl( Opt::SUBMENU, "Input", "", "_help_input" );
 	ctx.add_optl( Opt::SUBMENU, "Sound", "", "_help_sound" );
+	ctx.add_optl( Opt::SUBMENU, "Plug-ins", "", "_help_plugins" );
 	ctx.add_optl( Opt::SUBMENU, "General", "", "_help_misc" );
 
 	//
@@ -1007,6 +1076,9 @@ bool FeConfigMenu::on_option_select(
 		submenu = &m_sound_menu;
 		break;
 	case 4:
+		submenu = &m_plugin_menu;
+		break;
+	case 5:
 		submenu = &m_misc_menu;
 		break;
 	default:

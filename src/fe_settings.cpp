@@ -91,15 +91,16 @@ const char *FE_FONT_EXTENSIONS[]		=
 const char *FE_CFG_FILE					= "attract.cfg";
 const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
-const char *FE_LAYOUT_GLOBAL_FILE 	= "global.nut";
 const char *FE_RESOURCE_BASEFILE		= "locale$1.msg";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
+const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
 const char *FE_EMULATOR_SUBDIR		= "emulators/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
+const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 
 const std::string FE_EMPTY_STRING = "";
 
@@ -150,8 +151,8 @@ void FeSettings::clear()
 	m_current_list = -1;
 
 	m_lists.clear();
-	m_rl.clear();
 	m_emulators.clear();
+	m_plugins.clear();
 }
 
 bool FeSettings::load()
@@ -230,31 +231,45 @@ const char *FeSettings::configSettingStrings[] =
 	NULL
 };
 
+const char *FeSettings::otherSettingStrings[] =
+{
+	"list",
+	"sound",
+	"input_map",
+	"general",
+	"plugin",
+	NULL
+};
+
+
 int FeSettings::process_setting( const std::string &setting,
 					const std::string &value,
 					const std::string &fn )
 {
-	const char *subobjtokens[] =
-	{
-		"list",
-		"sound",
-		"input_map",
-		"general",
-		NULL
-	};
-
-	if ( setting.compare( subobjtokens[0] ) == 0 ) // list
+	if ( setting.compare( otherSettingStrings[0] ) == 0 ) // list
 	{
 		FeListInfo newList( value );
 		m_lists.push_back( newList );
 		m_current_config_object = &m_lists.back();
 	}
-	else if ( setting.compare( subobjtokens[1] ) == 0 ) // sound
+	else if ( setting.compare( otherSettingStrings[1] ) == 0 ) // sound
 		m_current_config_object = &m_sounds;
-	else if ( setting.compare( subobjtokens[2] ) == 0 ) // input_map
+	else if ( setting.compare( otherSettingStrings[2] ) == 0 ) // input_map
 		m_current_config_object = &m_inputmap;
-	else if ( setting.compare( subobjtokens[3] ) == 0 ) // general
+	else if ( setting.compare( otherSettingStrings[3] ) == 0 ) // general
 		m_current_config_object = NULL;
+	else if ( setting.compare( otherSettingStrings[4] ) == 0 ) // plugin
+	{
+		size_t pos=0;
+		std::pair < std::string, std::string > cmd;
+
+		token_helper( value, pos, cmd.first, FE_WHITESPACE );
+
+		if ( pos < value.size() )
+			cmd.second = value.substr( pos );
+
+		m_plugins.push_back( cmd );
+	}
 	else if ( setting.compare( configSettingStrings[0] ) == 0 ) // autorotate
 	{
 		if ( set_info( AutoRotate, value ) == false )
@@ -284,7 +299,7 @@ int FeSettings::process_setting( const std::string &setting,
 	}
 	else
 	{
-		invalid_setting( fn, "general", setting, subobjtokens, configSettingStrings );
+		invalid_setting( fn, "general", setting, otherSettingStrings, configSettingStrings );
 		return 1;
 	}
 
@@ -520,13 +535,6 @@ std::string FeSettings::get_current_layout_file() const
 	return path;
 }
 
-std::string FeSettings::get_layout_global_file() const
-{
-	std::string path = get_current_layout_dir();
-	path += FE_LAYOUT_GLOBAL_FILE;
-	return path;
-}
-
 std::string FeSettings::get_current_layout_dir() const
 {
 	if (( m_current_list < 0 ) 
@@ -691,6 +699,7 @@ int FeSettings::run()
 
 	command = clean_path( emu->get_info( FeEmulatorInfo::Executable ) );
 
+	std::cout << "Running: " << command << " " << args << std::endl;
 	return run_program( command, args );
 }
 
@@ -1168,6 +1177,24 @@ void FeSettings::delete_list( const std::string &n )
 	}
 }
 
+void FeSettings::delete_plugin( const std::string &n )
+{
+	std::vector<std::pair<std::string,std::string> >::iterator itr;
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); )
+	{
+		if ( n.compare( (*itr).first ) == 0 )
+			itr = m_plugins.erase( itr );
+		else
+			itr++;
+	}
+}
+
+void FeSettings::create_plugin( const std::string &n, const std::string &c )
+{
+	delete_plugin( n );
+	m_plugins.push_back( std::pair<std::string,std::string>( n, c ) );
+}
+
 bool FeSettings::check_romlist_configured( const std::string &n ) const
 {
 	for ( std::vector<FeListInfo>::const_iterator itr=m_lists.begin();
@@ -1186,6 +1213,7 @@ void FeSettings::save() const
 	confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
 	confirm_directory( m_config_path, FE_LAYOUT_SUBDIR );
 	confirm_directory( m_config_path, FE_SOUND_SUBDIR );
+	confirm_directory( m_config_path, FE_PLUGIN_SUBDIR );
 
 	std::string filename( m_config_path );
 	filename += FE_CFG_FILE;
@@ -1207,18 +1235,34 @@ void FeSettings::save() const
 			outfile << std::endl;
 		}
 
-		outfile << "input_map" << std::endl;
-		m_inputmap.save( outfile );
-
-		outfile << std::endl << "sound" << std::endl;
+		outfile << otherSettingStrings[1] << std::endl; // "sounds"
 		m_sounds.save( outfile );
 
-		outfile << std::endl << "general" << std::endl;
+		outfile << std::endl << otherSettingStrings[2] << std::endl; // "input_map"
+		m_inputmap.save( outfile );
+
+		outfile << std::endl << otherSettingStrings[3] << std::endl; // "general"
 		for ( int i=0; i < LAST_INDEX; i++ )
 		{
 			std::string val = get_info( i );
 			outfile << '\t' << std::setw(20) << std::left
 						<< configSettingStrings[i] << ' ' << val << std::endl;
+		}
+
+		outfile << std::endl;
+		std::vector< std::pair< std::string, std::string > >::const_iterator itr;
+		for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+		{
+			std::string label;
+			if ( (*itr).first.find_first_of( ' ' ) != std::string::npos )
+				label = '"' + (*itr).first + '"';
+			else
+				label = (*itr).first;
+
+			outfile << std::setw(20) << std::left
+						<< otherSettingStrings[4] // "plugin" 
+						<< ' ' << label 
+						<< ' ' << (*itr).second << std::endl;
 		}
 
 		outfile.close();
@@ -1242,4 +1286,26 @@ void FeSettings::get_resource( const std::string &token,
 int FeSettings::lists_count() const
 {
 	return m_lists.size();
+}
+
+const std::string &FeSettings::get_plugin_command( 
+			const std::string &label ) const
+{
+	std::vector< std::pair< std::string, std::string > >::const_iterator itr;
+
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( label.compare( (*itr).first ) == 0 )
+			return (*itr).second;
+	}
+
+	return FE_EMPTY_STRING;
+}
+
+void FeSettings::get_plugins( std::vector < std::string > &list ) const
+{
+	list.clear();
+	std::vector< std::pair< std::string, std::string > >::const_iterator itr;
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+		list.push_back( (*itr).first );
 }

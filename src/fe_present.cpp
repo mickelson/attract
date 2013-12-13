@@ -30,12 +30,6 @@
 
 #include <sqrat.h>
 
-#ifdef ENABLE_SCRIPT_SYSTEM_ACCESS
-#include <sqstdblob.h>
-#include <sqstdio.h>
-#include <sqstdsystem.h>
-#endif 
-
 #include <sqstdmath.h>
 #include <sqstdstring.h>
 
@@ -349,7 +343,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		if ( m_feSettings->next_list() ) 
 			load_layout( wnd );
 		else
-			update( true );
+			update_to_new_list( wnd );
 
 		break;
 
@@ -359,7 +353,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		if ( m_feSettings->prev_list() )
 			load_layout( wnd );
 		else
-			update( true );
+			update_to_new_list( wnd );
 
 		break;
 
@@ -378,7 +372,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 	return true;
 }
 
-int FePresent::update( bool new_list ) 
+int FePresent::update( bool new_list )
 {
 	std::vector<FeBasePresentable *>::iterator itl;
 	if ( new_list )
@@ -403,8 +397,7 @@ int FePresent::update( bool new_list )
 
 void FePresent::load_screensaver( sf::RenderWindow *wnd ) 
 {
-	bool from_screenSaver = m_screenSaverActive;
-	vm_on_transition( EndLayout, 1, wnd );
+	vm_on_transition( EndLayout, FromToScreenSaver, wnd );
 	clear();
 	set_transforms();
 	m_screenSaverActive=true;
@@ -419,13 +412,18 @@ void FePresent::load_screensaver( sf::RenderWindow *wnd )
 	// if there is no screen saver script then do a blank screen
 	//
 	update( true );
-	vm_on_transition( StartLayout, (from_screenSaver?1:0), wnd );
+	vm_on_transition( StartLayout, FromToNull, wnd );
 }
 
-void FePresent::load_layout( sf::RenderWindow *wnd ) 
+void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load ) 
 {
-	bool from_screenSaver = m_screenSaverActive;
-	vm_on_transition( EndLayout, 0, wnd );
+	int var = ( m_screenSaverActive ) ? FromToScreenSaver : FromToNull;
+
+	if ( !initial_load )
+		vm_on_transition( EndLayout, FromToNull, wnd );
+	else
+		var = FromToFrontend;
+
 	clear();
 	set_transforms();
 	m_screenSaverActive=false;
@@ -455,7 +453,15 @@ void FePresent::load_layout( sf::RenderWindow *wnd )
 	}
 
 	update( true );
-	vm_on_transition( StartLayout, (from_screenSaver?1:0), wnd );
+
+	vm_on_transition( ToNewList, var, wnd );
+	vm_on_transition( StartLayout, var, wnd );
+}
+
+void FePresent::update_to_new_list( sf::RenderWindow *wnd )
+{
+	update( true );
+	vm_on_transition( ToNewList, FromToNull, wnd );
 }
 
 bool FePresent::tick( sf::RenderWindow *wnd )
@@ -561,13 +567,13 @@ int FePresent::get_page_size() const
 		return 5;
 }
 
-void FePresent::stop( sf::RenderWindow *wnd )
+void FePresent::on_stop_frontend( sf::RenderWindow *wnd )
 {
 	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
 
-	vm_on_transition( EndLayout, 0, wnd );
+	vm_on_transition( EndLayout, FromToFrontend, wnd );
 }
 
 void FePresent::pre_run( sf::RenderWindow *wnd )
@@ -576,13 +582,13 @@ void FePresent::pre_run( sf::RenderWindow *wnd )
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
 
-	vm_on_transition( ToGame, 0, wnd );
+	vm_on_transition( ToGame, FromToNull, wnd );
 }
 
 void FePresent::post_run( sf::RenderWindow *wnd )
 {
 	perform_autorotate();
-	vm_on_transition( FromGame, 0, wnd );
+	vm_on_transition( FromGame, FromToNull, wnd );
 
 	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
@@ -883,6 +889,56 @@ void FePresent::do_nut( const char *script_file )
 	}
 }
 
+void my_callback( const char *buffer, void *opaque )
+{
+	Sqrat::Function func( Sqrat::RootTable(), (const char *)opaque );
+
+	if ( !func.IsNull() )
+		func.Execute( buffer );
+}
+
+bool FePresent::cb_plugin_command( const char *label, 
+		const char *args,
+		const char *output_callback )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FeSettings *fes = fep->get_fes();
+
+	std::string command = fes->get_plugin_command( label );
+	if ( command.empty() )
+		return false;
+
+	return run_program( clean_path( command ), 
+		args, my_callback, (void *)output_callback );
+}
+
+bool FePresent::cb_plugin_command( const char *label, const char *args )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FeSettings *fes = fep->get_fes();
+
+	std::string command = fes->get_plugin_command( label );
+	if ( command.empty() )
+		return false;
+
+	return run_program( clean_path( command ), args );
+}
+
+bool FePresent::cb_plugin_command_bg( const char *label, const char *args )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FeSettings *fes = fep->get_fes();
+
+	std::string command = fes->get_plugin_command( label );
+	if ( command.empty() )
+		return false;
+
+	return run_program( clean_path( command ), args, NULL, NULL, false );
+}
+
 const char *FePresent::cb_game_info( int index, int offset )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
@@ -920,12 +976,6 @@ void FePresent::vm_init()
 	sq_pushroottable( vm );
 	sq_setforeignptr( vm, this );
 
-#ifdef ENABLE_SCRIPT_SYSTEM_ACCESS
-	sqstd_register_bloblib( vm );
-	sqstd_register_iolib( vm );
-	sqstd_register_systemlib( vm );
-#endif
-
 	sqstd_register_mathlib( vm );
 	sqstd_register_stringlib( vm );
 	sqstd_seterrorhandlers( vm );
@@ -934,7 +984,7 @@ void FePresent::vm_init()
 }
 
 
-void FePresent::vm_on_new_layout( const std::string &file )
+void FePresent::vm_on_new_layout( const std::string &layout_file )
 {
 	using namespace Sqrat;
 
@@ -954,12 +1004,32 @@ void FePresent::vm_on_new_layout( const std::string &file )
 		.Const( _SC("ScreenWidth"), (int)vm.width )
 		.Const( _SC("ScreenHeight"), (int)vm.height )
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
+
+#ifdef SFML_SYSTEM_WINDOWS
+		.Const( _SC("OS"), "Windows" )
+#else
+ #ifdef SFML_SYSTEM_MACOS
+		.Const( _SC("OS"), "OSX" )
+ #else
+  #ifdef SFML_SYSTEM_FREEBSD
+		.Const( _SC("OS"), "FreeBSD" )
+  #else
+   #ifdef SFML_SYSTEM_LINUX
+		.Const( _SC("OS"), "Linux" )
+   #else
+		.Const( _SC("OS"), "Unknown" )
+   #endif
+  #endif
+ #endif
+#endif
+	
 		.Enum( _SC("Transition"), Enumeration()
 			.Const( _SC("StartLayout"), StartLayout )
 			.Const( _SC("EndLayout"), EndLayout )
 			.Const( _SC("ToNewSelection"), ToNewSelection )
 			.Const( _SC("ToGame"), ToGame )
 			.Const( _SC("FromGame"), FromGame )
+			.Const( _SC("ToNewList"), ToNewList )
 			)
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
@@ -987,6 +1057,11 @@ void FePresent::vm_on_new_layout( const std::string &file )
 			.Const( _SC("V"), sf::Joystick::V )
 			.Const( _SC("PovX"), sf::Joystick::PovX )
 			.Const( _SC("PovY"), sf::Joystick::PovY )
+			)
+		.Enum( _SC("FromTo"), Enumeration()
+			.Const( _SC("Null"), FromToNull )
+			.Const( _SC("ScreenSaver"), FromToScreenSaver )
+			.Const( _SC("Frontend"), FromToFrontend )
 			)
 		;
 
@@ -1131,6 +1206,9 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FePresent::do_nut);
 	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FePresent::cb_game_info);
 	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FePresent::cb_game_info);
+	fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
+	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
+	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FePresent::cb_plugin_command_bg);
 
 	//
 	// Define variables that get exposed to Squirrel
@@ -1146,38 +1224,58 @@ void FePresent::vm_on_new_layout( const std::string &file )
 	RootTable().Bind( _SC("fe"),  fe );
 
 	//
-	// Now run the global script, followed by the layout script
+	// Run the layout script
 	//
-	std::string global = m_feSettings->get_layout_global_file();
-	if ( file_exists( global ) )
+	if ( file_exists( layout_file ) )
 	{
+		fe.SetValue( _SC("init_name"), layout_file );
 		try
 		{
 			Script sc;
-			sc.CompileFile( global );
+			sc.CompileFile( layout_file );
 			sc.Run();
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in " << global
+			std::cout << "Script Error in " << layout_file 
 				<< " - " << e.Message() << std::endl;
 		}
 	}
 
-	if ( file_exists( file ) )
+	//
+	// Now run any plugin script(s)
+	//
+	std::string plugins_dir = m_feSettings->get_config_dir();
+	plugins_dir += FE_PLUGIN_SUBDIR;
+
+	std::vector< std::string > plugins_list;
+	m_feSettings->get_plugins( plugins_list );
+
+	while ( !plugins_list.empty() )
 	{
-		try
+		std::string plugin = plugins_list.back();
+		plugins_list.pop_back();
+
+		std::string plugin_file = plugins_dir + plugin + FE_PLUGIN_FILE_EXTENSION;
+
+		if ( file_exists( plugin_file ) )
 		{
-			Script sc;
-			sc.CompileFile( file );
-			sc.Run();
-		}
-		catch( Exception e )
-		{
-			std::cout << "Script Error in " << file 
-				<< " - " << e.Message() << std::endl;
+			fe.SetValue( _SC("init_name"), plugin );
+
+			try
+			{
+				Script sc;
+				sc.CompileFile( plugin_file );
+				sc.Run();
+			}
+			catch( Exception e )
+			{
+				std::cout << "Script Error in " << plugin_file
+					<< " - " << e.Message() << std::endl;
+			}
 		}
 	}
+	fe.SetValue( _SC("init_name"), "" );
 }
 
 bool FePresent::vm_on_tick()
@@ -1278,7 +1376,7 @@ bool FePresent::vm_on_transition(
 
 		// redraw now if we are doing another pass...
 		//
-		if ( !worklist.empty() )
+		if (( !worklist.empty() ) && ( wnd ))
 		{
 			wnd->clear();
 			wnd->draw( *this );

@@ -77,19 +77,17 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 
 	if ( listxml.compare( 0, 4, "mame" ) == 0 )
 	{
-		base_command += " -listxml ";
-
 		std::cout << "Obtaining -listxml info...";
 		listXMLParser.parse_mame( base_command );
 		std::cout << std::endl;
 	}
 	else if ( listxml.compare( 0, 4, "mess" ) == 0 )
 	{
-		std::string system;
+		std::string args;
 		size_t pos=4;
-		token_helper( listxml, pos, system );
+		token_helper( listxml, pos, args );
 
-		if ( system.empty() )
+		if ( args.empty() )
 		{
 			std::cout << "Note: No system provided in \""
 				<< "listxml mess\" entry for emulator: " 
@@ -99,12 +97,10 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 			return;
 		}
 
-		base_command += " ";
-		base_command += system;
-		base_command += " -listsoftware";
+		args += " -listsoftware";
 
 		std::cout << "Obtaining -listsoftware info...";
-		listXMLParser.parse_mess( base_command );
+		listXMLParser.parse_mess( base_command, args );
 		std::cout << std::endl;
 	}
 	else

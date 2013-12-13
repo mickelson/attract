@@ -56,10 +56,28 @@ bool tail_compare(
          const std::string &filename,
          const char *extension );
 
+
+typedef void (*output_callback_fn)( const char *, void * );
 //
 // Run the specified program, blocks while program running
 //
-bool run_program( const std::string &prog, const::std::string &args );
+// Arguments:
+//		"prog" - program to run
+//		"args" - space separated args. An arg can be wrapped in double quotes 
+//					if it contains spaces.
+//		"cb" - callback function to call with stdout output from program
+//		"opaque" - opaque ptr to pass to the callback function.  run_program()
+//					doesn't care what this is.
+//		"block" - if true, don't return until program is done execution
+//					if false, "cb" and "opaque" are ignored
+//
+//	Returns true if program ran successfully
+//
+bool run_program( const std::string &prog, 
+	const::std::string &args,
+	output_callback_fn cb = NULL,
+	void *opaque=NULL,
+	bool block=true );
 
 //
 // Utility functions for file processing:

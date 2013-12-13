@@ -299,6 +299,29 @@ public:
 	bool save( FeConfigContext &ctx );
 };
 
+class FePluginEditMenu : public FeBaseConfigMenu
+{
+private:
+	std::string m_plugin_label;
+
+public:
+	void get_options( FeConfigContext &ctx );
+
+	bool save( FeConfigContext &ctx );
+	void set_plugin( const std::string &plugin_label );
+};
+
+class FePluginSelMenu : public FeBaseConfigMenu
+{
+private:
+	FePluginEditMenu m_edit_menu;
+
+public:
+	void get_options( FeConfigContext &ctx );
+	bool on_option_select( FeConfigContext &ctx,
+			FeBaseConfigMenu *& submenu );
+};
+
 class FeConfigMenu : public FeBaseConfigMenu
 {
 private:
@@ -306,6 +329,7 @@ private:
 	FeListSelMenu m_list_menu;
 	FeInputSelMenu m_input_menu;
 	FeSoundMenu m_sound_menu;
+	FePluginSelMenu m_plugin_menu;
 	FeMiscMenu m_misc_menu;
 
 public:

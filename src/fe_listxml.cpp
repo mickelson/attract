@@ -311,26 +311,27 @@ void FeListXMLParse::end_element_mess( const char *element )
 	}
 }
 
-bool FeListXMLParse::parse_mame( const std::string &c )
+bool FeListXMLParse::parse_mame( const std::string &prog )
 {
 	std::vector< std::string > discarded;
-
 	int count( 0 ), total( m_romlist.size() );
 
 	std::cout << "    ";
 
+	std::string base_args = "-listxml ";
+
 	for ( m_itr = m_romlist.begin(); m_itr != m_romlist.end(); ++m_itr )
 	{
-		std::string command = c;
-		command += (*m_itr).get_info( FeRomInfo::Romname );
+		std::string args = base_args;
+		args += (*m_itr).get_info( FeRomInfo::Romname );
 
 		if ( parse_internal( 
 				exp_start_element_mame, 
 				exp_end_element_mame, 
-				command.c_str() ) == false )
+				prog, args ) == false )
 		{
-			std::cout << "No XML output found, command: " << command 
-						<< std::endl;
+			std::cout << "No XML output found, command: " << prog << " "
+						<< args << std::endl;
 		}
 
 		if ( !m_keep_rom ) 
@@ -367,58 +368,54 @@ bool FeListXMLParse::parse_mame( const std::string &c )
 	return true;
 }
 
-bool FeListXMLParse::parse_mess( const std::string &c )
+bool FeListXMLParse::parse_mess( const std::string &prog, 
+		const std::string &args )
 {
-	return parse_internal( exp_start_element_mess, exp_end_element_mess, c );
+	return parse_internal( 
+		exp_start_element_mess, 
+		exp_end_element_mess, prog, args );
 }
 
-bool FeListXMLParse::parse_internal( StartElementHandler s, EndElementHandler e, const std::string &c )
+struct user_data_struct 
 {
+	XML_Parser parser;
+	bool parsed_xml;
+};
+
+void my_parse_callback( const char *buff, void *opaque )
+{
+	struct user_data_struct *ds = (struct user_data_struct *)opaque;
+	if ( XML_Parse( ds->parser, buff, 
+			strlen(buff), XML_FALSE ) == XML_STATUS_ERROR )
+	{
+		std::cout << "Error parsing xml output:" 
+					<< buff << std::endl;
+	}
+	else
+		ds->parsed_xml = true;
+}
+
+bool FeListXMLParse::parse_internal( 
+		StartElementHandler s, 
+		EndElementHandler e, 
+		const std::string &prog,
+		const std::string &args )
+{
+	struct user_data_struct ud;
+	ud.parsed_xml = false;
+
 	clear_parse_state();
 
-	XML_Parser parser = XML_ParserCreate( NULL );
-	XML_SetUserData( parser, (void *)this );
-	XML_SetElementHandler( parser, s, e );
-	XML_SetCharacterDataHandler( parser, exp_handle_data );
+	ud.parser = XML_ParserCreate( NULL );
+	XML_SetUserData( ud.parser, (void *)this );
+	XML_SetElementHandler( ud.parser, s, e );
+	XML_SetCharacterDataHandler( ud.parser, exp_handle_data );
 
-	FILE *fp;
-	const int BUFFER_SIZE=1024;
-	char buffer[BUFFER_SIZE];
+	run_program( prog, args, my_parse_callback, (void *)&ud );
 
-#ifdef SFML_SYSTEM_WINDOWS
-	fp = _popen( c.c_str(), "r" );
-#else
-	fp = popen( c.c_str(), "r" );
-#endif
-
-	if ( fp == NULL )
-	{
-		std::cout << "Error executing: " << c << std::endl;
-		return false;
-	}
-
-	bool parsed_xml=false;
-
-	while ( fgets( buffer, BUFFER_SIZE, fp ) != NULL )
-	{
-		if ( XML_Parse( parser, buffer, 
-				strlen(buffer), XML_FALSE ) == XML_STATUS_ERROR )
-		{
-			std::cout << "Error parsing -listxml output:" 
-						<< buffer << std::endl;
-		}
-		else
-			parsed_xml = true;
-	}
 	// need to pass true to XML Parse on last line
-	XML_Parse( parser, 0, 0, XML_TRUE );
-	XML_ParserFree( parser );
+	XML_Parse( ud.parser, 0, 0, XML_TRUE );
+	XML_ParserFree( ud.parser );
 
-#ifdef SFML_SYSTEM_WINDOWS
-	_pclose( fp );
-#else
-	pclose( fp );
-#endif
-
-	return parsed_xml;
+	return ud.parsed_xml;
 }

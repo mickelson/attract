@@ -35,11 +35,12 @@ class FeListBox;
 
 enum FeTransitionType
 {
-	StartLayout=0,		// var = 1 if coming from screensaver, 0 otherwise
-	EndLayout,			// var = 1 if going to screensaver, 0 otherwise
+	StartLayout=0,		// var: 1=leaving screensaver, -1=starting frontend, 0 otherwise
+	EndLayout,			// var: 1=going to screensaver, -1=exiting frontend, 0 otherwise
 	ToNewSelection,	// var = index_offset of new selection
 	ToGame,				// var = 0
-	FromGame				// var = 0
+	FromGame,			// var = 0
+	ToNewList			// var = 0
 };
 
 class FePresent 
@@ -47,6 +48,13 @@ class FePresent
 {
 	friend void script_do_update( FeBasePresentable * );
 private:
+
+	enum FromToType
+	{
+		FromToNull=0,
+		FromToScreenSaver=1,
+		FromToFrontend=2
+	};
 
 	FeSettings *m_feSettings;
 	sf::Font *m_currentFont;
@@ -128,11 +136,13 @@ public:
 	~FePresent( void );
 
 	void load_screensaver( sf::RenderWindow *wnd );
-	void load_layout( sf::RenderWindow *wnd );
+	void load_layout( sf::RenderWindow *wnd, bool initial_load=false );
+
 	int update( bool reload_list=false );
+	void update_to_new_list( sf::RenderWindow *wnd ); 
 
 	bool tick( sf::RenderWindow *w ); // return true if display refresh required
-	void stop( sf::RenderWindow *w );
+	void on_stop_frontend( sf::RenderWindow *w );
 	void pre_run( sf::RenderWindow *w );
 	void post_run( sf::RenderWindow *w );
 	void toggle_mute();
@@ -165,6 +175,9 @@ public:
 	static bool cb_is_joybuttonpressed(int,int);
 	static float cb_get_joyaxispos(int,int);
 	static void do_nut(const char *);
+	static bool cb_plugin_command(const char *, const char *, const char *);
+	static bool cb_plugin_command(const char *, const char *);
+	static bool cb_plugin_command_bg(const char *, const char *);
 	static const char *cb_game_info(int,int);
 	static const char *cb_game_info(int);
 };

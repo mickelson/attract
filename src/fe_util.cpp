@@ -34,8 +34,12 @@
 #include <sys/types.h>
 
 #ifdef SFML_SYSTEM_WINDOWS
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <io.h>
+#include <Fcntl.h>
 #else
+#include <sys/wait.h>
 #include <pwd.h>
 #endif
 
@@ -76,17 +80,6 @@ namespace {
 	}
 
 #endif
-
-	bool split_out_path( const std::string &src, std::string &path )
-	{
-		size_t pos = src.find_last_of( "/\\" );
-		if ( pos != std::string::npos )
-		{
-			path = src.substr( 0, pos );
-			return true;
-		}
-		return false;
-	}
 } // end namespace
 
 //
@@ -182,8 +175,8 @@ bool search_for_file( const std::string &base_path,
 	std::vector<std::string>::iterator itr;
 	for ( itr = subs.begin(); itr != subs.end(); ++itr )
 	{
-		if ( search_for_file( base_path + "/" + (*itr), 
-				base_name, 
+		if ( search_for_file( base_path + "/" + (*itr),
+				base_name,
 				valid_exts,
 				result ) )
 		{
@@ -221,7 +214,7 @@ void get_subdirectories(
 	}
 	else
 	{
-		std::cout << "Error opening directory: " << path << std::endl;
+		std::cerr << "Error opening directory: " << path << std::endl;
 	}
 }
 
@@ -253,7 +246,7 @@ bool get_basename_from_extension(
 	}
 	else
 	{
-		std::cout << "Error opening directory: " << path << std::endl;
+		std::cerr << "Error opening directory: " << path << std::endl;
 	}
 
 	std::sort( list.begin(), list.end() );
@@ -320,7 +313,7 @@ bool get_filename_from_base( std::vector<std::string> &list,
 	}
 	else
 	{
-		std::cout << "Error opening directory: " << path << std::endl;
+		std::cerr << "Error opening directory: " << path << std::endl;
 	}
 
 	return !(list.empty());
@@ -512,15 +505,25 @@ int as_int( const std::string &s )
 	return atoi( s.c_str() );
 }
 
-bool run_program( const std::string &prog, const::std::string &args )
+bool run_program( const std::string &prog,
+	const::std::string &args,
+	output_callback_fn callback,
+	void *opaque,
+	bool block )
 {
 	std::string comstr( prog );
 	comstr += " ";
 	comstr += args;
 
-	std::cout << "Running: " << comstr << std::endl;
-
 #ifdef SFML_SYSTEM_WINDOWS
+	HANDLE child_output_read=NULL;
+	HANDLE child_output_write=NULL;
+
+	SECURITY_ATTRIBUTES satts;
+	satts.nLength = sizeof( SECURITY_ATTRIBUTES );
+	satts.bInheritHandle = TRUE;
+	satts.lpSecurityDescriptor = NULL;
+
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	MSG msg;
@@ -529,17 +532,79 @@ bool run_program( const std::string &prog, const::std::string &args )
 	ZeroMemory( &pi, sizeof(pi) );
 	si.cb = sizeof(si);
 
-	LPSTR ugh = const_cast<char *>(comstr.c_str());
-	LPSTR current_dir( NULL );
+	if ( NULL != callback )
+	{
+		CreatePipe( &child_output_read, &child_output_write, &satts, 1024 );
+		si.hStdOutput = child_output_write;
+		si.dwFlags |= STARTF_USESTDHANDLES;
+	}
 
-	std::string path;
-	if ( split_out_path( comstr, path ))
-		current_dir = const_cast<char *>(path.c_str());
+	LPSTR cmdline = new char[ comstr.length() + 1 ];
+	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
-	if ( !CreateProcess( NULL, ugh, NULL, NULL, FALSE, 0, NULL, current_dir, &si, &pi ))
+	LPSTR path = NULL;
+	size_t pos = prog.find_last_of( "/\\" );
+	if ( pos != std::string::npos )
+	{
+		path = new char[ pos + 1 ];
+		strncpy( path, prog.substr( 0, pos ).c_str(), pos + 1 );
+	}
+
+	bool ret = CreateProcess( NULL,
+		cmdline,
+		NULL,
+		NULL,
+		( NULL == callback ) ? FALSE : TRUE,
+		0,
+		NULL,
+		path,
+		&si,
+		&pi );
+
+	// Parent process - close the child write handle after child created
+	if ( child_output_write )
+		CloseHandle( child_output_write );
+
+	//
+	// Cleanup our allocated values now
+	//
+	if ( path )
+		delete [] path;
+
+	delete [] cmdline;
+
+	if ( ret == false )
 		return false;
 
-	bool keep_wait=true;
+	if (( NULL != callback ) && ( block ))
+	{
+		int fd = _open_osfhandle( (intptr_t)child_output_read, _O_RDONLY );
+		if ( fd == -1 )
+		{
+			std::cerr << "Error opening osf handle: " << comstr << std::endl;
+		}
+		else
+		{
+			FILE *fs = _fdopen( fd, "r" );
+			if ( fs == NULL )
+			{
+				std::cerr << "Error opening output from: " 
+					<< comstr << std::endl;
+			}
+			else
+			{
+				char buffer[ 1024 ];
+				while ( fgets( buffer, 1024, fs ) != NULL )
+					callback( buffer, opaque );
+
+				fclose( fs );
+			}
+			_close( fd ); // _close will close the underlying handle as well, 
+							// no need to call CloseHandle()
+		}
+	}
+
+	bool keep_wait=!block;
 	while (keep_wait)
 	{
 		switch (MsgWaitForMultipleObjects(1, &pi.hProcess,
@@ -559,18 +624,14 @@ bool run_program( const std::string &prog, const::std::string &args )
 			break;
 
 		default:
-			std::cout << "Unexpected failure waiting on process" << std::endl;
+			std::cerr << "Unexpected failure waiting on process" << std::endl;
 			keep_wait=false;
 			break;
 		}
 	}
+
 	CloseHandle( pi.hProcess );
 	CloseHandle( pi.hThread );
-	return true;
-#else
-
-#if 1
-	return ( system( comstr.c_str() ) == 0 ) ? true : false;
 
 #else
 
@@ -584,43 +645,66 @@ bool run_program( const std::string &prog, const::std::string &args )
 		string_list.push_back( val );
 	}
 
-	std::cout << prog << " ";
 	char *arg_list[string_list.size() + 2];
 	arg_list[0] = (char *)prog.c_str();
 	for ( unsigned int i=0; i < string_list.size(); i++ )
-	{
 		arg_list[i+1] = (char *)string_list[i].c_str();
-		std::cout << "[" << arg_list[i+1] << "] ";
-	}
+
 	arg_list[string_list.size() + 1] = NULL;
-	std::cout << std::endl;
+
+	int mypipe[2] = { 0, 0 }; // mypipe[0] = read end, mypipe[1] = write end
+	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
+		std::cerr << "Error, pipe() failed" << std::endl;
 
 	pid_t pid = fork();
-
 	switch (pid)
 	{
 	case -1:
-		std::cout << "Error, fork() failed" << std::endl;
+		std::cerr << "Error, fork() failed" << std::endl;
+		if ( mypipe[0] )
+		{
+			close( mypipe[0] );
+			close( mypipe[1] );
+		}
 		return false;
 
 	case 0: // child process
-		execv( prog.c_str(), arg_list );
+		if ( mypipe[0] )
+		{
+			dup2( mypipe[1], fileno(stdout) );
+			close( mypipe[1] );
+		}
+		execvp( prog.c_str(), arg_list );
 
-		// execl doesn't return unless there is an error.
-		std::cout << "Error, execl() failed" << std::endl;
-		exit(1);
+		// execvp doesn't return unless there is an error.
+		std::cerr << "Error executing: " << prog << " " << args << std::endl;
+		_exit(127);
 
 	default: // parent process
 
-		int status;
-		while ( !WIFEXITED( status ) )
+		if ( mypipe[0] )
 		{
-			waitpid( pid, &status, 0 ); // wait for child process to complete
-		}
-		return true;
-	}
-#endif
+			FILE *fp = fdopen( mypipe[0], "r" );
+			close( mypipe[1] );
 
+			char buffer[ 1024 ];
+
+			while( fgets( buffer, 1024, fp ) != NULL )
+				callback( buffer, opaque );
+
+			fclose( fp );
+		}
+
+		if ( block )
+		{
+			int status;
+			do
+			{
+				waitpid( pid, &status, 0 ); // wait for child process to complete
+			} while ( !WIFEXITED( status ) );
+		}
+	}
 #endif // SFML_SYSTEM_WINDOWS
+	return true;
 }
 
