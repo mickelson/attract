@@ -44,7 +44,11 @@ lb.charsize = 8;
 fe.add_artwork( "marquee", 144, 24, 168, 48 );
 fe.add_artwork( "screen", 240, 96, 192, 192 );
 fe.add_image( "field.png", 0, 0, 456, 336 );
-fe.add_text( "[ListTitle]", 118, 316, 220, 14 )
+fe.add_text( "[ListTitle]", 118, 316, 220, 14 );
+
+local l = fe.add_text( "[ListEntry]/[ListSize]", 0, 322, 60, 10 );
+l.align = Align.Left;
+l.set_rgb( 80, 80, 80 );
 
 //
 // Now run the game...

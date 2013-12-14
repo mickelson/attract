@@ -125,6 +125,10 @@ private:
 	int get_layout_width() const;
 	int get_layout_height() const;
 	int get_layout_orient() const;
+	const char *get_list_name() const;
+	int get_list_size() const;
+	int get_list_index() const;
+	void set_list_index( int );
 	const char *get_layout_font() const;
 	void set_layout_width( int );
 	void set_layout_height( int );

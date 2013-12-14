@@ -139,6 +139,12 @@ void FeText::on_new_selection( FeSettings *feSettings )
 	{
 		n -= perform_substitution( str, "[ListTitle]",
 				feSettings->get_current_list_title() );
+
+		n -= perform_substitution( str, "[ListSize]",
+				as_str( feSettings->get_current_list_size() ) );
+
+		n -= perform_substitution( str, "[ListEntry]",
+				as_str( feSettings->get_rom_index() + 1 ) );
 	}
 
 	m_draw_text.setString( str );

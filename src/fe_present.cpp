@@ -262,6 +262,27 @@ int FePresent::get_layout_orient() const
 	return m_baseRotation;
 }
 
+const char *FePresent::get_list_name() const
+{
+	return m_feSettings->get_current_list_title().c_str();
+}
+
+int FePresent::get_list_size() const
+{
+	return m_feSettings->get_current_list_size();
+}
+
+int FePresent::get_list_index() const
+{
+	return m_feSettings->get_rom_index();
+}
+
+void FePresent::set_list_index( int index )
+{
+	m_feSettings->change_rom( index - get_list_index() );
+	update( false );
+}
+
 bool FePresent::handle_event( FeInputMap::Command c, 
 	sf::Event ev,
 	sf::RenderWindow *wnd )
@@ -1172,6 +1193,12 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		.Prop( _SC("orient"), &FePresent::get_layout_orient, &FePresent::set_layout_orient )
 	);
 
+	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()
+		.Prop( _SC("name"), &FePresent::get_list_name )
+		.Prop( _SC("size"), &FePresent::get_list_size )
+		.Prop( _SC("index"), &FePresent::get_list_index, &FePresent::set_list_index )
+	);
+
 	fe.Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
 		.Func( _SC("play"), &FeScriptSound::play )
 		.Prop( _SC("is_playing"), &FeScriptSound::is_playing )
@@ -1215,6 +1242,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	//
 
 	fe.SetInstance( _SC("layout"), this );
+	fe.SetInstance( _SC("list"), this );
 
 	// Each presentation object gets an instance in the
 	// "obj" table available in Squirrel

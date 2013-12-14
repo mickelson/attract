@@ -129,10 +129,11 @@ public:
 
 	void toggle_layout();
 
-	int get_current_display_list( std::vector<std::string> &list ) const;
+	void get_current_display_list( std::vector<std::string> &list ) const;
+	int get_current_list_size() const { return m_rl.size(); };
 	int get_rom_index( int offset=0, bool wrap=true ) const;
 
-	std::string get_current_list_title() const;
+	const std::string &get_current_list_title() const;
 	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
 
 	// get the external command for the named plugin

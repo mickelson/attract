@@ -102,7 +102,7 @@ const char *FE_EMULATOR_SUBDIR		= "emulators/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
 const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 
-const std::string FE_EMPTY_STRING = "";
+const std::string FE_EMPTY_STRING;
 
 
 // NOTE: this has to remain aligned with the RotationState enum:
@@ -475,7 +475,7 @@ void FeSettings::dump() const
 
 }
 
-std::string FeSettings::get_current_list_title() const
+const std::string &FeSettings::get_current_list_title() const
 {
 	if ( m_current_list < 0 )
 		return FE_EMPTY_STRING;
@@ -712,15 +712,13 @@ int FeSettings::exit_command() const
 	return r;
 }
 
-int FeSettings::get_current_display_list( std::vector<std::string> &l ) const
+void FeSettings::get_current_display_list( std::vector<std::string> &l ) const
 {
 	l.clear();
 	l.reserve( m_rl.size() );
 
 	for ( int i=0; i < m_rl.size(); i++ )
 		l.push_back( m_rl[i].get_info( FeRomInfo::Title ) );
-
-	return 0;
 }
 
 FeEmulatorInfo *FeSettings::get_current_emulator()
