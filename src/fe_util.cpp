@@ -87,9 +87,9 @@ namespace {
 //
 bool tail_compare(
 			const std::string &filename,
-			const char *extension )
+			const std::string &extension )
 {
-	unsigned int extlen = strlen( extension );
+	unsigned int extlen = extension.size();
 
 	if ( extlen >= filename.size() )
 		return false;
@@ -221,7 +221,7 @@ void get_subdirectories(
 bool get_basename_from_extension(
 			std::vector<std::string> &list,
 			const std::string &path,
-			const std::string &extension,
+			const std::vector <std::string> &extensions,
 			bool strip_extension )
 {
 	DIR *dir;
@@ -233,13 +233,29 @@ bool get_basename_from_extension(
 		{
 			std::string what;
 			str_from_c( what, ent->d_name );
-			if ( ( what.compare( "." ) != 0 ) && ( what.compare( ".." ) != 0 )
-				&& ( tail_compare( what, extension.c_str() ) ) )
+
+			if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) ) 
+				continue;
+
+			std::vector<std::string>::const_iterator itr;
+			for ( itr = extensions.begin(); itr != extensions.end(); ++ itr )
 			{
-				if ( strip_extension && ( what.size() > extension.size() ))
-					list.push_back( what.substr( 0, what.size() - extension.size() ) );
-				else
-					list.push_back( what );
+				if ( tail_compare( what, *itr ) )
+				{
+					if ( strip_extension && ( what.size() > (*itr).size() ))
+					{
+						std::string bname = what.substr( 0, 
+							what.size() - (*itr).size() );
+
+						// don't add duplicates if we are stripping extension
+						// example: if there is both foo.zip and foo.7z 
+						//
+						if ( list.empty() || ( bname.compare( list.back() ) != 0 ))
+							list.push_back( bname );
+					}
+					else
+						list.push_back( what );
+				}
 			}
 		}
 		closedir( dir );

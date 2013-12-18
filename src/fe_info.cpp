@@ -473,7 +473,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Executable",
 	"Command Arguments",
 	"Rom Path",
-	"Rom Extension",
+	"Rom Extension(s)",
 	"Additional Import Files",	
 	"XML Mode",	
 	"Movie Path",
@@ -498,6 +498,22 @@ const std::string &FeEmulatorInfo::get_info( int i ) const
 void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 {
 	m_info[i] = s;
+	if ( i == Rom_extension )
+	{
+		size_t pos=0;
+		m_extensions.clear();
+		do
+		{
+			std::string ext;
+  			token_helper( s, pos, ext );
+			m_extensions.push_back( ext );
+		} while ( pos < s.size() );
+	}
+}
+
+const std::vector<std::string> &FeEmulatorInfo::get_extensions() const
+{
+	return m_extensions;
 }
 
 bool FeEmulatorInfo::get_artwork( const std::string &label, std::string &artwork ) const
@@ -573,7 +589,7 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 	{
 		if ( setting.compare( indexStrings[i] ) == 0 )
 		{
-			m_info[ (Index)i ] = value;
+			set_info( (Index)i, value );
 			return 0;
 		}
 	}

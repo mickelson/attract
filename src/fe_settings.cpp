@@ -510,8 +510,8 @@ std::string FeSettings::get_current_layout_file() const
 	if ( file.empty() )
 	{
 		std::vector<std::string> list;
-		get_basename_from_extension(
-				list, path, FE_LAYOUT_FILE_EXTENSION );
+		get_basename_from_extension( list, path, 
+			std::vector<std::string>(1, FE_LAYOUT_FILE_EXTENSION) );
 
 		if ( list.empty() )
 			return FE_EMPTY_STRING;
@@ -613,7 +613,7 @@ void FeSettings::toggle_layout()
 	get_basename_from_extension(
 			list,
 			get_current_layout_dir(),
-			FE_LAYOUT_FILE_EXTENSION );
+			std::vector<std::string>(1,FE_LAYOUT_FILE_EXTENSION) );
 
 	unsigned int index=0;
 	for ( unsigned int i=0; i< list.size(); i++ )
@@ -680,7 +680,7 @@ void FeSettings::set_sound_file( FeInputMap::Command c, const std::string &s )
 
 int FeSettings::run()
 {
-	std::string command, args, rom_path, rom;
+	std::string command, args, rom_path, rom, extension, romfilename;
 	const FeEmulatorInfo *emu = get_current_emulator();
 
 	if (( emu == NULL ) || (m_rl.empty()))
@@ -689,11 +689,35 @@ int FeSettings::run()
 	rom = m_rl[ get_rom_index() ].get_info( FeRomInfo::Romname );
 	rom_path = clean_path( emu->get_info( FeEmulatorInfo::Rom_path ));
 
+	const std::vector<std::string> &exts = emu->get_extensions();
+
+	// construct base romfilename (minus extension)
+	romfilename = rom_path + rom;
+
+	std::vector<std::string>::const_iterator itr;
+	bool found=false;
+
+	for ( itr = exts.begin(); itr != exts.end(); ++itr )
+	{
+		if ( file_exists( romfilename + (*itr) ) )
+		{
+			extension = (*itr);
+			found=true;
+			break;
+		}
+	}
+
+	if ( !found && !exts.empty() )
+		extension = exts.front();
+
+	// we have the extension now
+	romfilename += extension;
+
 	args = emu->get_info( FeEmulatorInfo::Command );
 	perform_substitution( args, "[name]", rom );
 	perform_substitution( args, "[rompath]", rom_path );
-	perform_substitution( args, "[romext]",
-				emu->get_info( FeEmulatorInfo::Rom_extension ) );
+	perform_substitution( args, "[romext]", extension );
+	perform_substitution( args, "[romfilename]", romfilename );
 	perform_substitution( args, "[emulator]",
 				emu->get_info( FeEmulatorInfo::Name ) );
 

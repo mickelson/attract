@@ -8,12 +8,12 @@ _help_art_label;The label that identifies this artwork resource (used by layouts
 _help_art_path;The directory containing the artworks
 _help_art_add;Add a new artwork resource (marquee images, screen shots, etc.)
 _help_emu_executable;The full path and name of the emulator executable. $HOME gets replaced with the user's home dir
-_help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator]
+_help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename]
 _help_emu_rompath;The path to the roms for this emulator
-_help_emu_romext;The rom extension for this emulator (i.e. .zip)
+_help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple extensions can be entered if separated by a semicolon.
 _help_emu_movie_path;The path to the attract-mode videos (if any) for this emulator
 _help_emu_movie_artwork;The artwork resource used to display movies
-_help_emu_import_extras;The full path to and name of any additional files that need to be read when generating a romlist for this emulator (multiple files can be separated by a semicolon).  The supported additional are files: catver.ini (for game categories) and nplayers.ini (for number of players)
+_help_emu_import_extras;Any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories) and nplayers.ini (for number of players).  Multiple files can be entered if separated by a semicolon
 _help_emu_listxml;Valid values for XML Mode are "mame" (if this a recent version of mame that provides -listxml output) or "mess <system>" (if this is a recent version of mess that provides -listsoftware output for the specified system).  For any other emulator this should be left empty
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
 _help_emu_delete;Delete the entry for this emulator

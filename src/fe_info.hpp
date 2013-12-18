@@ -186,7 +186,7 @@ public:
 		Executable,
 		Command,
 		Rom_path,
-		Rom_extension,
+		Rom_extension,  // this value gets split and duplicated in m_extensions
 		Import_extras, 
 		Listxml, 
 		Movie_path,
@@ -207,6 +207,8 @@ public:
 	void get_artwork_list( std::vector<std::pair<std::string,std::string> > & ) const;
 	void delete_artwork( const std::string & );
 	
+	const std::vector<std::string> &get_extensions() const;
+
 	int process_setting( const std::string &setting, 
 								const std::string &value,
 								const std::string &filename );
@@ -217,6 +219,7 @@ public:
 private:
 	std::string m_info[LAST_INDEX];
 	std::map<std::string, std::string> m_artwork;
+	std::vector<std::string> m_extensions;
 };
 
 //

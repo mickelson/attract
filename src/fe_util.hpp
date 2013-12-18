@@ -54,7 +54,7 @@ int perform_substitution( std::string &target,
 //
 bool tail_compare(
          const std::string &filename,
-         const char *extension );
+         const std::string &extension );
 
 
 typedef void (*output_callback_fn)( const char *, void * );
@@ -109,14 +109,14 @@ void get_subdirectories(
 			const std::string &path );
 //       
 // Return "list" of the base filenames in "path" where the file extension 
-// is "ext"
+// is in the vector "extensions"
 //
 // "list" is sorted alphabetically
 //
 bool get_basename_from_extension( 
 			std::vector<std::string> &list, 
 			const std::string &path, 
-			const std::string &ext,
+			const std::vector< std::string > &extensions,
 			bool strip_extension = true );
 
 //       

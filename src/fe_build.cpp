@@ -39,11 +39,10 @@ void build_basic_romlist( const FeEmulatorInfo &emulator,
 	std::string rom_path = clean_path( emulator.get_info( 
 					FeEmulatorInfo::Rom_path ) );
 
-	std::string rom_extension = emulator.get_info( 
-					FeEmulatorInfo::Rom_extension );
+	const std::vector<std::string> &extensions = emulator.get_extensions();
 
 	std::vector<std::string> base_list;
-	get_basename_from_extension( base_list, rom_path, rom_extension );
+	get_basename_from_extension( base_list, rom_path, extensions );
 
 	for ( std::vector<std::string>::iterator its=base_list.begin();
 				its != base_list.end(); ++its )
@@ -57,8 +56,14 @@ void build_basic_romlist( const FeEmulatorInfo &emulator,
 		romlist.push_back( new_rom );
 	}
 
-	std::cout << "Found " << romlist.size() << " files with rom extension: "
-				<< rom_extension << ".  Directory: " << rom_path << std::endl;
+	std::cout << "Found " << romlist.size() 
+		<< " unique files with rom extension(s):";
+
+	for ( std::vector<std::string>::const_iterator itr=extensions.begin();
+			itr != extensions.end(); ++itr )
+		std::cout << " " << (*itr); 	
+
+	std::cout << ".  Directory: " << rom_path << std::endl;
 }
 
 void apply_listxml( const FeEmulatorInfo &emulator, 

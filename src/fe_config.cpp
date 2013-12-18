@@ -389,7 +389,7 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 	get_basename_from_extension( 
 			emu_file_list,
 			path,
-			FE_EMULATOR_FILE_EXTENSION );
+			std::vector<std::string>(1, FE_EMULATOR_FILE_EXTENSION) );
 
 	for ( std::vector<std::string>::iterator itr=emu_file_list.begin();
 			itr < emu_file_list.end(); ++itr )
@@ -544,7 +544,9 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 		path += FE_ROMLIST_SUBDIR;
 
 		std::vector<std::string> additions;
-		get_basename_from_extension( additions, path, FE_ROMLIST_FILE_EXTENSION );
+		get_basename_from_extension( additions, path, 
+			std::vector<std::string>(1, FE_ROMLIST_FILE_EXTENSION) );
+
 		ctx.back_opt().append_vlist( additions );
 
 		FeRomInfo::Index i;
@@ -842,7 +844,7 @@ void FeSoundMenu::get_options( FeConfigContext &ctx )
 	get_basename_from_extension(
 		sound_list,
 		path,
-		"" );
+		std::vector<std::string>(1,"") );
 
 #ifndef NO_MOVIE
 	for ( std::vector<std::string>::iterator itr=sound_list.begin();
