@@ -342,6 +342,11 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		update( false );
 		break;
 
+	case FeInputMap::RandomGame:
+		m_feSettings->change_rom( rand() );
+		update( false );
+		break;
+
 	case FeInputMap::ToggleRotateRight:
 		toggle_rotate( FeSettings::RotateRight );
 		break;

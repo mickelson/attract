@@ -260,14 +260,7 @@ int main(int argc, char *argv[])
 					break;
 
 				case FeInputMap::Select:
-				case FeInputMap::RandomGame:
 					soundsys.stop();
-
-					if ( c == FeInputMap::RandomGame )
-					{
-						feSettings.change_rom( rand() );
-						fePresent.update( false );
-					}
 
 					fePresent.pre_run( &window );
 					feSettings.run();
