@@ -313,12 +313,14 @@ void FeSettings::init_list()
 	if ( m_current_list < 0 )
 		return;
 
-	FeRomInfo::Index target( FeRomInfo::LAST_INDEX );
-	FeListInfo::FilterComp comp( FeListInfo::LAST_COMPARISON );
-	std::string what;
+	FeFilter *f = m_lists[m_current_list].get_filter(
+			m_lists[m_current_list].get_current_filter_index() );
 
-	m_lists[m_current_list].get_filter( target, comp, what );
-	m_rl.set_filter( target, comp, what );
+	if ( f )
+	{
+		f->init();
+		m_rl.set_filter( f );
+	}
 
 	std::string romlist = m_lists[m_current_list].get_info(FeListInfo::Romlist);
 
@@ -595,6 +597,44 @@ bool FeSettings::prev_list()
 int FeSettings::get_current_list_index() const
 {
 	return m_current_list;
+}
+
+void FeSettings::set_filter( int index )
+{
+	if ( m_current_list < 0 )
+		return;
+
+	int filter_count = m_lists[m_current_list].get_filter_count();
+
+	if ( index >= filter_count )
+		index = 0;
+	else if ( index < 0 )
+		index = filter_count - 1;
+
+	m_lists[m_current_list].set_current_filter_index( index );
+	init_list();
+}
+
+int FeSettings::get_current_filter_index() const
+{
+	if ( m_current_list < 0 )
+		return 0;
+
+	return m_lists[m_current_list].get_current_filter_index();
+}
+
+const std::string &FeSettings::get_current_filter_name()
+{
+	if ( m_current_list < 0 )
+		return FE_EMPTY_STRING;
+
+	FeFilter *f = m_lists[m_current_list].get_filter(
+			m_lists[m_current_list].get_current_filter_index() );
+
+	if ( !f )
+		return FE_EMPTY_STRING;
+
+	return f->get_name();
 }
 
 void FeSettings::change_rom( int step, bool wrap )
@@ -1197,6 +1237,15 @@ void FeSettings::delete_list( const std::string &n )
 		}
 		i++;
 	}
+}
+
+void FeSettings::get_current_list_filter_names( 
+		std::vector<std::string> &list ) const
+{
+	if ( m_current_list < 0 )
+		return;
+
+	m_lists[ m_current_list ].get_filters_list( list );
 }
 
 void FeSettings::delete_plugin( const std::string &n )

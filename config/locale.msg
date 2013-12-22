@@ -19,14 +19,19 @@ _help_emu_gen_romlist;Generate a romlist by searching the configured rom path fo
 _help_emu_delete;Delete the entry for this emulator
 _help_emu_sel;Configure emulator
 _help_emu_add;Add a new emulator
-_help_filter_target;The game information attribute that you wish to filter based on
-_help_filter_comp;Comparison type for the filter
-_help_filter_value;The regular expression value to filter to.  For example, if the filter target is "year" and comparison is "equals", a value of "1984" will match the year of 1984, "198." will match any year in the 80s, and "(198.)|(199.)" will match any year in the 80s or 90s
-_help_filter_clear;Clear the filter
+_help_filter_name;The name for this filter
+_help_filter_rule;Configure filter rule
+_help_filter_add_rule;Add a rule to this filter
+_help_filter_delete;Delete this filter
+_help_rule_target;The game information attribute that you wish to filter based on
+_help_rule_comp;Comparison type for the filter
+_help_rule_value;The regular expression value to filter to.  For example, if the filter target is "Year" and comparison is "equals", a value of "1984" will match the year of 1984, "198." will match any year in the 80s, and "(198.)|(199.)" will match any year in the 80s or 90s
+_help_rule_delete;Delete this filter rule
 _help_list_name;The title of this display list
 _help_list_layout;The layout to use for this display list
 _help_list_romlist;The romlist to use for this display list
-_help_list_filter;A romlist filter for this display list
+_help_list_filter;Configure filter
+_help_list_add_filter;Add a filter to this display list
 _help_list_delete;Delete this display list
 _help_list_sel;Configure display list
 _help_list_add;Add a new display list

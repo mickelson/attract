@@ -437,59 +437,69 @@ bool FeEmulatorSelMenu::on_option_select(
 	return true; 
 }
 
-FeFilterEditMenu::FeFilterEditMenu()
-	: m_list( NULL )
+FeRuleEditMenu::FeRuleEditMenu()
+	: m_filter( NULL ), m_index( -1 )
 {
 }
 
-void FeFilterEditMenu::get_options( FeConfigContext &ctx )
+void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 {
-	ctx.set_style( FeConfigContext::EditList, "Filter Edit" );
+	ctx.set_style( FeConfigContext::EditList, "Rule Edit" );
 
 	FeRomInfo::Index target( FeRomInfo::LAST_INDEX );
-	FeListInfo::FilterComp comp( FeListInfo::LAST_COMPARISON );
+	FeRule::FilterComp comp( FeRule::LAST_COMPARISON );
 	std::string what, target_str, comp_str;
 
-	if ( m_list )
-		m_list->get_filter( target, comp, what );
+	if ( m_filter )
+	{
+		std::vector<FeRule> &r = m_filter->get_rules();
+		if (( m_index >= 0 ) && ( m_index < (int)r.size() ))
+		{
+			target = r[m_index].get_target();
+			comp = r[m_index].get_comp();
+			what = r[m_index].get_what();
+		}
+	}
 	
 	if ( target != FeRomInfo::LAST_INDEX )
 		target_str = FeRomInfo::indexStrings[ target ];
 
-	if ( comp != FeListInfo::LAST_COMPARISON )
-		comp_str = FeListInfo::filterCompStrings[ comp ];
+	if ( comp != FeRule::LAST_COMPARISON )
+		comp_str = FeRule::filterCompDisplayStrings[ comp ];
 
-	ctx.add_optl( Opt::LIST, "Filter Target", target_str, "_help_filter_target" );
+	ctx.add_optl( Opt::LIST, "Filter Target", target_str, "_help_rule_target" );
 	ctx.back_opt().append_vlist( FeRomInfo::indexStrings );
 
-	ctx.add_optl( Opt::LIST, "Filter Comparison", comp_str, "_help_filter_comp" );
-	ctx.back_opt().append_vlist( FeListInfo::filterCompStrings );
+	ctx.add_optl( Opt::LIST, "Filter Comparison", comp_str, "_help_rule_comp" );
+	ctx.back_opt().append_vlist( FeRule::filterCompDisplayStrings );
 
-	ctx.add_optl( Opt::EDIT, "Filter Value", what, "_help_filter_value" );
-
-	ctx.add_optl( Opt::RELOAD, "Clear Filter", "", "_help_filter_clear" );
+	ctx.add_optl( Opt::EDIT, "Filter Value", what, "_help_rule_value" );
+	ctx.add_optl(Opt::EXIT,"Delete this Rule","","_help_rule_delete");
 	ctx.back_opt().opaque = 1;
 
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeFilterEditMenu::on_option_select( 
+bool FeRuleEditMenu::on_option_select( 
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
-	if ( o.opaque == 1 ) // the "clear" option
+	if ( o.opaque == 1 ) // the "delete" option
 	{
-		// clear and reload
-		ctx.opt_list[0].set_value( -1 );
-		ctx.opt_list[1].set_value( -1 );
-		ctx.opt_list[2].set_value( "" );
+		std::vector<FeRule> &r = m_filter->get_rules();
+	
+		if (( m_index >= 0 ) && ( m_index < (int)r.size() ))
+			r.erase( r.begin() + m_index );
+
+		m_filter = NULL;
+		m_index = -1;
 		ctx.save_req = true;
 	}
 
 	return true;
 }
 
-bool FeFilterEditMenu::save( FeConfigContext &ctx )
+bool FeRuleEditMenu::save( FeConfigContext &ctx )
 {
 	int i = ctx.opt_list[0].get_vindex();
 	if ( i == -1 ) 
@@ -497,20 +507,147 @@ bool FeFilterEditMenu::save( FeConfigContext &ctx )
 		
 	int c = ctx.opt_list[1].get_vindex();
 	if ( c == -1 )
-		c = FeListInfo::LAST_COMPARISON;
+		c = FeRule::LAST_COMPARISON;
 
 	std::string what = ctx.opt_list[2].get_value();
 
-	if ( m_list )
-		m_list->set_filter( (FeRomInfo::Index)i, 
-							(FeListInfo::FilterComp)c, 
-							what );
+	if ( m_filter )
+	{
+		std::vector<FeRule> &r = m_filter->get_rules();
+	
+		if (( m_index >= 0 ) && ( m_index < (int)r.size() ))
+		{
+			r[m_index].set_values( 
+				(FeRomInfo::Index)i,
+				(FeRule::FilterComp)c,
+				what );
+		}
+	}
+
 	return true;
 }
 
-void FeFilterEditMenu::set_list( FeListInfo *list )
+void FeRuleEditMenu::set_rule_index( FeFilter *filter, int index )
 {
-   m_list=list;
+	m_filter=filter;
+	m_index=index;
+}
+
+FeFilterEditMenu::FeFilterEditMenu()
+	: m_list( NULL ), m_index( 0 )
+{
+}
+
+void FeFilterEditMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Filter Edit" );
+
+	if ( m_list )
+	{
+		FeFilter *f = m_list->get_filter( m_index );
+
+		ctx.add_optl( Opt::EDIT, "Filter Name", f->get_name(),
+			"_help_filter_name" );
+
+		int i=0;
+		std::vector<FeRule> &rules = f->get_rules();
+
+		for ( std::vector<FeRule>::const_iterator itr=rules.begin();
+				itr != rules.end(); ++itr )
+		{
+			std::string rule_str;
+			FeRomInfo::Index t = (*itr).get_target();
+
+			if ( t != FeRomInfo::LAST_INDEX )
+			{
+				rule_str = FeRomInfo::indexStrings[t];
+
+				FeRule::FilterComp c = (*itr).get_comp();
+				if ( c != FeRule::LAST_COMPARISON )
+				{
+					rule_str += " ";
+					rule_str += FeRule::filterCompDisplayStrings[ c ];
+					rule_str += " ";
+					rule_str += (*itr).get_what();
+				}
+			}
+			ctx.add_optl( Opt::SUBMENU, "Rule", rule_str, "_help_filter_rule" );
+			ctx.back_opt().opaque = 100 + i;
+			i++;
+		}
+
+		ctx.add_optl(Opt::SUBMENU,"Add Rule","","_help_filter_add_rule");
+		ctx.back_opt().opaque = 1;
+
+		ctx.add_optl(Opt::EXIT,"Delete this Filter","","_help_filter_delete");
+		ctx.back_opt().opaque = 2;
+		
+	}
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeFilterEditMenu::on_option_select( 
+		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+{
+	if ( !m_list )
+		return true;
+
+	FeMenuOpt &o = ctx.curr_opt();
+	if (( o.opaque >= 100 ) || ( o.opaque == 1 ))
+	{
+		FeFilter *f = m_list->get_filter( m_index );
+		int r_index=0;
+
+		if ( o.opaque == 1 )
+		{
+			std::vector<FeRule> &rules = f->get_rules();
+		
+			rules.push_back( FeRule() );
+			r_index = rules.size() - 1;
+			ctx.save_req=true;
+		}
+		else
+			r_index = o.opaque - 100;
+
+		m_rule_menu.set_rule_index( f, r_index );
+		submenu=&m_rule_menu;
+	}
+	else if ( o.opaque == 2 )
+	{
+		FeFilter *f = m_list->get_filter( m_index );
+
+		// "Delete this Filter" 
+		if ( ctx.confirm_dialog( "Delete filter '$1'?", 
+				f->get_name() ) == false )
+			return false;
+
+		m_list->delete_filter( m_index );
+		m_list=NULL;
+		m_index=-1;
+		ctx.save_req=true;
+	}
+
+	return true;
+}
+
+bool FeFilterEditMenu::save( FeConfigContext &ctx )
+{
+	std::string name = ctx.opt_list[0].get_value();
+
+	if ( m_list )
+	{
+		FeFilter *f = m_list->get_filter( m_index );
+		f->set_name( name );
+	}
+
+	return true;
+}
+
+void FeFilterEditMenu::set_filter_index( FeListInfo *l, int i )
+{
+	m_list=l;
+	m_index=i;
 }
 
 FeListEditMenu::FeListEditMenu()
@@ -549,16 +686,20 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 
 		ctx.back_opt().append_vlist( additions );
 
-		FeRomInfo::Index i;
-		FeListInfo::FilterComp c;
-		std::string v, what;
-		if ( m_list->get_filter( i, c, what ) )
-			ctx.fe_settings.get_resource( "Yes", v );
-		else
-			ctx.fe_settings.get_resource( "No", v );
-		
-		ctx.add_optl( Opt::SUBMENU, "Filter", 
-				v, "_help_list_filter" );
+		std::vector<std::string> filters;
+		m_list->get_filters_list( filters );
+		int i=0;
+
+		for ( std::vector<std::string>::iterator itr=filters.begin();
+				itr != filters.end(); ++itr )
+		{
+			ctx.add_optl( Opt::SUBMENU, "Filter", 
+				(*itr), "_help_list_filter" );
+			ctx.back_opt().opaque = 100 + i;
+			i++;	
+		}
+
+		ctx.add_optl( Opt::SUBMENU, "Add Filter", "", "_help_list_add_filter" );
 		ctx.back_opt().opaque = 1;
 
 		ctx.add_optl( Opt::EXIT, "Delete this List", "", "_help_list_delete" );
@@ -573,23 +714,37 @@ bool FeListEditMenu::on_option_select(
 {
 	FeMenuOpt &o = ctx.curr_opt();
 
-	switch ( o.opaque )
-	{
-	case 1: // Filter selected
-		submenu=&m_filter_menu;
-		break;
+	if ( !m_list )
+		return true;
 
-	case 2: // "Delete this List" 
+	if (( o.opaque >= 100 ) || ( o.opaque == 1 ))
+	{
+		// a filter or "Add Filter" is selected
+		int f_index=0;
+
+		if ( o.opaque == 1 ) 
+		{
+			std::string all;
+			ctx.fe_settings.get_resource( "All", all );
+			m_list->create_filter( all );
+			f_index = m_list->get_filter_count() - 1;
+			ctx.save_req=true;
+		}
+		else
+			f_index = o.opaque - 100;
+
+		m_filter_menu.set_filter_index( m_list, f_index );
+		submenu=&m_filter_menu;
+	}
+	else if ( o.opaque == 2 )
+	{
+		// "Delete this List" 
 		if ( ctx.confirm_dialog( "Delete list '$1'?", m_name ) == false )
 			return false;
 
 		ctx.fe_settings.delete_list( m_name );
 		m_list=NULL;
 		ctx.save_req=true;
-		break;
-
-	default:
-		break;
 	}
 
 	return true;
@@ -599,7 +754,7 @@ bool FeListEditMenu::save( FeConfigContext &ctx )
 {
 	if ( m_list )
 	{
-		for ( int i=0; i< FeListInfo::Filter; i++ )
+		for ( int i=0; i< FeListInfo::LAST_INDEX; i++ )
 			m_list->set_info( i, ctx.opt_list[i].get_value() );
 	}
 
@@ -609,7 +764,6 @@ bool FeListEditMenu::save( FeConfigContext &ctx )
 void FeListEditMenu::set_list( FeListInfo *l )
 {
 	m_list=l;
-	m_filter_menu.set_list( l );
 	m_name = l->get_info( FeListInfo::Name );
 }
 

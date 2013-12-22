@@ -124,6 +124,11 @@ public:
 
 	void init_list();
 
+	void set_filter( int index );
+	int get_current_filter_index() const;
+	const std::string &get_current_filter_name();
+	void get_current_list_filter_names( std::vector<std::string> &list ) const;
+
 	int run(); // run current selection
 	int exit_command() const; // run configured exit command (if any)
 

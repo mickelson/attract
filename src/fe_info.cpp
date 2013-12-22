@@ -122,28 +122,244 @@ bool FeRomInfo::operator< ( FeRomInfo s ) const
 	return (one < two);
 }
 
-const char *FeListInfo::indexStrings[] =
-{
-	"name",
-	"layout",
-	"romlist",
-	"filter",
-	NULL
-};
+const char *FeRule::indexString = "rule";
 
-const char *FeListInfo::filterCompStrings[] = 
+const char *FeRule::filterCompStrings[] =
 {
 	"equals",
 	"not_equals",
 	"contains",
 	"not_contains",
-	NULL 
+	NULL
+};
+
+const char *FeRule::filterCompDisplayStrings[] =
+{
+	"equals",
+	"does not equal",
+	"contains",
+	"does not contain",
+	NULL
+};
+
+FeRule::FeRule( FeRomInfo::Index t, FilterComp c, const std::string &w )
+	: m_filter_target( t ),
+	m_filter_comp( c ),
+	m_filter_what( w ),
+	m_rex( NULL )
+{
+}
+
+FeRule::~FeRule()
+{
+	if ( m_rex )
+		sqstd_rex_free( m_rex );
+}
+
+void FeRule::init()
+{
+	if (( m_rex ) || ( m_filter_what.empty() ))
+		return;
+
+	//
+	// Compile the regular expression now
+	//
+	const SQChar *err( NULL );
+	m_rex = sqstd_rex_compile(
+		(const SQChar *)m_filter_what.c_str(), &err );
+
+	if ( !m_rex )
+		std::cout << "Error compiling regular expression \""
+			<< m_filter_what << "\": " << err << std::endl;
+}
+
+bool FeRule::apply_rule( const FeRomInfo &rom ) const
+{
+	if (( m_filter_target == FeRomInfo::LAST_INDEX )
+		|| ( m_filter_comp == FeRule::LAST_COMPARISON )
+		|| ( m_rex == NULL ))
+		return true;
+
+	const SQChar *begin( NULL );
+	const SQChar *end( NULL );
+	const std::string &target = rom.get_info( m_filter_target );
+
+	switch ( m_filter_comp )
+	{
+	case FilterEquals:
+		return (( sqstd_rex_match(
+					m_rex,
+					(const SQChar *)target.c_str()
+					) == SQTrue ) ? true : false );
+
+	case FilterNotEquals:
+		return (( sqstd_rex_match(
+					m_rex,
+					(const SQChar *)target.c_str()
+					) == SQTrue ) ? false : true );
+
+	case FilterContains:
+		return (( sqstd_rex_search(
+					m_rex,
+					(const SQChar *)target.c_str(),
+					&begin,
+					&end
+					) == SQTrue ) ? true : false );
+
+	case FilterNotContains:
+		return (( sqstd_rex_search(
+					m_rex,
+					(const SQChar *)target.c_str(),
+					&begin,
+					&end
+					) == SQTrue ) ? false : true );
+
+	default:
+		return true;
+	}
+}
+
+void FeRule::save( std::ofstream &f ) const
+{
+	if (( m_filter_target != FeRomInfo::LAST_INDEX )
+		&& ( m_filter_comp != LAST_COMPARISON ))
+	{
+		f << "\t\t" << std::setw(20) << std::left << indexString << ' ' 
+			<< FeRomInfo::indexStrings[ m_filter_target ] << ' ' 
+			<< filterCompStrings[ m_filter_comp ] << ' ' 
+			<< m_filter_what << std::endl;
+	}
+}
+
+void FeRule::set_values( 
+		FeRomInfo::Index i, 
+		FilterComp c, 
+		const std::string &w )
+{
+	m_filter_target = i;
+	m_filter_comp = c;
+	m_filter_what = w;
+}
+
+const char *FeFilter::indexString = "filter";
+
+FeFilter::FeFilter( const std::string &name )
+	: m_name( name ),
+	m_rom_index( 0 )
+{
+}
+
+void FeFilter::init()
+{
+	for ( std::vector<FeRule>::iterator itr=m_rules.begin();
+			itr != m_rules.end(); ++itr )
+		(*itr).init();
+}
+
+bool FeFilter::apply_filter( const FeRomInfo &rom ) const
+{
+	for ( std::vector<FeRule>::const_iterator itr=m_rules.begin();
+		itr != m_rules.end(); ++itr )
+	{
+		if ( (*itr).apply_rule( rom ) == false )
+			return false;
+	}
+
+	return true;
+}
+
+int FeFilter::process_setting( const std::string &setting,
+         const std::string &value, const std::string &fn )
+{
+	if ( value.empty() )
+	{
+		m_rules.push_back( 
+			FeRule( FeRomInfo::LAST_INDEX, FeRule::LAST_COMPARISON, "" )
+			);
+		return 0;
+	}
+
+	FeRomInfo::Index target;
+	FeRule::FilterComp comp;
+	std::string what;
+
+	std::string token;
+	size_t pos=0;
+
+	token_helper( value, pos, token, FE_WHITESPACE );
+
+	int i=0;
+	while( FeRomInfo::indexStrings[i] != NULL )
+	{
+		if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
+			break;
+		i++;
+	}
+
+	if ( i >= FeRomInfo::LAST_INDEX )
+	{
+		invalid_setting( fn, "filter", token, 
+				FeRomInfo::indexStrings, NULL, "target" );
+		return 1;
+	}
+
+	target = (FeRomInfo::Index)i;
+	token_helper( value, pos, token, FE_WHITESPACE );
+
+	i=0;
+	while( FeRule::filterCompStrings[i] != NULL )
+	{
+		if ( token.compare( FeRule::filterCompStrings[i] ) == 0 )
+			break;
+		i++;
+	}
+
+	if ( i >= FeRule::LAST_COMPARISON )
+	{
+		invalid_setting( fn, "filter", token, FeRule::filterCompStrings, 
+				NULL, "comparison" );
+		return 1;
+	}
+
+	comp = (FeRule::FilterComp)i;
+
+	// Remainder of the line is filter regular expression (which may contain
+	// spaces...)
+	//
+	if ( pos < value.size() )
+		what = value.substr( pos );
+
+	m_rules.push_back( FeRule( target, comp, what ) );
+	return 0;
+}
+
+void FeFilter::save( std::ofstream &f ) const
+{
+	std::string n;
+	if ( m_name.find_first_of( ' ' ) != std::string::npos )
+		n = '"' + m_name + '"';
+	else
+		n = m_name;
+
+	f << '\t' << std::setw(20) << std::left 
+		<< indexString << ' ' << n << std::endl;
+
+	for ( std::vector<FeRule>::const_iterator itr=m_rules.begin();
+			itr != m_rules.end(); ++itr )
+		(*itr).save( f );
+}
+
+const char *FeListInfo::indexStrings[] =
+{
+	"name",
+	"layout",
+	"romlist",
+	NULL
 };
 
 FeListInfo::FeListInfo( const std::string &n )
-	: m_rom_index( 0 ), 
-	m_filter_target( FeRomInfo::LAST_INDEX ), 
-	m_filter_comp( LAST_COMPARISON )
+	: m_rom_index( 0 ),
+	m_filter_index( 0 )
 {
 	m_info[ Name ] = n;
 }
@@ -155,12 +371,18 @@ const std::string &FeListInfo::get_info( int i ) const
 
 int FeListInfo::get_current_rom_index() const
 {
+	if ( !m_filters.empty() )
+		return m_filters[ m_filter_index ].get_current_rom_index();
+
 	return m_rom_index;
 }
 
 void FeListInfo::set_current_rom_index( int r )
 {
-	m_rom_index = r;
+	if ( !m_filters.empty() )
+		m_filters[ m_filter_index ].set_current_rom_index( r );
+	else 
+		m_rom_index = r;
 }
 
 std::string FeListInfo::get_current_layout_file() const
@@ -198,8 +420,33 @@ int FeListInfo::process_setting( const std::string &setting,
 		m_info[ Layout ] = value;
 	else if ( setting.compare( indexStrings[Romlist] ) == 0 ) // romlist
 		m_info[ Romlist ] = value;
-	else if ( setting.compare( indexStrings[Filter] ) == 0 ) // filter
-		return parse_filter( fn, value );
+	else if ( setting.compare( FeFilter::indexString ) == 0 ) // filter
+	{
+		size_t pos=0;
+		std::string name;
+		token_helper( value, pos, name, FE_WHITESPACE );
+
+		// Create a new filter with the given name
+		//
+		m_filters.push_back( FeFilter( name ) );
+
+		//
+		// Deal with filters in the format from version 1.0, where there could 
+		// only be one filter per list (with one filter rule) saved in the 
+		// following format:
+		//
+		// filter <target> <comparision> <what>
+		//
+		if ( value.size() > pos )
+			m_filters.back().process_setting( setting, value, fn );
+
+		// In versions after 1.0, filter rules occur under the "rule" tag
+	}
+	else if ( setting.compare( FeRule::indexString ) == 0 ) // (filter) rule
+	{
+		if ( !m_filters.empty() )
+			m_filters.back().process_setting( setting, value, fn );
+	}
 	else
 	{
 		invalid_setting( fn, "list", setting, indexStrings + 1 );
@@ -211,18 +458,50 @@ int FeListInfo::process_setting( const std::string &setting,
 
 int FeListInfo::process_state( const std::string &state_string )
 {
-	// state string is in format "[curr_rom];[curr_layout_file];"
+	// state string is in format:
+	//
+	// "[curr_rom];[curr_layout_filename];[curr_filter];"
+	//
+	// With [curr_rom] = "[rom_index filter0],[rom_index filter1],..."
+	//
 	size_t pos=0;
 	std::string val;
 
 	token_helper( state_string, pos, val );
-	m_rom_index = as_int( val );
 
-	if ( pos < state_string.size() )
+	//
+	// Process the [curr_rom] string
+	//
+	if ( m_filters.empty() ) 
 	{
-		token_helper( state_string, pos, val );
-		m_current_layout_file = val;
+		// If there are no filters we stash the current rom in m_rom_index
+		m_rom_index = as_int( val );
 	}
+	else
+	{
+		// If there are filters we get a current rom for each filter
+		size_t sub_pos=0;
+		int findex=0;
+		do
+		{
+			std::string sub_val;
+			token_helper( val, sub_pos, sub_val, "," );
+			m_filters[findex].set_current_rom_index( as_int( sub_val ) );
+			findex++;
+		} while ( sub_pos < val.size() );
+	}
+
+	if ( pos >= state_string.size() )
+		return 0;
+
+	token_helper( state_string, pos, val );
+	m_current_layout_file = val;
+
+	if ( pos >= state_string.size() )
+		return 0;
+
+	token_helper( state_string, pos, val );
+	m_filter_index = as_int( val );
 
 	return 0;
 }
@@ -230,91 +509,54 @@ int FeListInfo::process_state( const std::string &state_string )
 std::string FeListInfo::state_as_output() const
 {
 	std::ostringstream state;
-	state << m_rom_index << ";" << m_current_layout_file << ";";
+
+	if ( m_filters.empty() ) 
+	{
+		state << m_rom_index;
+	}
+	else
+	{
+		for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
+			itr != m_filters.end(); ++itr )
+		{
+			state << (*itr).get_current_rom_index() << ",";
+		}
+	}
+
+	state << ";" << m_current_layout_file << ";" 
+		<< m_filter_index << ";";
+
 	return state.str();
 }
 
-int FeListInfo::parse_filter( const std::string &fn, 
-				const std::string &filter_str )
+FeFilter *FeListInfo::get_filter( int i )
 {
-	if ( filter_str.empty() )
-	{
-		m_filter_target = FeRomInfo::LAST_INDEX;
-		m_filter_comp = LAST_COMPARISON;
-		m_filter_what.clear();
-		return 0;
-	}
+	if (( i >= 0 ) && ( i < (int)m_filters.size() ))
+		return &(m_filters[i]);
 
-	std::string token;
-	size_t pos=0;
-
-	token_helper( filter_str, pos, token, FE_WHITESPACE );
-
-	int i=0;
-	while( FeRomInfo::indexStrings[i] != NULL )
-	{
-		if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
-			break;
-		i++;
-	}
-
-	if ( i >= FeRomInfo::LAST_INDEX )
-	{
-		invalid_setting( fn, "filter", token, 
-				FeRomInfo::indexStrings, NULL, "target" );
-		return 1;
-	}
-
-	m_filter_target = (FeRomInfo::Index)i;
-	token_helper( filter_str, pos, token, FE_WHITESPACE );
-
-	i=0;
-	while( filterCompStrings[i] != NULL )
-	{
-		if ( token.compare( filterCompStrings[i] ) == 0 )
-			break;
-		i++;
-	}
-
-	if ( i >= LAST_COMPARISON )
-	{
-		invalid_setting( fn, "filter", token, filterCompStrings, 
-				NULL, "comparison" );
-		return 1;
-	}
-
-	m_filter_comp = (FilterComp)i;
-
-	// Remainder of the line is filter regular expression (which may contain
-	// spaces...)
-	//
-	if ( pos < filter_str.size() )
-		m_filter_what = filter_str.substr( pos );
-
-	return 0;
+	return NULL;	
 }
 
-
-bool FeListInfo::get_filter( FeRomInfo::Index &i, FilterComp &c, 
-					std::string &w ) const
+FeFilter *FeListInfo::create_filter( const std::string &n )
 {
-	i = m_filter_target;
-	c = m_filter_comp;
-	w = m_filter_what;
-
-	if (( m_filter_target == FeRomInfo::LAST_INDEX )
-				|| ( m_filter_comp == LAST_COMPARISON ))
-		return false;
-	else
-		return true;
+	m_filters.push_back( FeFilter( n ) );
+	return &(m_filters.back());
 }
 
-void FeListInfo::set_filter( FeRomInfo::Index i, FilterComp c, 
-					const std::string &w )
+void FeListInfo::delete_filter( int i )
 {
-	m_filter_target = i;
-	m_filter_comp = c;
-	m_filter_what = w;
+	m_filters.erase( m_filters.begin() + i );
+}
+
+void FeListInfo::get_filters_list( std::vector<std::string> &l ) const
+{
+	l.clear();
+
+	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
+			itr != m_filters.end(); ++itr )
+	{
+		l.push_back( (*itr).get_name() );		
+	}
 }
 
 void FeListInfo::save( std::ofstream &f ) const
@@ -333,111 +575,29 @@ void FeListInfo::save( std::ofstream &f ) const
 		f << '\t' << setw(20) << left 
 			<< indexStrings[Romlist] << ' ' << get_info( Romlist ) << endl;
 
-	if (( m_filter_target != FeRomInfo::LAST_INDEX )
-		&& ( m_filter_comp != LAST_COMPARISON ))
-	{
-		f << '\t' << setw(20) << left << indexStrings[Filter] << ' ' 
-			<< FeRomInfo::indexStrings[ m_filter_target ] << ' ' 
-			<< filterCompStrings[ m_filter_comp ] << ' ' 
-			<< m_filter_what << endl;
-	}
+	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
+			itr != m_filters.end(); ++itr )
+		(*itr).save( f );
 }
 
 FeRomList::FeRomList()
-	: m_filter_target( FeRomInfo::LAST_INDEX ),
-	m_filter_comp( FeListInfo::LAST_COMPARISON ),
-	m_rex( NULL )
+	: m_filter( NULL )
 {
 }
 
 FeRomList::~FeRomList()
 {
-	// need to free m_rex
-	clear();
 }
 
 void FeRomList::clear()
 {
-	if ( m_rex )
-		sqstd_rex_free( m_rex );
-
 	m_list.clear();
-	m_filter_target = FeRomInfo::LAST_INDEX;
-	m_filter_comp = FeListInfo::LAST_COMPARISON;
-	m_rex = NULL;
+	m_filter=NULL;
 }
 
-bool FeRomList::apply_filter( const FeRomInfo &rom ) const
+void FeRomList::set_filter( const FeFilter *f )
 {
-	
-	if (( m_filter_target == FeRomInfo::LAST_INDEX )
-		|| ( m_filter_comp == FeListInfo::LAST_COMPARISON )
-		|| ( m_rex == NULL ))
-		return true;
-
-	const SQChar *begin( NULL );
-	const SQChar *end( NULL );
-	const std::string &target = rom.get_info( m_filter_target );
-
-	switch ( m_filter_comp )
-	{
-	case FeListInfo::FilterEquals:
-		return (( sqstd_rex_match( 
-					m_rex, 
-					(const SQChar *)target.c_str() 
-					) == SQTrue ) ? true : false );
-
-	case FeListInfo::FilterNotEquals:
-		return (( sqstd_rex_match( 
-					m_rex, 
-					(const SQChar *)target.c_str() 
-					) == SQTrue ) ? false : true );
-
-	case FeListInfo::FilterContains:
-		return (( sqstd_rex_search( 
-					m_rex, 
-					(const SQChar *)target.c_str(),
-					&begin,
-					&end
-					) == SQTrue ) ? true : false );
-
-	case FeListInfo::FilterNotContains:
-		return (( sqstd_rex_search( 
-					m_rex, 
-					(const SQChar *)target.c_str(),
-					&begin,
-					&end
-					) == SQTrue ) ? false : true );
-
-	default:
-		return true;
-	}
-}
-
-void FeRomList::set_filter( FeRomInfo::Index i,
-            FeListInfo::FilterComp c,
-            const std::string &w )
-{
-	clear();
-
-	m_filter_target = i;
-	m_filter_comp = c;
-	m_filter_what = w;
-
-	if ( !m_filter_what.empty() )
-	{
-		//
-		// Compile the regular expression now
-		//
-		const SQChar *err( NULL );
-		m_rex = sqstd_rex_compile( 
-			(const SQChar *)m_filter_what.c_str(),
-			&err );
-
-		if ( !m_rex )
-			std::cout << "Error compiling regular expression: " 
-				<< err << std::endl;
-	}
+	m_filter = f;
 }
 
 int FeRomList::process_setting( const std::string &setting,
@@ -447,7 +607,7 @@ int FeRomList::process_setting( const std::string &setting,
 	FeRomInfo next_rom( setting );
 	next_rom.process_setting( setting, value, fn );
 
-	if ( apply_filter( next_rom ) == true )
+	if (( m_filter == NULL ) || ( m_filter->apply_filter( next_rom ) == true ))
 		m_list.push_back( next_rom );
 
    return 0;

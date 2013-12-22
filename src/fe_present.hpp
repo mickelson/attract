@@ -126,6 +126,7 @@ private:
 	int get_layout_height() const;
 	int get_layout_orient() const;
 	const char *get_list_name() const;
+	const char *get_filter_name() const;
 	int get_list_size() const;
 	int get_list_index() const;
 	void set_list_index( int );

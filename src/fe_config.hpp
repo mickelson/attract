@@ -30,6 +30,8 @@
 class FeSettings;
 class FeEmulatorInfo;
 class FeListInfo;
+class FeFilter;
+class FeRule;
 
 namespace Opt 
 {
@@ -214,10 +216,28 @@ public:
 						FeBaseConfigMenu *& submenu );
 };
 
+class FeRuleEditMenu : public FeBaseConfigMenu
+{
+private:
+	FeFilter *m_filter;
+	int m_index;
+
+public:
+	FeRuleEditMenu();
+
+	void get_options( FeConfigContext &ctx );
+	bool on_option_select( FeConfigContext &ctx,
+						FeBaseConfigMenu *& submenu );
+	bool save( FeConfigContext &ctx );
+	void set_rule_index( FeFilter *f, int i );
+};
+
 class FeFilterEditMenu : public FeBaseConfigMenu
 {
 private:
 	FeListInfo *m_list;
+	int m_index;
+	FeRuleEditMenu m_rule_menu;
 
 public:
 	FeFilterEditMenu();
@@ -226,7 +246,7 @@ public:
 	bool on_option_select( FeConfigContext &ctx,
 						FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
-	void set_list( FeListInfo *list );
+	void set_filter_index( FeListInfo *l, int i );
 };
 
 class FeListEditMenu : public FeBaseConfigMenu

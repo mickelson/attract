@@ -69,10 +69,81 @@ public:
 
 private:
 	FeRomInfo &operator=( const FeRomInfo & );
-
 	std::string get_info_escaped( int ) const;
 
 	std::string m_info[LAST_INDEX];
+};
+
+//
+// Class for a single rule in a list filter
+//
+class FeRule
+{
+public:
+	enum FilterComp {
+		FilterEquals=0,
+		FilterNotEquals,
+		FilterContains,
+		FilterNotContains,
+		LAST_COMPARISON
+	};
+
+	static const char *indexString;
+	static const char *filterCompStrings[];
+	static const char *filterCompDisplayStrings[];
+
+	FeRule( FeRomInfo::Index target=FeRomInfo::LAST_INDEX, 
+		FilterComp comp=LAST_COMPARISON, 
+		const std::string &what="" );
+
+	~FeRule();
+
+	void init();
+	bool apply_rule( const FeRomInfo &rom ) const;
+	void save( std::ofstream & ) const;
+
+	FeRomInfo::Index get_target() const { return m_filter_target; };
+	FilterComp get_comp() const { return m_filter_comp; };
+	const std::string &get_what() const { return m_filter_what; };
+
+	void set_values( FeRomInfo::Index i, FilterComp c, const std::string &w );
+
+private:
+	FeRomInfo::Index m_filter_target;
+	FilterComp m_filter_comp;
+	std::string m_filter_what;
+	SQRex *m_rex;
+};
+
+//
+// Class for a list filter
+//
+class FeFilter : public FeBaseConfigurable
+{
+public:
+	static const char *indexString;
+
+	FeFilter( const std::string &name );
+	void init();
+	bool apply_filter( const FeRomInfo &rom ) const;
+
+	int process_setting( const std::string &setting,
+				const std::string &value,
+				const std::string &fn );
+
+	void save( std::ofstream & ) const;
+	const std::string &get_name() const { return m_name; };
+	void set_name( const std::string &n ) { m_name = n; };
+
+	int get_current_rom_index() const { return m_rom_index; };
+	void set_current_rom_index( int i ) { m_rom_index=i; };
+
+	std::vector<FeRule> &get_rules() { return m_rules; };
+	
+private:
+	std::string m_name;
+	std::vector<FeRule> m_rules;
+	int m_rom_index;
 };
 
 //
@@ -86,20 +157,9 @@ public:
 		Name=0,
 		Layout,
 		Romlist,
-		Filter,
 		LAST_INDEX
 	};
-
-	enum FilterComp {
-		FilterEquals=0,
-		FilterNotEquals,
-		FilterContains,
-		FilterNotContains,
-		LAST_COMPARISON
-	};
-
 	static const char *indexStrings[];
-	static const char *filterCompStrings[];
 
 	FeListInfo( const std::string &name );
 
@@ -115,8 +175,13 @@ public:
 
 	void dump( void ) const;
 
-	bool get_filter( FeRomInfo::Index &i, FilterComp &c, std::string &w ) const;
-	void set_filter( FeRomInfo::Index i, FilterComp c, const std::string &w );
+	void set_current_filter_index( int i ) { m_filter_index=i; };
+	int get_current_filter_index() const { return m_filter_index; };
+	int get_filter_count() const { return m_filters.size(); };
+	FeFilter *get_filter( int );
+	FeFilter *create_filter( const std::string &name );
+	void delete_filter( int i );
+	void get_filters_list( std::vector<std::string> &l ) const;
 
 	std::string get_current_layout_file() const;
 	void set_current_layout_file( const std::string & );
@@ -127,25 +192,19 @@ public:
 	void save( std::ofstream & ) const;
 
 private:
-	int parse_filter( const std::string &fn, const std::string &filter );
-
 	std::string m_info[LAST_INDEX];
 	std::string m_current_layout_file;
-	int m_rom_index;
+	int m_rom_index; // only used if there are no filters on this list
+	int m_filter_index;
 
-	FeRomInfo::Index m_filter_target;
-	FilterComp m_filter_comp;
-	std::string m_filter_what;
+	std::vector< FeFilter > m_filters;
 };
 
 class FeRomList : public FeFileConfigurable
 {
 private:
 	std::deque<FeRomInfo> m_list;
-	FeRomInfo::Index m_filter_target;
-	FeListInfo::FilterComp m_filter_comp;
-	std::string m_filter_what;
-	SQRex *m_rex;
+	const FeFilter *m_filter;
 
 	FeRomList( const FeRomList & );
 	FeRomList &operator=( const FeRomList & );
@@ -158,9 +217,7 @@ public:
 
 	void clear();
 
-	void set_filter( FeRomInfo::Index i, 
-		FeListInfo::FilterComp c, 
-		const std::string &w );
+	void set_filter( const FeFilter *f ); 
 
 	int process_setting( const std::string &setting, 
 		const std::string &value,

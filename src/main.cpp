@@ -319,6 +319,19 @@ int main(int argc, char *argv[])
 					}
 					break;
 
+				case FeInputMap::FiltersMenu:
+					{
+						int list_index = feOverlay.filters_dialog();
+						if ( list_index < 0 )
+							window.close();	
+						else
+						{
+							feSettings.set_filter( list_index );
+							fePresent.update_to_new_list( &window );
+						}
+					}
+					break;
+
 				default:
 					break;
 				}

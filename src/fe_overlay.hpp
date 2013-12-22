@@ -73,6 +73,7 @@ public:
 	int exit_dialog();
 	bool config_dialog(); 
 	int lists_dialog(); 
+	int filters_dialog();
 };
 
 #endif

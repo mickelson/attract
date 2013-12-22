@@ -267,6 +267,11 @@ const char *FePresent::get_list_name() const
 	return m_feSettings->get_current_list_title().c_str();
 }
 
+const char *FePresent::get_filter_name() const
+{
+	return m_feSettings->get_current_filter_name().c_str();
+}
+
 int FePresent::get_list_size() const
 {
 	return m_feSettings->get_current_list_size();
@@ -381,6 +386,16 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		else
 			update_to_new_list( wnd );
 
+		break;
+
+	case FeInputMap::NextFilter:
+		m_feSettings->set_filter( m_feSettings->get_current_filter_index() + 1 );
+		update_to_new_list( wnd );
+		break;
+
+	case FeInputMap::PrevFilter:
+		m_feSettings->set_filter( m_feSettings->get_current_filter_index() - 1 );
+		update_to_new_list( wnd );
 		break;
 
 	case FeInputMap::ToggleLayout:
@@ -1200,6 +1215,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 
 	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()
 		.Prop( _SC("name"), &FePresent::get_list_name )
+		.Prop( _SC("filter"), &FePresent::get_filter_name )
 		.Prop( _SC("size"), &FePresent::get_list_size )
 		.Prop( _SC("index"), &FePresent::get_list_index, &FePresent::set_list_index )
 	);
