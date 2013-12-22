@@ -510,9 +510,14 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 	bool ret_val = false;
 	if ( m_moveState != MoveNone )
 	{
-		sf::Time t = m_moveTimer.getElapsedTime();
-		if ( t.asMilliseconds() > 500 )
+		int t = m_moveTimer.getElapsedTime().asMilliseconds();
+		if ( t > 500 )
 		{
+			// As the button is held down, the advancement accelerates
+			int step = 1 << ( ( t / 500 ) - 1 );
+			if ( step > 128 ) // don't go above a maximum advance speed
+				step=128;
+
 			bool cont=false;
 
 			if ( m_moveEvent.type == sf::Event::KeyPressed )
@@ -538,18 +543,17 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 
 			if ( cont )
 			{
-				int offset( 0 );
 				switch ( m_moveState )
 				{
-					case MoveUp: offset = -1; break;
-					case MoveDown: offset = 1; break;
-					case MovePageUp: offset = -1 * get_page_size(); break;
-					case MovePageDown: offset = get_page_size(); break;
+					case MoveUp: step = -step; break;
+					case MoveDown: break; // do nothing
+					case MovePageUp: step *= -get_page_size(); break;
+					case MovePageDown: step *= get_page_size(); break;
 					default: break;
 				}
 
-				vm_on_transition( ToNewSelection, offset, wnd );
-				m_feSettings->change_rom( offset, false ); 
+				vm_on_transition( ToNewSelection, step, wnd );
+				m_feSettings->change_rom( step, false ); 
 
 				ret_val=true;
 				update( false );
