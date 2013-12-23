@@ -934,12 +934,14 @@ void FePresent::do_nut( const char *script_file )
 	}
 }
 
-void my_callback( const char *buffer, void *opaque )
+bool my_callback( const char *buffer, void *opaque )
 {
 	Sqrat::Function func( Sqrat::RootTable(), (const char *)opaque );
 
 	if ( !func.IsNull() )
 		func.Execute( buffer );
+
+	return true; // return false to cancel callbacks
 }
 
 bool FePresent::cb_plugin_command( const char *label, 

@@ -20,7 +20,7 @@
  *
  */
 
-#include "fe_listxml.hpp"
+#include "fe_xml.hpp"
 #include "fe_info.hpp"
 #include "fe_settings.hpp"
 #include "fe_util.hpp"
@@ -68,7 +68,7 @@ void build_basic_romlist( const FeEmulatorInfo &emulator,
 
 void apply_listxml( const FeEmulatorInfo &emulator, 
 				std::list<FeRomInfo> &romlist, 
-				FeListXMLParse::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL )
+				FeXMLParser::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL )
 {
 	std::string listxml = emulator.get_info(
 				FeEmulatorInfo::Listxml );
@@ -76,14 +76,14 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 	if ( listxml.empty() )
 		return;
 
-	FeListXMLParse listXMLParser( romlist, uiupdate, uiupdatedata );
 	std::string base_command = clean_path( emulator.get_info( 
 				FeEmulatorInfo::Executable ) );
 
 	if ( listxml.compare( 0, 4, "mame" ) == 0 )
 	{
 		std::cout << "Obtaining -listxml info...";
-		listXMLParser.parse_mame( base_command );
+		FeMameXMLParser mamep( romlist, uiupdate, uiupdatedata );
+		mamep.parse( base_command );
 		std::cout << std::endl;
 	}
 	else if ( listxml.compare( 0, 4, "mess" ) == 0 )
@@ -105,7 +105,8 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 		args += " -listsoftware";
 
 		std::cout << "Obtaining -listsoftware info...";
-		listXMLParser.parse_mess( base_command, args );
+		FeMessXMLParser messp( romlist, uiupdate, uiupdatedata );
+		messp.parse( base_command, args );
 		std::cout << std::endl;
 	}
 	else

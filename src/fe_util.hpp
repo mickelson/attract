@@ -57,7 +57,7 @@ bool tail_compare(
          const std::string &extension );
 
 
-typedef void (*output_callback_fn)( const char *, void * );
+typedef bool (*output_callback_fn)( const char *, void * );
 //
 // Run the specified program, blocks while program running
 //

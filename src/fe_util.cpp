@@ -611,7 +611,14 @@ bool run_program( const std::string &prog,
 			{
 				char buffer[ 1024 ];
 				while ( fgets( buffer, 1024, fs ) != NULL )
-					callback( buffer, opaque );
+				{
+					if ( callback( buffer, opaque ) == false )
+					{
+						block=false;
+						// TODO: kill child (?)
+						break;
+					}
+				}
 
 				fclose( fs );
 			}
@@ -706,9 +713,18 @@ bool run_program( const std::string &prog,
 			char buffer[ 1024 ];
 
 			while( fgets( buffer, 1024, fp ) != NULL )
-				callback( buffer, opaque );
+			{
+				if ( callback( buffer, opaque ) == false )
+				{
+					// User cancelled
+					kill( pid, SIGTERM );
+					block=false;
+					break;
+				}
+			}
 
 			fclose( fp );
+			close( mypipe[0] );
 		}
 
 		if ( block )

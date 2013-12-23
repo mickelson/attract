@@ -185,8 +185,8 @@
 		<Unit filename="fe_input.hpp" />
 		<Unit filename="fe_listbox.cpp" />
 		<Unit filename="fe_listbox.hpp" />
-		<Unit filename="fe_listxml.cpp" />
-		<Unit filename="fe_listxml.hpp" />
+		<Unit filename="fe_xml.cpp" />
+		<Unit filename="fe_xml.hpp" />
 		<Unit filename="fe_overlay.cpp" />
 		<Unit filename="fe_overlay.hpp" />
 		<Unit filename="fe_present.cpp" />

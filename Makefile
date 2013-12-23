@@ -64,7 +64,7 @@ _DEP =\
 	fe_util.hpp \
 	fe_info.hpp \
 	fe_input.hpp \
-	fe_listxml.hpp \
+	fe_xml.hpp \
 	fe_settings.hpp \
 	fe_config.hpp \
 	fe_presentable.hpp \
@@ -82,7 +82,7 @@ _OBJ =\
 	fe_util.o \
 	fe_info.o \
 	fe_input.o \
-	fe_listxml.o \
+	fe_xml.o \
 	fe_settings.o \
 	fe_build.o \
 	fe_config.o \
