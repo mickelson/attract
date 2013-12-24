@@ -267,11 +267,17 @@ void FeMameXMLParser::end_element( const char *element )
 			m_count++;
 
 			int percent = m_count * 100 / m_romlist.size();
-			std::cout << "\b\b\b\b" << std::setw(3) << percent << '%' << std::flush;
-			if ( m_ui_update )
+			if ( percent > m_percent )
 			{
-				if ( m_ui_update( m_ui_update_data, percent ) == false )
-					set_continue_parse( false );
+				m_percent = percent;
+				std::cout << "\b\b\b\b" << std::setw(3) 
+					<< m_percent << '%' << std::flush;
+
+				if ( m_ui_update )
+				{
+					if ( m_ui_update( m_ui_update_data, m_percent ) == false )
+						set_continue_parse( false );
+				}
 			}
 		}
 	}
@@ -294,6 +300,7 @@ bool FeMameXMLParser::parse( const std::string &prog )
 {
 	std::string base_args = "-listxml";
 	std::list<FeRomInfo>::iterator itr;
+	m_percent=m_count=0;
 
 	if ( m_romlist.size() < 1500 )
 	{

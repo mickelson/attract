@@ -82,6 +82,7 @@ private:
 	std::map<const char *, std::list<FeRomInfo>::iterator, FeMapComp> m_map;
 	std::vector<std::list<FeRomInfo>::iterator> m_discarded;
 	int m_count;
+	int m_percent;
 	bool m_collect_data;
 
 	void start_element( const char *, const char ** );
