@@ -9,6 +9,9 @@ fe.add_artwork( "marquee", 348, 64, 262, 72 );
 
 local l = fe.add_listbox( 32, 64, 262, 352 );
 l.charsize = 16;
+l.set_selbg_rgb( 255, 255, 255 );
+l.set_sel_rgb( 0, 0, 0 );
+l.sel_style = Style.Bold;
 
 fe.add_image( "bg.png", 0, 0 );
 
