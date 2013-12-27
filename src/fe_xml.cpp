@@ -154,7 +154,8 @@ void FeMameXMLParser::start_element(
 		{
 			for ( i=0; attribute[i]; i+=2 )
 			{
-				if (( strcmp( attribute[i], "isbios" ) == 0 )
+				if ((( strcmp( attribute[i], "isbios" ) == 0 )
+						|| ( strcmp( attribute[i], "isdevice" ) == 0 ))
 					&& ( strcmp( attribute[i+1], "yes" ) == 0 ))
 				{
 					m_keep_rom=false;
@@ -215,19 +216,19 @@ void FeMameXMLParser::start_element(
 			struct my_map_struct { const char *in; const char *out; };
 			my_map_struct map[] = 
 			{
-				{ "stick", "Joystick (Analog)" },
-				{ "doublejoy", "Double Joystick" },
-				{ "paddle", "Paddle" },
-				{ "trackball", "Trackball" },
-				{ "dial", "Dial" },
+				{ "stick", "joystick (analog)" },
+				{ "doublejoy", "double joystick" },
+				{ "paddle", "paddle" }, 
+				{ "trackball", "trackball" },
+				{ "dial", "dial" },
 				{ NULL, NULL }
 			};
 
 			if ( type.compare( "joy" ) == 0 )
 			{
-				type = "Joystick (";
+				type = "joystick (";
 				type += ways;
-				type += "-Way)";
+				type += "-way)";
 				(*m_itr).set_info( FeRomInfo::Control, type );
 			}
 			else
@@ -242,6 +243,9 @@ void FeMameXMLParser::start_element(
 					}
 					i++;
 				}
+
+				if ( (*m_itr).get_info( FeRomInfo::Control ).empty() )
+					(*m_itr).set_info( FeRomInfo::Control, type );
 			}
 		}
 		else if (( strcmp( element, "description" ) == 0 )
