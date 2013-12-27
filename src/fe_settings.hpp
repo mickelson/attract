@@ -66,7 +66,7 @@ private:
 	std::vector<std::string> m_font_paths;
 	std::vector<FeListInfo> m_lists;
 	std::vector<FeEmulatorInfo> m_emulators;
-	std::vector<std::pair<std::string,std::string> > m_plugins;
+	std::vector<FePlugInfo> m_plugins;
 	FeRomList m_rl;
 
 	FeInputMap m_inputmap;
@@ -141,10 +141,24 @@ public:
 	const std::string &get_current_list_title() const;
 	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
 
-	// get the external command for the named plugin
-	const std::string &get_plugin_command( const std::string &name ) const;
+	// get/set whether the named plugin is enabled
+	bool get_plugin_enabled( const std::string &name ) const;
+	void set_plugin_enabled( const std::string &name, bool e );
 
-	// get a list of configured plugins
+	// get/set the external command for the named plugin
+	const std::string &get_plugin_command( const std::string &name ) const;
+	void set_plugin_command( const std::string &name, const std::string &c );
+
+	bool get_plugin_param( const std::string &plugin, 
+		const std::string &param, std::string &v ) const;
+
+	void set_plugin_param( const std::string &plugin, 
+		const std::string &param, const std::string &v );
+
+	void get_plugin_param_labels( const std::string &plugin, 
+		std::vector<std::string> &labels ) const;
+
+	// get a list of available plugins
 	void get_plugins( std::vector < std::string > &list ) const;
 
 	//
@@ -196,9 +210,6 @@ public:
 	FeListInfo *get_list( const std::string &n );
 	FeListInfo *create_list( const std::string &n );
 	void delete_list( const std::string &n );
-
-	void delete_plugin( const std::string &n );
-	void create_plugin( const std::string &l, const std::string &c );
 
 	// return true if specified romlist name is configured for use as a display 
 	// list

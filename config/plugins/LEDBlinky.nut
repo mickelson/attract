@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////
 //
-// Attract-Mode Frontend - LedBlinky plugin
+// Attract-Mode Frontend - LEDBlinky plugin
 //
 ///////////////////////////////////////////////////
 //
@@ -12,11 +12,10 @@
 // 2.  Copy this file to the "plugins" directory of your Attract-Mode
 //     configuration.
 //
-// 3.  Run Attract-Mode and enter configuration mode.  Create a plugin
-//     labelled "ledblinky", and enter the path to the ledblinky executable 
-//     file as the plugin command.
+// 3.  Run Attract-Mode and configure the LEDBlinky plugin from config mode.
 //
 ///////////////////////////////////////////////////
+class UserConfig </ help="Integration plug-in for use with LEDBlinky: http://www.ledblinky.net" /> { };
 
 local ledblinky=fe.init_name;
 fe.add_transition_callback( "ledblinky_plugin_transition" );

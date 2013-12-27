@@ -323,6 +323,7 @@ class FePluginEditMenu : public FeBaseConfigMenu
 {
 private:
 	std::string m_plugin_label;
+	std::vector<std::string>m_params;
 
 public:
 	void get_options( FeConfigContext &ctx );

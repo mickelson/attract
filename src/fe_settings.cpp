@@ -104,7 +104,6 @@ const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 
 const std::string FE_EMPTY_STRING;
 
-
 // NOTE: this has to remain aligned with the RotationState enum:
 const char *FeSettings::rotationTokens[]	=
 {
@@ -260,15 +259,9 @@ int FeSettings::process_setting( const std::string &setting,
 		m_current_config_object = NULL;
 	else if ( setting.compare( otherSettingStrings[4] ) == 0 ) // plugin
 	{
-		size_t pos=0;
-		std::pair < std::string, std::string > cmd;
-
-		token_helper( value, pos, cmd.first, FE_WHITESPACE );
-
-		if ( pos < value.size() )
-			cmd.second = value.substr( pos );
-
-		m_plugins.push_back( cmd );
+		FePlugInfo newPlug( value );
+		m_plugins.push_back( newPlug );
+		m_current_config_object = &m_plugins.back();
 	}
 	else if ( setting.compare( configSettingStrings[0] ) == 0 ) // autorotate
 	{
@@ -1248,24 +1241,6 @@ void FeSettings::get_current_list_filter_names(
 	m_lists[ m_current_list ].get_filters_list( list );
 }
 
-void FeSettings::delete_plugin( const std::string &n )
-{
-	std::vector<std::pair<std::string,std::string> >::iterator itr;
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); )
-	{
-		if ( n.compare( (*itr).first ) == 0 )
-			itr = m_plugins.erase( itr );
-		else
-			itr++;
-	}
-}
-
-void FeSettings::create_plugin( const std::string &n, const std::string &c )
-{
-	delete_plugin( n );
-	m_plugins.push_back( std::pair<std::string,std::string>( n, c ) );
-}
-
 bool FeSettings::check_romlist_configured( const std::string &n ) const
 {
 	for ( std::vector<FeListInfo>::const_iterator itr=m_lists.begin();
@@ -1321,19 +1296,18 @@ void FeSettings::save() const
 		}
 
 		outfile << std::endl;
-		std::vector< std::pair< std::string, std::string > >::const_iterator itr;
+		std::vector< FePlugInfo >::const_iterator itr;
 		for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
 		{
-			std::string label;
-			if ( (*itr).first.find_first_of( ' ' ) != std::string::npos )
-				label = '"' + (*itr).first + '"';
-			else
-				label = (*itr).first;
-
-			outfile << std::setw(20) << std::left
-						<< otherSettingStrings[4] // "plugin" 
-						<< ' ' << label 
-						<< ' ' << (*itr).second << std::endl;
+			//
+			// Get rid of configs for old plugins by not saving it if the 
+			// plugin itself is gone
+			//
+			if ( file_exists( m_config_path + FE_PLUGIN_SUBDIR 
+					+ (*itr).get_name() + FE_PLUGIN_FILE_EXTENSION ) )
+			{
+				(*itr).save( outfile );
+			}
 		}
 
 		outfile.close();
@@ -1362,21 +1336,115 @@ int FeSettings::lists_count() const
 const std::string &FeSettings::get_plugin_command( 
 			const std::string &label ) const
 {
-	std::vector< std::pair< std::string, std::string > >::const_iterator itr;
+	std::vector< FePlugInfo >::const_iterator itr;
 
 	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
 	{
-		if ( label.compare( (*itr).first ) == 0 )
-			return (*itr).second;
+		if ( label.compare( (*itr).get_name() ) == 0 )
+			return (*itr).get_command();
 	}
 
 	return FE_EMPTY_STRING;
 }
 
+void FeSettings::set_plugin_command( 
+			const std::string &label, const std::string &command )
+{
+	std::vector< FePlugInfo >::iterator itr;
+
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( label.compare( (*itr).get_name() ) == 0 )
+		{
+			(*itr).set_command( command );
+			return;
+		}
+	}
+
+	// If there isn't a plugin configuration, create it now
+	//
+	m_plugins.push_back( FePlugInfo( label ) );
+	m_plugins.back().set_command( command );
+}
+
+bool FeSettings::get_plugin_enabled( const std::string &label ) const
+{
+	std::vector< FePlugInfo >::const_iterator itr;
+
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( label.compare( (*itr).get_name() ) == 0 )
+			return (*itr).get_enabled();
+	}
+
+	return false;
+}
+
+void FeSettings::set_plugin_enabled( 
+			const std::string &label, bool e )
+{
+	std::vector< FePlugInfo >::iterator itr;
+
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( label.compare( (*itr).get_name() ) == 0 )
+		{
+			(*itr).set_enabled( e );
+			return;
+		}
+	}
+
+	// If there isn't a plugin configuration, create it now
+	//
+	m_plugins.push_back( FePlugInfo( label ) );
+	m_plugins.back().set_enabled( e );
+}
+
+bool FeSettings::get_plugin_param( const std::string &plugin, 
+		const std::string &param, std::string &v ) const
+{
+	std::vector< FePlugInfo >::const_iterator itr;
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( plugin.compare( (*itr).get_name() ) == 0 )
+			return (*itr).get_param( param, v );
+	}
+	return false;
+}
+
+void FeSettings::set_plugin_param( const std::string &plugin, 
+		const std::string &param, const std::string &v )
+{
+	std::vector< FePlugInfo >::iterator itr;
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( plugin.compare( (*itr).get_name() ) == 0 )
+		{
+			(*itr).set_param( param, v );
+			return;
+		}
+	}
+}
+
+void FeSettings::get_plugin_param_labels( const std::string &plugin,
+		std::vector<std::string> &labels ) const
+{
+	std::vector< FePlugInfo >::const_iterator itr;
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( plugin.compare( (*itr).get_name() ) == 0 )
+		{
+			(*itr).get_param_labels( labels );
+			return;
+		}
+	}
+}
+
 void FeSettings::get_plugins( std::vector < std::string > &list ) const
 {
 	list.clear();
-	std::vector< std::pair< std::string, std::string > >::const_iterator itr;
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-		list.push_back( (*itr).first );
+	std::string path = m_config_path + FE_PLUGIN_SUBDIR;
+
+	get_basename_from_extension( list, path, 
+			std::vector<std::string>(1, FE_PLUGIN_FILE_EXTENSION) );
 }

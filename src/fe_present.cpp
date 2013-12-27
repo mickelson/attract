@@ -1030,7 +1030,6 @@ void FePresent::vm_init()
 	Sqrat::DefaultVM::Set( vm );
 }
 
-
 void FePresent::vm_on_new_layout( const std::string &layout_file )
 {
 	using namespace Sqrat;
@@ -1311,11 +1310,35 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		std::string plugin = plugins_list.back();
 		plugins_list.pop_back();
 
+		// Don't run disabled plugins...
+		if ( m_feSettings->get_plugin_enabled( plugin ) == false )
+			continue;
+
 		std::string plugin_file = plugins_dir + plugin + FE_PLUGIN_FILE_EXTENSION;
 
 		if ( file_exists( plugin_file ) )
 		{
+			//
+			// fe.init_name in squirrel is set to the plugin name
+			//
 			fe.SetValue( _SC("init_name"), plugin );
+
+			//
+			// fe.uconfig in squirrel is set to a table of the user config
+			// settings
+			//
+			Table uconfig;
+			fe.Bind( _SC("uconfig"), uconfig );
+
+			std::vector<std::string> params;
+			m_feSettings->get_plugin_param_labels( plugin, params );
+			for ( std::vector<std::string>::iterator itr=params.begin();
+				itr!=params.end(); ++itr )
+			{
+				std::string v;
+				m_feSettings->get_plugin_param( plugin, (*itr), v );
+				uconfig.SetValue( (*itr).c_str(), v.c_str() );
+			}
 
 			try
 			{

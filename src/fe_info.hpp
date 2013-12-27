@@ -280,6 +280,40 @@ private:
 };
 
 //
+// Class for storing plug-in configuration
+//
+class FePlugInfo : public FeBaseConfigurable
+{
+public:
+	FePlugInfo( const std::string &name );
+	const std::string &get_name() const { return m_name; };
+
+	const std::string &get_command() const { return m_command; };
+	void set_command( const std::string &c ) { m_command=c; };
+
+	bool get_enabled() const { return m_enabled; };
+	void set_enabled( bool e ) { m_enabled=e; };
+
+	bool get_param( const std::string &label, std::string &v ) const;
+	void set_param( const std::string &label, const std::string &v );
+	void get_param_labels( std::vector<std::string> &labels ) const;
+
+	int process_setting( const std::string &setting, 
+								const std::string &value,
+								const std::string &filename );
+
+	void save( std::ofstream & ) const;
+
+private:
+	static const char *indexStrings[];
+
+	std::string m_name;
+	std::string m_command;
+	bool m_enabled;
+	std::map<std::string,std::string> m_params;
+};
+
+//
 // Class to contain the interface language strings
 //
 class FeResourceMap : public FeFileConfigurable

@@ -816,6 +816,94 @@ void FeEmulatorInfo::save( const std::string &filename ) const
    }
 }
 
+const char *FePlugInfo::indexStrings[] = { "command","enabled","param",NULL };
+
+FePlugInfo::FePlugInfo( const std::string & n )
+	: m_name( n ), m_enabled( false )
+{
+}
+
+bool FePlugInfo::get_param( const std::string &label, std::string &v ) const
+{
+	std::map<std::string,std::string>::const_iterator itr;
+
+	itr = m_params.find( label );
+	if ( itr != m_params.end() )
+	{
+		v = (*itr).second;
+		return true;
+	}
+
+	return false;
+}
+
+void FePlugInfo::set_param( const std::string &label, const std::string &v )
+{
+	m_params[ label ] = v;
+}
+
+void FePlugInfo::get_param_labels( std::vector<std::string> &labels ) const
+{
+	std::map<std::string,std::string>::const_iterator itr;
+	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
+		labels.push_back( (*itr).first );
+}
+
+int FePlugInfo::process_setting( const std::string &setting,
+         const std::string &value, const std::string &fn )
+{
+	if ( setting.compare( indexStrings[0] ) == 0 ) // command
+		set_command( value );
+	else if ( setting.compare( indexStrings[1] ) == 0 ) // enabled
+	{
+		if (( value.compare( "yes" ) == 0 )
+				|| ( value.compare( "true" ) == 0 ))
+			set_enabled( true );
+		else
+			set_enabled( false );
+	}
+	else if ( setting.compare( indexStrings[2] ) == 0 ) // param
+	{
+		std::string label, v;
+		size_t pos=0;
+
+		token_helper( value, pos, label, FE_WHITESPACE );
+
+		if ( pos < value.size() )
+			v = value.substr( pos );
+
+		m_params[ label ] = v;
+	}
+	else
+	{
+		invalid_setting( fn, "plugin", setting, indexStrings );
+		return 1;
+	}
+	return 0;
+}
+
+void FePlugInfo::save( std::ofstream &f ) const
+{
+	if (( m_command.empty() ) && ( !m_enabled ))
+		return;
+
+	f << "plugin" << '\t' << m_name << std::endl;
+
+	if ( !m_command.empty() )
+		f << '\t' << std::setw(20) << std::left 
+			<< indexStrings[0] << ' ' << get_command() << std::endl;
+
+	f << '\t' << std::setw(20) << std::left << indexStrings[1] 
+		<< ( m_enabled ? " true" : " false" ) << std::endl;
+
+	std::map<std::string,std::string>::const_iterator itr;
+	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
+	{
+		f << '\t' << std::setw(20) << std::left << indexStrings[2] << ' '
+			<< (*itr).first << ' ' << (*itr).second << std::endl;
+	}
+}
+
 FeResourceMap::FeResourceMap()
 {
 }

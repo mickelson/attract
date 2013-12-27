@@ -27,6 +27,8 @@
 #include <iostream>
 #include "media.hpp"
 
+#include <sqrat.h>
+
 FeMenuOpt::FeMenuOpt( int t, const std::string &set, const std::string &val )
 	: m_list_index( -1 ), type( t ), opaque( 0 ), setting( set )
 {
@@ -1125,29 +1127,219 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
+namespace {
+
+bool get_object_string(
+	HSQUIRRELVM vm, 
+	HSQOBJECT obj, 
+	std::string &out_string)
+{ 
+	sq_pushobject(vm, obj);
+	sq_tostring(vm, -1);
+	const SQChar *s;
+	SQRESULT res = sq_getstring(vm, -1, &s);
+	bool r = SQ_SUCCEEDED(res);
+	if (r) 
+		out_string = s;
+
+	sq_pop(vm,2);
+	return r;
+}
+
+bool get_attribute_string(
+	HSQUIRRELVM vm, 
+	HSQOBJECT obj, 
+	const std::string &key, 
+	const std::string &attribute, 
+	std::string & out_string)
+{
+	sq_pushobject(vm, obj);
+
+	if ( key.empty() )
+		sq_pushnull(vm);
+	else
+		sq_pushstring(vm, key.c_str(), key.size());
+
+	if ( SQ_FAILED( sq_getattributes(vm, -2) ) )
+	{
+		sq_pop(vm, 2);
+		return false;
+	}
+
+	HSQOBJECT att_obj;
+	sq_resetobject( &att_obj );
+	sq_getstackobj( vm, -1, &att_obj );
+
+	Sqrat::Object attTable( att_obj, vm );
+	sq_pop( vm, 2 );
+
+	if ( attTable.IsNull() )
+		return false;
+
+	Sqrat::Object attVal = attTable.GetSlot( attribute.c_str() );
+	if ( attVal.IsNull() )
+		return false;
+
+	return get_object_string( vm, attVal.GetObject(), out_string );
+}
+
+}; // end namespace
+
 void FePluginEditMenu::get_options( FeConfigContext &ctx )
 {
-	ctx.set_style( FeConfigContext::EditList, "Edit Plug-in" );
+	ctx.set_style( FeConfigContext::EditList, "Configure Plug-in" );
 
 	std::string command = ctx.fe_settings.get_plugin_command( m_plugin_label );
+	bool enabled = ctx.fe_settings.get_plugin_enabled( m_plugin_label );
 
-	ctx.add_optl( Opt::EDIT, "Plug-in Label", m_plugin_label, 
-		"_help_plugin_label" );
+	ctx.add_optl( Opt::INFO, "Name", m_plugin_label, 
+		"_help_plugin_name" );
 
-	ctx.add_optl( Opt::EDIT, "Plug-in Command", command, 
+	ctx.add_optl( Opt::EDIT, "Command", command, 
 		"_help_plugin_command" );
+
+	std::vector<std::string> opts( 2 );
+	ctx.fe_settings.get_resource( "Yes", opts[0] );
+	ctx.fe_settings.get_resource( "No", opts[1] );
+
+	ctx.add_optl( Opt::LIST, "Enabled", enabled ? opts[0] : opts[1], 
+			"_help_plugin_enabled" );
+	ctx.back_opt().append_vlist( opts );
+
+	//
+	// We run the plug-in script to check if a "UserConfig" class is defined.
+	// If it is, then its members and member attributes set out what it is
+	// that the plug-in needs configured by the user.
+	//
+	std::string script_file = ctx.fe_settings.get_config_dir() 
+		+ FE_PLUGIN_SUBDIR + m_plugin_label + FE_PLUGIN_FILE_EXTENSION;
+
+	m_params.clear();
+
+	if ( file_exists( script_file ) )
+	{
+		HSQUIRRELVM stored_vm = Sqrat::DefaultVM::Get();
+		HSQUIRRELVM temp_vm = sq_open( 1024 );
+		sq_pushroottable( temp_vm );
+		Sqrat::DefaultVM::Set( temp_vm );
+
+		try
+		{
+			Sqrat::Script sc;
+			sc.CompileFile( script_file );
+			sc.Run();
+		}
+		catch( Sqrat::Exception e )
+		{
+			// ignore all errors, they are expected
+		}
+
+		// Control the scope of our Sqrat objects so they are destroyed
+		// before we call sq_close() on the vm below
+		//
+		{
+			Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
+			if ( !uConfig.IsNull() )
+			{
+				// Put the help property of the class into the help message for
+				// the plug-in name
+				//
+				std::string gen_help;
+				get_attribute_string( 
+					temp_vm, 
+					uConfig.GetObject(), "", "help", gen_help );
+				if ( !gen_help.empty() )
+				{
+					ctx.opt_list[0].help_msg = gen_help;
+				}
+
+				// Construct the UI elements for plug-in specific configuration
+				//
+				Sqrat::Object::iterator it;
+				while ( uConfig.Next( it ) )
+				{
+					std::string key, value, label, help, options;
+					get_object_string( temp_vm, it.getKey(), key );
+
+					// use the default value from the script if a value has
+					// not already been configured
+					//
+					if ( !ctx.fe_settings.get_plugin_param( 
+								m_plugin_label, key, value ) )
+					{
+						get_object_string( temp_vm, it.getValue(), value );
+					}
+
+					get_attribute_string( 
+							temp_vm, 
+							uConfig.GetObject(), key, "label", label);
+
+					if ( label.empty() )
+						label = key;
+
+					get_attribute_string( 
+							temp_vm, 
+							uConfig.GetObject(), key, "help", help);
+
+					get_attribute_string( 
+							temp_vm, 
+							uConfig.GetObject(), key, "options", options);
+
+					if ( !options.empty() )
+					{
+						std::vector<std::string> options_list;
+						size_t pos=0;
+						do
+						{
+							std::string temp;
+							token_helper( options, pos, temp, "," );
+							options_list.push_back( temp );
+						} while ( pos < options.size() );
+
+						ctx.add_optl( Opt::LIST, label, value, help );
+						ctx.back_opt().append_vlist( options_list );
+					}
+					else
+					{
+						ctx.add_optl( Opt::EDIT, label, value, help );
+					}
+
+					m_params.push_back( key );
+					ctx.back_opt().opaque = 99 + m_params.size();
+				}
+			}
+		}
+	
+		// reset to our usual VM and close the temp vm
+		Sqrat::DefaultVM::Set( stored_vm );
+		sq_close( temp_vm );
+	}
+
 
 	FeBaseConfigMenu::get_options( ctx );
 }
 
 bool FePluginEditMenu::save( FeConfigContext &ctx )
 {
-	if ( !m_plugin_label.empty() )
-		ctx.fe_settings.delete_plugin( m_plugin_label );
+	ctx.fe_settings.set_plugin_command( 
+		m_plugin_label, 
+		ctx.opt_list[1].get_value() );
 
-	std::string label = ctx.opt_list[0].get_value();
-	if ( !label.empty() )
-		ctx.fe_settings.create_plugin( label, ctx.opt_list[1].get_value() );
+	ctx.fe_settings.set_plugin_enabled(
+		m_plugin_label,
+		ctx.opt_list[2].get_vindex() == 0 ? true : false );
+
+	for ( unsigned int i=3; i < ctx.opt_list.size(); i++ )
+	{
+		int op = ctx.opt_list[i].opaque;
+		if ( op >= 100 )
+		{
+			ctx.fe_settings.set_plugin_param(
+				m_plugin_label, 
+				m_params[ op-100 ], 
+				ctx.opt_list[i].get_value() );
+		}
+	}
 
 	return true;
 }
@@ -1168,9 +1360,6 @@ void FePluginSelMenu::get_options( FeConfigContext &ctx )
 			itr < plugin_list.end(); ++itr )
 		ctx.add_opt( Opt::MENU, (*itr), "", "_help_plugin_sel" );
 
-	ctx.add_opt( Opt::MENU, "Add New Plug-in", "", "_help_plugin_add" );
-	ctx.back_opt().opaque = 1;
-
 	FeBaseConfigMenu::get_options( ctx );
 }
 
@@ -1182,11 +1371,6 @@ bool FePluginSelMenu::on_option_select(
 	if ( o.opaque == 0 )
 	{
 		m_edit_menu.set_plugin( o.setting );
-		submenu = &m_edit_menu;
-	}
-	else if ( o.opaque == 1 )
-	{
-		m_edit_menu.set_plugin( "" );
 		submenu = &m_edit_menu;
 	}
 
