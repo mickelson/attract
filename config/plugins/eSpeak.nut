@@ -21,8 +21,8 @@
 // from Attract-Mode's configuration menu
 //
 class UserConfig </ help="Integration plug-in for use with eSpeak Speech Synthesizer: http://espeak.sourceforge.net" /> {
-	</ label="Voice", help="Select Voice", options="Male,Female" />
-	voice="Male";
+	</ label="Voice", help="Select Voice", options="Default, Male1, Male2, Male3,Female1, Female2, Female3, MBrola_en1" />
+	voice="Default";
 
 	</ label="Welcome Message", help="Message to play on startup" />
 	welcome="Welcome";
@@ -39,12 +39,18 @@ local espeak=fe.init_name;
 //
 local welcome_msg = fe.uconfig["welcome"];
 local goodbye_msg = fe.uconfig["goodbye"];
-local options = "";
 
-if ( fe.uconfig["voice"] == "Female" )
-{
-	options = "-ven+f2 ";
-}
+local v_map = {
+	Default=""
+	Male1="-v male1 "
+	Male2="-v male2 "
+	Male3="-v male3 "
+	Female1="-v female1 "
+	Female2="-v female2 "
+	Female3="-v female3 "
+	MBrola_en1="-v mb-en1 "
+};
+local options = v_map[ fe.uconfig["voice"] ];
 
 fe.add_transition_callback( "espeak_plugin_transition" );
 
