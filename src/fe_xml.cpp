@@ -306,7 +306,7 @@ bool FeMameXMLParser::parse( const std::string &prog )
 	std::list<FeRomInfo>::iterator itr;
 	m_percent=m_count=0;
 
-	if ( m_romlist.size() < 1500 )
+	if ( m_romlist.size() < 500 )
 	{
 		//
 		// Small List Strategy: run "mame -listxml <romname>" for each rom.

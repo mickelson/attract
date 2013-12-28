@@ -614,8 +614,8 @@ bool run_program( const std::string &prog,
 				{
 					if ( callback( buffer, opaque ) == false )
 					{
+						TerminateProcess( pi.hProcess, 0 );
 						block=false;
-						// TODO: kill child (?)
 						break;
 					}
 				}
@@ -627,7 +627,7 @@ bool run_program( const std::string &prog,
 		}
 	}
 
-	bool keep_wait=!block;
+	bool keep_wait=block;
 	while (keep_wait)
 	{
 		switch (MsgWaitForMultipleObjects(1, &pi.hProcess,
