@@ -31,6 +31,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstring>
+#include <cstdlib>
 
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -60,7 +61,7 @@ void process_args( int argc, char *argv[],
 			else
 			{
 				std::cerr << "Error, no config directory specified with --config option." << std::endl;
-				_exit(1);
+				exit(1);
 			}
 		}
 		else if ( strcmp( argv[next_arg], "--font" ) == 0 )
@@ -74,7 +75,7 @@ void process_args( int argc, char *argv[],
 			else
 			{
 				std::cerr << "Error, no font name specified with --font option." << std::endl;
-				_exit(1);
+				exit(1);
 			}
 		}
 		else if ( strcmp( argv[next_arg], "--build-rom-list" ) == 0 )
@@ -92,7 +93,7 @@ void process_args( int argc, char *argv[],
 			{
 				std::cerr << "Error, no target emulators specified with --build-rom-list option."
 							<<  std::endl;
-				_exit(1);
+				exit(1);
 			}
 
 		}
@@ -113,7 +114,7 @@ void process_args( int argc, char *argv[],
 				<< "\t--font [font_name]: specify default font name" << std::endl
 				<< "\t--build-rom-list [emulator...]: build rom list for specified emulators" << std::endl
 				<< "\t--help: show this message" << std::endl;
-			_exit( retval );
+			exit( retval );
 		}
 	}
 
@@ -121,7 +122,7 @@ void process_args( int argc, char *argv[],
 	{
 		FeSettings feSettings( config_path, cmdln_font, false );
 		int retval = feSettings.build_romlist( romlist_emulators );
-		_exit( retval );
+		exit( retval );
 	}
 }
 

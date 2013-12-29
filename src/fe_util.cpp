@@ -27,7 +27,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <algorithm>
-#include <cassert>
+#include <cstdlib>
 
 #include <unistd.h>
 #include <sys/stat.h>
