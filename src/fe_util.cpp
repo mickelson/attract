@@ -28,10 +28,12 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
 
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -41,10 +43,8 @@
 #else
 #include <sys/wait.h>
 #include <pwd.h>
+#include <signal.h>
 #endif
-
-#include <dirent.h>
-#include <cstring>
 
 namespace {
 
@@ -659,7 +659,7 @@ bool run_program( const std::string &prog,
 #else
 
 	std::vector < std::string > string_list;
-	unsigned int pos=0;
+	size_t pos=0;
 
 	while ( pos < args.size() )
 	{
