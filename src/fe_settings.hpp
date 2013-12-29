@@ -101,7 +101,7 @@ public:
 	bool load();
 	void save_state( void ) const;
 
-	FeInputMap::Command map( sf::Event e ) const { return m_inputmap.map( e ); };
+	FeInputMap::Command map( const sf::Event &e ) const { return m_inputmap.map( e ); };
 	FeInputMap &get_input_map() { return m_inputmap; };
 
 	void set_volume( FeSoundInfo::SoundType, const std::string & );
@@ -112,7 +112,7 @@ public:
 	bool get_sound_file( FeInputMap::Command, std::string &s, bool full_path=true ) const;
 	void set_sound_file( FeInputMap::Command, const std::string &s );
 
-	void change_rom( int step, bool wrap=true );
+	void change_rom( int step );
 
 	// Switches the display list
 	// returns true if the list change results in a new layout, false otherwise
@@ -136,7 +136,7 @@ public:
 
 	void get_current_display_list( std::vector<std::string> &list ) const;
 	int get_current_list_size() const { return m_rl.size(); };
-	int get_rom_index( int offset=0, bool wrap=true ) const;
+	int get_rom_index( int offset=0 ) const;
 
 	const std::string &get_current_list_title() const;
 	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;

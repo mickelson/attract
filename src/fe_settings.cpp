@@ -386,7 +386,7 @@ void FeSettings::load_state()
 		m_current_list = 0;
 }
 
-int FeSettings::get_rom_index( int offset, bool wrap ) const
+int FeSettings::get_rom_index( int offset ) const
 {
 	if ( m_current_list < 0 )
 		return -1;
@@ -403,28 +403,16 @@ int FeSettings::get_rom_index( int offset, bool wrap ) const
 	// apply the offset
 	if ( m_rl.size() > 0 )
 	{
-		if ( !wrap )
-		{
-			retval += offset;
-
-			if ( retval < 0 )
-				retval = 0;
-			if ( retval >= (int)m_rl.size() )
-				retval = m_rl.size()-1;
-		}
+		int off = abs( offset ) % m_rl.size();
+		if ( offset < 0 )
+			retval -= off;
 		else
-		{
-			int off = abs( offset ) % m_rl.size();
-			if ( offset < 0 )
-				retval -= off;
-			else
-				retval += off;
+			retval += off;
 
-			if ( retval < 0 )
-				retval = retval + m_rl.size();
-			if ( retval >= (int)m_rl.size() )
-				retval = retval - m_rl.size();
-		}
+		if ( retval < 0 )
+			retval = retval + m_rl.size();
+		if ( retval >= (int)m_rl.size() )
+			retval = retval - m_rl.size();
 	}
 	return retval;
 }
@@ -630,9 +618,9 @@ const std::string &FeSettings::get_current_filter_name()
 	return f->get_name();
 }
 
-void FeSettings::change_rom( int step, bool wrap )
+void FeSettings::change_rom( int step )
 {
-	set_current_rom( get_rom_index( step, wrap ) );
+	set_current_rom( get_rom_index( step ) );
 }
 
 void FeSettings::toggle_layout()

@@ -289,7 +289,7 @@ void FePresent::set_list_index( int index )
 }
 
 bool FePresent::handle_event( FeInputMap::Command c, 
-	sf::Event ev,
+	const sf::Event &ev,
 	sf::RenderWindow *wnd )
 {
 	m_moveState=MoveNone;
@@ -306,45 +306,60 @@ bool FePresent::handle_event( FeInputMap::Command c,
 	switch( c )
 	{
 	case FeInputMap::Down:
-		m_moveTimer.restart();
-		m_moveState=MoveDown;
-		m_moveEvent = ev;
-		vm_on_transition( ToNewSelection, 1, wnd );
-		m_feSettings->change_rom( 1 );
-		update( false );
+		if ( m_moveState == MoveNone )
+		{
+			m_moveTimer.restart();
+			m_moveState=MoveDown;
+			m_moveEvent = ev;
+			vm_on_transition( ToNewSelection, 1, wnd );
+			m_feSettings->change_rom( 1 );
+			update( false );
+		}
 		break;
 
 	case FeInputMap::Up:
-		m_moveTimer.restart();
-		m_moveState=MoveUp;
-		m_moveEvent = ev;
-		vm_on_transition( ToNewSelection, -1, wnd );
-		m_feSettings->change_rom( -1 );
-		update( false );
+		if ( m_moveState == MoveNone )
+		{
+			m_moveTimer.restart();
+			m_moveState=MoveUp;
+			m_moveEvent = ev;
+			vm_on_transition( ToNewSelection, -1, wnd );
+			m_feSettings->change_rom( -1 );
+			update( false );
+		}
 		break;
 
 	case FeInputMap::PageDown:
-		m_moveTimer.restart();
-		m_moveState=MovePageDown;
-		m_moveEvent = ev;
+		if ( m_moveState == MoveNone )
 		{
-			int page = get_page_size();
-			vm_on_transition( ToNewSelection, page, wnd );
-			m_feSettings->change_rom( page, false );
+			m_moveTimer.restart();
+			m_moveState=MovePageDown;
+			m_moveEvent = ev;
+
+			int step = get_no_wrap_step( get_page_size() );
+			if ( step != 0 )
+			{
+				vm_on_transition( ToNewSelection, step, wnd );
+				m_feSettings->change_rom( step );
+				update( false );
+			}
 		}
-		update( false );
 		break;
 
 	case FeInputMap::PageUp:
-		m_moveTimer.restart();
-		m_moveState=MovePageUp;
-		m_moveEvent = ev;
+		if ( m_moveState == MoveNone )
 		{
-			int page = -1 * get_page_size();
-			vm_on_transition( ToNewSelection, page, wnd );
-			m_feSettings->change_rom( page, false );
+			m_moveTimer.restart();
+			m_moveState=MovePageUp;
+			m_moveEvent = ev;
+			int step = get_no_wrap_step( -get_page_size() );
+			if ( step != 0 )
+			{
+				vm_on_transition( ToNewSelection, step, wnd );
+				m_feSettings->change_rom( step );
+				update( false );
+			}
 		}
-		update( false );
 		break;
 
 	case FeInputMap::RandomGame:
@@ -510,39 +525,51 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 	bool ret_val = false;
 	if ( m_moveState != MoveNone )
 	{
-		int t = m_moveTimer.getElapsedTime().asMilliseconds();
-		if ( t > 500 )
+		bool cont=false;
+
+		switch ( m_moveEvent.type )
 		{
-			// As the button is held down, the advancement accelerates
-			int step = 1 << ( ( t / 500 ) - 1 );
-			if ( step > 128 ) // don't go above a maximum advance speed
-				step=128;
+		case sf::Event::KeyPressed:
+			if ( sf::Keyboard::isKeyPressed( m_moveEvent.key.code ) )
+				cont=true;
+			break;
 
-			bool cont=false;
+		case sf::Event::MouseButtonPressed:
+			if ( sf::Mouse::isButtonPressed( m_moveEvent.mouseButton.button ) )
+				cont=true;
+			break;
 
-			if ( m_moveEvent.type == sf::Event::KeyPressed )
+		case sf::Event::JoystickButtonPressed:
+			if ( sf::Joystick::isButtonPressed(
+					m_moveEvent.joystickButton.joystickId,
+					m_moveEvent.joystickButton.button ) )
+				cont=true;
+			break;
+
+		case sf::Event::JoystickMoved:
 			{
-				if ( sf::Keyboard::isKeyPressed( m_moveEvent.key.code ) )
-					cont=true;
-			}
-			else if ( m_moveEvent.type == sf::Event::JoystickButtonPressed )
-			{
-				if ( sf::Joystick::isButtonPressed( 
-						m_moveEvent.joystickButton.joystickId,
-						m_moveEvent.joystickButton.button ) )
-					cont=true;
-			}
-			else if ( m_moveEvent.type == sf::Event::JoystickMoved )
-			{
-				float pos = sf::Joystick::getAxisPosition( 
+				float pos = sf::Joystick::getAxisPosition(
 						m_moveEvent.joystickMove.joystickId,
 						m_moveEvent.joystickMove.axis );
 				if ( abs( pos ) > FeInputMap::JOY_THRESH )
 					cont=true;
 			}
+			break;
 
-			if ( cont )
+		default:
+			break;
+		}
+
+		if ( cont )
+		{
+			int t = m_moveTimer.getElapsedTime().asMilliseconds();
+			if ( t > 500 )
 			{
+				// As the button is held down, the advancement accelerates
+				int step = 1 << ( ( t / 500 ) - 1 );
+				if ( step > 128 ) // don't go above a maximum advance speed
+					step=128;
+
 				switch ( m_moveState )
 				{
 					case MoveUp: step = -step; break;
@@ -552,16 +579,20 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 					default: break;
 				}
 
-				vm_on_transition( ToNewSelection, step, wnd );
-				m_feSettings->change_rom( step, false ); 
+				int real_step = get_no_wrap_step( step );
+				if ( real_step != 0 )
+				{
+					vm_on_transition( ToNewSelection, real_step, wnd );
+					m_feSettings->change_rom( real_step ); 					
 
-				ret_val=true;
-				update( false );
+					ret_val=true;
+					update( false );
+				}
 			}
-			else
-			{
-				m_moveState = MoveNone;
-			}
+		}
+		else
+		{
+			m_moveState = MoveNone;
 		}
 	}
 
@@ -602,6 +633,19 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 	}
 
 	return ret_val;
+}
+
+int FePresent::get_no_wrap_step( int step )
+{
+	int curr_sel = m_feSettings->get_rom_index( 0 );
+	if ( ( curr_sel + step ) < 0 )
+		return -curr_sel;
+
+	int list_size = m_feSettings->get_current_list_size();
+	if ( ( curr_sel + step ) >= list_size )
+		return list_size - curr_sel - 1;
+
+	return step;
 }
 
 int FePresent::get_page_size() const

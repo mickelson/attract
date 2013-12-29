@@ -102,12 +102,12 @@ public:
 	static const int JOY_THRESH=90;
 
 	FeInputMap( bool disable_mousecap );
-	Command map( sf::Event ) const;
+	Command map( const sf::Event & ) const;
 
 	void get_mappings( std::vector< FeMapping > &mappings ) const;
 	void set_mapping( const FeMapping &mapping );
 	void init_config_map_input();
-	bool config_map_input( sf::Event e, std::string &s, Command &conflict ) const;
+	bool config_map_input( const sf::Event &e, std::string &s, Command &conflict ) const;
 	void default_mappings();
 
 	int process_setting( const std::string &setting, 
@@ -137,7 +137,7 @@ private:
 	static bool is_joystick( InputType i )  { return ( i <= JoyB8 ); }
 	static bool is_mouse_move( InputType i );
 	std::pair< int, InputType > get_map_index( 
-		sf::Event e, bool config=false ) const;
+		const sf::Event &e, bool config=false ) const;
 	void string_to_index( const std::string &s,
 		std::pair< int, InputType > &index ) const;
 };

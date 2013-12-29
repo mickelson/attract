@@ -94,6 +94,7 @@ private:
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );
 
+	int get_no_wrap_step( int step );
 	void clear();
 	void toggle_movie();
 
@@ -152,7 +153,7 @@ public:
 	void post_run( sf::RenderWindow *w );
 	void toggle_mute();
 
-	bool handle_event( FeInputMap::Command, sf::Event ev, sf::RenderWindow *w );
+	bool handle_event( FeInputMap::Command, const sf::Event &ev, sf::RenderWindow *w );
 
 	FeSettings *get_fes() const { return m_feSettings; };
 	int get_page_size() const;

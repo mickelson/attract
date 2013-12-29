@@ -162,7 +162,7 @@ const char *FeInputMap::commandDispStrings[] =
 };
 
 std::pair< int, FeInputMap::InputType > 
-FeInputMap::get_map_index( sf::Event e, bool config ) const
+FeInputMap::get_map_index( const sf::Event &e, bool config ) const
 {
 	std::pair< int, InputType > index( 0, LAST_INPUT );
 
@@ -277,7 +277,7 @@ FeInputMap::get_map_index( sf::Event e, bool config ) const
 	return index;
 }
 
-FeInputMap::Command FeInputMap::map( sf::Event e ) const
+FeInputMap::Command FeInputMap::map( const sf::Event &e ) const
 {
 	if ( e.type == sf::Event::Closed )
 		return ExitNoMenu;
@@ -385,7 +385,7 @@ void FeInputMap::init_config_map_input()
 	sf::Mouse::setPosition( sf::Vector2i( m_cap.reset_x, m_cap.reset_y ) );
 }
 
-bool FeInputMap::config_map_input( sf::Event e, std::string &s, Command &conflict ) const
+bool FeInputMap::config_map_input( const sf::Event &e, std::string &s, Command &conflict ) const
 {
 	conflict = LAST_COMMAND;
 	std::pair< int, InputType > index = get_map_index( e, true );
