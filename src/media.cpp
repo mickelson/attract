@@ -36,6 +36,7 @@ extern "C"
 #include <iostream>
 #include "media.hpp"
 
+#define MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio 
 //
 // Base class for our implementation of the audio and video components
 //
@@ -618,7 +619,7 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_audio->codec_ctx = m_format_ctx->streams[stream_id]->codec;
 				m_audio->codec = dec;
 				m_audio->buffer = (sf::Int16 *)av_malloc( 
-											AVCODEC_MAX_AUDIO_FRAME_SIZE 
+											MAX_AUDIO_FRAME_SIZE 
 											+ m_audio->codec_ctx->sample_rate );
 
 				sf::SoundStream::initialize( 
@@ -744,7 +745,7 @@ bool FeMedia::onGetData( Chunk &data )
 
 	while ( offset < m_audio->codec_ctx->sample_rate )
 	{
-		bsize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+		bsize = MAX_AUDIO_FRAME_SIZE;
 
 		AVPacket *packet = m_audio->pop_packet();
 		while (( packet == NULL ) && ( !end_of_file() ))
