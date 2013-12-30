@@ -979,24 +979,30 @@ bool FeSettings::get_font_file( std::string &fontpath,
 #ifndef NO_FONTCONFIG
 	bool fc_found = false;
 	FcConfig *config = FcInitLoadConfigAndFonts();
-
-	FcPattern *pat = FcNameParse( (const FcChar8 *)(fontname.c_str()) );
-	FcConfigSubstitute( config, pat, FcMatchPattern );
-	FcDefaultSubstitute( pat );
-
-	FcPattern *font = FcFontMatch( config, pat, NULL );
-	if ( font )
+	if ( config )
 	{
-		FcChar8 *file = NULL;
-		if ( FcPatternGetString( font, FC_FILE, 0, &file ) == FcResultMatch )
+		FcPattern *pat = FcNameParse( (const FcChar8 *)(fontname.c_str()) );
+		if ( pat )
 		{
-			fontpath = (char *)file;
-			fc_found = true;
+			FcConfigSubstitute( config, pat, FcMatchPattern );
+			FcDefaultSubstitute( pat );
+
+			FcResult res = FcResultNoMatch;
+			FcPattern *font = FcFontMatch( config, pat, &res );
+			if ( font )
+			{
+				FcChar8 *file = NULL;
+				if ( FcPatternGetString( font, FC_FILE, 0, &file ) == FcResultMatch )
+				{
+					fontpath = (char *)file;
+					fc_found = true;
+				}
+				FcPatternDestroy( font );
+			}
+			FcPatternDestroy( pat );
 		}
-		FcPatternDestroy( font );
+		FcConfigDestroy( config );
 	}
-	FcPatternDestroy( pat );
-	FcConfigDestroy( config );
 
 	if ( fc_found )
 		return true;
