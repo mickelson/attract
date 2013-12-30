@@ -170,14 +170,16 @@ bool search_for_file( const std::string &base_path,
 	}
 
 	std::vector<std::string> subs;
-	get_subdirectories( subs, base_path );
+	get_subdirectories( subs, base_path, true );
 
 	std::vector<std::string>::iterator itr;
 	for ( itr = subs.begin(); itr != subs.end(); ++itr )
 	{
-		if ( search_for_file( base_path + "/" + (*itr),
-				base_name,
-				valid_exts,
+
+		if ( search_for_file( 
+				base_path + (*itr), 
+				base_name, 
+				valid_exts, 
 				result ) )
 		{
 			return true;
@@ -189,7 +191,7 @@ bool search_for_file( const std::string &base_path,
 
 void get_subdirectories(
 			std::vector<std::string> &list,
-			const std::string &path )
+			const std::string &path, bool append_slash )
 {
 	DIR *dir;
 	struct dirent *ent;
@@ -208,7 +210,7 @@ void get_subdirectories(
 			stat( (path + "/" + name).c_str(), &st );
 
 			if ( S_ISDIR( st.st_mode ) )
-				list.push_back( name );
+				list.push_back( append_slash ? name + '/' : name );
 		}
 		closedir( dir );
 	}
