@@ -170,8 +170,10 @@ int main(int argc, char *argv[])
 	{
 		SetWindowLong( hw, GWL_STYLE, 
 			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
-		SetWindowPos(hw, HWND_TOP, 0, 0, 
-			mode.width, mode.height, SWP_FRAMECHANGED);
+
+		// resize the window off screen 1 pixel in each direction so we don't see the window border
+		SetWindowPos(hw, HWND_TOP, -1, -1,
+			mode.width + 2, mode.height + 2, SWP_FRAMECHANGED);
 
 		ShowWindow(hw, SW_SHOW);
 	}
