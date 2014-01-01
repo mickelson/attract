@@ -135,6 +135,12 @@ else
 
 UNAME = $(shell uname -a)
 ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+
+_DEP += fe_util_osx.hpp
+_OBJ += fe_util_osx.o
+
+LIBS += -framework Cocoa
+
 ifneq ($(ENABLE_FONTCONFIG),1)
 DISABLE_FONTCONFIG=1
 endif
@@ -196,6 +202,9 @@ DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 	$(CPP) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
+	$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
 attract: $(OBJ) $(EXPAT) $(SQUIRREL)
 	$(CPP) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)

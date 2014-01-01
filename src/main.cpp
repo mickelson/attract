@@ -38,6 +38,10 @@
 #include <windows.h>
 #endif // SFML_SYSTEM_WINDOWS
 
+#ifdef SFML_SYSTEM_MACOS
+#include "fe_util_osx.hpp"
+#endif // SFM_SYSTEM_MACOS
+
 void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font )
@@ -177,6 +181,11 @@ int main(int argc, char *argv[])
 
 		ShowWindow(hw, SW_SHOW);
 	}
+#endif
+
+#ifdef SFML_SYSTEM_MACOS
+	osx_hide_menu_bar();
+	window.setPosition( sf::Vector2i( 0, 0 ) );
 #endif
 
 	window.setIcon( fe_icon.width, fe_icon.height, fe_icon.pixel_data );
