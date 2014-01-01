@@ -468,15 +468,15 @@ void FePresent::load_screensaver( sf::RenderWindow *wnd )
 	// if there is no screen saver script then do a blank screen
 	//
 	update( true );
-	vm_on_transition( StartLayout, FromToNull, wnd );
+	vm_on_transition( StartLayout, FromToNoValue, wnd );
 }
 
 void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load ) 
 {
-	int var = ( m_screenSaverActive ) ? FromToScreenSaver : FromToNull;
+	int var = ( m_screenSaverActive ) ? FromToScreenSaver : FromToNoValue;
 
 	if ( !initial_load )
-		vm_on_transition( EndLayout, FromToNull, wnd );
+		vm_on_transition( EndLayout, FromToNoValue, wnd );
 	else
 		var = FromToFrontend;
 
@@ -517,7 +517,7 @@ void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load )
 void FePresent::update_to_new_list( sf::RenderWindow *wnd )
 {
 	update( true );
-	vm_on_transition( ToNewList, FromToNull, wnd );
+	vm_on_transition( ToNewList, FromToNoValue, wnd );
 }
 
 bool FePresent::tick( sf::RenderWindow *wnd )
@@ -671,13 +671,13 @@ void FePresent::pre_run( sf::RenderWindow *wnd )
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
 
-	vm_on_transition( ToGame, FromToNull, wnd );
+	vm_on_transition( ToGame, FromToNoValue, wnd );
 }
 
 void FePresent::post_run( sf::RenderWindow *wnd )
 {
 	perform_autorotate();
-	vm_on_transition( FromGame, FromToNull, wnd );
+	vm_on_transition( FromGame, FromToNoValue, wnd );
 
 	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
@@ -1030,6 +1030,14 @@ bool FePresent::cb_plugin_command_bg( const char *label, const char *args )
 	return run_program( clean_path( command ), args, NULL, NULL, false );
 }
 
+const char *FePresent::cb_path_expand( const char *path )
+{
+		static std::string internal_str;
+
+		internal_str = clean_path( path );
+		return internal_str.c_str();
+}
+
 const char *FePresent::cb_game_info( int index, int offset )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
@@ -1149,7 +1157,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 			.Const( _SC("PovY"), sf::Joystick::PovY )
 			)
 		.Enum( _SC("FromTo"), Enumeration()
-			.Const( _SC("Null"), FromToNull )
+			.Const( _SC("NoValue"), FromToNoValue )
 			.Const( _SC("ScreenSaver"), FromToScreenSaver )
 			.Const( _SC("Frontend"), FromToFrontend )
 			)
@@ -1306,6 +1314,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FePresent::cb_plugin_command_bg);
+	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FePresent::cb_path_expand);	
 
 	//
 	// Define variables that get exposed to Squirrel

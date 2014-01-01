@@ -118,31 +118,30 @@ std::string clean_path( const std::string &path, bool require_trailing_slash )
 
 #ifdef SFML_SYSTEM_WINDOWS
 	// substitute systemroot leading %SYSTEMROOT%
-	if (( retval.size() > 12 )
+	if (( retval.size() >= 12 )
 		&& ( retval.compare( 0, 12, "%SYSTEMROOT%" ) == 0 ))
 	{
-		std::string end = retval.substr( 12 );
-		retval.clear();
-		str_from_c( retval, getenv( "SystemRoot" ) );
-		retval += end;
+		std::string sysroot;
+		str_from_c( sysroot, getenv( "SystemRoot" ) );
+		retval.replace( 0, 12, sysroot );
 	}
+	else if (( retval.size() >= 14 )
+		&& ( retval.compare( 0, 14, "%PROGRAMFILES%" ) == 0 ))
+	{
+		std::string pf;
+		str_from_c( pf, getenv( "ProgramFiles" ) );
+		retval.replace( 0, 14, pf );
+	}
+
 #endif
 
 	// substitute home dir for leading ~
-	if (( retval.size() > 1 ) && ( retval.compare( 0, 1, "~" ) == 0 ))
-	{
-		std::string end = retval.substr( 1 );
-		retval = get_home_dir();
-		retval += end;
-	}
+	if (( retval.size() >= 1 ) && ( retval.compare( 0, 1, "~" ) == 0 ))
+		retval.replace( 0, 1, get_home_dir() );
 
 	// substitute home dir for leading $HOME
-	if (( retval.size() > 5 ) && ( retval.compare( 0, 5, "$HOME" ) == 0 ))
-	{
-		std::string end = retval.substr( 5 );
-		retval = get_home_dir();
-		retval += end;
-	}
+	if (( retval.size() >= 5 ) && ( retval.compare( 0, 5, "$HOME" ) == 0 ))
+		retval.replace( 0, 5, get_home_dir() );
 
 	if (( require_trailing_slash )
 #ifdef SFML_SYSTEM_WINDOWS

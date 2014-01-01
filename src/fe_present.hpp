@@ -51,7 +51,7 @@ private:
 
 	enum FromToType
 	{
-		FromToNull=0,
+		FromToNoValue=0,
 		FromToScreenSaver=1,
 		FromToFrontend=2
 	};
@@ -184,6 +184,7 @@ public:
 	static bool cb_plugin_command(const char *, const char *, const char *);
 	static bool cb_plugin_command(const char *, const char *);
 	static bool cb_plugin_command_bg(const char *, const char *);
+	static const char *cb_path_expand( const char *path );
 	static const char *cb_game_info(int,int);
 	static const char *cb_game_info(int);
 };

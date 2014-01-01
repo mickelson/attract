@@ -50,7 +50,10 @@ local v_map = {
 	Female3="-v female3 "
 	MBrola_en1="-v mb-en1 "
 };
-local options = v_map[ fe.uconfig["voice"] ];
+
+local options;
+if ( v_map.rawin( fe.uconfig["voice"] ) )
+	options = v_map[ fe.uconfig["voice"] ];
 
 fe.add_transition_callback( "espeak_plugin_transition" );
 

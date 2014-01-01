@@ -65,7 +65,7 @@ function ledblinky_plugin_transition( ttype, var, ttime ) {
 
 	case Transition.ToNewList:
 		// ignore this event if leaving screensaver or starting FE
-		if ( var == FromTo.Null ) 
+		if ( var == FromTo.NoValue )
 			fe.plugin_command( ledblinky, "8" );
 		break;
 	}
