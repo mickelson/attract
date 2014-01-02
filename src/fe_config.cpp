@@ -306,7 +306,7 @@ bool FeEmulatorEditMenu::on_option_select(
 			ctx.fe_settings.build_romlist( emu_name, my_ui_update, &ctx, 
 								list_size );
 
-			ctx.fe_settings.get_resource( "Wrote $1 entries to romlist.", 
+			ctx.fe_settings.get_resource( "Wrote $1 entries to romlist",
 											as_str(list_size), ctx.help_msg );
 
 			//
@@ -464,16 +464,34 @@ void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 	}
 	
 	if ( target != FeRomInfo::LAST_INDEX )
-		target_str = FeRomInfo::indexStrings[ target ];
+		ctx.fe_settings.get_resource( FeRomInfo::indexStrings[ target ], target_str );
 
 	if ( comp != FeRule::LAST_COMPARISON )
-		comp_str = FeRule::filterCompDisplayStrings[ comp ];
+		ctx.fe_settings.get_resource( FeRule::filterCompDisplayStrings[ comp ], comp_str );
 
-	ctx.add_optl( Opt::LIST, "Filter Target", target_str, "_help_rule_target" );
-	ctx.back_opt().append_vlist( FeRomInfo::indexStrings );
+	std::vector< std::string > targets;
+	int i=0;
+	while ( FeRomInfo::indexStrings[i] != 0 )
+	{
+		targets.push_back( std::string() );
+		ctx.fe_settings.get_resource( FeRomInfo::indexStrings[i], targets.back() );
+		i++;
+	}
 
-	ctx.add_optl( Opt::LIST, "Filter Comparison", comp_str, "_help_rule_comp" );
-	ctx.back_opt().append_vlist( FeRule::filterCompDisplayStrings );
+	ctx.add_optl( Opt::LIST, "Target", target_str, "_help_rule_target" );
+	ctx.back_opt().append_vlist( targets );
+
+	std::vector< std::string > comparisons;
+	i=0;
+	while ( FeRule::filterCompDisplayStrings[i] != 0 )
+	{
+		comparisons.push_back( std::string() );
+		ctx.fe_settings.get_resource( FeRule::filterCompDisplayStrings[i], comparisons.back() );
+		i++;
+	}
+
+	ctx.add_optl( Opt::LIST, "Comparison", comp_str, "_help_rule_comp" );
+	ctx.back_opt().append_vlist( comparisons );
 
 	ctx.add_optl( Opt::EDIT, "Filter Value", what, "_help_rule_value" );
 	ctx.add_optl(Opt::EXIT,"Delete this Rule","","_help_rule_delete");
@@ -562,13 +580,16 @@ void FeFilterEditMenu::get_options( FeConfigContext &ctx )
 
 			if ( t != FeRomInfo::LAST_INDEX )
 			{
-				rule_str = FeRomInfo::indexStrings[t];
+				ctx.fe_settings.get_resource( FeRomInfo::indexStrings[t], rule_str );
 
 				FeRule::FilterComp c = (*itr).get_comp();
 				if ( c != FeRule::LAST_COMPARISON )
 				{
+					std::string comp_str;
+					ctx.fe_settings.get_resource( FeRule::filterCompDisplayStrings[c], comp_str );
+
 					rule_str += " ";
-					rule_str += FeRule::filterCompDisplayStrings[ c ];
+					rule_str += comp_str;
 					rule_str += " ";
 					rule_str += (*itr).get_what();
 				}
@@ -830,10 +851,9 @@ void FeInputEditMenu::get_options( FeConfigContext &ctx )
 
 	if (m_mapping)
 	{
-		ctx.add_optl( Opt::INFO, 
-				"Action", 
-				FeInputMap::commandDispStrings[m_mapping->command], 
-				"_help_input_action" );
+		std::string act;
+		ctx.fe_settings.get_resource( FeInputMap::commandDispStrings[m_mapping->command], act );
+		ctx.add_optl( Opt::INFO, "Action", act, "_help_input_action" );
 
 		std::vector< std::string >::iterator it;
 		for ( it=m_mapping->input_list.begin();
@@ -886,9 +906,10 @@ bool FeInputEditMenu::on_option_select(
 			if (( conflict != FeInputMap::LAST_COMMAND )
 				&& ( conflict != m_mapping->command ))
 			{
+				std::string command_str;
+				ctx.fe_settings.get_resource( FeInputMap::commandDispStrings[ conflict ], command_str );
 				save = ctx.confirm_dialog( 
-					"This will overwrite an existing mapping ($1).  Proceed?",
-					FeInputMap::commandDispStrings[ conflict ]  );
+					"This will overwrite an existing mapping ($1).  Proceed?", command_str  );
 			}
 
 			if ( save )
@@ -1070,11 +1091,18 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ), 
 			"_help_screen_saver_timeout" );
 
-	ctx.add_optl( Opt::LIST, 
-			"Auto Rotate", 
-			FeSettings::rotationDispTokens[ ctx.fe_settings.get_autorotate() ], 
-			"_help_autorot" );
-	ctx.back_opt().append_vlist( FeSettings::rotationDispTokens );
+	std::string autorot;
+	ctx.fe_settings.get_resource( FeSettings::rotationDispTokens[ ctx.fe_settings.get_autorotate() ], autorot );
+	std::vector < std::string > rotations;
+	int i=0;
+	while ( FeSettings::rotationDispTokens[i] != 0 )
+	{
+		rotations.push_back( std::string() );
+		ctx.fe_settings.get_resource( FeSettings::rotationDispTokens[ i ], rotations.back() );
+		i++;
+	}
+	ctx.add_optl( Opt::LIST, "Auto Rotate", autorot, "_help_autorot" );
+	ctx.back_opt().append_vlist( rotations );
 
 	ctx.add_optl( Opt::EDIT, 
 			"Exit Command", 
