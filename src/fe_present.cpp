@@ -1102,24 +1102,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		.Const( _SC("ScreenWidth"), (int)vm.width )
 		.Const( _SC("ScreenHeight"), (int)vm.height )
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
-
-#ifdef SFML_SYSTEM_WINDOWS
-		.Const( _SC("OS"), "Windows" )
-#else
- #ifdef SFML_SYSTEM_MACOS
-		.Const( _SC("OS"), "OSX" )
- #else
-  #ifdef SFML_SYSTEM_FREEBSD
-		.Const( _SC("OS"), "FreeBSD" )
-  #else
-   #ifdef SFML_SYSTEM_LINUX
-		.Const( _SC("OS"), "Linux" )
-   #else
-		.Const( _SC("OS"), "Unknown" )
-   #endif
-  #endif
- #endif
-#endif
+		.Const( _SC("OS"), get_OS_string() )
 	
 		.Enum( _SC("Transition"), Enumeration()
 			.Const( _SC("StartLayout"), StartLayout )

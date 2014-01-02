@@ -522,6 +522,28 @@ int as_int( const std::string &s )
 	return atoi( s.c_str() );
 }
 
+const char *get_OS_string()
+{
+#ifdef SFML_SYSTEM_WINDOWS
+	return "Windows";
+#else
+ #ifdef SFML_SYSTEM_MACOS
+	return "OSX";
+ #else
+  #ifdef SFML_SYSTEM_FREEBSD
+	return "FreeBSD";
+  #else
+   #ifdef SFML_SYSTEM_LINUX
+	return "Linux";
+   #else
+	return "Unknown";
+   #endif
+  #endif
+ #endif
+#endif
+}
+
+
 bool run_program( const std::string &prog,
 	const::std::string &args,
 	output_callback_fn callback,

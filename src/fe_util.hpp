@@ -171,6 +171,11 @@ std::string as_str( int i );
 //
 int as_int( const std::string &s );
 
+//
+// Return the name of the operating system.
+//
+const char *get_OS_string();
+
 #ifdef FE_DEBUG
 #define ASSERT(a) assert(a)
 #else

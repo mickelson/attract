@@ -1251,6 +1251,11 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 		sq_pushroottable( temp_vm );
 		Sqrat::DefaultVM::Set( temp_vm );
 
+		Sqrat::ConstTable()
+			.Const( _SC("FeVersion"), FE_VERSION)
+			.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
+			.Const( _SC("OS"), get_OS_string() );
+
 		try
 		{
 			Sqrat::Script sc;
