@@ -187,18 +187,35 @@ bool FeRule::apply_rule( const FeRomInfo &rom ) const
 	switch ( m_filter_comp )
 	{
 	case FilterEquals:
+		if ( target.empty() )
+		{
+			if ( m_filter_what.empty() )
+				return true;
+			else
+				return false;
+		}
 		return (( sqstd_rex_match(
 					m_rex,
 					(const SQChar *)target.c_str()
 					) == SQTrue ) ? true : false );
 
 	case FilterNotEquals:
+		if ( target.empty() )
+		{
+			if ( m_filter_what.empty() )
+				return false;
+			else
+				return true;
+		}
 		return (( sqstd_rex_match(
 					m_rex,
 					(const SQChar *)target.c_str()
 					) == SQTrue ) ? false : true );
 
 	case FilterContains:
+		if ( target.empty() )
+			return false;
+
 		return (( sqstd_rex_search(
 					m_rex,
 					(const SQChar *)target.c_str(),
@@ -207,6 +224,9 @@ bool FeRule::apply_rule( const FeRomInfo &rom ) const
 					) == SQTrue ) ? true : false );
 
 	case FilterNotContains:
+		if ( target.empty() )
+			return true;
+
 		return (( sqstd_rex_search(
 					m_rex,
 					(const SQChar *)target.c_str(),
