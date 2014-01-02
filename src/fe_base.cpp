@@ -25,11 +25,11 @@
 #include <iostream>
 #include <fstream>
 
-#define FE_NAME_D					"Attract-Mode"
-#define FE_VERSION_D 			"1.0.2"
-const int FE_VERSION_NUM		= 102;
+#define FE_NAME_D			"Attract-Mode"
+#define FE_VERSION_D 			"1.1.0"
+const int FE_VERSION_NUM		= 110;
 
-const char *FE_NAME				= FE_NAME_D;
+const char *FE_NAME			= FE_NAME_D;
 const char *FE_COPYRIGHT		= FE_NAME_D " " FE_VERSION_D \
 	" Copyright (c) 2013 Andrew Mickelson";
 const char *FE_VERSION 			= FE_VERSION_D;
