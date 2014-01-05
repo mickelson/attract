@@ -23,6 +23,7 @@
 					<Add library="swscale" />
 					<Add library="avformat" />
 					<Add library="avcodec" />
+					<Add library="avresample" />
 					<Add library="avutil" />
 				</Linker>
 			</Target>
@@ -42,6 +43,7 @@
 					<Add library="swscale" />
 					<Add library="avformat" />
 					<Add library="avcodec" />
+					<Add library="avresample" />
 					<Add library="avutil" />
 				</Linker>
 			</Target>
@@ -64,6 +66,7 @@
 					<Add library="swscale" />
 					<Add library="avformat" />
 					<Add library="avcodec" />
+					<Add library="avresample" />
 					<Add library="avutil" />
 				</Linker>
 			</Target>
@@ -185,8 +188,6 @@
 		<Unit filename="fe_input.hpp" />
 		<Unit filename="fe_listbox.cpp" />
 		<Unit filename="fe_listbox.hpp" />
-		<Unit filename="fe_xml.cpp" />
-		<Unit filename="fe_xml.hpp" />
 		<Unit filename="fe_overlay.cpp" />
 		<Unit filename="fe_overlay.hpp" />
 		<Unit filename="fe_present.cpp" />
@@ -201,6 +202,8 @@
 		<Unit filename="fe_text.hpp" />
 		<Unit filename="fe_util.cpp" />
 		<Unit filename="fe_util.hpp" />
+		<Unit filename="fe_xml.cpp" />
+		<Unit filename="fe_xml.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="media.cpp">
 			<Option target="Debug" />

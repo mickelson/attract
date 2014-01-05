@@ -166,13 +166,15 @@ ifeq ($(WINDOWS_STATIC),1)
 LIBS += $(shell $(PKG_CONFIG) --libs libavformat) \
 	$(shell $(PKG_CONFIG) --libs libavcodec) \
 	$(shell $(PKG_CONFIG) --libs libavutil) \
-	$(shell $(PKG_CONFIG) --libs libswscale)
+	$(shell $(PKG_CONFIG) --libs libswscale) \
+	$(shell $(PKG_CONFIG) --libs libavresample)
 else
 LIBS +=\
 	-lavformat \
 	-lavcodec \
 	-lavutil \
-	-lswscale
+	-lswscale \
+	-lavresample
 endif
 
 _DEP += media.hpp

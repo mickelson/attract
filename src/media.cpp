@@ -25,11 +25,18 @@
 #define UINT64_C(c) (c ## ULL)
 #endif
 
+#define OLD_AUDIO_API (LIBAVCODEC_VERSION_INT < AV_VERSION_INT( 53, 42, 4 ))
+
 extern "C"
 {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
+
+#if !OLD_AUDIO_API
+#include <libavresample/avresample.h>
+#include <libavutil/opt.h>
+#endif
 }
 
 #include <queue>
@@ -62,9 +69,10 @@ public:
 	void push_packet( AVPacket *pkt );
 	void clear_packet_queue();
 
-	// Utility function to free an AVPacket
+	// Utility function to free an AV stuff...
 	//
 	static void free_packet( AVPacket *pkt );
+	static void free_frame( AVFrame *frame );
 };
 
 //
@@ -73,6 +81,9 @@ public:
 class FeAudioImp : public FeBaseStream
 {
 public:
+#if !OLD_AUDIO_API
+	AVAudioResampleContext *resample_ctx;
+#endif
 	sf::Int16 *buffer;
 	sf::Mutex buffer_mutex;
 
@@ -183,8 +194,21 @@ void FeBaseStream::free_packet( AVPacket *pkt )
 	av_free( pkt );
 }
 
+void FeBaseStream::free_frame( AVFrame *frame )
+{
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 54, 59, 100 ))
+	avcodec_free_frame( &frame );
+#else
+	av_free( frame );
+#endif
+}
+
 FeAudioImp::FeAudioImp()
-	: FeBaseStream(), buffer( NULL )
+	: FeBaseStream(),
+#if !OLD_AUDIO_API
+	resample_ctx( NULL ),
+#endif
+	buffer( NULL )
 {
 }
 
@@ -195,6 +219,15 @@ FeAudioImp::~FeAudioImp()
 
 void FeAudioImp::close()
 {
+#if !OLD_AUDIO_API
+	if ( resample_ctx )
+	{
+		sf::Lock l( buffer_mutex );
+		avresample_free( &resample_ctx );
+		resample_ctx = NULL;
+	}
+#endif
+
 	if ( buffer )
 	{
 		sf::Lock l( buffer_mutex );
@@ -402,11 +435,7 @@ the_end:
 
 	if (raw_frame)
 	{
-#if LIBAVCODEC_VERSION_MAJOR > 54
-		avcodec_free_frame( &raw_frame );
-#else
-		av_free( raw_frame );
-#endif
+		free_frame( raw_frame );
 		raw_frame=NULL;
 	}
 
@@ -554,8 +583,11 @@ void FeMedia::close()
 	
 	if (m_format_ctx)
 	{
-//		avformat_close_input( &m_format_ctx );
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 54, 35, 0 ))
+		avformat_close_input( &m_format_ctx );
+#else
 		av_close_input_file( m_format_ctx );
+#endif
 		m_format_ctx=NULL;
 	}
 
@@ -619,8 +651,13 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_audio->codec_ctx = m_format_ctx->streams[stream_id]->codec;
 				m_audio->codec = dec;
 				m_audio->buffer = (sf::Int16 *)av_malloc( 
-											MAX_AUDIO_FRAME_SIZE 
+											MAX_AUDIO_FRAME_SIZE
+											+ FF_INPUT_BUFFER_PADDING_SIZE
 											+ m_audio->codec_ctx->sample_rate );
+
+#if !OLD_AUDIO_API
+				m_audio->codec_ctx->request_sample_fmt = AV_SAMPLE_FMT_S16;
+#endif
 
 				sf::SoundStream::initialize( 
 								m_audio->codec_ctx->channels,
@@ -735,7 +772,7 @@ bool FeMedia::tick()
 
 bool FeMedia::onGetData( Chunk &data )
 {
-	int bsize, offset=0;
+	int offset=0;
 
 	data.samples = NULL;
 	data.sampleCount = 0;
@@ -745,8 +782,6 @@ bool FeMedia::onGetData( Chunk &data )
 
 	while ( offset < m_audio->codec_ctx->sample_rate )
 	{
-		bsize = MAX_AUDIO_FRAME_SIZE;
-
 		AVPacket *packet = m_audio->pop_packet();
 		while (( packet == NULL ) && ( !end_of_file() ))
 		{
@@ -762,9 +797,11 @@ bool FeMedia::onGetData( Chunk &data )
 			return false;
 		}
 
+#if OLD_AUDIO_API
 		{
 			sf::Lock l( m_audio->buffer_mutex );
 
+			int bsize = MAX_AUDIO_FRAME_SIZE;
 			if ( avcodec_decode_audio3(
 						m_audio->codec_ctx,
 						(m_audio->buffer + offset),
@@ -781,6 +818,114 @@ bool FeMedia::onGetData( Chunk &data )
 				data.samples = m_audio->buffer;
 			}
 		}
+#else
+		AVFrame *frame = avcodec_alloc_frame();
+
+		//
+		// TODO: avcodec_decode_audio4() can return multiple frames per packet depending on the codec.
+		// We don't deal with this currently...
+		//
+		int got_frame( 0 );
+		int len = avcodec_decode_audio4( m_audio->codec_ctx, frame, &got_frame, packet );
+		if ( len < 0 )
+		{
+			std::cerr << "Error decoding audio." << std::endl;
+			FeBaseStream::free_packet( packet );
+			FeBaseStream::free_frame( frame );
+			break;
+		}
+
+		if ( got_frame )
+		{
+			int data_size = av_samples_get_buffer_size(
+				NULL,
+				m_audio->codec_ctx->channels,
+				frame->nb_samples,
+				m_audio->codec_ctx->sample_fmt, 1);
+
+			if ( m_audio->codec_ctx->sample_fmt == AV_SAMPLE_FMT_S16 )
+			{
+				sf::Lock l( m_audio->buffer_mutex );
+
+				memcpy( (m_audio->buffer + offset), frame->data[0], data_size );
+				offset += data_size / sizeof( sf::Int16 );
+				data.sampleCount += data_size / sizeof(sf::Int16);
+				data.samples = m_audio->buffer;
+			}
+			else
+			{
+				sf::Lock l( m_audio->buffer_mutex );
+
+				if ( !m_audio->resample_ctx )
+				{
+					m_audio->resample_ctx = avresample_alloc_context();
+					if ( !m_audio->resample_ctx )
+					{
+						std::cerr << "Error allocating audio format converter." << std::endl;
+						FeBaseStream::free_packet( packet );
+						FeBaseStream::free_frame( frame );
+						return false;
+					}
+
+					av_opt_set_int( m_audio->resample_ctx, "in_channel_layout", frame->channel_layout, 0 );
+					av_opt_set_int( m_audio->resample_ctx, "in_sample_fmt", frame->format, 0 );
+					av_opt_set_int( m_audio->resample_ctx, "in_sample_rate", frame->sample_rate, 0 );
+					av_opt_set_int( m_audio->resample_ctx, "out_channel_layout", frame->channel_layout, 0 );
+					av_opt_set_int( m_audio->resample_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0 );
+					av_opt_set_int( m_audio->resample_ctx, "out_sample_rate", frame->sample_rate, 0 );
+
+#ifdef FE_DEBUG
+					std::cout << "Initializing resampler: in_sample_fmt="
+						<< av_get_sample_fmt_name( (AVSampleFormat)frame->format )
+						<< ", in_sample_rate=" << frame->sample_rate
+						<< ", out_sample_fmt=" << av_get_sample_fmt_name( AV_SAMPLE_FMT_S16 )
+						<< ", out_sample_rate=" << frame->sample_rate << std::endl;
+#endif
+					if ( avresample_open( m_audio->resample_ctx ) < 0 )
+					{
+						std::cerr << "Error initializing audio format converter." << std::endl;
+						FeBaseStream::free_packet( packet );
+						FeBaseStream::free_frame( frame );
+						avresample_free( &m_audio->resample_ctx );
+						m_audio->resample_ctx = NULL;
+						return false;
+					}
+				}
+				if ( m_audio->resample_ctx )
+				{
+					int out_linesize;
+					av_samples_get_buffer_size(
+						&out_linesize,
+						m_audio->codec_ctx->channels,
+						frame->nb_samples,
+						AV_SAMPLE_FMT_S16, 0 );
+
+					uint8_t *tmp_ptr = (uint8_t *)(m_audio->buffer + offset);
+
+					int out_samples = avresample_convert(
+								m_audio->resample_ctx,
+								&tmp_ptr,
+								out_linesize,
+								frame->nb_samples,
+								frame->data,
+								frame->linesize[0],
+								frame->nb_samples );
+					if ( out_samples < 0 )
+					{
+						std::cerr << "Error performing audio conversion." << std::endl;
+						FeBaseStream::free_packet( packet );
+						FeBaseStream::free_frame( frame );
+						break;
+					}
+					offset += out_samples * m_audio->codec_ctx->channels;
+					data.sampleCount += out_samples * m_audio->codec_ctx->channels;
+					data.samples = m_audio->buffer;
+				}
+			}
+		}
+		FeBaseStream::free_frame( frame );
+
+#endif
 
 		FeBaseStream::free_packet( packet );
 	}
