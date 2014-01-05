@@ -27,6 +27,11 @@
 # Uncomment next line to disable movie support (i.e. don't use ffmpeg).
 #DISABLE_MOVIE=1
 #
+# Attract-Mode supports ancient versions of FFmpeg where libavcodec only has
+# avcodec_decode_audio3() and there is no libavresample.  Uncomment the next
+# line to not link libavresample if you are using one of these versions.
+#NO_AVRESAMPLE=1
+#
 # By default, fontconfig is enabled on Linux & FreeBSD and disabled on Mac OS X
 # & Windows.  Uncomment next line to always disable fontconfig...
 #DISABLE_FONTCONFIG=1
@@ -166,15 +171,23 @@ ifeq ($(WINDOWS_STATIC),1)
 LIBS += $(shell $(PKG_CONFIG) --libs libavformat) \
 	$(shell $(PKG_CONFIG) --libs libavcodec) \
 	$(shell $(PKG_CONFIG) --libs libavutil) \
-	$(shell $(PKG_CONFIG) --libs libswscale) \
-	$(shell $(PKG_CONFIG) --libs libavresample)
+	$(shell $(PKG_CONFIG) --libs libswscale)
+
+ifneq ($(NO_AVRESAMPLE),1)
+LIBS += $(shell $(PKG_CONFIG) --libs libavresample)
+endif
+
 else
 LIBS +=\
 	-lavformat \
 	-lavcodec \
 	-lavutil \
-	-lswscale \
-	-lavresample
+	-lswscale
+
+ifneq ($(NO_AVRESAMPLE),1)
+LIBS += -lavresample
+endif
+
 endif
 
 _DEP += media.hpp
