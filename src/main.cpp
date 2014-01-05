@@ -240,6 +240,9 @@ int main(int argc, char *argv[])
 		{
 			FeInputMap::Command c = feSettings.map( ev );
 
+			if ( c == FeInputMap::LAST_COMMAND )
+				continue;
+
 			soundsys.sound_event( c );
 			if ( fePresent.handle_event( c, ev, &window ) )
 				redraw = true;
