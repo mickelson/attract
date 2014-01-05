@@ -566,9 +566,11 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 			if ( t > 500 )
 			{
 				// As the button is held down, the advancement accelerates
-				int step = 1 << ( ( t / 500 ) - 1 );
-				if ( step > 128 ) // don't go above a maximum advance speed
-					step=128;
+				int shift = ( t / 500 ) - 1;
+				if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
+					shift = 7; 
+
+				int step = 1 << ( shift );
 
 				switch ( m_moveState )
 				{
