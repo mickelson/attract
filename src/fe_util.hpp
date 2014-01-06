@@ -176,6 +176,13 @@ int as_int( const std::string &s );
 //
 const char *get_OS_string();
 
+#ifndef NO_MOVIE
+//
+// Print FFmpeg version information to stdout.
+//
+void print_ffmpeg_version_info();
+#endif
+
 #ifdef FE_DEBUG
 #define ASSERT(a) assert(a)
 #else

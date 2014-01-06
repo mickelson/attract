@@ -43,6 +43,32 @@ extern "C"
 #include <iostream>
 #include "media.hpp"
 
+void print_ffmpeg_version_info()
+{
+	std::cout << "Using " 
+		<< (( LIBAVCODEC_VERSION_MICRO >= 100 ) ? "FFmpeg" : "Libav" )
+		<< " for Audio and Video." << std::endl
+
+		<< "avcodec " << LIBAVCODEC_VERSION_MAJOR
+		<< '.' << LIBAVCODEC_VERSION_MINOR
+		<< '.' << LIBAVCODEC_VERSION_MICRO 
+
+		<< " / avformat " << LIBAVFORMAT_VERSION_MAJOR
+		<< '.' << LIBAVFORMAT_VERSION_MINOR
+		<< '.' << LIBAVFORMAT_VERSION_MICRO 
+
+		<< " / swscale " << LIBSWSCALE_VERSION_MAJOR
+		<< '.' << LIBSWSCALE_VERSION_MINOR
+		<< '.' << LIBSWSCALE_VERSION_MICRO;
+
+#if !OLD_AUDIO_API
+	std::cout << " / avresample " << LIBAVRESAMPLE_VERSION_MAJOR
+		<< '.' << LIBAVRESAMPLE_VERSION_MINOR
+		<< '.' << LIBAVRESAMPLE_VERSION_MICRO;
+#endif
+	std::cout << std::endl;
+}
+
 #define MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio 
 //
 // Base class for our implementation of the audio and video components

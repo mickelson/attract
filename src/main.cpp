@@ -101,6 +101,24 @@ void process_args( int argc, char *argv[],
 			}
 
 		}
+		else if ( strcmp( argv[next_arg], "--version" ) == 0 )
+		{
+			std::cout << FE_NAME << " " << FE_VERSION << " ("
+				<< get_OS_string()
+				<< ", SFML " << SFML_VERSION_MAJOR << '.' << SFML_VERSION_MINOR
+#ifndef NO_FONTCONFIG
+				<< " +FC"
+#endif
+				<< ") " << std::endl << std::endl;
+
+#ifdef NO_MOVIE
+			std::cout << "No Video, using SFML for Audio." << std::endl;
+#else
+			print_ffmpeg_version_info();
+#endif
+			std::cout << std::endl;
+			exit(0);
+		}
 		else
 		{
 			int retval=1;
@@ -114,10 +132,11 @@ void process_args( int argc, char *argv[],
 			std::cout << FE_COPYRIGHT << std::endl
 				<< "Usage: " << argv[0] << " [option...]" << std::endl
 				<< "OPTIONS:" << std::endl
-				<< "\t--config [config_directory]: specify config directory" << std::endl
-				<< "\t--font [font_name]: specify default font name" << std::endl
-				<< "\t--build-rom-list [emulator...]: build rom list for specified emulators" << std::endl
-				<< "\t--help: show this message" << std::endl;
+				<< "\t--build-rom-list <emu(s)...>: build rom list for specified emulators" << std::endl
+				<< "\t--config <config_directory>: specify config directory" << std::endl
+				<< "\t--font <font_name>: specify default font name" << std::endl
+				<< "\t--help: show this message" << std::endl
+				<< "\t--version: show version information" << std::endl;
 			exit( retval );
 		}
 	}
