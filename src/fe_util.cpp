@@ -39,7 +39,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <io.h>
-#include <Fcntl.h>
+#include <fcntl.h>
 #else
 #include <sys/wait.h>
 #include <pwd.h>
