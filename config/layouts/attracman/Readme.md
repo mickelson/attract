@@ -1,13 +1,13 @@
 ### Attrac-Man - Sample Attract-Mode Layout ###
 
-Based on the arcade game "Pac-Man" designed by Toru Iwatani and published by 
-Namco.
+Based on the arcade game "Pac-Man" designed by Toru Iwatani and first 
+released by Namco in 1980.
 
-Special Thanks to Jamey Pittman for "The Pac-Man Dossier" resource.
+Special thanks to Jamey Pittman for "The Pac-Man Dossier" resource.
 
 http://home.comcast.net/~jpittman2/pacman/pacmandossier.html
 
 #### Configuration ####
 
 The keys used to control Attrac-Man and set game speed can be configured
-by editting the file "layout.nut".
+by editing the file "layout.nut".
