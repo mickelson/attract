@@ -38,8 +38,8 @@ fe.layout.width=456;
 fe.layout.height=336;
 
 local lb = fe.add_listbox( 24, 96, 192, 192 );
-lb.rows = 15;
-lb.charsize = 8;
+lb.rows = 13;
+lb.charsize = 10;
 
 fe.add_artwork( "marquee", 144, 24, 168, 48 );
 fe.add_artwork( "screen", 240, 96, 192, 192 );
@@ -48,6 +48,10 @@ fe.add_text( "[ListTitle]", 118, 316, 220, 14 );
 
 local l = fe.add_text( "[ListEntry]/[ListSize]", 0, 322, 60, 10 );
 l.align = Align.Left;
+l.set_rgb( 80, 80, 80 );
+
+l = fe.add_text( "[ListFilterName]", 396, 322, 60, 10 );
+l.align = Align.Right;
 l.set_rgb( 80, 80, 80 );
 
 //
