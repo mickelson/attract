@@ -14,7 +14,7 @@ version 3 or later.
 
 Please visit <http://attractmode.org> for more information.
 
-See [Build.md][] if you intend to compile Attract-Mode from source.
+See [Compile.md][] if you intend to compile Attract-Mode from source.
 
 Quick Start
 -----------
