@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <SFML/Config.hpp>
 
-#ifndef NO_FONTCONFIG
+#ifdef USE_FONTCONFIG
 #include <fontconfig/fontconfig.h>
 #endif
 
@@ -976,7 +976,7 @@ bool FeSettings::get_font_file( std::string &fontpath,
 		return true;
 	}
 
-#ifndef NO_FONTCONFIG
+#ifdef USE_FONTCONFIG
 	bool fc_found = false;
 	FcConfig *config = FcInitLoadConfigAndFonts();
 	if ( config )

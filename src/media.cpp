@@ -25,18 +25,40 @@
 #define UINT64_C(c) (c ## ULL)
 #endif
 
-#define OLD_AUDIO_API (LIBAVCODEC_VERSION_INT < AV_VERSION_INT( 53, 42, 4 ))
-
 extern "C"
 {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
-#if !OLD_AUDIO_API
-#include <libavresample/avresample.h>
-#include <libavutil/opt.h>
+#if USE_SWRESAMPLE
+ #include <libswresample/swresample.h>
+ #include <libavutil/opt.h>
+ #define DO_RESAMPLE
+ #define RESAMPLE_LIB_STR " / swresample "
+ #define RESAMPLE_VERSION_MAJOR LIBSWRESAMPLE_VERSION_MAJOR
+ #define RESAMPLE_VERSION_MINOR LIBSWRESAMPLE_VERSION_MINOR
+ #define RESAMPLE_VERSION_MICRO LIBSWRESAMPLE_VERSION_MICRO
+ typedef SwrContext ResampleContext;
+ inline void resample_free( ResampleContext **ctx ) { swr_free( ctx ); }
+ inline ResampleContext *resample_alloc() { return swr_alloc(); }
+ inline int resample_init( ResampleContext *ctx ) { return swr_init( ctx ); }
+#else
+ #if USE_AVRESAMPLE
+  #include <libavresample/avresample.h>
+  #include <libavutil/opt.h>
+  #define DO_RESAMPLE
+  #define RESAMPLE_LIB_STR " / avresample "
+  #define RESAMPLE_VERSION_MAJOR LIBAVRESAMPLE_VERSION_MAJOR
+  #define RESAMPLE_VERSION_MINOR LIBAVRESAMPLE_VERSION_MINOR
+  #define RESAMPLE_VERSION_MICRO LIBAVRESAMPLE_VERSION_MICRO
+  typedef AVAudioResampleContext ResampleContext;
+  inline void resample_free( ResampleContext **ctx ) { avresample_free( ctx ); }
+  inline ResampleContext *resample_alloc() { return avresample_alloc_context(); }
+  inline int resample_init( ResampleContext *ctx ) { return avresample_open( ctx ); }
+ #endif
 #endif
+
 }
 
 #include <queue>
@@ -61,10 +83,10 @@ void print_ffmpeg_version_info()
 		<< '.' << LIBSWSCALE_VERSION_MINOR
 		<< '.' << LIBSWSCALE_VERSION_MICRO;
 
-#if !OLD_AUDIO_API
-	std::cout << " / avresample " << LIBAVRESAMPLE_VERSION_MAJOR
-		<< '.' << LIBAVRESAMPLE_VERSION_MINOR
-		<< '.' << LIBAVRESAMPLE_VERSION_MICRO;
+#ifdef DO_RESAMPLE
+	std::cout << RESAMPLE_LIB_STR << RESAMPLE_VERSION_MAJOR
+		<< '.' << RESAMPLE_VERSION_MINOR
+		<< '.' << RESAMPLE_VERSION_MICRO;
 #endif
 	std::cout << std::endl;
 }
@@ -95,7 +117,7 @@ public:
 	void push_packet( AVPacket *pkt );
 	void clear_packet_queue();
 
-	// Utility function to free an AV stuff...
+	// Utility functions to free AV stuff...
 	//
 	static void free_packet( AVPacket *pkt );
 	static void free_frame( AVFrame *frame );
@@ -107,8 +129,8 @@ public:
 class FeAudioImp : public FeBaseStream
 {
 public:
-#if !OLD_AUDIO_API
-	AVAudioResampleContext *resample_ctx;
+#ifdef DO_RESAMPLE
+	ResampleContext *resample_ctx;
 #endif
 	sf::Int16 *buffer;
 	sf::Mutex buffer_mutex;
@@ -126,7 +148,7 @@ class FeVideoImp : public FeBaseStream
 private:
 	//
 	// Video decoding and colour conversion runs on a dedicated thread.
-	//	Loading the result into an sf::Texture and displaying it is done 
+	// Loading the result into an sf::Texture and displaying it is done 
 	// on the main thread.
 	//
 	sf::Thread m_video_thread;
@@ -222,7 +244,7 @@ void FeBaseStream::free_packet( AVPacket *pkt )
 
 void FeBaseStream::free_frame( AVFrame *frame )
 {
-#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 54, 59, 100 ))
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 54, 28, 0 ))
 	avcodec_free_frame( &frame );
 #else
 	av_free( frame );
@@ -231,7 +253,7 @@ void FeBaseStream::free_frame( AVFrame *frame )
 
 FeAudioImp::FeAudioImp()
 	: FeBaseStream(),
-#if !OLD_AUDIO_API
+#ifdef DO_RESAMPLE
 	resample_ctx( NULL ),
 #endif
 	buffer( NULL )
@@ -245,11 +267,11 @@ FeAudioImp::~FeAudioImp()
 
 void FeAudioImp::close()
 {
-#if !OLD_AUDIO_API
+#ifdef DO_RESAMPLE
 	if ( resample_ctx )
 	{
 		sf::Lock l( buffer_mutex );
-		avresample_free( &resample_ctx );
+		resample_free( &resample_ctx );
 		resample_ctx = NULL;
 	}
 #endif
@@ -519,7 +541,7 @@ void FeMedia::init_av()
 		av_register_all();
 
 #ifndef FE_DEBUG
-      av_log_set_level(AV_LOG_FATAL);
+		av_log_set_level(AV_LOG_FATAL);
 #endif
 
 		do_init=false;
@@ -609,7 +631,7 @@ void FeMedia::close()
 	
 	if (m_format_ctx)
 	{
-#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 54, 35, 0 ))
+#if (LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( 53, 17, 0 ))
 		avformat_close_input( &m_format_ctx );
 #else
 		av_close_input_file( m_format_ctx );
@@ -664,6 +686,8 @@ bool FeMedia::openFromFile( const std::string &name )
 
 		if ( stream_id >= 0 )
 		{
+			m_format_ctx->streams[stream_id]->codec->request_sample_fmt = AV_SAMPLE_FMT_S16;
+
 			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec, 
 										dec, NULL ) < 0 )
 			{
@@ -676,18 +700,19 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_audio->stream_id = stream_id;
 				m_audio->codec_ctx = m_format_ctx->streams[stream_id]->codec;
 				m_audio->codec = dec;
-				m_audio->buffer = (sf::Int16 *)av_malloc( 
-											MAX_AUDIO_FRAME_SIZE
-											+ FF_INPUT_BUFFER_PADDING_SIZE
-											+ m_audio->codec_ctx->sample_rate );
 
-#if !OLD_AUDIO_API
-				m_audio->codec_ctx->request_sample_fmt = AV_SAMPLE_FMT_S16;
-#endif
+				//
+				// TODO: Fix buffer sizing, we allocate way
+				// more than we use
+				//
+				m_audio->buffer = (sf::Int16 *)av_malloc( 
+					MAX_AUDIO_FRAME_SIZE
+					+ FF_INPUT_BUFFER_PADDING_SIZE
+					+ m_audio->codec_ctx->sample_rate );
 
 				sf::SoundStream::initialize( 
-								m_audio->codec_ctx->channels,
-								m_audio->codec_ctx->sample_rate );
+					m_audio->codec_ctx->channels,
+					m_audio->codec_ctx->sample_rate );
 
 				sf::SoundStream::setLoop( false );
 			}
@@ -699,7 +724,7 @@ bool FeMedia::openFromFile( const std::string &name )
 		int stream_id( -1 );
 		AVCodec *dec;
  		stream_id = av_find_best_stream( m_format_ctx, AVMEDIA_TYPE_VIDEO, 
-											-1, -1, &dec, 0 );
+					-1, -1, &dec, 0 );
 
 		if ( stream_id < 0 )
 		{
@@ -726,7 +751,6 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_video->display_texture.create( m_video->codec_ctx->width,
 											m_video->codec_ctx->height );
 				m_video->display_texture.setSmooth( true );
-				m_format_ctx->flags |= AVFMT_FLAG_GENPTS;
 			}
 		}
 	}
@@ -823,7 +847,7 @@ bool FeMedia::onGetData( Chunk &data )
 			return false;
 		}
 
-#if OLD_AUDIO_API
+#if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT( 53, 25, 0 ))
 		{
 			sf::Lock l( m_audio->buffer_mutex );
 
@@ -849,7 +873,7 @@ bool FeMedia::onGetData( Chunk &data )
 
 		//
 		// TODO: avcodec_decode_audio4() can return multiple frames per packet depending on the codec.
-		// We don't deal with this currently...
+		// We don't deal with this appropriately...
 		//
 		int got_frame( 0 );
 		int len = avcodec_decode_audio4( m_audio->codec_ctx, frame, &got_frame, packet );
@@ -869,7 +893,9 @@ bool FeMedia::onGetData( Chunk &data )
 				frame->nb_samples,
 				m_audio->codec_ctx->sample_fmt, 1);
 
+#ifdef DO_RESAMPLE
 			if ( m_audio->codec_ctx->sample_fmt == AV_SAMPLE_FMT_S16 )
+#endif
 			{
 				sf::Lock l( m_audio->buffer_mutex );
 
@@ -878,13 +904,14 @@ bool FeMedia::onGetData( Chunk &data )
 				data.sampleCount += data_size / sizeof(sf::Int16);
 				data.samples = m_audio->buffer;
 			}
+#ifdef DO_RESAMPLE
 			else
 			{
 				sf::Lock l( m_audio->buffer_mutex );
 
 				if ( !m_audio->resample_ctx )
 				{
-					m_audio->resample_ctx = avresample_alloc_context();
+					m_audio->resample_ctx = resample_alloc();
 					if ( !m_audio->resample_ctx )
 					{
 						std::cerr << "Error allocating audio format converter." << std::endl;
@@ -907,12 +934,14 @@ bool FeMedia::onGetData( Chunk &data )
 						<< ", out_sample_fmt=" << av_get_sample_fmt_name( AV_SAMPLE_FMT_S16 )
 						<< ", out_sample_rate=" << frame->sample_rate << std::endl;
 #endif
-					if ( avresample_open( m_audio->resample_ctx ) < 0 )
+					if ( resample_init( m_audio->resample_ctx ) < 0 )
 					{
-						std::cerr << "Error initializing audio format converter." << std::endl;
+						std::cerr << "Error initializing audio format converter, input format="
+							<< av_get_sample_fmt_name( (AVSampleFormat)frame->format )
+							<< ", input sample rate=" << frame->sample_rate << std::endl;
 						FeBaseStream::free_packet( packet );
 						FeBaseStream::free_frame( frame );
-						avresample_free( &m_audio->resample_ctx );
+						resample_free( &m_audio->resample_ctx );
 						m_audio->resample_ctx = NULL;
 						return false;
 					}
@@ -928,6 +957,14 @@ bool FeMedia::onGetData( Chunk &data )
 
 					uint8_t *tmp_ptr = (uint8_t *)(m_audio->buffer + offset);
 
+#ifdef USE_SWRESAMPLE
+					int out_samples = swr_convert(
+								m_audio->resample_ctx,
+								&tmp_ptr,
+								frame->nb_samples,
+								(const uint8_t **)frame->data,
+								frame->nb_samples );
+#else // USE_AVRESAMPLE
 					int out_samples = avresample_convert(
 								m_audio->resample_ctx,
 								&tmp_ptr,
@@ -936,6 +973,7 @@ bool FeMedia::onGetData( Chunk &data )
 								frame->data,
 								frame->linesize[0],
 								frame->nb_samples );
+#endif
 					if ( out_samples < 0 )
 					{
 						std::cerr << "Error performing audio conversion." << std::endl;
@@ -948,6 +986,7 @@ bool FeMedia::onGetData( Chunk &data )
 					data.samples = m_audio->buffer;
 				}
 			}
+#endif
 		}
 		FeBaseStream::free_frame( frame );
 

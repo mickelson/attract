@@ -19,32 +19,20 @@
 ##  along with Attract-Mode.  If not, see <http://www.gnu.org/licenses/>.
 ##
 ##
-
 ###############################
 #
 # BUILD CONFIGURATION OPTIONS:
 #
-# Uncomment next line to disable movie support (i.e. don't use ffmpeg).
-#DISABLE_MOVIE=1
+# Uncomment next line to disable movie support (i.e. don't use FFmpeg).
+#NO_MOVIE=1
 #
-# Attract-Mode supports ancient versions of FFmpeg where libavcodec only has
-# avcodec_decode_audio3() and there is no libavresample.  Uncomment the next
-# line to not link libavresample if you are using one of these versions.
-#NO_AVRESAMPLE=1
-#
-# By default, fontconfig is enabled on Linux & FreeBSD and disabled on Mac OS X
-# & Windows.  Uncomment next line to always disable fontconfig...
-#DISABLE_FONTCONFIG=1
-# ...or uncomment next line to always enable fontconfig.
-#ENABLE_FONTCONFIG=1
-#
-# By default, if fontconfig is enabled we link against the system's expat 
-# library (because fontconfig uses expat too).  If fontconfig is disabled 
+# By default, if FontConfig gets enabled we link against the system's expat 
+# library (because FontConfig uses expat too).  If FontConfig is not used
 # then Attract-Mode is statically linked to its own version of expat.
 # Uncomment next line to always link to Attract-Mode's version of expat.
 #BUILD_EXPAT=1
 #
-# Uncomment next line for Windows static build
+# Uncomment next line for Windows static cross-compile build (mxe)
 #WINDOWS_STATIC=1
 ###############################
 
@@ -101,112 +89,100 @@ _OBJ =\
 	fe_listbox.o \
 	main.o
 
-ifneq ($(WINDOWS_STATIC),1)
-LIBS = -lsfml-audio \
+#
+# Test OS to set some defaults
+#
+ifeq ($(OS),Windows_NT)
+ #
+ # Windows
+ #
+ CFLAGS+=-mconsole
+else
+ UNAME = $(shell uname -a)
+ ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+  #
+  # Mac OS X
+  #
+  _DEP += fe_util_osx.hpp
+  _OBJ += fe_util_osx.o
+  LIBS += -framework Cocoa
+ endif
+endif
+
+#
+# Deal with SFML
+#
+ifeq ($(WINDOWS_STATIC),1)
+ LIBS += $(shell $(PKG_CONFIG) --static --libs sfml)
+ CFLAGS += -mconsole -DSFML_STATIC \
+	$(shell $(PKG_CONFIG) --static --cflags sfml)
+else
+ LIBS += -lsfml-audio \
 	-lsfml-graphics \
 	-lsfml-window \
 	-lsfml-system
-else
-LIBS = -lsfml-audio-s \
-	-lsfml-graphics-s \
-	-lsfml-window-s \
-	-lsfml-system-s \
-	$(shell $(PKG_CONFIG) --libs sndfile openal glew freetype2) \
-	-ljpeg \
-	-lws2_32 \
-	-lgdi32 \
-	-lopengl32 \
-	-lwinmm
-
-CFLAGS += -mconsole -DSFML_STATIC \
-	$(shell $(PKG_CONFIG) --cflags sndfile openal glew freetype2) \
-
-ifneq ($(ENABLE_FONTCONFIG),1)
-DISABLE_FONTCONFIG=1
-endif
 endif
 
 #
-# Test OS to set defaults
+# Check whether optional libs should be enabled
 #
-ifeq ($(OS),Windows_NT)
-
-CFLAGS+=-mconsole
-ifneq ($(ENABLE_FONTCONFIG),1)
-DISABLE_FONTCONFIG=1
+ifeq ($(shell $(PKG_CONFIG) --exists fontconfig && echo "1" || echo "0"), 1)
+USE_FONTCONFIG=1
 endif
 
-else
-
-UNAME = $(shell uname -a)
-ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
-
-_DEP += fe_util_osx.hpp
-_OBJ += fe_util_osx.o
-
-LIBS += -framework Cocoa
-
-ifneq ($(ENABLE_FONTCONFIG),1)
-DISABLE_FONTCONFIG=1
-endif
+ifeq ($(shell $(PKG_CONFIG) --exists libswresample && echo "1" || echo "0"), 1)
+ USE_SWRESAMPLE=1
 endif
 
+ifeq ($(shell $(PKG_CONFIG) --exists libavresample && echo "1" || echo "0"), 1)
+ USE_AVRESAMPLE=1
 endif
 
 #
 # Now process the various settings...
 #
 ifeq ($(FE_DEBUG),1)
-CFLAGS += -g -Wall
-FE_FLAGS += -DFE_DEBUG
+ CFLAGS += -g -Wall
+ FE_FLAGS += -DFE_DEBUG
 else
-CFLAGS += -O2
+ CFLAGS += -O2
 endif
 
-ifeq ($(DISABLE_MOVIE),1)
-FE_FLAGS += -DNO_MOVIE
+ifeq ($(USE_FONTCONFIG),1)
+ FE_FLAGS += -DUSE_FONTCONFIG
+ TEMP_LIBS += fontconfig
 else
-
-ifeq ($(WINDOWS_STATIC),1)
-LIBS += $(shell $(PKG_CONFIG) --libs libavformat) \
-	$(shell $(PKG_CONFIG) --libs libavcodec) \
-	$(shell $(PKG_CONFIG) --libs libavutil) \
-	$(shell $(PKG_CONFIG) --libs libswscale)
-
-ifneq ($(NO_AVRESAMPLE),1)
-LIBS += $(shell $(PKG_CONFIG) --libs libavresample)
+ BUILD_EXPAT=1
 endif
 
+ifeq ($(NO_MOVIE),1)
+ FE_FLAGS += -DNO_MOVIE
 else
-LIBS +=\
-	-lavformat \
-	-lavcodec \
-	-lavutil \
-	-lswscale
+ TEMP_LIBS += libavformat libavcodec libavutil libswscale
 
-ifneq ($(NO_AVRESAMPLE),1)
-LIBS += -lavresample
+ ifeq ($(USE_SWRESAMPLE),1)
+  TEMP_LIBS += libswresample
+  FE_FLAGS += -DUSE_SWRESAMPLE
+ else
+  ifeq ($(USE_AVRESAMPLE),1)
+  TEMP_LIBS += libavresample
+  FE_FLAGS += -DUSE_AVRESAMPLE
+  endif
+ endif 
+
+ _DEP += media.hpp
+ _OBJ += media.o
 endif
 
-endif
-
-_DEP += media.hpp
-_OBJ += media.o
-endif
-
-ifeq ($(DISABLE_FONTCONFIG),1)
-FE_FLAGS += -DNO_FONTCONFIG
-BUILD_EXPAT=1
-else
-LIBS += -lfontconfig
-endif
+LIBS += $(shell $(PKG_CONFIG) --libs $(TEMP_LIBS))
+CFLAGS += $(shell $(PKG_CONFIG) --cflags $(TEMP_LIBS))
 
 ifeq ($(BUILD_EXPAT),1)
-CFLAGS += -I$(EXTLIBS_DIR)/expat
-EXPAT = $(OBJ_DIR)/libexpat.a
+ CFLAGS += -I$(EXTLIBS_DIR)/expat
+ EXPAT = $(OBJ_DIR)/libexpat.a
 else
-LIBS += -lexpat
-EXPAT =
+ LIBS += -lexpat
+ EXPAT =
 endif
 
 CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include

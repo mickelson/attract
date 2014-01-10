@@ -106,7 +106,7 @@ void process_args( int argc, char *argv[],
 			std::cout << FE_NAME << " " << FE_VERSION << " ("
 				<< get_OS_string()
 				<< ", SFML " << SFML_VERSION_MAJOR << '.' << SFML_VERSION_MINOR
-#ifndef NO_FONTCONFIG
+#ifdef USE_FONTCONFIG
 				<< " +FC"
 #endif
 				<< ") " << std::endl << std::endl;
