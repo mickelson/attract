@@ -24,11 +24,6 @@
 <h2 id="project_tagline">
 Attract-Mode is a graphical front-end for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinet setups.  Attract-Mode is open source and runs on Linux, OS X and Windows.
 </h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/mickelson/attract/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/mickelson/attract/tarball/master">Download this project as a tar.gz file</a>
-            </section>
         </header>
     </div>
 
@@ -47,29 +42,53 @@ Attract-Mode is a graphical front-end for command line emulators such as MAME, M
 <li>User configurable sounds and ambient music.</li>
 <li>Display images, videos and information related to specific games.</li>
 <li>Supports screen rotation and flipping (including auto-rotation).</li>
-<li>Filter game lists based on specific attributes.</li>
+<li>Filter game lists based on multiple game attributes.</li>
+<li>Plug-ins for integration with external programs (such as LED control or joystick mapping software).
 <li>Automatically generate game lists from directory contents.</li>
 <li>Import game information from MAME/MESS -listxml and -listsoftware commands.</li>
-<li>Catver.ini and nplayers.ini file support.</li>
+<li>Catver.ini and <a href="http://nplayers.arcadebelgium.be/">nplayers.ini</a> file support.</li>
 <li>Unicode character (UTF-8) support.</li>
 <li>Configurable screensaver.</li>
 </ul>
 
-        <h3><a name="download" class="anchor" href="#download"><span class="octicon octicon-link"></span></a>Download</h3>
+        <h3><a name="releases" class="anchor" href="#releases"><span class="octicon octicon-link"></span></a>Latest Release</h3>
 
+	<p>The lastest release is version 1.1.</p>
+	<p>What's new in 1.1:</p>
 <ul>
-	<li><a href="https://github.com/mickelson/attract/releases/download/v1.0.2/attract-1.0-win32.zip">Attract-Mode 1.0 Windows Binary (.zip)</a></li>
-	<li><a href="https://github.com/mickelson/attract/archive/v1.0.2.zip">Attract-Mode 1.0 Source (.zip)</a></li>
-	<li><a href="https://github.com/mickelson/attract/archive/v1.0.2.tar.gz">Attract-Mode 1.0 Source (.tar.gz)</a></li>
+	<li>list filters have been completely reworked. You can now have multiple rules per filter and multiple filters per list. The filters associated with a list can be cycled through and selected in the same manner as lists are cycled/selected.</li>
+	<li>plug-in support added to allow integration with external programs. UltraStik mapping, LEDBlinky and eSpeak plugins are included.</li>
+	<li>much faster MAME romlist creation.</li>
+	<li>fixed behaviour when holding down keys to navigate the game list.</li>
+	<li>fixed movie audio.</li>
+	<li>hide menu bar on OS X.</li>
+	<li>many other bug fixes and improvements.</li>
 </ul>
+        <h3><a name="download" class="anchor" href="#download"><span class="octicon octicon-link"></span></a>Download</h3>
+<ul>
+	
+	<li><a href="https://github.com/mickelson/attract/releases/download/v1.1.0/attract-1.1-win32.zip">Attract-Mode 1.1 Windows Binary (.zip)</a></li>
+	<li><a href="https://github.com/mickelson/attract/archive/v1.1.0.zip">Attract-Mode 1.1 Source (.zip)</a></li>
+	<li><a href="https://github.com/mickelson/attract/archive/v1.1.0.tar.gz">Attract-Mode 1.1 Source (.tar.gz)</a></li>
+</ul>
+<a href="https://github.com/mickelson/attract/releases">Click here for other releases</a>
 
         <h3><a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h3>
 <p>
 Attract-Mode is distributed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>, version 3 or later.
 </p>
         <h3><a name="support" class="anchor" href="#support"><span class="octicon octicon-link"></span></a>Support</h3>
+
+	<p>Version 1.1 documentation:</p>
+	<ul>
+		<li><a href="https://github.com/mickelson/attract/blob/v1.1.0/Readme.md">Readme.md</a></li>
+		<li><a href="https://github.com/mickelson/attract/blob/v1.1.0/Compile.md">Compile.md</a></li>
+		<li><a href="https://github.com/mickelson/attract/blob/v1.1.0/Layouts.md">Layouts.md</a></li>
+	</ul>
+
 <p>There is a <a href="https://github.com/mickelson/attract/wiki">wiki</a>.</p>
 <p>Bug reports and feature requests can be submitted <a href="https://github.com/mickelson/attract/issues">at GitHub</a>.</p>
+
 
       </section>
     </div>
