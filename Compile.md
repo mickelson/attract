@@ -7,9 +7,11 @@ system.  This means:
 
 * the "build-essential" and "pkg-config" packages on Debian/Ubuntu.  Other
   Linux distributions should have similar packages available.
+
 * "MinGW" (<http://mingw.org>) and "pkg-config" on Windows 
   (see <http://sourceforge.net/projects/pkgconfiglite/> for what looks to be
   the least painful way of getting pkg-config on Windows).
+
 * "X-Code" on OS X.
 
 Build instructions are set out by operating system below:
@@ -27,9 +29,15 @@ Linux, FreeBSD and Windows:
 
 2. Extract the Attract-Mode source to your system.
 
-3. From the directory you extracted the source into, run `make`.  This will
-build Attract-Mode with movie support.  Run `make NO_MOVIE=1` to build without
-movie support. This step will create the "attract" executable file.
+3. From the directory you extracted the source into, run:
+
+           make
+
+   or, to build without movie support: 
+
+           make NO_MOVIE=1
+
+   This step will create the "attract" executable file.
 
    On Windows: Remember to set the MinGW environment variables first and 
 to use the MINGW make command.
@@ -44,19 +52,22 @@ OS X:
 
 1. Install Homebrew by pasting the following at the command prompt:
 
-      ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+           ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
 
 2.  Install the pkg-config and ffmpeg homebrew recipes:
 
-      brew install pkg-config
-      brew install ffmpeg
+           brew install pkg-config
+           brew install ffmpeg
 
 3. Download and install SFML on your system.  This can be done by following
 "Installing SFML" instructions at: <http://sfml-dev.org/tutorials/2.1/start-osx.php>
 
 4. Extract the Attract-Mode source to your system.
 
-5. From the directory you extracted the Attract-Mode source into, run `make`.
+5. From the directory you extracted the Attract-Mode source into, run:
+
+           make
+
    This step will create the "attract" executable file.
 
 6. Copy the contents of the "config" directory from the Attract-Mode 

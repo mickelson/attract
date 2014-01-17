@@ -451,12 +451,12 @@ Parameters:
      Squirrel to call with any output that the plug-in command provides on 
      stdout.  The function should be in the following form:
 
-      function callback_function( op )
-      {
-      }
+        function callback_function( op )
+        {
+        }
 
      If provided, this function will be called with each line of output from 
-     the plug-in command in the `op` variable.
+     the plug-in command in the `op` parameter.
 
 Return Value:
 
