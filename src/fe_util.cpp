@@ -275,11 +275,27 @@ bool get_filename_from_base( std::vector<std::string> &list,
 				const std::vector <std::string> &base_list,
 				const char **filter, bool filter_excludes )
 {
-	DIR *dir;
-	struct dirent *ent;
-
 	if ( base_list.empty() )
 		return false;
+
+#ifdef SFML_SYSTEM_WINDOWS
+	for ( std::vector<std::string>::const_iterator itr = base_list.begin();
+			itr < base_list.end(); ++itr )
+	{
+		std::string temp = path + (*itr) + "*";
+		struct _finddata_t t;
+		intptr_t srch = _findfirst( temp.c_str(), &t );
+
+		if  ( srch < 0 )
+			continue;
+		do
+		{
+			std::string what;
+			str_from_c( what, t.name );
+#else
+
+	DIR *dir;
+	struct dirent *ent;
 
 	if ( (dir = opendir( path.c_str() )) != NULL )
 	{
@@ -291,12 +307,15 @@ bool get_filename_from_base( std::vector<std::string> &list,
 			{
 				std::string what;
 				str_from_c( what, ent->d_name );
+
 				if (( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ))
 					continue;
 
 				if (( what.size() >= (*itr).size() ) &&
 					( what.compare( 0, (*itr).size(), (*itr) ) == 0 ))
 				{
+#endif // SFML_SYSTEM_WINDOWS
+
 					bool add=true;
 					if ( filter )
 					{
@@ -318,20 +337,22 @@ bool get_filename_from_base( std::vector<std::string> &list,
 					}
 
 					if ( add )
-					{
-						std::string new_name = path;
-						str_from_c( new_name, ent->d_name );
-						list.push_back( new_name );
-					}
+						list.push_back( path + what );
+
+#ifdef SFML_SYSTEM_WINDOWS
+		} while ( _findnext( srch, &t ) == 0 );
+		_findclose( srch );
+	}
+#else
 				}
 			}
 		}
 		closedir( dir );
 	}
 	else
-	{
 		std::cerr << "Error opening directory: " << path << std::endl;
-	}
+
+#endif // SFML_SYSTEM_WINDOWS
 
 	return !(list.empty());
 }
