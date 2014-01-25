@@ -197,7 +197,7 @@ private:
 	int m_rom_index; // only used if there are no filters on this list
 	int m_filter_index;
 
-	std::vector< FeFilter > m_filters;
+	std::deque< FeFilter > m_filters;
 };
 
 class FeRomList : public FeFileConfigurable

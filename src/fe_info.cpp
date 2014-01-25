@@ -536,7 +536,7 @@ std::string FeListInfo::state_as_output() const
 	}
 	else
 	{
-		for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
+		for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 		{
 			state << (*itr).get_current_rom_index() << ",";
@@ -565,6 +565,9 @@ FeFilter *FeListInfo::create_filter( const std::string &n )
 
 void FeListInfo::delete_filter( int i )
 {
+	if (( m_filter_index > 0 ) && ( m_filter_index >= i ))
+		m_filter_index--;
+
 	m_filters.erase( m_filters.begin() + i );
 }
 
@@ -572,7 +575,7 @@ void FeListInfo::get_filters_list( std::vector<std::string> &l ) const
 {
 	l.clear();
 
-	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
+	for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 	{
 		l.push_back( (*itr).get_name() );		
@@ -595,7 +598,7 @@ void FeListInfo::save( std::ofstream &f ) const
 		f << '\t' << setw(20) << left 
 			<< indexStrings[Romlist] << ' ' << get_info( Romlist ) << endl;
 
-	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
+	for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 		(*itr).save( f );
 }
