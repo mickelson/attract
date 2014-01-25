@@ -74,6 +74,7 @@ public:
 	bool config_dialog(); 
 	int lists_dialog(); 
 	int filters_dialog();
+	int languages_dialog();
 };
 
 #endif

@@ -29,13 +29,9 @@
 
 extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_EMULATOR_SUBDIR;
-extern const char *FE_LAYOUT_SUBDIR;
-extern const char *FE_SOUND_SUBDIR;
-extern const char *FE_PLUGIN_SUBDIR;
 
 extern const char *FE_ROMLIST_FILE_EXTENSION;
 extern const char *FE_EMULATOR_FILE_EXTENSION;
-extern const char *FE_PLUGIN_FILE_EXTENSION;
 
 class FeSettings : public FeFileConfigurable
 {
@@ -46,7 +42,8 @@ public:
 
 	enum ConfigSettingIndex 
 	{ 
-		AutoRotate=0, 
+		Language=0,
+		AutoRotate, 
 		ExitCommand, 
 		DefaultFont, 
 		FontPath, 
@@ -62,6 +59,7 @@ private:
 	std::string m_config_path;
 	std::string m_default_font;
 	std::string m_exit_command;
+	std::string m_language;
 
 	std::vector<std::string> m_font_paths;
 	std::vector<FeListInfo> m_lists;
@@ -94,11 +92,18 @@ private:
 	void internal_get_art_file( std::vector<std::string> &, 
 							std::string &, int, const std::string &, bool  ) const;
 
+	void internal_gather_config_files(
+			std::vector<std::string> &ll,
+			const std::vector<std::string> &extension_list,
+			const char *subdir ) const;
+
+	void internal_load_language( const std::string &lang );
+
 public:
 	FeSettings( const std::string &config_dir, 
 				const std::string &cmdln_font, bool disable_mousecap );
 
-	bool load();
+	void load();
 	void save_state( void ) const;
 
 	FeInputMap::Command map( const sf::Event &e ) const { return m_inputmap.map( e ); };
@@ -111,6 +116,7 @@ public:
 	void set_mute( bool );
 	bool get_sound_file( FeInputMap::Command, std::string &s, bool full_path=true ) const;
 	void set_sound_file( FeInputMap::Command, const std::string &s );
+	void get_sounds_list( std::vector < std::string > &ll ) const;
 
 	void change_rom( int step );
 
@@ -158,6 +164,8 @@ public:
 	void get_plugin_param_labels( const std::string &plugin, 
 		std::vector<std::string> &labels ) const;
 
+	std::string get_plugin_full_path( const std::string &label ) const;
+
 	// get a list of available plugins
 	void get_plugins( std::vector < std::string > &list ) const;
 
@@ -172,6 +180,7 @@ public:
 	std::string get_screensaver_file() const;
 	std::string get_current_layout_file() const;
 	std::string get_current_layout_dir() const;
+	void get_layouts_list( std::vector<std::string> &layouts ) const;
 
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;
@@ -214,6 +223,7 @@ public:
 	// return true if specified romlist name is configured for use as a display 
 	// list
 	bool check_romlist_configured( const std::string &n ) const;
+	void get_romlists_list( std::vector < std::string > &ll ) const;
 
 	void save() const;
 
@@ -222,6 +232,10 @@ public:
 									std::string &str ) const;
 
 	int lists_count() const;
+
+	void set_language( const std::string &s );
+	const std::string &get_language() const { return m_language; }
+	void get_languages_list( std::vector < std::string > &ll ) const;
 };
 
 #endif

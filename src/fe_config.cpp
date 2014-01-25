@@ -690,24 +690,16 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl( Opt::LIST, "Layout", 
 				m_list->get_info( FeListInfo::Layout ), "_help_list_layout" );
 
-		std::string path = ctx.fe_settings.get_config_dir();
-		path += FE_LAYOUT_SUBDIR;
-
-		std::vector<std::string> values;
-		get_subdirectories( values, path );
-		ctx.back_opt().append_vlist( values );
+		std::vector<std::string> layouts;
+		ctx.fe_settings.get_layouts_list( layouts );
+		ctx.back_opt().append_vlist( layouts );
 
 		ctx.add_optl( Opt::LIST, "Rom List", 
 				m_list->get_info( FeListInfo::Romlist ), "_help_list_romlist" );
 
-		path = ctx.fe_settings.get_config_dir();
-		path += FE_ROMLIST_SUBDIR;
-
-		std::vector<std::string> additions;
-		get_basename_from_extension( additions, path, 
-			std::vector<std::string>(1, FE_ROMLIST_FILE_EXTENSION) );
-
-		ctx.back_opt().append_vlist( additions );
+		std::vector<std::string> romlists;
+		ctx.fe_settings.get_romlists_list( romlists );
+		ctx.back_opt().append_vlist( romlists );
 
 		std::vector<std::string> filters;
 		m_list->get_filters_list( filters );
@@ -801,7 +793,7 @@ void FeListSelMenu::get_options( FeConfigContext &ctx )
 			itr < name_list.end(); ++itr )
 		ctx.add_opt( Opt::MENU, (*itr), "", "_help_list_sel" );
 
-	ctx.add_opt( Opt::MENU, "Add New List", "", "_help_list_add" );
+	ctx.add_optl( Opt::MENU, "Add New List", "", "_help_list_add" );
 	ctx.back_opt().opaque = 1;
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -1015,13 +1007,7 @@ void FeSoundMenu::get_options( FeConfigContext &ctx )
 	// Note the sound_list vector gets copied to each option!
 	//
 	std::vector<std::string> sound_list;
-	std::string path = ctx.fe_settings.get_config_dir();
-	path += FE_SOUND_SUBDIR;
-
-	get_basename_from_extension(
-		sound_list,
-		path,
-		std::vector<std::string>(1,"") );
+	ctx.fe_settings.get_sounds_list( sound_list );
 
 #ifndef NO_MOVIE
 	for ( std::vector<std::string>::iterator itr=sound_list.begin();
@@ -1086,6 +1072,31 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Configure / Miscellaneous" );
 
+	ctx.fe_settings.get_languages_list( m_languages );
+	std::string cl = ctx.fe_settings.get_info( FeSettings::Language );
+
+	std::vector<std::string> disp_lang_list( m_languages.size() );
+	std::string disp_lang;
+
+	int i=0;
+	for ( std::vector<std::string>::iterator itr=m_languages.begin(); itr!=m_languages.end(); ++itr )
+	{
+		ctx.fe_settings.get_resource( (*itr), (disp_lang_list[i]) );
+
+		if ( cl.compare(*itr) == 0 )
+		{
+			disp_lang = disp_lang_list[i];
+		}
+
+		i++;
+	}
+
+	ctx.add_optl( Opt::LIST,
+			"Language",
+			disp_lang,
+			"_help_language" );
+	ctx.back_opt().append_vlist( disp_lang_list );
+
 	ctx.add_optl( Opt::EDIT, 
 			"Screen Saver Timeout", 
 			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ), 
@@ -1094,7 +1105,7 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	std::string autorot;
 	ctx.fe_settings.get_resource( FeSettings::rotationDispTokens[ ctx.fe_settings.get_autorotate() ], autorot );
 	std::vector < std::string > rotations;
-	int i=0;
+	i=0;
 	while ( FeSettings::rotationDispTokens[i] != 0 )
 	{
 		rotations.push_back( std::string() );
@@ -1134,23 +1145,25 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 
 bool FeMiscMenu::save( FeConfigContext &ctx )
 {
+	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ] );
+
 	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout, 
-			ctx.opt_list[0].get_value() );
+			ctx.opt_list[1].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::AutoRotate, 
-			FeSettings::rotationTokens[ ctx.opt_list[1].get_vindex() ] );
+			FeSettings::rotationTokens[ ctx.opt_list[2].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand, 
-			ctx.opt_list[2].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
 			ctx.opt_list[3].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath, 
+	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
 			ctx.opt_list[4].get_value() );
 
+	ctx.fe_settings.set_info( FeSettings::FontPath, 
+			ctx.opt_list[5].get_value() );
+
 	ctx.fe_settings.set_info( FeSettings::ListsMenuExit, 
-			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[6].get_vindex() == 0 ? "yes" : "no" );
 
 	return true;
 }
@@ -1239,12 +1252,11 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	// If it is, then its members and member attributes set out what it is
 	// that the plug-in needs configured by the user.
 	//
-	std::string script_file = ctx.fe_settings.get_config_dir() 
-		+ FE_PLUGIN_SUBDIR + m_plugin_label + FE_PLUGIN_FILE_EXTENSION;
+	std::string script_file = ctx.fe_settings.get_plugin_full_path( m_plugin_label );
 
 	m_params.clear();
 
-	if ( file_exists( script_file ) )
+	if ( !script_file.empty() )
 	{
 		HSQUIRRELVM stored_vm = Sqrat::DefaultVM::Get();
 		HSQUIRRELVM temp_vm = sq_open( 1024 );

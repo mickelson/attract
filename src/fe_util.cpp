@@ -188,7 +188,7 @@ bool search_for_file( const std::string &base_path,
 	return false;
 }
 
-void get_subdirectories(
+bool get_subdirectories(
 			std::vector<std::string> &list,
 			const std::string &path, bool append_slash )
 {
@@ -212,11 +212,9 @@ void get_subdirectories(
 				list.push_back( append_slash ? name + '/' : name );
 		}
 		closedir( dir );
+		return true;
 	}
-	else
-	{
-		std::cerr << "Error opening directory: " << path << std::endl;
-	}
+	return false;
 }
 
 bool get_basename_from_extension(
@@ -260,10 +258,6 @@ bool get_basename_from_extension(
 			}
 		}
 		closedir( dir );
-	}
-	else
-	{
-		std::cerr << "Error opening directory: " << path << std::endl;
 	}
 
 	std::sort( list.begin(), list.end() );
@@ -349,8 +343,6 @@ bool get_filename_from_base( std::vector<std::string> &list,
 		}
 		closedir( dir );
 	}
-	else
-		std::cerr << "Error opening directory: " << path << std::endl;
 
 #endif // SFML_SYSTEM_WINDOWS
 

@@ -104,7 +104,7 @@ bool search_for_file( const std::string &base_path,
 //
 // Return list of subdirectories in path
 //
-void get_subdirectories( 
+bool get_subdirectories(
 			std::vector<std::string> &list, 
 			const std::string &path,
 			bool append_trailing_slash = false );

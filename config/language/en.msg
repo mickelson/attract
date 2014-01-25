@@ -1,7 +1,20 @@
+#
+# Languages
+#
+en;English
+fr;Français
+
+#
+# General
+#
 Exit Attract-Mode;Exit Attract-Mode
 Exit Attract-Mode?;Exit Attract-Mode?
 Yes;Yes
 No;No
+
+#
+# Help text
+#
 _help_back;Exit menu
 _help_emulators;Configure available emulators
 _help_art_label;The label that identifies this artwork resource (used by layouts)

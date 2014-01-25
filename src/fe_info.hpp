@@ -320,6 +320,7 @@ class FeResourceMap : public FeFileConfigurable
 {
 public:
 	FeResourceMap();
+	void clear() { m_map.clear(); }
 
 	int process_setting( const std::string &setting, 
 								const std::string &value,

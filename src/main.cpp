@@ -158,9 +158,7 @@ int main(int argc, char *argv[])
 	// Run the front-end
 	//
 	FeSettings feSettings( config_path, cmdln_font, false );
-	if ( feSettings.load() == false )
-		return 1;
-
+	feSettings.load();
 	feSettings.init_list();
 
 	std::string defaultFontFile;
@@ -205,9 +203,11 @@ int main(int argc, char *argv[])
 #ifdef SFML_SYSTEM_MACOS
 	osx_hide_menu_bar();
 	window.setPosition( sf::Vector2i( 0, 0 ) );
+#else
+	// We don't set the icon on OS X, it looks like crap (too low res).
+	window.setIcon( fe_icon.width, fe_icon.height, fe_icon.pixel_data );
 #endif
 
-	window.setIcon( fe_icon.width, fe_icon.height, fe_icon.pixel_data );
 	window.setVerticalSyncEnabled(true);
 	window.setKeyRepeatEnabled(false);
 	window.setMouseCursorVisible(false);
@@ -216,6 +216,16 @@ int main(int argc, char *argv[])
 	fePresent.load_layout( &window, true );
 
 	FeOverlay feOverlay( window, feSettings, fePresent );
+
+	if ( feSettings.get_language().empty() )
+	{
+		// If our language isn't set at this point, we want to prompt the user for the language
+		// they wish to use
+		//
+		if ( feOverlay.languages_dialog() < 0 )
+			window.close();
+	}
+
 	soundsys.sound_event( FeInputMap::EventStartup );
 
 	sf::Event ev;

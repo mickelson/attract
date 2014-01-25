@@ -51,6 +51,10 @@ FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 {
 	Sqrat::DefaultVM::Set( NULL );
 
+	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+	m_outputSize.x = vm.width;
+	m_outputSize.y = vm.height;
+
 	srand( time( NULL ) );
 }
 
@@ -95,9 +99,7 @@ void FePresent::clear()
 		delete s;
 	}
 
-	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-	m_layoutSize.x = vm.width;
-	m_layoutSize.y = vm.height;
+	m_layoutSize = m_outputSize;
 	m_layoutScale.x = 1.0;
 	m_layoutScale.y = 1.0;
 }
@@ -218,7 +220,7 @@ float FePresent::get_layout_scale_y() const
 void FePresent::set_layout_width( int w )
 {
 	m_layoutSize.x = w;
-	m_layoutScale.x = (float) sf::VideoMode::getDesktopMode().width / w;
+	m_layoutScale.x = (float) m_outputSize.x / w;
 	set_transforms();
 	m_redrawTriggered = true;
 }
@@ -226,7 +228,7 @@ void FePresent::set_layout_width( int w )
 void FePresent::set_layout_height( int h )
 {
 	m_layoutSize.y = h;
-	m_layoutScale.y = (float) sf::VideoMode::getDesktopMode().height / h;
+	m_layoutScale.y = (float) m_outputSize.y / h;
 	set_transforms();
 	m_redrawTriggered = true;
 }
@@ -736,7 +738,6 @@ void FePresent::toggle_rotate( FeSettings::RotationState r )
 
 void FePresent::set_transforms()
 {
-	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 	m_rotationTransform = sf::Transform();
 
 	FeSettings::RotationState actualRotation 
@@ -748,19 +749,19 @@ void FePresent::set_transforms()
 		// do nothing
 		break;
 	case FeSettings::RotateRight:
-		m_rotationTransform.translate( vm.width, 0 );
-		m_rotationTransform.scale( (float) vm.width / vm.height,
-												(float) vm.height / vm.width );
+		m_rotationTransform.translate( m_outputSize.x, 0 );
+		m_rotationTransform.scale( (float) m_outputSize.x / m_outputSize.y,
+												(float) m_outputSize.y / m_outputSize.x );
 		m_rotationTransform.rotate(90);
 		break;
 	case FeSettings::RotateFlip:
-		m_rotationTransform.translate( vm.width, vm.height );
+		m_rotationTransform.translate( m_outputSize.x, m_outputSize.y );
 		m_rotationTransform.rotate(180);
 		break;
 	case FeSettings::RotateLeft:
-		m_rotationTransform.translate( 0, vm.height );
-		m_rotationTransform.scale( (float) vm.width / vm.height,
-											(float) vm.height / vm.width );
+		m_rotationTransform.translate( 0, m_outputSize.y );
+		m_rotationTransform.scale( (float) m_outputSize.x / m_outputSize.y,
+											(float) m_outputSize.y / m_outputSize.x );
 		m_rotationTransform.rotate(270);
 		break;
 	}
@@ -1094,15 +1095,13 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	//
 	vm_init();
 
-	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-
 	// Set fe-related constants
 	//
 	ConstTable()
 		.Const( _SC("FeVersion"), FE_VERSION)
 		.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
-		.Const( _SC("ScreenWidth"), (int)vm.width )
-		.Const( _SC("ScreenHeight"), (int)vm.height )
+		.Const( _SC("ScreenWidth"), (int)m_outputSize.x )
+		.Const( _SC("ScreenHeight"), (int)m_outputSize.y )
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
 		.Const( _SC("OS"), get_OS_string() )
 	
@@ -1337,9 +1336,6 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	//
 	// Now run any plugin script(s)
 	//
-	std::string plugins_dir = m_feSettings->get_config_dir();
-	plugins_dir += FE_PLUGIN_SUBDIR;
-
 	std::vector< std::string > plugins_list;
 	m_feSettings->get_plugins( plugins_list );
 
@@ -1352,9 +1348,8 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		if ( m_feSettings->get_plugin_enabled( plugin ) == false )
 			continue;
 
-		std::string plugin_file = plugins_dir + plugin + FE_PLUGIN_FILE_EXTENSION;
-
-		if ( file_exists( plugin_file ) )
+		std::string plugin_file = m_feSettings->get_plugin_full_path( plugin );
+		if ( !plugin_file.empty() )
 		{
 			//
 			// fe.init_name in squirrel is set to the plugin name

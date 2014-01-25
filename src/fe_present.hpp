@@ -90,6 +90,7 @@ private:
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
 	sf::Vector2f m_layoutScale;
+	sf::Vector2i m_outputSize;
 
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );

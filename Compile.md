@@ -40,12 +40,21 @@ Linux, FreeBSD and Windows:
    This step will create the "attract" executable file.
 
    On Windows: Remember to set the MinGW environment variables first and 
-to use the MINGW make command.
+   to use the MINGW make command.
 
-4. Copy the contents of the "config" directory from the Attract-Mode 
-source directory to the location that you will use as your Attract-Mode 
-config directory.  By default, this config directory is located in 
-"$HOME/.attract" on Linux and in the current working directory on Windows.
+4. The final step is to actually copy the Attract-Mode executable and data
+   to a location where they can be used.  On Linux and FreeBSD, you can run:
+
+           sudo make install
+
+   to install on a system-wide basis, available to all users.  This will copy the
+   'attract' executable to /usr/local/bin and data to /usr/local/share/attract
+
+   On Windows systems (or if you wish to do a user-only install on Linux or FreeBSD)
+   you can complete this step by copying the contents of the "config" directory from
+   the Attract-Mode source directory to the location that you will use as your
+   Attract-Mode config directory.  By default, this config directory is located in
+   "$HOME/.attract" on Linux/FreeBSD and in the current working directory on Windows.
 
 OS X:
 -----
@@ -70,7 +79,15 @@ OS X:
 
    This step will create the "attract" executable file.
 
-6. Copy the contents of the "config" directory from the Attract-Mode 
-source to the location that you will use as your Attract-Mode config
-directory.  By default, this config directory is located in "$HOME/.attract"
-on OS X.
+6. The final step is to actually copy the Attract-Mode executable and data to a
+   location where they can be used.  You can run:
+
+           sudo make install
+
+   to install on a system-wide basis.  This will copy the 'attract' executable to
+   /usr/local/bin and data to /usr/local/share/attract
+
+   If you wish to do a user-only install, you can complete this step by copying the
+   contents of the "config" directory from the Attract-Mode source directory to the
+   location that you will use as your Attract-Mode config directory.  By default,
+   this config directory is located in "$HOME/.attract" on OS X.

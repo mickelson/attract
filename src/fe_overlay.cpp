@@ -253,6 +253,75 @@ int FeOverlay::filters_dialog()
 	return sel;
 }
 
+int FeOverlay::languages_dialog()
+{
+	std::vector<std::string> ll;
+	m_feSettings.get_languages_list( ll );
+
+	if ( ll.size() <= 1 )
+	{
+		// if there is nothing to select, then set what we can and get out of here
+		//
+		m_feSettings.set_language( ll.empty() ? "en" : ll.front() );
+		return 0;
+	}
+
+	// Try and get a useful default setting based on POSIX locale value...
+	//
+	// TODO: figure out how to do this right on Windows...
+	//
+	std::string loc, test( "en" );
+	try { loc = std::locale("").name(); } catch (...) {}
+	if ( loc.size() > 1 )
+		test = loc;
+
+	int status( -2 ), current_i( 0 ), i( 0 );
+	std::vector<std::string> pl;
+	for ( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
+	{
+		if (( status < 0 ) && ( test.compare( 0, 5, (*itr) ) == 0 ))
+		{
+			current_i = i;
+			status = 0;
+		}
+		else if (( status < -1 ) && ( test.compare( 0, 2, (*itr)) == 0 ))
+		{
+			current_i = i;
+			status = -1;
+		}
+
+		pl.push_back( std::string() );
+		m_feSettings.get_resource( (*itr), pl.back() );
+		i++;
+	}
+
+	sf::Vector2u size = m_wnd.getSize();
+	FeListBox dialog(
+		m_fePresent.get_font(),
+		m_textColour,
+		m_bgColour,
+		m_selColour,
+		m_selBgColour,
+		m_characterSize,
+		size.y / m_characterSize );
+
+	dialog.setPosition( 0, 0 );
+	dialog.setSize( size.x, size.y );
+	dialog.init();
+
+	std::vector<sf::Drawable *> draw_list( 1, &dialog );
+
+	int sel = current_i;
+	dialog.setText( sel, pl );
+	while ( event_loop( draw_list, sel, current_i, pl.size() - 1 ) == false )
+		dialog.setText( sel, pl );
+
+	if ( sel >= 0 )
+		m_feSettings.set_language( ll[sel] );
+
+	return sel;
+}
+
 int FeOverlay::internal_dialog( 
 			const std::string &msg_str,
 			const std::vector<std::string> &list )

@@ -46,10 +46,19 @@ AR=$(CROSS)ar
 ARFLAGS=rc
 RM=rm -f
 MD=mkdir
+
+prefix=/usr/local
+datarootdir=$(prefix)/share
+datadir=$(datarootdir)
+exec_prefix=$(prefix)
+bindir=$(exec_prefix)/bin
+
+DATA_PATH=$(datadir)/attract/
+EXE_BASE=attract
+EXE_EXT=
 OBJ_DIR=obj
 SRC_DIR=src
 EXTLIBS_DIR=extlibs
-INSTALL_DIR=/usr/local/bin
 FE_FLAGS=
 
 _DEP =\
@@ -96,7 +105,7 @@ ifeq ($(OS),Windows_NT)
  #
  # Windows
  #
- CFLAGS+=-mconsole
+ FE_WINDOWS_COMPILE=1
 else
  UNAME = $(shell uname -a)
  ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
@@ -114,13 +123,20 @@ endif
 #
 ifeq ($(WINDOWS_STATIC),1)
  LIBS += $(shell $(PKG_CONFIG) --static --libs sfml)
- CFLAGS += -mconsole -DSFML_STATIC \
-	$(shell $(PKG_CONFIG) --static --cflags sfml)
+ CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags sfml)
+ FE_WINDOWS_COMPILE=1
 else
  LIBS += -lsfml-audio \
 	-lsfml-graphics \
 	-lsfml-window \
 	-lsfml-system
+endif
+
+ifeq ($(FE_WINDOWS_COMPILE),1)
+ CFLAGS += -mconsole
+ EXE_EXT = .exe
+else
+ CFLAGS += -DDATA_PATH=\"$(DATA_PATH)\"
 endif
 
 #
@@ -177,6 +193,8 @@ endif
 LIBS += $(shell $(PKG_CONFIG) --libs $(TEMP_LIBS))
 CFLAGS += $(shell $(PKG_CONFIG) --cflags $(TEMP_LIBS))
 
+EXE = $(EXE_BASE)$(EXE_EXT)
+
 ifeq ($(BUILD_EXPAT),1)
  CFLAGS += -I$(EXTLIBS_DIR)/expat
  EXPAT = $(OBJ_DIR)/libexpat.a
@@ -197,7 +215,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 	$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
-attract: $(OBJ) $(EXPAT) $(SQUIRREL)
+$(EXE): $(OBJ) $(EXPAT) $(SQUIRREL)
 	$(CPP) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
 
 .PHONY: clean
@@ -278,8 +296,12 @@ $(SQSTDLIB_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/sqstdlib/%.cpp | $(SQSTDLIB_OBJ
 $(SQSTDLIB_OBJ_DIR):
 	$(MD) $@
 
-install: attract
-	cp attract $(INSTALL_DIR)
+$(DATA_PATH):
+	$(MD) $@
+
+install: $(EXE) $(DATA_PATH)
+	cp $(EXE) $(bindir)
+	cp -r config/* $(DATA_PATH)
 
 smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
