@@ -49,6 +49,8 @@ public:
 		Rotation,
 		Control,
 		Status,
+		DisplayCount,
+		DisplayType,
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
@@ -95,8 +97,11 @@ public:
 	FeRule( FeRomInfo::Index target=FeRomInfo::LAST_INDEX, 
 		FilterComp comp=LAST_COMPARISON, 
 		const std::string &what="" );
+	FeRule( const FeRule & );
 
 	~FeRule();
+
+	FeRule &operator=( const FeRule & );
 
 	void init();
 	bool apply_rule( const FeRomInfo &rom ) const;

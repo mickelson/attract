@@ -44,6 +44,8 @@ const char *FeRomInfo::indexStrings[] =
 	"Rotation",
 	"Control",
 	"Status",
+	"DisplayCount",
+	"DisplayType",
 	NULL
 };
 
@@ -150,10 +152,30 @@ FeRule::FeRule( FeRomInfo::Index t, FilterComp c, const std::string &w )
 {
 }
 
+FeRule::FeRule( const FeRule &r )
+	: m_filter_target( r.m_filter_target ),
+	m_filter_comp( r.m_filter_comp ),
+	m_filter_what( r.m_filter_what ),
+	m_rex( NULL )
+{
+}
+
 FeRule::~FeRule()
 {
 	if ( m_rex )
 		sqstd_rex_free( m_rex );
+}
+
+FeRule &FeRule::operator=( const FeRule &r )
+{
+	m_filter_target = r.m_filter_target;
+	m_filter_comp = r.m_filter_comp;
+	m_filter_what = r.m_filter_what;
+
+	if ( m_rex )
+		sqstd_rex_free( m_rex );
+
+	m_rex = NULL;
 }
 
 void FeRule::init()
@@ -256,6 +278,11 @@ void FeRule::set_values(
 		FilterComp c, 
 		const std::string &w )
 {
+	if ( m_rex )
+		sqstd_rex_free( m_rex );
+
+	m_rex = NULL;
+
 	m_filter_target = i;
 	m_filter_comp = c;
 	m_filter_what = w;

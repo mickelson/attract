@@ -83,6 +83,7 @@ private:
 	std::vector<std::list<FeRomInfo>::iterator> m_discarded;
 	int m_count;
 	int m_percent;
+	int m_displays;
 	bool m_collect_data;
 
 	void start_element( const char *, const char ** );

@@ -116,10 +116,13 @@ bool FeMapComp::operator()(const char *lhs, const char *rhs) const
 // Mame XML Parser
 //
 FeMameXMLParser::FeMameXMLParser( 
-	std::list <FeRomInfo> &romlist, 
-	UiUpdate u, 
-	void *d )
-	: FeXMLParser( u, d ), m_romlist( romlist ), m_count( 0 )
+		std::list <FeRomInfo> &romlist, 
+		UiUpdate u, 
+		void *d )
+	: FeXMLParser( u, d ),
+	m_romlist( romlist ),
+	m_count( 0 ),
+	m_displays( 0 )
 {
 }
 
@@ -140,6 +143,7 @@ void FeMameXMLParser::start_element(
 				{
 					m_itr = (*itr).second;
 					m_collect_data=true;
+					m_displays=0;
 					m_keep_rom=true;
 				}
 				else
@@ -184,11 +188,11 @@ void FeMameXMLParser::start_element(
 			for ( int i=0; attribute[i]; i+=2 )
 			{
 				if ( strcmp( attribute[i], "rotate" ) == 0 )
-				{
 					(*m_itr).set_info( FeRomInfo::Rotation, attribute[i+1] );
-					break;
-				}
+				else if ( strcmp( attribute[i], "type" ) == 0 )
+					(*m_itr).set_info( FeRomInfo::DisplayType, attribute[i+1] );
 			}
+			m_displays++;
 		}
 		else if ( strcmp( element, "driver" ) == 0 )
 		{
@@ -268,6 +272,7 @@ void FeMameXMLParser::end_element( const char *element )
 			if ( !m_keep_rom ) 
 				m_discarded.push_back( m_itr );
 
+			(*m_itr).set_info( FeRomInfo::DisplayCount, as_str( m_displays ) );
 			m_count++;
 
 			int percent = m_count * 100 / m_romlist.size();

@@ -166,6 +166,8 @@ Parameters:
       - `[Rotation]` - the rotation for the selected game
       - `[Control]` - the primary control for the selected game
       - `[Status]` - the status for the selected game
+      - `[DisplayCount]` - the number of displays for the selected game
+      - `[DisplayType]` - the display type for the selected game
    * x - the x coordinate of the top left corner of the text (in layout 
      coordinates).
    * y - the y coordinate of the top left corner of the text (in layout 
@@ -339,6 +341,8 @@ Parameters:
       - `Info.Rotation`
       - `Info.Control`
       - `Info.Status`
+      - `Info.DisplayCount`
+      - `Info.DisplayType`
    * index_offset - the offset (from the current selection) of the game to 
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.
@@ -649,6 +653,8 @@ Attributes:
       - `[Rotation]` - the rotation for the selected game
       - `[Control]` - the primary control for the selected game
       - `[Status]` - the status for the selected game
+      - `[DisplayCount]` - the number of displays for the selected game
+      - `[DisplayType]` - the display type for the selected game
    * `x` - Get/set x position of top left corner (in layout coordinates). 
    * `y` - Get/set y position of top left corner (in layout coordinates). 
    * `width` - Get/set width of text (in layout coordinates).
