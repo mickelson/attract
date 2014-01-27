@@ -971,12 +971,12 @@ void FeSettings::internal_get_art_file(
 		perform_substitution( artpath, "$LAYOUT", layout_path );
 
 		// test for "romname" specific
-		test_list.push_back( m_rl[curr_rom].get_info( FeRomInfo::Romname ) );
+		test_list.push_back( m_rl[curr_rom].get_info( FeRomInfo::Romname ) + '.' );
 
 		// then "cloneof" specific
 		std::string cloneof = m_rl[curr_rom].get_info( FeRomInfo::Cloneof );
 		if ( !cloneof.empty() )
-			test_list.push_back( cloneof );
+			test_list.push_back( cloneof + '.' );
 
 		// then "emulator"
 		test_list.push_back( current_emu );
