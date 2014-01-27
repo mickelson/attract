@@ -49,9 +49,9 @@ _help_list_delete;Delete this display list
 _help_list_sel;Configure display list
 _help_list_add;Add a new display list
 _help_input_action;
-_help_input_delete;Remove this input mapping
-_help_input_add;Add a new input mapping
-_help_input_sel;Configure input mappings
+_help_input_delete;Remove this control mapping
+_help_input_add;Add a new control mapping for this action
+_help_control_sel;Configure control mappings
 _help_plugin_command;The executable associated with this plug-in
 _help_plugin_enabled;Set whether this plug-in is enabled
 _help_plugin_sel;Configure plug-in
@@ -60,12 +60,13 @@ _help_sound;Assign a sound to this event/action
 _help_autorot;Autorotate to match the rotation of the last game played
 _help_exit_command;Command to execute when Exit (Confirm) is selected [i.e. "sudo shutdown"]
 _help_default_font;The name of the default font to use
-_help_font_path;The directories containing fonts (semicolon separates multiple entries)
+_help_font_path;The directories containing fonts.  Multiple directories can be entered if separated by a semicolon.  Attract-Mode will recursively search these directories to find a specified font
 _help_screen_saver_timeout;The amount of time in seconds to wait before switching to the screen saver.  0 to disable
 _help_lists_menu_exit;Configure whether an Exit option should be provided in the"Lists Menu"
+_help_hide_brackets;Hide text in brackets when showing game titles
 _help_emulators;Configure emulator settings
 _help_lists;Configure display lists
-_help_input;Configure input mappings
+_help_controls;Configure controls
 _help_sound;Configure sound volumes and sound mappings
 _help_plugins;Configure plug-ins
 _help_misc;Configure Miscellaneous settings

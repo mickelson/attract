@@ -127,6 +127,9 @@ void FeText::on_new_selection( FeSettings *feSettings )
 	std::string str = m_string;
 	for ( int i=0; ((i< FeRomInfo::LAST_INDEX) && ( n > 0 )); i++ )
 	{
+		if ( i == FeRomInfo::Title ) // this is a special case dealt with below
+			continue;
+
 		std::string from = "[";
 		from += FeRomInfo::indexStrings[i];
 		from += "]";
@@ -148,6 +151,32 @@ void FeText::on_new_selection( FeSettings *feSettings )
 
 		n -= perform_substitution( str, "[ListEntry]",
 				as_str( feSettings->get_rom_index() + 1 ) );
+	}
+
+	if ( n > 0 )
+	{
+		const std::string &title_full =
+				feSettings->get_rom_info( m_index_offset, FeRomInfo::Title );
+
+		n -= perform_substitution( str, "[TitleFull]", title_full );
+
+		if ( feSettings->hide_brackets() )
+		{
+			std::string title;
+			size_t pos = title_full.find_first_of( "([" );
+
+			if ( pos == std::string::npos )
+				title = title_full;
+			else
+			{
+				title = title_full.substr( 0,
+						title_full.find_last_of( FE_WHITESPACE, pos ) );
+			}
+
+			n -= perform_substitution( str, "[Title]", title );
+		}
+		else
+			n -= perform_substitution( str, "[Title]", title_full );
 	}
 
 	m_draw_text.setString( str );

@@ -49,6 +49,7 @@ public:
 		FontPath, 
 		ScreenSaverTimeout, 
 		ListsMenuExit,
+		HideBrackets,
 		LAST_INDEX 
 	};
 
@@ -76,6 +77,7 @@ private:
 	FeBaseConfigurable *m_current_config_object;
 	int m_ssaver_time;
 	bool m_lists_menu_exit;
+	bool m_hide_brackets;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
@@ -146,6 +148,7 @@ public:
 
 	const std::string &get_current_list_title() const;
 	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
+	bool hide_brackets() const { return m_hide_brackets; }
 
 	// get/set whether the named plugin is enabled
 	bool get_plugin_enabled( const std::string &name ) const;

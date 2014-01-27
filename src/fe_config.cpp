@@ -839,7 +839,7 @@ FeInputEditMenu::FeInputEditMenu()
 
 void FeInputEditMenu::get_options( FeConfigContext &ctx )
 {
-	ctx.set_style( FeConfigContext::EditList, "Edit Input" );
+	ctx.set_style( FeConfigContext::EditList, "Edit Control" );
 
 	if (m_mapping)
 	{
@@ -936,7 +936,7 @@ void FeInputEditMenu::set_mapping( FeMapping *mapping )
 
 void FeInputSelMenu::get_options( FeConfigContext &ctx )
 {
-	ctx.set_style( FeConfigContext::EditList, "Configure / Input" );
+	ctx.set_style( FeConfigContext::EditList, "Configure / Controls" );
 	ctx.fe_settings.get_input_map().get_mappings( m_mappings );
 
 	std::vector < FeMapping >::iterator it;
@@ -961,7 +961,7 @@ void FeInputSelMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl( Opt::SUBMENU, 
 			FeInputMap::commandDispStrings[(*it).command], 
 			value, 
-			"_help_input_sel" );
+			"_help_control_sel" );
 	}
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -1130,15 +1130,21 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::FontPath ), 
 			"_help_font_path" );
 
-	std::vector<std::string> exit_opts( 2 );
-	ctx.fe_settings.get_resource( "Yes", exit_opts[0] );
-	ctx.fe_settings.get_resource( "No", exit_opts[1] );
+	std::vector<std::string> bool_opts( 2 );
+	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
+	ctx.fe_settings.get_resource( "No", bool_opts[1] );
 
 	ctx.add_optl( Opt::LIST, 
 			"Allow exit from 'Lists Menu'", 
-			ctx.fe_settings.get_lists_menu_exit() ? exit_opts[0] : exit_opts[1], 
+			ctx.fe_settings.get_lists_menu_exit() ? bool_opts[0] : bool_opts[1], 
 			"_help_lists_menu_exit" );
-	ctx.back_opt().append_vlist( exit_opts );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST, 
+			"Hide brackets in Game Title", 
+			ctx.fe_settings.hide_brackets() ? bool_opts[0] : bool_opts[1], 
+			"_help_hide_brackets" );
+	ctx.back_opt().append_vlist( bool_opts );
 
 	FeBaseConfigMenu::get_options( ctx );
 }
@@ -1164,6 +1170,9 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 
 	ctx.fe_settings.set_info( FeSettings::ListsMenuExit, 
 			ctx.opt_list[6].get_vindex() == 0 ? "yes" : "no" );
+
+	ctx.fe_settings.set_info( FeSettings::HideBrackets, 
+			ctx.opt_list[7].get_vindex() == 0 ? "yes" : "no" );
 
 	return true;
 }
@@ -1429,7 +1438,7 @@ void FeConfigMenu::get_options( FeConfigContext &ctx )
 
 	ctx.add_optl( Opt::SUBMENU, "Emulators", "", "_help_emulators" );
 	ctx.add_optl( Opt::SUBMENU, "Lists", "", "_help_lists" );
-	ctx.add_optl( Opt::SUBMENU, "Input", "", "_help_input" );
+	ctx.add_optl( Opt::SUBMENU, "Controls", "", "_help_controls" );
 	ctx.add_optl( Opt::SUBMENU, "Sound", "", "_help_sound" );
 	ctx.add_optl( Opt::SUBMENU, "Plug-ins", "", "_help_plugins" );
 	ctx.add_optl( Opt::SUBMENU, "General", "", "_help_misc" );

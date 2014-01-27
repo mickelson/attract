@@ -137,7 +137,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_autorotate( RotateNone ),
 	m_current_config_object( NULL ),
 	m_ssaver_time( 600 ),
-	m_lists_menu_exit( true )
+	m_lists_menu_exit( true ),
+	m_hide_brackets( false )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -248,6 +249,7 @@ const char *FeSettings::configSettingStrings[] =
 	"font_path",
 	"screen_saver_timeout",
 	"lists_menu_exit",
+	"hide_brackets",
 	NULL
 };
 
@@ -284,41 +286,47 @@ int FeSettings::process_setting( const std::string &setting,
 		m_plugins.push_back( newPlug );
 		m_current_config_object = &m_plugins.back();
 	}
-	else if ( setting.compare( configSettingStrings[Language] ) == 0 ) // language
-		set_info( Language, value );
-	else if ( setting.compare( configSettingStrings[AutoRotate] ) == 0 ) // autorotate
-	{
-		if ( set_info( AutoRotate, value ) == false )
-		{
-			invalid_setting( fn, "autorotate", value, rotationTokens, NULL, "value" );
-			return 1;
-		}
-	}
-	else if ( setting.compare( configSettingStrings[ExitCommand] ) == 0 ) // exit_command
-		m_exit_command = value;
 	else if ( setting.compare( configSettingStrings[DefaultFont] ) == 0 ) // default_font
 	{
+		// Special case for the default font, we don't want to set it here
+		// if it was already specified at the command line
+		//
 		if ( m_default_font.empty() ) // don't overwrite command line font
 			m_default_font = value;
 	}
-	else if ( setting.compare( configSettingStrings[FontPath] ) == 0 ) // font_path
-		set_info( FontPath, value );
-	else if ( setting.compare( configSettingStrings[ScreenSaverTimeout] ) == 0 ) // screen_saver_timeout
-		set_info( ScreenSaverTimeout, value );
-	else if ( setting.compare( configSettingStrings[ListsMenuExit] ) == 0 ) // lists_menu_exit
-		set_info( ListsMenuExit, value );
-	else if ( m_current_config_object != NULL )
-	{
-		// otherwise setting belongs to the most recently declared
-		// list or emulator
-		m_current_config_object->process_setting( setting, value, fn );
-	}
 	else
 	{
-		invalid_setting( fn, "general", setting, otherSettingStrings, configSettingStrings );
-		return 1;
+		int i=0;
+		while ( configSettingStrings[i] != NULL )
+		{
+			if ( setting.compare( configSettingStrings[i] ) == 0 )
+			{
+				if ( set_info( i, value ) == false )
+				{
+					invalid_setting( fn,
+						configSettingStrings[i],
+						value, rotationTokens, NULL, "value" );
+					return 1;
+				}
+				return 0;
+			}
+			i++;
+		}
+
+		// if we get this far, then none of the settings associated with
+		// this object were found, pass to the current child object
+		if ( m_current_config_object != NULL )
+			return m_current_config_object->process_setting( setting, value, fn );
+		else
+		{
+			invalid_setting( fn,
+				"general", setting, otherSettingStrings, configSettingStrings );
+			return 1;
+		}
 	}
 
+	// shouldn't get here
+	ASSERT( 0 );
 	return 0;
 }
 
@@ -855,8 +863,27 @@ void FeSettings::get_current_display_list( std::vector<std::string> &l ) const
 	l.clear();
 	l.reserve( m_rl.size() );
 
-	for ( int i=0; i < m_rl.size(); i++ )
-		l.push_back( m_rl[i].get_info( FeRomInfo::Title ) );
+	if ( m_hide_brackets )
+	{
+		for ( int i=0; i < m_rl.size(); i++ )
+		{
+			const std::string &temp = m_rl[i].get_info( FeRomInfo::Title );
+			size_t pos = temp.find_first_of( "([" );
+
+			if ( pos == std::string::npos )
+				l.push_back( temp );
+			else
+			{
+				l.push_back( 
+					temp.substr( 0, temp.find_last_of( FE_WHITESPACE, pos ) ) );
+			}
+		}
+	}
+	else
+	{
+		for ( int i=0; i < m_rl.size(); i++ )
+			l.push_back( m_rl[i].get_info( FeRomInfo::Title ) );
+	}
 }
 
 FeEmulatorInfo *FeSettings::get_current_emulator()
@@ -1187,6 +1214,8 @@ const std::string FeSettings::get_info( int index ) const
 		return as_str( m_ssaver_time);
 	case ListsMenuExit:
 		return ( m_lists_menu_exit ? "yes" : "no" );
+	case HideBrackets:
+		return ( m_hide_brackets ? "yes" : "no" );
 	default:
 		break;
 	}
@@ -1199,11 +1228,11 @@ bool FeSettings::set_info( int index, const std::string &value )
 	{
 	case Language:
 		m_language = value;
-		return true;
+		break;
 
 	case ExitCommand:
 		m_exit_command = value;
-		return true;
+		break;
 
 	case AutoRotate:
 		{
@@ -1218,14 +1247,14 @@ bool FeSettings::set_info( int index, const std::string &value )
 				i++;
 			}
 
-			if ( rotationTokens[i] != NULL )
-				return true;
+			if ( rotationTokens[i] == NULL )
+				return false;
 		}
 		break;
 
 	case DefaultFont:
 		m_default_font = value;
-		return true;
+		break;
 
 	case FontPath:
 		{
@@ -1238,7 +1267,7 @@ bool FeSettings::set_info( int index, const std::string &value )
 				m_font_paths.push_back( path );
 			} while ( pos < value.size() );
 		}
-		return true;
+		break;
 
 	case ScreenSaverTimeout:
 		m_ssaver_time = as_int( value );
@@ -1252,11 +1281,19 @@ bool FeSettings::set_info( int index, const std::string &value )
 			m_lists_menu_exit = false;
 		break;
 
-	default:
+	case HideBrackets:
+		if (( value.compare( "yes" ) == 0 ) 
+				|| ( value.compare( "true" ) == 0 ))
+			m_hide_brackets = true;
+		else
+			m_hide_brackets = false;
 		break;
+
+	default:
+		return false;
 	}
 
-	return false;
+	return true;
 }
 
 
@@ -1625,6 +1662,9 @@ void FeSettings::get_languages_list( std::vector < std::string > &ll ) const
 		ll,
 		std::vector<std::string>(1, FE_LANGUAGE_FILE_EXTENSION),
 		FE_LANGUAGE_SUBDIR );
+
+	if ( ll.empty() )
+		ll.push_back( "en" );
 }
 
 void FeSettings::get_romlists_list( std::vector < std::string > &ll ) const
