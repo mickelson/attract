@@ -1235,24 +1235,30 @@ bool get_attribute_string(
 
 }; // end namespace
 
+FePluginEditMenu::FePluginEditMenu()
+	: m_plugin( NULL )
+{
+}
+
 void FePluginEditMenu::get_options( FeConfigContext &ctx )
 {
+	if ( !m_plugin )
+		return;
+
 	ctx.set_style( FeConfigContext::EditList, "Configure Plug-in" );
 
-	std::string command = ctx.fe_settings.get_plugin_command( m_plugin_label );
-	bool enabled = ctx.fe_settings.get_plugin_enabled( m_plugin_label );
-
-	ctx.add_optl( Opt::INFO, "Name", m_plugin_label, 
+	ctx.add_optl( Opt::INFO, "Name", m_plugin->get_name(), 
 		"_help_plugin_name" );
 
-	ctx.add_optl( Opt::EDIT, "Command", command, 
+	ctx.add_optl( Opt::EDIT, "Command", m_plugin->get_command(), 
 		"_help_plugin_command" );
 
 	std::vector<std::string> opts( 2 );
 	ctx.fe_settings.get_resource( "Yes", opts[0] );
 	ctx.fe_settings.get_resource( "No", opts[1] );
 
-	ctx.add_optl( Opt::LIST, "Enabled", enabled ? opts[0] : opts[1], 
+	ctx.add_optl( Opt::LIST, "Enabled",
+			m_plugin->get_enabled() ? opts[0] : opts[1], 
 			"_help_plugin_enabled" );
 	ctx.back_opt().append_vlist( opts );
 
@@ -1261,7 +1267,8 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	// If it is, then its members and member attributes set out what it is
 	// that the plug-in needs configured by the user.
 	//
-	std::string script_file = ctx.fe_settings.get_plugin_full_path( m_plugin_label );
+	std::string script_file = ctx.fe_settings.get_plugin_full_path(
+			m_plugin->get_name() );
 
 	m_params.clear();
 
@@ -1318,8 +1325,7 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 					// use the default value from the script if a value has
 					// not already been configured
 					//
-					if ( !ctx.fe_settings.get_plugin_param( 
-								m_plugin_label, key, value ) )
+					if ( !m_plugin->get_param( key, value ) )
 					{
 						get_object_string( temp_vm, it.getValue(), value );
 					}
@@ -1375,12 +1381,13 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 
 bool FePluginEditMenu::save( FeConfigContext &ctx )
 {
-	ctx.fe_settings.set_plugin_command( 
-		m_plugin_label, 
+	if ( m_plugin == NULL )
+		return false;
+
+	m_plugin->set_command(
 		ctx.opt_list[1].get_value() );
 
-	ctx.fe_settings.set_plugin_enabled(
-		m_plugin_label,
+	m_plugin->set_enabled(
 		ctx.opt_list[2].get_vindex() == 0 ? true : false );
 
 	for ( unsigned int i=3; i < ctx.opt_list.size(); i++ )
@@ -1388,8 +1395,7 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 		int op = ctx.opt_list[i].opaque;
 		if ( op >= 100 )
 		{
-			ctx.fe_settings.set_plugin_param(
-				m_plugin_label, 
+			m_plugin->set_param(
 				m_params[ op-100 ], 
 				ctx.opt_list[i].get_value() );
 		}
@@ -1398,20 +1404,20 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
-void FePluginEditMenu::set_plugin( const std::string &plugin_label )
+void FePluginEditMenu::set_plugin( FePlugInfo *plugin )
 {
-	m_plugin_label = plugin_label;
+	m_plugin = plugin;
 }
 
 void FePluginSelMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::SelectionList, "Configure / Plug-ins" );
 
-	std::vector<std::string> plugin_list;
-	ctx.fe_settings.get_plugins( plugin_list );
+	std::vector<std::string> plugins;
+	ctx.fe_settings.get_available_plugins( plugins );
 
-	for ( std::vector<std::string>::iterator itr=plugin_list.begin();
-			itr < plugin_list.end(); ++itr )
+	for ( std::vector<std::string>::iterator itr=plugins.begin();
+			itr != plugins.end(); ++itr )
 		ctx.add_opt( Opt::MENU, (*itr), "", "_help_plugin_sel" );
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -1424,7 +1430,8 @@ bool FePluginSelMenu::on_option_select(
 
 	if ( o.opaque == 0 )
 	{
-		m_edit_menu.set_plugin( o.setting );
+		m_edit_menu.set_plugin(
+			ctx.fe_settings.get_plugin( o.setting ) );
 		submenu = &m_edit_menu;
 	}
 

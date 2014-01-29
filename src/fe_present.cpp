@@ -999,7 +999,7 @@ bool FePresent::cb_plugin_command( const char *label,
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 	FeSettings *fes = fep->get_fes();
 
-	std::string command = fes->get_plugin_command( label );
+	const std::string &command = fes->get_plugin_command( label );
 	if ( command.empty() )
 		return false;
 
@@ -1013,7 +1013,7 @@ bool FePresent::cb_plugin_command( const char *label, const char *args )
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 	FeSettings *fes = fep->get_fes();
 
-	std::string command = fes->get_plugin_command( label );
+	const std::string &command = fes->get_plugin_command( label );
 	if ( command.empty() )
 		return false;
 
@@ -1026,7 +1026,7 @@ bool FePresent::cb_plugin_command_bg( const char *label, const char *args )
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 	FeSettings *fes = fep->get_fes();
 
-	std::string command = fes->get_plugin_command( label );
+	const std::string &command = fes->get_plugin_command( label );
 	if ( command.empty() )
 		return false;
 
@@ -1336,25 +1336,24 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	//
 	// Now run any plugin script(s)
 	//
-	std::vector< std::string > plugins_list;
-	m_feSettings->get_plugins( plugins_list );
+	const std::vector< FePlugInfo > &plugins = m_feSettings->get_plugins();
 
-	while ( !plugins_list.empty() )
+	for ( std::vector< FePlugInfo >::const_iterator itr= plugins.begin();
+		itr != plugins.end(); ++itr )
 	{
-		std::string plugin = plugins_list.back();
-		plugins_list.pop_back();
-
 		// Don't run disabled plugins...
-		if ( m_feSettings->get_plugin_enabled( plugin ) == false )
+		if ( (*itr).get_enabled() == false )
 			continue;
 
-		std::string plugin_file = m_feSettings->get_plugin_full_path( plugin );
+		std::string plugin_file = m_feSettings->get_plugin_full_path(
+				(*itr).get_name() );
+
 		if ( !plugin_file.empty() )
 		{
 			//
 			// fe.init_name in squirrel is set to the plugin name
 			//
-			fe.SetValue( _SC("init_name"), plugin );
+			fe.SetValue( _SC("init_name"), (*itr).get_name() );
 
 			//
 			// fe.uconfig in squirrel is set to a table of the user config
@@ -1364,13 +1363,14 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 			fe.Bind( _SC("uconfig"), uconfig );
 
 			std::vector<std::string> params;
-			m_feSettings->get_plugin_param_labels( plugin, params );
-			for ( std::vector<std::string>::iterator itr=params.begin();
-				itr!=params.end(); ++itr )
+			(*itr).get_param_labels( params );
+
+			for ( std::vector<std::string>::iterator itp=params.begin();
+				itp!=params.end(); ++itp )
 			{
 				std::string v;
-				m_feSettings->get_plugin_param( plugin, (*itr), v );
-				uconfig.SetValue( (*itr).c_str(), v.c_str() );
+				(*itr).get_param( (*itp), v );
+				uconfig.SetValue( (*itp).c_str(), v.c_str() );
 			}
 
 			try

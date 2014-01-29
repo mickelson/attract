@@ -32,6 +32,7 @@ class FeEmulatorInfo;
 class FeListInfo;
 class FeFilter;
 class FeRule;
+class FePlugInfo;
 
 namespace Opt 
 {
@@ -324,14 +325,15 @@ public:
 class FePluginEditMenu : public FeBaseConfigMenu
 {
 private:
-	std::string m_plugin_label;
+	FePlugInfo *m_plugin;
 	std::vector<std::string>m_params;
 
 public:
+	FePluginEditMenu();
 	void get_options( FeConfigContext &ctx );
 
 	bool save( FeConfigContext &ctx );
-	void set_plugin( const std::string &plugin_label );
+	void set_plugin( FePlugInfo *plugin );
 };
 
 class FePluginSelMenu : public FeBaseConfigMenu

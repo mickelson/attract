@@ -1443,7 +1443,7 @@ void FeSettings::save() const
 		}
 
 		std::vector<std::string> plugin_files;
-		get_plugins( plugin_files );
+		get_available_plugins( plugin_files );
 
 		outfile << std::endl;
 		std::vector< FePlugInfo >::const_iterator itr;
@@ -1501,105 +1501,27 @@ const std::string &FeSettings::get_plugin_command(
 	return FE_EMPTY_STRING;
 }
 
-void FeSettings::set_plugin_command( 
-			const std::string &label, const std::string &command )
-{
-	std::vector< FePlugInfo >::iterator itr;
-
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-	{
-		if ( label.compare( (*itr).get_name() ) == 0 )
-		{
-			(*itr).set_command( command );
-			return;
-		}
-	}
-
-	// If there isn't a plugin configuration, create it now
-	//
-	m_plugins.push_back( FePlugInfo( label ) );
-	m_plugins.back().set_command( command );
-}
-
-bool FeSettings::get_plugin_enabled( const std::string &label ) const
-{
-	std::vector< FePlugInfo >::const_iterator itr;
-
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-	{
-		if ( label.compare( (*itr).get_name() ) == 0 )
-			return (*itr).get_enabled();
-	}
-
-	return false;
-}
-
-void FeSettings::set_plugin_enabled( 
-			const std::string &label, bool e )
-{
-	std::vector< FePlugInfo >::iterator itr;
-
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-	{
-		if ( label.compare( (*itr).get_name() ) == 0 )
-		{
-			(*itr).set_enabled( e );
-			return;
-		}
-	}
-
-	// If there isn't a plugin configuration, create it now
-	//
-	m_plugins.push_back( FePlugInfo( label ) );
-	m_plugins.back().set_enabled( e );
-}
-
-bool FeSettings::get_plugin_param( const std::string &plugin, 
-		const std::string &param, std::string &v ) const
-{
-	std::vector< FePlugInfo >::const_iterator itr;
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-	{
-		if ( plugin.compare( (*itr).get_name() ) == 0 )
-			return (*itr).get_param( param, v );
-	}
-	return false;
-}
-
-void FeSettings::set_plugin_param( const std::string &plugin, 
-		const std::string &param, const std::string &v )
-{
-	std::vector< FePlugInfo >::iterator itr;
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-	{
-		if ( plugin.compare( (*itr).get_name() ) == 0 )
-		{
-			(*itr).set_param( param, v );
-			return;
-		}
-	}
-}
-
-void FeSettings::get_plugin_param_labels( const std::string &plugin,
-		std::vector<std::string> &labels ) const
-{
-	std::vector< FePlugInfo >::const_iterator itr;
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-	{
-		if ( plugin.compare( (*itr).get_name() ) == 0 )
-		{
-			(*itr).get_param_labels( labels );
-			return;
-		}
-	}
-}
-
-void FeSettings::get_plugins( std::vector < std::string > &ll ) const
+void FeSettings::get_available_plugins( std::vector < std::string > &ll ) const
 {
 	internal_gather_config_files(
 		ll,
 		std::vector<std::string>(1, FE_PLUGIN_FILE_EXTENSION),
 		FE_PLUGIN_SUBDIR );
+}
+
+FePlugInfo *FeSettings::get_plugin( const std::string &label )
+{
+	std::vector< FePlugInfo >::iterator itr;
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( label.compare( (*itr).get_name() ) == 0 )
+			return &(*itr);
+	}
+
+	// No config for this plugin currently.  Add one
+	//
+	m_plugins.push_back( FePlugInfo( label ) );
+	return &(m_plugins.back());
 }
 
 std::string FeSettings::get_plugin_full_path( const std::string &label ) const

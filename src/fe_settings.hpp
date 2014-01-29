@@ -150,27 +150,13 @@ public:
 	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
 	bool hide_brackets() const { return m_hide_brackets; }
 
-	// get/set whether the named plugin is enabled
-	bool get_plugin_enabled( const std::string &name ) const;
-	void set_plugin_enabled( const std::string &name, bool e );
-
-	// get/set the external command for the named plugin
-	const std::string &get_plugin_command( const std::string &name ) const;
-	void set_plugin_command( const std::string &name, const std::string &c );
-
-	bool get_plugin_param( const std::string &plugin, 
-		const std::string &param, std::string &v ) const;
-
-	void set_plugin_param( const std::string &plugin, 
-		const std::string &param, const std::string &v );
-
-	void get_plugin_param_labels( const std::string &plugin, 
-		std::vector<std::string> &labels ) const;
-
-	std::string get_plugin_full_path( const std::string &label ) const;
-
 	// get a list of available plugins
-	void get_plugins( std::vector < std::string > &list ) const;
+	void get_available_plugins( std::vector < std::string > &list ) const;
+	std::vector<FePlugInfo> &get_plugins() { return m_plugins; }
+	FePlugInfo *get_plugin( const std::string &label );
+
+	const std::string &get_plugin_command( const std::string &name ) const;
+	std::string get_plugin_full_path( const std::string &label ) const;
 
 	//
 	// Returns filenames to use for artwork. prefer the files earlier in the list

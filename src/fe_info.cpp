@@ -944,7 +944,7 @@ void FePlugInfo::save( std::ofstream &f ) const
 			<< indexStrings[0] << ' ' << get_command() << std::endl;
 
 	f << '\t' << std::setw(20) << std::left << indexStrings[1] 
-		<< ( m_enabled ? " true" : " false" ) << std::endl;
+		<< ( m_enabled ? " yes" : " no" ) << std::endl;
 
 	std::map<std::string,std::string>::const_iterator itr;
 	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
