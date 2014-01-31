@@ -83,6 +83,7 @@ public:
 		ScreenShot,
 		Configure,
 		RandomGame,
+		ReplayLastGame,
 		LAST_COMMAND,
 
 		//

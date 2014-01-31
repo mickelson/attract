@@ -124,6 +124,7 @@ const char *FeInputMap::commandStrings[] =
 	"screenshot",
 	"configure",
 	"random_game",
+	"replay_last_game",
 	NULL, // LAST_COMMAND... NULL required here
 	"ambient",
 	"startup",
@@ -154,6 +155,7 @@ const char *FeInputMap::commandDispStrings[] =
 	"Screenshot",
 	"Configure",
 	"Random Game",
+	"Replay Last Game",
 	NULL, // LAST_COMMAND... NULL required here
 	"Ambient Sounds",
 	"Startup Sound",

@@ -397,7 +397,7 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 			itr < emu_file_list.end(); ++itr )
 		ctx.add_opt( Opt::MENU, *itr, "", "_help_emu_sel" );
 
-	ctx.add_opt( Opt::MENU, "Add Emulator", "", "_help_emu_add" );
+	ctx.add_optl( Opt::MENU, "Add Emulator", "", "_help_emu_add" );
 	ctx.back_opt().opaque = 1;
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -1115,6 +1115,28 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Auto Rotate", autorot, "_help_autorot" );
 	ctx.back_opt().append_vlist( rotations );
 
+	std::vector<std::string> bool_opts( 2 );
+	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
+	ctx.fe_settings.get_resource( "No", bool_opts[1] );
+
+	ctx.add_optl( Opt::LIST, 
+			"Allow Exit from 'Lists Menu'", 
+			ctx.fe_settings.get_lists_menu_exit() ? bool_opts[0] : bool_opts[1], 
+			"_help_lists_menu_exit" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST, 
+			"Hide Brackets in Game Title", 
+			ctx.fe_settings.hide_brackets() ? bool_opts[0] : bool_opts[1], 
+			"_help_hide_brackets" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST, 
+			"Launch Last Game on Startup", 
+			ctx.fe_settings.autolaunch_last_game() ? bool_opts[0] : bool_opts[1], 
+			"_help_autolaunch_last_game" );
+	ctx.back_opt().append_vlist( bool_opts );
+
 	ctx.add_optl( Opt::EDIT, 
 			"Exit Command", 
 			ctx.fe_settings.get_info( FeSettings::ExitCommand ), 
@@ -1130,22 +1152,6 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::FontPath ), 
 			"_help_font_path" );
 
-	std::vector<std::string> bool_opts( 2 );
-	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
-	ctx.fe_settings.get_resource( "No", bool_opts[1] );
-
-	ctx.add_optl( Opt::LIST, 
-			"Allow exit from 'Lists Menu'", 
-			ctx.fe_settings.get_lists_menu_exit() ? bool_opts[0] : bool_opts[1], 
-			"_help_lists_menu_exit" );
-	ctx.back_opt().append_vlist( bool_opts );
-
-	ctx.add_optl( Opt::LIST, 
-			"Hide brackets in Game Title", 
-			ctx.fe_settings.hide_brackets() ? bool_opts[0] : bool_opts[1], 
-			"_help_hide_brackets" );
-	ctx.back_opt().append_vlist( bool_opts );
-
 	FeBaseConfigMenu::get_options( ctx );
 }
 
@@ -1159,20 +1165,23 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::AutoRotate, 
 			FeSettings::rotationTokens[ ctx.opt_list[2].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::ExitCommand, 
-			ctx.opt_list[3].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
-			ctx.opt_list[4].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::FontPath, 
-			ctx.opt_list[5].get_value() );
-
 	ctx.fe_settings.set_info( FeSettings::ListsMenuExit, 
-			ctx.opt_list[6].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[3].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::HideBrackets, 
-			ctx.opt_list[7].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
+
+	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame, 
+			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
+
+	ctx.fe_settings.set_info( FeSettings::ExitCommand, 
+			ctx.opt_list[6].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
+			ctx.opt_list[7].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::FontPath, 
+			ctx.opt_list[8].get_value() );
 
 	return true;
 }

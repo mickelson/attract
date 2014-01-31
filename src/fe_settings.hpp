@@ -50,6 +50,7 @@ public:
 		ScreenSaverTimeout, 
 		ListsMenuExit,
 		HideBrackets,
+		AutoLaunchLastGame,
 		LAST_INDEX 
 	};
 
@@ -76,8 +77,12 @@ private:
 	RotationState m_autorotate;
 	FeBaseConfigurable *m_current_config_object;
 	int m_ssaver_time;
+	int m_last_launch_list;
+	int m_last_launch_filter;
+	int m_last_launch_rom;
 	bool m_lists_menu_exit;
 	bool m_hide_brackets;
+	bool m_autolaunch_last_game;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
@@ -137,6 +142,8 @@ public:
 	const std::string &get_current_filter_name();
 	void get_current_list_filter_names( std::vector<std::string> &list ) const;
 
+	bool select_last_launch();
+
 	int run(); // run current selection
 	int exit_command() const; // run configured exit command (if any)
 
@@ -149,6 +156,7 @@ public:
 	const std::string &get_current_list_title() const;
 	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
 	bool hide_brackets() const { return m_hide_brackets; }
+	bool autolaunch_last_game() const { return m_autolaunch_last_game; }
 
 	// get a list of available plugins
 	void get_available_plugins( std::vector < std::string > &list ) const;

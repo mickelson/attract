@@ -137,8 +137,12 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_autorotate( RotateNone ),
 	m_current_config_object( NULL ),
 	m_ssaver_time( 600 ),
+	m_last_launch_list( 0 ),
+	m_last_launch_filter( 0 ),
+	m_last_launch_rom( 0 ),
 	m_lists_menu_exit( true ),
-	m_hide_brackets( false )
+	m_hide_brackets( false ),
+	m_autolaunch_last_game( false )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -250,6 +254,7 @@ const char *FeSettings::configSettingStrings[] =
 	"screen_saver_timeout",
 	"lists_menu_exit",
 	"hide_brackets",
+	"autolaunch_last_game",
 	NULL
 };
 
@@ -385,7 +390,9 @@ void FeSettings::save_state() const
 	std::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
-		outfile << m_current_list << std::endl;
+		outfile << m_current_list << ";"
+			<< m_last_launch_list << "," << m_last_launch_filter
+			<< "," << m_last_launch_rom << std::endl;
 
 		for ( std::vector<FeListInfo>::const_iterator itl=m_lists.begin();
 					itl != m_lists.end(); ++itl )
@@ -412,7 +419,26 @@ void FeSettings::load_state()
 	if ( myfile.is_open() && myfile.good() )
 	{
 		getline( myfile, line );
-		m_current_list = as_int( line );
+		size_t pos=0;
+		std::string tok;
+		token_helper( line, pos, tok, ";" );
+
+		m_current_list = as_int( tok );
+
+		int i=0;
+		while (( pos < line.size() ) && ( i < 3 ))
+		{
+			token_helper( line, pos, tok, "," );
+			int temp = as_int( tok );
+
+			switch (i)
+			{
+				case 0: m_last_launch_list = temp; break;
+				case 1: m_last_launch_filter = temp; break;
+				case 2: m_last_launch_rom = temp; break;
+			}
+			i++;
+		}
 
 		for ( std::vector<FeListInfo>::iterator itl=m_lists.begin();
 					itl != m_lists.end(); ++itl )
@@ -707,6 +733,20 @@ void FeSettings::change_rom( int step )
 	set_current_rom( get_rom_index( step ) );
 }
 
+bool FeSettings::select_last_launch()
+{
+	bool retval = false;
+	if ( m_current_list != m_last_launch_list )
+	{
+		set_list( m_last_launch_list );
+		retval = true;
+	}	
+
+	set_filter( m_last_launch_filter );
+	set_current_rom( m_last_launch_rom );
+	return retval;
+}
+
 void FeSettings::toggle_layout()
 {
 	if ( m_current_list < 0 )
@@ -808,7 +848,11 @@ int FeSettings::run()
 	if (( emu == NULL ) || (m_rl.empty()))
 		return -1;
 
-	rom = m_rl[ get_rom_index() ].get_info( FeRomInfo::Romname );
+	m_last_launch_list = get_current_list_index();
+	m_last_launch_filter = get_current_filter_index();
+	m_last_launch_rom = get_rom_index();
+
+	rom = m_rl[ m_last_launch_rom ].get_info( FeRomInfo::Romname );
 	rom_path = clean_path( emu->get_info( FeEmulatorInfo::Rom_path ));
 
 	const std::vector<std::string> &exts = emu->get_extensions();
@@ -1216,11 +1260,23 @@ const std::string FeSettings::get_info( int index ) const
 		return ( m_lists_menu_exit ? "yes" : "no" );
 	case HideBrackets:
 		return ( m_hide_brackets ? "yes" : "no" );
+	case AutoLaunchLastGame:
+		return ( m_autolaunch_last_game ? "yes" : "no" );
 	default:
 		break;
 	}
 	return FE_EMPTY_STRING;
 }
+
+namespace {
+	bool config_str_to_bool( const std::string &s )
+	{
+		if (( s.compare( "yes" ) == 0 ) || ( s.compare( "true" ) == 0 ))
+			return true;
+		else
+			return false;
+	}
+};
 
 bool FeSettings::set_info( int index, const std::string &value )
 {
@@ -1274,19 +1330,15 @@ bool FeSettings::set_info( int index, const std::string &value )
 		break;
 
 	case ListsMenuExit:
-		if (( value.compare( "yes" ) == 0 ) 
-				|| ( value.compare( "true" ) == 0 ))
-			m_lists_menu_exit = true;
-		else
-			m_lists_menu_exit = false;
+		m_lists_menu_exit = config_str_to_bool( value );
 		break;
 
 	case HideBrackets:
-		if (( value.compare( "yes" ) == 0 ) 
-				|| ( value.compare( "true" ) == 0 ))
-			m_hide_brackets = true;
-		else
-			m_hide_brackets = false;
+		m_hide_brackets = config_str_to_bool( value );
+		break;
+
+	case AutoLaunchLastGame:
+		m_autolaunch_last_game = config_str_to_bool( value );
 		break;
 
 	default:

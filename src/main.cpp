@@ -152,6 +152,8 @@ void process_args( int argc, char *argv[],
 int main(int argc, char *argv[])
 {
 	std::string config_path, cmdln_font;
+	bool launch_game = false;
+
 	process_args( argc, argv, config_path, cmdln_font );
 
 	//
@@ -159,6 +161,13 @@ int main(int argc, char *argv[])
 	//
 	FeSettings feSettings( config_path, cmdln_font, false );
 	feSettings.load();
+
+	if ( feSettings.autolaunch_last_game() )
+	{
+		feSettings.select_last_launch();
+		launch_game=true;
+	}
+
 	feSettings.init_list();
 
 	std::string defaultFontFile;
@@ -264,6 +273,20 @@ int main(int argc, char *argv[])
 			redraw=true;
 			config_mode=false;
 		}
+		else if ( launch_game )
+		{
+			soundsys.stop();
+
+			fePresent.pre_run( &window );
+			feSettings.run();
+			fePresent.post_run( &window );
+
+			soundsys.sound_event( FeInputMap::EventGameReturn );
+			soundsys.play_ambient();
+
+			launch_game=false;
+			redraw=true;
+		}
 
 		while (window.pollEvent(ev))
 		{
@@ -303,17 +326,18 @@ int main(int argc, char *argv[])
 					window.close();
 					break;
 
-				case FeInputMap::Select:
-					soundsys.stop();
+				case FeInputMap::ReplayLastGame:
+					if ( feSettings.select_last_launch() )
+						fePresent.load_layout( &window );
+					else
+						fePresent.update_to_new_list( &window );
 
-					fePresent.pre_run( &window );
-					feSettings.run();
-					fePresent.post_run( &window );
-
-					soundsys.sound_event( FeInputMap::EventGameReturn );
-					soundsys.play_ambient();
-
+					launch_game=true;
 					redraw=true;
+					break;
+
+				case FeInputMap::Select:
+					launch_game=true;
 					break;
 
 				case FeInputMap::ToggleMute:
