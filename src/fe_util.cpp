@@ -769,7 +769,7 @@ bool run_program( const std::string &prog,
 			do
 			{
 				waitpid( pid, &status, 0 ); // wait for child process to complete
-			} while ( !WIFEXITED( status ) );
+			} while ( !WIFEXITED( status ) && !WIFSIGNALED( status ) );
 		}
 	}
 #endif // SFML_SYSTEM_WINDOWS

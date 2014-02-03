@@ -293,7 +293,16 @@ int main(int argc, char *argv[])
 			FeInputMap::Command c = feSettings.map( ev );
 
 			if ( c == FeInputMap::LAST_COMMAND )
+			{
+				if (( ev.type == sf::Event::KeyReleased )
+					|| ( ev.type == sf::Event::MouseButtonReleased )
+					|| ( ev.type == sf::Event::JoystickButtonReleased ))
+				{
+					fePresent.reset_screen_saver( &window );
+				}
+
 				continue;
+			}
 
 			soundsys.sound_event( c );
 			if ( fePresent.handle_event( c, ev, &window ) )

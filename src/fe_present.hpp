@@ -154,6 +154,7 @@ public:
 	void post_run( sf::RenderWindow *w );
 	void toggle_mute();
 
+	bool reset_screen_saver( sf::RenderWindow *w );
 	bool handle_event( FeInputMap::Command, const sf::Event &ev, sf::RenderWindow *w );
 
 	FeSettings *get_fes() const { return m_feSettings; };

@@ -290,13 +290,8 @@ void FePresent::set_list_index( int index )
 	update( false );
 }
 
-bool FePresent::handle_event( FeInputMap::Command c, 
-	const sf::Event &ev,
-	sf::RenderWindow *wnd )
+bool FePresent::reset_screen_saver( sf::RenderWindow *wnd )
 {
-	m_moveState=MoveNone;
-	m_lastInput=m_layoutTimer.getElapsedTime();
-
 	if ( m_screenSaverActive )
 	{
 		// Reset from screen saver
@@ -304,6 +299,19 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		load_layout( wnd );
 		return true;
 	}
+
+	m_lastInput=m_layoutTimer.getElapsedTime();
+	return false;
+}
+
+bool FePresent::handle_event( FeInputMap::Command c, 
+	const sf::Event &ev,
+	sf::RenderWindow *wnd )
+{
+	m_moveState=MoveNone;
+
+	if ( reset_screen_saver( wnd ) )
+		return true;
 
 	switch( c )
 	{
@@ -709,6 +717,8 @@ void FePresent::post_run( sf::RenderWindow *wnd )
 	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( m_playMovies );
+
+	reset_screen_saver( wnd );
 }
 
 void FePresent::toggle_movie()
