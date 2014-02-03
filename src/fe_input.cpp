@@ -125,7 +125,7 @@ const char *FeInputMap::commandStrings[] =
 	"configure",
 	"random_game",
 	"replay_last_game",
-	"toggle_favourite",
+	"add_favourite",
 	"prev_favourite",
 	"next_favourite",
 	NULL, // LAST_COMMAND... NULL required here
@@ -159,7 +159,7 @@ const char *FeInputMap::commandDispStrings[] =
 	"Configure",
 	"Random Game",
 	"Replay Last Game",
-	"Toggle Favourite",
+	"Add/Remove Favourite",
 	"Previous Favourite",
 	"Next Favourite",
 	NULL, // LAST_COMMAND... NULL required here
