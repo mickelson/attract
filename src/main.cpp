@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
 				{
 				case FeInputMap::ExitMenu:
 					{
-						int retval = feOverlay.exit_dialog();
+						int retval = feOverlay.confirm_dialog( "Exit Attract-Mode?" );
 
 						//
 						// retval is 0 if the user confirmed exit.
@@ -396,6 +396,31 @@ int main(int argc, char *argv[])
 						{
 							feSettings.set_filter( list_index );
 							fePresent.update_to_new_list( &window );
+						}
+					}
+					break;
+
+				case FeInputMap::ToggleFavourite:
+					{
+						bool new_state = !feSettings.get_current_fav();
+
+						if ( feSettings.confirm_favs() )
+						{
+							std::string msg = ( new_state )
+								? "Add '$1' to Favourites?"
+								: "Remove '$1' from Favourites?";
+
+							// returns 0 if user confirmed toggle
+							if ( feOverlay.confirm_dialog(
+									msg,
+									feSettings.get_rom_info( 0, FeRomInfo::Title ) ) == 0 )
+							{
+								feSettings.set_current_fav( new_state );
+							}
+						}
+						else
+						{
+							feSettings.set_current_fav( new_state );
 						}
 					}
 					break;

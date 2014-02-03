@@ -101,6 +101,7 @@ const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
+const char *FE_FAVOURITE_FILE_EXTENSION = ".fav";
 const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
@@ -142,7 +143,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_last_launch_rom( 0 ),
 	m_lists_menu_exit( true ),
 	m_hide_brackets( false ),
-	m_autolaunch_last_game( false )
+	m_autolaunch_last_game( false ),
+	m_confirm_favs( false )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -255,6 +257,7 @@ const char *FeSettings::configSettingStrings[] =
 	"lists_menu_exit",
 	"hide_brackets",
 	"autolaunch_last_game",
+	"confirm_favourites",
 	NULL
 };
 
@@ -328,16 +331,18 @@ int FeSettings::process_setting( const std::string &setting,
 				"general", setting, otherSettingStrings, configSettingStrings );
 			return 1;
 		}
+
+		// shouldn't get here
+		ASSERT( 0 );
 	}
 
-	// shouldn't get here
-	ASSERT( 0 );
 	return 0;
 }
 
 void FeSettings::init_list()
 {
-	m_rl.clear();
+	if ( !m_rl.empty() )
+		m_rl.save_fav_map();
 
 	if ( m_current_list < 0 )
 		return;
@@ -350,6 +355,8 @@ void FeSettings::init_list()
 		f->init();
 		m_rl.set_filter( f );
 	}
+	else
+		m_rl.set_filter( NULL );
 
 	std::string romlist = m_lists[m_current_list].get_info(FeListInfo::Romlist);
 
@@ -359,7 +366,10 @@ void FeSettings::init_list()
 	std::string filename( m_config_path );
 	filename += FE_ROMLIST_SUBDIR;
 	filename += romlist;
+	std::string favfile( filename );
+	
 	filename += FE_ROMLIST_FILE_EXTENSION;
+	favfile += FE_FAVOURITE_FILE_EXTENSION;
 
 	// Check for a romlist in the data path if there isn't one that matches in the
 	// config directory
@@ -376,12 +386,20 @@ void FeSettings::init_list()
 			filename = temp;
 	}
 
+	// We need to load the favourites map before we load the romlist, as
+	// it is used in the populating of each rom
+	//
+	m_rl.load_fav_map( favfile );
+
 	if ( m_rl.load_from_file( filename, ";" ) == false )
 		std::cout << "Error opening romlist: " << filename << std::endl;
 }
 
 void FeSettings::save_state() const
 {
+	if ( !m_rl.empty() )
+		m_rl.save_fav_map();
+
 	std::string filename( m_config_path );
 	confirm_directory( m_config_path, FE_EMPTY_STRING );
 
@@ -745,6 +763,48 @@ bool FeSettings::select_last_launch()
 	set_filter( m_last_launch_filter );
 	set_current_rom( m_last_launch_rom );
 	return retval;
+}
+
+bool FeSettings::get_current_fav() const
+{
+	const std::string &s = m_rl[get_rom_index()].get_info(FeRomInfo::Favourite);
+	if ( s.empty() || ( s.compare("1") != 0 ))
+		return false;
+	else
+		return true;
+}
+
+void FeSettings::set_current_fav( bool status )
+{
+	m_rl.set_fav( get_rom_index(), status );
+}
+
+int FeSettings::get_prev_fav_offset() const
+{
+	int idx = get_rom_index();
+
+	for ( int i=1; i < m_rl.size(); i++ )
+	{
+		int t_idx = ( i <= idx ) ? ( idx - i ) : ( m_rl.size() - ( i - idx ) );
+		if ( m_rl[ t_idx ].get_info(FeRomInfo::Favourite).compare("1")==0 )
+			return ( t_idx - idx );
+	}
+
+	return 0;
+}
+
+int FeSettings::get_next_fav_offset() const
+{
+	int idx = get_rom_index();
+
+	for ( int i=1; i < m_rl.size(); i++ )
+	{
+		int t_idx = ( idx + i ) % m_rl.size();
+		if ( m_rl[ t_idx ].get_info(FeRomInfo::Favourite).compare("1")==0 )
+			return ( t_idx - idx );
+	}
+
+	return 0;
 }
 
 void FeSettings::toggle_layout()
@@ -1262,6 +1322,8 @@ const std::string FeSettings::get_info( int index ) const
 		return ( m_hide_brackets ? "yes" : "no" );
 	case AutoLaunchLastGame:
 		return ( m_autolaunch_last_game ? "yes" : "no" );
+	case ConfirmFavourites:
+		return ( m_confirm_favs ? "yes" : "no" );
 	default:
 		break;
 	}
@@ -1339,6 +1401,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case AutoLaunchLastGame:
 		m_autolaunch_last_game = config_str_to_bool( value );
+		break;
+
+	case ConfirmFavourites:
+		m_confirm_favs = config_str_to_bool( value );
 		break;
 
 	default:

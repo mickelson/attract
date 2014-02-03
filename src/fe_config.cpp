@@ -1137,6 +1137,12 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_autolaunch_last_game" );
 	ctx.back_opt().append_vlist( bool_opts );
 
+	ctx.add_optl( Opt::LIST, 
+			"Confirm Favourites", 
+			ctx.fe_settings.confirm_favs() ? bool_opts[0] : bool_opts[1], 
+			"_help_confirm_favs" );
+	ctx.back_opt().append_vlist( bool_opts );
+
 	ctx.add_optl( Opt::EDIT, 
 			"Exit Command", 
 			ctx.fe_settings.get_info( FeSettings::ExitCommand ), 
@@ -1174,14 +1180,17 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame, 
 			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
 
-	ctx.fe_settings.set_info( FeSettings::ExitCommand, 
-			ctx.opt_list[6].get_value() );
+	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites, 
+			ctx.opt_list[6].get_vindex() == 0 ? "yes" : "no" );
 
-	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
+	ctx.fe_settings.set_info( FeSettings::ExitCommand, 
 			ctx.opt_list[7].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath, 
+	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
 			ctx.opt_list[8].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::FontPath, 
+			ctx.opt_list[9].get_value() );
 
 	return true;
 }

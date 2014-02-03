@@ -165,16 +165,16 @@ void FeOverlay::splash_message( const std::string &msg,
 	m_wnd.display();
 }
 
-int FeOverlay::exit_dialog()
+int FeOverlay::confirm_dialog( const std::string &msg, const std::string &rep )
 {
-	std::string exit_str;
-	m_feSettings.get_resource( "Exit Attract-Mode?", exit_str );
+	std::string msg_str;
+	m_feSettings.get_resource( msg, rep, msg_str );
 
 	std::vector<std::string> list(2);
 	m_feSettings.get_resource( "Yes", list[0] );
 	m_feSettings.get_resource( "No", list[1] );
 
-	return internal_dialog(	exit_str, list );
+	return internal_dialog(	msg_str, list );
 }
 
 int FeOverlay::lists_dialog()

@@ -84,6 +84,9 @@ public:
 		Configure,
 		RandomGame,
 		ReplayLastGame,
+		ToggleFavourite,
+		PrevFavourite,
+		NextFavourite,
 		LAST_COMMAND,
 
 		//

@@ -365,8 +365,15 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		break;
 
 	case FeInputMap::RandomGame:
-		m_feSettings->change_rom( rand() );
-		update( false );
+		{
+			int step = rand() % m_feSettings->get_current_list_size();
+			if ( step != 0 )
+			{
+				vm_on_transition( ToNewSelection, step, wnd );
+				m_feSettings->change_rom( step );
+				update( false );
+			}
+		}
 		break;
 
 	case FeInputMap::ToggleRotateRight:
@@ -418,6 +425,22 @@ bool FePresent::handle_event( FeInputMap::Command c,
 	case FeInputMap::ToggleLayout:
 		m_feSettings->toggle_layout();
 		load_layout( wnd );
+		break;
+
+	case FeInputMap::PrevFavourite:
+	case FeInputMap::NextFavourite:
+		{
+			int step = ( c == FeInputMap::PrevFavourite )
+					? m_feSettings->get_prev_fav_offset()
+					: m_feSettings->get_next_fav_offset();
+
+			if ( step != 0 )
+			{
+				vm_on_transition( ToNewSelection, step, wnd );
+				m_feSettings->change_rom( step );
+				update( false );
+			}
+		}
 		break;
 
 	case FeInputMap::LAST_COMMAND:

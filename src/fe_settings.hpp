@@ -51,6 +51,7 @@ public:
 		ListsMenuExit,
 		HideBrackets,
 		AutoLaunchLastGame,
+		ConfirmFavourites,
 		LAST_INDEX 
 	};
 
@@ -83,6 +84,7 @@ private:
 	bool m_lists_menu_exit;
 	bool m_hide_brackets;
 	bool m_autolaunch_last_game;
+	bool m_confirm_favs;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
@@ -188,6 +190,12 @@ public:
 	bool get_lists_menu_exit() const;
 
 	void dump( void ) const;
+
+	bool get_current_fav() const;
+	void set_current_fav( bool );
+	int get_prev_fav_offset() const;
+	int get_next_fav_offset() const;
+	bool confirm_favs() const { return m_confirm_favs; }
 
 	//
 	// This function implements the command-line romlist generation

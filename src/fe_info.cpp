@@ -46,6 +46,7 @@ const char *FeRomInfo::indexStrings[] =
 	"Status",
 	"DisplayCount",
 	"DisplayType",
+	"Favourite",
 	NULL
 };
 
@@ -86,7 +87,7 @@ int FeRomInfo::process_setting( const std::string &,
 	size_t pos=0;
 	std::string token;
 
-	for ( int i=1; i<LAST_INDEX; i++ )
+	for ( int i=1; i < Favourite; i++ )
 	{
 		token_helper( value, pos, token );
 		m_info[(Index)i] = token;
@@ -98,7 +99,7 @@ int FeRomInfo::process_setting( const std::string &,
 std::string FeRomInfo::as_output( void ) const
 {
 	std::string s = get_info_escaped( (Index)0 );
-	for ( int i=1; i < LAST_INDEX; i++ )
+	for ( int i=1; i < Favourite; i++ )
 	{
 		s += ';';
 		s += get_info_escaped( (Index)i );
@@ -176,6 +177,7 @@ FeRule &FeRule::operator=( const FeRule &r )
 		sqstd_rex_free( m_rex );
 
 	m_rex = NULL;
+	return *this;
 }
 
 void FeRule::init()
@@ -631,7 +633,7 @@ void FeListInfo::save( std::ofstream &f ) const
 }
 
 FeRomList::FeRomList()
-	: m_filter( NULL )
+	: m_filter( NULL ), m_fav_changed( false )
 {
 }
 
@@ -639,15 +641,16 @@ FeRomList::~FeRomList()
 {
 }
 
-void FeRomList::clear()
-{
-	m_list.clear();
-	m_filter=NULL;
-}
-
 void FeRomList::set_filter( const FeFilter *f )
 {
 	m_filter = f;
+}
+
+bool FeRomList::load_from_file( const std::string &filename,
+			const char *sep )
+{
+	m_list.clear();
+	return FeFileConfigurable::load_from_file( filename, sep );
 }
 
 int FeRomList::process_setting( const std::string &setting,
@@ -657,10 +660,75 @@ int FeRomList::process_setting( const std::string &setting,
 	FeRomInfo next_rom( setting );
 	next_rom.process_setting( setting, value, fn );
 
+	if ( m_favs.find( next_rom.get_info( FeRomInfo::Romname ) ) != m_favs.end() )
+		next_rom.set_info( FeRomInfo::Favourite, "1" );
+
 	if (( m_filter == NULL ) || ( m_filter->apply_filter( next_rom ) == true ))
 		m_list.push_back( next_rom );
 
    return 0;
+}
+
+void FeRomList::load_fav_map( const std::string filename )
+{
+	m_favs.clear();
+	m_fav_changed=false;
+
+	std::ifstream myfile( filename.c_str() );
+
+	if ( !myfile.is_open() )
+		return;
+
+	m_fav_file = filename;
+	std::set<std::string>::iterator itr=m_favs.begin();
+
+	while ( myfile.good() )
+	{
+		size_t pos=0;
+		std::string line, name;
+
+		getline( myfile, line );
+		token_helper( line, pos, name );
+
+		itr=m_favs.insert( itr, name );
+	}
+
+	myfile.close();
+}
+
+void FeRomList::save_fav_map() const
+{
+	if (( !m_fav_changed ) || ( m_fav_file.empty() ))
+		return;
+
+	std::ofstream outfile( m_fav_file.c_str() );
+	if ( !outfile.is_open() )
+		return;
+
+	std::set<std::string>::const_iterator itr;
+	for ( itr = m_favs.begin(); itr != m_favs.end(); ++itr )
+	{
+		if ( !(*itr).empty() )
+			outfile << (*itr) << std::endl;
+	}
+
+	outfile.close();
+}
+
+void FeRomList::set_fav( int idx, bool fav )
+{
+	if ( fav )
+	{
+		m_list[idx].set_info( FeRomInfo::Favourite, "1" );
+		m_favs.insert( m_list[idx].get_info( FeRomInfo::Romname ) );
+	}
+	else
+	{
+		m_list[idx].set_info( FeRomInfo::Favourite, "" );
+		m_favs.erase( m_list[idx].get_info( FeRomInfo::Romname ) );
+	}
+
+	m_fav_changed=true;
 }
 
 const char *FeEmulatorInfo::indexStrings[] =

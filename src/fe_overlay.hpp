@@ -70,7 +70,7 @@ public:
 		FePresent &fep );
 
 	void splash_message( const std::string &, const std::string &rep="" );
-	int exit_dialog();
+	int confirm_dialog( const std::string &msg, const std::string &rep="" );
 	bool config_dialog(); 
 	int lists_dialog(); 
 	int filters_dialog();

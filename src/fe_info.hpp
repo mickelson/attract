@@ -25,6 +25,7 @@
 
 #include "fe_base.hpp"
 #include <map>
+#include <set>
 #include <vector>
 #include <deque>
 
@@ -51,6 +52,7 @@ public:
 		Status,
 		DisplayCount,
 		DisplayType,
+		Favourite,		// everything from Favourite on is not loaded from romlist
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
@@ -205,11 +207,14 @@ private:
 	std::deque< FeFilter > m_filters;
 };
 
-class FeRomList : public FeFileConfigurable
+class FeRomList : protected FeFileConfigurable
 {
 private:
 	std::deque<FeRomInfo> m_list;
+	std::set<std::string> m_favs;
+	std::string m_fav_file;
 	const FeFilter *m_filter;
+	bool m_fav_changed;
 
 	FeRomList( const FeRomList & );
 	FeRomList &operator=( const FeRomList & );
@@ -224,9 +229,17 @@ public:
 
 	void set_filter( const FeFilter *f ); 
 
+	// base class has this function too!
+	bool load_from_file( const std::string &filename,
+					const char *sep=FE_WHITESPACE );
+
 	int process_setting( const std::string &setting, 
 		const std::string &value,
 		const std::string &fn );
+
+	void load_fav_map( const std::string filename );
+	void save_fav_map() const;
+	void set_fav( int idx, bool fav );
 
 	bool empty() const { return m_list.empty(); };
 	int size() const { return (int)m_list.size(); };

@@ -64,6 +64,8 @@ _help_font_path;The directories containing fonts.  Multiple directories can be e
 _help_screen_saver_timeout;The amount of time in seconds to wait before switching to the screen saver.  0 to disable
 _help_lists_menu_exit;Configure whether an Exit option should be provided in the"Lists Menu"
 _help_hide_brackets;Hide text in brackets when showing game titles
+_help_autolaunch_last_game;Automatically launch the last game played on startup
+_help_confirm_favs;Confirm the addition/removal of Favourites
 _help_emulators;Configure emulator settings
 _help_lists;Configure display lists
 _help_controls;Configure controls
