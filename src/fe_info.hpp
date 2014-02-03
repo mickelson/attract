@@ -237,7 +237,7 @@ public:
 		const std::string &value,
 		const std::string &fn );
 
-	void load_fav_map( const std::string filename );
+	void load_fav_map( const std::string &filename );
 	void save_fav_map() const;
 	void set_fav( int idx, bool fav );
 

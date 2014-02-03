@@ -669,17 +669,17 @@ int FeRomList::process_setting( const std::string &setting,
    return 0;
 }
 
-void FeRomList::load_fav_map( const std::string filename )
+void FeRomList::load_fav_map( const std::string &filename )
 {
 	m_favs.clear();
 	m_fav_changed=false;
+	m_fav_file = filename;
 
 	std::ifstream myfile( filename.c_str() );
 
 	if ( !myfile.is_open() )
 		return;
 
-	m_fav_file = filename;
 	std::set<std::string>::iterator itr=m_favs.begin();
 
 	while ( myfile.good() )
