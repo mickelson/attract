@@ -739,9 +739,14 @@ bool FeListEditMenu::on_option_select(
 
 		if ( o.opaque == 1 ) 
 		{
-			std::string all;
-			ctx.fe_settings.get_resource( "All", all );
-			m_list->create_filter( all );
+			std::string res;
+			ctx.edit_dialog( "Enter Filter Name", res );
+
+			if ( res.empty() )
+				return false;		// if they don't enter a name then cancel
+
+			ctx.fe_settings.create_filter( *m_list, res );
+
 			f_index = m_list->get_filter_count() - 1;
 			ctx.save_req=true;
 		}
@@ -816,7 +821,7 @@ bool FeListSelMenu::on_option_select(
 
 		if ( res.empty() )
 			return false;		// if they don't enter a name then cancel
-		
+
 		ctx.save_req=true;
 		l = ctx.fe_settings.create_list( res );
 	}

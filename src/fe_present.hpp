@@ -35,8 +35,8 @@ class FeListBox;
 
 enum FeTransitionType
 {
-	StartLayout=0,		// var: 1=leaving screensaver, -1=starting frontend, 0 otherwise
-	EndLayout,			// var: 1=going to screensaver, -1=exiting frontend, 0 otherwise
+	StartLayout=0,		// var: FromToScreenSaver, FromToFrontend or FromToNoValue
+	EndLayout,			// var: FromToScreenSaver, FromToFrontend or FromToNoValue
 	ToNewSelection,	// var = index_offset of new selection
 	ToGame,				// var = 0
 	FromGame,			// var = 0
@@ -48,6 +48,8 @@ class FePresent
 {
 	friend void script_do_update( FeBasePresentable * );
 private:
+
+	static const char *transitionTypeStrings[];
 
 	enum FromToType
 	{

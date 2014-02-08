@@ -38,6 +38,17 @@
 #include <ctime>
 #include <stdarg.h>
 
+const char *FePresent::transitionTypeStrings[] =
+{
+		"StartLayout",
+		"EndLayout",
+		"ToNewSelection",
+		"ToGame",
+		"FromGame",
+		"ToNewList",
+		NULL
+};
+
 FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 	: m_feSettings( fesettings ), 
 	m_currentFont( NULL ), 
@@ -543,7 +554,7 @@ void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load )
 
 	update( true );
 
-	vm_on_transition( ToNewList, var, wnd );
+	vm_on_transition( ToNewList, FromToNoValue, wnd );
 	vm_on_transition( StartLayout, var, wnd );
 }
 
@@ -1137,15 +1148,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		.Const( _SC("ScreenHeight"), (int)m_outputSize.y )
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
 		.Const( _SC("OS"), get_OS_string() )
-	
-		.Enum( _SC("Transition"), Enumeration()
-			.Const( _SC("StartLayout"), StartLayout )
-			.Const( _SC("EndLayout"), EndLayout )
-			.Const( _SC("ToNewSelection"), ToNewSelection )
-			.Const( _SC("ToGame"), ToGame )
-			.Const( _SC("FromGame"), FromGame )
-			.Const( _SC("ToNewList"), ToNewList )
-			)
+
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
 			.Const( _SC("Bold"), sf::Text::Bold )
@@ -1198,6 +1201,15 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		i++;
 	}
 	ConstTable().Enum( _SC("Info"), info);
+
+	Enumeration transition;
+	i=0;
+	while ( transitionTypeStrings[i] != NULL )
+	{
+		transition.Const( transitionTypeStrings[i], i );
+		i++;
+	}
+	ConstTable().Enum( _SC("Transition"), transition );
 
 	// All frontend functionality is in the "fe" table in Squirrel
 	//
@@ -1468,6 +1480,10 @@ bool FePresent::vm_on_transition(
 	sf::RenderWindow *wnd )
 {
 	using namespace Sqrat;
+
+#ifdef FE_DEBUG
+	std::cout << "[Transition] type=" << transitionTypeStrings[t] << ", var=" << var << std::endl;
+#endif // FE_DEBUG
 
 	sf::Time tstart = m_layoutTimer.getElapsedTime();
 	m_redrawTriggered = false;

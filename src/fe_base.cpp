@@ -63,7 +63,7 @@ void FeBaseConfigurable::invalid_setting(
 	std::cout << std::endl;
 }
 
-bool FeFileConfigurable::load_from_file( const std::string &filename,
+bool FeBaseConfigurable::load_from_file( const std::string &filename,
 									const char *sep )
 {
    std::ifstream myfile( filename.c_str() );

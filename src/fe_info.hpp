@@ -186,7 +186,7 @@ public:
 	int get_current_filter_index() const { return m_filter_index; };
 	int get_filter_count() const { return m_filters.size(); };
 	FeFilter *get_filter( int );
-	FeFilter *create_filter( const std::string &name );
+	void append_filter( const FeFilter &f );
 	void delete_filter( int i );
 	void get_filters_list( std::vector<std::string> &l ) const;
 
@@ -207,7 +207,7 @@ private:
 	std::deque< FeFilter > m_filters;
 };
 
-class FeRomList : protected FeFileConfigurable
+class FeRomList : protected FeBaseConfigurable
 {
 private:
 	std::deque<FeRomInfo> m_list;
@@ -251,7 +251,7 @@ public:
 // 
 // Class for storing information regarding a specific emulator
 //
-class FeEmulatorInfo : public FeFileConfigurable
+class FeEmulatorInfo : public FeBaseConfigurable
 {
 public:
 
@@ -334,7 +334,7 @@ private:
 //
 // Class to contain the interface language strings
 //
-class FeResourceMap : public FeFileConfigurable
+class FeResourceMap : public FeBaseConfigurable
 {
 public:
 	FeResourceMap();

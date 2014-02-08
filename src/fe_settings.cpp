@@ -109,6 +109,9 @@ const char *FE_EMULATOR_SUBDIR		= "emulators/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
 const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
+const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
+const char *FE_LIST_DEFAULT			= "default-list.cfg";
+const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
 
 const std::string FE_EMPTY_STRING;
 
@@ -567,25 +570,11 @@ const std::string &FeSettings::get_rom_info( int offset, FeRomInfo::Index index 
 
 std::string FeSettings::get_screensaver_file() const
 {
-	std::string path = m_config_path;
-	path += FE_LAYOUT_SUBDIR;
-	path += FE_SCREENSAVER_FILE;
+	std::string temp;
+	if ( !internal_resolve_config_file( temp, FE_LAYOUT_SUBDIR, FE_SCREENSAVER_FILE ) )
+		std::cerr << "Error loading screensaver: " << FE_SCREENSAVER_FILE << std::endl;
 
-	if ( file_exists( path ) )
-		return path;
-
-	if ( FE_DATA_PATH != NULL )
-	{
-		path = FE_DATA_PATH;
-		path += FE_LAYOUT_SUBDIR;
-		path += FE_SCREENSAVER_FILE;
-
-		if ( file_exists( path ) )
-			return path;
-	}
-
-	std::cerr << "Error, could not find screensaver: " << FE_SCREENSAVER_FILE << std::endl;
-	return FE_EMPTY_STRING;
+	return temp;
 }
 
 std::string FeSettings::get_current_layout_file() const
@@ -866,19 +855,10 @@ bool FeSettings::get_sound_file( FeInputMap::Command c, std::string &s, bool ful
 	{
 		if ( full_path )
 		{
-			s = m_config_path;
-			s += FE_SOUND_SUBDIR;
-			s += filename;
-
-			// if the sound file doesn't exist in our config path, check for it in the data directory
-			if (( !file_exists( s ) )
-				&& ( FE_DATA_PATH != NULL ))
+			if ( !internal_resolve_config_file( s, FE_SOUND_SUBDIR, filename ) )
 			{
-				std::string temp = FE_DATA_PATH;
-				temp += FE_SOUND_SUBDIR;
-				temp += filename;
-				if ( file_exists( temp ) )
-					s = temp;
+				std::cerr << "Sound file not found: " << filename << std::endl;
+				return false;
 			}
 		}
 		else
@@ -1043,13 +1023,11 @@ FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
 	//
 	// Fill in with default values if there is a "default" emulator
 	//
-	std::string filename = m_config_path;
-	filename += FE_EMULATOR_SUBDIR;
-	filename += "default";
-	filename += FE_EMULATOR_FILE_EXTENSION;
-
 	FeEmulatorInfo new_emu( emu );
-	new_emu.load_from_file( filename );
+
+	std::string defaults_file;
+	if ( internal_resolve_config_file( defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
+		new_emu.load_from_file( defaults_file );
 
 	m_emulators.push_back( new_emu );
 	return &(m_emulators.back());
@@ -1426,6 +1404,17 @@ FeListInfo *FeSettings::get_list( const std::string &n )
 	return NULL;
 }
 
+void FeSettings::create_filter( FeListInfo &l, const std::string &name ) const
+{
+	FeFilter new_filter( name );
+
+	std::string defaults_file;
+	if ( internal_resolve_config_file( defaults_file, NULL, FE_FILTER_DEFAULT ) )
+		new_filter.load_from_file( defaults_file );
+
+	l.append_filter( new_filter );
+}
+
 FeListInfo *FeSettings::create_list( const std::string &n )
 {
 	if ( m_current_list == -1 )
@@ -1433,22 +1422,40 @@ FeListInfo *FeSettings::create_list( const std::string &n )
 
 	FeListInfo new_list( n );
 
-	if ( !m_lists.empty() )
+	std::string defaults_file;
+	if ( internal_resolve_config_file( defaults_file, NULL, FE_LIST_DEFAULT ) )
+		new_list.load_from_file( defaults_file );
+
+	// If there is no layout set, set a good default one now
+	//
+	if ( new_list.get_info( FeListInfo::Layout ).empty() )
 	{
-		// If other lists are configured, give the new list the same layout as
-		// the last configured list
-		//
-		new_list.set_info( FeListInfo::Layout, 
-			m_lists.back().get_info( FeListInfo::Layout ) );
+		if ( !m_lists.empty() )
+		{
+			// If other lists are configured, give the new list the same layout as
+			// the last configured list
+			//
+			new_list.set_info( FeListInfo::Layout,
+				m_lists.back().get_info( FeListInfo::Layout ) );
+		}
+		else
+		{
+			// Pick an available layout, use the first one alphabetically
+			//
+			std::vector<std::string> layouts;
+			get_layouts_list( layouts ); // the returned list is sorted alphabetically
+			if ( !layouts.empty() )
+				new_list.set_info( FeListInfo::Layout, layouts.front() );
+		}
 	}
-	else
+
+	// If there is no romlist set, use the one from the last list created
+	//
+	if (( new_list.get_info( FeListInfo::Romlist ).empty() )
+		&& ( !m_lists.empty() ))
 	{
-		// Pick an available layout, use the first one alphabetically
-		//
-		std::vector<std::string> layouts;
-		get_layouts_list( layouts ); // the returned list is sorted alphabetically
-		if ( !layouts.empty() )
-			new_list.set_info( FeListInfo::Layout, layouts.front() );
+		new_list.set_info( FeListInfo::Romlist,
+			m_lists.back().get_info( FeListInfo::Romlist ) );
 	}
 
 	m_lists.push_back( new_list );
@@ -1644,47 +1651,22 @@ FePlugInfo *FeSettings::get_plugin( const std::string &label )
 
 std::string FeSettings::get_plugin_full_path( const std::string &label ) const
 {
-	std::string path;
-	path = m_config_path + FE_PLUGIN_SUBDIR;
-	path += label + FE_PLUGIN_FILE_EXTENSION;
+	std::string temp;
+	if ( !internal_resolve_config_file( temp, FE_PLUGIN_SUBDIR, label + FE_PLUGIN_FILE_EXTENSION ) )
+		std::cerr << "Plugin file not found: " << label << std::cerr;
 
-	if ( file_exists( path ) )
-		return path;
-
-	if ( FE_DATA_PATH != NULL )
-	{
-		path = FE_DATA_PATH;
-		path += FE_PLUGIN_SUBDIR;
-		path += label + FE_PLUGIN_FILE_EXTENSION;
-
-		if ( file_exists( path ) )
-			return path;
-	}
-
-	return FE_EMPTY_STRING;
+	return temp;
 }
 
 void FeSettings::internal_load_language( const std::string &lang )
 {
-	std::string filename = m_config_path;
-	filename += FE_LANGUAGE_SUBDIR;
-	filename += lang;
-	filename += FE_LANGUAGE_FILE_EXTENSION;
-
-	if (( !file_exists( filename ) )
-			&& ( FE_DATA_PATH != NULL ))
-	{
-		std::string temp = FE_DATA_PATH;
-		temp += FE_LANGUAGE_SUBDIR;
-		temp += lang;
-		temp += FE_LANGUAGE_FILE_EXTENSION;
-
-		if ( file_exists( temp ) )
-			filename = temp;
-	}
-
 	m_resourcemap.clear();
-	m_resourcemap.load_from_file( filename, ";" );
+
+	std::string fname;
+	if ( internal_resolve_config_file( fname, FE_LANGUAGE_SUBDIR, lang + FE_LANGUAGE_FILE_EXTENSION ) )
+		m_resourcemap.load_from_file( fname, ";" );
+	else
+		std::cerr << "Error loading language resource file: " << lang << std::endl;
 }
 
 void FeSettings::set_language( const std::string &s )
@@ -1740,4 +1722,36 @@ void FeSettings::internal_gather_config_files(
 	// Sort the list and remove duplicates
 	std::sort( ll.begin(), ll.end() );
 	ll.erase( std::unique( ll.begin(), ll.end() ), ll.end() );
+}
+
+bool FeSettings::internal_resolve_config_file(
+						std::string &result,
+						const char *subdir,
+						const std::string &name  ) const
+{
+	std::string path;
+	path = m_config_path;
+	if ( subdir ) path += subdir;
+	path += name;
+
+	if ( file_exists( path ) )
+	{
+		result = path;
+		return true;
+	}
+
+	if ( FE_DATA_PATH != NULL )
+	{
+		path = FE_DATA_PATH;
+		if ( subdir ) path += subdir;
+		path += name;
+
+		if ( file_exists( path ) )
+		{
+			result = path;
+			return true;
+		}
+	}
+
+	return false;
 }

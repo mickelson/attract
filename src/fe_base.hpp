@@ -46,11 +46,7 @@ public:
 	virtual int process_setting( const std::string &setting, 
 								const std::string &value,
 								const std::string &filename )=0;
-};
 
-class FeFileConfigurable : public FeBaseConfigurable
-{
-public:
 	bool load_from_file( const std::string &filename,
 								const char *sep=FE_WHITESPACE );
 };

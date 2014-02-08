@@ -33,7 +33,7 @@ extern const char *FE_EMULATOR_SUBDIR;
 extern const char *FE_ROMLIST_FILE_EXTENSION;
 extern const char *FE_EMULATOR_FILE_EXTENSION;
 
-class FeSettings : public FeFileConfigurable
+class FeSettings : public FeBaseConfigurable
 {
 public:
    enum RotationState { RotateNone=0, RotateRight, RotateFlip, RotateLeft };
@@ -105,6 +105,9 @@ private:
 			std::vector<std::string> &ll,
 			const std::vector<std::string> &extension_list,
 			const char *subdir ) const;
+
+	bool internal_resolve_config_file(
+			std::string &result, const char *subdir, const std::string &config_file  ) const;
 
 	void internal_load_language( const std::string &lang );
 
@@ -224,6 +227,8 @@ public:
 	FeListInfo *get_list( const std::string &n );
 	FeListInfo *create_list( const std::string &n );
 	void delete_list( const std::string &n );
+
+	void create_filter( FeListInfo &l, const std::string &name ) const;
 
 	// return true if specified romlist name is configured for use as a display 
 	// list

@@ -586,10 +586,9 @@ FeFilter *FeListInfo::get_filter( int i )
 	return NULL;	
 }
 
-FeFilter *FeListInfo::create_filter( const std::string &n )
+void FeListInfo::append_filter( const FeFilter &f )
 {
-	m_filters.push_back( FeFilter( n ) );
-	return &(m_filters.back());
+	m_filters.push_back( f );
 }
 
 void FeListInfo::delete_filter( int i )
@@ -650,7 +649,7 @@ bool FeRomList::load_from_file( const std::string &filename,
 			const char *sep )
 {
 	m_list.clear();
-	return FeFileConfigurable::load_from_file( filename, sep );
+	return FeBaseConfigurable::load_from_file( filename, sep );
 }
 
 int FeRomList::process_setting( const std::string &setting,
