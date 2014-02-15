@@ -67,17 +67,17 @@ extern "C"
 
 void print_ffmpeg_version_info()
 {
-	std::cout << "Using " 
+	std::cout << "Using "
 		<< (( LIBAVCODEC_VERSION_MICRO >= 100 ) ? "FFmpeg" : "Libav" )
 		<< " for Audio and Video." << std::endl
 
 		<< "avcodec " << LIBAVCODEC_VERSION_MAJOR
 		<< '.' << LIBAVCODEC_VERSION_MINOR
-		<< '.' << LIBAVCODEC_VERSION_MICRO 
+		<< '.' << LIBAVCODEC_VERSION_MICRO
 
 		<< " / avformat " << LIBAVFORMAT_VERSION_MAJOR
 		<< '.' << LIBAVFORMAT_VERSION_MINOR
-		<< '.' << LIBAVFORMAT_VERSION_MICRO 
+		<< '.' << LIBAVFORMAT_VERSION_MICRO
 
 		<< " / swscale " << LIBSWSCALE_VERSION_MAJOR
 		<< '.' << LIBSWSCALE_VERSION_MINOR
@@ -91,7 +91,7 @@ void print_ffmpeg_version_info()
 	std::cout << std::endl;
 }
 
-#define MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio 
+#define MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
 //
 // Base class for our implementation of the audio and video components
 //
@@ -106,7 +106,7 @@ private:
 
 public:
 	bool at_end;					// set when at the end of our input
-	AVCodecContext *codec_ctx; 
+	AVCodecContext *codec_ctx;
 	AVCodec *codec;
 	int stream_id;
 
@@ -148,7 +148,7 @@ class FeVideoImp : public FeBaseStream
 private:
 	//
 	// Video decoding and colour conversion runs on a dedicated thread.
-	// Loading the result into an sf::Texture and displaying it is done 
+	// Loading the result into an sf::Texture and displaying it is done
 	// on the main thread.
 	//
 	sf::Thread m_video_thread;
@@ -162,7 +162,7 @@ public:
 
 	//
 	// The video thread sets display_frame and display_frame_ready when
-	// the next image is ready for display.  The main thread then copies 
+	// the next image is ready for display.  The main thread then copies
 	// the image data into the corresponding sf::Texture
 	//
 	sf::Mutex image_swap_mutex;
@@ -178,9 +178,9 @@ public:
 };
 
 FeBaseStream::FeBaseStream()
-	: at_end( false ), 
-	codec_ctx( NULL ), 
-	codec( NULL ), 
+	: at_end( false ),
+	codec_ctx( NULL ),
+	codec( NULL ),
 	stream_id( -1 )
 {
 }
@@ -288,11 +288,11 @@ void FeAudioImp::close()
 }
 
 FeVideoImp::FeVideoImp( FeMedia *p )
-		: FeBaseStream(), 
-		m_video_thread( &FeVideoImp::video_thread, this ), 
-		m_parent( p ), 
-		run_video_thread( false ), 
-		display_frame( NULL ), 
+		: FeBaseStream(),
+		m_video_thread( &FeVideoImp::video_thread, this ),
+		m_parent( p ),
+		run_video_thread( false ),
+		display_frame( NULL ),
 		display_ready( false )
 {
 }
@@ -301,7 +301,7 @@ void FeVideoImp::play()
 {
 	run_video_thread = true;
 	video_timer.restart();
-	m_video_thread.launch();	
+	m_video_thread.launch();
 }
 
 void FeVideoImp::stop()
@@ -323,7 +323,7 @@ void FeVideoImp::close()
 	FeBaseStream::close();
 }
 
-struct frame_queue_type 
+struct frame_queue_type
 {
 	AVPicture *p;
 	sf::Time pts;
@@ -342,7 +342,7 @@ void FeVideoImp::video_thread()
 
 	AVFrame *raw_frame = avcodec_alloc_frame();
 
-	SwsContext *sws_ctx = sws_getContext( 
+	SwsContext *sws_ctx = sws_getContext(
 					codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
 					codec_ctx->width, codec_ctx->height, PIX_FMT_RGBA,
 					SWS_FAST_BILINEAR, NULL, NULL, NULL );
@@ -414,13 +414,13 @@ void FeVideoImp::video_thread()
 			if ( frame_queue.size() < MAX_QUEUE )
 			{
 				//
-				// get next packet 
+				// get next packet
 				//
 				AVPacket *packet = pop_packet();
 				if ( packet == NULL )
 				{
 					if ( !m_parent->end_of_file() )
-						m_parent->read_packet();	
+						m_parent->read_packet();
 					else if ( frame_queue.empty() )
 						goto the_end;
 					else
@@ -432,31 +432,31 @@ void FeVideoImp::video_thread()
 					// decompress packet and put it in our frame queue
 					//
 					int got_frame = 0;
-					int len = avcodec_decode_video2( codec_ctx, raw_frame, 
+					int len = avcodec_decode_video2( codec_ctx, raw_frame,
 											&got_frame, packet );
 					if ( len < 0 )
 						std::cout << "error decoding video" << std::endl;
 
 					if ( got_frame )
 					{
-						frame_queue_type my_new = 
-						{ 
+						frame_queue_type my_new =
+						{
 							NULL, 				// AVPicture *
 							sf::Time::Zero		// pts
 						};
 
 						if ( packet->pts != AV_NOPTS_VALUE )
 							my_new.pts = time_base * (sf::Int64)packet->pts;
-						else 
+						else
 							my_new.pts = time_base * (sf::Int64)packet->dts;
 
 						my_new.p = (AVPicture *)av_malloc( sizeof( AVPicture ) );
-						avpicture_alloc( my_new.p, PIX_FMT_RGBA, 
+						avpicture_alloc( my_new.p, PIX_FMT_RGBA,
 												codec_ctx->width,
 												codec_ctx->height );
-	
+
 						sws_scale( sws_ctx, raw_frame->data, raw_frame->linesize,
-									0, codec_ctx->height, my_new.p->data, 
+									0, codec_ctx->height, my_new.p->data,
 									my_new.p->linesize );
 
 						frame_queue.push( my_new );
@@ -517,11 +517,11 @@ the_end:
 
 FeMedia::FeMedia( Type t )
 	: sf::SoundStream(),
-		m_type( t ), 
-		m_format_ctx( NULL ), 
-		m_loop( true ), 
-		m_read_eof( false ), 
-		m_audio( NULL ), 
+		m_type( t ),
+		m_format_ctx( NULL ),
+		m_loop( true ),
+		m_read_eof( false ),
+		m_audio( NULL ),
 		m_video( NULL )
 {
 }
@@ -578,10 +578,10 @@ sf::Time FeMedia::get_video_time()
 
 void FeMedia::play()
 {
-	if ( m_video ) 
+	if ( m_video )
 		m_video->play();
 
-	if ( m_audio ) 
+	if ( m_audio )
 		sf::SoundStream::play();
 }
 
@@ -628,7 +628,7 @@ void FeMedia::close()
 		delete m_video;
 		m_video=NULL;
 	}
-	
+
 	if (m_format_ctx)
 	{
 #if (LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( 53, 17, 0 ))
@@ -644,14 +644,10 @@ void FeMedia::close()
 
 bool FeMedia::is_playing()
 {
-	bool flag=false;
 	if ((m_video) && (!m_video->at_end))
-		flag=true;
+		return true;
 
-	if ((m_audio) && (sf::SoundStream::getStatus() == sf::SoundStream::Playing))
-		flag=true;
-
-	return flag;
+	return ((m_audio) && (sf::SoundStream::getStatus() == sf::SoundStream::Playing));
 }
 
 void FeMedia::setLoop( bool l )
@@ -672,7 +668,7 @@ bool FeMedia::openFromFile( const std::string &name )
 
 	if ( avformat_find_stream_info( m_format_ctx, NULL ) < 0 )
 	{
-		std::cout << "Error finding stream information in input file: " 
+		std::cout << "Error finding stream information in input file: "
 					<< name << std::endl;
 		return false;
 	}
@@ -681,17 +677,17 @@ bool FeMedia::openFromFile( const std::string &name )
 	{
 		int stream_id( -1 );
 		AVCodec *dec;
- 		stream_id = av_find_best_stream( m_format_ctx, AVMEDIA_TYPE_AUDIO, 
+		stream_id = av_find_best_stream( m_format_ctx, AVMEDIA_TYPE_AUDIO,
 											-1, -1, &dec, 0 );
 
 		if ( stream_id >= 0 )
 		{
 			m_format_ctx->streams[stream_id]->codec->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
-			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec, 
+			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec,
 										dec, NULL ) < 0 )
 			{
-				std::cout << "Could not open audio decoder for file: " 
+				std::cout << "Could not open audio decoder for file: "
 						<< name << std::endl;
 			}
 			else
@@ -705,12 +701,12 @@ bool FeMedia::openFromFile( const std::string &name )
 				// TODO: Fix buffer sizing, we allocate way
 				// more than we use
 				//
-				m_audio->buffer = (sf::Int16 *)av_malloc( 
+				m_audio->buffer = (sf::Int16 *)av_malloc(
 					MAX_AUDIO_FRAME_SIZE
 					+ FF_INPUT_BUFFER_PADDING_SIZE
 					+ m_audio->codec_ctx->sample_rate );
 
-				sf::SoundStream::initialize( 
+				sf::SoundStream::initialize(
 					m_audio->codec_ctx->channels,
 					m_audio->codec_ctx->sample_rate );
 
@@ -723,7 +719,7 @@ bool FeMedia::openFromFile( const std::string &name )
 	{
 		int stream_id( -1 );
 		AVCodec *dec;
- 		stream_id = av_find_best_stream( m_format_ctx, AVMEDIA_TYPE_VIDEO, 
+		stream_id = av_find_best_stream( m_format_ctx, AVMEDIA_TYPE_VIDEO,
 					-1, -1, &dec, 0 );
 
 		if ( stream_id < 0 )
@@ -732,10 +728,10 @@ bool FeMedia::openFromFile( const std::string &name )
 		}
 		else
 		{
-			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec, 
+			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec,
 										dec, NULL ) < 0 )
 			{
-				std::cout << "Could not open video decoder for file: " 
+				std::cout << "Could not open video decoder for file: "
 						<< name << std::endl;
 			}
 			else
@@ -744,7 +740,7 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_video->stream_id = stream_id;
 				m_video->codec_ctx = m_format_ctx->streams[stream_id]->codec;
 				m_video->codec = dec;
-				m_video->time_base = sf::seconds( 
+				m_video->time_base = sf::seconds(
 						av_q2d(m_format_ctx->streams[stream_id]->time_base) );
 
 				m_video->display_texture = sf::Texture();
@@ -796,6 +792,9 @@ bool FeMedia::read_packet()
 
 bool FeMedia::tick()
 {
+	if (( !m_video ) && ( !m_audio ))
+		return false;
+
 	if ( m_video )
 	{
 		sf::Lock l( m_video->image_swap_mutex );
@@ -835,10 +834,10 @@ bool FeMedia::onGetData( Chunk &data )
 		AVPacket *packet = m_audio->pop_packet();
 		while (( packet == NULL ) && ( !end_of_file() ))
 		{
-			read_packet();		
+			read_packet();
 			packet = m_audio->pop_packet();
 		}
-		
+
 		if ( packet == NULL )
 		{
 			m_audio->at_end=true;
@@ -859,7 +858,7 @@ bool FeMedia::onGetData( Chunk &data )
 			{
 				std::cout << "Error decoding audio." << std::endl;
 				FeBaseStream::free_packet( packet );
-				break;
+				return false;
 			}
 			else
 			{
@@ -882,7 +881,7 @@ bool FeMedia::onGetData( Chunk &data )
 			std::cerr << "Error decoding audio." << std::endl;
 			FeBaseStream::free_packet( packet );
 			FeBaseStream::free_frame( frame );
-			break;
+			return false;
 		}
 
 		if ( got_frame )
@@ -1006,8 +1005,8 @@ void FeMedia::onSeek( sf::Time timeOffset )
 bool FeMedia::is_supported_media_file( const std::string &filename )
 {
 	init_av();
-	return ( av_guess_format( 
-					NULL, 
-					filename.c_str(), 
+	return ( av_guess_format(
+					NULL,
+					filename.c_str(),
 					NULL ) != NULL ) ? true : false;
 }
