@@ -135,8 +135,8 @@ const char *FeSettings::rotationDispTokens[]	=
 };
 
 FeSettings::FeSettings( const std::string &config_path,
-				const std::string &cmdln_font, bool disable_mousecap )
-	:  m_inputmap( disable_mousecap ),
+				const std::string &cmdln_font )
+	:  m_inputmap(),
 	m_current_list( -1 ),
 	m_autorotate( RotateNone ),
 	m_current_config_object( NULL ),
@@ -144,6 +144,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_last_launch_list( 0 ),
 	m_last_launch_filter( 0 ),
 	m_last_launch_rom( 0 ),
+	m_joy_thresh( 75 ),
+	m_mouse_thresh( 10 ),
 	m_lists_menu_exit( true ),
 	m_hide_brackets( false ),
 	m_autolaunch_last_game( false ),
@@ -261,6 +263,8 @@ const char *FeSettings::configSettingStrings[] =
 	"hide_brackets",
 	"autolaunch_last_game",
 	"confirm_favourites",
+	"mouse_threshold",
+	"joystick_threshold",
 	NULL
 };
 
@@ -370,7 +374,7 @@ void FeSettings::init_list()
 	filename += FE_ROMLIST_SUBDIR;
 	filename += romlist;
 	std::string favfile( filename );
-	
+
 	filename += FE_ROMLIST_FILE_EXTENSION;
 	favfile += FE_FAVOURITE_FILE_EXTENSION;
 
@@ -477,6 +481,40 @@ void FeSettings::load_state()
 		m_current_list = m_lists.size() - 1;
 	if ( m_current_list < 0 )
 		m_current_list = 0;
+}
+
+FeInputMap::Command FeSettings::map_input( const sf::Event &e )
+{
+	return m_inputmap.map_input( e, m_mousecap_rect, m_joy_thresh );
+}
+
+bool FeSettings::config_map_input( const sf::Event &e, std::string &s, FeInputMap::Command &conflict )
+{
+	FeInputSource index( e, m_mousecap_rect, m_joy_thresh );
+	if ( index.get_type() == FeInputSource::Unsupported )
+		return false;
+
+	s = index.as_string();
+
+	conflict = map_input( e );
+	return true;
+}
+
+void FeSettings::init_mouse_capture( int window_x, int window_y )
+{
+	int radius = window_x * m_mouse_thresh / 400;
+	int centre_x = window_x / 2;
+	int centre_y = window_y / 2;
+
+	m_mousecap_rect.left = centre_x - radius;
+	m_mousecap_rect.top = centre_y - radius;
+	m_mousecap_rect.width = radius * 2;
+	m_mousecap_rect.height = radius * 2;
+}
+
+bool FeSettings::test_mouse_reset( int mouse_x, int mouse_y ) const
+{
+	return (( m_inputmap.has_mouse_moves() ) && ( !m_mousecap_rect.contains( mouse_x, mouse_y ) ));
 }
 
 int FeSettings::get_rom_index( int offset ) const
@@ -587,7 +625,7 @@ std::string FeSettings::get_current_layout_file() const
 	if ( file.empty() )
 	{
 		std::vector<std::string> list;
-		get_basename_from_extension( list, path, 
+		get_basename_from_extension( list, path,
 			std::vector<std::string>(1, FE_LAYOUT_FILE_EXTENSION) );
 
 		if ( list.empty() )
@@ -614,7 +652,7 @@ std::string FeSettings::get_current_layout_file() const
 
 std::string FeSettings::get_current_layout_dir() const
 {
-	if (( m_current_list < 0 ) 
+	if (( m_current_list < 0 )
 		|| ( m_lists[ m_current_list ].get_info( FeListInfo::Layout ).empty() ))
 	{
 		return FE_EMPTY_STRING;
@@ -656,7 +694,7 @@ const std::string &FeSettings::get_config_dir() const
 	return m_config_path;
 }
 
-bool FeSettings::config_file_exists() const 
+bool FeSettings::config_file_exists() const
 {
 	std::string config_file = m_config_path;
 	config_file += FE_CFG_FILE;
@@ -675,7 +713,7 @@ bool FeSettings::set_list( int index )
 		m_current_list = 0;
 	else if ( index < 0 )
 		m_current_list = m_lists.size() - 1;
-	else	
+	else
 		m_current_list = index;
 
 	init_list();
@@ -747,7 +785,7 @@ bool FeSettings::select_last_launch()
 	{
 		set_list( m_last_launch_list );
 		retval = true;
-	}	
+	}
 
 	set_filter( m_last_launch_filter );
 	set_current_rom( m_last_launch_rom );
@@ -958,7 +996,7 @@ void FeSettings::get_current_display_list( std::vector<std::string> &l ) const
 				l.push_back( temp );
 			else
 			{
-				l.push_back( 
+				l.push_back(
 					temp.substr( 0, temp.find_last_of( FE_WHITESPACE, pos ) ) );
 			}
 		}
@@ -1171,7 +1209,7 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	//
 	std::string test;
 	std::string layout_dir = get_current_layout_dir();
-	if ( !layout_dir.empty() && search_for_file( layout_dir, 
+	if ( !layout_dir.empty() && search_for_file( layout_dir,
 				fontname, FE_FONT_EXTENSIONS, test ) )
 	{
 		fontpath = test;
@@ -1302,6 +1340,10 @@ const std::string FeSettings::get_info( int index ) const
 		return ( m_autolaunch_last_game ? "yes" : "no" );
 	case ConfirmFavourites:
 		return ( m_confirm_favs ? "yes" : "no" );
+	case MouseThreshold:
+		return as_str( m_mouse_thresh );
+	case JoystickThreshold:
+		return as_str( m_joy_thresh );
 	default:
 		break;
 	}
@@ -1383,6 +1425,22 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ConfirmFavourites:
 		m_confirm_favs = config_str_to_bool( value );
+		break;
+
+	case MouseThreshold:
+		m_mouse_thresh = as_int( value );
+		if ( m_mouse_thresh > 100 )
+			m_mouse_thresh=100;
+		else if ( m_mouse_thresh < 1 )
+			m_mouse_thresh=1;
+		break;
+
+	case JoystickThreshold:
+		m_joy_thresh = as_int( value );
+		if ( m_joy_thresh > 100 )
+			m_joy_thresh=100;
+		else if ( m_joy_thresh < 1 )
+			m_joy_thresh=1;
 		break;
 
 	default:
@@ -1503,7 +1561,7 @@ void FeSettings::delete_list( const std::string &n )
 	}
 }
 
-void FeSettings::get_current_list_filter_names( 
+void FeSettings::get_current_list_filter_names(
 		std::vector<std::string> &list ) const
 {
 	if ( m_current_list < 0 )
@@ -1575,7 +1633,7 @@ void FeSettings::save() const
 		for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
 		{
 			//
-			// Get rid of configs for old plugins by not saving it if the 
+			// Get rid of configs for old plugins by not saving it if the
 			// plugin itself is gone
 			//
 			std::vector< std::string >::const_iterator its;
@@ -1612,7 +1670,7 @@ int FeSettings::lists_count() const
 	return m_lists.size();
 }
 
-const std::string &FeSettings::get_plugin_command( 
+const std::string &FeSettings::get_plugin_command(
 			const std::string &label ) const
 {
 	std::vector< FePlugInfo >::const_iterator itr;

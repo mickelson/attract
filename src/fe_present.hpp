@@ -43,7 +43,7 @@ enum FeTransitionType
 	ToNewList			// var = 0
 };
 
-class FePresent 
+class FePresent
 	: public sf::Drawable
 {
 	friend void script_do_update( FeBasePresentable * );
@@ -88,7 +88,7 @@ private:
 	// flag if a redraw has been triggered during script callback execution
 	//
 	bool m_redrawTriggered;
-	
+
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
 	sf::Vector2f m_layoutScale;
@@ -102,7 +102,7 @@ private:
 	void toggle_movie();
 
 	void toggle_rotate( FeSettings::RotationState ); // toggle between none and provided state
-	void set_transforms();	
+	void set_transforms();
 
 	// Overrides from base classes:
 	//
@@ -148,7 +148,7 @@ public:
 	void load_layout( sf::RenderWindow *wnd, bool initial_load=false );
 
 	int update( bool reload_list=false );
-	void update_to_new_list( sf::RenderWindow *wnd ); 
+	void update_to_new_list( sf::RenderWindow *wnd );
 
 	bool tick( sf::RenderWindow *w ); // return true if display refresh required
 	void on_stop_frontend( sf::RenderWindow *w );
@@ -165,8 +165,10 @@ public:
 	const sf::Font *get_font() const;
 	void set_default_font( sf::Font &f );
 
+	sf::Vector2i get_output_size() const { return m_outputSize; }
+
 	void perform_autorotate();
-	
+
 	void flag_redraw();
 
 	static FeImage *cb_add_image(const char *,int, int, int, int);
@@ -181,9 +183,11 @@ public:
 	static FeScriptSound *cb_add_sound(const char *);
 	static void cb_add_ticks_callback(const char *);
 	static void cb_add_transition_callback(const char *);
-	static bool cb_is_keypressed(int);
-	static bool cb_is_joybuttonpressed(int,int);
-	static float cb_get_joyaxispos(int,int);
+	static bool cb_is_keypressed(int);	// deprecated as of 1.2
+	static bool cb_is_joybuttonpressed(int,int);	// deprecated as of 1.2
+	static float cb_get_joyaxispos(int,int);	// deprecated as of 1.2
+	static bool cb_get_input_state( const char *input );
+	static int cb_get_input_pos( const char *input );
 	static void do_nut(const char *);
 	static bool cb_plugin_command(const char *, const char *, const char *);
 	static bool cb_plugin_command(const char *, const char *);

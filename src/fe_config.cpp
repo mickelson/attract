@@ -59,7 +59,7 @@ void FeMenuOpt::set_value( const std::string &s )
 			{
 				set_value( i );
 				return;
-			}	
+			}
 		}
 	}
 
@@ -70,9 +70,9 @@ void FeMenuOpt::set_value( const std::string &s )
 void FeMenuOpt::set_value( int i )
 {
 	m_list_index = i;
-	m_edit_value.clear(); //may be set for lists if no match previously 
+	m_edit_value.clear(); //may be set for lists if no match previously
 }
-   
+
 void FeMenuOpt::append_vlist( const char **clist )
 {
 	int i=0;
@@ -80,7 +80,7 @@ void FeMenuOpt::append_vlist( const char **clist )
 	{
 		values_list.push_back( clist[i++] );
 
-		if (( m_list_index == -1 ) 
+		if (( m_list_index == -1 )
 					&& ( m_edit_value.compare( values_list.back() ) == 0 ))
 			set_value( values_list.size() - 1 );
 	}
@@ -88,7 +88,7 @@ void FeMenuOpt::append_vlist( const char **clist )
 
 void FeMenuOpt::append_vlist( const std::vector< std::string > &list )
 {
-	for ( std::vector<std::string>::const_iterator it=list.begin(); 
+	for ( std::vector<std::string>::const_iterator it=list.begin();
 			it!=list.end(); ++it )
 	{
 		values_list.push_back( *it );
@@ -103,14 +103,14 @@ FeConfigContext::FeConfigContext( FeSettings &f )
 {
 }
 
-void FeConfigContext::add_opt( int t, const std::string &s, 
+void FeConfigContext::add_opt( int t, const std::string &s,
 		const std::string &v, const std::string &h )
 {
 	opt_list.push_back( FeMenuOpt( t, s, v ) );
 	fe_settings.get_resource( h, opt_list.back().help_msg );
 }
 
-void FeConfigContext::add_optl( int t, const std::string &s, 
+void FeConfigContext::add_optl( int t, const std::string &s,
 		const std::string &v, const std::string &h )
 {
 	std::string ss;
@@ -134,7 +134,7 @@ void FeBaseConfigMenu::get_options( FeConfigContext &ctx )
 	ctx.back_opt().opaque = -1;
 }
 
-bool FeBaseConfigMenu::on_option_select( 
+bool FeBaseConfigMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	return true;
@@ -178,7 +178,7 @@ bool FeEmuArtEditMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
-void FeEmuArtEditMenu::set_art( FeEmulatorInfo *emu, 
+void FeEmuArtEditMenu::set_art( FeEmulatorInfo *emu,
 					const std::string &art_name )
 {
 	m_emulator = emu;
@@ -201,7 +201,7 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 	{
 		// Don't allow editting of the name. User can set it when adding new
 		//
-		ctx.add_optl( Opt::INFO, "Emulator Name", 
+		ctx.add_optl( Opt::INFO, "Emulator Name",
 				m_emulator->get_info( FeEmulatorInfo::Name ) );
 
 		for ( int i=1; i < FeEmulatorInfo::LAST_INDEX; i++ )
@@ -209,7 +209,7 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 			std::string help( "_help_emu_" );
 			help += FeEmulatorInfo::indexStrings[i];
 
-			ctx.add_optl( Opt::EDIT, 
+			ctx.add_optl( Opt::EDIT,
 					FeEmulatorInfo::indexDispStrings[i],
 					m_emulator->get_info( (FeEmulatorInfo::Index)i ),
 					help );
@@ -229,7 +229,7 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl( Opt::SUBMENU, "Add Artwork", "", "_help_art_add" );
 		ctx.back_opt().opaque = 2;
 
-		ctx.add_optl( Opt::SUBMENU, "Generate Romlist", "", 
+		ctx.add_optl( Opt::SUBMENU, "Generate Romlist", "",
 								"_help_emu_gen_romlist" );
 		ctx.back_opt().opaque = 3;
 
@@ -253,7 +253,7 @@ bool my_ui_update( void *d, int i )
 	return !od->check_for_cancel();
 }
 
-bool FeEmulatorEditMenu::on_option_select( 
+bool FeEmulatorEditMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
@@ -272,23 +272,23 @@ bool FeEmulatorEditMenu::on_option_select(
 		m_art_menu.set_art( m_emulator, "" );
 		submenu = &m_art_menu;
 		break;
-	
+
 	case 3: // Generate Romlist
 		{
 			// Make sure m_emulator is set with all the configured info
 			//
 			for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
-				m_emulator->set_info( (FeEmulatorInfo::Index)i, 
+				m_emulator->set_info( (FeEmulatorInfo::Index)i,
 					ctx.opt_list[i].get_value() );
 
-			// Do some checks and confirmation before launching the Generator 
+			// Do some checks and confirmation before launching the Generator
 			//
-			std::string rom_path = clean_path( 
+			std::string rom_path = clean_path(
 				m_emulator->get_info( FeEmulatorInfo::Rom_path ) );
 
 			if ( !file_exists( rom_path ) )
 			{
-				if ( ctx.confirm_dialog( "Rom path '$1' not found, proceed anyways?", 
+				if ( ctx.confirm_dialog( "Rom path '$1' not found, proceed anyways?",
 									rom_path ) == false )
 					return false;
 			}
@@ -297,20 +297,20 @@ bool FeEmulatorEditMenu::on_option_select(
 
 			if ( m_romlist_exists )
 			{
-				if ( ctx.confirm_dialog( "Overwrite existing '$1' romlist?", 
+				if ( ctx.confirm_dialog( "Overwrite existing '$1' romlist?",
 									emu_name ) == false )
 					return false;
 			}
 
 			int list_size( 0 );
-			ctx.fe_settings.build_romlist( emu_name, my_ui_update, &ctx, 
+			ctx.fe_settings.build_romlist( emu_name, my_ui_update, &ctx,
 								list_size );
 
 			ctx.fe_settings.get_resource( "Wrote $1 entries to romlist",
 											as_str(list_size), ctx.help_msg );
 
 			//
-			// If we don't have a display list configured for this romlist, 
+			// If we don't have a display list configured for this romlist,
 			// configure one now
 			//
 			if ( !ctx.fe_settings.check_romlist_configured( emu_name ) )
@@ -330,7 +330,7 @@ bool FeEmulatorEditMenu::on_option_select(
 			if ( ctx.confirm_dialog( "Delete emulator '$1'?", name ) == false )
 				return false;
 
-			ctx.fe_settings.delete_emulator( 
+			ctx.fe_settings.delete_emulator(
 					m_emulator->get_info(FeEmulatorInfo::Name) );
 		}
 		break;
@@ -345,10 +345,10 @@ bool FeEmulatorEditMenu::on_option_select(
 bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 {
 	if ( !m_emulator )
-		return m_parent_save; 
+		return m_parent_save;
 
 	for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
-		m_emulator->set_info( (FeEmulatorInfo::Index)i, 
+		m_emulator->set_info( (FeEmulatorInfo::Index)i,
 				ctx.opt_list[i].get_value() );
 
 	std::string filename = ctx.fe_settings.get_config_dir();
@@ -362,7 +362,7 @@ bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 	return m_parent_save;
 }
 
-void FeEmulatorEditMenu::set_emulator( 
+void FeEmulatorEditMenu::set_emulator(
 				FeEmulatorInfo *emu, bool is_new, const std::string &romlist_dir )
 {
 	m_emulator=emu;
@@ -388,7 +388,7 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 	path += FE_EMULATOR_SUBDIR;
 
 	std::vector<std::string> emu_file_list;
-	get_basename_from_extension( 
+	get_basename_from_extension(
 			emu_file_list,
 			path,
 			std::vector<std::string>(1, FE_EMULATOR_FILE_EXTENSION) );
@@ -403,7 +403,7 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeEmulatorSelMenu::on_option_select( 
+bool FeEmulatorSelMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
@@ -418,7 +418,7 @@ bool FeEmulatorSelMenu::on_option_select(
 	{
 		std::string res;
 		ctx.edit_dialog( "Enter Emulator Name", res );
-		
+
 		if ( res.empty() )
 			return false;
 
@@ -428,7 +428,7 @@ bool FeEmulatorSelMenu::on_option_select(
 	else
 		e = ctx.fe_settings.get_emulator( o.setting );
 
-	if ( e ) 
+	if ( e )
 	{
 		std::string romlist_dir = ctx.fe_settings.get_config_dir();
 		romlist_dir += FE_ROMLIST_SUBDIR;
@@ -436,7 +436,7 @@ bool FeEmulatorSelMenu::on_option_select(
 		submenu = &m_edit_menu;
 	}
 
-	return true; 
+	return true;
 }
 
 FeRuleEditMenu::FeRuleEditMenu()
@@ -462,7 +462,7 @@ void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 			what = r[m_index].get_what();
 		}
 	}
-	
+
 	if ( target != FeRomInfo::LAST_INDEX )
 		ctx.fe_settings.get_resource( FeRomInfo::indexStrings[ target ], target_str );
 
@@ -500,14 +500,14 @@ void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeRuleEditMenu::on_option_select( 
+bool FeRuleEditMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
 	if ( o.opaque == 1 ) // the "delete" option
 	{
 		std::vector<FeRule> &r = m_filter->get_rules();
-	
+
 		if (( m_index >= 0 ) && ( m_index < (int)r.size() ))
 			r.erase( r.begin() + m_index );
 
@@ -522,9 +522,9 @@ bool FeRuleEditMenu::on_option_select(
 bool FeRuleEditMenu::save( FeConfigContext &ctx )
 {
 	int i = ctx.opt_list[0].get_vindex();
-	if ( i == -1 ) 
+	if ( i == -1 )
 		i = FeRomInfo::LAST_INDEX;
-		
+
 	int c = ctx.opt_list[1].get_vindex();
 	if ( c == -1 )
 		c = FeRule::LAST_COMPARISON;
@@ -534,10 +534,10 @@ bool FeRuleEditMenu::save( FeConfigContext &ctx )
 	if ( m_filter )
 	{
 		std::vector<FeRule> &r = m_filter->get_rules();
-	
+
 		if (( m_index >= 0 ) && ( m_index < (int)r.size() ))
 		{
-			r[m_index].set_values( 
+			r[m_index].set_values(
 				(FeRomInfo::Index)i,
 				(FeRule::FilterComp)c,
 				what );
@@ -604,13 +604,13 @@ void FeFilterEditMenu::get_options( FeConfigContext &ctx )
 
 		ctx.add_optl(Opt::EXIT,"Delete this Filter","","_help_filter_delete");
 		ctx.back_opt().opaque = 2;
-		
+
 	}
 
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeFilterEditMenu::on_option_select( 
+bool FeFilterEditMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	if ( !m_list )
@@ -625,7 +625,7 @@ bool FeFilterEditMenu::on_option_select(
 		if ( o.opaque == 1 )
 		{
 			std::vector<FeRule> &rules = f->get_rules();
-		
+
 			rules.push_back( FeRule() );
 			r_index = rules.size() - 1;
 			ctx.save_req=true;
@@ -640,8 +640,8 @@ bool FeFilterEditMenu::on_option_select(
 	{
 		FeFilter *f = m_list->get_filter( m_index );
 
-		// "Delete this Filter" 
-		if ( ctx.confirm_dialog( "Delete filter '$1'?", 
+		// "Delete this Filter"
+		if ( ctx.confirm_dialog( "Delete filter '$1'?",
 				f->get_name() ) == false )
 			return false;
 
@@ -684,17 +684,17 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 
 	if ( m_list )
 	{
-		ctx.add_optl( Opt::EDIT, "List Name", 
+		ctx.add_optl( Opt::EDIT, "List Name",
 				m_list->get_info( FeListInfo::Name ), "_help_list_name" );
 
-		ctx.add_optl( Opt::LIST, "Layout", 
+		ctx.add_optl( Opt::LIST, "Layout",
 				m_list->get_info( FeListInfo::Layout ), "_help_list_layout" );
 
 		std::vector<std::string> layouts;
 		ctx.fe_settings.get_layouts_list( layouts );
 		ctx.back_opt().append_vlist( layouts );
 
-		ctx.add_optl( Opt::LIST, "Rom List", 
+		ctx.add_optl( Opt::LIST, "Rom List",
 				m_list->get_info( FeListInfo::Romlist ), "_help_list_romlist" );
 
 		std::vector<std::string> romlists;
@@ -708,10 +708,10 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 		for ( std::vector<std::string>::iterator itr=filters.begin();
 				itr != filters.end(); ++itr )
 		{
-			ctx.add_optl( Opt::SUBMENU, "Filter", 
+			ctx.add_optl( Opt::SUBMENU, "Filter",
 				(*itr), "_help_list_filter" );
 			ctx.back_opt().opaque = 100 + i;
-			i++;	
+			i++;
 		}
 
 		ctx.add_optl( Opt::SUBMENU, "Add Filter", "", "_help_list_add_filter" );
@@ -724,7 +724,7 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeListEditMenu::on_option_select( 
+bool FeListEditMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
@@ -737,7 +737,7 @@ bool FeListEditMenu::on_option_select(
 		// a filter or "Add Filter" is selected
 		int f_index=0;
 
-		if ( o.opaque == 1 ) 
+		if ( o.opaque == 1 )
 		{
 			std::string res;
 			ctx.edit_dialog( "Enter Filter Name", res );
@@ -758,7 +758,7 @@ bool FeListEditMenu::on_option_select(
 	}
 	else if ( o.opaque == 2 )
 	{
-		// "Delete this List" 
+		// "Delete this List"
 		if ( ctx.confirm_dialog( "Delete list '$1'?", m_name ) == false )
 			return false;
 
@@ -804,7 +804,7 @@ void FeListSelMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeListSelMenu::on_option_select( 
+bool FeListSelMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
@@ -866,7 +866,7 @@ void FeInputEditMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeInputEditMenu::on_option_select( 
+bool FeInputEditMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
@@ -878,7 +878,7 @@ bool FeInputEditMenu::on_option_select(
 	case 0:
 		{
 			std::vector< std::string >::iterator it;
-			for ( it=m_mapping->input_list.begin(); 
+			for ( it=m_mapping->input_list.begin();
 					it<m_mapping->input_list.end(); ++it )
 			{
 				if ( (*it).compare( o.get_value() ) == 0 )
@@ -905,7 +905,7 @@ bool FeInputEditMenu::on_option_select(
 			{
 				std::string command_str;
 				ctx.fe_settings.get_resource( FeInputMap::commandDispStrings[ conflict ], command_str );
-				save = ctx.confirm_dialog( 
+				save = ctx.confirm_dialog(
 					"This will overwrite an existing mapping ($1).  Proceed?", command_str  );
 			}
 
@@ -928,7 +928,7 @@ bool FeInputEditMenu::save( FeConfigContext &ctx )
 {
 	if ( m_mapping )
 	{
-		ctx.fe_settings.get_input_map().set_mapping( *m_mapping );
+		ctx.fe_settings.set_input_mapping( *m_mapping );
 	}
 
 	return true;
@@ -942,7 +942,7 @@ void FeInputEditMenu::set_mapping( FeMapping *mapping )
 void FeInputSelMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Configure / Controls" );
-	ctx.fe_settings.get_input_map().get_mappings( m_mappings );
+	ctx.fe_settings.get_input_mappings( m_mappings );
 
 	std::vector < FeMapping >::iterator it;
 	for ( it=m_mappings.begin(); it != m_mappings.end(); ++it )
@@ -963,22 +963,61 @@ void FeInputSelMenu::get_options( FeConfigContext &ctx )
 			value += (*iti);
 		}
 
-		ctx.add_optl( Opt::SUBMENU, 
-			FeInputMap::commandDispStrings[(*it).command], 
-			value, 
+		ctx.add_optl( Opt::SUBMENU,
+			FeInputMap::commandDispStrings[(*it).command],
+			value,
 			"_help_control_sel" );
 	}
+
+	// Add the joystick and mouse threshold settings to this menu as well
+	std::vector<std::string> thresh(21);
+	thresh[0]="99";
+	for ( int i=0; i<19; i++ )
+		thresh[i+1] = as_str( 95 - ( i * 5 ) );
+	thresh[20]="1";
+	std::string setstr, help;
+
+	ctx.add_optl( Opt::LIST, "Joystick Threshold",
+		ctx.fe_settings.get_info( FeSettings::JoystickThreshold ), "_help_joystick_threshold" );
+	ctx.back_opt().append_vlist( thresh );
+	ctx.back_opt().opaque = 1;
+
+	ctx.add_optl( Opt::LIST, "Mouse Threshold",
+		ctx.fe_settings.get_info( FeSettings::MouseThreshold ), "_help_mouse_threshold" );
+	ctx.back_opt().append_vlist( thresh );
+	ctx.back_opt().opaque = 1;
 
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeInputSelMenu::on_option_select( 
+bool FeInputSelMenu::save( FeConfigContext &ctx )
+{
+	ctx.fe_settings.set_info(
+			FeSettings::JoystickThreshold,
+			ctx.opt_list[ ctx.opt_list.size() - 3 ].get_value() );
+
+	ctx.fe_settings.set_info(
+			FeSettings::MouseThreshold,
+			ctx.opt_list[ ctx.opt_list.size() - 2 ].get_value() );
+
+	return true;
+}
+
+bool FeInputSelMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
 
 	if ( o.opaque == 0 )
 	{
+		// save now if needed so that the updated mouse and joystick
+		// threshold values are used for any further mapping
+		if ( ctx.save_req )
+		{
+			save( ctx );
+			ctx.save_req = false;
+		}
+
 		m_edit_menu.set_mapping( &(m_mappings[ ctx.curr_sel ]) );
 		submenu = &m_edit_menu;
 	}
@@ -1002,7 +1041,7 @@ void FeSoundMenu::get_options( FeConfigContext &ctx )
 	for ( int i=0; i<3; i++ )
 	{
 		int v = ctx.fe_settings.get_set_volume( (FeSoundInfo::SoundType)i );
-		ctx.add_optl( Opt::LIST, FeSoundInfo::settingDispStrings[i], 
+		ctx.add_optl( Opt::LIST, FeSoundInfo::settingDispStrings[i],
 					as_str(v), "_help_volume" );
 		ctx.back_opt().append_vlist( volumes );
 	}
@@ -1028,18 +1067,18 @@ void FeSoundMenu::get_options( FeConfigContext &ctx )
 	sound_list.push_back( "" );
 
 	//
-	// Sounds that can be mapped to input commands.  
+	// Sounds that can be mapped to input commands.
 	//
 	for ( int i=0; i < FeInputMap::LAST_EVENT; i++ )
 	{
 		// there is a NULL in the middle of the commandStrings list
-		if ( FeInputMap::commandDispStrings[i] != NULL ) 
+		if ( FeInputMap::commandDispStrings[i] != NULL )
 		{
 			std::string v;
 			ctx.fe_settings.get_sound_file( (FeInputMap::Command)i, v, false );
 
 			ctx.add_optl( Opt::LIST,
-				FeInputMap::commandDispStrings[i], v, "_help_sound" );
+				FeInputMap::commandDispStrings[i], v, "_help_sound_sel" );
 
 			ctx.back_opt().append_vlist( sound_list );
 			ctx.back_opt().opaque = i;
@@ -1056,7 +1095,7 @@ bool FeSoundMenu::save( FeConfigContext &ctx )
 	//
 	int i;
 	for ( i=0; i<3; i++ )
-		ctx.fe_settings.set_volume( (FeSoundInfo::SoundType)i, 
+		ctx.fe_settings.set_volume( (FeSoundInfo::SoundType)i,
 					ctx.opt_list[i].get_value() );
 
 	//
@@ -1064,9 +1103,9 @@ bool FeSoundMenu::save( FeConfigContext &ctx )
 	//
 	for ( i=3; i< (int)ctx.opt_list.size(); i++ )
 	{
-		if ( ctx.opt_list[i].opaque >= 0 ) 
-			ctx.fe_settings.set_sound_file( 
-					(FeInputMap::Command)ctx.opt_list[i].opaque, 
+		if ( ctx.opt_list[i].opaque >= 0 )
+			ctx.fe_settings.set_sound_file(
+					(FeInputMap::Command)ctx.opt_list[i].opaque,
 					ctx.opt_list[i].get_value() );
 	}
 
@@ -1102,9 +1141,9 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_language" );
 	ctx.back_opt().append_vlist( disp_lang_list );
 
-	ctx.add_optl( Opt::EDIT, 
-			"Screen Saver Timeout", 
-			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ), 
+	ctx.add_optl( Opt::EDIT,
+			"Screen Saver Timeout",
+			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ),
 			"_help_screen_saver_timeout" );
 
 	std::string autorot;
@@ -1124,43 +1163,43 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
 	ctx.fe_settings.get_resource( "No", bool_opts[1] );
 
-	ctx.add_optl( Opt::LIST, 
-			"Allow Exit from 'Lists Menu'", 
-			ctx.fe_settings.get_lists_menu_exit() ? bool_opts[0] : bool_opts[1], 
+	ctx.add_optl( Opt::LIST,
+			"Allow Exit from 'Lists Menu'",
+			ctx.fe_settings.get_lists_menu_exit() ? bool_opts[0] : bool_opts[1],
 			"_help_lists_menu_exit" );
 	ctx.back_opt().append_vlist( bool_opts );
 
-	ctx.add_optl( Opt::LIST, 
-			"Hide Brackets in Game Title", 
-			ctx.fe_settings.hide_brackets() ? bool_opts[0] : bool_opts[1], 
+	ctx.add_optl( Opt::LIST,
+			"Hide Brackets in Game Title",
+			ctx.fe_settings.hide_brackets() ? bool_opts[0] : bool_opts[1],
 			"_help_hide_brackets" );
 	ctx.back_opt().append_vlist( bool_opts );
 
-	ctx.add_optl( Opt::LIST, 
-			"Launch Last Game on Startup", 
-			ctx.fe_settings.autolaunch_last_game() ? bool_opts[0] : bool_opts[1], 
+	ctx.add_optl( Opt::LIST,
+			"Launch Last Game on Startup",
+			ctx.fe_settings.autolaunch_last_game() ? bool_opts[0] : bool_opts[1],
 			"_help_autolaunch_last_game" );
 	ctx.back_opt().append_vlist( bool_opts );
 
-	ctx.add_optl( Opt::LIST, 
-			"Confirm Favourites", 
-			ctx.fe_settings.confirm_favs() ? bool_opts[0] : bool_opts[1], 
+	ctx.add_optl( Opt::LIST,
+			"Confirm Favourites",
+			ctx.fe_settings.confirm_favs() ? bool_opts[0] : bool_opts[1],
 			"_help_confirm_favs" );
 	ctx.back_opt().append_vlist( bool_opts );
 
-	ctx.add_optl( Opt::EDIT, 
-			"Exit Command", 
-			ctx.fe_settings.get_info( FeSettings::ExitCommand ), 
+	ctx.add_optl( Opt::EDIT,
+			"Exit Command",
+			ctx.fe_settings.get_info( FeSettings::ExitCommand ),
 			"_help_exit_command" );
 
-	ctx.add_optl( Opt::EDIT, 
-			"Default Font", 
-			ctx.fe_settings.get_info( FeSettings::DefaultFont ), 
+	ctx.add_optl( Opt::EDIT,
+			"Default Font",
+			ctx.fe_settings.get_info( FeSettings::DefaultFont ),
 			"_help_default_font" );
 
-	ctx.add_optl( Opt::EDIT, 
-			"Font Path", 
-			ctx.fe_settings.get_info( FeSettings::FontPath ), 
+	ctx.add_optl( Opt::EDIT,
+			"Font Path",
+			ctx.fe_settings.get_info( FeSettings::FontPath ),
 			"_help_font_path" );
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -1170,31 +1209,31 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout, 
+	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout,
 			ctx.opt_list[1].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::AutoRotate, 
+	ctx.fe_settings.set_info( FeSettings::AutoRotate,
 			FeSettings::rotationTokens[ ctx.opt_list[2].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::ListsMenuExit, 
+	ctx.fe_settings.set_info( FeSettings::ListsMenuExit,
 			ctx.opt_list[3].get_vindex() == 0 ? "yes" : "no" );
 
-	ctx.fe_settings.set_info( FeSettings::HideBrackets, 
+	ctx.fe_settings.set_info( FeSettings::HideBrackets,
 			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
 
-	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame, 
+	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame,
 			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
 
-	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites, 
+	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
 			ctx.opt_list[6].get_vindex() == 0 ? "yes" : "no" );
 
-	ctx.fe_settings.set_info( FeSettings::ExitCommand, 
+	ctx.fe_settings.set_info( FeSettings::ExitCommand,
 			ctx.opt_list[7].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::DefaultFont, 
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[8].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath, 
+	ctx.fe_settings.set_info( FeSettings::FontPath,
 			ctx.opt_list[9].get_value() );
 
 	return true;
@@ -1203,16 +1242,16 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 namespace {
 
 bool get_object_string(
-	HSQUIRRELVM vm, 
-	HSQOBJECT obj, 
+	HSQUIRRELVM vm,
+	HSQOBJECT obj,
 	std::string &out_string)
-{ 
+{
 	sq_pushobject(vm, obj);
 	sq_tostring(vm, -1);
 	const SQChar *s;
 	SQRESULT res = sq_getstring(vm, -1, &s);
 	bool r = SQ_SUCCEEDED(res);
-	if (r) 
+	if (r)
 		out_string = s;
 
 	sq_pop(vm,2);
@@ -1220,10 +1259,10 @@ bool get_object_string(
 }
 
 bool get_attribute_string(
-	HSQUIRRELVM vm, 
-	HSQOBJECT obj, 
-	const std::string &key, 
-	const std::string &attribute, 
+	HSQUIRRELVM vm,
+	HSQOBJECT obj,
+	const std::string &key,
+	const std::string &attribute,
 	std::string & out_string)
 {
 	sq_pushobject(vm, obj);
@@ -1270,10 +1309,10 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 
 	ctx.set_style( FeConfigContext::EditList, "Configure Plug-in" );
 
-	ctx.add_optl( Opt::INFO, "Name", m_plugin->get_name(), 
+	ctx.add_optl( Opt::INFO, "Name", m_plugin->get_name(),
 		"_help_plugin_name" );
 
-	ctx.add_optl( Opt::EDIT, "Command", m_plugin->get_command(), 
+	ctx.add_optl( Opt::EDIT, "Command", m_plugin->get_command(),
 		"_help_plugin_command" );
 
 	std::vector<std::string> opts( 2 );
@@ -1281,7 +1320,7 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_resource( "No", opts[1] );
 
 	ctx.add_optl( Opt::LIST, "Enabled",
-			m_plugin->get_enabled() ? opts[0] : opts[1], 
+			m_plugin->get_enabled() ? opts[0] : opts[1],
 			"_help_plugin_enabled" );
 	ctx.back_opt().append_vlist( opts );
 
@@ -1329,8 +1368,8 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 				// the plug-in name
 				//
 				std::string gen_help;
-				get_attribute_string( 
-					temp_vm, 
+				get_attribute_string(
+					temp_vm,
 					uConfig.GetObject(), "", "help", gen_help );
 				if ( !gen_help.empty() )
 				{
@@ -1353,19 +1392,19 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 						get_object_string( temp_vm, it.getValue(), value );
 					}
 
-					get_attribute_string( 
-							temp_vm, 
+					get_attribute_string(
+							temp_vm,
 							uConfig.GetObject(), key, "label", label);
 
 					if ( label.empty() )
 						label = key;
 
-					get_attribute_string( 
-							temp_vm, 
+					get_attribute_string(
+							temp_vm,
 							uConfig.GetObject(), key, "help", help);
 
-					get_attribute_string( 
-							temp_vm, 
+					get_attribute_string(
+							temp_vm,
 							uConfig.GetObject(), key, "options", options);
 
 					if ( !options.empty() )
@@ -1392,7 +1431,7 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 				}
 			}
 		}
-	
+
 		// reset to our usual VM and close the temp vm
 		Sqrat::DefaultVM::Set( stored_vm );
 		sq_close( temp_vm );
@@ -1419,7 +1458,7 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 		if ( op >= 100 )
 		{
 			m_plugin->set_param(
-				m_params[ op-100 ], 
+				m_params[ op-100 ],
 				ctx.opt_list[i].get_value() );
 		}
 	}
@@ -1446,7 +1485,7 @@ void FePluginSelMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FePluginSelMenu::on_option_select( 
+bool FePluginSelMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
@@ -1482,7 +1521,7 @@ void FeConfigMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool FeConfigMenu::on_option_select( 
+bool FeConfigMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	switch (ctx.curr_sel)

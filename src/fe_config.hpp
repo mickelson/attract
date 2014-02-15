@@ -34,15 +34,15 @@ class FeFilter;
 class FeRule;
 class FePlugInfo;
 
-namespace Opt 
+namespace Opt
 {
 	const int	EDIT 				= 1; // option text can be editted by user
 	const int	LIST				= 2; // option gets selected from values_list
 	const int	INFO				= 3; // option is just for info (no changes)
 	const int	MENU				= 4; // option leads to another menu
 	const int	SUBMENU			= 5; // option leads to submenu of current menu
-	const int	RELOAD			= 6; // option reloads menu 
-	const int	EXIT				= 7; // option results in exiting the menu 
+	const int	RELOAD			= 6; // option reloads menu
+	const int	EXIT				= 7; // option results in exiting the menu
 	const int	DEFAULTEXIT		= 8; // option is default for exiting the menu
 };
 
@@ -62,8 +62,8 @@ public:
 	std::string help_msg;	// the help message for this option
 	std::vector<std::string> values_list; // list options
 
-	FeMenuOpt(int t, 
-		const std::string &set, 
+	FeMenuOpt(int t,
+		const std::string &set,
 		const std::string &val="" );
 
 	void set_value( const std::string & );
@@ -87,8 +87,8 @@ private:
 	FeConfigContext &operator=( const FeConfigContext & );
 
 public:
-	enum Style 
-	{ 
+	enum Style
+	{
 		SelectionList,
 		EditList
 	};
@@ -96,7 +96,7 @@ public:
 	FeSettings &fe_settings;
 	Style style;
 	std::string title;
-	std::string help_msg; // temporary help message,displayed until next input 
+	std::string help_msg; // temporary help message,displayed until next input
 
 	std::vector<FeMenuOpt> opt_list;	// menu options
 	int curr_sel;		// index of currently selected menu option in opt_list
@@ -108,14 +108,14 @@ public:
 	// Convenient addition of menu options
 	//
 	// set and val are added without language lookup.  help gets lookup.
-	void add_opt( int type, const std::string &set, 
+	void add_opt( int type, const std::string &set,
 				const std::string &val="", const std::string &help="" );
 
 	// set and help get language lookup
-	void add_optl( int type, const std::string &set, 
+	void add_optl( int type, const std::string &set,
 				const std::string &val="", const std::string &help="" );
 
-	// set the Style and title for the menu.  
+	// set the Style and title for the menu.
 	void set_style( Style s, const std::string &t );
 
 	//
@@ -135,7 +135,7 @@ public:
 	virtual void splash_message( const std::string &msg,
 						const std::string &rep="" )=0;
 
-	virtual void input_map_dialog( const std::string &msg, 
+	virtual void input_map_dialog( const std::string &msg,
 						std::string &map_str,
 						FeInputMap::Command &conflict )=0;
 
@@ -160,7 +160,7 @@ public:
 	//
 	virtual bool on_option_select( FeConfigContext &ctx,
 						FeBaseConfigMenu *& submenu );
-						
+
 
 	// Called when leaving the menu if ctx.save_req is true (it is either
 	// set to true in on_option_select above or when an EDIT or LIST option
@@ -202,7 +202,7 @@ public:
 						FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
 
-	void set_emulator( FeEmulatorInfo *emu, bool is_new, 
+	void set_emulator( FeEmulatorInfo *emu, bool is_new,
 							const std::string &romlist_dir );
 };
 
@@ -304,6 +304,7 @@ public:
 	void get_options( FeConfigContext &ctx );
 	bool on_option_select( FeConfigContext &ctx,
 						FeBaseConfigMenu *& submenu );
+	bool save( FeConfigContext &ctx );
 };
 
 class FeSoundMenu : public FeBaseConfigMenu

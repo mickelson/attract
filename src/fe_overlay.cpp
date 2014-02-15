@@ -58,20 +58,20 @@ public:
 };
 
 FeConfigContextImp::FeConfigContextImp( FeSettings &fes, FeOverlay &feo )
-	: FeConfigContext( fes ), m_feo( feo ) 
+	: FeConfigContext( fes ), m_feo( feo )
 {
 }
 
-void FeConfigContextImp::edit_dialog( const std::string &m, std::string &t ) 
-{ 
+void FeConfigContextImp::edit_dialog( const std::string &m, std::string &t )
+{
 	std::string trans;
 	fe_settings.get_resource( m, trans );
-	m_feo.edit_dialog( trans, t ); 
+	m_feo.edit_dialog( trans, t );
 }
 
 bool FeConfigContextImp::confirm_dialog( const std::string &msg,
-						const std::string &rep ) 
-{ 
+						const std::string &rep )
+{
 	std::string t;
 	fe_settings.get_resource( msg, rep, t );
 
@@ -79,10 +79,10 @@ bool FeConfigContextImp::confirm_dialog( const std::string &msg,
 	fe_settings.get_resource( "Yes", list[0] );
 	fe_settings.get_resource( "No", list[1] );
 
-	return (( m_feo.internal_dialog( t, list ) == 0 ) ? true : false ); 
+	return (( m_feo.internal_dialog( t, list ) == 0 ) ? true : false );
 }
 
-void FeConfigContextImp::splash_message( 
+void FeConfigContextImp::splash_message(
 			const std::string &msg, const std::string &rep )
 {
 	m_feo.splash_message( msg, rep );
@@ -90,11 +90,11 @@ void FeConfigContextImp::splash_message(
 
 void FeConfigContextImp::input_map_dialog( const std::string &m,
 		std::string &ms,
-		FeInputMap::Command &conflict ) 
-{ 
+		FeInputMap::Command &conflict )
+{
 	std::string t;
 	fe_settings.get_resource( m, t );
-	m_feo.input_map_dialog( t, ms, conflict ); 
+	m_feo.input_map_dialog( t, ms, conflict );
 }
 
 void FeConfigContextImp::update_to_menu(
@@ -124,9 +124,9 @@ bool FeConfigContextImp::check_for_cancel()
 FeOverlay::FeOverlay( sf::RenderWindow &wnd,
 		FeSettings &fes,
 		FePresent &fep )
-	: m_wnd( wnd ), 
+	: m_wnd( wnd ),
 	m_feSettings( fes ),
-	m_fePresent( fep ), 
+	m_fePresent( fep ),
 	m_textColour( sf::Color::White ),
 	m_bgColour( sf::Color( 0, 0, 0, 200 ) ),
 	m_selColour( sf::Color::Yellow ),
@@ -142,7 +142,7 @@ void FeOverlay::splash_message( const std::string &msg,
 	FeTextPrimative message(
 		m_fePresent.get_font(),
 		m_textColour,
-		m_bgColour, 
+		m_bgColour,
 		m_characterSize );
 
 	message.setWordWrap( true );
@@ -322,7 +322,7 @@ int FeOverlay::languages_dialog()
 	return sel;
 }
 
-int FeOverlay::internal_dialog( 
+int FeOverlay::internal_dialog(
 			const std::string &msg_str,
 			const std::vector<std::string> &list )
 {
@@ -364,7 +364,7 @@ int FeOverlay::internal_dialog(
 	return sel;
 }
 
-void FeOverlay::edit_dialog( 
+void FeOverlay::edit_dialog(
 			const std::string &msg_str,
 			std::string &text )
 {
@@ -398,7 +398,7 @@ void FeOverlay::edit_dialog(
 	}
 }
 
-void FeOverlay::input_map_dialog( 
+void FeOverlay::input_map_dialog(
 			const std::string &msg_str,
 			std::string &map_str,
 			FeInputMap::Command &conflict )
@@ -408,22 +408,36 @@ void FeOverlay::input_map_dialog(
 	message.setWordWrap( true );
 
 	sf::Vector2u s = m_wnd.getSize();
+
+	// Make sure the appropriate mouse capture variables are set, in case
+	// the user has just changed the mouse threshold
+	//
+	m_feSettings.init_mouse_capture( s.x, s.y );
+
 	message.setSize( s.x, s.y );
 	message.setString( msg_str );
 
-	FeInputMap &im = m_feSettings.get_input_map();
-	im.init_config_map_input();
+	// Centre the mouse in case the user is mapping a mouse move event
+	s.x /= 2;
+	s.y /= 2;
+	sf::Mouse::setPosition( sf::Vector2i( s ), m_wnd );
+
+	// empty the window event queue
+	sf::Event ev;
+	while ( m_wnd.pollEvent(ev) )
+	{
+		// no op
+	}
 
 	const sf::Transform &t = m_fePresent.get_rotation_transform();
 	while ( m_wnd.isOpen() )
 	{
-		sf::Event ev;
 		while (m_wnd.pollEvent(ev))
 		{
 			if ( ev.type == sf::Event::Closed )
 				return;
 
-			if ( im.config_map_input( ev, map_str, conflict ) )
+			if ( m_feSettings.config_map_input( ev, map_str, conflict ) )
 				return;
 		}
 
@@ -449,8 +463,8 @@ bool FeOverlay::config_dialog()
 	return settings_changed;
 }
 
-int FeOverlay::display_config_dialog( 
-				FeBaseConfigMenu *m, 
+int FeOverlay::display_config_dialog(
+				FeBaseConfigMenu *m,
 				bool &parent_setting_changed )
 {
 	FeConfigContextImp ctx( m_feSettings, *this );
@@ -486,10 +500,10 @@ int FeOverlay::display_config_dialog(
 	//
 	// The "settings" (left) list, also used to list submenu and exit options...
 	//
-	FeListBox sdialog( 
+	FeListBox sdialog(
 		font,
-		m_textColour, 
-		sf::Color::Transparent, 
+		m_textColour,
+		sf::Color::Transparent,
 		m_selColour,
 		sf::Color( 0, 0, 200, 200 ),
 		m_characterSize / 2,
@@ -503,10 +517,10 @@ int FeOverlay::display_config_dialog(
 	//
 	// The "values" (right) list shows the values corresponding to a setting.
 	//
-	FeListBox vdialog( 
+	FeListBox vdialog(
 		font,
-		m_textColour, 
-		sf::Color::Transparent, 
+		m_textColour,
+		sf::Color::Transparent,
 		m_textColour,
 		sf::Color( 0, 0, 200, 200 ),
 		m_characterSize / 2,
@@ -514,7 +528,7 @@ int FeOverlay::display_config_dialog(
 
 	if ( ctx.style == FeConfigContext::EditList )
 	{
-		//	
+		//
 		// We only use the values listbox in the "EditList" mode
 		//
 		vdialog.setPosition( width + 2, slice );
@@ -523,11 +537,11 @@ int FeOverlay::display_config_dialog(
 		draw_list.push_back( &vdialog );
 	}
 
-	FeTextPrimative footer( font, 
-				m_textColour, 
-				sf::Color::Transparent, 
+	FeTextPrimative footer( font,
+				m_textColour,
+				sf::Color::Transparent,
 				m_characterSize / 3 );
-	
+
 	footer.setPosition( 0, size.y - slice );
 	footer.setSize( size.x, slice );
 	footer.setOutlineColor( m_textColour );
@@ -558,10 +572,10 @@ int FeOverlay::display_config_dialog(
 	//
 	while ( true )
 	{
-		while ( event_loop( 
-				draw_list, 
-				ctx.curr_sel, 
-				ctx.exit_sel, 
+		while ( event_loop(
+				draw_list,
+				ctx.curr_sel,
+				ctx.exit_sel,
 				ctx.left_list.size() - 1 ) == false )
 		{
 			footer.setString( ctx.curr_opt().help_msg );
@@ -624,7 +638,7 @@ int FeOverlay::display_config_dialog(
 					if ( test )
 						ctx.save_req = true;
 
-					// 
+					//
 					// The submenu may have changed stuff in this menu, need
 					// to update our variables as a result
 					//
@@ -644,13 +658,13 @@ int FeOverlay::display_config_dialog(
 		{
 			//
 			// User has selected to edit a specific entry.
-			//	Update the UI and enter the appropriate 
+			//	Update the UI and enter the appropriate
 			// event loop
 			//
 			sdialog.setSelColor( m_textColour );
 			FeTextPrimative *tp = vdialog.setEditMode( true, m_selColour );
 
-			if ( tp == NULL ) 
+			if ( tp == NULL )
 				continue;
 
 			if ( t == Opt::LIST )
@@ -658,9 +672,9 @@ int FeOverlay::display_config_dialog(
 				int original_value = ctx.curr_opt().get_vindex();
 				int new_value = original_value;
 
-				while ( event_loop( 
-							draw_list, 
-							new_value, -1, 
+				while ( event_loop(
+							draw_list,
+							new_value, -1,
 							ctx.curr_opt().values_list.size() - 1 ) == false )
 				{
 					tp->setString(ctx.curr_opt().values_list[new_value]);
@@ -683,11 +697,11 @@ int FeOverlay::display_config_dialog(
 				if ( edit_loop( draw_list, str, tp ) == true )
 				{
 					ctx.save_req = true;
-					
+
 					std::string d_str;
-					sf::Utf32::toUtf8( 
-								str.begin(), 
-								str.end(), 
+					sf::Utf32::toUtf8(
+								str.begin(),
+								str.end(),
 								std::back_inserter( d_str ) );
 					ctx.curr_opt().set_value( d_str );
 					ctx.right_list[ctx.curr_sel] = d_str;
@@ -707,21 +721,21 @@ bool FeOverlay::check_for_cancel()
 	sf::Event ev;
 	while (m_wnd.pollEvent(ev))
 	{
-		FeInputMap::Command c = m_feSettings.map( ev );
+		FeInputMap::Command c = m_feSettings.map_input( ev );
 
 		if (( c == FeInputMap::ExitMenu )
 				|| ( c == FeInputMap::ExitNoMenu ))
 			return true;
 	}
 
-	return false;	
+	return false;
 }
 
 //
 // Return true if the user selected something.  False if they have simply
 // navigated the selection up or down.
 //
-bool FeOverlay::event_loop( std::vector<sf::Drawable *> d, 
+bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 			int &sel, int default_sel, int max_sel )
 {
 	const sf::Transform &t = m_fePresent.get_rotation_transform();
@@ -731,7 +745,7 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 		sf::Event ev;
 		while (m_wnd.pollEvent(ev))
 		{
-			FeInputMap::Command c = m_feSettings.map( ev );
+			FeInputMap::Command c = m_feSettings.map_input( ev );
 
 			switch( c )
 			{
@@ -768,9 +782,9 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 		m_wnd.clear();
 		m_wnd.draw( m_fePresent, t );
 
-		for ( std::vector<sf::Drawable *>::iterator itr=d.begin(); 
+		for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
 				itr < d.end(); ++itr )
-			m_wnd.draw( *(*itr), t ); 
+			m_wnd.draw( *(*itr), t );
 
 		m_wnd.display();
 	}
@@ -799,7 +813,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			{
 			case sf::Event::Closed:
 				return false;
-	
+
 			case sf::Event::TextEntered:
 
 				switch ( ev.text.unicode )
@@ -864,7 +878,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 		m_wnd.clear();
 		m_wnd.draw( m_fePresent, t );
 
-		for ( std::vector<sf::Drawable *>::iterator itr=d.begin(); 
+		for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
 				itr < d.end(); ++itr )
 			m_wnd.draw( *(*itr), t );
 

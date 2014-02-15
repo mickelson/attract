@@ -50,14 +50,14 @@ const char *FePresent::transitionTypeStrings[] =
 };
 
 FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
-	: m_feSettings( fesettings ), 
-	m_currentFont( NULL ), 
-	m_defaultFont( defaultfont ), 
-	m_moveState( MoveNone ), 
-	m_baseRotation( FeSettings::RotateNone ), 
-	m_toggleRotation( FeSettings::RotateNone ), 
-	m_playMovies( true ), 
-	m_screenSaverActive( false ), 
+	: m_feSettings( fesettings ),
+	m_currentFont( NULL ),
+	m_defaultFont( defaultfont ),
+	m_moveState( MoveNone ),
+	m_baseRotation( FeSettings::RotateNone ),
+	m_toggleRotation( FeSettings::RotateNone ),
+	m_playMovies( true ),
+	m_screenSaverActive( false ),
 	m_listBox( NULL )
 {
 	Sqrat::DefaultVM::Set( NULL );
@@ -69,7 +69,7 @@ FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 	srand( time( NULL ) );
 }
 
-FePresent::~FePresent() 
+FePresent::~FePresent()
 {
 	clear();
 	vm_close();
@@ -126,7 +126,7 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 	{
 		if ( (*itl)->get_visible() )
-			target.draw( (*itl)->drawable(), 
+			target.draw( (*itl)->drawable(),
 				(*itl)->get_draw_apply_scale() ? scaled_states : states );
 	}
 }
@@ -191,7 +191,7 @@ FeScriptSound *FePresent::add_sound( const std::string &n )
 
 	FeScriptSound *new_sound = new FeScriptSound();
 	new_sound->load( filename );
-	new_sound->set_volume( 
+	new_sound->set_volume(
 		m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
 
 	m_scriptSounds.push_back( new_sound );
@@ -200,12 +200,12 @@ FeScriptSound *FePresent::add_sound( const std::string &n )
 
 void FePresent::add_ticks_callback( const std::string &n )
 {
-	m_ticksList.push_back( n );	
+	m_ticksList.push_back( n );
 }
 
 void FePresent::add_transition_callback( const std::string &n )
 {
-	m_transitionList.push_back( n );	
+	m_transitionList.push_back( n );
 }
 
 int FePresent::get_layout_width() const
@@ -315,7 +315,7 @@ bool FePresent::reset_screen_saver( sf::RenderWindow *wnd )
 	return false;
 }
 
-bool FePresent::handle_event( FeInputMap::Command c, 
+bool FePresent::handle_event( FeInputMap::Command c,
 	const sf::Event &ev,
 	sf::RenderWindow *wnd )
 {
@@ -414,7 +414,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 	case FeInputMap::NextList:
 		// next_list returns true if the layout changes with the new list
 		//
-		if ( m_feSettings->next_list() ) 
+		if ( m_feSettings->next_list() )
 			load_layout( wnd );
 		else
 			update_to_new_list( wnd );
@@ -478,8 +478,8 @@ int FePresent::update( bool new_list )
 	if ( new_list )
 	{
 		for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
-			(*itl)->on_new_list( m_feSettings, 
-				m_layoutScale.x, 
+			(*itl)->on_new_list( m_feSettings,
+				m_layoutScale.x,
 				m_layoutScale.y );
 	}
 
@@ -495,7 +495,7 @@ int FePresent::update( bool new_list )
 	return 0;
 }
 
-void FePresent::load_screensaver( sf::RenderWindow *wnd ) 
+void FePresent::load_screensaver( sf::RenderWindow *wnd )
 {
 	vm_on_transition( EndLayout, FromToScreenSaver, wnd );
 	clear();
@@ -515,7 +515,7 @@ void FePresent::load_screensaver( sf::RenderWindow *wnd )
 	vm_on_transition( StartLayout, FromToNoValue, wnd );
 }
 
-void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load ) 
+void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load )
 {
 	int var = ( m_screenSaverActive ) ? FromToScreenSaver : FromToNoValue;
 
@@ -542,10 +542,10 @@ void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load )
 	if ( m_elements.empty() )
 	{
 		//
-		// Nothing loaded, default to a full screen list with the 
+		// Nothing loaded, default to a full screen list with the
 		// configured movie artwork as the background
 		//
-		FeImage *img = cb_add_artwork( "", 0, 0, 
+		FeImage *img = cb_add_artwork( "", 0, 0,
 			m_layoutSize.x, m_layoutSize.y );
 
 		img->setColor( sf::Color( 100, 100, 100, 180 ) );
@@ -592,10 +592,12 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 
 		case sf::Event::JoystickMoved:
 			{
+				sf::Joystick::update();
+
 				float pos = sf::Joystick::getAxisPosition(
 						m_moveEvent.joystickMove.joystickId,
 						m_moveEvent.joystickMove.axis );
-				if ( abs( pos ) > FeInputMap::JOY_THRESH )
+				if ( abs( pos ) > m_feSettings->get_joy_thresh() )
 					cont=true;
 			}
 			break;
@@ -612,7 +614,7 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 				// As the button is held down, the advancement accelerates
 				int shift = ( t / 500 ) - 1;
 				if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
-					shift = 7; 
+					shift = 7;
 
 				int step = 1 << ( shift );
 
@@ -629,7 +631,7 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 				if ( real_step != 0 )
 				{
 					vm_on_transition( ToNewSelection, real_step, wnd );
-					m_feSettings->change_rom( real_step ); 					
+					m_feSettings->change_rom( real_step );
 
 					ret_val=true;
 					update( false );
@@ -669,7 +671,7 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 		int saver_timeout = m_feSettings->get_screen_saver_timeout();
 		if (( !m_screenSaverActive ) && ( saver_timeout > 0 ))
 		{
-		 	if ( ( m_layoutTimer.getElapsedTime() - m_lastInput ) 
+		 	if ( ( m_layoutTimer.getElapsedTime() - m_lastInput )
 					> sf::seconds( saver_timeout ) )
 			{
 				load_screensaver( wnd );
@@ -784,7 +786,7 @@ void FePresent::set_transforms()
 {
 	m_rotationTransform = sf::Transform();
 
-	FeSettings::RotationState actualRotation 
+	FeSettings::RotationState actualRotation
 		= (FeSettings::RotationState)(( m_baseRotation + m_toggleRotation ) % 4);
 
 	switch ( actualRotation )
@@ -821,7 +823,7 @@ void FePresent::perform_autorotate()
 	if ( autorotate == FeSettings::RotateNone )
 		return;
 
-	std::string rom_rot = m_feSettings->get_rom_info( 0, 
+	std::string rom_rot = m_feSettings->get_rom_info( 0,
 						FeRomInfo::Rotation );
 
 	m_toggleRotation = FeSettings::RotateNone;
@@ -993,7 +995,22 @@ bool FePresent::cb_is_joybuttonpressed( int num, int b )
 
 float FePresent::cb_get_joyaxispos( int num, int a )
 {
+	sf::Joystick::update();
 	return sf::Joystick::getAxisPosition( num, (sf::Joystick::Axis)a );
+}
+
+bool FePresent::cb_get_input_state( const char *input )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FeSettings *fes = fep->get_fes();
+
+	return FeInputSource( input ).get_current_state( fes->get_joy_thresh() );
+}
+
+int FePresent::cb_get_input_pos( const char *input )
+{
+	return FeInputSource( input ).get_current_pos();
 }
 
 void FePresent::do_nut( const char *script_file )
@@ -1035,7 +1052,7 @@ bool my_callback( const char *buffer, void *opaque )
 	return true; // return false to cancel callbacks
 }
 
-bool FePresent::cb_plugin_command( const char *label, 
+bool FePresent::cb_plugin_command( const char *label,
 		const char *args,
 		const char *output_callback )
 {
@@ -1047,7 +1064,7 @@ bool FePresent::cb_plugin_command( const char *label,
 	if ( command.empty() )
 		return false;
 
-	return run_program( clean_path( command ), 
+	return run_program( clean_path( command ),
 		args, my_callback, (void *)output_callback );
 }
 
@@ -1166,6 +1183,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 			.Const( _SC("Flip"), FeSettings::RotateFlip )
 			.Const( _SC("Left"), FeSettings::RotateLeft )
 			)
+		// The "Axis" enum is deprecated along with fe.get_joyaxispos() as of version 1.2
 		.Enum( _SC("Axis"), Enumeration()
 			.Const( _SC("X"), sf::Joystick::X )
 			.Const( _SC("Y"), sf::Joystick::Y )
@@ -1183,11 +1201,12 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 			)
 		;
 
+	// The "Key" enum is deprecated along with fe.get_keypressed() as of version 1.2
 	Enumeration keys;
 	int i=0;
-	while ( FeInputMap::keyStrings[i] != NULL )
+	while ( FeInputSource::keyStrings[i] != NULL )
 	{
-		keys.Const( FeInputMap::keyStrings[i], i );
+		keys.Const( FeInputSource::keyStrings[i], i );
 		i++;
 	}
 
@@ -1221,17 +1240,17 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 
 	// Base Presentable Object Class
 	//
-	fe.Bind( _SC("Presentable"), 
+	fe.Bind( _SC("Presentable"),
 		Class<FeBasePresentable, NoConstructor>()
-		.Prop(_SC("visible"), 
+		.Prop(_SC("visible"),
 			&FeBasePresentable::get_visible, &FeBasePresentable::set_visible )
 		.Prop(_SC("x"), &FeBasePresentable::get_x, &FeBasePresentable::set_x )
 		.Prop(_SC("y"), &FeBasePresentable::get_y, &FeBasePresentable::set_y )
-		.Prop(_SC("width"), 
+		.Prop(_SC("width"),
 			&FeBasePresentable::get_width, &FeBasePresentable::set_width )
-		.Prop(_SC("height"), 
+		.Prop(_SC("height"),
 			&FeBasePresentable::get_height, &FeBasePresentable::set_height )
-		.Prop(_SC("rotation"), 
+		.Prop(_SC("rotation"),
 			&FeBasePresentable::getRotation, &FeBasePresentable::setRotation )
 		.Prop(_SC("red"), &FeBasePresentable::get_r, &FeBasePresentable::set_r )
 		.Prop(_SC("green"), &FeBasePresentable::get_g, &FeBasePresentable::set_g )
@@ -1241,7 +1260,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
 	);
 
-	fe.Bind( _SC("Image"), 
+	fe.Bind( _SC("Image"),
 		DerivedClass<FeImage, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("shear_x"), &FeImage::get_shear_x, &FeImage::set_shear_x )
 		.Prop(_SC("shear_y"), &FeImage::get_shear_y, &FeImage::set_shear_y )
@@ -1254,7 +1273,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		.Prop(_SC("movie_enabled"), &FeImage::getMovieEnabled, &FeImage::setMovieEnabled )
 	);
 
-	fe.Bind( _SC("Text"), 
+	fe.Bind( _SC("Text"),
 		DerivedClass<FeText, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("msg"), &FeText::get_string, &FeText::set_string )
 		.Prop(_SC("bg_red"), &FeText::get_bgr, &FeText::set_bgr )
@@ -1268,7 +1287,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
 
-	fe.Bind( _SC("ListBox"), 
+	fe.Bind( _SC("ListBox"),
 		DerivedClass<FeListBox, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("bg_red"), &FeListBox::get_bgr, &FeListBox::set_bgr )
 		.Prop(_SC("bg_green"), &FeListBox::get_bgg, &FeListBox::set_bgg )
@@ -1334,16 +1353,23 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	fe.Func<FeScriptSound* (*)(const char *)>(_SC("add_sound"), &FePresent::cb_add_sound);
 	fe.Func<void (*)(const char *)>(_SC("add_ticks_callback"), &FePresent::cb_add_ticks_callback);
 	fe.Func<void (*)(const char *)>(_SC("add_transition_callback"), &FePresent::cb_add_transition_callback);
-	fe.Func<bool (*)(int)>(_SC("is_keypressed"), &FePresent::cb_is_keypressed);
-	fe.Func<bool (*)(int, int)>(_SC("is_joybuttonpressed"), &FePresent::cb_is_joybuttonpressed);
-	fe.Func<float (*)(int, int)>(_SC("get_joyaxispos"), &FePresent::cb_get_joyaxispos);
+	fe.Func<bool (*)(const char *)>(_SC("get_input_state"), &FePresent::cb_get_input_state);
+	fe.Func<int (*)(const char *)>(_SC("get_input_pos"), &FePresent::cb_get_input_pos);
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FePresent::do_nut);
 	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FePresent::cb_game_info);
 	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FePresent::cb_game_info);
 	fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FePresent::cb_plugin_command_bg);
-	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FePresent::cb_path_expand);	
+	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FePresent::cb_path_expand);
+
+	// BEGIN deprecated functions
+	// is_keypressed() and is_joybuttonpressed() deprecated as of version 1.2.  Use get_input_state() instead
+	fe.Func<bool (*)(int)>(_SC("is_keypressed"), &FePresent::cb_is_keypressed);
+	fe.Func<bool (*)(int, int)>(_SC("is_joybuttonpressed"), &FePresent::cb_is_joybuttonpressed);
+	// get_joyaxispos() deprecated as of version 1.2.  Use get_input_pos() instead
+	fe.Func<float (*)(int, int)>(_SC("get_joyaxispos"), &FePresent::cb_get_joyaxispos);
+	// END deprecated functions
 
 	//
 	// Define variables that get exposed to Squirrel
@@ -1373,7 +1399,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in " << layout_file 
+			std::cout << "Script Error in " << layout_file
 				<< " - " << e.Message() << std::endl;
 		}
 	}
@@ -1447,7 +1473,7 @@ bool FePresent::vm_on_tick()
 		ASSERT( Sqrat::DefaultVM::Get() );
 
 		bool remove=false;
-		try 
+		try
 		{
 			Function func( RootTable(), (*itr).c_str() );
 
@@ -1456,7 +1482,7 @@ bool FePresent::vm_on_tick()
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in " << (*itr) 
+			std::cout << "Script Error in " << (*itr)
 				<< "(): " << e.Message() << std::endl;
 
 			// Knock out this entry.   If it causes a script error, we don't
@@ -1474,8 +1500,8 @@ bool FePresent::vm_on_tick()
 	return m_redrawTriggered;
 }
 
-bool FePresent::vm_on_transition( 
-	FeTransitionType t, 
+bool FePresent::vm_on_transition(
+	FeTransitionType t,
 	int var,
 	sf::RenderWindow *wnd )
 {
@@ -1510,15 +1536,15 @@ bool FePresent::vm_on_transition(
 			itr != worklist.end(); )
 		{
 			bool keep=false;
-			try 
+			try
 			{
 				Function func( RootTable(), (*itr) );
-				if ( !func.IsNull() ) 
+				if ( !func.IsNull() )
 				{
 					sf::Time ttime = m_layoutTimer.getElapsedTime() - tstart;
-					keep = func.Evaluate<bool>( 
-						(int)t, 
-						var, 
+					keep = func.Evaluate<bool>(
+						(int)t,
+						var,
 						ttime.asMilliseconds() );
 				}
 			}
@@ -1548,7 +1574,7 @@ bool FePresent::vm_on_transition(
 	return m_redrawTriggered;
 }
 
-namespace 
+namespace
 {
 	FePresent *helper_get_fep()
 	{
@@ -1567,7 +1593,7 @@ void script_do_update( FeBasePresentable *bp )
 
 	if ( fep )
 	{
-		bp->on_new_list( fep->get_fes(), 
+		bp->on_new_list( fep->get_fes(),
 			fep->get_layout_scale_x(),
 			fep->get_layout_scale_y() );
 

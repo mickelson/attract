@@ -26,7 +26,7 @@ _help_emu_rompath;The path to the roms for this emulator
 _help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple extensions can be entered if separated by a semicolon.
 _help_emu_movie_path;The path to the attract-mode videos (if any) for this emulator
 _help_emu_movie_artwork;The artwork resource used to display movies
-_help_emu_import_extras;Any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories) and nplayers.ini (for number of players).  Multiple files can be entered if separated by a semicolon
+_help_emu_import_extras;Path to any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories) and nplayers.ini (for number of players).  Multiple file paths can be entered if separated by a semicolon
 _help_emu_listxml;Valid values for XML Mode are "mame" (if this a recent version of mame that provides -listxml output) or "mess <system>" (if this is a recent version of mess that provides -listsoftware output for the specified system).  For any other emulator this should be left empty
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
 _help_emu_delete;Delete the entry for this emulator
@@ -52,11 +52,13 @@ _help_input_action;
 _help_input_delete;Remove this control mapping
 _help_input_add;Add a new control mapping for this action
 _help_control_sel;Configure control mappings
+_help_joystick_threshold;The threshold for registering joystick moves, from 1 to 100 (100=least sensitive)
+_help_mouse_threshold;The threshold for registering mouse moves, from 1 to 100 (100=least sensitive)
 _help_plugin_command;The executable associated with this plug-in
 _help_plugin_enabled;Set whether this plug-in is enabled
 _help_plugin_sel;Configure plug-in
 _help_volume;Valid volume settings are from 0 (mute) to 100 
-_help_sound;Assign a sound to this event/action
+_help_sound_sel;Assign a sound to this event/action
 _help_autorot;Autorotate to match the rotation of the last game played
 _help_exit_command;Command to execute when Exit (Confirm) is selected [i.e. "sudo shutdown"]
 _help_default_font;The name of the default font to use

@@ -143,10 +143,20 @@ void process_args( int argc, char *argv[],
 
 	if ( !romlist_emulators.empty() )
 	{
-		FeSettings feSettings( config_path, cmdln_font, false );
+		FeSettings feSettings( config_path, cmdln_font );
 		int retval = feSettings.build_romlist( romlist_emulators );
 		exit( retval );
 	}
+}
+
+void initialize_mouse_capture( FeSettings &fes, sf::Window &wnd )
+{
+	sf::Vector2u wsize = wnd.getSize();
+	fes.init_mouse_capture( wsize.x, wsize.y );
+
+	// Only mess with the mouse position if mouse moves mapped
+	if ( fes.test_mouse_reset( 0, 0 ) )
+		sf::Mouse::setPosition( sf::Vector2i( wsize.x / 2, wsize.y / 2 ), wnd );
 }
 
 int main(int argc, char *argv[])
@@ -159,7 +169,7 @@ int main(int argc, char *argv[])
 	//
 	// Run the front-end
 	//
-	FeSettings feSettings( config_path, cmdln_font, false );
+	FeSettings feSettings( config_path, cmdln_font );
 	feSettings.load();
 
 	if ( feSettings.autolaunch_last_game() )
@@ -182,7 +192,7 @@ int main(int argc, char *argv[])
 	//
 	FeSoundSystem soundsys( &feSettings );
 	soundsys.play_ambient();
-	
+
 	sf::VideoMode mode = sf::VideoMode::getDesktopMode();
 
 	// Create window
@@ -192,13 +202,13 @@ int main(int argc, char *argv[])
 			sf::Style::None );
 
 #ifdef SFML_SYSTEM_WINDOWS
-	// In Windows, the "WS_POPUP" style creates grief switching to MAME.  
+	// In Windows, the "WS_POPUP" style creates grief switching to MAME.
 	// Use the "WS_BORDER" style to fix this...
 	//
 	sf::WindowHandle hw = window.getSystemHandle();
 	if ( ( GetWindowLong( hw, GWL_STYLE ) & WS_POPUP ) != 0 )
 	{
-		SetWindowLong( hw, GWL_STYLE, 
+		SetWindowLong( hw, GWL_STYLE,
 			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
 
 		// resize the window off screen 1 pixel in each direction so we don't see the window border
@@ -220,6 +230,9 @@ int main(int argc, char *argv[])
 	window.setVerticalSyncEnabled(true);
 	window.setKeyRepeatEnabled(false);
 	window.setMouseCursorVisible(false);
+	window.setJoystickThreshold( 1.0 );
+
+	initialize_mouse_capture( feSettings, window );
 
 	FePresent fePresent( &feSettings, defaultFont );
 	fePresent.load_layout( &window, true );
@@ -239,6 +252,7 @@ int main(int argc, char *argv[])
 
 	sf::Event ev;
 	bool redraw=true;
+	int guard_joyid=-1, guard_axis=-1;
 
 	// go straight into config mode if there are no lists configured for
 	// display
@@ -269,6 +283,7 @@ int main(int argc, char *argv[])
 
 				soundsys.stop();
 				soundsys.play_ambient();
+				initialize_mouse_capture( feSettings, window );
 			}
 			redraw=true;
 			config_mode=false;
@@ -290,7 +305,16 @@ int main(int argc, char *argv[])
 
 		while (window.pollEvent(ev))
 		{
-			FeInputMap::Command c = feSettings.map( ev );
+			FeInputMap::Command c = feSettings.map_input( ev );
+
+			if (( ev.type == sf::Event::MouseMoved )
+					&& ( feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y )))
+			{
+				// We reset the mouse if we are capturing it and it has moved outside of its bounding box
+				//
+				sf::Vector2u s = window.getSize();
+				sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), window );
+			}
 
 			if ( c == FeInputMap::LAST_COMMAND )
 			{
@@ -300,8 +324,28 @@ int main(int argc, char *argv[])
 				{
 					fePresent.reset_screen_saver( &window );
 				}
+				else if (( ev.type == sf::Event::JoystickMoved )
+						&& ( (int)ev.joystickMove.joystickId == guard_joyid )
+						&& ( ev.joystickMove.axis == guard_axis ))
+				{
+					// Reset the joystick guard because the axis we are guarding has moved
+					// below the joystick threshold
+					guard_joyid = -1;
+					guard_axis = -1;
+				}
 
 				continue;
+			}
+
+			// Only allow one mapped "Joystick Moved" input through at a time
+			//
+			if ( ev.type == sf::Event::JoystickMoved )
+			{
+				if ( guard_joyid != -1 )
+					continue;
+
+				guard_joyid = ev.joystickMove.joystickId;
+				guard_axis = ev.joystickMove.axis;
 			}
 
 			soundsys.sound_event( c );
@@ -381,7 +425,7 @@ int main(int argc, char *argv[])
 							// menu option was selected
 							//
 							window.close();
-							if ( list_index < -1 ) 
+							if ( list_index < -1 )
 								feSettings.exit_command();
 						}
 						else
@@ -400,7 +444,7 @@ int main(int argc, char *argv[])
 					{
 						int list_index = feOverlay.filters_dialog();
 						if ( list_index < 0 )
-							window.close();	
+							window.close();
 						else
 						{
 							feSettings.set_filter( list_index );

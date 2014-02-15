@@ -40,19 +40,21 @@ public:
 	static const char *rotationTokens[];
 	static const char *rotationDispTokens[];
 
-	enum ConfigSettingIndex 
-	{ 
+	enum ConfigSettingIndex
+	{
 		Language=0,
-		AutoRotate, 
-		ExitCommand, 
-		DefaultFont, 
-		FontPath, 
-		ScreenSaverTimeout, 
+		AutoRotate,
+		ExitCommand,
+		DefaultFont,
+		FontPath,
+		ScreenSaverTimeout,
 		ListsMenuExit,
 		HideBrackets,
 		AutoLaunchLastGame,
 		ConfirmFavourites,
-		LAST_INDEX 
+		MouseThreshold,
+		JoystickThreshold,
+		LAST_INDEX
 	};
 
 	static const char *configSettingStrings[];
@@ -73,6 +75,7 @@ private:
 	FeInputMap m_inputmap;
 	FeSoundInfo m_sounds;
 	FeResourceMap m_resourcemap;
+	sf::IntRect m_mousecap_rect;
 
 	int m_current_list;
 	RotationState m_autorotate;
@@ -81,6 +84,8 @@ private:
 	int m_last_launch_list;
 	int m_last_launch_filter;
 	int m_last_launch_rom;
+	int m_joy_thresh;		// [1..100], 100=least sensitive
+	int m_mouse_thresh;	// [1..100], 100=least sensitive
 	bool m_lists_menu_exit;
 	bool m_hide_brackets;
 	bool m_autolaunch_last_game;
@@ -89,7 +94,7 @@ private:
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
 
-	int process_setting( const std::string &, 
+	int process_setting( const std::string &,
 						const std::string &,
 						const std::string & );
 
@@ -98,7 +103,7 @@ private:
 
 	void set_current_rom(int );
 
-	void internal_get_art_file( std::vector<std::string> &, 
+	void internal_get_art_file( std::vector<std::string> &,
 							std::string &, int, const std::string &, bool  ) const;
 
 	void internal_gather_config_files(
@@ -112,14 +117,17 @@ private:
 	void internal_load_language( const std::string &lang );
 
 public:
-	FeSettings( const std::string &config_dir, 
-				const std::string &cmdln_font, bool disable_mousecap );
+	FeSettings( const std::string &config_dir,
+				const std::string &cmdln_font );
 
 	void load();
 	void save_state( void ) const;
 
-	FeInputMap::Command map( const sf::Event &e ) const { return m_inputmap.map( e ); };
-	FeInputMap &get_input_map() { return m_inputmap; };
+	FeInputMap::Command map_input( const sf::Event &e );
+	bool config_map_input( const sf::Event &e, std::string &s, FeInputMap::Command &conflict );
+
+	void get_input_mappings( std::vector < FeMapping > &l ) const { m_inputmap.get_mappings( l ); };
+	void set_input_mapping( FeMapping &m ) { m_inputmap.set_mapping( m ); };
 
 	void set_volume( FeSoundInfo::SoundType, const std::string & );
 	int get_set_volume( FeSoundInfo::SoundType ) const;
@@ -148,6 +156,9 @@ public:
 	void get_current_list_filter_names( std::vector<std::string> &list ) const;
 
 	bool select_last_launch();
+	int get_joy_thresh() const { return m_joy_thresh; }
+	void init_mouse_capture( int window_x, int window_y );
+	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
 	int run(); // run current selection
 	int exit_command() const; // run configured exit command (if any)
@@ -187,7 +198,7 @@ public:
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;
 	bool get_font_file( std::string &fullpath, const std::string &filename="" ) const;
-	
+
 	RotationState get_autorotate() const;
 	int get_screen_saver_timeout() const;
 	bool get_lists_menu_exit() const;
@@ -230,7 +241,7 @@ public:
 
 	void create_filter( FeListInfo &l, const std::string &name ) const;
 
-	// return true if specified romlist name is configured for use as a display 
+	// return true if specified romlist name is configured for use as a display
 	// list
 	bool check_romlist_configured( const std::string &n ) const;
 	void get_romlists_list( std::vector < std::string > &ll ) const;
@@ -238,7 +249,7 @@ public:
 	void save() const;
 
 	void get_resource( const std::string &token, std::string &str ) const;
-	void get_resource( const std::string &token, const std::string &rep, 
+	void get_resource( const std::string &token, const std::string &rep,
 									std::string &str ) const;
 
 	int lists_count() const;

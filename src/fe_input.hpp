@@ -24,43 +24,87 @@
 #define FE_INPUT_HPP
 
 #include <SFML/Window/Event.hpp>
+#include <SFML/Graphics/Rect.hpp>
 #include "fe_base.hpp"
 #include <vector>
 #include <map>
 
-//
-// FeMouseCapture - A container for information used if we are capturing
-// mouse input.  The mouse gets captured if the user maps any mouse moves 
-// (i.e. MouseUp, MouseDown, MouseLeft, MouseRight) as an input.
-//
-class FeMouseCapture
+class FeMapping;
+
+class FeInputSource
 {
 public:
-	FeMouseCapture( int );
+	enum Type
+	{
+		Unsupported=-1,
+		Keyboard=0,
+		Mouse=1,
+		Joystick0=2 // up to sf::Joystick::Count joysticks supported starting from Joystick0
+	};
 
-	int capture_count;
-	int top_bound;
-	int bottom_bound;
-	int left_bound;
-	int right_bound;
-	int reset_x;
-	int reset_y;
+	enum MouseCode
+	{
+		MouseUp, MouseDown, MouseLeft, MouseRight,
+		MouseWheelUp, MouseWheelDown, MouseBLeft, MouseBRight, MouseBMiddle, MouseBX1, MouseBX2
+	};
+
+	enum JoyCode
+	{
+		JoyUp, JoyDown, JoyLeft, JoyRight, JoyZPos, JoyZNeg,
+		JoyRPos, JoyRNeg, JoyUPos, JoyUNeg, JoyVPos, JoyVNeg,
+		JoyPOVXPos, JoyPOVXNeg, JoyPOVYPos, JoyPOVYNeg,
+		JoyButton0 // up to sf::Joystick::ButtonCount buttons supported starting from JoyButton0
+	};
+
+	static const char *keyStrings[];
+
+	FeInputSource();
+
+	// Construct from a known type and code
+	FeInputSource( Type t, int code );
+
+	// Construct from an SFML event
+	FeInputSource( const sf::Event &ev, const sf::IntRect &mc_rect, const int joy_thresh );
+
+	// Construct from a config string
+	FeInputSource( const std::string &str );
+
+	// Output as a config string
+	std::string as_string() const;
+
+	Type get_type() const { return m_type; }
+	bool is_mouse_move() const;
+
+	bool operator< ( const FeInputSource &o ) const;
+
+	// test the current state of the input that this object represents and return true if it is depressed,
+	// false otherwise.  Works for keys, buttons and joystick axes.  Does not work for mouse moves or wheels.
+	bool get_current_state( int joy_thresh ) const;
+
+	// Return the current position of the input that this object represents.
+	// Works for joystick axes
+	int get_current_pos() const;
+
+private:
+	static const char *mouseStrings[];
+	static const char *joyStrings[];
+
+	Type m_type;
+	int m_code;
 };
-
-class FeMapping;
 
 class FeInputMap : public FeBaseConfigurable
 {
 	friend class FeMapping;
 public:
 
-	// 
+	//
 	// Input actions supported by Attract-Mode:
 	//
 	// This enum needs to be kept in sync with commandStrings[] and
 	// commandDispStrings[] below.
 	//
-	enum Command {  
+	enum Command {
 		Select=0,
 		Up,
 		Down,
@@ -94,63 +138,39 @@ public:
 		// as events to which sounds can be mapped:
 		//
 		AmbientSound,
-		EventStartup, 	
+		EventStartup,
 		EventGameReturn,
 		LAST_EVENT
 	};
 
 	static const char *commandStrings[];
 	static const char *commandDispStrings[];
-	static const char *keyStrings[];
-	static const char *inputStrings[];
-	static const int JOY_THRESH=90;
 
-	FeInputMap( bool disable_mousecap );
-	Command map( const sf::Event & ) const;
+	FeInputMap();
+
+	Command map_input( const sf::Event &, const sf::IntRect &mc_rect, const int joy_thresh );
 
 	void get_mappings( std::vector< FeMapping > &mappings ) const;
 	void set_mapping( const FeMapping &mapping );
-	void init_config_map_input();
-	bool config_map_input( const sf::Event &e, std::string &s, Command &conflict ) const;
 	void default_mappings();
 
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 		const std::string &value,
 		const std::string &fn );
 
 	void save( std::ofstream & ) const;
+	bool has_mouse_moves() const { return ( m_mmove_count > 0 ); };
 
 	static Command string_to_command( const std::string &s );
 
 private:
-	enum InputType
-	{ 
-		JoyUp, JoyDown, JoyLeft, JoyRight, 
-		JoyB1, JoyB2, JoyB3, JoyB4, JoyB5, JoyB6, JoyB7, JoyB8, 
-		MouseUp, MouseDown, MouseLeft, MouseRight, 
-		MouseWheelUp, MouseWheelDown, 
-		MouseBLeft, MouseBRight, MouseBMiddle, MouseBX1, MouseBX2, 
-		Keyboard, // need to keep "Keyboard" right before LAST_INPUT
-		LAST_INPUT
-	};
-
-	std::map< std::pair< int, InputType >, Command> m_map;
-	FeMouseCapture m_cap;
-	bool m_disable_mousecap;
-
-	static bool is_joystick( InputType i )  { return ( i <= JoyB8 ); }
-	static bool is_mouse_move( InputType i );
-	std::pair< int, InputType > get_map_index( 
-		const sf::Event &e, bool config=false ) const;
-	void string_to_index( const std::string &s,
-		std::pair< int, InputType > &index ) const;
+	std::map< FeInputSource, Command > m_map;
+	int m_mmove_count; // counter of whether mouse moves are mapped
 };
+
 
 //
 // Container class used in mapping configuration
-//
-// TODO: Mapping to specific joystick # is current not supported in 
-// config interface
 //
 class FeMapping
 {
@@ -159,7 +179,6 @@ public:
 	std::vector< std::string > input_list;
 
 	FeMapping( FeInputMap::Command cmd );
-	void add_input( const std::pair< int, FeInputMap::InputType > & );
 	bool operator< ( const FeMapping ) const;
 };
 
@@ -182,7 +201,7 @@ public:
 	bool get_mute() const;
 	void set_mute( bool );
 
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 		const std::string &value,
 		const std::string &fn );
 

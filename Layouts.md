@@ -352,78 +352,43 @@ Return Value:
    * A string containing the requested information.
 
 
-#### `fe.is_keypressed()` ####
+#### `fe.get_input_state()` ####
 
-    fe.is_keypressed( keycode )
+    fe.get_input_state( input_id )
 
-Check if a keyboard key is currently being pressed. 
+Check if a keyboard key, mouse button, joystick button or joystick
+direction is currently pressed.
 
-Parameters:
+Parameter:
 
-   * keycode - the key to test.  Can be one of the following values:
-      - `Key.A` to `Key.Z`
-      - `Key.Num0` to `Key.Num9`
-      - `Key.Escape`
-      - `Key.LControl`, `Key.LShift`, `Key.LAlt`, `Key.LSystem`
-      - `Key.RControl`, `Key.RShift`, `Key.RAlt`, `Key.RSystem`
-      - `Key.Menu`
-      - `Key.LBracket`, `Key.RBracket`
-      - `Key.Semicolon`, `Key.Comma`, `Key.Period`, `Key.Quote`, `Key.Slash`
-      - `Key.Backslash`, `Key.Tilde`, `Key.Equal`, `Key.Dash`
-      - `Key.Space`
-      - `Key.Return`
-      - `Key.Backspace`
-      - `Key.Tab`
-      - `Key.PageUp`, `Key.PageDown`
-      - `Key.End`, `Key.Home`, `Key.Insert`, `Key.Delete`
-      - `Key.Add`, `Key.Subtract`, `Key.Multiply`, `Key.Divide`
-      - `Key.Left`, `Key.Right`, `Key.Up`, `Key.Down`
-      - `Key.Numpad0` to `Key.Numpad9`
-      - `Key.F1` to `Key.F15`
-      - `Key.Pause`
+   * input_id - [string] the input to test.  The format of this string
+     is the same as that used in the attract.cfg file.  For example,
+     "LControl" is the left control key, "Joy0 Up" is the up direction on the
+     first joystick, "Mouse MiddleButton" is the middle mouse button...
+
+     Note that mouse moves and mouse wheel movements are not available through
+     this function.
 
 Return Value:
 
-   * `true` if key is pressed, `false` otherwise.
+   * `true` if input is pressed, `false` otherwise.
 
 
-#### `fe.is_joybuttonpressed()` ####
+#### `fe.get_input_pos()` ####
 
-    fe.is_joybuttonpressed( joy_id, button_num )
-
-Check if a joystick button is currently being pressed.
-
-Parameters:
-
-   * joy_id - index of joystick from 0 (for first joystick) to 7.
-   * button_num - button number. 
-
-Return Value:
-
-   * `true` if button is pressed, `false` otherwise.
-
-
-#### `fe.get_joyaxispos()` ####
-
-    fe.get_joyaxispos( joy_id, axis_id )
+    fe.get_input_pos( input_id )
 
 Return the current position for the specified joystick axis.
 
-Parameters:
+Parameter:
 
-   * joy_id - index of joystick from 0 (for first joystick) to 7.
-   * axis_id - the axis to check. Can be one of the following values:
-      - `Axis.X`
-      - `Axis.Y`
-      - `Axis.Z`
-      - `Axis.R`
-      - `Axis.U`
-      - `Axis.PovX`
-      - `Axis.PovY`
+   * input_id - [string] the input to test.  The format of this string
+     is the same as that used in the attract.cfg file.  For example,
+     "Joy0 Up" is the up direction on the first joystick.
 
 Return Value:
 
-   * Current position of the axis, in range [-100 ... 100].
+   * Current position of the specified axis, in range [0..100].
 
 
 #### `fe.do_nut()` ####
@@ -831,3 +796,17 @@ Whether the screen saver is active.
 
 The Operating System that Attract-Mode is running under.  Will be one of:
 "Windows", "OSX", "FreeBSD", "Linux" or "Unknown"
+
+
+Deprecated Functions
+--------------------
+#### `fe.is_keypressed()` ####
+#### `fe.is_joybuttonpressed()` ####
+
+fe.is_keypressed() and fe.is_joybuttonpressed() are deprecated as of version
+1.2.  Use `fe.get_input_state()` instead.
+
+#### `fe.get_joyaxispos()` ####
+
+fe.get_joyaxispos() is deprecated as of version 1.2.  Use `fe.get_input_pos()`
+instead.
