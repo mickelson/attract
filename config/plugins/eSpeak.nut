@@ -22,23 +22,17 @@
 //
 class UserConfig </ help="Integration plug-in for use with eSpeak Speech Synthesizer: http://espeak.sourceforge.net" /> {
 	</ label="Voice", help="Select Voice", options="Default, Male1, Male2, Male3,Female1, Female2, Female3, MBrola_en1" />
-	voice="Default";
+	a_voice="Default";
 
 	</ label="Welcome Message", help="Message to play on startup" />
-	welcome="Welcome";
+	b_welcome="Welcome";
 
 	</ label="Goodbye Message", help="Message to play on exit" />
-	goodbye="Goodbye";
+	c_goodbye="Goodbye";
 }
 
 local espeak=fe.init_name;
-
-//
-// Copy the configured values from uconfig so we can use them
-// whenever the transition callback function gets called
-//
-local welcome_msg = fe.uconfig["welcome"];
-local goodbye_msg = fe.uconfig["goodbye"];
+local config=fe.get_config(); // get the plugin settings configured by the user
 
 local v_map = {
 	Default=""
@@ -51,9 +45,7 @@ local v_map = {
 	MBrola_en1="-v mb-en1 "
 };
 
-local options;
-if ( v_map.rawin( fe.uconfig["voice"] ) )
-	options = v_map[ fe.uconfig["voice"] ];
+local options = v_map[ config["a_voice"] ];
 
 fe.add_transition_callback( "espeak_plugin_transition" );
 
@@ -65,13 +57,13 @@ function espeak_plugin_transition( ttype, var, ttime ) {
 	switch ( ttype )
 	{
 	case Transition.StartLayout:
-		if (( var == FromTo.Frontend ) && ( welcome_msg.len() > 0 ))
-			fe.plugin_command_bg( espeak, options + "\"" + welcome_msg + "\"" );
+		if (( var == FromTo.Frontend ) && ( config["b_welcome"].len() > 0 ))
+			fe.plugin_command_bg( espeak, options + "\"" + config["b_welcome"] + "\"" );
 		break;
 
 	case Transition.EndLayout:
-		if (( var == FromTo.Frontend ) && ( goodbye_msg.len() > 0 ))
-			fe.plugin_command_bg( espeak, options + "\"" + goodbye_msg + "\"" );
+		if (( var == FromTo.Frontend ) && ( config["c_goodbye"].len() > 0 ))
+			fe.plugin_command_bg( espeak, options + "\"" + config["c_goodbye"] + "\"" );
 		break;
 
 	case Transition.ToGame:

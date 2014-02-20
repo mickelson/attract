@@ -27,6 +27,7 @@
 #include "fe_listbox.hpp"
 #include "fe_sound.hpp"
 #include "fe_input.hpp"
+#include "fe_util_sq.hpp"
 
 #include <sqrat.h>
 
@@ -51,6 +52,7 @@ const char *FePresent::transitionTypeStrings[] =
 
 FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 	: m_feSettings( fesettings ),
+	m_currentScriptConfig( NULL ),
 	m_currentFont( NULL ),
 	m_defaultFont( defaultfont ),
 	m_moveState( MoveNone ),
@@ -506,7 +508,7 @@ void FePresent::load_screensaver( sf::RenderWindow *wnd )
 	// Run the script which actually sets up the screensaver
 	//
 	m_layoutTimer.restart();
-	vm_on_new_layout( m_feSettings->get_screensaver_file() );
+	vm_on_new_layout( m_feSettings->get_screensaver_file(), m_feSettings->get_screensaver_config() );
 
 	//
 	// if there is no screen saver script then do a blank screen
@@ -535,7 +537,7 @@ void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load )
 	// Run the script which actually sets up the layout
 	//
 	m_layoutTimer.restart();
-	vm_on_new_layout( m_feSettings->get_current_layout_file() );
+	vm_on_new_layout( m_feSettings->get_current_layout_file(), m_feSettings->get_current_layout_config() );
 
 	// make things usable if the layout is empty
 	//
@@ -1116,6 +1118,37 @@ const char *FePresent::cb_game_info( int index )
 	return cb_game_info( index, 0 );
 }
 
+Sqrat::Table FePresent::cb_get_config()
+{
+	Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
+	if ( uConfig.IsNull() )
+		return NULL;
+
+	Sqrat::Table retval;
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	Sqrat::Object::iterator it;
+	while ( uConfig.Next( it ) )
+	{
+		std::string key, value;
+		fe_get_object_string( vm, it.getKey(), key );
+
+		// use the default value from the script if a value has
+		// not already been configured
+		//
+		if (( !fep->m_currentScriptConfig )
+				|| ( !fep->m_currentScriptConfig->get_param( key, value ) ))
+		{
+			fe_get_object_string( vm, it.getValue(), value );
+		}
+
+		retval.SetValue( key.c_str(), value.c_str() );
+	}
+
+	return retval;
+}
+
 void FePresent::flag_redraw()
 {
 	m_redrawTriggered=true;
@@ -1146,7 +1179,7 @@ void FePresent::vm_init()
 	Sqrat::DefaultVM::Set( vm );
 }
 
-void FePresent::vm_on_new_layout( const std::string &layout_file )
+void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayoutInfo &layout_params )
 {
 	using namespace Sqrat;
 
@@ -1362,6 +1395,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FePresent::cb_plugin_command_bg);
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FePresent::cb_path_expand);
+	fe.Func<Sqrat::Table (*)()>(_SC("get_config"), &FePresent::cb_get_config);
 
 	// BEGIN deprecated functions
 	// is_keypressed() and is_joybuttonpressed() deprecated as of version 1.2.  Use get_input_state() instead
@@ -1391,6 +1425,8 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 	if ( file_exists( layout_file ) )
 	{
 		fe.SetValue( _SC("init_name"), layout_file );
+		m_currentScriptConfig = &layout_params;
+
 		try
 		{
 			Script sc;
@@ -1430,6 +1466,8 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 			// fe.uconfig in squirrel is set to a table of the user config
 			// settings
 			//
+			// The uconfig table is deprecated as of version 1.2 (use fe.get_config() instead).
+			//
 			Table uconfig;
 			fe.Bind( _SC("uconfig"), uconfig );
 
@@ -1444,6 +1482,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 				uconfig.SetValue( (*itp).c_str(), v.c_str() );
 			}
 
+			m_currentScriptConfig = &(*itr);
 			try
 			{
 				Script sc;
@@ -1457,6 +1496,8 @@ void FePresent::vm_on_new_layout( const std::string &layout_file )
 			}
 		}
 	}
+
+	m_currentScriptConfig = NULL;
 	fe.SetValue( _SC("init_name"), "" );
 }
 

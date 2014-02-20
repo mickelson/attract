@@ -175,10 +175,10 @@ bool search_for_file( const std::string &base_path,
 	for ( itr = subs.begin(); itr != subs.end(); ++itr )
 	{
 
-		if ( search_for_file( 
-				base_path + (*itr), 
-				base_name, 
-				valid_exts, 
+		if ( search_for_file(
+				base_path + (*itr),
+				base_name,
+				valid_exts,
 				result ) )
 		{
 			return true;
@@ -233,7 +233,7 @@ bool get_basename_from_extension(
 			std::string what;
 			str_from_c( what, ent->d_name );
 
-			if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) ) 
+			if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) )
 				continue;
 
 			std::vector<std::string>::const_iterator itr;
@@ -243,11 +243,11 @@ bool get_basename_from_extension(
 				{
 					if ( strip_extension && ( what.size() > (*itr).size() ))
 					{
-						std::string bname = what.substr( 0, 
+						std::string bname = what.substr( 0,
 							what.size() - (*itr).size() );
 
 						// don't add duplicates if we are stripping extension
-						// example: if there is both foo.zip and foo.7z 
+						// example: if there is both foo.zip and foo.7z
 						//
 						if ( list.empty() || ( bname.compare( list.back() ) != 0 ))
 							list.push_back( bname );
@@ -535,6 +535,14 @@ int as_int( const std::string &s )
 	return atoi( s.c_str() );
 }
 
+bool config_str_to_bool( const std::string &s )
+{
+	if (( s.compare( "yes" ) == 0 ) || ( s.compare( "true" ) == 0 ))
+		return true;
+	else
+		return false;
+}
+
 const char *get_OS_string()
 {
 #ifdef SFML_SYSTEM_WINDOWS
@@ -640,7 +648,7 @@ bool run_program( const std::string &prog,
 			FILE *fs = _fdopen( fd, "r" );
 			if ( fs == NULL )
 			{
-				std::cerr << "Error opening output from: " 
+				std::cerr << "Error opening output from: "
 					<< comstr << std::endl;
 			}
 			else
@@ -658,7 +666,7 @@ bool run_program( const std::string &prog,
 
 				fclose( fs );
 			}
-			_close( fd ); // _close will close the underlying handle as well, 
+			_close( fd ); // _close will close the underlying handle as well,
 							// no need to call CloseHandle()
 		}
 	}

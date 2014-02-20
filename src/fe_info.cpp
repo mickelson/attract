@@ -31,7 +31,7 @@
 #include <squirrel.h>
 #include <sqstdstring.h>
 
-const char *FeRomInfo::indexStrings[] = 
+const char *FeRomInfo::indexStrings[] =
 {
 	"Name",
 	"Title",
@@ -121,7 +121,7 @@ bool FeRomInfo::operator< ( FeRomInfo s ) const
 {
 	std::string one = get_info( FeRomInfo::Title );
 	std::string two = s.get_info( FeRomInfo::Title );
-	
+
 	return (one < two);
 }
 
@@ -268,16 +268,16 @@ void FeRule::save( std::ofstream &f ) const
 	if (( m_filter_target != FeRomInfo::LAST_INDEX )
 		&& ( m_filter_comp != LAST_COMPARISON ))
 	{
-		f << "\t\t" << std::setw(20) << std::left << indexString << ' ' 
-			<< FeRomInfo::indexStrings[ m_filter_target ] << ' ' 
-			<< filterCompStrings[ m_filter_comp ] << ' ' 
+		f << "\t\t" << std::setw(20) << std::left << indexString << ' '
+			<< FeRomInfo::indexStrings[ m_filter_target ] << ' '
+			<< filterCompStrings[ m_filter_comp ] << ' '
 			<< m_filter_what << std::endl;
 	}
 }
 
-void FeRule::set_values( 
-		FeRomInfo::Index i, 
-		FilterComp c, 
+void FeRule::set_values(
+		FeRomInfo::Index i,
+		FilterComp c,
 		const std::string &w )
 {
 	if ( m_rex )
@@ -322,7 +322,7 @@ int FeFilter::process_setting( const std::string &setting,
 {
 	if ( value.empty() )
 	{
-		m_rules.push_back( 
+		m_rules.push_back(
 			FeRule( FeRomInfo::LAST_INDEX, FeRule::LAST_COMPARISON, "" )
 			);
 		return 0;
@@ -347,7 +347,7 @@ int FeFilter::process_setting( const std::string &setting,
 
 	if ( i >= FeRomInfo::LAST_INDEX )
 	{
-		invalid_setting( fn, "filter", token, 
+		invalid_setting( fn, "filter", token,
 				FeRomInfo::indexStrings, NULL, "target" );
 		return 1;
 	}
@@ -365,7 +365,7 @@ int FeFilter::process_setting( const std::string &setting,
 
 	if ( i >= FeRule::LAST_COMPARISON )
 	{
-		invalid_setting( fn, "filter", token, FeRule::filterCompStrings, 
+		invalid_setting( fn, "filter", token, FeRule::filterCompStrings,
 				NULL, "comparison" );
 		return 1;
 	}
@@ -390,7 +390,7 @@ void FeFilter::save( std::ofstream &f ) const
 	else
 		n = m_name;
 
-	f << '\t' << std::setw(20) << std::left 
+	f << '\t' << std::setw(20) << std::left
 		<< indexString << ' ' << n << std::endl;
 
 	for ( std::vector<FeRule>::const_iterator itr=m_rules.begin();
@@ -430,7 +430,7 @@ void FeListInfo::set_current_rom_index( int r )
 {
 	if ( !m_filters.empty() )
 		m_filters[ m_filter_index ].set_current_rom_index( r );
-	else 
+	else
 		m_rom_index = r;
 }
 
@@ -480,8 +480,8 @@ int FeListInfo::process_setting( const std::string &setting,
 		m_filters.push_back( FeFilter( name ) );
 
 		//
-		// Deal with filters in the format from version 1.0, where there could 
-		// only be one filter per list (with one filter rule) saved in the 
+		// Deal with filters in the format from version 1.0, where there could
+		// only be one filter per list (with one filter rule) saved in the
 		// following format:
 		//
 		// filter <target> <comparision> <what>
@@ -521,7 +521,7 @@ int FeListInfo::process_state( const std::string &state_string )
 	//
 	// Process the [curr_rom] string
 	//
-	if ( m_filters.empty() ) 
+	if ( m_filters.empty() )
 	{
 		// If there are no filters we stash the current rom in m_rom_index
 		m_rom_index = as_int( val );
@@ -559,7 +559,7 @@ std::string FeListInfo::state_as_output() const
 {
 	std::ostringstream state;
 
-	if ( m_filters.empty() ) 
+	if ( m_filters.empty() )
 	{
 		state << m_rom_index;
 	}
@@ -572,7 +572,7 @@ std::string FeListInfo::state_as_output() const
 		}
 	}
 
-	state << ";" << m_current_layout_file << ";" 
+	state << ";" << m_current_layout_file << ";"
 		<< m_filter_index << ";";
 
 	return state.str();
@@ -583,7 +583,7 @@ FeFilter *FeListInfo::get_filter( int i )
 	if (( i >= 0 ) && ( i < (int)m_filters.size() ))
 		return &(m_filters[i]);
 
-	return NULL;	
+	return NULL;
 }
 
 void FeListInfo::append_filter( const FeFilter &f )
@@ -606,7 +606,7 @@ void FeListInfo::get_filters_list( std::vector<std::string> &l ) const
 	for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 	{
-		l.push_back( (*itr).get_name() );		
+		l.push_back( (*itr).get_name() );
 	}
 }
 
@@ -619,11 +619,11 @@ void FeListInfo::save( std::ofstream &f ) const
 	f << "list" << '\t' << get_info( Name ) << endl;
 
 	if ( !get_info( Layout ).empty() )
-		f << '\t' << setw(20) << left 
+		f << '\t' << setw(20) << left
 			<< indexStrings[Layout] << ' ' << get_info( Layout ) << endl;
 
 	if ( !get_info( Romlist ).empty() )
-		f << '\t' << setw(20) << left 
+		f << '\t' << setw(20) << left
 			<< indexStrings[Romlist] << ' ' << get_info( Romlist ) << endl;
 
 	for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
@@ -737,8 +737,8 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"args",
 	"rompath",
 	"romext",
-	"import_extras",	
-	"listxml",	
+	"import_extras",
+	"listxml",
 	"movie_path",
 	"movie_artwork",
 	NULL
@@ -751,8 +751,8 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Command Arguments",
 	"Rom Path",
 	"Rom Extension(s)",
-	"Additional Import Files",	
-	"XML Mode",	
+	"Additional Import Files",
+	"XML Mode",
 	"Movie Path",
 	"Movie Fallback Artwork",
 	NULL
@@ -816,15 +816,15 @@ void FeEmulatorInfo::set_artwork( const std::string &label, const std::string &a
 	m_artwork[ label ] = artwork;
 }
 
-void FeEmulatorInfo::get_artwork_list( 
+void FeEmulatorInfo::get_artwork_list(
 			std::vector< std::pair< std::string, std::string > > &list ) const
 {
 	list.clear();
 	std::map<std::string, std::string>::const_iterator it;
 
 	for ( it=m_artwork.begin(); it != m_artwork.end(); ++it )
-		list.push_back( std::pair<std::string, std::string>( 
-									(*it).first, 
+		list.push_back( std::pair<std::string, std::string>(
+									(*it).first,
 									(*it).second ) );
 }
 
@@ -848,11 +848,11 @@ void FeEmulatorInfo::dump( void ) const
 
 	for ( std::map<std::string,std::string>::const_iterator itl=m_artwork.begin();
 			itl != m_artwork.end(); ++itl )
-			std::cout << "artwork " << (*itl).first << "=[" 
+			std::cout << "artwork " << (*itl).first << "=["
 				<< (*itl).second << "]";
 
 	std::cout << std::endl;
-} 
+}
 
 int FeEmulatorInfo::process_setting( const std::string &setting,
          const std::string &value, const std::string &fn )
@@ -881,7 +881,7 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 	}
 	else
 	{
-		invalid_setting( fn, "emulator", setting, 
+		invalid_setting( fn, "emulator", setting,
 				indexStrings + 1, stokens );
 		return 1;
 	}
@@ -902,7 +902,7 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 		using std::left;
 		using std::endl;
 
-		outfile << "# Generated by " << FE_NAME << " " << FE_VERSION << endl 
+		outfile << "# Generated by " << FE_NAME << " " << FE_VERSION << endl
 					<< "#" << endl;
 
 		// skip name, which gets derived from the filename
@@ -911,7 +911,7 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 		{
 			string val = get_info( (Index) i );
 			if ( !val.empty() )
-				outfile << setw(20) << left << indexStrings[i] 
+				outfile << setw(20) << left << indexStrings[i]
 							<< ' ' << val << endl;
 		}
 
@@ -924,8 +924,8 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 			else
 				label = (*itr).first;
 
-			outfile << setw(10) << left << "artwork" 
-						<< ' ' << setw(15) << left << label 
+			outfile << setw(10) << left << "artwork"
+						<< ' ' << setw(15) << left << label
 						<< ' ' << (*itr).second << endl;
 		}
 
@@ -933,14 +933,9 @@ void FeEmulatorInfo::save( const std::string &filename ) const
    }
 }
 
-const char *FePlugInfo::indexStrings[] = { "command","enabled","param",NULL };
+const char *FeScriptConfigurable::indexString = "param";
 
-FePlugInfo::FePlugInfo( const std::string & n )
-	: m_name( n ), m_enabled( false )
-{
-}
-
-bool FePlugInfo::get_param( const std::string &label, std::string &v ) const
+bool FeScriptConfigurable::get_param( const std::string &label, std::string &v ) const
 {
 	std::map<std::string,std::string>::const_iterator itr;
 
@@ -954,32 +949,22 @@ bool FePlugInfo::get_param( const std::string &label, std::string &v ) const
 	return false;
 }
 
-void FePlugInfo::set_param( const std::string &label, const std::string &v )
+void FeScriptConfigurable::set_param( const std::string &label, const std::string &v )
 {
 	m_params[ label ] = v;
 }
 
-void FePlugInfo::get_param_labels( std::vector<std::string> &labels ) const
+void FeScriptConfigurable::get_param_labels( std::vector<std::string> &labels ) const
 {
 	std::map<std::string,std::string>::const_iterator itr;
 	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
 		labels.push_back( (*itr).first );
 }
 
-int FePlugInfo::process_setting( const std::string &setting,
+int FeScriptConfigurable::process_setting( const std::string &setting,
          const std::string &value, const std::string &fn )
 {
-	if ( setting.compare( indexStrings[0] ) == 0 ) // command
-		set_command( value );
-	else if ( setting.compare( indexStrings[1] ) == 0 ) // enabled
-	{
-		if (( value.compare( "yes" ) == 0 )
-				|| ( value.compare( "true" ) == 0 ))
-			set_enabled( true );
-		else
-			set_enabled( false );
-	}
-	else if ( setting.compare( indexStrings[2] ) == 0 ) // param
+	if ( setting.compare( indexString ) == 0 ) // param
 	{
 		std::string label, v;
 		size_t pos=0;
@@ -990,8 +975,38 @@ int FePlugInfo::process_setting( const std::string &setting,
 			v = value.substr( pos );
 
 		m_params[ label ] = v;
+
+		return 0;
 	}
 	else
+		return 1;
+}
+
+void FeScriptConfigurable::save( std::ofstream &f ) const
+{
+	std::map<std::string,std::string>::const_iterator itr;
+	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
+	{
+		f << '\t' << std::setw(20) << std::left << indexString << ' '
+			<< (*itr).first << ' ' << (*itr).second << std::endl;
+	}
+}
+
+const char *FePlugInfo::indexStrings[] = { "command","enabled","param",NULL };
+
+FePlugInfo::FePlugInfo( const std::string & n )
+	: m_name( n ), m_enabled( false )
+{
+}
+
+int FePlugInfo::process_setting( const std::string &setting,
+         const std::string &value, const std::string &fn )
+{
+	if ( setting.compare( indexStrings[0] ) == 0 ) // command
+		set_command( value );
+	else if ( setting.compare( indexStrings[1] ) == 0 ) // enabled
+		set_enabled( config_str_to_bool( value ) );
+	else if ( FeScriptConfigurable::process_setting( setting, value, fn ) ) // params
 	{
 		invalid_setting( fn, "plugin", setting, indexStrings );
 		return 1;
@@ -1004,20 +1019,43 @@ void FePlugInfo::save( std::ofstream &f ) const
 	if (( m_command.empty() ) && ( !m_enabled ))
 		return;
 
-	f << "plugin" << '\t' << m_name << std::endl;
+	f << std::endl << "plugin" << '\t' << m_name << std::endl;
 
 	if ( !m_command.empty() )
-		f << '\t' << std::setw(20) << std::left 
+		f << '\t' << std::setw(20) << std::left
 			<< indexStrings[0] << ' ' << get_command() << std::endl;
 
-	f << '\t' << std::setw(20) << std::left << indexStrings[1] 
+	f << '\t' << std::setw(20) << std::left << indexStrings[1]
 		<< ( m_enabled ? " yes" : " no" ) << std::endl;
 
-	std::map<std::string,std::string>::const_iterator itr;
-	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
+	FeScriptConfigurable::save( f );
+}
+
+const char *FeLayoutInfo::indexStrings[] = {
+	"saver_config",
+	"layout_config",
+	NULL
+};
+
+FeLayoutInfo::FeLayoutInfo()
+{
+}
+
+FeLayoutInfo::FeLayoutInfo( const std::string &name )
+	: m_name( name )
+{
+}
+
+void FeLayoutInfo::save( std::ofstream &f ) const
+{
+	if ( !m_params.empty() )
 	{
-		f << '\t' << std::setw(20) << std::left << indexStrings[2] << ' '
-			<< (*itr).first << ' ' << (*itr).second << std::endl;
+		if ( m_name.empty() )
+			f << std::endl << indexStrings[0] << std::endl;
+		else
+			f << std::endl << indexStrings[1] << '\t' << m_name << std::endl;
+
+		FeScriptConfigurable::save( f );
 	}
 }
 
@@ -1043,6 +1081,6 @@ void FeResourceMap::get_resource( const std::string &token,
 
 	if ( it != m_map.end() )
 		str = (*it).second;
-	else if ( token[0] != '_' ) 
+	else if ( token[0] != '_' )
 		str = token;
 }

@@ -33,6 +33,11 @@ class FeTextureContainer;
 class FeText;
 class FeListBox;
 
+namespace Sqrat
+{
+	class Table;
+};
+
 enum FeTransitionType
 {
 	StartLayout=0,		// var: FromToScreenSaver, FromToFrontend or FromToNoValue
@@ -59,6 +64,7 @@ private:
 	};
 
 	FeSettings *m_feSettings;
+	const FeScriptConfigurable *m_currentScriptConfig;
 	sf::Font *m_currentFont;
 	sf::Font &m_defaultFont;
 	sf::Font m_layoutFont;
@@ -115,7 +121,7 @@ private:
 	//
 	void vm_close();
 	void vm_init();
-	void vm_on_new_layout( const std::string &filename );
+	void vm_on_new_layout( const std::string &filename, const FeLayoutInfo &layout_params );
 	bool vm_on_tick();
 	bool vm_on_transition( FeTransitionType, int var, sf::RenderWindow *wnd );
 
@@ -195,6 +201,7 @@ public:
 	static const char *cb_path_expand( const char *path );
 	static const char *cb_game_info(int,int);
 	static const char *cb_game_info(int);
+	static Sqrat::Table cb_get_config();
 };
 
 #endif

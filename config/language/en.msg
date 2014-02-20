@@ -45,6 +45,7 @@ _help_list_layout;The layout to use for this display list
 _help_list_romlist;The romlist to use for this display list
 _help_list_filter;Configure filter
 _help_list_add_filter;Add a filter to this display list
+_help_list_layout_options;Configure any layout-specific options
 _help_list_delete;Delete this display list
 _help_list_sel;Configure display list
 _help_list_add;Add a new display list
@@ -72,5 +73,6 @@ _help_emulators;Configure emulator settings
 _help_lists;Configure display lists
 _help_controls;Configure controls
 _help_sound;Configure sound volumes and sound mappings
+_help_screen_saver;Configure screen saver
 _help_plugins;Configure plug-ins
 _help_misc;Configure Miscellaneous settings

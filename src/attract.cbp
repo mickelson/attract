@@ -92,7 +92,6 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add option="-DNO_FONTCONFIG" />
 			<Add option="-DHAVE_MEMMOVE" />
 			<Add directory="../../SFML/include" />
 			<Add directory="../../ffmpeg/include" />
@@ -202,6 +201,8 @@
 		<Unit filename="fe_text.hpp" />
 		<Unit filename="fe_util.cpp" />
 		<Unit filename="fe_util.hpp" />
+		<Unit filename="fe_util_sq.cpp" />
+		<Unit filename="fe_util_sq.hpp" />
 		<Unit filename="fe_xml.cpp" />
 		<Unit filename="fe_xml.hpp" />
 		<Unit filename="main.cpp" />
@@ -218,6 +219,15 @@
 			<debugger />
 			<envvars />
 			<editor_config active="1" use_tabs="1" tab_indents="1" tab_width="3" indent="3" eol_mode="0" />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

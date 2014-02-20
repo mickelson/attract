@@ -281,6 +281,9 @@ FeInputSource::FeInputSource( const std::string &str )
 	: m_type( Unsupported ),
 	m_code( 0 )
 {
+	if ( str.empty() )
+		return;
+
 	size_t pos=0;
 	std::string val;
 
@@ -448,7 +451,7 @@ int FeInputSource::get_current_pos() const
 		if (( m_code == MouseUp ) || ( m_code == MouseDown ))
 			return sf::Mouse::getPosition().y;
 		else if (( m_code == MouseLeft ) || ( m_code == MouseRight ))
-			return sf::Mouse::getPosition().y;
+			return sf::Mouse::getPosition().x;
 	}
 	else if (( m_type >= Joystick0 ) && ( m_code < JoyButton0 ))
 	{

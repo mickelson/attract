@@ -512,21 +512,21 @@ class Player extends Sprite
 
 	function update_direction( ttime )
 	{
-		if ( fe.is_keypressed( PM_UP ) )
+		if ( fe.get_input_state( AM_CONFIG["a_up"] ) )
 		{
 			if ( ::field[ p2g( pos_y() ) - 1 ][ p2g( pos_x() ) ] )
 				direction = Direction.Up;
 
 			cruise_control = false;
 		}
-		else if ( fe.is_keypressed( PM_DOWN ) )
+		else if ( fe.get_input_state( AM_CONFIG["b_down"] ) )
 		{
 			if ( ::field[ p2g( pos_y() ) + 1 ][ p2g( pos_x() ) ] )
 				direction = Direction.Down;
 
 			cruise_control = false;
 		}
-		else if ( fe.is_keypressed( PM_LEFT ) )
+		else if ( fe.get_input_state( AM_CONFIG["c_left"] ) )
 		{
 			local temp = p2g( pos_x() ) - 1;
 			if (( temp < 0 ) // special case for tunnel movement
@@ -535,7 +535,7 @@ class Player extends Sprite
 
 			cruise_control = false;
 		}
-		else if ( fe.is_keypressed( PM_RIGHT ) )
+		else if ( fe.get_input_state( AM_CONFIG["d_right"] ) )
 		{
 			local temp = p2g( pos_x() ) + 1;
 			if (( temp > GridWidth ) // special case for tunnel movement
@@ -1112,8 +1112,8 @@ function maze_init()
 //
 function speed_adjust()
 {
-	local speed_up = fe.is_keypressed( SPEED_UP );
-	local speed_down = fe.is_keypressed( SPEED_DOWN );
+	local speed_up = fe.get_input_state( AM_CONFIG["e_speed_up"] );
+	local speed_down = fe.get_input_state( AM_CONFIG["f_speed_down"] );
 
 	if ( ::query_speed == false )
 	{

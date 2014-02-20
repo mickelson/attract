@@ -1,13 +1,59 @@
+///////////////////////////////////////////////////
+//
 // Attract-Mode Frontend - default screensaver script
 //
-const screen_interval=3000; // screenshot display time (in ms)
-const movie_interval=20000; // movie display time
+///////////////////////////////////////////////////
+class UserConfig {
+	</ label="Collage Mode", help="Enable 4x4 collage mode", options="Yes,No" />
+	a_collage="Yes";
 
-local last_time=0;
-local switch_count=1;
-local interval=screen_interval;
+	</ label="Screen Shot Mode", help="Enable screen shot mode", options="Yes,No" />
+	b_screen="Yes";
 
-// Initialize artwork resource
+	</ label="Movie Mode", help="Enable movie mode", options="Yes,No" />
+	c_movie="Yes";
+
+	</ label="Mode Interval", help="The amount of time to spend in each mode (in seconds)" />
+	d_interval="21";
+}
+
+enum Mode {
+	Screen,
+	Movie,
+	Collage
+}
+
+local config = fe.get_config();
+local cycle = [];
+
+if ( config["b_screen"] == "Yes" )
+	cycle.append( Mode.Screen );
+
+if ( config["c_movie"] == "Yes" )
+	cycle.append( Mode.Movie );
+
+if ( config["a_collage"] == "Yes" )
+	cycle.append( Mode.Collage );
+
+if ( cycle.len() < 1 )
+	cycle.append( Mode.Screen );
+
+local mode_interval = 21000;
+try {
+	local temp = config[ "d_interval" ].tointeger();
+	mode_interval = temp * 1000;
+}
+catch ( e ) {
+}
+
+local screen_interval = 3000;
+local collage_interval = 100;
+
+local current_mode= cycle.len() - 1;
+local mode_count=0;
+local screen_count=1;
+
+// Initialize artwork resources
 //
 local art = fe.add_artwork( "", 0, 0, ScreenWidth, ScreenHeight );
 art.movie_enabled = false;
@@ -27,9 +73,6 @@ for ( local i=0; i<4; i++ )
 	}
 }
 
-local show_group=false;
-local group_switch=0;
-
 fe.add_ticks_callback( "saver_tick" );
 
 // saver_tick gets called repeatedly during screensaver.
@@ -37,13 +80,17 @@ fe.add_ticks_callback( "saver_tick" );
 //
 function saver_tick( stime )
 {
-	if ( stime - last_time > interval )
+	if ( stime > mode_count * mode_interval )
 	{
-		// show 16 image group every 9 switches
-		if ( switch_count % 9 == 0 )
-		{
-			interval=movie_interval;
+		// change mode
+		//
+		mode_count++;
+		current_mode++;
+		if ( current_mode >= cycle.len() )
+			current_mode = 0;
 
+		if ( cycle[current_mode] == Mode.Collage )
+		{
 			foreach ( g in group )
 			{
 				g.visible = true;
@@ -51,37 +98,55 @@ function saver_tick( stime )
 			}
 
 			art.visible = false;
-			show_group=true;
-			group_switch = stime + 100;
+			screen_count = 1;
 		}
 		else
 		{
-			// show movie every 10 switches
-			if ( switch_count % 10 == 0 )
+			foreach ( g in group )
 			{
-				interval=movie_interval;
+				g.visible = false;
+			}
+
+			art.visible = true;
+			art.index_offset = rand();
+
+			if ( cycle[current_mode] == Mode.Movie )
+			{
 				art.movie_enabled = true;
 			}
 			else
 			{
-				interval=screen_interval;
 				art.movie_enabled = false;
+				screen_count = 1;
 			}
-			art.index_offset = rand();
-
-			foreach ( g in group )
-				g.visible = false;
-
-			art.visible = true;
-			show_group = false;
 		}
-		last_time = stime;
-		switch_count++;
 	}
-
-	if (( show_group ) && ( stime > group_switch ))
+	else
 	{
-		group[ ( rand() % group.len() ) ].index_offset = rand();
-		group_switch = stime + 100;
+		local m_time = stime - ( ( mode_count - 1 ) * mode_interval );
+		switch ( cycle[current_mode] )
+		{
+		case Mode.Screen:
+			if ( m_time > ( screen_count * screen_interval ))
+			{
+				// change image
+				art.index_offset = rand();
+				screen_count++;
+			}
+			break;
+
+		case Mode.Movie:
+			// Do nothing
+			break;
+
+		case Mode.Collage:
+			if ( m_time > ( screen_count * collage_interval ))
+			{
+				// change image
+				group[ ( rand() % group.len() ) ].index_offset = rand();
+				screen_count++;
+			}
+			break;
+		}
 	}
 }

@@ -33,6 +33,8 @@ class FeListInfo;
 class FeFilter;
 class FeRule;
 class FePlugInfo;
+class FeLayoutInfo;
+class FeScriptConfigurable;
 
 namespace Opt
 {
@@ -170,6 +172,50 @@ public:
 	virtual bool save( FeConfigContext &ctx );
 };
 
+// Utility class where script parameters are being configured
+class FeScriptConfigMenu : public FeBaseConfigMenu
+{
+protected:
+	void get_options_helper(
+		FeConfigContext &ctx,
+		std::string &gen_help,
+		FeScriptConfigurable &configurable,
+		const std::string &script_file );
+
+	bool on_option_select(
+			FeConfigContext &ctx, FeBaseConfigMenu *& submenu );
+
+	bool save_helper( FeConfigContext &ctx,
+		FeScriptConfigurable &configurable );
+
+private:
+	static const int OPAQUE_BASE=100;
+	static const int INPUT_OPAQUE_BASE=200;
+
+	std::vector<std::string>m_params;
+};
+
+class FeLayoutEditMenu : public FeScriptConfigMenu
+{
+private:
+	FeLayoutInfo *m_layout;
+
+public:
+	FeLayoutEditMenu();
+	void get_options( FeConfigContext &ctx );
+
+	bool save( FeConfigContext &ctx );
+	void set_layout( FeLayoutInfo *layout );
+};
+
+class FeSaverEditMenu : public FeScriptConfigMenu
+{
+public:
+	void get_options( FeConfigContext &ctx );
+
+	bool save( FeConfigContext &ctx );
+};
+
 class FeEmuArtEditMenu : public FeBaseConfigMenu
 {
 private:
@@ -254,6 +300,7 @@ class FeListEditMenu : public FeBaseConfigMenu
 {
 private:
 	FeFilterEditMenu m_filter_menu;
+	FeLayoutEditMenu m_layout_menu;
 	FeListInfo *m_list;
 	std::string m_name;
 
@@ -323,11 +370,11 @@ public:
 	bool save( FeConfigContext &ctx );
 };
 
-class FePluginEditMenu : public FeBaseConfigMenu
+
+class FePluginEditMenu : public FeScriptConfigMenu
 {
 private:
 	FePlugInfo *m_plugin;
-	std::vector<std::string>m_params;
 
 public:
 	FePluginEditMenu();
@@ -355,6 +402,7 @@ private:
 	FeListSelMenu m_list_menu;
 	FeInputSelMenu m_input_menu;
 	FeSoundMenu m_sound_menu;
+	FeSaverEditMenu m_saver_menu;
 	FePluginSelMenu m_plugin_menu;
 	FeMiscMenu m_misc_menu;
 

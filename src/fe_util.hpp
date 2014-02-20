@@ -63,7 +63,7 @@ typedef bool (*output_callback_fn)( const char *, void * );
 //
 // Arguments:
 //		"prog" - program to run
-//		"args" - space separated args. An arg can be wrapped in double quotes 
+//		"args" - space separated args. An arg can be wrapped in double quotes
 //					if it contains spaces.
 //		"cb" - callback function to call with stdout output from program
 //		"opaque" - opaque ptr to pass to the callback function.  run_program()
@@ -73,7 +73,7 @@ typedef bool (*output_callback_fn)( const char *, void * );
 //
 //	Returns true if program ran successfully
 //
-bool run_program( const std::string &prog, 
+bool run_program( const std::string &prog,
 	const::std::string &args,
 	output_callback_fn cb = NULL,
 	void *opaque=NULL,
@@ -86,12 +86,12 @@ bool run_program( const std::string &prog,
 bool file_exists( const std::string &file );
 
 // clean the path string for usage.  Performs substitution of $HOME etc...
-std::string clean_path( const std::string &path, 
+std::string clean_path( const std::string &path,
 		bool require_trailing_slash = false );
 
 //
 // Search "base_path"'s dir structure for a file with the given "base_name".
-// Valid extensions for the "result" file are in the NULL terminated list 
+// Valid extensions for the "result" file are in the NULL terminated list
 // "valid_extensions".
 //
 // put the full path and name in "result" and return true if found
@@ -105,39 +105,39 @@ bool search_for_file( const std::string &base_path,
 // Return list of subdirectories in path
 //
 bool get_subdirectories(
-			std::vector<std::string> &list, 
+			std::vector<std::string> &list,
 			const std::string &path,
 			bool append_trailing_slash = false );
-//       
-// Return "list" of the base filenames in "path" where the file extension 
+//
+// Return "list" of the base filenames in "path" where the file extension
 // is in the vector "extensions"
 //
 // "list" is sorted alphabetically
 //
-bool get_basename_from_extension( 
-			std::vector<std::string> &list, 
-			const std::string &path, 
+bool get_basename_from_extension(
+			std::vector<std::string> &list,
+			const std::string &path,
 			const std::vector< std::string > &extensions,
 			bool strip_extension = true );
 
-//       
+//
 // Return "list" of filenames in "path" where the file basename is in "baselist"
 // Ordering of returned "list" corresponds to ordering of baselist
 //
-// if filter_excludes is false and ext_filter is non-NULL: Only include 
-// files with an extension in the "ext_filter" NULL terminated list. 
+// if filter_excludes is false and ext_filter is non-NULL: Only include
+// files with an extension in the "ext_filter" NULL terminated list.
 //
-// if filter_excludes is true and ext_filter is non-NULL: Don't include 
-// files with an extension in the "ext_filter" NULL terminated list. 
+// if filter_excludes is true and ext_filter is non-NULL: Don't include
+// files with an extension in the "ext_filter" NULL terminated list.
 //
-bool get_filename_from_base( std::vector<std::string> &list, 
-				const std::string &path, 
+bool get_filename_from_base( std::vector<std::string> &list,
+				const std::string &path,
 				const std::vector<std::string> &base_list,
 				const char **ext_filter=NULL,
 				bool filter_excludes=false );
 
 //
-// Get a filename that does not currently exist.  
+// Get a filename that does not currently exist.
 // The resulting filename must start with "base" and end with "extension"
 //
 // Results:
@@ -170,6 +170,11 @@ std::string as_str( int i );
 // Return string as integer
 //
 int as_int( const std::string &s );
+
+//
+// Return config string (i.e. "ues", "true", "no", "false" as bool
+//
+bool config_str_to_bool( const std::string &s );
 
 //
 // Return the name of the operating system.

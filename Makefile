@@ -64,6 +64,7 @@ FE_FLAGS=
 _DEP =\
 	fe_base.hpp \
 	fe_util.hpp \
+	fe_util_sq.hpp \
 	fe_info.hpp \
 	fe_input.hpp \
 	fe_xml.hpp \
@@ -82,6 +83,7 @@ _DEP =\
 _OBJ =\
 	fe_base.o \
 	fe_util.o \
+	fe_util_sq.o \
 	fe_info.o \
 	fe_input.o \
 	fe_xml.o \

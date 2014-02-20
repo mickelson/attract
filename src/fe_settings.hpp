@@ -33,6 +33,8 @@ extern const char *FE_EMULATOR_SUBDIR;
 extern const char *FE_ROMLIST_FILE_EXTENSION;
 extern const char *FE_EMULATOR_FILE_EXTENSION;
 
+extern const char *FE_LAYOUT_UI_KEY_FILE;
+
 class FeSettings : public FeBaseConfigurable
 {
 public:
@@ -70,11 +72,13 @@ private:
 	std::vector<FeListInfo> m_lists;
 	std::vector<FeEmulatorInfo> m_emulators;
 	std::vector<FePlugInfo> m_plugins;
+	std::vector<FeLayoutInfo> m_layout_params;
 	FeRomList m_rl;
 
 	FeInputMap m_inputmap;
 	FeSoundInfo m_sounds;
 	FeResourceMap m_resourcemap;
+	FeLayoutInfo m_saver_params;
 	sf::IntRect m_mousecap_rect;
 
 	int m_current_list;
@@ -191,9 +195,13 @@ public:
 	const std::string &get_movie_artwork();
 
 	std::string get_screensaver_file() const;
+	FeLayoutInfo &get_screensaver_config() { return m_saver_params; }
 	std::string get_current_layout_file() const;
 	std::string get_current_layout_dir() const;
+	std::string get_layout_dir( const std::string &layout_name ) const;
 	void get_layouts_list( std::vector<std::string> &layouts ) const;
+	FeLayoutInfo &get_layout_config( const std::string &layout_name );
+	FeLayoutInfo &get_current_layout_config();
 
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;

@@ -97,6 +97,7 @@ const char *FE_DATA_PATH = NULL;
 const char *FE_CFG_FILE					= "attract.cfg";
 const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
+const char *FE_LAYOUT_UI_KEY_FILE		= "layout.nut";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
@@ -275,6 +276,8 @@ const char *FeSettings::otherSettingStrings[] =
 	"input_map",
 	"general",
 	"plugin",
+	FeLayoutInfo::indexStrings[0], // "saver_config"
+	FeLayoutInfo::indexStrings[1], // "layout_config"
 	NULL
 };
 
@@ -297,9 +300,17 @@ int FeSettings::process_setting( const std::string &setting,
 		m_current_config_object = NULL;
 	else if ( setting.compare( otherSettingStrings[4] ) == 0 ) // plugin
 	{
-		FePlugInfo newPlug( value );
-		m_plugins.push_back( newPlug );
+		FePlugInfo new_plug( value );
+		m_plugins.push_back( new_plug );
 		m_current_config_object = &m_plugins.back();
+	}
+	else if ( setting.compare( otherSettingStrings[5] ) == 0 ) // saver_config
+		m_current_config_object = &m_saver_params;
+	else if ( setting.compare( otherSettingStrings[6] ) == 0 ) // layout_config
+	{
+		FeLayoutInfo new_entry( value );
+		m_layout_params.push_back( new_entry );
+		m_current_config_object = &m_layout_params.back();
 	}
 	else if ( setting.compare( configSettingStrings[DefaultFont] ) == 0 ) // default_font
 	{
@@ -624,24 +635,24 @@ std::string FeSettings::get_current_layout_file() const
 	std::string file = m_lists[m_current_list].get_current_layout_file();
 	if ( file.empty() )
 	{
-		std::vector<std::string> list;
-		get_basename_from_extension( list, path,
+		std::vector<std::string> my_list;
+		get_basename_from_extension( my_list, path,
 			std::vector<std::string>(1, FE_LAYOUT_FILE_EXTENSION) );
 
-		if ( list.empty() )
+		if ( my_list.empty() )
 			return FE_EMPTY_STRING;
 
-		for ( unsigned int i=0; i< list.size(); i++ )
+		for ( std::vector<std::string>::iterator itr=my_list.begin(); itr!=my_list.end(); ++itr )
 		{
-			if ( list[i].compare( "layout" ) == 0 )
+			if ( (*itr).compare( "layout" ) == 0 )
 			{
-				file = list[i];
+				file = (*itr);
 				break;
 			}
 		}
 
 		if ( file.empty() )
-			file = list.front();
+			file = my_list.front();
 	}
 
 	path += file;
@@ -658,35 +669,38 @@ std::string FeSettings::get_current_layout_dir() const
 		return FE_EMPTY_STRING;
 	}
 
-	//
-	// First check in the config directory
-	//
-	std::string layout_dir = m_config_path;
-	layout_dir += FE_LAYOUT_SUBDIR;
-	layout_dir += m_lists[ m_current_list ].get_info( FeListInfo::Layout );
-	layout_dir += "/";
+	return get_layout_dir( m_lists[ m_current_list ].get_info( FeListInfo::Layout ));
+}
 
-	if ( file_exists( layout_dir ) )
-		return layout_dir;
+std::string FeSettings::get_layout_dir( const std::string &layout_name ) const
+{
+	std::string temp;
+	internal_resolve_config_file( temp, FE_LAYOUT_SUBDIR, layout_name + "/" );
+	return temp;
+}
 
-	//
-	// Otherwise, look for the layout in the share path
-	//
-	if ( FE_DATA_PATH != NULL )
+FeLayoutInfo &FeSettings::get_layout_config( const std::string &layout_name )
+{
+	for ( std::vector<FeLayoutInfo>::iterator itr=m_layout_params.begin(); itr != m_layout_params.end(); ++itr )
 	{
-		layout_dir = FE_DATA_PATH;
-		layout_dir += FE_LAYOUT_SUBDIR;
-		layout_dir += m_lists[ m_current_list ].get_info( FeListInfo::Layout );
-		layout_dir += "/";
-
-		if ( file_exists( layout_dir ) )
-			return layout_dir;
+		if ( layout_name.compare( (*itr).get_name() ) == 0 )
+			return (*itr);
 	}
 
-	std::cerr << "Error, could not find layout: " << m_lists[ m_current_list ].get_info( FeListInfo::Layout )
-		<< std::cout;
+	// Add a new config entry if one doesn't exist
+	m_layout_params.push_back( FeLayoutInfo( layout_name ) );
+	return m_layout_params.back();
+}
 
-	return FE_EMPTY_STRING;
+FeLayoutInfo &FeSettings::get_current_layout_config()
+{
+	if ( m_current_list < 0 )
+	{
+		ASSERT( 0 ); // This should not happen
+		return get_layout_config( "" );
+	}
+
+	return get_layout_config( m_lists[ m_current_list ].get_info( FeListInfo::Layout ) );
 }
 
 const std::string &FeSettings::get_config_dir() const
@@ -1350,16 +1364,6 @@ const std::string FeSettings::get_info( int index ) const
 	return FE_EMPTY_STRING;
 }
 
-namespace {
-	bool config_str_to_bool( const std::string &s )
-	{
-		if (( s.compare( "yes" ) == 0 ) || ( s.compare( "true" ) == 0 ))
-			return true;
-		else
-			return false;
-	}
-};
-
 bool FeSettings::set_info( int index, const std::string &value )
 {
 	switch ( index )
@@ -1623,6 +1627,13 @@ void FeSettings::save() const
 			std::string val = get_info( i );
 			outfile << '\t' << std::setw(20) << std::left
 						<< configSettingStrings[i] << ' ' << val << std::endl;
+		}
+
+		m_saver_params.save( outfile );
+
+		for ( std::vector<FeLayoutInfo>::const_iterator itr=m_layout_params.begin(); itr != m_layout_params.end(); ++itr )
+		{
+			(*itr).save( outfile );
 		}
 
 		std::vector<std::string> plugin_files;

@@ -24,6 +24,7 @@
 #include "fe_info.hpp"
 #include "fe_settings.hpp"
 #include "fe_util.hpp"
+#include "fe_util_sq.hpp"
 #include <iostream>
 #include "media.hpp"
 
@@ -717,8 +718,11 @@ void FeListEditMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl( Opt::SUBMENU, "Add Filter", "", "_help_list_add_filter" );
 		ctx.back_opt().opaque = 1;
 
-		ctx.add_optl( Opt::EXIT, "Delete this List", "", "_help_list_delete" );
+		ctx.add_optl( Opt::SUBMENU, "Layout Options", "", "_help_list_layout_options" );
 		ctx.back_opt().opaque = 2;
+
+		ctx.add_optl( Opt::EXIT, "Delete this List", "", "_help_list_delete" );
+		ctx.back_opt().opaque = 3;
 	}
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -757,6 +761,13 @@ bool FeListEditMenu::on_option_select(
 		submenu=&m_filter_menu;
 	}
 	else if ( o.opaque == 2 )
+	{
+		// Layout Options
+		FeLayoutInfo &cfg = ctx.fe_settings.get_layout_config( ctx.opt_list[1].get_value() );
+		m_layout_menu.set_layout( &cfg );
+		submenu=&m_layout_menu;
+	}
+	else if ( o.opaque == 3 )
 	{
 		// "Delete this List"
 		if ( ctx.confirm_dialog( "Delete list '$1'?", m_name ) == false )
@@ -1141,11 +1152,6 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_language" );
 	ctx.back_opt().append_vlist( disp_lang_list );
 
-	ctx.add_optl( Opt::EDIT,
-			"Screen Saver Timeout",
-			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ),
-			"_help_screen_saver_timeout" );
-
 	std::string autorot;
 	ctx.fe_settings.get_resource( FeSettings::rotationDispTokens[ ctx.fe_settings.get_autorotate() ], autorot );
 	std::vector < std::string > rotations;
@@ -1209,93 +1215,199 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout,
-			ctx.opt_list[1].get_value() );
-
 	ctx.fe_settings.set_info( FeSettings::AutoRotate,
-			FeSettings::rotationTokens[ ctx.opt_list[2].get_vindex() ] );
+			FeSettings::rotationTokens[ ctx.opt_list[1].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ListsMenuExit,
-			ctx.opt_list[3].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[2].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::HideBrackets,
-			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[3].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame,
-			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
-			ctx.opt_list[6].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[7].get_value() );
+			ctx.opt_list[6].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::DefaultFont,
-			ctx.opt_list[8].get_value() );
+			ctx.opt_list[7].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::FontPath,
-			ctx.opt_list[9].get_value() );
+			ctx.opt_list[8].get_value() );
 
 	return true;
 }
 
-namespace {
-
-bool get_object_string(
-	HSQUIRRELVM vm,
-	HSQOBJECT obj,
-	std::string &out_string)
+void FeScriptConfigMenu::get_options_helper(
+		FeConfigContext &ctx,
+		std::string &gen_help,
+		FeScriptConfigurable &configurable,
+		const std::string &script_file )
 {
-	sq_pushobject(vm, obj);
-	sq_tostring(vm, -1);
-	const SQChar *s;
-	SQRESULT res = sq_getstring(vm, -1, &s);
-	bool r = SQ_SUCCEEDED(res);
-	if (r)
-		out_string = s;
+	m_params.clear();
 
-	sq_pop(vm,2);
-	return r;
+	if ( !script_file.empty() )
+	{
+		HSQUIRRELVM stored_vm = Sqrat::DefaultVM::Get();
+		HSQUIRRELVM temp_vm = sq_open( 1024 );
+		sq_pushroottable( temp_vm );
+		Sqrat::DefaultVM::Set( temp_vm );
+
+		Sqrat::ConstTable()
+			.Const( _SC("FeVersion"), FE_VERSION)
+			.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
+			.Const( _SC("OS"), get_OS_string() );
+
+		try
+		{
+			Sqrat::Script sc;
+			sc.CompileFile( script_file );
+			sc.Run();
+		}
+		catch( Sqrat::Exception e )
+		{
+			// ignore all errors, they are expected
+		}
+
+		// Control the scope of our Sqrat objects so they are destroyed
+		// before we call sq_close() on the vm below
+		//
+		{
+			Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
+			if ( !uConfig.IsNull() )
+			{
+				fe_get_attribute_string(
+					temp_vm,
+					uConfig.GetObject(), "", "help", gen_help );
+
+				// Get the keys from the UserConfig class and put them in alphabetical order
+				std::vector<std::string> key_list;
+				Sqrat::Object::iterator it;
+				while ( uConfig.Next( it ) )
+				{
+					std::string key;
+					fe_get_object_string( temp_vm, it.getKey(), key );
+					key_list.push_back( key );
+				}
+
+				std::sort( key_list.begin(), key_list.end() );
+
+				// Now Ccnstruct the UI elements for plug-in/layout specific configuration
+				//
+				for ( std::vector < std::string >::iterator itr=key_list.begin(); itr!=key_list.end(); ++itr )
+				{
+					int opaque_base = OPAQUE_BASE;
+					std::string value, label, help, options, is_input;
+
+					// use the default value from the script if a value has
+					// not already been configured
+					//
+					if ( !configurable.get_param( *itr, value ) )
+						fe_get_object_string( temp_vm, uConfig.GetSlot( (*itr).c_str() ), value );
+
+					fe_get_attribute_string(
+							temp_vm,
+							uConfig.GetObject(), *itr, "label", label);
+
+					if ( label.empty() )
+						label = *itr;
+
+					fe_get_attribute_string(
+							temp_vm,
+							uConfig.GetObject(), *itr, "help", help);
+
+					fe_get_attribute_string(
+							temp_vm,
+							uConfig.GetObject(), *itr, "options", options);
+
+					fe_get_attribute_string(
+							temp_vm,
+							uConfig.GetObject(), *itr, "is_input", is_input);
+
+					if ( !options.empty() )
+					{
+						std::vector<std::string> options_list;
+						size_t pos=0;
+						do
+						{
+							std::string temp;
+							token_helper( options, pos, temp, "," );
+							options_list.push_back( temp );
+						} while ( pos < options.size() );
+
+						ctx.add_optl( Opt::LIST, label, value, help );
+						ctx.back_opt().append_vlist( options_list );
+					}
+					else if ( is_input.compare( "yes" ) == 0 )
+					{
+						opaque_base = INPUT_OPAQUE_BASE;
+						ctx.add_optl( Opt::RELOAD, label, value, help );
+					}
+					else
+					{
+						ctx.add_optl( Opt::EDIT, label, value, help );
+					}
+
+					m_params.push_back( *itr );
+					ctx.back_opt().opaque = opaque_base + m_params.size() - 1;
+				}
+			}
+		}
+
+		// reset to our usual VM and close the temp vm
+		Sqrat::DefaultVM::Set( stored_vm );
+		sq_close( temp_vm );
+	}
 }
 
-bool get_attribute_string(
-	HSQUIRRELVM vm,
-	HSQOBJECT obj,
-	const std::string &key,
-	const std::string &attribute,
-	std::string & out_string)
+bool FeScriptConfigMenu::on_option_select(
+		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
-	sq_pushobject(vm, obj);
+	FeMenuOpt &o = ctx.curr_opt();
 
-	if ( key.empty() )
-		sq_pushnull(vm);
-	else
-		sq_pushstring(vm, key.c_str(), key.size());
-
-	if ( SQ_FAILED( sq_getattributes(vm, -2) ) )
+	if ( o.opaque >= INPUT_OPAQUE_BASE )
 	{
-		sq_pop(vm, 2);
-		return false;
+		std::string res;
+		FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
+		ctx.input_map_dialog( "Press Input", res, conflict );
+
+		if (( conflict == FeInputMap::ExitMenu )
+			|| ( conflict == FeInputMap::ExitNoMenu ))
+		{
+			// Clear the mapping if the user pushed an exit button
+			res.clear();
+		}
+
+		o.set_value( res );
+		ctx.save_req = true;
+	}
+	return true;
+}
+
+bool FeScriptConfigMenu::save_helper( FeConfigContext &ctx,
+		FeScriptConfigurable &configurable )
+{
+	configurable.clear_params();
+
+	for ( unsigned int i=0; i < ctx.opt_list.size(); i++ )
+	{
+		int op = ctx.opt_list[i].opaque;
+		if ( op >= OPAQUE_BASE )
+		{
+			int decrement = ( op >= INPUT_OPAQUE_BASE ) ? INPUT_OPAQUE_BASE : OPAQUE_BASE;
+
+			configurable.set_param(
+				m_params[ op - decrement ],
+				ctx.opt_list[i].get_value() );
+		}
 	}
 
-	HSQOBJECT att_obj;
-	sq_resetobject( &att_obj );
-	sq_getstackobj( vm, -1, &att_obj );
-
-	Sqrat::Object attTable( att_obj, vm );
-	sq_pop( vm, 2 );
-
-	if ( attTable.IsNull() )
-		return false;
-
-	Sqrat::Object attVal = attTable.GetSlot( attribute.c_str() );
-	if ( attVal.IsNull() )
-		return false;
-
-	return get_object_string( vm, attVal.GetObject(), out_string );
+	return true;
 }
-
-}; // end namespace
 
 FePluginEditMenu::FePluginEditMenu()
 	: m_plugin( NULL )
@@ -1332,111 +1444,11 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	std::string script_file = ctx.fe_settings.get_plugin_full_path(
 			m_plugin->get_name() );
 
-	m_params.clear();
+	std::string gen_help;
+	FeScriptConfigMenu::get_options_helper( ctx, gen_help, *m_plugin, script_file );
 
-	if ( !script_file.empty() )
-	{
-		HSQUIRRELVM stored_vm = Sqrat::DefaultVM::Get();
-		HSQUIRRELVM temp_vm = sq_open( 1024 );
-		sq_pushroottable( temp_vm );
-		Sqrat::DefaultVM::Set( temp_vm );
-
-		Sqrat::ConstTable()
-			.Const( _SC("FeVersion"), FE_VERSION)
-			.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
-			.Const( _SC("OS"), get_OS_string() );
-
-		try
-		{
-			Sqrat::Script sc;
-			sc.CompileFile( script_file );
-			sc.Run();
-		}
-		catch( Sqrat::Exception e )
-		{
-			// ignore all errors, they are expected
-		}
-
-		// Control the scope of our Sqrat objects so they are destroyed
-		// before we call sq_close() on the vm below
-		//
-		{
-			Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
-			if ( !uConfig.IsNull() )
-			{
-				// Put the help property of the class into the help message for
-				// the plug-in name
-				//
-				std::string gen_help;
-				get_attribute_string(
-					temp_vm,
-					uConfig.GetObject(), "", "help", gen_help );
-				if ( !gen_help.empty() )
-				{
-					ctx.opt_list[0].help_msg = gen_help;
-				}
-
-				// Construct the UI elements for plug-in specific configuration
-				//
-				Sqrat::Object::iterator it;
-				while ( uConfig.Next( it ) )
-				{
-					std::string key, value, label, help, options;
-					get_object_string( temp_vm, it.getKey(), key );
-
-					// use the default value from the script if a value has
-					// not already been configured
-					//
-					if ( !m_plugin->get_param( key, value ) )
-					{
-						get_object_string( temp_vm, it.getValue(), value );
-					}
-
-					get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "label", label);
-
-					if ( label.empty() )
-						label = key;
-
-					get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "help", help);
-
-					get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "options", options);
-
-					if ( !options.empty() )
-					{
-						std::vector<std::string> options_list;
-						size_t pos=0;
-						do
-						{
-							std::string temp;
-							token_helper( options, pos, temp, "," );
-							options_list.push_back( temp );
-						} while ( pos < options.size() );
-
-						ctx.add_optl( Opt::LIST, label, value, help );
-						ctx.back_opt().append_vlist( options_list );
-					}
-					else
-					{
-						ctx.add_optl( Opt::EDIT, label, value, help );
-					}
-
-					m_params.push_back( key );
-					ctx.back_opt().opaque = 99 + m_params.size();
-				}
-			}
-		}
-
-		// reset to our usual VM and close the temp vm
-		Sqrat::DefaultVM::Set( stored_vm );
-		sq_close( temp_vm );
-	}
-
+	if ( !gen_help.empty() )
+		ctx.opt_list[0].help_msg = gen_help;
 
 	FeBaseConfigMenu::get_options( ctx );
 }
@@ -1452,18 +1464,7 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 	m_plugin->set_enabled(
 		ctx.opt_list[2].get_vindex() == 0 ? true : false );
 
-	for ( unsigned int i=3; i < ctx.opt_list.size(); i++ )
-	{
-		int op = ctx.opt_list[i].opaque;
-		if ( op >= 100 )
-		{
-			m_plugin->set_param(
-				m_params[ op-100 ],
-				ctx.opt_list[i].get_value() );
-		}
-	}
-
-	return true;
+	return FeScriptConfigMenu::save_helper( ctx, *m_plugin );
 }
 
 void FePluginEditMenu::set_plugin( FePlugInfo *plugin )
@@ -1500,6 +1501,73 @@ bool FePluginSelMenu::on_option_select(
 	return true;
 }
 
+FeLayoutEditMenu::FeLayoutEditMenu()
+	: m_layout( NULL )
+{
+}
+
+void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
+{
+	if ( m_layout )
+	{
+		const std::string &name = m_layout->get_name();
+		ctx.set_style( FeConfigContext::EditList, "Configure Layout" );
+
+		ctx.add_optl( Opt::INFO, "Name", name, "_help_layout_name" );
+
+		std::string script_file;
+		script_file = ctx.fe_settings.get_layout_dir( name ) + FE_LAYOUT_UI_KEY_FILE;
+
+		std::string gen_help;
+		FeScriptConfigMenu::get_options_helper( ctx, gen_help, *m_layout, script_file );
+
+		if ( !gen_help.empty() )
+			ctx.opt_list[0].help_msg = gen_help;
+	}
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeLayoutEditMenu::save( FeConfigContext &ctx )
+{
+	if ( m_layout == NULL )
+		return false;
+
+	return FeScriptConfigMenu::save_helper( ctx, *m_layout );
+}
+
+void FeLayoutEditMenu::set_layout( FeLayoutInfo *layout )
+{
+	m_layout = layout;
+}
+
+void FeSaverEditMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Configure Screen Saver" );
+
+	ctx.add_optl( Opt::EDIT,
+			"Screen Saver Timeout",
+			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ),
+			"_help_screen_saver_timeout" );
+
+	std::string gen_help;
+	FeScriptConfigMenu::get_options_helper( ctx, gen_help,
+					ctx.fe_settings.get_screensaver_config(),
+					ctx.fe_settings.get_screensaver_file() );
+
+	if ( !gen_help.empty() )
+		ctx.opt_list[0].help_msg = gen_help;
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeSaverEditMenu::save( FeConfigContext &ctx )
+{
+	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout,
+			ctx.opt_list[0].get_value() );
+
+	return FeScriptConfigMenu::save_helper( ctx, ctx.fe_settings.get_screensaver_config() );
+}
+
 void FeConfigMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::SelectionList, "Configure" );
@@ -1509,6 +1577,7 @@ void FeConfigMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::SUBMENU, "Lists", "", "_help_lists" );
 	ctx.add_optl( Opt::SUBMENU, "Controls", "", "_help_controls" );
 	ctx.add_optl( Opt::SUBMENU, "Sound", "", "_help_sound" );
+	ctx.add_optl( Opt::SUBMENU, "Screen Saver", "", "_help_screen_saver" );
 	ctx.add_optl( Opt::SUBMENU, "Plug-ins", "", "_help_plugins" );
 	ctx.add_optl( Opt::SUBMENU, "General", "", "_help_misc" );
 
@@ -1539,9 +1608,12 @@ bool FeConfigMenu::on_option_select(
 		submenu = &m_sound_menu;
 		break;
 	case 4:
-		submenu = &m_plugin_menu;
+		submenu = &m_saver_menu;
 		break;
 	case 5:
+		submenu = &m_plugin_menu;
+		break;
+	case 6:
 		submenu = &m_misc_menu;
 		break;
 	default:

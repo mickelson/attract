@@ -462,6 +462,30 @@ Return Value:
    * The expansion of path. 
 
 
+#### `fe.get_config()` ####
+
+Get the user configured settings for this layout/plugin/screensaver.
+
+NOTE this function will *not* return valid settings when called from a
+callback function registered with fe.add_ticks_callback() or
+fe.add_transition_callback()
+
+Parameters:
+
+   * None.
+
+Return Value:
+
+   * A table containing each of the applicable user configured settings.
+     A layout or plug-in can signal its user configured settings to
+     Attract-Mode by defining a class named "UserConfig" at the very start
+     of the script.  In the case a layouts, the "UserConfig" class must be
+     located in a file named  'layout.nut' in the layout directory.
+
+     For an example, please see one of the plug-ins included with Attract-
+     Mode or the "Attrac-Man" layout.
+
+
 Objects and Variables
 ---------------------
 
@@ -488,15 +512,6 @@ list settings are stored.
 When Attract-Mode runs a plug-in script, `fe.init_name` is set to the 
 name of the plug-in.  NOTE this variable will *not* be valid when callback
 functions are executed.
-
-#### `fe.uconfig` ####
-
-When Attract-Mode runs a plug-in script, the `fe.uconfig` table contains the
-user configured plug-in settings.  NOTE this table will *not* be valid when
-callback functions are executed.  A plug-in script can signal its user
-configured settings to Attract-Mode by defining a class named "UserConfig"
-at the very start of the script.  Please see one of the plug-ins included
-with Attract-Mode for an example.
 
 Classes
 -------
@@ -798,15 +813,20 @@ The Operating System that Attract-Mode is running under.  Will be one of:
 "Windows", "OSX", "FreeBSD", "Linux" or "Unknown"
 
 
-Deprecated Functions
---------------------
+Deprecated Functions and Objects
+--------------------------------
 #### `fe.is_keypressed()` ####
 #### `fe.is_joybuttonpressed()` ####
 
-fe.is_keypressed() and fe.is_joybuttonpressed() are deprecated as of version
-1.2.  Use `fe.get_input_state()` instead.
+The fe.is_keypressed() and fe.is_joybuttonpressed() functions are deprecated as
+of version 1.2.  Use `fe.get_input_state()` instead.
 
 #### `fe.get_joyaxispos()` ####
 
-fe.get_joyaxispos() is deprecated as of version 1.2.  Use `fe.get_input_pos()`
-instead.
+The fe.get_joyaxispos() function is deprecated as of version 1.2.  Use
+`fe.get_input_pos()` instead.
+
+#### `fe.uconfig` ####
+
+The fe.uconfig object is deprecated as of version 1.2.  Use the `fe.get_config`
+function instead

@@ -3,21 +3,6 @@
 // Attract-Mode Frontend - "Attrac-Man" Layout
 //
 /////////////////////////////////////////////////////////
-//
-//	BEGIN User Configurable Settings:
-//
-// Define the keys that control the Attrac-Man character:
-//
-::PM_UP    <- Key.R;
-::PM_DOWN  <- Key.F;
-::PM_LEFT  <- Key.D;
-::PM_RIGHT <- Key.G;
-
-// Define the keys that speed up/slow down game:
-//
-::SPEED_UP 		<- Key.A;
-::SPEED_DOWN 	<- Key.S;
-
 // Define the default game speed, should be between 0.5 and 2.0
 //
 const DEFAULT_SPEED = 0.8;
@@ -26,10 +11,28 @@ const DEFAULT_SPEED = 0.8;
 //
 const SPEED_INCREMENT = 0.1;
 
-//
-// END User Configurable Settings.
-//
-/////////////////////////////////////////////////////////
+class UserConfig {
+	</ label="Player Up", help="Set player controls", is_input="yes" />
+	a_up="R";
+
+	</ label="Player Down", help="Set player controls", is_input="yes" />
+	b_down="F";
+
+	</ label="Player Left", help="Set player controls", is_input="yes" />
+	c_left="D";
+
+	</ label="Player Right", help="Set player controls", is_input="yes" />
+	d_right="G";
+
+	</ label="Increase Speed", help="Set game speed controls", is_input="yes" />
+	e_speed_up="";
+
+	</ label="Decrease Speed", help="Set game speed controls", is_input="yes" />
+	f_speed_down="";
+
+}
+
+::AM_CONFIG <- fe.get_config();
 
 //
 // Initialize the layout's frontend-related graphic elements

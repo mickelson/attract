@@ -63,7 +63,7 @@ public:
 	const std::string &get_info( int ) const;
 	void set_info( enum Index, const std::string & );
 
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 								const std::string &value,
 								const std::string &fn );
 	void dump( void ) const;
@@ -96,8 +96,8 @@ public:
 	static const char *filterCompStrings[];
 	static const char *filterCompDisplayStrings[];
 
-	FeRule( FeRomInfo::Index target=FeRomInfo::LAST_INDEX, 
-		FilterComp comp=LAST_COMPARISON, 
+	FeRule( FeRomInfo::Index target=FeRomInfo::LAST_INDEX,
+		FilterComp comp=LAST_COMPARISON,
 		const std::string &what="" );
 	FeRule( const FeRule & );
 
@@ -146,7 +146,7 @@ public:
 	void set_current_rom_index( int i ) { m_rom_index=i; };
 
 	std::vector<FeRule> &get_rules() { return m_rules; };
-	
+
 private:
 	std::string m_name;
 	std::vector<FeRule> m_rules;
@@ -173,7 +173,7 @@ public:
 	const std::string &get_info( int ) const;
 	void set_info( int setting, const std::string &value );
 
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 								const std::string &value,
 								const std::string &fn );
 
@@ -227,13 +227,13 @@ public:
 
 	void clear();
 
-	void set_filter( const FeFilter *f ); 
+	void set_filter( const FeFilter *f );
 
 	// base class has this function too!
 	bool load_from_file( const std::string &filename,
 					const char *sep=FE_WHITESPACE );
 
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 		const std::string &value,
 		const std::string &fn );
 
@@ -248,7 +248,7 @@ public:
 };
 
 
-// 
+//
 // Class for storing information regarding a specific emulator
 //
 class FeEmulatorInfo : public FeBaseConfigurable
@@ -262,8 +262,8 @@ public:
 		Command,
 		Rom_path,
 		Rom_extension,  // this value gets split and duplicated in m_extensions
-		Import_extras, 
-		Listxml, 
+		Import_extras,
+		Listxml,
 		Movie_path,
 		Movie_artwork,
 		LAST_INDEX
@@ -281,10 +281,10 @@ public:
 	void set_artwork( const std::string &, const std::string & );
 	void get_artwork_list( std::vector<std::pair<std::string,std::string> > & ) const;
 	void delete_artwork( const std::string & );
-	
+
 	const std::vector<std::string> &get_extensions() const;
 
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 								const std::string &value,
 								const std::string &filename );
 	void dump( void ) const;
@@ -297,10 +297,29 @@ private:
 	std::vector<std::string> m_extensions;
 };
 
+class FeScriptConfigurable : public FeBaseConfigurable
+{
+public:
+	bool get_param( const std::string &label, std::string &v ) const;
+	void set_param( const std::string &label, const std::string &v );
+	void get_param_labels( std::vector<std::string> &labels ) const;
+	void clear_params() { m_params.clear(); };
+
+	int process_setting( const std::string &setting,
+								const std::string &value,
+								const std::string &filename );
+
+	void save( std::ofstream & ) const;
+
+protected:
+	static const char *indexString;
+	std::map<std::string,std::string> m_params;
+};
+
 //
 // Class for storing plug-in configuration
 //
-class FePlugInfo : public FeBaseConfigurable
+class FePlugInfo : public FeScriptConfigurable
 {
 public:
 	FePlugInfo( const std::string &name );
@@ -312,11 +331,7 @@ public:
 	bool get_enabled() const { return m_enabled; };
 	void set_enabled( bool e ) { m_enabled=e; };
 
-	bool get_param( const std::string &label, std::string &v ) const;
-	void set_param( const std::string &label, const std::string &v );
-	void get_param_labels( std::vector<std::string> &labels ) const;
-
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 								const std::string &value,
 								const std::string &filename );
 
@@ -328,7 +343,24 @@ private:
 	std::string m_name;
 	std::string m_command;
 	bool m_enabled;
-	std::map<std::string,std::string> m_params;
+};
+
+//
+// Class for storing layout/screensaver configuration
+//
+class FeLayoutInfo : public FeScriptConfigurable
+{
+public:
+	static const char *indexStrings[];
+
+	FeLayoutInfo();
+	FeLayoutInfo( const std::string &name );
+	const std::string &get_name() const { return m_name; };
+
+	void save( std::ofstream & ) const;
+
+private:
+	std::string m_name;
 };
 
 //
@@ -340,7 +372,7 @@ public:
 	FeResourceMap();
 	void clear() { m_map.clear(); }
 
-	int process_setting( const std::string &setting, 
+	int process_setting( const std::string &setting,
 								const std::string &value,
 								const std::string &filename );
 
