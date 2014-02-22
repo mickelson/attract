@@ -117,12 +117,67 @@ void FeRomInfo::dump( void ) const
 	std::cout << std::endl;
 }
 
-bool FeRomInfo::operator< ( FeRomInfo s ) const
-{
-	std::string one = get_info( FeRomInfo::Title );
-	std::string two = s.get_info( FeRomInfo::Title );
+SQRex *FeRomListCompare::m_rex = NULL;
 
-	return (one < two);
+void FeRomListCompare::init_rex( const std::string &re_mask )
+{
+	ASSERT( m_rex == NULL );
+
+	if ( re_mask.empty() )
+		return;
+
+	const SQChar *err( NULL );
+	m_rex = sqstd_rex_compile(
+		(const SQChar *)re_mask.c_str(), &err );
+
+	if ( !m_rex )
+		std::cout << "Error compiling regular expression \""
+			<< re_mask << "\": " << err << std::endl;
+}
+
+void FeRomListCompare::close_rex()
+{
+	if ( m_rex )
+		sqstd_rex_free( m_rex );
+
+	m_rex = NULL;
+}
+
+bool FeRomListCompare::cmp( const FeRomInfo &one_info, const FeRomInfo &two_info )
+{
+	const std::string &one = one_info.get_info( FeRomInfo::Title );
+	const std::string &two = two_info.get_info( FeRomInfo::Title );
+
+	size_t one_begin( 0 ), one_len( one.size() ), two_begin( 0 ), two_len( two.size() );
+
+	if ( m_rex )
+	{
+		const SQChar *one_begin_ptr;
+		const SQChar *one_end_ptr;
+		const SQChar *two_begin_ptr;
+		const SQChar *two_end_ptr;
+
+		//
+		// I couldn't get Squirrel's no capture regexp (?:) working the way I would expect it to.
+		// I'm probably doing something dumb but I can't figure it out and docs seem nonexistent
+		//
+		// So we do this kind of backwards, instead of defining what we want to compare based on,
+		// the regexp instead defines the part of the sting we want to stip out up front
+		//
+		if ( sqstd_rex_search( m_rex, one.c_str(), &one_begin_ptr, &one_end_ptr ) == SQTrue )
+		{
+			one_begin = one_end_ptr - one.c_str();
+			one_len -= one_begin;
+		}
+
+		if ( sqstd_rex_search( m_rex, two.c_str(), &two_begin_ptr, &two_end_ptr ) == SQTrue )
+		{
+			two_begin = two_end_ptr - two.c_str();
+			two_len -= two_begin;
+		}
+	}
+
+	return ( one.compare( one_begin, one_len, two, two_begin, two_len ) < 0 );
 }
 
 const char *FeRule::indexString = "rule";

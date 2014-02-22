@@ -144,6 +144,7 @@ void process_args( int argc, char *argv[],
 	if ( !romlist_emulators.empty() )
 	{
 		FeSettings feSettings( config_path, cmdln_font );
+		feSettings.load();
 		int retval = feSettings.build_romlist( romlist_emulators );
 		exit( retval );
 	}
@@ -276,10 +277,10 @@ int main(int argc, char *argv[])
 				{
 					defaultFont.loadFromFile( defaultFontFile );
 					fePresent.set_default_font( defaultFont );
-
-					feSettings.init_list();
-					fePresent.load_layout( &window );
 				}
+
+				feSettings.init_list();
+				fePresent.load_layout( &window );
 
 				soundsys.stop();
 				soundsys.play_ambient();

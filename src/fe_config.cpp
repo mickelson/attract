@@ -318,9 +318,10 @@ bool FeEmulatorEditMenu::on_option_select(
 			{
 				FeListInfo *new_list = ctx.fe_settings.create_list( emu_name );
 				new_list->set_info( FeListInfo::Romlist, emu_name );
-				ctx.save_req = true;
-				m_parent_save = true;
 			}
+
+			ctx.save_req = true;
+			m_parent_save = true;
 		}
 		break;
 

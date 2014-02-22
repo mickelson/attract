@@ -69,13 +69,25 @@ public:
 	void dump( void ) const;
 	std::string as_output( void ) const;
 
-	bool operator< ( FeRomInfo ) const;
-
 private:
 	FeRomInfo &operator=( const FeRomInfo & );
 	std::string get_info_escaped( int ) const;
 
 	std::string m_info[LAST_INDEX];
+};
+
+//
+// Comparison used when sorting/merging FeRomLists
+//
+class FeRomListCompare
+{
+private:
+	static SQRex *m_rex;
+
+public:
+	static void init_rex( const std::string &re );
+	static void close_rex();
+	static bool cmp( const FeRomInfo &one, const FeRomInfo &two );
 };
 
 //

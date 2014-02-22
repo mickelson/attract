@@ -33,10 +33,10 @@ extern const char *FE_ROMLIST_SUBDIR;
 
 namespace {
 
-void build_basic_romlist( const FeEmulatorInfo &emulator, 
+void build_basic_romlist( const FeEmulatorInfo &emulator,
 				std::list<FeRomInfo> &romlist )
 {
-	std::string rom_path = clean_path( emulator.get_info( 
+	std::string rom_path = clean_path( emulator.get_info(
 					FeEmulatorInfo::Rom_path ) );
 
 	const std::vector<std::string> &extensions = emulator.get_extensions();
@@ -50,24 +50,24 @@ void build_basic_romlist( const FeEmulatorInfo &emulator,
 		FeRomInfo new_rom;
 		new_rom.set_info( FeRomInfo::Romname, (*its) );
 		new_rom.set_info( FeRomInfo::Title, (*its) );
-		new_rom.set_info( FeRomInfo::Emulator, emulator.get_info( 
+		new_rom.set_info( FeRomInfo::Emulator, emulator.get_info(
 															FeEmulatorInfo::Name ));
 
 		romlist.push_back( new_rom );
 	}
 
-	std::cout << "Found " << romlist.size() 
+	std::cout << "Found " << romlist.size()
 		<< " unique files with rom extension(s):";
 
 	for ( std::vector<std::string>::const_iterator itr=extensions.begin();
 			itr != extensions.end(); ++itr )
-		std::cout << " " << (*itr); 	
+		std::cout << " " << (*itr);
 
 	std::cout << ".  Directory: " << rom_path << std::endl;
 }
 
-void apply_listxml( const FeEmulatorInfo &emulator, 
-				std::list<FeRomInfo> &romlist, 
+void apply_listxml( const FeEmulatorInfo &emulator,
+				std::list<FeRomInfo> &romlist,
 				FeXMLParser::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL )
 {
 	std::string listxml = emulator.get_info(
@@ -76,7 +76,7 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 	if ( listxml.empty() )
 		return;
 
-	std::string base_command = clean_path( emulator.get_info( 
+	std::string base_command = clean_path( emulator.get_info(
 				FeEmulatorInfo::Executable ) );
 
 	if ( listxml.compare( 0, 4, "mame" ) == 0 )
@@ -95,8 +95,8 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 		if ( args.empty() )
 		{
 			std::cout << "Note: No system provided in \""
-				<< "listxml mess\" entry for emulator: " 
-				<< emulator.get_info( FeEmulatorInfo::Name ) 
+				<< "listxml mess\" entry for emulator: "
+				<< emulator.get_info( FeEmulatorInfo::Name )
 				<< ", unable to obtain -listsoftware info."
 				<< std::endl;
 			return;
@@ -116,7 +116,7 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 	}
 }
 
-void write_romlist( const std::string &filename, 
+void write_romlist( const std::string &filename,
 				const std::list<FeRomInfo> &romlist )
 {
 
@@ -144,7 +144,7 @@ void write_romlist( const std::string &filename,
 	}
 }
 
-void ini_import( const std::string &filename, 
+void ini_import( const std::string &filename,
 				std::list<FeRomInfo> &romlist,
 				FeRomInfo::Index index,
 				const std::string &init_tag )
@@ -152,7 +152,7 @@ void ini_import( const std::string &filename,
 	std::map <std::string, std::string> my_map;
 
 	// create entries in the map for each name we want to find
-	for ( std::list<FeRomInfo>::iterator itr=romlist.begin(); 
+	for ( std::list<FeRomInfo>::iterator itr=romlist.begin();
 			itr!=romlist.end(); ++itr )
 	{
 		my_map[ (*itr).get_info( FeRomInfo::Romname ) ] = "";
@@ -172,12 +172,12 @@ void ini_import( const std::string &filename,
 		//
 		if ( !init_tag.empty() )
 		{
-			while (( myfile.good() ) 
+			while (( myfile.good() )
 					&& ( line.compare(0, init_tag.size(), init_tag ) != 0 ))
 				getline( myfile, line );
 		}
 
-		// Now read until the next tag is found	
+		// Now read until the next tag is found
 		getline( myfile, line );
 		bool done=false;
 
@@ -196,7 +196,7 @@ void ini_import( const std::string &filename,
 			itr = my_map.find( name );
 			if ( itr != my_map.end() )
 			{
-				std::string val;	
+				std::string val;
 				token_helper( line, pos, val, "=" );
 				my_map[ name ] = val;
 			}
@@ -206,7 +206,7 @@ void ini_import( const std::string &filename,
 	myfile.close();
 
 	int count=0;
-	for ( std::list<FeRomInfo>::iterator itr=romlist.begin(); 
+	for ( std::list<FeRomInfo>::iterator itr=romlist.begin();
 			itr!=romlist.end(); ++itr )
 	{
 		std::string val = my_map[ (*itr).get_info( FeRomInfo::Romname ) ];
@@ -220,11 +220,11 @@ void ini_import( const std::string &filename,
 		}
 	}
 
-	std::cout << "Found info for " << count << " entries.  File: " 
+	std::cout << "Found info for " << count << " entries.  File: "
 					<< filename << std::endl;
 }
 
-void apply_import_extras( const FeEmulatorInfo &emulator, 
+void apply_import_extras( const FeEmulatorInfo &emulator,
 				std::list<FeRomInfo> &romlist )
 {
 	std::string iextras = emulator.get_info( FeEmulatorInfo::Import_extras );
@@ -233,7 +233,7 @@ void apply_import_extras( const FeEmulatorInfo &emulator,
 		return;
 
 	size_t pos=0;
-	do 
+	do
 	{
 		std::string val, path;
 		token_helper( iextras, pos, val );
@@ -262,7 +262,7 @@ bool FeSettings::build_romlist( const std::vector <std::string> &emu_names )
 	std::list<FeRomInfo> total_romlist;
    std::string name, list_name, path;
 
-	for ( std::vector<std::string>::const_iterator itr=emu_names.begin(); 
+	for ( std::vector<std::string>::const_iterator itr=emu_names.begin();
 			itr < emu_names.end(); ++itr )
 	{
 		FeEmulatorInfo *emu = get_emulator( *itr );
@@ -277,19 +277,22 @@ bool FeSettings::build_romlist( const std::vector <std::string> &emu_names )
 			name = emu->get_info( FeEmulatorInfo::Name );
 
 			build_basic_romlist( *emu, romlist );
-			romlist.sort();
 
 			apply_listxml( *emu, romlist );
 			apply_import_extras( *emu, romlist );
 
-			total_romlist.merge( romlist );
+			total_romlist.splice( total_romlist.end(), romlist );
 		}
 	}
 
+	std::string rex_str;
+	get_resource( "_sort_regexp", rex_str );
+	FeRomListCompare::init_rex( rex_str );
+	total_romlist.sort( FeRomListCompare::cmp );
+	FeRomListCompare::close_rex();
+
 	if ( emu_names.size() > 1 )
 		name = "multi";
-
-	total_romlist.sort(); // shouldn't be needed
 
 	path = get_config_dir();
 	confirm_directory( path, FE_ROMLIST_SUBDIR );
@@ -309,10 +312,15 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 
 	std::list<FeRomInfo> romlist;
 	build_basic_romlist( *emu, romlist );
-	romlist.sort();
 
 	apply_listxml( *emu, romlist, uiu, uid );
 	apply_import_extras( *emu, romlist );
+
+	std::string rex_str;
+	get_resource( "_sort_regexp", rex_str );
+	FeRomListCompare::init_rex( rex_str );
+	romlist.sort( FeRomListCompare::cmp );
+	FeRomListCompare::close_rex();
 
 	size = romlist.size();
 

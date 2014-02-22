@@ -76,3 +76,4 @@ _help_sound;Configure sound volumes and sound mappings
 _help_screen_saver;Configure screen saver
 _help_plugins;Configure plug-ins
 _help_misc;Configure Miscellaneous settings
+_sort_regexp;^(The |Vs\. )
