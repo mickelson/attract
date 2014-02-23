@@ -183,10 +183,13 @@ int main(int argc, char *argv[])
 
 	std::string defaultFontFile;
 	if ( feSettings.get_font_file( defaultFontFile ) == false )
+	{
+		std::cerr << "Error, could not find default font."  << std::endl;
 		return 1;
+	}
 
-	sf::Font defaultFont;
-	defaultFont.loadFromFile( defaultFontFile );
+	FeFontContainer defaultFont;
+	defaultFont.set_font( defaultFontFile );
 
 	//
 	// Set up music/sound playing objects
@@ -274,10 +277,7 @@ int main(int argc, char *argv[])
 				soundsys.update_volumes();
 
 				if ( feSettings.get_font_file( defaultFontFile ) )
-				{
-					defaultFont.loadFromFile( defaultFontFile );
-					fePresent.set_default_font( defaultFont );
-				}
+					defaultFont.set_font( defaultFontFile );
 
 				feSettings.init_list();
 				fePresent.load_layout( &window );

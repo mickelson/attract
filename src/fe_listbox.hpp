@@ -41,7 +41,7 @@ public:
 			const sf::Color &colour,
 			const sf::Color &bgcolour,
 			const sf::Color &selcolour,
-			const sf::Color &selbgcolour, 
+			const sf::Color &selbgcolour,
 			unsigned int characterSize,
 			int rows );
 
@@ -111,11 +111,13 @@ public:
 	int get_selbgg();
 	int get_selbgb();
 	int get_selbga();
+	const char *get_font();
 	void set_selbgr(int r);
 	void set_selbgg(int g);
 	void set_selbgb(int b);
 	void set_selbga(int a);
 	void set_selbg_rgb( int, int, int );
+	void set_font( const char *f );
 
 private:
 	FeListBox( const FeListBox & );
@@ -124,6 +126,7 @@ private:
 	FeTextPrimative m_base_text;
 	std::vector<std::string> m_displayList;
 	std::vector<FeTextPrimative> m_texts;
+	std::string m_font_name;
 	sf::Color m_selColour;
 	sf::Color m_selBg;
 	int m_selStyle;

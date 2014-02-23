@@ -71,6 +71,7 @@ public:
 	int get_charsize();
 	int get_style();
 	int get_align();
+	const char *get_font();
 	void set_bgr(int r);
 	void set_bgg(int g);
 	void set_bgb(int b);
@@ -79,6 +80,7 @@ public:
 	void set_charsize(int s);
 	void set_style(int s);
 	void set_align(int a);
+	void set_font(const char *f);
 
 protected:
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
@@ -89,6 +91,7 @@ private:
 
 	FeTextPrimative m_draw_text;
 	std::string m_string;
+	std::string m_font_name;
 	int m_index_offset;
 	int m_user_charsize;	 	// -1 if no charsize specified
 	sf::Vector2f m_size;		// unscaled size

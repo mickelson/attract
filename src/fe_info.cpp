@@ -162,7 +162,7 @@ bool FeRomListCompare::cmp( const FeRomInfo &one_info, const FeRomInfo &two_info
 		// I'm probably doing something dumb but I can't figure it out and docs seem nonexistent
 		//
 		// So we do this kind of backwards, instead of defining what we want to compare based on,
-		// the regexp instead defines the part of the sting we want to stip out up front
+		// the regexp instead defines the part of the string we want to strip out up front
 		//
 		if ( sqstd_rex_search( m_rex, one.c_str(), &one_begin_ptr, &one_end_ptr ) == SQTrue )
 		{

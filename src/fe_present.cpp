@@ -39,6 +39,12 @@
 #include <ctime>
 #include <stdarg.h>
 
+void FeFontContainer::set_font( const std::string &n )
+{
+	m_name = n;
+	m_font.loadFromFile( m_name );
+}
+
 const char *FePresent::transitionTypeStrings[] =
 {
 		"StartLayout",
@@ -50,10 +56,10 @@ const char *FePresent::transitionTypeStrings[] =
 		NULL
 };
 
-FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
+FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	: m_feSettings( fesettings ),
 	m_currentScriptConfig( NULL ),
-	m_currentFont( NULL ),
+	m_currentFont( &defaultfont ),
 	m_defaultFont( defaultfont ),
 	m_moveState( MoveNone ),
 	m_baseRotation( FeSettings::RotateNone ),
@@ -67,6 +73,8 @@ FePresent::FePresent( FeSettings *fesettings, sf::Font &defaultfont )
 	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 	m_outputSize.x = vm.width;
 	m_outputSize.y = vm.height;
+
+	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 
 	srand( time( NULL ) );
 }
@@ -87,7 +95,7 @@ void FePresent::clear()
 	m_baseRotation = FeSettings::RotateNone;
 	m_scaledTransform = m_rotationTransform = sf::Transform();
 	m_currentFont = &m_defaultFont;
-	m_layoutFontName.clear();
+	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	m_ticksList.clear();
 	m_transitionList.clear();
 
@@ -110,6 +118,13 @@ void FePresent::clear()
 		FeScriptSound *s = m_scriptSounds.back();
 		m_scriptSounds.pop_back();
 		delete s;
+	}
+
+	while ( !m_fontPool.empty() )
+	{
+		FeFontContainer *f = m_fontPool.back();
+		m_fontPool.pop_back();
+		delete f;
 	}
 
 	m_layoutSize = m_outputSize;
@@ -165,8 +180,8 @@ FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h )
 {
 	FeText *new_text = new FeText( n, x, y, w, h );
 
-	if ( m_currentFont )
-		new_text->setFont( *m_currentFont );
+	ASSERT( m_currentFont );
+	new_text->setFont( m_currentFont->get_font() );
 
 	m_redrawTriggered = true;
 	m_elements.push_back( new_text );
@@ -177,8 +192,8 @@ FeListBox *FePresent::add_listbox( int x, int y, int w, int h )
 {
 	FeListBox *new_lb = new FeListBox( x, y, w, h );
 
-	if ( m_currentFont )
-		new_lb->setFont( *m_currentFont );
+	ASSERT( m_currentFont );
+	new_lb->setFont( m_currentFont->get_font() );
 
 	m_redrawTriggered = true;
 	m_listBox = new_lb;
@@ -246,17 +261,43 @@ void FePresent::set_layout_height( int h )
 	m_redrawTriggered = true;
 }
 
+const FeFontContainer *FePresent::get_pooled_font( const std::string &n )
+{
+	std::string fullpath;
+	if ( !m_feSettings->get_font_file( fullpath, n ) )
+		return NULL;
+
+	// First check if this matches the default font
+	//
+	if ( fullpath.compare( m_defaultFont.get_name() ) == 0 )
+		return &m_defaultFont;
+
+	// Next check if this font is already loaded in our pool
+	//
+	for ( std::vector<FeFontContainer *>::iterator itr=m_fontPool.begin();
+		itr != m_fontPool.end(); ++itr )
+	{
+		if ( fullpath.compare( (*itr)->get_name() ) == 0 )
+			return *itr;
+	}
+
+	// No match, so load this font and add it to the pool
+	//
+	m_fontPool.push_back( new FeFontContainer() );
+	m_fontPool.back()->set_font( fullpath );
+
+	return m_fontPool.back();
+}
+
 void FePresent::set_layout_font( const char *n )
 {
-	m_layoutFontName = n;
-	std::string filename;
-	if ( m_feSettings->get_font_file( filename, m_layoutFontName ) )
+	const FeFontContainer *font = get_pooled_font( n );
+
+	if ( font )
 	{
-		if ( m_layoutFont.loadFromFile( filename ) )
-		{
-			m_currentFont = &m_layoutFont;
-			m_redrawTriggered = true;
-		}
+		m_layoutFontName = n;
+		m_currentFont = font;
+		m_redrawTriggered = true;
 	}
 }
 
@@ -766,12 +807,8 @@ const sf::Transform &FePresent::get_rotation_transform() const
 
 const sf::Font *FePresent::get_font() const
 {
-	return m_currentFont;
-}
-
-void FePresent::set_default_font( sf::Font &f )
-{
-	m_defaultFont = f;
+	ASSERT( m_currentFont );
+	return &(m_currentFont->get_font());
 }
 
 void FePresent::toggle_rotate( FeSettings::RotationState r )
@@ -1319,6 +1356,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("style"), &FeText::get_style, &FeText::set_style )
 		.Prop(_SC("align"), &FeText::get_align, &FeText::set_align )
 		.Prop(_SC("word_wrap"), &FeText::get_word_wrap, &FeText::set_word_wrap )
+		.Prop(_SC("font"), &FeText::get_font, &FeText::set_font )
 		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
 
@@ -1341,6 +1379,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("style"), &FeListBox::get_style, &FeListBox::set_style )
 		.Prop(_SC("align"), &FeListBox::get_align, &FeListBox::set_align )
 		.Prop(_SC("sel_style"), &FeListBox::getSelStyle, &FeListBox::setSelStyle )
+		.Prop(_SC("font"), &FeListBox::get_font, &FeListBox::set_font )
 		.Func( _SC("set_bg_rgb"), &FeListBox::set_bg_rgb )
 		.Func( _SC("set_sel_rgb"), &FeListBox::set_sel_rgb )
 		.Func( _SC("set_selbg_rgb"), &FeListBox::set_selbg_rgb )
@@ -1663,4 +1702,18 @@ void script_flag_redraw()
 
 	if ( fep )
 		fep->flag_redraw();
+}
+
+const sf::Font *script_get_font( const std::string &name )
+{
+	FePresent *fep = helper_get_fep();
+	if ( fep )
+	{
+		const FeFontContainer *font = fep->get_pooled_font( name );
+
+		if ( font )
+			return &(font->get_font());
+	}
+
+	return NULL;
 }

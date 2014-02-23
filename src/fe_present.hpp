@@ -32,6 +32,7 @@ class FeImage;
 class FeTextureContainer;
 class FeText;
 class FeListBox;
+class FeFontContainer;
 
 namespace Sqrat
 {
@@ -48,12 +49,28 @@ enum FeTransitionType
 	ToNewList			// var = 0
 };
 
+//
+// Container class for use in our font pool
+//
+class FeFontContainer
+{
+public:
+	void set_font( const std::string &n );
+
+	const sf::Font &get_font() const { return m_font; };
+	const std::string &get_name() const { return m_name; };
+
+private:
+	sf::Font m_font;
+	std::string m_name;
+};
+
 class FePresent
 	: public sf::Drawable
 {
 	friend void script_do_update( FeBasePresentable * );
-private:
 
+private:
 	static const char *transitionTypeStrings[];
 
 	enum FromToType
@@ -65,9 +82,9 @@ private:
 
 	FeSettings *m_feSettings;
 	const FeScriptConfigurable *m_currentScriptConfig;
-	sf::Font *m_currentFont;
-	sf::Font &m_defaultFont;
-	sf::Font m_layoutFont;
+
+	const FeFontContainer *m_currentFont;
+	FeFontContainer &m_defaultFont;
 	std::string m_layoutFontName;
 
 	enum MoveState { MoveNone, MoveUp, MoveDown, MovePageUp, MovePageDown };
@@ -86,6 +103,7 @@ private:
 	std::vector<FeBasePresentable *> m_elements;
 	std::vector<FeTextureContainer *> m_texturePool;
 	std::vector<FeScriptSound *> m_scriptSounds;
+	std::vector<FeFontContainer *> m_fontPool;
 	std::vector<std::string> m_ticksList;
 	std::vector<std::string> m_transitionList;
 	bool m_playMovies;
@@ -147,7 +165,7 @@ private:
 	void set_layout_font( const char * );
 
 public:
-	FePresent( FeSettings *fesettings, sf::Font &defaultfont );
+	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
 	~FePresent( void );
 
 	void load_screensaver( sf::RenderWindow *wnd );
@@ -168,8 +186,10 @@ public:
 	FeSettings *get_fes() const { return m_feSettings; };
 	int get_page_size() const;
 	const sf::Transform &get_rotation_transform() const;
-	const sf::Font *get_font() const;
-	void set_default_font( sf::Font &f );
+	const sf::Font *get_font() const; // get the current font (used by overlay)
+
+	// Get a font from the font pool, loading it if necessary
+	const FeFontContainer *get_pooled_font( const std::string &n );
 
 	sf::Vector2i get_output_size() const { return m_outputSize; }
 

@@ -679,6 +679,8 @@ Attributes:
       - `Align.Right`
    * `word_wrap` - Get/set whether word wrapping is enabled in this text
      (boolean).  Default is `false`.
+   * `font` - Get/set the name of the font used for this text.  Default is
+     the layout font name.
 
 Functions:   
 
@@ -759,7 +761,8 @@ Attributes:
       - `Style.Bold`
       - `Style.Italic`
       - `Style.Underlined`
-   * `align` - Get/set the text alignment.  Can be one of the following 
+   * `font` - Get/set the name of the font used for this listbox.  Default is
+     the layout font name.
 
 Functions:
 

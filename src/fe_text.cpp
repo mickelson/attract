@@ -27,7 +27,7 @@
 
 FeText::FeText( const std::string &str, int x, int y, int w, int h )
 	: FeBasePresentable( false ),
-	m_string( str ), 
+	m_string( str ),
 	m_index_offset( 0 ),
 	m_user_charsize( -1 ),
 	m_size( w, h ),
@@ -97,7 +97,7 @@ int FeText::getIndexOffset() const
 
 void FeText::on_new_list( FeSettings *s, float scale_x, float scale_y )
 {
-	//	
+	//
 	// Apply the scale factors using m_base_text to get m_draw_text
 	//
 	sf::Transform scaler;
@@ -243,6 +243,11 @@ int FeText::get_align()
 	return (int)m_draw_text.getAlignment();
 }
 
+const char *FeText::get_font()
+{
+	return m_font_name.c_str();
+}
+
 void FeText::set_bgr(int r)
 {
 	sf::Color c=m_draw_text.getBgColor();
@@ -301,4 +306,17 @@ void FeText::set_align(int a)
 {
 	m_draw_text.setAlignment( (FeTextPrimative::Alignment)a);
 	script_flag_redraw();
+}
+
+void FeText::set_font( const char *f )
+{
+	const sf::Font *font = script_get_font( f );
+
+	if ( font )
+	{
+		setFont( *font );
+		m_font_name = f;
+
+		script_flag_redraw();
+	}
 }

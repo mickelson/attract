@@ -105,16 +105,16 @@ void FeListBox::init( float scale_x, float scale_y )
 
 	int actual_spacing = (int)size.y / m_rows;
 	int char_size = 10;
-	
+
 	// Set the character size now
 	//
-	if ( m_userCharSize > 0 ) 
+	if ( m_userCharSize > 0 )
 		char_size = m_userCharSize * scale_y;
 	else if ( actual_spacing > 14 )
 		char_size = actual_spacing - 4;
 
 	m_base_text.setCharacterSize( char_size );
-		
+
 	m_texts.clear();
 	m_texts.reserve( m_rows );
 
@@ -414,7 +414,7 @@ void FeListBox::set_align(int a)
 
 int FeListBox::get_selr()
 {
-	return m_selColour.r; 
+	return m_selColour.r;
 }
 
 int FeListBox::get_selg()
@@ -484,6 +484,11 @@ int FeListBox::get_selbga()
 	return m_selBg.a;
 }
 
+const char *FeListBox::get_font()
+{
+	return m_font_name.c_str();
+}
+
 void FeListBox::set_selbgr(int r)
 {
 	m_selBg.r=r;
@@ -514,4 +519,17 @@ void FeListBox::set_selbg_rgb(int r, int g, int b )
 	m_selBg.g = g;
 	m_selBg.b = b;
 	setSelBgColor( m_selBg );
+}
+
+void FeListBox::set_font( const char *f )
+{
+	const sf::Font *font = script_get_font( f );
+
+	if ( font )
+	{
+		setFont( *font );
+		m_font_name = f;
+
+		script_flag_redraw();
+	}
 }

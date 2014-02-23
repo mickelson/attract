@@ -85,5 +85,6 @@ public:
 
 void script_do_update( FeBasePresentable * );
 void script_flag_redraw();
+const sf::Font *script_get_font( const std::string & );
 
 #endif
