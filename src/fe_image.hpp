@@ -72,8 +72,10 @@ class FeImage : public sf::Drawable, public FeBasePresentable
 protected:
 	FeTextureContainer *m_tex;
 	sf::Sprite m_sprite;
+	sf::Vector2f m_pos;
 	sf::Vector2f m_size;
 	sf::Vector2i m_shear;
+	bool m_preserve_aspect_ratio;
 
 	void scale();
 
@@ -110,20 +112,23 @@ public:
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
 	void texture_changed();
 
-	int get_shear_x();
-	int get_shear_y();
+	int get_shear_x() const ;
+	int get_shear_y() const;
+	int get_texture_width() const;
+	int get_texture_height() const;
+	int get_subimg_x() const;
+	int get_subimg_y() const;
+	int get_subimg_width() const;
+	int get_subimg_height() const;
+	bool get_preserve_aspect_ratio() const;
+
 	void set_shear_x( int x );
 	void set_shear_y( int y );
-	int get_texture_width();
-	int get_texture_height();
-	int get_subimg_x();
-	int get_subimg_y();
-	int get_subimg_width();
-	int get_subimg_height();
 	void set_subimg_x( int x );
 	void set_subimg_y( int y );
 	void set_subimg_width( int w );
 	void set_subimg_height( int h );
+	void set_preserve_aspect_ratio( bool p );
 };
 
 void script_do_update( FeTextureContainer * );

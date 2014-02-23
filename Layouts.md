@@ -598,6 +598,8 @@ Attributes:
    * `movie_enabled` - [artwork only] Get/set whether movies may be displayed
      in the artwork if configured by the user (boolean).  Default value is 
      `true`.  
+   * `preserve_aspect_ratio` - Get/set whether the aspect ratio from the source
+     image is to be preserved.  Default value is `false`.
 
 Functions:   
 

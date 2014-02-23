@@ -1304,6 +1304,8 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("subimg_width"), &FeImage::get_subimg_width, &FeImage::set_subimg_width )
 		.Prop(_SC("subimg_height"), &FeImage::get_subimg_height, &FeImage::set_subimg_height )
 		.Prop(_SC("movie_enabled"), &FeImage::getMovieEnabled, &FeImage::setMovieEnabled )
+		.Prop(_SC("preserve_aspect_ratio"), &FeImage::get_preserve_aspect_ratio,
+				&FeImage::set_preserve_aspect_ratio )
 	);
 
 	fe.Bind( _SC("Text"),

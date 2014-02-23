@@ -3,15 +3,22 @@
 // Attract-Mode Frontend - Orbit layout
 //
 ///////////////////////////////////////////////////
+class UserConfig {
+	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel" />
+	orbit_art="marquee";
+}
+
+local my_config = fe.get_config();
+
 fe.layout.width = 800
 fe.layout.height = 600
 
-const MWIDTH = 300;
-const MHEIGHT = 100;
+const MWIDTH = 280;
+const MHEIGHT = 170;
 const SPIN_MS = 200;
 
 function get_y( x ) {
-	return ( 225 + sqrt( pow( 270, 2 ) - pow( x - 400, 2 ) ) );
+	return ( 200 + sqrt( pow( 270, 2 ) - pow( x - 400, 2 ) ) );
 }
 
 function set_bright( x, o ) {
@@ -20,13 +27,16 @@ function set_bright( x, o ) {
 
 class Marquee {
 	ob=null; 
+	orig_ob=null;
 	base_io=0;
 	xl=0; xm=0; xr=0; 
 	sl=0.0; sm=0.0; sr=0.0;
 
 	constructor( pio, pxl, pxm, pxr, psl, psm, psr ) {
 		xl=pxl; xm=pxm; xr=pxr; sl=psl; sm=psm; sr=psr;
-		ob = fe.add_artwork( "marquee" );
+		orig_ob = ob = fe.add_artwork( my_config["orbit_art"] );
+		ob.preserve_aspect_ratio=true;
+		ob.movie_enabled = false;
 		ob.index_offset = base_io = pio;
 		reset();
 	}
@@ -81,10 +91,16 @@ l.align = Align.Left;
 local marquees = [
 	Marquee( -2, 200, 150, 145, 0.7, 0.4, 0.1 ), 
 	Marquee( -1, 400, 200, 150, 1.0, 0.7, 0.4 ), 
-	Marquee(  0, 600, 400, 200, 0.7, 1.0, 0.7 ),
-	Marquee(  1, 650, 600, 400, 0.4, 0.7, 1.0 ),
 	Marquee(  2, 655, 650, 600, 0.1, 0.4, 0.7 )
 ];
+
+// Delayed creation of these two so that they are drawn over top of the others
+// (they will be later in the draw order)
+//
+marquees.insert( 2, Marquee(  1, 650, 600, 400, 0.4, 0.7, 1.0 ) );
+
+// This is the marquee for the current selection
+marquees.insert( 2, Marquee(  0, 600, 400, 200, 0.7, 1.0, 0.7 ) );
 
 l = fe.add_text( "[ListTitle]", 0, 0, 800, 55 );
 l.set_rgb( 180, 180, 70 ); 
@@ -160,6 +176,7 @@ function orbit_transition( ttype, var, ttime ) {
 
 		foreach ( m in marquees )
 		{
+			m.ob = m.orig_ob;
 			m.reset();
 			m.ob.index_offset = m.base_io;
 		}

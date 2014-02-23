@@ -28,15 +28,15 @@
 #include <cstdlib>
 
 FeTextureContainer::FeTextureContainer()
-	: m_index_offset( 0 ), 
+	: m_index_offset( 0 ),
 	m_is_artwork( false ),
 	m_movie( NULL ),
 	m_movie_status( NoPlay )
 {
 }
 
-FeTextureContainer::FeTextureContainer( 
-	bool is_artwork, 
+FeTextureContainer::FeTextureContainer(
+	bool is_artwork,
 	const std::string &name )
 	: m_name( name ),
 	m_index_offset( 0 ),
@@ -114,7 +114,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 		{
 			if (m_movie->is_playing())
 				m_movie->stop();
-	
+
 			m_movie->close();
 		}
 		m_movie_status=Delayed;
@@ -163,9 +163,9 @@ bool FeTextureContainer::tick( FeSettings *feSettings )
 	// We only need to do anything if we have the configured movie
 	// artwork and movies are not running
 	//
-	if ( !m_is_artwork 
+	if ( !m_is_artwork
 		|| ( m_movie_status == LockNoPlay )
-		|| ( ( m_name.compare( feSettings->get_movie_artwork() ) != 0 ) 
+		|| ( ( m_name.compare( feSettings->get_movie_artwork() ) != 0 )
 			&& !m_name.empty() ))
 		return false;
 
@@ -243,9 +243,11 @@ void FeTextureContainer::set_vol( float vol )
 
 FeImage::FeImage( FeTextureContainer *tc )
 	: FeBasePresentable( true ),
-	m_tex( tc ), 
-	m_size( 0, 0 ), 
-	m_shear( 0, 0 )
+	m_tex( tc ),
+	m_pos( 0, 0 ),
+	m_size( 0, 0 ),
+	m_shear( 0, 0 ),
+	m_preserve_aspect_ratio( false )
 {
 	ASSERT( m_tex );
 
@@ -257,10 +259,12 @@ FeImage::FeImage( FeTextureContainer *tc )
 
 FeImage::FeImage( FeImage *o )
 	: FeBasePresentable( true ),
-	m_tex( o->m_tex ), 
+	m_tex( o->m_tex ),
 	m_sprite( o->m_sprite ),
-	m_size( o->m_size ), 
-	m_shear( o->m_shear )
+	m_pos( o->m_pos ),
+	m_size( o->m_size ),
+	m_shear( o->m_shear ),
+	m_preserve_aspect_ratio( o->m_preserve_aspect_ratio )
 {
 	m_tex->m_images.push_back( this );
 }
@@ -294,10 +298,18 @@ void FeImage::setIndexOffset( int io )
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
 	if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
-		states.transform *= sf::Transform( 
-				1.f, (float)m_shear.x / (float)m_size.x, 0.f,
-				(float)m_shear.y / (float)m_size.y, 1.f, 0.f,
+	{
+		const sf::Vector2f &sscale = m_sprite.getScale();
+		const sf::IntRect &texture_rect = m_sprite.getTextureRect();
+
+		float size_x = ( m_size.x > 0.0 ) ? m_size.x : ( texture_rect.width * sscale.x );
+		float size_y = ( m_size.y > 0.0 ) ? m_size.y : ( texture_rect.height * sscale.y );
+
+		states.transform *= sf::Transform(
+				1.f, (float)m_shear.x / size_x, 0.f,
+				(float)m_shear.y / size_y, 1.f, 0.f,
 				0.f, 0.f, 1.f );
+	}
 
 	target.draw( m_sprite, states );
 }
@@ -307,25 +319,60 @@ void FeImage::scale()
 	sf::IntRect texture_rect = m_sprite.getTextureRect();
 	bool scale=false;
 	float scale_x( 1.0 ), scale_y( 1.0 );
+	sf::Vector2f final_pos = m_pos;
 
 	if ( m_size.x > 0.0 )
 	{
 		scale_x = (float) m_size.x / texture_rect.width;
+
+		if ( m_preserve_aspect_ratio )
+			scale_y = scale_x;
+
 		scale = true;
 	}
+
 	if ( m_size.y > 0.0 )
 	{
 		scale_y = (float) m_size.y / texture_rect.height;
+
+		if ( m_preserve_aspect_ratio )
+		{
+			if ( m_size.x <= 0.0 )
+			{
+				scale_x = scale_y;
+			}
+			else
+			{
+				// We have a size set in both directions and are preserving the aspect
+				// ratio, so calculate how we will centre the image in the space we have
+				//
+				if ( scale_x > scale_y ) // centre in x direction
+					final_pos.x += ( m_size.x - ( texture_rect.width * scale_y )) / 2.0;
+				else // centre in y direction
+					final_pos.y += ( m_size.y - ( texture_rect.height * scale_x )) / 2.0;
+			}
+		}
+
 		scale = true;
+	}
+
+	if ( m_preserve_aspect_ratio && ( scale_y != scale_x ))
+	{
+		if ( scale_y > scale_x )
+			scale_y = scale_x;
+		else
+			scale_x = scale_y;
 	}
 
 	if ( scale )
 		m_sprite.setScale( scale_x, scale_y );
+
+	m_sprite.setPosition( final_pos );
 }
 
 const sf::Vector2f &FeImage::getPosition() const
 {
-	return m_sprite.getPosition();
+	return m_pos;
 }
 
 const sf::Vector2f &FeImage::getSize() const
@@ -342,7 +389,8 @@ void FeImage::setSize( const sf::Vector2f &s )
 
 void FeImage::setPosition( const sf::Vector2f &p )
 {
-	m_sprite.setPosition( p );
+	m_pos = p;
+	scale();
 	script_flag_redraw();
 }
 
@@ -387,7 +435,7 @@ void FeImage::setTextureRect( const sf::IntRect &r )
 
 bool FeImage::getMovieEnabled() const
 {
-	return ( (m_tex->m_movie_status != FeTextureContainer::LockNoPlay) 
+	return ( (m_tex->m_movie_status != FeTextureContainer::LockNoPlay)
 		? true : false );
 }
 
@@ -419,12 +467,12 @@ void FeImage::setMovieEnabled( bool f )
 	}
 }
 
-int FeImage::get_shear_x()
+int FeImage::get_shear_x() const
 {
 	return m_shear.x;
 }
 
-int FeImage::get_shear_y()
+int FeImage::get_shear_y() const
 {
 	return m_shear.y;
 }
@@ -441,34 +489,39 @@ void FeImage::set_shear_y( int y )
 	script_flag_redraw();
 }
 
-int FeImage::get_texture_width()
+int FeImage::get_texture_width() const
 {
 	return getTextureSize().x;
 }
 
-int FeImage::get_texture_height()
+int FeImage::get_texture_height() const
 {
 	return getTextureSize().y;
 }
 
-int FeImage::get_subimg_x()
+int FeImage::get_subimg_x() const
 {
 	return getTextureRect().left;
 }
 
-int FeImage::get_subimg_y()
+int FeImage::get_subimg_y() const
 {
 	return getTextureRect().top;
 }
 
-int FeImage::get_subimg_width()
+int FeImage::get_subimg_width() const
 {
 	return getTextureRect().width;
 }
 
-int FeImage::get_subimg_height()
+int FeImage::get_subimg_height() const
 {
 	return getTextureRect().height;
+}
+
+bool FeImage::get_preserve_aspect_ratio() const
+{
+	return m_preserve_aspect_ratio;
 }
 
 void FeImage::set_subimg_x( int x )
@@ -499,3 +552,7 @@ void FeImage::set_subimg_height( int h )
 	setTextureRect( r );
 }
 
+void FeImage::set_preserve_aspect_ratio( bool p )
+{
+	m_preserve_aspect_ratio = p;
+}
