@@ -117,6 +117,12 @@ void process_args( int argc, char *argv[],
 			print_ffmpeg_version_info();
 #endif
 			std::cout << std::endl;
+
+			if ( sf::Shader::isAvailable() )
+				std::cout << "Shaders are available." << std::endl;
+			else
+				std::cout << "Shaders are not available." << std::endl;
+
 			exit(0);
 		}
 		else

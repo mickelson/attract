@@ -74,6 +74,7 @@ _DEP =\
 	fe_present.hpp \
 	fe_image.hpp \
 	fe_sound.hpp \
+	fe_shader.hpp \
 	fe_overlay.hpp \
 	tp.hpp \
 	fe_text.hpp \
@@ -94,6 +95,7 @@ _OBJ =\
 	fe_present.o \
 	fe_image.o \
 	fe_sound.o \
+	fe_shader.o \
 	fe_overlay.o \
 	tp.o \
 	fe_text.o \

@@ -22,6 +22,7 @@
 
 #include "fe_listbox.hpp"
 #include "fe_settings.hpp"
+#include "fe_shader.hpp"
 #include <iostream>
 
 FeListBox::FeListBox( int x, int y, int w, int h )
@@ -256,6 +257,14 @@ void FeListBox::on_new_selection( FeSettings *s )
 
 void FeListBox::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 {
+	FeShader *s = get_shader();
+	if ( s )
+	{
+		const sf::Shader *sh = s->get_shader();
+		if ( sh )
+			states.shader = sh;
+	}
+
 	for ( std::vector<FeTextPrimative>::const_iterator itl=m_texts.begin();
 				itl != m_texts.end(); ++itl )
 		target.draw( (*itl), states );

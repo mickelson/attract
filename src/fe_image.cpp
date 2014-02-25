@@ -23,6 +23,7 @@
 #include "fe_image.hpp"
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
+#include "fe_shader.hpp"
 #include "media.hpp"
 #include <iostream>
 #include <cstdlib>
@@ -309,6 +310,14 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 				1.f, (float)m_shear.x / size_x, 0.f,
 				(float)m_shear.y / size_y, 1.f, 0.f,
 				0.f, 0.f, 1.f );
+	}
+
+	FeShader *s = get_shader();
+	if ( s )
+	{
+		const sf::Shader *sh = s->get_shader();
+		if ( sh )
+			states.shader = sh;
 	}
 
 	target.draw( m_sprite, states );

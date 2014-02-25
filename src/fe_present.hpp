@@ -33,6 +33,7 @@ class FeTextureContainer;
 class FeText;
 class FeListBox;
 class FeFontContainer;
+class FeShader;
 
 namespace Sqrat
 {
@@ -103,6 +104,7 @@ private:
 	std::vector<FeBasePresentable *> m_elements;
 	std::vector<FeTextureContainer *> m_texturePool;
 	std::vector<FeScriptSound *> m_scriptSounds;
+	std::vector<FeShader *> m_scriptShaders;
 	std::vector<FeFontContainer *> m_fontPool;
 	std::vector<std::string> m_ticksList;
 	std::vector<std::string> m_transitionList;
@@ -148,6 +150,7 @@ private:
 	FeText *add_text(const std::string &n, int x, int y, int w, int h);
 	FeListBox *add_listbox(int x, int y, int w, int h);
 	FeScriptSound *add_sound(const std::string &n);
+	FeShader *add_shader(int type, const char *shader1, const char *shader2);
 	void add_ticks_callback(const std::string &);
 	void add_transition_callback(const std::string &);
 	int get_layout_width() const;
@@ -207,6 +210,9 @@ public:
 	static FeText *cb_add_text(const char *,int, int, int, int);
 	static FeListBox *cb_add_listbox(int, int, int, int);
 	static FeScriptSound *cb_add_sound(const char *);
+	static FeShader *cb_add_shader(int, const char *, const char *);
+	static FeShader *cb_add_shader(int, const char *);
+	static FeShader *cb_add_shader(int);
 	static void cb_add_ticks_callback(const char *);
 	static void cb_add_transition_callback(const char *);
 	static bool cb_is_keypressed(int);	// deprecated as of 1.2

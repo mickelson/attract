@@ -22,13 +22,14 @@
 
 #include "fe_presentable.hpp"
 
-FeBasePresentable::FeBasePresentable( const bool draw_apply_scale ) 
-	: m_draw_apply_scale( draw_apply_scale ),
+FeBasePresentable::FeBasePresentable( const bool draw_apply_scale )
+	: m_shader( NULL ),
+	m_draw_apply_scale( draw_apply_scale ),
 	m_visible( true )
 {
 }
 
-FeBasePresentable::~FeBasePresentable() 
+FeBasePresentable::~FeBasePresentable()
 {
 }
 
@@ -40,32 +41,32 @@ void FeBasePresentable::on_new_list( FeSettings *, float, float )
 {
 }
 
-float FeBasePresentable::get_x() 
-{ 
-	return getPosition().x; 
+float FeBasePresentable::get_x() const
+{
+	return getPosition().x;
 }
 
-float FeBasePresentable::get_y()
-{ 
+float FeBasePresentable::get_y() const
+{
 	return getPosition().y;
 }
 
 void FeBasePresentable::set_x( float x )
-{ 
-	setPosition( sf::Vector2f( x, get_y() )); 
+{
+	setPosition( sf::Vector2f( x, get_y() ));
 }
 
-void FeBasePresentable::set_y( float y ) 
-{ 
-	setPosition( sf::Vector2f( get_x(), y )); 
+void FeBasePresentable::set_y( float y )
+{
+	setPosition( sf::Vector2f( get_x(), y ));
 }
 
-float FeBasePresentable::get_width() 
-{ 
-	return getSize().x; 
+float FeBasePresentable::get_width() const
+{
+	return getSize().x;
 }
 
-float FeBasePresentable::get_height()
+float FeBasePresentable::get_height() const
 {
 	return getSize().y;
 }
@@ -76,26 +77,26 @@ void FeBasePresentable::set_width( float w )
 }
 
 void FeBasePresentable::set_height( float h )
-{ 
-	setSize( sf::Vector2f( get_width(), h )); 
+{
+	setSize( sf::Vector2f( get_width(), h ));
 }
 
-int FeBasePresentable::get_r() 
+int FeBasePresentable::get_r() const
 {
 	return getColor().r;
 }
 
-int FeBasePresentable::get_g()
+int FeBasePresentable::get_g() const
 {
 	return getColor().g;
 }
 
-int FeBasePresentable::get_b()
+int FeBasePresentable::get_b() const
 {
 	return getColor().b;
 }
 
-int FeBasePresentable::get_a()
+int FeBasePresentable::get_a() const
 {
 	return getColor().a;
 }
@@ -137,7 +138,7 @@ void FeBasePresentable::set_rgb(int r, int g, int b)
 	setColor(c);
 }
 
-bool FeBasePresentable::get_visible()
+bool FeBasePresentable::get_visible() const
 {
 	return m_visible;
 }
@@ -146,4 +147,14 @@ void FeBasePresentable::set_visible( bool v )
 {
 	m_visible = v;
 	script_flag_redraw();
+}
+
+FeShader *FeBasePresentable::get_shader() const
+{
+	return m_shader;
+}
+
+void FeBasePresentable::set_shader( FeShader *sh )
+{
+	m_shader = sh;
 }

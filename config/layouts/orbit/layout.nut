@@ -6,6 +6,9 @@
 class UserConfig {
 	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel" />
 	orbit_art="marquee";
+
+	</ label="Bloom Effect", help="Enable Bloom Effect (requires shader support)", options="Yes,No" />
+	enable_bloom="Yes";
 }
 
 local my_config = fe.get_config();
@@ -23,6 +26,18 @@ function get_y( x ) {
 
 function set_bright( x, o ) {
 	o.set_rgb( x, x, x );
+}
+
+local no_shader = fe.add_shader( Shader.Empty );
+local yes_shader;
+if ( my_config["enable_bloom"] == "Yes" )
+{
+	yes_shader = fe.add_shader( Shader.Fragment, "bloom_shader.frag" );
+	yes_shader.set_texture_param("bgl_RenderedTexture");
+}
+else
+{
+	yes_shader = no_shader;
 }
 
 class Marquee {
@@ -78,7 +93,8 @@ class Marquee {
 }
 
 fe.add_artwork( "screen", 224, 59, 352, 264 );
-local frame = fe.add_image( "frame.png", 220, 55, 360, 270 );
+local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
+frame.shader = yes_shader;
 
 local l = fe.add_text( "[ListFilterName] [[ListEntry]/[ListSize]]", 400, 580, 400, 20 );
 l.set_rgb( 180, 180, 70 );
@@ -101,10 +117,12 @@ marquees.insert( 2, Marquee(  1, 650, 600, 400, 0.4, 0.7, 1.0 ) );
 
 // This is the marquee for the current selection
 marquees.insert( 2, Marquee(  0, 600, 400, 200, 0.7, 1.0, 0.7 ) );
+marquees[2].ob.shader = yes_shader;
 
 l = fe.add_text( "[ListTitle]", 0, 0, 800, 55 );
 l.set_rgb( 180, 180, 70 ); 
 l.style = Style.Bold;
+l.shader = yes_shader;
 
 l = fe.add_text( "[Title], [Manufacturer] [Year]", 0, 550, 800, 30 );
 l.set_rgb( 255, 255, 255 );
@@ -119,6 +137,7 @@ function orbit_transition( ttype, var, ttime ) {
 	case Transition.ToNewSelection:
 		if ( ttime < SPIN_MS )
 		{
+			marquees[2].ob.shader = no_shader;
 			local moves = abs( var );
 			local jump_adjust = 0;
 			if ( moves > marquees.len() )
@@ -180,6 +199,7 @@ function orbit_transition( ttype, var, ttime ) {
 			m.reset();
 			m.ob.index_offset = m.base_io;
 		}
+		marquees[2].ob.shader = yes_shader;
 		last_move=0;
 		break;
 

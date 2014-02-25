@@ -26,6 +26,7 @@
 #include "fe_text.hpp"
 #include "fe_listbox.hpp"
 #include "fe_sound.hpp"
+#include "fe_shader.hpp"
 #include "fe_input.hpp"
 #include "fe_util_sq.hpp"
 
@@ -118,6 +119,13 @@ void FePresent::clear()
 		FeScriptSound *s = m_scriptSounds.back();
 		m_scriptSounds.pop_back();
 		delete s;
+	}
+
+	while ( !m_scriptShaders.empty() )
+	{
+		FeShader *sh = m_scriptShaders.back();
+		m_scriptShaders.pop_back();
+		delete sh;
 	}
 
 	while ( !m_fontPool.empty() )
@@ -213,6 +221,38 @@ FeScriptSound *FePresent::add_sound( const std::string &n )
 
 	m_scriptSounds.push_back( new_sound );
 	return new_sound;
+}
+
+FeShader *FePresent::add_shader( int type, const char *shader1, const char *shader2 )
+{
+	std::string path = m_feSettings->get_current_layout_dir();
+
+	switch ( type )
+	{
+		case FeShader::VertexAndFragment:
+			m_scriptShaders.push_back(
+						new FeShader( (shader1 ? path + shader1 : ""),
+										(shader2 ? path + shader2 : "") ) );
+			break;
+
+		case FeShader::Vertex:
+			m_scriptShaders.push_back(
+						new FeShader( (shader1 ? path + shader1 : ""), "" ) );
+			break;
+
+		case FeShader::Fragment:
+			m_scriptShaders.push_back(
+						new FeShader( "", (shader1 ? path + shader1 : "") ) );
+			break;
+
+		case FeShader::Empty:
+		default:
+			m_scriptShaders.push_back(
+						new FeShader( "", "" ) );
+			break;
+	}
+
+	return m_scriptShaders.back();
 }
 
 void FePresent::add_ticks_callback( const std::string &n )
@@ -1006,6 +1046,27 @@ FeScriptSound* FePresent::cb_add_sound( const char *s )
 	//
 }
 
+FeShader* FePresent::cb_add_shader( int type, const char *shader1, const char *shader2 )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	return fep->add_shader( type, shader1, shader2 );
+	//
+	// We assume the script will keep a reference to the shader
+	//
+}
+
+FeShader* FePresent::cb_add_shader( int type, const char *shader1 )
+{
+	return FePresent::cb_add_shader( type, shader1, NULL );
+}
+
+FeShader* FePresent::cb_add_shader( int type )
+{
+	return FePresent::cb_add_shader( type, NULL, NULL );
+}
+
 void FePresent::cb_add_ticks_callback( const char *n )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
@@ -1235,6 +1296,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Const( _SC("ScreenHeight"), (int)m_outputSize.y )
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
 		.Const( _SC("OS"), get_OS_string() )
+		.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
 
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
@@ -1268,6 +1330,12 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 			.Const( _SC("NoValue"), FromToNoValue )
 			.Const( _SC("ScreenSaver"), FromToScreenSaver )
 			.Const( _SC("Frontend"), FromToFrontend )
+			)
+		.Enum( _SC("Shader"), Enumeration()
+			.Const( _SC("VertexAndFragment"), FeShader::VertexAndFragment )
+			.Const( _SC("Vertex"), FeShader::Vertex )
+			.Const( _SC("Fragment"), FeShader::Fragment )
+			.Const( _SC("Empty"), FeShader::Empty )
 			)
 		;
 
@@ -1327,6 +1395,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("blue"), &FeBasePresentable::get_b, &FeBasePresentable::set_b )
 		.Prop(_SC("alpha"), &FeBasePresentable::get_a, &FeBasePresentable::set_a )
 		.Prop(_SC("index_offset"), &FeBasePresentable::getIndexOffset, &FeBasePresentable::setIndexOffset )
+		.Prop(_SC("shader"), &FeBasePresentable::get_shader, &FeBasePresentable::set_shader )
 		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
 	);
 
@@ -1408,6 +1477,14 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop( _SC("z"), &FeScriptSound::get_z, &FeScriptSound::set_z )
 	);
 
+	fe.Bind( _SC("Shader"), Class <FeShader, NoConstructor>()
+		.Overload<void (FeShader::*)(const char *, float)>(_SC("set_param"), &FeShader::set_param)
+		.Overload<void (FeShader::*)(const char *, float, float)>(_SC("set_param"), &FeShader::set_param)
+		.Overload<void (FeShader::*)(const char *, float, float, float)>(_SC("set_param"), &FeShader::set_param)
+		.Overload<void (FeShader::*)(const char *, float, float, float, float)>(_SC("set_param"), &FeShader::set_param)
+		.Func( _SC("set_texture_param"), &FeShader::set_texture_param )
+	);
+
 	//
 	// Define functions that get exposed to Squirrel
 	//
@@ -1425,6 +1502,9 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 	fe.Overload<FeText* (*)(const char *, int, int, int, int)>(_SC("add_text"), &FePresent::cb_add_text);
 	fe.Func<FeListBox* (*)(int, int, int, int)>(_SC("add_listbox"), &FePresent::cb_add_listbox);
 	fe.Func<FeScriptSound* (*)(const char *)>(_SC("add_sound"), &FePresent::cb_add_sound);
+	fe.Overload<FeShader* (*)(int, const char *, const char *)>(_SC("add_shader"), &FePresent::cb_add_shader);
+	fe.Overload<FeShader* (*)(int, const char *)>(_SC("add_shader"), &FePresent::cb_add_shader);
+	fe.Overload<FeShader* (*)(int)>(_SC("add_shader"), &FePresent::cb_add_shader);
 	fe.Func<void (*)(const char *)>(_SC("add_ticks_callback"), &FePresent::cb_add_ticks_callback);
 	fe.Func<void (*)(const char *)>(_SC("add_transition_callback"), &FePresent::cb_add_transition_callback);
 	fe.Func<bool (*)(const char *)>(_SC("get_input_state"), &FePresent::cb_get_input_state);

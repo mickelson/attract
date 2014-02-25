@@ -1261,7 +1261,8 @@ void FeScriptConfigMenu::get_options_helper(
 		Sqrat::ConstTable()
 			.Const( _SC("FeVersion"), FE_VERSION)
 			.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
-			.Const( _SC("OS"), get_OS_string() );
+			.Const( _SC("OS"), get_OS_string() )
+			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() );
 
 		try
 		{

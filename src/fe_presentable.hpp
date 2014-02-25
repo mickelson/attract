@@ -26,9 +26,12 @@
 #include <SFML/Graphics.hpp>
 
 class FeSettings;
+class FeShader;
+
 class FeBasePresentable
 {
 private:
+	FeShader *m_shader;
 	const bool m_draw_apply_scale; // true for images, false for texts
 	bool m_visible;
 
@@ -57,28 +60,31 @@ public:
 	//
 	// Accessor functions used in scripting implementation
 	//
-	float get_x();
-	float get_y();
+	float get_x() const;
+	float get_y() const;
 	void set_x( float x );
 	void set_y( float y );
 
-	float get_width();
-	float get_height();
+	float get_width() const;
+	float get_height() const;
 	void set_width( float w );
 	void set_height( float h );
 
-	int get_r();
-	int get_g();
-	int get_b();
-	int get_a();
+	int get_r() const;
+	int get_g() const;
+	int get_b() const;
+	int get_a() const;
 	void set_r(int r);
 	void set_g(int g);
 	void set_b(int b);
 	void set_a(int a);
 	void set_rgb(int r, int g, int b);
 
-	bool get_visible();
+	bool get_visible() const;
 	void set_visible( bool );
+
+	FeShader *get_shader() const;
+	void set_shader( FeShader *s );
 
 	bool get_draw_apply_scale() const { return m_draw_apply_scale; };
 };

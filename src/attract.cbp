@@ -195,6 +195,8 @@
 		<Unit filename="fe_presentable.hpp" />
 		<Unit filename="fe_settings.cpp" />
 		<Unit filename="fe_settings.hpp" />
+		<Unit filename="fe_shader.cpp" />
+		<Unit filename="fe_shader.hpp" />
 		<Unit filename="fe_sound.cpp" />
 		<Unit filename="fe_sound.hpp" />
 		<Unit filename="fe_text.cpp" />

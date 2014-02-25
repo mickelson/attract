@@ -202,6 +202,36 @@ Return Value:
      the added text.
 
 
+#### `fe.add_shader()` ####
+
+    fe.add_shader( type, file1, file2 )
+    fe.add_shader( type, file1 )
+    fe.add_shader( type )
+
+Add a GLSL shader (vertex and/or fragment) for use in the layout.
+
+Parameters:
+
+   * type - the type of shader to add.  Can be one of the following values:
+      - `Shader.VertexAndFragment` - add a combined vertex and fragment shader
+      - `Shader.Vertex` - add a vertex shader
+      - `Shader.Fragment` - add a fragment shader
+      - `Shader.Empty` - add an empty shader.  An object's shader property can
+        be set to an empty shader to stop using a shader on that object where
+        one was set previously.
+
+   * file1 - the name of the shader file located in the layout directory.
+     For the VertexAndFragment type, this should be the vertex shader.
+   * file2 - This parameter is only used with the VertexAndFragment type, and
+     should be the name of the fragment shader file located in the layout
+     directory.
+
+Return Value:
+
+   * An instance of the class `fe.Shader` which can be used to interact with
+     the added shader.
+
+
 #### `fe.add_sound()` ####
 
     fe.add_sound( name )
@@ -209,7 +239,7 @@ Return Value:
 Add a small sound sample for the layout to play.  The entire file is loaded 
 into memory.
 
-Parameters:   
+Parameters:
 
    * name - the name of the sound file located in the layout directory. 
 
@@ -600,6 +630,8 @@ Attributes:
      `true`.  
    * `preserve_aspect_ratio` - Get/set whether the aspect ratio from the source
      image is to be preserved.  Default value is `false`.
+   * `shader` - Get/set the GLSL shader for this image. This can only be set to
+     an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 
 Functions:   
 
@@ -681,6 +713,8 @@ Attributes:
      (boolean).  Default is `false`.
    * `font` - Get/set the name of the font used for this text.  Default is
      the layout font name.
+   * `shader` - Get/set the GLSL shader for this text. This can only be set to
+     an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 
 Functions:   
 
@@ -763,6 +797,8 @@ Attributes:
       - `Style.Underlined`
    * `font` - Get/set the name of the font used for this listbox.  Default is
      the layout font name.
+   * `shader` - Get/set the GLSL shader for this listbox. This can only be set
+     to an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 
 Functions:
 
@@ -795,6 +831,28 @@ Functions:
    * `play()` - Play the sound.
 
 
+#### `fe.Shader` ####
+
+The class representing a GLSL shader.  Instances of this class are returned
+by the `fe.add_shader()` function.  This class cannot be otherwise
+instantiated in a script.
+
+Functions:
+
+   * `set_param( name, f )` - Set the float variable (float GLSL type) with
+     the specified name to the value of f.
+   * `set_param( name, f1, f2 )` - Set the 2-component vector variable (vec2
+     GLSL type) with the specified name to (f1,f2).
+   * `set_param( name, f1, f2, f3 )` - Set the 3-component vector variable
+     (vec3 GLSL type) with the specified name to (f1,f2,f3).
+   * `set_param( name, f1, f2, f3, f4 )` - Set the 4-component vector
+     variable (vec4 GLSL type) with the specified name to (f1,f2,f3,f4).
+   * `set_texture_param( name )` - Set the texture variable (sampler2D GLSL
+     type) with the specified name.  The texture used will be the texture
+     for whatever object (fe.Image, fe.Text, fe.Listbox) the shader is
+     drawing.
+
+
 Constants
 ---------
 
@@ -810,12 +868,16 @@ The screen width and height in pixels.
 
 #### `ScreenSaverActive` [bool] ####
 
-Whether the screen saver is active.
+true if the screen saver is active, false otherwise.
 
 #### `OS` [string] ####
 
 The Operating System that Attract-Mode is running under.  Will be one of:
 "Windows", "OSX", "FreeBSD", "Linux" or "Unknown"
+
+#### `ShadersAvailable` [bool] ####
+
+true if GLSL shaders are available on this system, false otherwise.
 
 
 Deprecated Functions and Objects

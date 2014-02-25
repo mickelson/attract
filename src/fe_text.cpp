@@ -23,6 +23,7 @@
 #include "fe_text.hpp"
 #include "fe_settings.hpp"
 #include "fe_util.hpp"
+#include "fe_shader.hpp"
 #include <iostream>
 
 FeText::FeText( const std::string &str, int x, int y, int w, int h )
@@ -184,6 +185,14 @@ void FeText::on_new_selection( FeSettings *feSettings )
 
 void FeText::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 {
+	FeShader *s = get_shader();
+	if ( s )
+	{
+		const sf::Shader *sh = s->get_shader();
+		if ( sh )
+			states.shader = sh;
+	}
+
 	target.draw( m_draw_text, states );
 }
 
