@@ -292,8 +292,11 @@ int FeImage::getIndexOffset() const
 
 void FeImage::setIndexOffset( int io )
 {
-	m_tex->m_index_offset = io;
-	script_do_update( m_tex );
+	if ( m_tex->m_index_offset != io )
+	{
+		m_tex->m_index_offset = io;
+		script_do_update( m_tex );
+	}
 }
 
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const

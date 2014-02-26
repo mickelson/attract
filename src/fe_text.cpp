@@ -87,8 +87,11 @@ const sf::Color &FeText::getColor() const
 
 void FeText::setIndexOffset( int io )
 {
-	m_index_offset=io;
-	script_do_update( this );
+	if ( m_index_offset != io )
+	{
+		m_index_offset=io;
+		script_do_update( this );
+	}
 }
 
 int FeText::getIndexOffset() const
