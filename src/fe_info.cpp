@@ -809,7 +809,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Additional Import Files",
 	"XML Mode",
 	"Movie Path",
-	"Movie Fallback Artwork",
+	"Movie Artwork",
 	NULL
 };
 
