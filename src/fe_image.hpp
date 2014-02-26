@@ -87,6 +87,8 @@ public:
 	FeImage( FeImage * ); // clone the given image (texture is not copied)
 	~FeImage();
 
+	const sf::Texture *get_texture();
+
 	void loadFromFile( const std::string & );
 
 	const sf::Vector2f &getSize() const;

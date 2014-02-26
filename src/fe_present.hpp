@@ -27,13 +27,13 @@
 #include "fe_presentable.hpp"
 #include "fe_settings.hpp"
 #include "fe_sound.hpp"
+#include "fe_shader.hpp"
 
 class FeImage;
 class FeTextureContainer;
 class FeText;
 class FeListBox;
 class FeFontContainer;
-class FeShader;
 
 namespace Sqrat
 {
@@ -45,6 +45,7 @@ enum FeTransitionType
 	StartLayout=0,		// var: FromToScreenSaver, FromToFrontend or FromToNoValue
 	EndLayout,			// var: FromToScreenSaver, FromToFrontend or FromToNoValue
 	ToNewSelection,	// var = index_offset of new selection
+	FromOldSelection,	// var == index_offset of old selection
 	ToGame,				// var = 0
 	FromGame,			// var = 0
 	ToNewList			// var = 0
@@ -70,6 +71,7 @@ class FePresent
 	: public sf::Drawable
 {
 	friend void script_do_update( FeBasePresentable * );
+	friend FeShader *script_get_empty_shader();
 
 private:
 	static const char *transitionTypeStrings[];
@@ -120,6 +122,8 @@ private:
 	sf::Vector2f m_layoutScale;
 	sf::Vector2i m_outputSize;
 
+	FeShader *m_emptyShader;
+
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );
 
@@ -150,7 +154,7 @@ private:
 	FeText *add_text(const std::string &n, int x, int y, int w, int h);
 	FeListBox *add_listbox(int x, int y, int w, int h);
 	FeScriptSound *add_sound(const std::string &n);
-	FeShader *add_shader(int type, const char *shader1, const char *shader2);
+	FeShader *add_shader(FeShader::Type type, const char *shader1, const char *shader2);
 	void add_ticks_callback(const std::string &);
 	void add_transition_callback(const std::string &);
 	int get_layout_width() const;
@@ -166,6 +170,7 @@ private:
 	void set_layout_height( int );
 	void set_layout_orient( int );
 	void set_layout_font( const char * );
+	FeShader *get_empty_shader();
 
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );

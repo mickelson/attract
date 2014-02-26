@@ -25,8 +25,6 @@
 #include "fe_image.hpp"
 #include "fe_text.hpp"
 #include "fe_listbox.hpp"
-#include "fe_sound.hpp"
-#include "fe_shader.hpp"
 #include "fe_input.hpp"
 #include "fe_util_sq.hpp"
 
@@ -51,6 +49,7 @@ const char *FePresent::transitionTypeStrings[] =
 		"StartLayout",
 		"EndLayout",
 		"ToNewSelection",
+		"FromOldSelection",
 		"ToGame",
 		"FromGame",
 		"ToNewList",
@@ -67,7 +66,8 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_toggleRotation( FeSettings::RotateNone ),
 	m_playMovies( true ),
 	m_screenSaverActive( false ),
-	m_listBox( NULL )
+	m_listBox( NULL ),
+	m_emptyShader( NULL )
 {
 	Sqrat::DefaultVM::Set( NULL );
 
@@ -126,6 +126,12 @@ void FePresent::clear()
 		FeShader *sh = m_scriptShaders.back();
 		m_scriptShaders.pop_back();
 		delete sh;
+	}
+
+	if ( m_emptyShader )
+	{
+		delete m_emptyShader;
+		m_emptyShader = NULL;
 	}
 
 	while ( !m_fontPool.empty() )
@@ -223,7 +229,7 @@ FeScriptSound *FePresent::add_sound( const std::string &n )
 	return new_sound;
 }
 
-FeShader *FePresent::add_shader( int type, const char *shader1, const char *shader2 )
+FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const char *shader2 )
 {
 	std::string path = m_feSettings->get_current_layout_dir();
 
@@ -231,24 +237,24 @@ FeShader *FePresent::add_shader( int type, const char *shader1, const char *shad
 	{
 		case FeShader::VertexAndFragment:
 			m_scriptShaders.push_back(
-						new FeShader( (shader1 ? path + shader1 : ""),
+						new FeShader( type, (shader1 ? path + shader1 : ""),
 										(shader2 ? path + shader2 : "") ) );
 			break;
 
 		case FeShader::Vertex:
 			m_scriptShaders.push_back(
-						new FeShader( (shader1 ? path + shader1 : ""), "" ) );
+						new FeShader( type, (shader1 ? path + shader1 : ""), "" ) );
 			break;
 
 		case FeShader::Fragment:
 			m_scriptShaders.push_back(
-						new FeShader( "", (shader1 ? path + shader1 : "") ) );
+						new FeShader( type, "", (shader1 ? path + shader1 : "") ) );
 			break;
 
 		case FeShader::Empty:
 		default:
 			m_scriptShaders.push_back(
-						new FeShader( "", "" ) );
+						new FeShader( type, "", "" ) );
 			break;
 	}
 
@@ -418,6 +424,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			vm_on_transition( ToNewSelection, 1, wnd );
 			m_feSettings->change_rom( 1 );
 			update( false );
+			vm_on_transition( FromOldSelection, -1, wnd );
 		}
 		break;
 
@@ -430,6 +437,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			vm_on_transition( ToNewSelection, -1, wnd );
 			m_feSettings->change_rom( -1 );
 			update( false );
+			vm_on_transition( FromOldSelection, 1, wnd );
 		}
 		break;
 
@@ -446,6 +454,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 				vm_on_transition( ToNewSelection, step, wnd );
 				m_feSettings->change_rom( step );
 				update( false );
+				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
 		break;
@@ -462,6 +471,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 				vm_on_transition( ToNewSelection, step, wnd );
 				m_feSettings->change_rom( step );
 				update( false );
+				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
 		break;
@@ -474,6 +484,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 				vm_on_transition( ToNewSelection, step, wnd );
 				m_feSettings->change_rom( step );
 				update( false );
+				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
 		break;
@@ -541,6 +552,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 				vm_on_transition( ToNewSelection, step, wnd );
 				m_feSettings->change_rom( step );
 				update( false );
+				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
 		break;
@@ -718,6 +730,7 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 
 					ret_val=true;
 					update( false );
+					vm_on_transition( FromOldSelection, -real_step, wnd );
 				}
 			}
 		}
@@ -1051,7 +1064,7 @@ FeShader* FePresent::cb_add_shader( int type, const char *shader1, const char *s
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
-	return fep->add_shader( type, shader1, shader2 );
+	return fep->add_shader( (FeShader::Type)type, shader1, shader2 );
 	//
 	// We assume the script will keep a reference to the shader
 	//
@@ -1395,7 +1408,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("blue"), &FeBasePresentable::get_b, &FeBasePresentable::set_b )
 		.Prop(_SC("alpha"), &FeBasePresentable::get_a, &FeBasePresentable::set_a )
 		.Prop(_SC("index_offset"), &FeBasePresentable::getIndexOffset, &FeBasePresentable::setIndexOffset )
-		.Prop(_SC("shader"), &FeBasePresentable::get_shader, &FeBasePresentable::set_shader )
+		.Prop(_SC("shader"), &FeBasePresentable::script_get_shader, &FeBasePresentable::script_set_shader )
 		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
 	);
 
@@ -1478,11 +1491,13 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 	);
 
 	fe.Bind( _SC("Shader"), Class <FeShader, NoConstructor>()
+		.Prop( _SC("type"), &FeShader::get_type )
 		.Overload<void (FeShader::*)(const char *, float)>(_SC("set_param"), &FeShader::set_param)
 		.Overload<void (FeShader::*)(const char *, float, float)>(_SC("set_param"), &FeShader::set_param)
 		.Overload<void (FeShader::*)(const char *, float, float, float)>(_SC("set_param"), &FeShader::set_param)
 		.Overload<void (FeShader::*)(const char *, float, float, float, float)>(_SC("set_param"), &FeShader::set_param)
-		.Func( _SC("set_texture_param"), &FeShader::set_texture_param )
+		.Overload<void (FeShader::*)(const char *)>( _SC("set_texture_param"), &FeShader::set_texture_param )
+		.Overload<void (FeShader::*)(const char *, FeImage *)>( _SC("set_texture_param"), &FeShader::set_texture_param )
 	);
 
 	//
@@ -1736,6 +1751,14 @@ bool FePresent::vm_on_transition(
 	return m_redrawTriggered;
 }
 
+FeShader *FePresent::get_empty_shader()
+{
+	if ( !m_emptyShader )
+		m_emptyShader = new FeShader( FeShader::Empty, "", "" );
+
+	return m_emptyShader;
+}
+
 namespace
 {
 	FePresent *helper_get_fep()
@@ -1794,6 +1817,16 @@ const sf::Font *script_get_font( const std::string &name )
 		if ( font )
 			return &(font->get_font());
 	}
+
+	return NULL;
+}
+
+FeShader *script_get_empty_shader()
+{
+	FePresent *fep = helper_get_fep();
+
+	if ( fep )
+		return fep->get_empty_shader();
 
 	return NULL;
 }

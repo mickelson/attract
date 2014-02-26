@@ -22,12 +22,13 @@
 
 #include "fe_shader.hpp"
 #include "fe_presentable.hpp"
+#include "fe_image.hpp"
 #include <iostream>
 
-FeShader::FeShader( const std::string &vert_shader, const std::string &frag_shader )
-	: m_loaded( false )
+FeShader::FeShader( Type t, const std::string &vert_shader, const std::string &frag_shader )
+	: m_type( Empty )
 {
-	if ( !sf::Shader::isAvailable() ) // silent fail if shaders aren't available
+	if ( !sf::Shader::isAvailable() || ( t == Empty ) ) // silent fail if shaders aren't available
 		return;
 
 	if ( !vert_shader.empty() && !frag_shader.empty() )
@@ -39,7 +40,7 @@ FeShader::FeShader( const std::string &vert_shader, const std::string &frag_shad
 			return;
 		}
 
-		m_loaded = true;
+		m_type = VertexAndFragment;
 	}
 	else if ( !vert_shader.empty() )
 	{
@@ -49,7 +50,7 @@ FeShader::FeShader( const std::string &vert_shader, const std::string &frag_shad
 			return;
 		}
 
-		m_loaded = true;
+		m_type = Vertex;
 	}
 	else if ( !frag_shader.empty() )
 	{
@@ -59,13 +60,13 @@ FeShader::FeShader( const std::string &vert_shader, const std::string &frag_shad
 			return;
 		}
 
-		m_loaded = true;
+		m_type = Fragment;
 	}
 }
 
 void FeShader::set_param( const char *name, float x )
 {
-	if ( m_loaded )
+	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x );
 		script_flag_redraw();
@@ -74,7 +75,7 @@ void FeShader::set_param( const char *name, float x )
 
 void FeShader::set_param( const char *name, float x, float y )
 {
-	if ( m_loaded )
+	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x, y );
 		script_flag_redraw();
@@ -83,7 +84,7 @@ void FeShader::set_param( const char *name, float x, float y )
 
 void FeShader::set_param( const char *name, float x, float y, float z )
 {
-	if ( m_loaded )
+	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x, y, z );
 		script_flag_redraw();
@@ -92,7 +93,7 @@ void FeShader::set_param( const char *name, float x, float y, float z )
 
 void FeShader::set_param( const char *name, float x, float y, float z, float w )
 {
-	if ( m_loaded )
+	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x, y, z, w );
 		script_flag_redraw();
@@ -101,9 +102,23 @@ void FeShader::set_param( const char *name, float x, float y, float z, float w )
 
 void FeShader::set_texture_param( const char *name )
 {
-	if ( m_loaded )
+	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, sf::Shader::CurrentTexture );
 		script_flag_redraw();
+	}
+}
+
+void FeShader::set_texture_param( const char *name, FeImage *image )
+{
+	if (( m_type != Empty ) && ( image ))
+	{
+		const sf::Texture *texture = image->get_texture();
+
+		if ( texture )
+		{
+			m_shader.setParameter( name, *texture );
+			script_flag_redraw();
+		}
 	}
 }

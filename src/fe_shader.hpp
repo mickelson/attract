@@ -24,30 +24,33 @@
 #define FE_SHADER_HPP
 
 #include <SFML/Graphics/Shader.hpp>
+class FeImage;
 
 class FeShader
 {
 public:
 	enum Type
 	{
+		Empty,
 		VertexAndFragment,
 		Vertex,
-		Fragment,
-		Empty
+		Fragment
 	};
 
-	FeShader( const std::string &vert_shader, const std::string &frag_shader );
+	FeShader( Type t, const std::string &vert_shader, const std::string &frag_shader );
 
 	void set_param( const char *name, float x );
 	void set_param( const char *name, float x, float y );
 	void set_param( const char *name, float x, float y, float z );
 	void set_param( const char *name, float x, float y, float z, float w );
 	void set_texture_param( const char *name );
+	void set_texture_param( const char *name, FeImage *image );
 
-	const sf::Shader *get_shader() const { return ( m_loaded ) ? &m_shader : NULL; };
+	const sf::Shader *get_shader() const { return ( m_type != Empty ) ? &m_shader : NULL; };
+	Type get_type() const { return m_type; };
 
 private:
-	bool m_loaded;
+	Type m_type;
 	sf::Shader m_shader;
 };
 

@@ -274,6 +274,15 @@ FeImage::~FeImage()
 {
 }
 
+const sf::Texture *FeImage::get_texture()
+{
+	if ( m_tex )
+		return &(m_tex->get_texture());
+	else
+		return NULL;
+}
+
+
 void FeImage::texture_changed()
 {
 	m_sprite.setTexture( m_tex->get_texture(), true );

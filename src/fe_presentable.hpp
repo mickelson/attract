@@ -84,7 +84,8 @@ public:
 	void set_visible( bool );
 
 	FeShader *get_shader() const;
-	void set_shader( FeShader *s );
+	FeShader *script_get_shader() const;
+	void script_set_shader( FeShader *s );
 
 	bool get_draw_apply_scale() const { return m_draw_apply_scale; };
 };
@@ -92,5 +93,6 @@ public:
 void script_do_update( FeBasePresentable * );
 void script_flag_redraw();
 const sf::Font *script_get_font( const std::string & );
+FeShader *script_get_empty_shader();
 
 #endif

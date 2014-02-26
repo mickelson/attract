@@ -231,6 +231,38 @@ Return Value:
    * An instance of the class `fe.Shader` which can be used to interact with
      the added shader.
 
+#### Implementation note for GLSL shaders in Attract-Mode: ####
+
+Shaders are implemented using the SFML API.  For more information please see:
+http://www.sfml-dev.org/tutorials/2.1/graphics-shader.php
+
+The minimal vertex shader expected is as follows:
+
+    void main()
+    {
+        // transform the vertex position
+        gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+
+        // transform the texture coordinates
+        gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
+
+        // forward the vertex color
+        gl_FrontColor = gl_Color;
+    }
+
+The minimal fragment shader expected is as follows:
+
+    uniform sampler2D texture;
+
+    void main()
+    {
+        // lookup the pixel in the texture
+        vec4 pixel = texture2D(texture, gl_TexCoord[0].xy);
+
+        // multiply it by the color
+        gl_FragColor = gl_Color * pixel;
+    }
+
 
 #### `fe.add_sound()` ####
 
@@ -300,6 +332,7 @@ happening.  It will have one of the following values:
    * `Transition.StartLayout`
    * `Transition.EndLayout`
    * `Transition.ToNewSelection`
+   * `Transition.FromOldSelection`
    * `Transition.ToGame`
    * `Transition.FromGame`
    * `Transition.ToNewList`
@@ -310,6 +343,11 @@ upon the value of `ttype`:
    * When `ttype` is `Transition.ToNewSelection`, `var` indicates the index 
      offset of the selection being transitioned to (i.e. -1 when moving back 
      one position in the list, 1 when moving forward one position, 2 when
+     moving forward two positions, etc.)
+
+   * When `ttype` is `Transition.FromOldSelection`, `var` indicates the index
+     offset of the selection being transitioned from (i.e. 1 after moving back
+     one position in the list, -1 after moving forward one position, -2 after
      moving forward two positions, etc.)
 
    * When `ttype` is `Transition.StartLayout` or `Transition.ToNewList`, 
@@ -851,6 +889,9 @@ Functions:
      type) with the specified name.  The texture used will be the texture
      for whatever object (fe.Image, fe.Text, fe.Listbox) the shader is
      drawing.
+   * `set_texture_param( name, image )` - Set the texture variable (sampler2D
+     GLSL type) with the specified name to the texture contained in "image".
+     "image" must be an instance of the `fe.Image` class.
 
 
 Constants

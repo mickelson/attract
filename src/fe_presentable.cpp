@@ -154,7 +154,16 @@ FeShader *FeBasePresentable::get_shader() const
 	return m_shader;
 }
 
-void FeBasePresentable::set_shader( FeShader *sh )
+FeShader *FeBasePresentable::script_get_shader() const
+{
+	if ( m_shader )
+		return m_shader;
+	else
+		return script_get_empty_shader();
+}
+
+
+void FeBasePresentable::script_set_shader( FeShader *sh )
 {
 	m_shader = sh;
 }
