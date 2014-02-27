@@ -429,6 +429,8 @@ void FeOverlay::input_map_dialog(
 		// no op
 	}
 
+	bool redraw=true;
+
 	const sf::Transform &t = m_fePresent.get_rotation_transform();
 	while ( m_wnd.isOpen() )
 	{
@@ -441,11 +443,19 @@ void FeOverlay::input_map_dialog(
 				return;
 		}
 
-		m_fePresent.tick( NULL );
-		m_wnd.clear();
-		m_wnd.draw( m_fePresent, t );
-		m_wnd.draw( message, t );
-		m_wnd.display();
+		if ( m_fePresent.tick( NULL ) )
+			redraw = true;
+
+		if ( redraw )
+		{
+			m_wnd.clear();
+			m_wnd.draw( m_fePresent, t );
+			m_wnd.draw( message, t );
+			m_wnd.display();
+			redraw = false;
+		}
+		else
+			sf::sleep( sf::milliseconds( 30 ) );
 	}
 }
 
@@ -740,6 +750,8 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 {
 	const sf::Transform &t = m_fePresent.get_rotation_transform();
 
+	bool redraw=true;
+
 	while ( m_wnd.isOpen() )
 	{
 		sf::Event ev;
@@ -778,15 +790,24 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 			}
 		}
 
-		m_fePresent.tick( NULL );
-		m_wnd.clear();
-		m_wnd.draw( m_fePresent, t );
+		if ( m_fePresent.tick( NULL ) )
+			redraw = true;
 
-		for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
-				itr < d.end(); ++itr )
-			m_wnd.draw( *(*itr), t );
+		if ( redraw )
+		{
+			m_wnd.clear();
+			m_wnd.draw( m_fePresent, t );
 
-		m_wnd.display();
+			for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
+					itr < d.end(); ++itr )
+				m_wnd.draw( *(*itr), t );
+
+			m_wnd.display();
+			redraw = false;
+		}
+		else
+			sf::sleep( sf::milliseconds( 30 ) );
+
 	}
 	return true;
 }
@@ -803,6 +824,8 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 
 	int cursor_pos=str.size();
 	cursor.setPosition( tp->setString( str, cursor_pos ) );
+
+	bool redraw=true;
 
 	while ( m_wnd.isOpen() )
 	{
@@ -824,6 +847,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 						str.erase( cursor_pos - 1, 1 );
 						cursor_pos--;
 					}
+					redraw = true;
 					break;
 
 				case 13: // Return (ignore here, deal with as keypress event)
@@ -832,6 +856,8 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				case 127: // Delete
 					if ( cursor_pos < (int)str.size() )
 						str.erase( cursor_pos, 1 );
+
+					redraw = true;
 					break;
 
 				default: // General text entry
@@ -841,6 +867,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 						str += ev.text.unicode;
 
 					cursor_pos++;
+					redraw = true;
 				}
 
 				break;
@@ -851,11 +878,15 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				case sf::Keyboard::Left:
 					if ( cursor_pos > 0 )
 						cursor_pos--;
+
+					redraw = true;
 					break;
 
 				case sf::Keyboard::Right:
 					if ( cursor_pos < (int)str.size() )
 						cursor_pos++;
+
+					redraw = true;
 					break;
 
 				case sf::Keyboard::Return:
@@ -871,19 +902,30 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			break;
 			}
 
-			cursor.setPosition( tp->setString( str, cursor_pos ) );
+			if ( redraw )
+				cursor.setPosition( tp->setString( str, cursor_pos ) );
 		}
 
-		m_fePresent.tick( NULL );
-		m_wnd.clear();
-		m_wnd.draw( m_fePresent, t );
+		if ( m_fePresent.tick( NULL ) )
+			redraw = true;
 
-		for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
-				itr < d.end(); ++itr )
-			m_wnd.draw( *(*itr), t );
+		if ( redraw )
+		{
+			m_wnd.clear();
+			m_wnd.draw( m_fePresent, t );
 
-		m_wnd.draw( cursor, t );
-		m_wnd.display();
+			for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
+					itr < d.end(); ++itr )
+				m_wnd.draw( *(*itr), t );
+
+			m_wnd.draw( cursor, t );
+			m_wnd.display();
+
+			redraw = false;
+		}
+		else
+			sf::sleep( sf::milliseconds( 30 ) );
+
 	}
 	return true;
 }
