@@ -21,7 +21,7 @@ Rom Extension(s);Extension(s) des ROM
 Additional Import Files;Fichiers additionels
 XML Mode;Mode XML
 Movie Path;Chemin des vidéos
-Movie Fallback Artwork;Artwork alternatif
+Movie Artwork;Artwork alternatif
 Add Artwork;Ajouter Artwork
 Generate Romlist;Générer la liste de ROM
 Delete this Emulator;Supprimer cet émulateur
@@ -54,6 +54,7 @@ _help_emu_add;Ajouter un nouvel émulateur
 #
 # Filter Settings Configuration
 #
+Enter Filter Name;Entrer le nom du filtre
 Rule Edit;Editer les règles
 Target;Cible
 Comparison;Comparaison
@@ -150,10 +151,14 @@ Random Game;Jeux au hasard
 Ambient Sounds;Son d'ambiance
 Startup Sound;Son au démarrage
 Game Return Sound;Son au retour du jeux
+Mouse Threshold;Seuil de la souris
+Joystick Threshold;Seuil du joystick
 
 _help_input_delete;Enlever ce contrôle
 _help_input_add;Ajouter un nouveau contrôle
-_help_input_sel;Configurer les contrôles
+_help_control_sel;Configurer les contrôles
+_help_joystick_threshold;Seuil d'amplitude des mouvements du joystick, de 1 à 100 (100=moins sensible)
+_help_mouse_threshold;Seuil d'amplitude des mouvements de la souris, de 1 à 100 (100=moins sensible)
 
 #
 # Sound Settings Configuration
@@ -163,14 +168,17 @@ Sound Volume;Volume général
 Ambient Volume;Volume des sons d'ambiances
 Movie Volume;Volume des vidéos
 _help_volume;Les valeurs possibles pour le volume vont de 0 (silence) à 100
-_help_sound;Assigner un son à cet événement/action
+_help_sound_sel;Assigner un son à cet événement/action
 
 #
 # Miscellaneous Settings Configuration
 #
 Configure / Miscellaneous;Configuration / Divers
-Screen Saver Timeout;Décompte économiseur d'écran
 Auto Rotate;Rotation automatique
+Hide Brackets in Game Title;Cacher les crochets dans le titre du jeux
+Launch Last Game on Startup;Lancer le dernier jeux au démarrage
+Confirm Favourites;Confirmer les favoris
+Layout Options;Options du Layout
 
 None;Non
 Right;Droite
@@ -188,9 +196,16 @@ _help_autorot;Auto-rotation correspondant à la rotation du dernier jeux joué
 _help_exit_command;Commande à executer en quittant (Confirmer) [exemple "sudo shutdown"]
 _help_default_font;Le nom de la police par défaut à utiliser
 _help_font_path;Répertoires contenant les polices (séparés par des points virgules)
-_help_screen_saver_timeout;Temps total en seconde à attendre pour activer l'économiseur d'écran.  0 pour désactiver
 _help_lists_menu_exit;Indiquer si une option de sortie doit être prévue dans le menu des listes
 _help_language;Sélectionner le language
+_help_list_layout_options;Configurer une option spécifique du Layout
+_help_hide_brackets;Cacher le texte entre crochets lors de l'affichage du titre du jeux
+_help_autolaunch_last_game;Lancer automatiquement au démarrage le dernier jeux joué
+_help_confirm_favs;Confirmer l'addition/suppression des favoris
+
+Configure Screen Saver;Configurer l'économiseur d'écran
+Screen Saver Timeout;Décompte économiseur d'écran
+_help_screen_saver_timeout;Temps total en seconde à attendre pour activer l'économiseur d'écran.  0 pour désactiver
 
 #
 # Plug-in Configuration
@@ -213,13 +228,28 @@ Emulators;Emulateurs
 Lists;Listes
 Controls;Contrôles
 Sound;Son
+Screen Saver;Economiseur d'écran
 Plug-ins;Plug-in
 General;Général
 Back;Retour
+
 _help_emulators;Configurer les émulateurs
 _help_lists;Configurer les listes d'affichage
 _help_controls;Configurer les contrôles
+_help_screen_saver;Configurer l'économiseur d'écran
 _help_sound;Configurer le volume et les affectations sonores
 _help_plugins;Configurer les plug-ins
 _help_misc;Configurations diverses
 Exit menu;Quitter le menu
+
+_sort_regexp;^(The |Vs\. )
+
+#TODO:
+#
+Add/Remove Favourite;Add/Remove Favourite
+Next Favourite;Next Favourite
+Previous Favourite;Previous Favourite
+Replay Last Game;Replay Last Game
+DisplayType;DisplayType
+DisplayCount;DisplayCount
+Favourite;Favourite
