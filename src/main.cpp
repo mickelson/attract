@@ -268,8 +268,9 @@ int main(int argc, char *argv[])
 	// display
 	//
 	bool config_mode = ( feSettings.lists_count() < 1 ) ? true : false;
+	bool exit_selected=false;
 
-	while (window.isOpen())
+	while (window.isOpen() && (!exit_selected))
 	{
 		if ( config_mode )
 		{
@@ -314,7 +315,11 @@ int main(int argc, char *argv[])
 		{
 			FeInputMap::Command c = feSettings.map_input( ev );
 
-			if (( ev.type == sf::Event::MouseMoved )
+			if ( ev.type == sf::Event::Closed )
+			{
+				window.close();
+			}
+			else if (( ev.type == sf::Event::MouseMoved )
 					&& ( feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y )))
 			{
 				// We reset the mouse if we are capturing it and it has moved outside of its bounding box
@@ -373,7 +378,7 @@ int main(int argc, char *argv[])
 						//
 						if ( retval < 1 )
 						{
-							window.close();
+							exit_selected = true;
 							if ( retval == 0 )
 								feSettings.exit_command();
 						}
@@ -383,7 +388,7 @@ int main(int argc, char *argv[])
 					break;
 
 				case FeInputMap::ExitNoMenu:
-					window.close();
+					exit_selected = true;
 					break;
 
 				case FeInputMap::ReplayLastGame:
@@ -508,7 +513,16 @@ int main(int argc, char *argv[])
 		soundsys.tick();
 	}
 
-	fePresent.on_stop_frontend( &window );
+	if ( window.isOpen() )
+	{
+		fePresent.on_stop_frontend( &window );
+		window.close();
+	}
+	else
+	{
+		fePresent.on_stop_frontend( NULL );
+	}
+
 	soundsys.stop();
 	feSettings.save_state();
 	return 0;
