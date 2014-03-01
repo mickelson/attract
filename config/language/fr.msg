@@ -71,12 +71,15 @@ Title;Titre
 Emulator;Emulateur
 CloneOf;Clone de
 Year;Année
-anufacturer;Fabriquant
+Manufacturer;Fabriquant
 Category;Catégorie
 Players;Joueurs
 Rotation;Rotation
 Control;Contrôle
 Status;Etat
+DisplayType;Afficher type
+DisplayCount;Afficher compteur
+Favourite;Favoris
 equals;est égal à
 does not equal;n'est pas égal à
 contains;contient
@@ -148,6 +151,10 @@ Exit to Desktop;Sortie vers le bureau
 Screenshot;Photo écran
 Configure;Configurer
 Random Game;Jeux au hasard
+Add/Remove Favourite;Ajouter/Supprimer Favoris
+Next Favourite;Favoris suivant
+Previous Favourite;Favoris précédent
+Replay Last Game;Rejouer au dernier jeux
 Ambient Sounds;Son d'ambiance
 Startup Sound;Son au démarrage
 Game Return Sound;Son au retour du jeux
@@ -243,13 +250,3 @@ _help_misc;Configurations diverses
 Exit menu;Quitter le menu
 
 _sort_regexp;^(The |Vs\. )
-
-#TODO:
-#
-Add/Remove Favourite;Add/Remove Favourite
-Next Favourite;Next Favourite
-Previous Favourite;Previous Favourite
-Replay Last Game;Replay Last Game
-DisplayType;DisplayType
-DisplayCount;DisplayCount
-Favourite;Favourite

@@ -875,6 +875,14 @@ The class representing a GLSL shader.  Instances of this class are returned
 by the `fe.add_shader()` function.  This class cannot be otherwise
 instantiated in a script.
 
+Attributes:
+
+   * `type` - Get the shader type.   Can be one of the following values:
+      - `Shader.VertexAndFragment`
+      - `Shader.Vertex`
+      - `Shader.Fragment`
+      - `Shader.Empty`
+
 Functions:
 
    * `set_param( name, f )` - Set the float variable (float GLSL type) with

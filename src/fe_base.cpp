@@ -26,8 +26,8 @@
 #include <fstream>
 
 #define FE_NAME_D			"Attract-Mode"
-#define FE_VERSION_D 			"1.1.1"
-const int FE_VERSION_NUM		= 111;
+#define FE_VERSION_D 			"1.2.0"
+const int FE_VERSION_NUM		= 120;
 
 const char *FE_NAME			= FE_NAME_D;
 const char *FE_COPYRIGHT		= FE_NAME_D " " FE_VERSION_D \
@@ -36,18 +36,18 @@ const char *FE_VERSION 			= FE_VERSION_D;
 
 const char *FE_WHITESPACE=" \t\r";
 
-void FeBaseConfigurable::invalid_setting( 
+void FeBaseConfigurable::invalid_setting(
 					const std::string & fn,
-					const char *base, 
-					const std::string &setting, 
+					const char *base,
+					const std::string &setting,
 					const char **valid1,
 					const char **valid2,
 					const char *label )
 {
-	std::cout << "Unrecognized \"" << base << "\" " << label 
+	std::cout << "Unrecognized \"" << base << "\" " << label
 					<< " of \"" << setting << "\" in file: " << fn << ".";
 	int i=0;
-	if (valid1[i]) 
+	if (valid1[i])
 		std::cout << "  Valid " << label <<"s are: " << valid1[i++];
 
 	while (valid1[i])
