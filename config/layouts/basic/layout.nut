@@ -4,7 +4,7 @@
 fe.layout.width=640;
 fe.layout.height=480;
 
-fe.add_artwork( "screen", 348, 152, 262, 262 );
+fe.add_artwork( "snap", 348, 152, 262, 262 );
 fe.add_artwork( "marquee", 348, 64, 262, 72 );
 
 local l = fe.add_listbox( 32, 64, 262, 352 );

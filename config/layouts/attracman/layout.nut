@@ -45,7 +45,7 @@ lb.rows = 13;
 lb.charsize = 10;
 
 fe.add_artwork( "marquee", 144, 24, 168, 48 );
-fe.add_artwork( "screen", 240, 96, 192, 192 );
+fe.add_artwork( "snap", 240, 96, 192, 192 );
 fe.add_image( "field.png", 0, 0, 456, 336 );
 fe.add_text( "[ListTitle]", 118, 316, 220, 14 );
 

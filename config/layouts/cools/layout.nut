@@ -104,10 +104,8 @@ fe.add_transition_callback( "fancy_transitions" );
 function fancy_transitions( ttype, var, ttime ) {
 	switch ( ttype )
 	{
-	case Transition.StartLayout:
 	case Transition.ToNewList:
 	case Transition.ToNewSelection:
-	case Transition.EndLayout:
 		gametitleshadow.msg = trimmed_name( var );
 		gametitle.msg = trimmed_name( var );
 		copy.msg = trimmed_copy ( var );

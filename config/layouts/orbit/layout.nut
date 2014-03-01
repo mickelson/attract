@@ -92,7 +92,7 @@ class Marquee {
 	}
 }
 
-fe.add_artwork( "screen", 224, 59, 352, 264 );
+fe.add_artwork( "snap", 224, 59, 352, 264 );
 local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
 frame.shader = yes_shader;
 
