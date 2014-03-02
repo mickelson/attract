@@ -35,6 +35,19 @@ extern const char *FE_EMULATOR_FILE_EXTENSION;
 
 extern const char *FE_LAYOUT_UI_KEY_FILE;
 
+// A container for each task when importing/building romlists from the command line
+class FeImportTask
+{
+public:
+	FeImportTask( const std::string &fn, const std::string &en )
+		: file_name( fn ), emulator_name( en )
+	{
+	};
+
+	std::string file_name;		// if empty, then we build romlist for specified emulator
+	std::string emulator_name;
+};
+
 class FeSettings : public FeBaseConfigurable
 {
 public:
@@ -220,10 +233,12 @@ public:
 	bool confirm_favs() const { return m_confirm_favs; }
 
 	//
-	// This function implements the command-line romlist generation
-	// A non-existing filename is chosen for the resulting romlist
+	// This function implements command-line romlist generation/imports
+	// If output_name is empty, then a non-existing filename is chosen for
+	// the resulting romlist file
 	//
-	bool build_romlist( const std::vector< std::string > &emu_list );
+	bool build_romlist( const std::vector< FeImportTask > &task_list,
+							const std::string &output_name );
 
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,

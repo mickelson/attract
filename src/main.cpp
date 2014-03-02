@@ -49,12 +49,15 @@ void process_args( int argc, char *argv[],
 	//
 	// Deal with command line arguments
 	//
-	std::vector<std::string> romlist_emulators;
+	std::vector <FeImportTask> task_list;
+	std::string output_name;
+
 	int next_arg=1;
 
 	while ( next_arg < argc )
 	{
-		if ( strcmp( argv[next_arg], "--config" ) == 0 )
+		if (( strcmp( argv[next_arg], "-c" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--config" ) == 0 ))
 		{
 			next_arg++;
 			if ( next_arg < argc )
@@ -68,7 +71,8 @@ void process_args( int argc, char *argv[],
 				exit(1);
 			}
 		}
-		else if ( strcmp( argv[next_arg], "--font" ) == 0 )
+		else if (( strcmp( argv[next_arg], "-f" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--font" ) == 0 ))
 		{
 			next_arg++;
 			if ( next_arg < argc )
@@ -82,26 +86,70 @@ void process_args( int argc, char *argv[],
 				exit(1);
 			}
 		}
-		else if ( strcmp( argv[next_arg], "--build-rom-list" ) == 0 )
+		else if (( strcmp( argv[next_arg], "-b" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--build-romlist" ) == 0 ))
 		{
 			next_arg++;
+			int first_cmd_arg = next_arg;
 
 			for ( ; next_arg < argc; next_arg++ )
 			{
 				if ( argv[next_arg][0] == '-' )
 					break;
-				romlist_emulators.push_back( argv[next_arg] );
+
+				task_list.push_back( FeImportTask( "", argv[next_arg] ));
 			}
 
-			if ( romlist_emulators.empty() )
+			if ( next_arg == first_cmd_arg )
 			{
-				std::cerr << "Error, no target emulators specified with --build-rom-list option."
+				std::cerr << "Error, no target emulators specified with --build-romlist option."
 							<<  std::endl;
 				exit(1);
 			}
-
 		}
-		else if ( strcmp( argv[next_arg], "--version" ) == 0 )
+		else if (( strcmp( argv[next_arg], "-i" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--import-romlist" ) == 0 ))
+		{
+			std::string my_filename;
+			std::string my_emulator;
+
+			next_arg++;
+			if ( next_arg < argc )
+			{
+				my_filename = argv[next_arg];
+				next_arg++;
+			}
+			else
+			{
+				std::cerr << "Error, no filename specified with --import-romlist option." << std::endl;
+				exit(1);
+			}
+
+			if ( ( next_arg < argc ) && ( argv[next_arg][0] != '-' ) )
+			{
+				my_emulator = argv[ next_arg ];
+				next_arg++;
+			}
+
+			task_list.push_back( FeImportTask( my_filename, my_emulator ));
+		}
+		else if (( strcmp( argv[next_arg], "-o" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--output" ) == 0 ))
+		{
+			next_arg++;
+			if ( next_arg < argc )
+			{
+				output_name = argv[next_arg];
+				next_arg++;
+			}
+			else
+			{
+				std::cerr << "Error, no output filename specified with --output option." << std::endl;
+				exit(1);
+			}
+		}
+		else if (( strcmp( argv[next_arg], "-v" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--version" ) == 0 ))
 		{
 			std::cout << FE_NAME << " " << FE_VERSION << " ("
 				<< get_OS_string()
@@ -128,7 +176,8 @@ void process_args( int argc, char *argv[],
 		else
 		{
 			int retval=1;
-			if ( strcmp( argv[next_arg], "--help" ) != 0 )
+			if (( strcmp( argv[next_arg], "-h" ) != 0 )
+				&& ( strcmp( argv[next_arg], "--help" ) != 0 ))
 			{
 				std::cerr << "Unrecognized command line option: "
 					<< argv[next_arg] <<  std::endl;
@@ -136,22 +185,35 @@ void process_args( int argc, char *argv[],
 			}
 
 			std::cout << FE_COPYRIGHT << std::endl
-				<< "Usage: " << argv[0] << " [option...]" << std::endl
-				<< "OPTIONS:" << std::endl
-				<< "\t--build-rom-list <emu(s)...>: build rom list for specified emulators" << std::endl
-				<< "\t--config <config_directory>: specify config directory" << std::endl
-				<< "\t--font <font_name>: specify default font name" << std::endl
-				<< "\t--help: show this message" << std::endl
-				<< "\t--version: show version information" << std::endl;
+				<< "Usage: " << argv[0] << " [option...]" << std::endl << std::endl
+				<< "ROMLIST IMPORT/BUILD OPTIONS:" << std::endl
+				<< "  -b, --build-romlist <emu> [emu(s)...]" << std::endl
+				<< "     Builds a romlist using the configuration for the specified emulator(s)" << std::endl
+				<< "  -i, --import-romlist <file> [emu]" << std::endl
+				<< "     Import romlist from the specified file. Supported formats:" << std::endl
+				<< "        *.lst (Mamewah/Wahcade!)" << std::endl
+				<< "        *.txt (Attract-Mode)" << std::endl
+				<< "        *.xml (HyperSpin)" << std::endl
+				<< "     The emulator to use for list entries can be specified as well" << std::endl
+				<< "  -o, --output <romlist>" << std::endl
+				<< "     Specify the name of the romlist to create, overwriting any existing"
+				<< std::endl << std::endl
+				<< "OTHER OPTIONS:" << std::endl
+				<< "  -c, --config <config_directory>" << std::endl
+				<< "     Specify the configuration to use" << std::endl
+				<< "  -f, --font <font_name>" << std::endl
+				<< "     Specify the default font to use" << std::endl
+				<< "  -h, --help: Show this message" << std::endl
+				<< "  -v, --version: Show version information" << std::endl;
 			exit( retval );
 		}
 	}
 
-	if ( !romlist_emulators.empty() )
+	if ( !task_list.empty() )
 	{
 		FeSettings feSettings( config_path, cmdln_font );
 		feSettings.load();
-		int retval = feSettings.build_romlist( romlist_emulators );
+		int retval = feSettings.build_romlist( task_list, output_name );
 		exit( retval );
 	}
 }

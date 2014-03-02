@@ -28,6 +28,7 @@
 #include <fstream>
 #include <list>
 #include <map>
+#include <strings.h> // strcasecmp()
 
 extern const char *FE_ROMLIST_SUBDIR;
 
@@ -130,7 +131,7 @@ void write_romlist( const std::string &filename,
 		// one line header showing what the columns represent
 		//
 		outfile << "#" << FeRomInfo::indexStrings[i++];
-		while ( FeRomInfo::indexStrings[i] != NULL )
+		while ( i < FeRomInfo::Favourite )
 			outfile << ";" << FeRomInfo::indexStrings[i++];
 		outfile << std::endl;
 
@@ -144,12 +145,20 @@ void write_romlist( const std::string &filename,
 	}
 }
 
+struct myclasscmp
+{
+	bool operator() ( const std::string &lhs, const std::string &rhs )
+	{
+		return ( strcasecmp( lhs.c_str(), rhs.c_str() ) < 0 );
+	}
+};
+
 void ini_import( const std::string &filename,
 				std::list<FeRomInfo> &romlist,
 				FeRomInfo::Index index,
 				const std::string &init_tag )
 {
-	std::map <std::string, std::string> my_map;
+	std::map <std::string, std::string, myclasscmp> my_map;
 
 	// create entries in the map for each name we want to find
 	for ( std::list<FeRomInfo>::iterator itr=romlist.begin();
@@ -192,7 +201,7 @@ void ini_import( const std::string &filename,
 			size_t pos=0;
 			token_helper( line, pos, name, "=" );
 
-			std::map<std::string, std::string>::iterator itr;
+			std::map<std::string, std::string, myclasscmp>::iterator itr;
 			itr = my_map.find( name );
 			if ( itr != my_map.end() )
 			{
@@ -220,8 +229,8 @@ void ini_import( const std::string &filename,
 		}
 	}
 
-	std::cout << "Found info for " << count << " entries.  File: "
-					<< filename << std::endl;
+	std::cout << "[Import " << filename << "] - found info for " << count
+		<< " entries." << std::endl;
 }
 
 void apply_import_extras( const FeEmulatorInfo &emulator,
@@ -255,31 +264,184 @@ void apply_import_extras( const FeEmulatorInfo &emulator,
 	} while ( pos < iextras.size() );
 }
 
+bool import_mamewah( const std::string &input_filename,
+				const std::string &emulator_name,
+				std::list<FeRomInfo> &romlist )
+{
+	// Map the lines of the Mamewah / Wahcade! romlist file to our RomInfo structure
+	//
+	const FeRomInfo::Index wah_map[] =
+	{
+		FeRomInfo::Romname,			// Name
+		FeRomInfo::Title,				// Description
+		FeRomInfo::Year,
+		FeRomInfo::Manufacturer,
+		FeRomInfo::Cloneof,
+		FeRomInfo::LAST_INDEX,		// Romof
+		FeRomInfo::DisplayType,
+		FeRomInfo::Rotation,
+		FeRomInfo::Control,
+		FeRomInfo::Status,
+		FeRomInfo::LAST_INDEX,		// Colour status
+		FeRomInfo::LAST_INDEX,		// Sound status
+		FeRomInfo::Category
+	};
+
+	std::ifstream myfile( input_filename.c_str() );
+	if ( !myfile.is_open() )
+	{
+		std::cerr << "Error opening file: " << input_filename << std::endl;
+		return false;
+	}
+
+	int count=0;
+	FeRomInfo current_rom;
+
+	while ( myfile.good() )
+	{
+		std::string line;
+		getline( myfile, line );
+
+		int index = ( count % 13 );
+
+		if ( wah_map[ index ] != FeRomInfo::LAST_INDEX )
+		{
+			size_t l = line.find_last_not_of( FE_WHITESPACE );
+			if ( l != std::string::npos )
+			{
+				current_rom.set_info(
+					wah_map[ index ],
+					line.substr( 0, l+1 ) );
+			}
+		}
+
+		if ( index == 12 )
+		{
+			current_rom.set_info(
+					FeRomInfo::Emulator,
+					emulator_name );
+
+			romlist.push_back( current_rom );
+			current_rom.clear();
+			count = 0;
+		}
+		else
+			count++;
+	}
+
+	if ( count > 1 )
+	{
+		std::cout << "Warning: Unexpected end of file encountered: " << input_filename
+			<< ", this probably means the import failed." << std::endl;
+	}
+
+	myfile.close();
+	return true;
+}
+
 }; // end namespace
 
-bool FeSettings::build_romlist( const std::vector <std::string> &emu_names )
+bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
+						const std::string &output_name )
 {
 	std::list<FeRomInfo> total_romlist;
-   std::string name, list_name, path;
+	std::string best_name, list_name, path;
 
-	for ( std::vector<std::string>::const_iterator itr=emu_names.begin();
-			itr < emu_names.end(); ++itr )
+	for ( std::vector<FeImportTask>::const_iterator itr=task_list.begin();
+			itr < task_list.end(); ++itr )
 	{
-		FeEmulatorInfo *emu = get_emulator( *itr );
-		if ( emu == NULL )
+		if ( (*itr).file_name.empty() )
 		{
-			std::cout << "Error: Invalid -build-rom-list target: " <<  (*itr)
-				<< std::endl;
+			// Build romlist task
+			FeEmulatorInfo *emu = get_emulator( (*itr).emulator_name );
+			if ( emu == NULL )
+			{
+				std::cout << "Error: Invalid -build-rom-list target: " <<  (*itr).emulator_name
+					<< std::endl;
+			}
+			else
+			{
+				std::list<FeRomInfo> romlist;
+
+				best_name = emu->get_info( FeEmulatorInfo::Name );
+
+				build_basic_romlist( *emu, romlist );
+
+				apply_listxml( *emu, romlist );
+				apply_import_extras( *emu, romlist );
+
+				total_romlist.splice( total_romlist.end(), romlist );
+			}
 		}
 		else
 		{
+			// import romlist from file task
 			std::list<FeRomInfo> romlist;
-			name = emu->get_info( FeEmulatorInfo::Name );
+			std::string emu_name;
 
-			build_basic_romlist( *emu, romlist );
+			if ( (*itr).emulator_name.empty() )
+			{
+				// deduce the emulator name from the filename provided
+				size_t my_start = (*itr).file_name.find_last_of( "\\/" );
+				if ( my_start == std::string::npos ) // if there is no / we start at the beginning
+					my_start = 0;
+				else
+					my_start += 1;
 
-			apply_listxml( *emu, romlist );
-			apply_import_extras( *emu, romlist );
+				size_t my_end = (*itr).file_name.find_last_of( "." );
+				if ( my_end != std::string::npos )
+					emu_name = (*itr).file_name.substr( my_start, my_end - my_start  );
+			}
+			else
+				emu_name = (*itr).emulator_name;
+
+			best_name = emu_name;
+
+			if ( tail_compare( (*itr).file_name, ".txt" ) )
+			{
+				// Attract-Mode format list
+				//
+				FeRomList temp_list;
+				temp_list.load_from_file( (*itr).file_name, ";" );
+
+				for ( int i=0; i< temp_list.size(); i++ )
+					romlist.push_back( temp_list[i] );
+			}
+			else if ( tail_compare( (*itr).file_name, ".lst" ) )
+			{
+				// Mamewah/Wahcade! format list
+				//
+				import_mamewah( (*itr).file_name, emu_name, romlist );
+			}
+			else if ( tail_compare( (*itr).file_name, ".xml" ) )
+			{
+				// HyperSpin format list
+				//
+				FeHyperSpinXMLParser my_parser( romlist );
+				if ( my_parser.parse( (*itr).file_name ) )
+				{
+					// Update the emulator entries
+					for ( std::list<FeRomInfo>::iterator itr=romlist.begin(); itr != romlist.end(); ++itr )
+						(*itr).set_info( FeRomInfo::Emulator, emu_name );
+				}
+			}
+			else
+			{
+				std::cerr << "Error: Unsupported --import-rom-list file: "
+					<<  (*itr).file_name << std::endl;
+			}
+
+			std::cout << "[Import " << (*itr).file_name << "] - Imported " << romlist.size() << " entries."
+				<< std::endl;
+
+			FeEmulatorInfo *emu = get_emulator( emu_name );
+			if ( emu == NULL )
+			{
+				std::cout << "Warning: The emulator specified with --import-rom-list was not found: "
+					<<  emu_name << std::endl;
+			}
+			else
+				apply_import_extras( *emu, romlist );
 
 			total_romlist.splice( total_romlist.end(), romlist );
 		}
@@ -291,14 +453,22 @@ bool FeSettings::build_romlist( const std::vector <std::string> &emu_names )
 	total_romlist.sort( FeRomListCompare::cmp );
 	FeRomListCompare::close_rex();
 
-	if ( emu_names.size() > 1 )
-		name = "multi";
+	if ( task_list.size() > 1 )
+		best_name = "multi";
 
 	path = get_config_dir();
 	confirm_directory( path, FE_ROMLIST_SUBDIR );
 
 	path += FE_ROMLIST_SUBDIR;
-	get_available_filename( path, name, FE_ROMLIST_FILE_EXTENSION, list_name );
+
+	// if we weren't given a specific output name, then we come up with a name
+	// that doesn't exist already
+	//
+	if ( output_name.empty() )
+		get_available_filename( path, best_name, FE_ROMLIST_FILE_EXTENSION, list_name );
+	else
+		list_name = path + output_name + FE_ROMLIST_FILE_EXTENSION;
+
 	write_romlist( list_name, total_romlist );
 
 	return true;

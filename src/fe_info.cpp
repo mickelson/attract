@@ -117,6 +117,12 @@ void FeRomInfo::dump( void ) const
 	std::cout << std::endl;
 }
 
+void FeRomInfo::clear()
+{
+	for ( int i=0; i < LAST_INDEX; i++ )
+		m_info[i].clear();
+}
+
 SQRex *FeRomListCompare::m_rex = NULL;
 
 void FeRomListCompare::init_rex( const std::string &re_mask )

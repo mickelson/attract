@@ -27,7 +27,7 @@
 #include <list>
 #include <map>
 #include <vector>
-class FeRomInfo;
+#include "fe_info.hpp"
 
 class FeXMLParser
 {
@@ -108,6 +108,21 @@ private:
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
 	void clear_parse_state();
+};
+
+class FeHyperSpinXMLParser : private FeXMLParser
+{
+public:
+	FeHyperSpinXMLParser( std::list<FeRomInfo> & );
+	bool parse( const std::string &filename );
+
+private:
+	void start_element( const char *, const char ** );
+	void end_element( const char * );
+
+	std::list<FeRomInfo> &m_romlist;
+	FeRomInfo m_current_rom;
+	bool m_collect_data;
 };
 
 #endif

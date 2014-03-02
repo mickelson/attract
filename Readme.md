@@ -72,9 +72,12 @@ be selected from the "Sound" menu when in config mode and mapped to an action
 or event.
 
 **ARTWORK:** Attract-Mode supports PNG, JPEG, GIF, BMP and TGA image formats.
-When deciding what image file to use for a particular artwork type
-(default artworks are "marquee" and "screen"), Attract-Mode will use the
-artwork/movie selection order set out below.
+When deciding what image file to use for a particular artwork type, Attract-
+Mode will use the artwork/movie selection order set out below.  The default
+artworks in Attract-Mode are: "marquee" (for cabinet marquee images),
+"snap" (for game screen shots), "flyer" (for game flyer/box art) and "wheel"
+(for HyperSpin wheel art).  You can add others as needed in the emulator
+configuration menu.
 
 **MOVIE:** Attract-Mode should support any movie format supported by FFmpeg.
 The movie to play is decided in the order set out below.
@@ -111,11 +114,31 @@ file that can be edited by most common spreadsheet programs (be sure to
 load it as "Text CSV").  The file has one game entry per line, with the very 
 first line of the file specifying what each column represents.
 
-In addition to the Romlist generation function available in config mode,
+In addition to the romlist generation function available in config mode,
 Attract-Mode can generate a romlist for multiple emulators from the command
 line using the following command: 
 
-		attract --build-rom-list [emulator names...]
+		attract --build-romlist <emulator names...>
+
+You can also import romlists from MameWah/Wahcade! (.lst), Attract-Mode
+(.txt) and HyperSpin (.xml) using the following command:
+
+		attract --import-romlist <file> [emulator name]
+
+The --build-romlist and --import-romlist options can be chained together in
+all sorts of strange and wonderful ways to generate combined Attract-Mode
+romlists. So:
+
+`attract --import-romlist mame.lst --import-romlist nintendo.lst nestopia`
+
+will combine the entries from the mame.lst and nintendo.lst files (located
+in the current directory) into a single Attract-Mode romlist.  The "mame"
+emulator will be used for the mame.lst games, while the "nestopia" emulator
+will be used for the nintendo.lst games.
+
+If you wish to specify the name of the created romlist at the command
+line, you can do so with the `--output <name>` option.  Beware that this will
+overwrite any existing Attract-Mode romlist with the specified name.
 
 [Compile.md]: Compile.md
 [Layouts.md]: Layouts.md

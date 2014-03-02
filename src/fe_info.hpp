@@ -69,6 +69,8 @@ public:
 	void dump( void ) const;
 	std::string as_output( void ) const;
 
+	void clear();
+
 private:
 	FeRomInfo &operator=( const FeRomInfo & );
 	std::string get_info_escaped( int ) const;
