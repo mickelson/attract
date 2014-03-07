@@ -508,9 +508,8 @@ int main(int argc, char *argv[])
 								fePresent.load_layout( &window );
 							else
 								fePresent.update_to_new_list( &window );
-
-							redraw=true;
 						}
+						redraw=true;
 					}
 					break;
 
@@ -524,6 +523,8 @@ int main(int argc, char *argv[])
 							feSettings.set_filter( list_index );
 							fePresent.update_to_new_list( &window );
 						}
+
+						redraw=true;
 					}
 					break;
 
@@ -544,6 +545,7 @@ int main(int argc, char *argv[])
 							{
 								feSettings.set_current_fav( new_state );
 							}
+							redraw=true;
 						}
 						else
 						{
