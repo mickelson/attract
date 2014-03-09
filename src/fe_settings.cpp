@@ -1064,6 +1064,20 @@ FeEmulatorInfo *FeSettings::get_emulator( const std::string & emu )
 	return NULL;
 }
 
+namespace
+{
+	const char *EMU_TOKEN = "[emulator]";
+
+	void emulator_substitution( FeEmulatorInfo &emu,
+		FeEmulatorInfo::Index i,
+		const std::string &name )
+	{
+		std::string temp = emu.get_info( i );
+		if ( perform_substitution( temp, EMU_TOKEN, name ) )
+			emu.set_info( i, temp );
+	}
+}
+
 FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
 {
 	// If an emulator with the given name already exists we return it
@@ -1079,7 +1093,27 @@ FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
 
 	std::string defaults_file;
 	if ( internal_resolve_config_file( defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
+	{
 		new_emu.load_from_file( defaults_file );
+
+		//
+		// Find and replace the [emulator] token, replace with the specified
+		// name.  This is only done in the path fields.  It is not done for
+		// the FeEmulator::Command field.
+		//
+		emulator_substitution( new_emu, FeEmulatorInfo::Rom_path, emu );
+		emulator_substitution( new_emu, FeEmulatorInfo::Movie_path, emu );
+
+		std::vector<std::pair<std::string,std::string> > al;
+		std::vector<std::pair<std::string,std::string> >::iterator itr;
+		new_emu.get_artwork_list( al );
+		for ( itr=al.begin(); itr!=al.end(); ++itr )
+		{
+			std::string temp = (*itr).second;
+			if ( perform_substitution( temp, EMU_TOKEN, emu ) )
+				new_emu.set_artwork( (*itr).first, temp );
+		}
+	}
 
 	m_emulators.push_back( new_emu );
 	return &(m_emulators.back());
