@@ -249,4 +249,4 @@ _help_plugins;Configurer les plug-ins
 _help_misc;Configurations diverses
 Exit menu;Quitter le menu
 
-_sort_regexp;^(The |Vs\. )
+_sort_regexp;^(Vs\. The |The |Vs\. )
