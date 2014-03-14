@@ -35,6 +35,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#include <SFML/Config.hpp>
+
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -353,7 +355,6 @@ bool get_filename_from_base( std::vector<std::string> &list,
 bool token_helper( const std::string &from,
 	size_t &pos, std::string &token, const char *sep )
 {
-	std::string to;
 	bool retval( false ), in_quotes( false ), escaped( false );
 	size_t end;
 
@@ -379,16 +380,13 @@ bool token_helper( const std::string &from,
 		end = from.find_first_of( sep, pos );
 	}
 
-
+	size_t old_pos = pos;
 	if ( end == std::string::npos )
 	{
-		to = from.substr( pos );
 		pos = from.size();
 	}
 	else
 	{
-		to = from.substr( pos, end - pos );
-
 		if ( in_quotes )
 			pos = end + 2; // skip over quote and sep
 		else
@@ -399,56 +397,21 @@ bool token_helper( const std::string &from,
 
 	// clean out leading and trailing whitespace from token
 	//
-	size_t f= to.find_first_not_of( FE_WHITESPACE );
+	size_t f= from.find_first_not_of( FE_WHITESPACE, old_pos );
 	if ( f == std::string::npos )
 	{
 		token.clear();
 	}
 	else
 	{
-		size_t l = to.find_last_not_of( FE_WHITESPACE );
-		token = to.substr( f, l-f+1 );
+		size_t l = from.find_last_not_of( FE_WHITESPACE, end-1 );
+		token = from.substr( f, l-f+1 );
 	}
 
 	if ( escaped )
 		perform_substitution( token, "\\\"", "\"" );
 
 	return retval;
-}
-
-sf::Color colour_helper( const std::string &value )
-{
-	// format: R,G,B,A
-	// values from 0 to 255
-	sf::Color c;
-	c.a = 255;
-
-	size_t pos=0;
-	std::string val;
-
-	token_helper( value, pos, val, "," );
-
-	if ( pos >= value.size() )
-		return c;
-
-	c.r = as_int( val );
-
-	token_helper( value, pos, val, "," );
-	c.g = as_int( val );
-
-	if ( pos >= value.size() )
-		return c;
-
-	token_helper( value, pos, val, "," );
-	c.b = as_int( val );
-
-	if ( pos >= value.size() )
-		return c;
-
-	token_helper( value, pos, val, "," );
-	c.a = as_int( val );
-
-	return c;
 }
 
 int perform_substitution( std::string &target,

@@ -25,7 +25,6 @@
 
 #include <vector>
 #include <string>
-#include <SFML/Graphics/Color.hpp>
 
 #ifdef FE_DEBUG
 #include <cassert>
@@ -36,8 +35,6 @@
 //
 bool token_helper( const std::string &from,
 		size_t &pos, std::string &token, const char *sep=";" );
-
-sf::Color colour_helper( const std::string &value );
 
 //
 // Substitute all occurrences of "from" that appear in "target" with
