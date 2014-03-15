@@ -130,7 +130,8 @@ void FeMameXMLParser::start_element(
 			const char *element,
 			const char **attribute )
 {
-	if ( strcmp( element, "game" ) == 0 )
+	if (( strcmp( element, "game" ) == 0 )
+		|| ( strcmp( element, "machine" ) == 0 ))
 	{
 		int i;
 		for ( i=0; attribute[i]; i+=2 )
@@ -265,7 +266,8 @@ void FeMameXMLParser::start_element(
 
 void FeMameXMLParser::end_element( const char *element )
 {
-	if ( strcmp( element, "game" ) == 0 )
+	if (( strcmp( element, "game" ) == 0 )
+		|| ( strcmp( element, "machine" ) == 0 ))
 	{
 		if ( m_collect_data )
 		{
@@ -394,6 +396,7 @@ void FeMessXMLParser::clear_parse_state()
 	m_year.clear();
 	m_man.clear();
 	m_fuzzydesc.clear();
+	m_cloneof.clear();
 }
 
 void FeMessXMLParser::start_element(
@@ -419,6 +422,10 @@ void FeMessXMLParser::start_element(
 					}
 				}
 			}
+			else if ( strcmp( attribute[i], "cloneof" ) == 0 )
+			{
+				m_cloneof = attribute[i+1];
+			}
 		}
 	}
 	else if (( strcmp( element, "description" ) == 0 )
@@ -435,10 +442,7 @@ void FeMessXMLParser::end_element( const char *element )
 	{
 		if ( m_keep_rom )
 		{
-			(*m_itr).set_info( FeRomInfo::Title, m_description );
-			(*m_itr).set_info( FeRomInfo::Year, m_year );
-			(*m_itr).set_info( FeRomInfo::Manufacturer, m_man );
-			(*m_itr).set_info( FeRomInfo::Cloneof, m_name );
+			set_info_values( *m_itr );
 		}
 		else
 		{
@@ -448,18 +452,19 @@ void FeMessXMLParser::end_element( const char *element )
 				if ( m_description.compare(
 							(*m_itr).get_info( FeRomInfo::Romname ) ) == 0 )
 				{
-					(*m_itr).set_info( FeRomInfo::Title, m_description );
-					(*m_itr).set_info( FeRomInfo::Year, m_year );
-					(*m_itr).set_info( FeRomInfo::Manufacturer, m_man );
-					(*m_itr).set_info( FeRomInfo::Cloneof, m_name );
+					set_info_values( *m_itr );
 				}
-				else if (( (*m_itr).get_info( FeRomInfo::Cloneof ).empty() )
-						&& ( (*m_itr).get_info( FeRomInfo::Title ).find(
-									m_fuzzydesc ) != std::string::npos ))
+				else if ( (*m_itr).get_info( FeRomInfo::BuildAltName ).empty() )
 				{
-					(*m_itr).set_info( FeRomInfo::Year, m_year );
-					(*m_itr).set_info( FeRomInfo::Manufacturer, m_man );
-					(*m_itr).set_info( FeRomInfo::Cloneof, m_name );
+					// Try using a "fuzzy" match that ignores brackets.
+					//
+					const std::string &temp = (*m_itr).get_info( FeRomInfo::BuildScratchPad );
+
+					if (( temp.find( m_fuzzydesc ) != std::string::npos )
+						|| ( m_fuzzydesc.find( temp ) != std::string::npos ))
+					{
+						set_info_values( *m_itr );
+					}
 				}
 			}
 		}
@@ -483,10 +488,60 @@ void FeMessXMLParser::end_element( const char *element )
 	}
 }
 
-bool FeMessXMLParser::parse( const std::string &prog,
-		const std::string &args )
+void FeMessXMLParser::set_info_values( FeRomInfo &r )
 {
-	return parse_internal( prog, args );
+	r.set_info( FeRomInfo::Title, m_description );
+	r.set_info( FeRomInfo::Year, m_year );
+	r.set_info( FeRomInfo::Manufacturer, m_man );
+	r.set_info( FeRomInfo::Cloneof, m_cloneof );
+	r.set_info( FeRomInfo::BuildAltName, m_name );
+}
+
+bool FeMessXMLParser::parse( const std::string &prog,
+		const std::string &system_name )
+{
+	// First get our machine -listxml settings
+	//
+	std::list<FeRomInfo> temp_list;
+	temp_list.push_back( FeRomInfo( system_name ) );
+
+	FeMameXMLParser listxml( temp_list );
+	listxml.parse( prog );
+
+	std::list<FeRomInfo>::iterator itr;
+	if ( !temp_list.empty() )
+	{
+		const FeRomInfo &ri = temp_list.front();
+		for ( itr=m_romlist.begin(); itr!=m_romlist.end(); ++itr )
+		{
+			(*itr).set_info( FeRomInfo::Players, ri.get_info( FeRomInfo::Players ));
+			(*itr).set_info( FeRomInfo::Rotation, ri.get_info( FeRomInfo::Rotation ));
+			(*itr).set_info( FeRomInfo::Control, ri.get_info( FeRomInfo::Control ));
+			(*itr).set_info( FeRomInfo::Status, ri.get_info( FeRomInfo::Status ));
+			(*itr).set_info( FeRomInfo::DisplayCount, ri.get_info( FeRomInfo::DisplayCount ));
+			(*itr).set_info( FeRomInfo::DisplayType, ri.get_info( FeRomInfo::DisplayType ));
+
+			// A bit of a hack here: the Category field gets repurposed for this stage of a MESS
+			// import...We temporarily store a "fuzzy" match romname (i.e. the name stripped of
+			// bracketted text) for each rom
+			//
+			size_t pos=0;
+			std::string temp;
+			token_helper( (*itr).get_info( FeRomInfo::Romname ), pos, temp, "(" );
+			(*itr).set_info( FeRomInfo::BuildScratchPad, temp );
+		}
+	}
+
+	// Now get the individual game -listsoftware settings
+	//
+	int retval=parse_internal( prog, system_name + " -listsoftware" );
+
+	// We're done with our "fuzzy" matching, so clear where we were storing them
+	//
+	for ( itr=m_romlist.begin(); itr!=m_romlist.end(); ++itr )
+		(*itr).set_info( FeRomInfo::BuildScratchPad, "" );
+
+	return retval;
 }
 
 FeHyperSpinXMLParser::FeHyperSpinXMLParser(  std::list<FeRomInfo> & li )

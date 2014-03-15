@@ -89,11 +89,11 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 	}
 	else if ( listxml.compare( 0, 4, "mess" ) == 0 )
 	{
-		std::string args;
+		std::string system_name;
 		size_t pos=4;
-		token_helper( listxml, pos, args );
+		token_helper( listxml, pos, system_name );
 
-		if ( args.empty() )
+		if ( system_name.empty() )
 		{
 			std::cout << "Note: No system provided in \""
 				<< "listxml mess\" entry for emulator: "
@@ -103,11 +103,9 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 			return;
 		}
 
-		args += " -listsoftware";
-
 		std::cout << "Obtaining -listsoftware info...";
 		FeMessXMLParser messp( romlist, uiupdate, uiupdatedata );
-		messp.parse( base_command, args );
+		messp.parse( base_command, system_name );
 		std::cout << std::endl;
 	}
 	else
@@ -166,9 +164,13 @@ void ini_import( const std::string &filename,
 	{
 		my_map[ (*itr).get_info( FeRomInfo::Romname ) ] = "";
 
-		std::string key = (*itr).get_info( FeRomInfo::Cloneof );
-		if ( !key.empty() )
-			my_map[ key ] = "";
+		const std::string &cloneof_key = (*itr).get_info( FeRomInfo::Cloneof );
+		if ( !cloneof_key.empty() )
+			my_map[ cloneof_key ] = "";
+
+		const std::string &alt_key = (*itr).get_info( FeRomInfo::BuildAltName );
+		if ( !alt_key.empty() )
+			my_map[ alt_key ] = "";
 	}
 
 	std::ifstream myfile( filename.c_str() );
@@ -219,6 +221,10 @@ void ini_import( const std::string &filename,
 			itr!=romlist.end(); ++itr )
 	{
 		std::string val = my_map[ (*itr).get_info( FeRomInfo::Romname ) ];
+
+		if ( val.empty() )
+			val = my_map[ (*itr).get_info( FeRomInfo::BuildAltName ) ];
+
 		if ( val.empty() )
 			val = my_map[ (*itr).get_info( FeRomInfo::Cloneof ) ];
 

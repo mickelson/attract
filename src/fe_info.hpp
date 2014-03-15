@@ -55,6 +55,12 @@ public:
 		Favourite,		// everything from Favourite on is not loaded from romlist
 		LAST_INDEX
 	};
+
+	// The Favourite and Category indexes get repurposed at certain stages of mess
+	// romlist building/importing...
+	static const Index BuildAltName;
+	static const Index BuildScratchPad;
+
 	static const char *indexStrings[];
 
 	FeRomInfo();

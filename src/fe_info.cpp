@@ -31,6 +31,9 @@
 #include <squirrel.h>
 #include <sqstdstring.h>
 
+const FeRomInfo::Index FeRomInfo::BuildAltName = FeRomInfo::Favourite;
+const FeRomInfo::Index FeRomInfo::BuildScratchPad = FeRomInfo::Category;
+
 const char *FeRomInfo::indexStrings[] =
 {
 	"Name",

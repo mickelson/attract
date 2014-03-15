@@ -104,6 +104,9 @@ private:
 	std::string m_year;
 	std::string m_man;
 	std::string m_fuzzydesc;
+	std::string m_cloneof;
+
+	void set_info_values( FeRomInfo &r );
 
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
