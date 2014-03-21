@@ -25,7 +25,8 @@
 
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/Audio/SoundStream.hpp>
+
+#include <Audio/SoundStream.hpp>
 
 class FeAudioImp;
 class FeVideoImp;
