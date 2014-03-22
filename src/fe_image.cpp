@@ -106,18 +106,21 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 		label = m_name;
 
 #ifndef NO_MOVIE
+	// If a movie is running, close it...
+	//
+	if (m_movie)
+	{
+		if (m_movie->is_playing())
+			m_movie->stop();
+
+		m_movie->close();
+	}
+
+	// ... and reset movie status if we are to play a movie again
+	//
 	if ( ( m_movie_status != LockNoPlay )
 		&& ( label.compare( feSettings->get_movie_artwork() ) == 0 ) )
 	{
-		// If a movie is running, close it and reset movie status
-		//
-		if (m_movie)
-		{
-			if (m_movie->is_playing())
-				m_movie->stop();
-
-			m_movie->close();
-		}
 		m_movie_status=Delayed;
 	}
 #endif
