@@ -86,7 +86,7 @@ public:
 	}
 	void Error(const SQChar *s, ...)
 	{
-		static SQChar temp[256];
+		SQChar temp[256];
 		va_list vl;
 		va_start(vl, s);
 		scvsprintf(temp, s, vl);
@@ -338,6 +338,7 @@ public:
 			_fs->PushTarget(p1);
 			//EmitCompArithLocal(tok, p1, p1, p2);
 			_fs->AddInstruction(ChooseArithOpByToken(tok),p1, p2, p1, 0);
+			_fs->SnoozeOpt();
 				   }
 			break;
 		case OBJECT:
@@ -384,6 +385,8 @@ public:
 			SQInteger ds = _es.etype;
 			SQInteger pos = _es.epos;
 			if(ds == EXPR) Error(_SC("can't assign expression"));
+			else if(ds == BASE) Error(_SC("'base' cannot be modified"));
+
 			Lex(); Expression();
 
 			switch(op){
@@ -447,9 +450,19 @@ public:
 		}
 		_es = es;
 	}
+	template<typename T> void INVOKE_EXP(T f)
+	{
+		SQExpState es = _es;
+		_es.etype     = EXPR;
+		_es.epos      = -1;
+		_es.donot_get = false;
+		(this->*f)();
+		_es = es;
+	}
 	template<typename T> void BIN_EXP(SQOpcode op, T f,SQInteger op3 = 0)
 	{
-		Lex(); (this->*f)();
+		Lex(); 
+		INVOKE_EXP(f);
 		SQInteger op1 = _fs->PopTarget();SQInteger op2 = _fs->PopTarget();
 		_fs->AddInstruction(op, _fs->PushTarget(), op1, op2, op3);
 	}
@@ -462,7 +475,7 @@ public:
 			_fs->AddInstruction(_OP_OR, trg, 0, first_exp, 0);
 			SQInteger jpos = _fs->GetCurrentPos();
 			if(trg != first_exp) _fs->AddInstruction(_OP_MOVE, trg, first_exp);
-			Lex(); LogicalOrExp();
+			Lex(); INVOKE_EXP(&SQCompiler::LogicalOrExp);
 			_fs->SnoozeOpt();
 			SQInteger second_exp = _fs->PopTarget();
 			if(trg != second_exp) _fs->AddInstruction(_OP_MOVE, trg, second_exp);
@@ -481,7 +494,7 @@ public:
 			_fs->AddInstruction(_OP_AND, trg, 0, first_exp, 0);
 			SQInteger jpos = _fs->GetCurrentPos();
 			if(trg != first_exp) _fs->AddInstruction(_OP_MOVE, trg, first_exp);
-			Lex(); LogicalAndExp();
+			Lex(); INVOKE_EXP(&SQCompiler::LogicalAndExp);
 			_fs->SnoozeOpt();
 			SQInteger second_exp = _fs->PopTarget();
 			if(trg != second_exp) _fs->AddInstruction(_OP_MOVE, trg, second_exp);
@@ -489,8 +502,7 @@ public:
 			_fs->SetIntructionParam(jpos, 1, (_fs->GetCurrentPos() - jpos));
 			break;
 			}
-		case TK_IN: BIN_EXP(_OP_EXISTS, &SQCompiler::BitwiseOrExp); break;
-		case TK_INSTANCEOF: BIN_EXP(_OP_INSTANCEOF, &SQCompiler::BitwiseOrExp); break;
+    
 		default:
 			return;
 		}
@@ -534,6 +546,8 @@ public:
 		case _SC('<'): BIN_EXP(_OP_CMP, &SQCompiler::ShiftExp,CMP_L); break;
 		case TK_GE: BIN_EXP(_OP_CMP, &SQCompiler::ShiftExp,CMP_GE); break;
 		case TK_LE: BIN_EXP(_OP_CMP, &SQCompiler::ShiftExp,CMP_LE); break;
+		case TK_IN: BIN_EXP(_OP_EXISTS, &SQCompiler::ShiftExp); break;
+		case TK_INSTANCEOF: BIN_EXP(_OP_INSTANCEOF, &SQCompiler::ShiftExp); break;
 		default: return;	
 		}
 	}
@@ -1003,32 +1017,32 @@ public:
 		} while(1);
 	}
 	void IfStatement()
-	{
-		SQInteger jmppos;
-		bool haselse = false;
-		Lex(); Expect(_SC('(')); CommaExpr(); Expect(_SC(')'));
-		_fs->AddInstruction(_OP_JZ, _fs->PopTarget());
-		SQInteger jnepos = _fs->GetCurrentPos();
-		BEGIN_SCOPE();
-		
-		Statement();
-		//
-		if(_token != _SC('}') && _token != TK_ELSE) OptionalSemicolon();
-		
-		END_SCOPE();
-		SQInteger endifblock = _fs->GetCurrentPos();
-		if(_token == TK_ELSE){
-			haselse = true;
-			BEGIN_SCOPE();
-			_fs->AddInstruction(_OP_JMP);
-			jmppos = _fs->GetCurrentPos();
-			Lex();
-			Statement(); OptionalSemicolon();
-			END_SCOPE();
-			_fs->SetIntructionParam(jmppos, 1, _fs->GetCurrentPos() - jmppos);
-		}
-		_fs->SetIntructionParam(jnepos, 1, endifblock - jnepos + (haselse?1:0));
-	}
+    {
+        SQInteger jmppos;
+        bool haselse = false;
+        Lex(); Expect(_SC('(')); CommaExpr(); Expect(_SC(')'));
+        _fs->AddInstruction(_OP_JZ, _fs->PopTarget());
+        SQInteger jnepos = _fs->GetCurrentPos();
+        BEGIN_SCOPE();
+        
+        Statement();
+        //
+        if(_token != _SC('}') && _token != TK_ELSE) OptionalSemicolon();
+        
+        END_SCOPE();
+        SQInteger endifblock = _fs->GetCurrentPos();
+        if(_token == TK_ELSE){
+            haselse = true;
+            BEGIN_SCOPE();
+            _fs->AddInstruction(_OP_JMP);
+            jmppos = _fs->GetCurrentPos();
+            Lex();
+            Statement(); if(_lex._prevtoken != _SC('}')) OptionalSemicolon();
+            END_SCOPE();
+            _fs->SetIntructionParam(jmppos, 1, _fs->GetCurrentPos() - jmppos);
+        }
+        _fs->SetIntructionParam(jnepos, 1, endifblock - jnepos + (haselse?1:0));
+    }
 	void WhileStatement()
 	{
 		SQInteger jzpos, jmppos;
@@ -1169,8 +1183,17 @@ public:
 			//condition
 			Lex(); Expression(); Expect(_SC(':'));
 			SQInteger trg = _fs->PopTarget();
-			_fs->AddInstruction(_OP_EQ, trg, trg, expr);
-			_fs->AddInstruction(_OP_JZ, trg, 0);
+			SQInteger eqtarget = trg;
+			bool local = _fs->IsLocal(trg);
+			if(local) {
+				eqtarget = _fs->PushTarget(); //we need to allocate a extra reg
+			}
+			_fs->AddInstruction(_OP_EQ, eqtarget, trg, expr);
+			_fs->AddInstruction(_OP_JZ, eqtarget, 0);
+			if(local) {
+				_fs->PopTarget();
+			}
+			
 			//end condition
 			if(skipcondjmp != -1) {
 				_fs->SetIntructionParam(skipcondjmp, 1, (_fs->GetCurrentPos() - skipcondjmp));
@@ -1250,6 +1273,11 @@ public:
 				break;
 			case TK_STRING_LITERAL:
 				val = _fs->CreateString(_lex._svalue,_lex._longstr.size()-1);
+				break;
+			case TK_TRUE:
+			case TK_FALSE:
+				val._type = OT_BOOL;
+				val._unVal.nInteger = _token == TK_TRUE ? 1 : 0;
 				break;
 			case '-':
 				Lex();

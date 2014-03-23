@@ -1,3 +1,9 @@
+***version 3.0.5 stable***
+-fixed crash in compiler when trying to write 'base'
+-fixed bug in gc
+-fixed few bugs in the compiler
+
+***2012-11-10		   ***
 ***version 3.0.4 stable***
 -sq_deleteslot slot now pops the key in case of failure
 -fixed bug when _get metamethod throws null
