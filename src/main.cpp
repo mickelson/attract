@@ -42,6 +42,10 @@
 #include "fe_util_osx.hpp"
 #endif // SFM_SYSTEM_MACOS
 
+#ifndef NO_MOVIE
+#include <Audio/AudioDevice.hpp>
+#endif
+
 void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font )
@@ -262,6 +266,9 @@ int main(int argc, char *argv[])
 	//
 	// Set up music/sound playing objects
 	//
+#ifndef NO_MOVIE
+	sf::AudioDevice audio_device;
+#endif
 	FeSoundSystem soundsys( &feSettings );
 	soundsys.play_ambient();
 

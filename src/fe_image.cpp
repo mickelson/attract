@@ -24,7 +24,11 @@
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
 #include "fe_shader.hpp"
+
+#ifndef NO_MOVIE
 #include "media.hpp"
+#endif
+
 #include <iostream>
 #include <cstdlib>
 

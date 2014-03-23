@@ -130,8 +130,7 @@ ifeq ($(WINDOWS_STATIC),1)
  CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags sfml)
  FE_WINDOWS_COMPILE=1
 else
- LIBS += -lsfml-audio \
-	-lsfml-graphics \
+ LIBS += -lsfml-graphics \
 	-lsfml-window \
 	-lsfml-system
 endif
@@ -177,8 +176,10 @@ endif
 
 ifeq ($(NO_MOVIE),1)
  FE_FLAGS += -DNO_MOVIE
+ LIBS += -lsfml-audio
+ AUDIO =
 else
- TEMP_LIBS += libavformat libavcodec libavutil libswscale
+ TEMP_LIBS += libavformat libavcodec libavutil libswscale openal
 
  ifeq ($(USE_SWRESAMPLE),1)
   TEMP_LIBS += libswresample
@@ -192,6 +193,9 @@ else
 
  _DEP += media.hpp
  _OBJ += media.o
+
+ CFLAGS += -I$(EXTLIBS_DIR)/audio/include
+ AUDIO = $(OBJ_DIR)/libaudio.a
 endif
 
 LIBS += $(shell $(PKG_CONFIG) --libs $(TEMP_LIBS))
@@ -219,7 +223,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 	$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
-$(EXE): $(OBJ) $(EXPAT) $(SQUIRREL)
+$(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
 	$(CPP) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
 
 .PHONY: clean
@@ -300,6 +304,27 @@ $(SQSTDLIB_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/sqstdlib/%.cpp | $(SQSTDLIB_OBJ
 $(SQSTDLIB_OBJ_DIR):
 	$(MD) $@
 
+#
+# Audio
+#
+AUDIO_OBJ_DIR = $(OBJ_DIR)/audiolib
+
+AUDIOOBJS= \
+	$(AUDIO_OBJ_DIR)/ALCheck.o \
+	$(AUDIO_OBJ_DIR)/AudioDevice.o \
+	$(AUDIO_OBJ_DIR)/Listener.o \
+	$(AUDIO_OBJ_DIR)/SoundSource.o \
+	$(AUDIO_OBJ_DIR)/SoundStream.o
+
+$(OBJ_DIR)/libaudio.a: $(AUDIOOBJS) | $(AUDIO_OBJ_DIR)
+	$(AR) $(ARFLAGS) $@ $(AUDIOOBJS)
+
+$(AUDIO_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/audio/Audio/%.cpp | $(AUDIO_OBJ_DIR)
+	$(CPP) -c $< -o $@ $(CFLAGS)
+
+$(AUDIO_OBJ_DIR):
+	$(MD) $@
+
 $(DATA_PATH):
 	$(MD) $@
 
@@ -311,4 +336,4 @@ smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
 
 clean:
-	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(OBJ_DIR)/*.a *~ core

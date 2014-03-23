@@ -26,7 +26,11 @@
 #include "fe_util.hpp"
 #include "fe_util_sq.hpp"
 #include <iostream>
+
+#include <SFML/Graphics/Shader.hpp>
+#ifndef NO_MOVIE
 #include "media.hpp"
+#endif
 
 #include <sqrat.h>
 
