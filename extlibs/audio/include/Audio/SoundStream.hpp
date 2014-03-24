@@ -28,7 +28,6 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <Audio/Export.hpp>
 #include <Audio/SoundSource.hpp>
 #include <SFML/System/Thread.hpp>
 #include <SFML/System/Time.hpp>
@@ -41,7 +40,7 @@ namespace sf
 /// \brief Abstract base class for streamed audio sources
 ///
 ////////////////////////////////////////////////////////////
-class SFML_AUDIO_API SoundStream : public SoundSource
+class SoundStream : public SoundSource
 {
 public :
 
@@ -328,7 +327,7 @@ private :
 /// rest of the program. In particular, the OnGetData and OnSeek
 /// virtual functions may sometimes be called from this separate thread.
 /// It is important to keep this in mind, because you may have to take
-/// care of synchronization issues if you share data between threads. 
+/// care of synchronization issues if you share data between threads.
 ///
 /// Usage example:
 /// \code

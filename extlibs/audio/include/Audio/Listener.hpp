@@ -28,7 +28,6 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <Audio/Export.hpp>
 #include <SFML/System/Vector3.hpp>
 
 
@@ -39,7 +38,7 @@ namespace sf
 ///        from where all the sounds are heard
 ///
 ////////////////////////////////////////////////////////////
-class SFML_AUDIO_API Listener
+class Listener
 {
 public :
 
@@ -160,7 +159,7 @@ public :
 /// audio environment, it defines where and how sounds and musics
 /// are heard. If sf::View is the eyes of the user, then sf::Listener
 /// is his ears (by the way, they are often linked together --
-/// same position, orientation, etc.). 
+/// same position, orientation, etc.).
 ///
 /// sf::Listener is a simple interface, which allows to setup the
 /// listener in the 3D audio environment (position and direction),
