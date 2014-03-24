@@ -919,10 +919,17 @@ bool FeMedia::onGetData( Chunk &data )
 						return false;
 					}
 
-					av_opt_set_int( m_audio->resample_ctx, "in_channel_layout", frame->channel_layout, 0 );
+					int64_t channel_layout = frame->channel_layout;
+					if ( !channel_layout )
+					{
+						channel_layout = av_get_default_channel_layout(
+								m_audio->codec_ctx->channels );
+					}
+
+					av_opt_set_int( m_audio->resample_ctx, "in_channel_layout", channel_layout, 0 );
 					av_opt_set_int( m_audio->resample_ctx, "in_sample_fmt", frame->format, 0 );
 					av_opt_set_int( m_audio->resample_ctx, "in_sample_rate", frame->sample_rate, 0 );
-					av_opt_set_int( m_audio->resample_ctx, "out_channel_layout", frame->channel_layout, 0 );
+					av_opt_set_int( m_audio->resample_ctx, "out_channel_layout", channel_layout, 0 );
 					av_opt_set_int( m_audio->resample_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0 );
 					av_opt_set_int( m_audio->resample_ctx, "out_sample_rate", frame->sample_rate, 0 );
 
