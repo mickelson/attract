@@ -22,6 +22,7 @@ Linux, FreeBSD and Windows:
 1. Install the following libraries and headers on your system:
    * Required:
       - SFML SDK version 2.x (<http://sfml-dev.org>)
+      - OpenAL (which is required by SFML anyways)
    * Optional:
       - The following FFmpeg development libraries (required for movies):
         avformat, avcodec, swscale and either swresample or avresample.
