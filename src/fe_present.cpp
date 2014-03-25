@@ -386,8 +386,12 @@ int FePresent::get_list_index() const
 
 void FePresent::set_list_index( int index )
 {
-	m_feSettings->change_rom( index - get_list_index() );
-	update( false );
+	int new_offset = index - get_list_index();
+	if ( new_offset != 0 )
+	{
+		m_feSettings->change_rom( index - get_list_index() );
+		update( false );
+	}
 }
 
 bool FePresent::reset_screen_saver( sf::RenderWindow *wnd )
