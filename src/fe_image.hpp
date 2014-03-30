@@ -24,6 +24,7 @@
 #define FE_IMAGE_HPP
 
 #include <SFML/Graphics.hpp>
+#include "sprite.hpp"
 #include "fe_presentable.hpp"
 
 class FeSettings;
@@ -71,10 +72,9 @@ class FeImage : public sf::Drawable, public FeBasePresentable
 {
 protected:
 	FeTextureContainer *m_tex;
-	sf::Sprite m_sprite;
+	FeSprite m_sprite;
 	sf::Vector2f m_pos;
 	sf::Vector2f m_size;
-	sf::Vector2i m_shear;
 	bool m_preserve_aspect_ratio;
 
 	void scale();
@@ -114,8 +114,10 @@ public:
 	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
 	void texture_changed();
 
-	int get_shear_x() const ;
-	int get_shear_y() const;
+	int get_skew_x() const ;
+	int get_skew_y() const;
+	int get_pinch_x() const ;
+	int get_pinch_y() const;
 	int get_texture_width() const;
 	int get_texture_height() const;
 	int get_subimg_x() const;
@@ -124,8 +126,10 @@ public:
 	int get_subimg_height() const;
 	bool get_preserve_aspect_ratio() const;
 
-	void set_shear_x( int x );
-	void set_shear_y( int y );
+	void set_skew_x( int x );
+	void set_skew_y( int y );
+	void set_pinch_x( int x );
+	void set_pinch_y( int y );
 	void set_subimg_x( int x );
 	void set_subimg_y( int y );
 	void set_subimg_width( int w );

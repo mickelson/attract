@@ -266,6 +266,8 @@
 			<Option target="Release Static" />
 		</Unit>
 		<Unit filename="media.hpp" />
+		<Unit filename="sprite.cpp" />
+		<Unit filename="sprite.hpp" />
 		<Unit filename="tp.cpp" />
 		<Unit filename="tp.hpp" />
 		<Extensions>

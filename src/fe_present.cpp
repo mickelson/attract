@@ -1418,8 +1418,16 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 
 	fe.Bind( _SC("Image"),
 		DerivedClass<FeImage, FeBasePresentable, NoConstructor>()
-		.Prop(_SC("shear_x"), &FeImage::get_shear_x, &FeImage::set_shear_x )
-		.Prop(_SC("shear_y"), &FeImage::get_shear_y, &FeImage::set_shear_y )
+
+		// Misnamed: shear_x and shear_y deprecated as of version 1.3, more accurately named
+		// skew_x and skew_y instead
+		.Prop(_SC("shear_x"), &FeImage::get_skew_x, &FeImage::set_skew_x )
+		.Prop(_SC("shear_y"), &FeImage::get_skew_y, &FeImage::set_skew_y )
+
+		.Prop(_SC("skew_x"), &FeImage::get_skew_x, &FeImage::set_skew_x )
+		.Prop(_SC("skew_y"), &FeImage::get_skew_y, &FeImage::set_skew_y )
+		.Prop(_SC("pinch_x"), &FeImage::get_pinch_x, &FeImage::set_pinch_x )
+		.Prop(_SC("pinch_y"), &FeImage::get_pinch_y, &FeImage::set_pinch_y )
 		.Prop(_SC("texture_width"), &FeImage::get_texture_width )
 		.Prop(_SC("texture_height"), &FeImage::get_texture_height )
 		.Prop(_SC("subimg_x"), &FeImage::get_subimg_x, &FeImage::set_subimg_x )

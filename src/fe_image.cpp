@@ -254,7 +254,6 @@ FeImage::FeImage( FeTextureContainer *tc )
 	m_tex( tc ),
 	m_pos( 0, 0 ),
 	m_size( 0, 0 ),
-	m_shear( 0, 0 ),
 	m_preserve_aspect_ratio( false )
 {
 	ASSERT( m_tex );
@@ -271,7 +270,6 @@ FeImage::FeImage( FeImage *o )
 	m_sprite( o->m_sprite ),
 	m_pos( o->m_pos ),
 	m_size( o->m_size ),
-	m_shear( o->m_shear ),
 	m_preserve_aspect_ratio( o->m_preserve_aspect_ratio )
 {
 	m_tex->m_images.push_back( this );
@@ -317,20 +315,6 @@ void FeImage::setIndexOffset( int io )
 
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-	if (( m_shear.x != 0 ) || (m_shear.y != 0 ))
-	{
-		const sf::Vector2f &sscale = m_sprite.getScale();
-		const sf::IntRect &texture_rect = m_sprite.getTextureRect();
-
-		float size_x = ( m_size.x > 0.0 ) ? m_size.x : ( texture_rect.width * sscale.x );
-		float size_y = ( m_size.y > 0.0 ) ? m_size.y : ( texture_rect.height * sscale.y );
-
-		states.transform *= sf::Transform(
-				1.f, (float)m_shear.x / size_x, 0.f,
-				(float)m_shear.y / size_y, 1.f, 0.f,
-				0.f, 0.f, 1.f );
-	}
-
 	FeShader *s = get_shader();
 	if ( s )
 	{
@@ -495,25 +479,47 @@ void FeImage::setMovieEnabled( bool f )
 	}
 }
 
-int FeImage::get_shear_x() const
+int FeImage::get_skew_x() const
 {
-	return m_shear.x;
+	return m_sprite.getSkewX();
 }
 
-int FeImage::get_shear_y() const
+int FeImage::get_skew_y() const
 {
-	return m_shear.y;
+	return m_sprite.getSkewY();
 }
 
-void FeImage::set_shear_x( int x )
+int FeImage::get_pinch_x() const
 {
-	m_shear.x = x;
+	return m_sprite.getPinchX();
+}
+
+int FeImage::get_pinch_y() const
+{
+	return m_sprite.getPinchY();
+}
+
+void FeImage::set_skew_x( int x )
+{
+	m_sprite.setSkewX( x );
 	script_flag_redraw();
 }
 
-void FeImage::set_shear_y( int y )
+void FeImage::set_skew_y( int y )
 {
-	m_shear.y = y;
+	m_sprite.setSkewY( y );
+	script_flag_redraw();
+}
+
+void FeImage::set_pinch_x( int x )
+{
+	m_sprite.setPinchX( x );
+	script_flag_redraw();
+}
+
+void FeImage::set_pinch_y( int y )
+{
+	m_sprite.setPinchY( y );
 	script_flag_redraw();
 }
 

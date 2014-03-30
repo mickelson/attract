@@ -72,6 +72,7 @@ _DEP =\
 	fe_config.hpp \
 	fe_presentable.hpp \
 	fe_present.hpp \
+	sprite.hpp \
 	fe_image.hpp \
 	fe_sound.hpp \
 	fe_shader.hpp \
@@ -93,6 +94,7 @@ _OBJ =\
 	fe_config.o \
 	fe_presentable.o \
 	fe_present.o \
+	sprite.o \
 	fe_image.o \
 	fe_sound.o \
 	fe_shader.o \

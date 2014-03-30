@@ -649,10 +649,18 @@ Attributes:
      for the artwork to display.  For example, set to -1 for the image 
      corresponding to the previous list entry, or 1 for the next list entry,
      etc.  Default value is 0.
-   * `shear_x` - Get/set the x shear factor for image (in layout coordinate
-     units).  Default value is 0.
-   * `shear_y` - Get/set the y shear factor for image (in layout coordinate
-     units).  Default value is 0.
+   * `skew_x` - Get/set the amount of x-direction image skew (in layout
+     coordinates).  Default value is 0.  Use a negative value to skew the
+     image to the left instead.
+   * `skew_y` - Get/set the amount of y-direction image skew (in layout
+     coordinates).  Default value is 0.  Use a negative value to skew the
+     image up instead.
+   * `pinch_x` - Get/set the amount of x-direction image pinch (in layout
+     coordinates).  Default value is 0.  Use a negative value to expand
+     towards the bottom instead.
+   * `pinch_y` - Get/set the amount of y-direction image pinch (in layout
+     coordinates).  Default value is 0.  Use a negative value to expand
+     towards the right instead.
    * `texture_width` - Get the width of the image texture (in pixels).
    * `texture_height` - Get the height of the image texture (in pixels).
    * `subimg_x` - Get/set the x position of top left corner of the image 
