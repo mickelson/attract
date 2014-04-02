@@ -121,6 +121,8 @@ else
   _DEP += fe_util_osx.hpp
   _OBJ += fe_util_osx.o
   LIBS += -framework Cocoa
+
+  FE_MACOSX_COMPILE=1
  endif
 endif
 
@@ -181,7 +183,13 @@ ifeq ($(NO_MOVIE),1)
  LIBS += -lsfml-audio
  AUDIO =
 else
- TEMP_LIBS += libavformat libavcodec libavutil libswscale openal
+ TEMP_LIBS += libavformat libavcodec libavutil libswscale
+
+ ifeq ($(FE_MACOSX_COMPILE),1)
+  LIBS += -framework OpenAL
+ else
+  TEMP_LIBS += openal
+ endif
 
  ifeq ($(USE_SWRESAMPLE),1)
   TEMP_LIBS += libswresample

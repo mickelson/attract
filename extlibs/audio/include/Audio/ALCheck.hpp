@@ -30,8 +30,16 @@
 ////////////////////////////////////////////////////////////
 #include <iostream>
 #include <string>
+
+#include <SFML/Config.hpp>
+
+#ifdef SFML_SYSTEM_MACOS
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
+#else
 #include <AL/al.h>
 #include <AL/alc.h>
+#endif
 
 
 namespace sf
