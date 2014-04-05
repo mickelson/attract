@@ -209,12 +209,20 @@ void FeSprite::setSkewY( float y )
 
 void FeSprite::setPinchX( float x )
 {
-	m_pinch.x = x;
+	if ( x != m_pinch.x )
+	{
+		m_pinch.x = x;
+		updateGeometry();
+	}
 }
 
 void FeSprite::setPinchY( float y )
 {
-	m_pinch.y = y;
+	if ( y != m_pinch.y )
+	{
+		m_pinch.y = y;
+		updateGeometry();
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -251,6 +259,7 @@ void FeSprite::updateGeometry()
 		float sys = (float)m_skew.y / SLICES;
 		float bpxs = bws - (float)m_pinch.x * 2 / SLICES;
 
+		sf::Color vert_colour = m_vertices[0].color;
 		m_vertices.resize( SLICES + 3 );
 		m_vertices.setPrimitiveType( sf::TrianglesStrip );
 
@@ -292,6 +301,12 @@ void FeSprite::updateGeometry()
 
 		m_vertices[SLICES + 1].texCoords = sf::Vector2f(right, top );
 		m_vertices[SLICES + 2].texCoords = sf::Vector2f(right, bottom );
+
+		//
+		// And finally the vertex colour
+		//
+		for ( unsigned int i=0; i< m_vertices.getVertexCount(); i++ )
+			m_vertices[i].color = vert_colour;
 	}
 	else
 	{
