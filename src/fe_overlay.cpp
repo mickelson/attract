@@ -850,6 +850,8 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					redraw = true;
 					break;
 
+				case 9: // horizontal tab 
+				case 10: // linefeed
 				case 13: // Return (ignore here, deal with as keypress event)
 					break;
 
