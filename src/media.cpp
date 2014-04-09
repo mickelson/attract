@@ -323,31 +323,54 @@ void FeVideoImp::close()
 	FeBaseStream::close();
 }
 
-struct frame_queue_type
+namespace
 {
-	AVPicture *p;
-	sf::Time pts;
-};
+	void set_avdiscard_from_qscore( AVCodecContext *c, int qscore )
+	{
+		AVDiscard d = AVDISCARD_DEFAULT;
+
+		if ( qscore <= -40 )
+		{
+			if ( qscore <= -120 )
+				d = AVDISCARD_ALL;
+			else if ( qscore <= -100 )
+				d = AVDISCARD_NONKEY;
+			else
+				d = AVDISCARD_BIDIR;
+		}
+		else if ( qscore <= 0 )
+			d = AVDISCARD_NONREF;
+
+		c->skip_loop_filter = d;
+		c->skip_idct = d;
+		c->skip_frame = d;
+	}
+}
 
 void FeVideoImp::video_thread()
 {
 	const unsigned int MAX_QUEUE( 4 ), MIN_QUEUE( 0 );
 
-	int discarded( 0 ), displayed( 0 );
 	bool exhaust_queue( false );
 	sf::Time max_sleep = time_base / (sf::Int64)2;
 
-	std::queue<frame_queue_type> frame_queue;
-	frame_queue_type detached_frame = { NULL, sf::Time::Zero };
+	int qscore( 100 ), qadjust( 10 ); // quality scoring
+	int displayed( 0 ), discarded( 0 ), qscore_accum( 0 );
 
-	AVFrame *raw_frame = avcodec_alloc_frame();
+	std::queue<AVFrame *> frame_queue;
+	AVFrame *detached_frame = NULL;
+
+	AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
+	avpicture_alloc( my_pict, PIX_FMT_RGBA,
+							codec_ctx->width,
+							codec_ctx->height );
 
 	SwsContext *sws_ctx = sws_getContext(
 					codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
 					codec_ctx->width, codec_ctx->height, PIX_FMT_RGBA,
 					SWS_FAST_BILINEAR, NULL, NULL, NULL );
 
-	if ((!sws_ctx) || (!raw_frame) )
+	if ((!sws_ctx) || (!my_pict) )
 	{
 		std::cout << "error initializing video thread" << std::endl;
 		goto the_end;
@@ -363,44 +386,53 @@ void FeVideoImp::video_thread()
 		if (( frame_queue.size() > MIN_QUEUE )
 			|| ( exhaust_queue && !frame_queue.empty() ))
 		{
-			sf::Time wait_time = frame_queue.front().pts
+			sf::Time wait_time = (sf::Int64)frame_queue.front()->pts * time_base
 										- m_parent->get_video_time();
 
 			if ( wait_time < max_sleep )
 			{
-				if ( wait_time >= sf::Time::Zero )
+				if ( wait_time < -time_base )
 				{
+					// If we are falling behind, we may need to start discarding
+					// frames to catch up
 					//
-					// sleep until presentation time and then display
-					//
-					sf::sleep( wait_time );
-					{
-						sf::Lock l( image_swap_mutex );
-
-						if ( detached_frame.p )
-						{
-							avpicture_free( detached_frame.p );
-							av_free( detached_frame.p );
-						}
-
-						detached_frame = frame_queue.front();
-						frame_queue.pop();
-						display_frame = detached_frame.p->data[0];
-						displayed++;
-					}
+					qscore -= qadjust;
+					set_avdiscard_from_qscore( codec_ctx, qscore );
 				}
-				else
+				//
+				// sleep until presentation time and then display
+				//
+				else if ( wait_time >= sf::Time::Zero )
+					sf::sleep( wait_time );
+
 				{
-					//
-					// we are already past the presentation time, discard
-					//
-					frame_queue_type f=frame_queue.front();
+					sf::Lock l( image_swap_mutex );
+
+					if ( detached_frame )
+					{
+						free_frame( detached_frame );
+						detached_frame=NULL;
+					}
+
+					detached_frame = frame_queue.front();
 					frame_queue.pop();
 
-					avpicture_free( f.p );
-					av_free( f.p );
-					discarded++;
+					qscore_accum += qscore;
+					if ( codec_ctx->skip_frame == AVDISCARD_ALL )
+					{
+						discarded++;
+						continue;
+					}
+
+					displayed++;
+
+					sws_scale( sws_ctx, detached_frame->data, detached_frame->linesize,
+								0, codec_ctx->height, my_pict->data,
+								my_pict->linesize );
+
+					display_frame = my_pict->data[0];
 				}
+
 				do_process = false;
 			}
 			//
@@ -432,6 +464,8 @@ void FeVideoImp::video_thread()
 					// decompress packet and put it in our frame queue
 					//
 					int got_frame = 0;
+					AVFrame *raw_frame = avcodec_alloc_frame();
+
 					int len = avcodec_decode_video2( codec_ctx, raw_frame,
 											&got_frame, packet );
 					if ( len < 0 )
@@ -439,33 +473,34 @@ void FeVideoImp::video_thread()
 
 					if ( got_frame )
 					{
-						frame_queue_type my_new =
-						{
-							NULL, 				// AVPicture *
-							sf::Time::Zero		// pts
-						};
+						raw_frame->pts = raw_frame->pkt_pts;
 
-						if ( packet->pts != AV_NOPTS_VALUE )
-							my_new.pts = time_base * (sf::Int64)packet->pts;
-						else
-							my_new.pts = time_base * (sf::Int64)packet->dts;
+						if ( raw_frame->pts == AV_NOPTS_VALUE )
+							raw_frame->pts = packet->dts;
 
-						my_new.p = (AVPicture *)av_malloc( sizeof( AVPicture ) );
-						avpicture_alloc( my_new.p, PIX_FMT_RGBA,
-												codec_ctx->width,
-												codec_ctx->height );
-
-						sws_scale( sws_ctx, raw_frame->data, raw_frame->linesize,
-									0, codec_ctx->height, my_new.p->data,
-									my_new.p->linesize );
-
-						frame_queue.push( my_new );
+						frame_queue.push( raw_frame );
 					}
+					else
+						free_frame( raw_frame );
+
 					free_packet( packet );
 				}
 			}
 			else
 			{
+				// Adjust our quality scoring, increasing it if it is down
+				//
+				if (( codec_ctx->skip_frame != AVDISCARD_DEFAULT )
+						&& ( qadjust > 1 ))
+					qadjust--;
+
+				if ( qscore <= -100 ) // we stick at the lowest rate if we are actually discarding frames
+					qscore = -100;
+				else if ( qscore < 100 )
+					qscore += qadjust;
+
+				set_avdiscard_from_qscore( codec_ctx, qscore );
+
 				//
 				// full frame queue and nothing to display yet, so sleep
 				//
@@ -481,37 +516,37 @@ the_end:
 	at_end=true;
 	if (sws_ctx) sws_freeContext( sws_ctx );
 
-	if (raw_frame)
+	if ( my_pict )
 	{
-		free_frame( raw_frame );
-		raw_frame=NULL;
+		avpicture_free( my_pict );
+		av_free( my_pict );
 	}
 
 	while ( !frame_queue.empty() )
 	{
-		frame_queue_type f=frame_queue.front();
+		AVFrame *f=frame_queue.front();
 		frame_queue.pop();
 
-		if ( f.p )
-		{
-			avpicture_free( f.p );
-			av_free( f.p );
-		}
+		if (f)
+			free_frame( f );
 	}
 
 	{
 		sf::Lock l( image_swap_mutex );
-		if ( detached_frame.p )
-		{
-			avpicture_free( detached_frame.p );
-			av_free( detached_frame.p );
-			detached_frame.p=NULL;
-		}
+
+		if (detached_frame)
+			free_frame( detached_frame );
+
 		display_frame=NULL;
 	}
 #ifdef FE_DEBUG
-	std::cout << "End Video Thread, displayed=" << displayed
-				<< ", discarded=" << discarded << std::endl;
+
+	std::cout << "End Video Thread - " << m_parent->m_format_ctx->filename << std::endl
+				<< " - bit_rate=" << codec_ctx->bit_rate
+				<< ", width=" << codec_ctx->width << ", height=" << codec_ctx->height << std::endl
+				<< " - displayed=" << displayed << ", discarded=" << discarded << std::endl
+				<< " - average qscore=" << ( qscore_accum / ( displayed + discarded ) )
+				<< std::endl;
 #endif
 }
 
@@ -728,6 +763,8 @@ bool FeMedia::openFromFile( const std::string &name )
 		}
 		else
 		{
+			m_format_ctx->streams[stream_id]->codec->workaround_bugs = FF_BUG_AUTODETECT;
+
 			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec,
 										dec, NULL ) < 0 )
 			{
