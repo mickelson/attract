@@ -459,7 +459,8 @@ fe.game_info( id, index_offset )
 <li><code>Info.Control</code></li>
 <li><code>Info.Status</code></li>
 <li><code>Info.DisplayCount</code></li>
-<li><code>Info.DisplayType</code></li></ul></li>
+<li><code>Info.DisplayType</code></li>
+<li><code>Info.Favourite</code></li></ul></li>
 <li>index_offset - the offset (from the current selection) of the game to 
  retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
  and so on.  Default value is 0.</li>
@@ -729,10 +730,18 @@ in a script.</p>
  for the artwork to display.  For example, set to -1 for the image 
  corresponding to the previous list entry, or 1 for the next list entry,
  etc.  Default value is 0.</li>
-<li><code>shear_x</code> - Get/set the x shear factor for image (in layout coordinate
- units).  Default value is 0.</li>
-<li><code>shear_y</code> - Get/set the y shear factor for image (in layout coordinate
- units).  Default value is 0.</li>
+<li><code>skew_x</code> - Get/set the amount of x-direction image skew (in layout
+ coordinates).  Default value is 0.  Use a negative value to skew the
+ image to the left instead.</li>
+<li><code>skew_y</code> - Get/set the amount of y-direction image skew (in layout
+ coordinates).  Default value is 0.  Use a negative value to skew the
+ image up instead.</li>
+<li><code>pinch_x</code> - Get/set the amount of x-direction image pinch (in layout
+ coordinates).  Default value is 0.  Use a negative value to expand
+ towards the bottom instead.</li>
+<li><code>pinch_y</code> - Get/set the amount of y-direction image pinch (in layout
+ coordinates).  Default value is 0.  Use a negative value to expand
+ towards the right instead.</li>
 <li><code>texture_width</code> - Get the width of the image texture (in pixels).</li>
 <li><code>texture_height</code> - Get the height of the image texture (in pixels).</li>
 <li><code>subimg_x</code> - Get/set the x position of top left corner of the image 
@@ -1041,6 +1050,7 @@ of version 1.2.  Use <code>fe.get_input_state()</code> instead.</p>
 
 <p>The fe.uconfig object is deprecated as of version 1.2.  Use the <code>fe.get_config</code>
 function instead</p>
+
 
 </section></div>
 </body>
