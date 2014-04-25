@@ -7,7 +7,8 @@ intended to be controlled with a joystick, gamepad or spin dial, making it
 ideal for use in arcade cabinet setups.
 
 Attract-Mode was originally developed for use in Linux.  It is known to work 
-on Ubuntu Linux (x86, x86-64), Mac OS X (10.6.8), and Windows (XP and 7).
+on Ubuntu Linux (x86, x86-64), Mac OS X (10.6.8), and Windows (x86 and
+x86-64, XP, 7).
 
 Attract-Mode is licensed under the terms of the GNU General Public License, 
 version 3 or later.
@@ -27,9 +28,9 @@ line as follows:
 
 		attract --config /my/config/location
 
-	In the (hopefully unlikely) event that Attract-Mode has difficulty finding
-a display font to use on your system, you can specify one at the command line
-as follows:
+	In the (hopefully unlikely) event that Attract-Mode has difficulty
+finding a display font to use on your system, you can specify one at the
+command line as follows:
 
 		attract --font <font_name>
 
@@ -72,22 +73,25 @@ be selected from the "Sound" menu when in config mode and mapped to an action
 or event.
 
 **ARTWORK:** Attract-Mode supports PNG, JPEG, GIF, BMP and TGA image formats.
-When deciding what image file to use for a particular artwork type, Attract-
-Mode will use the artwork/movie selection order set out below.  The default
-artworks in Attract-Mode are: "marquee" (for cabinet marquee images),
-"snap" (for game screen shots), "flyer" (for game flyer/box art) and "wheel"
-(for HyperSpin wheel art).  You can add others as needed in the emulator
-configuration menu.
+For video formats, Attract-Mode should support any video format supported by
+FFmpeg.  When deciding what file to use for a particular artwork type,
+Attract-Mode will use the artwork selection order set out below.
 
-**MOVIE:** Attract-Mode should support any movie format supported by FFmpeg.
-The movie to play is decided in the order set out below.
+The location of artwork resources is configured on a per-emulator basis in the
+emulator configuration menu.  Attract-Mode's default artworks are: "marquee"
+(for cabinet marquee images), "snap" (for attract-mode videos and game screen
+shots), "flyer" (for game flyer/box art) and "wheel" (for Hyperspin wheel art).
+You can add others as needed in the emulator configuration menu.  Multiple
+paths can be specified for each artwork, in which case Attract-Mode will check
+each path in the order they are specified before moving to the next check in
+the selection order.
 
-**ARTWORK/MOVIE SELECTION ORDER:**
+**ARTWORK SELECTION ORDER:**
 
    * From the artwork path configured in the emulator setting (if any):
 
-      - [Name].xxx  (i.e. "pacman.png")  
-      - [CloneOf].xxx  (i.e. "puckman.gif")  
+      - [Name].xxx  (i.e. "pacman.mp4")  
+      - [CloneOf].xxx  (i.e. "puckman.png")  
       - [Emulator].xxx (i.e. "mame.jpg")  
 
    * From the layout path for the current layout (layouts are located in
@@ -96,8 +100,15 @@ The movie to play is decided in the order set out below.
       - [Emulator]-[ArtLabel].xxx  (i.e. "mame-marquee.png")  
       - [ArtLabel].xxx  (i.e. "marquee.png")  
 
-   * If no files are found matching the above rules, then the artwork/movie 
-   is left blank.
+   * If no files are found matching the above rules, then the artwork
+   is not drawn.
+
+   Attract-Mode gives preference to videos over images when checking for
+   artwork matches.  If no video or image match is found, Attract-Mode will
+   then check for a subdirectory that meets the match criteria.  If a
+   subdirectory is located (i.e. a "pacman" directory in the configured
+   artwork path) then Attract-Mode will then pick a random video or image
+   from that directory (with a preference for videos).
 
 **LAYOUTS:** See: [Layouts.md][]
 

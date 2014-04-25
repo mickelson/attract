@@ -284,8 +284,6 @@ public:
 		Rom_extension,  // this value gets split and duplicated in m_extensions
 		Import_extras,
 		Listxml,
-		Movie_path,
-		Movie_artwork,
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
@@ -297,9 +295,18 @@ public:
 	const std::string &get_info( int ) const;
 	void set_info( enum Index, const std::string & );
 
-	bool get_artwork( const std::string &, std::string & ) const;
-	void set_artwork( const std::string &, const std::string & );
+	// get artwork path.  Multiple paths are semicolon separated
+	bool get_artwork( const std::string &label, std::string &paths ) const;
+
+	// get artwork paths in the provided vector
+	bool get_artwork( const std::string &label, std::vector< std::string > &paths ) const;
+
+	// add artwork paths to the specified artwork
+	void add_artwork( const std::string &label, const std::string &paths );
+
+	// get a list of all artworks labels with the related paths in a string
 	void get_artwork_list( std::vector<std::pair<std::string,std::string> > & ) const;
+
 	void delete_artwork( const std::string & );
 
 	const std::vector<std::string> &get_extensions() const;
@@ -307,13 +314,18 @@ public:
 	int process_setting( const std::string &setting,
 								const std::string &value,
 								const std::string &filename );
-	void dump( void ) const;
 
 	void save( const std::string &filename ) const;
 
 private:
 	std::string m_info[LAST_INDEX];
-	std::map<std::string, std::string> m_artwork;
+
+	//
+	// Considered using a std::multimap here but C++98 doesn't guarantee the
+	// relative order of equivalent values, so we do a map of vectors so that
+	// we can maintain the precedence ordering of our artwork paths...
+	//
+	std::map<std::string, std::vector<std::string> > m_artwork;
 	std::vector<std::string> m_extensions;
 };
 

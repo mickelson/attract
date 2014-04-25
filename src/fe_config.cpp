@@ -178,7 +178,10 @@ bool FeEmuArtEditMenu::save( FeConfigContext &ctx )
 
 	std::string label = ctx.opt_list[0].get_value();
 	if ( !label.empty() )
-		m_emulator->set_artwork( label, ctx.opt_list[1].get_value() );
+	{
+		m_emulator->delete_artwork( label );
+		m_emulator->add_artwork( label, ctx.opt_list[1].get_value() );
+	}
 
 	return true;
 }
@@ -1246,6 +1249,9 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 
 	return true;
 }
+
+const int FeScriptConfigMenu::OPAQUE_BASE=100;
+const int FeScriptConfigMenu::INPUT_OPAQUE_BASE=200;
 
 void FeScriptConfigMenu::get_options_helper(
 		FeConfigContext &ctx,

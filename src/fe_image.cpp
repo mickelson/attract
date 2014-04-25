@@ -24,6 +24,7 @@
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
 #include "fe_shader.hpp"
+#include "fe_present.hpp" // for surface functionality
 
 #ifndef NO_MOVIE
 #include "media.hpp"
@@ -32,12 +33,93 @@
 #include <iostream>
 #include <cstdlib>
 
-FeTextureContainer::FeTextureContainer()
-	: m_index_offset( 0 ),
-	m_is_artwork( false ),
-	m_movie( NULL ),
-	m_movie_status( NoPlay )
+FeBaseTextureContainer::FeBaseTextureContainer()
 {
+}
+
+FeBaseTextureContainer::~FeBaseTextureContainer()
+{
+}
+
+void FeBaseTextureContainer::on_new_selection( FeSettings *feSettings )
+{
+}
+
+void FeBaseTextureContainer::on_new_list( FeSettings *, float, float )
+{
+}
+
+void FeBaseTextureContainer::set_play_state( bool play )
+{
+}
+
+bool FeBaseTextureContainer::get_play_state() const
+{
+	return false;
+}
+
+void FeBaseTextureContainer::set_vol( float vol )
+{
+}
+
+void FeBaseTextureContainer::set_index_offset( int io )
+{
+}
+
+int FeBaseTextureContainer::get_index_offset() const
+{
+	return 0;
+}
+
+void FeBaseTextureContainer::set_video_flags( FeVideoFlags f )
+{
+}
+
+FeVideoFlags FeBaseTextureContainer::get_video_flags() const
+{
+	return VF_Normal;
+}
+
+FeImage *FeBaseTextureContainer::add_image(const char *,int, int, int, int)
+{
+	return NULL;
+}
+
+FeImage *FeBaseTextureContainer::add_artwork(const char *,int, int, int, int)
+{
+	return NULL;
+}
+
+FeImage *FeBaseTextureContainer::add_clone(FeImage *)
+{
+	return NULL;
+}
+
+FeText *FeBaseTextureContainer::add_text(const char *,int, int, int, int)
+{
+	return NULL;
+}
+
+FeListBox *FeBaseTextureContainer::add_listbox(int, int, int, int)
+{
+	return NULL;
+}
+
+FeImage *FeBaseTextureContainer::add_surface(int, int)
+{
+	return NULL;
+}
+
+void FeBaseTextureContainer::register_image( FeImage *img )
+{
+	m_images.push_back( img );
+}
+
+void FeBaseTextureContainer::notify_texture_change()
+{
+	for ( std::vector<FeImage *>::iterator itr=m_images.begin();
+			itr != m_images.end(); ++itr )
+		(*itr)->texture_changed();
 }
 
 FeTextureContainer::FeTextureContainer(
@@ -47,8 +129,11 @@ FeTextureContainer::FeTextureContainer(
 	m_index_offset( 0 ),
 	m_is_artwork( is_artwork ),
 	m_movie( NULL ),
-	m_movie_status( NoPlay )
+	m_movie_status( Uninitialized ),
+	m_video_flags( VF_Normal )
 {
+	if (( m_is_artwork ) && ( m_name.empty() ))
+		m_name = FE_DEFAULT_ARTWORK;
 }
 
 FeTextureContainer::~FeTextureContainer()
@@ -62,28 +147,165 @@ FeTextureContainer::~FeTextureContainer()
 #endif
 }
 
-const sf::Texture &FeTextureContainer::load( const std::string &name )
+bool FeTextureContainer::load(
+	const std::string &file_name )
 {
+	std::vector<std::string> image_names;
+	std::vector<std::string> non_image_names;
+
+	int i=0;
+	while ( FE_ART_EXTENSIONS[i] != NULL )
+	{
+		if ( tail_compare( file_name, FE_ART_EXTENSIONS[i] ) )
+		{
+			image_names.push_back( file_name );
+			break;
+		}
+		i++;
+	}
+
+	if ( image_names.empty() )
+		non_image_names.push_back( file_name );
+
+	return common_load( non_image_names, image_names );
+}
+
+bool FeTextureContainer::load(
+	const std::vector < std::string > &art_paths,
+	const std::string &target_name )
+{
+	for ( std::vector< std::string >::const_iterator itr = art_paths.begin();
+			itr != art_paths.end(); ++itr )
+	{
+		std::vector<std::string> non_image_names;
+		std::vector<std::string> image_names;
+
+		get_filename_from_base(
+			image_names,
+			non_image_names,
+			(*itr),
+			target_name + '.',
+			FE_ART_EXTENSIONS );
+
+		if ( common_load( non_image_names, image_names ) )
+			return true;
+
+		//
+		// If there is a subdirectory in art_path with the
+		// given target name, then we load a random video or
+		// image from it at this point (if available)
+		//
+		std::string sd_path = (*itr) + target_name;
+		if ( directory_exists( sd_path ) )
+		{
+			sd_path += "/";
+
+			get_filename_from_base(
+				image_names,
+				non_image_names,
+				sd_path,
+				"",
+				FE_ART_EXTENSIONS );
+
+			std::random_shuffle( non_image_names.begin(), non_image_names.end() );
+			std::random_shuffle( image_names.begin(), image_names.end() );
+
+			if ( common_load( non_image_names, image_names ) )
+				return true;
+		}
+	}
+	return false;
+}
+
+bool FeTextureContainer::common_load(
+	std::vector<std::string> &non_image_names,
+	std::vector<std::string> &image_names )
+{
+	bool loaded=false;
 #ifndef NO_MOVIE
+	// If a movie is running, close it...
+	//
 	if ( m_movie )
 	{
+		m_movie->close();
 		delete m_movie;
 		m_movie=NULL;
 	}
+
+	if ( !(m_video_flags & VF_DisableVideo) )
+	{
+		std::string movie_file;
+		for ( std::vector<std::string>::iterator itr = non_image_names.begin();
+				itr != non_image_names.end(); ++itr  )
+		{
+			if ( FeMedia::is_supported_media_file( *itr ) )
+			{
+				movie_file = (*itr);
+				break;
+			}
+		}
+
+		if ( movie_file.empty() )
+		{
+			m_movie_status = NoPlay;
+		}
+		else
+ 		{
+			// We should have deleted this above...
+			ASSERT( m_movie == NULL );
+
+			m_movie = new FeMedia( (m_video_flags & VF_NoAudio)
+											? FeMedia::Video : FeMedia::AudioVideo );
+
+			if (!m_movie->openFromFile( movie_file ))
+			{
+				std::cout << "ERROR loading movie: " << movie_file << std::endl;
+				m_movie_status = NoPlay;
+			}
+			else
+			{
+				loaded = true;
+				m_movie_status = Loaded;
+			}
+		}
+	}
 #endif
 
-	m_name = name;
-	m_is_artwork = false;
-	m_texture.loadFromFile( m_name );
-	m_texture.setSmooth( true );
+	if ( !loaded )
+	{
+		for ( std::vector<std::string>::iterator itr=image_names.begin();
+			itr != image_names.end(); ++itr )
+		{
+			if ( m_texture.loadFromFile( *itr ) )
+			{
+				m_texture.setSmooth( true );
+				m_movie_status = NoPlay;
+				loaded = true;
+				break;
+			}
+		}
+	}
 
-	return m_texture;
+	non_image_names.clear();
+	image_names.clear();
+
+	return loaded;
+}
+
+void FeTextureContainer::load_now()
+{
+	if ( !m_is_artwork )
+	{
+		m_texture = sf::Texture();
+		load( m_name );
+		notify_texture_change();
+	}
 }
 
 const sf::Texture &FeTextureContainer::get_texture()
 {
 #ifndef NO_MOVIE
-	if (( m_is_artwork ) && ( m_movie ))
+	if ( m_movie )
 	{
 		const sf::Texture *t = m_movie->get_texture();
 		if ( t ) return *t;
@@ -95,133 +317,99 @@ const sf::Texture &FeTextureContainer::get_texture()
 
 void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 {
-	// We only need to do anything if this is flagged as an artwork
-	//
 	if ( !m_is_artwork )
 		return;
 
-	// if m_name is empty then check for the configured movie
-	// artwork
-	//
-	std::string label;
-	if ( m_name.empty() )
-		label = feSettings->get_movie_artwork();
-	else
-		label = m_name;
-
-#ifndef NO_MOVIE
-	// If a movie is running, close it...
-	//
-	if (m_movie)
-	{
-		if (m_movie->is_playing())
-			m_movie->stop();
-
-		m_movie->close();
-	}
-
-	// ... and reset movie status if we are to play a movie again
-	//
-	if ( ( m_movie_status != LockNoPlay )
-		&& ( label.compare( feSettings->get_movie_artwork() ) == 0 ) )
-	{
-		m_movie_status=Delayed;
-	}
-#endif
-
 	m_texture = sf::Texture();
 
-	if ( !label.empty() )
-	{
-		std::vector<std::string> file_list;
-		feSettings->get_art_file( m_index_offset, label, file_list );
+	std::vector<std::string> movie_list;
+	std::vector<std::string> image_list;
 
-		for ( unsigned int i=0; i<file_list.size(); i++ )
+	std::string layout_path = feSettings->get_current_layout_dir();
+
+	const std::string &emu_name
+		= feSettings->get_rom_info( m_index_offset, FeRomInfo::Emulator );
+
+	FeEmulatorInfo *emu_info = feSettings->get_emulator( emu_name );
+
+	std::vector < std::string > art_paths;
+	if ( emu_info )
+	{
+		std::vector < std::string > temp_list;
+		emu_info->get_artwork( m_name, temp_list );
+		for ( std::vector< std::string >::iterator itr = temp_list.begin();
+				itr != temp_list.end(); ++itr )
 		{
-			if ( m_texture.loadFromFile( file_list[i] ) )
-				break;
+			art_paths.push_back( clean_path( (*itr), true ) );
+			perform_substitution( art_paths.back(), "$LAYOUT", layout_path );
 		}
 	}
 
-	m_texture.setSmooth( true );
+	if ( !art_paths.empty() )
+	{
+		// test for "romname" specific
+		if ( load( art_paths, feSettings->get_rom_info( m_index_offset, FeRomInfo::Romname ) ) )
+			goto the_end;
 
-	for ( unsigned int i=0; i < m_images.size(); i++ )
-		m_images[i]->texture_changed();
+		// then "cloneof" specific
+		const std::string cloneof = feSettings->get_rom_info( m_index_offset, FeRomInfo::Cloneof );
+		if ( !cloneof.empty() && load( art_paths, cloneof ) )
+			goto the_end;
+
+		// then "emulator"
+		if ( !emu_name.empty() && load( art_paths, emu_name ) )
+			goto the_end;
+	}
+
+	if ( !layout_path.empty() )
+	{
+		std::vector< std::string > layout_paths;
+		layout_paths.push_back( layout_path );
+
+		if ( !emu_name.empty() )
+		{
+			// check for "[emulator]-[artlabel]" in layout directory
+			if ( load( layout_paths, emu_name + "-" + m_name ) )
+				goto the_end;
+		}
+
+		// check for file named with the artwork label in layout directory
+		if ( load( layout_paths, m_name ) )
+			goto the_end;
+	}
+
+the_end:
+	//
+	// Texture was replaced, so notify the attached images
+	//
+	notify_texture_change();
 }
 
-bool FeTextureContainer::tick( FeSettings *feSettings )
+bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
 #ifndef NO_MOVIE
-	if (( m_movie_status == Playing )
-		|| ( m_movie_status == Loading ))
+	if (( play_movies )
+		&& ( !(m_video_flags & VF_DisableVideo) )
+		&& ( m_movie ))
 	{
-		bool ret = m_movie->tick();
-		if (( m_movie_status == Loading ) && ( ret ))
+		if ( m_movie_status == Loaded )
 		{
-			m_movie_status = Playing;
-
-			// Force a reload of the texture for all images that point to us
 			//
-			for ( unsigned int i=0; i < m_images.size(); i++ )
-				m_images[i]->texture_changed();
-		}
-		return ret;
-	}
-
-	// We only need to do anything if we have the configured movie
-	// artwork and movies are not running
-	//
-	if ( !m_is_artwork
-		|| ( m_movie_status == LockNoPlay )
-		|| ( ( m_name.compare( feSettings->get_movie_artwork() ) != 0 )
-			&& !m_name.empty() ))
-		return false;
-
-	if ( m_movie_status == Delayed )
-	{
-		std::string movie_file;
-		std::vector <std::string> file_list;
-		feSettings->get_movie_file( m_index_offset, file_list );
-
-		for ( unsigned int i=0; i< file_list.size(); i++ )
-		{
-			if ( FeMedia::is_supported_media_file( file_list[i] ) )
-			{
-				movie_file = file_list[i];
-				break;
-			}
-		}
-
-		if ( movie_file.empty() )
-		{
-			m_movie_status = NoPlay;
-		}
-		else
-		{
-			if (m_movie == NULL)
-			{
-				//
-				// We only want sound for movies when they are the
-				// current selection.
-				//
-				if ( m_index_offset != 0 )
-					m_movie = new FeMedia(FeMedia::Video);
-				else
-					m_movie = new FeMedia(FeMedia::AudioVideo);
-			}
-
-			if (!m_movie->openFromFile( movie_file ))
-			{
-				std::cout << "ERROR loading movie: " << movie_file << std::endl;
-				m_movie_status = NoPlay;
-			}
+			// Start playing now if this is a video...
+			//
+			if ( m_video_flags & VF_NoAudio )
+				m_movie->setVolume( 0.f );
 			else
-			{
 				m_movie->setVolume( feSettings->get_play_volume( FeSoundInfo::Movie ) );
+
+			m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
+
+			if ( !(m_video_flags & VF_NoAutoStart) )
 				m_movie->play();
-				m_movie_status = Loading;
-			}
+
+			m_movie_status = Playing;
 		}
+		return m_movie->tick();
 	}
 #endif
 
@@ -241,27 +429,187 @@ void FeTextureContainer::set_play_state( bool play )
 #endif
 }
 
+bool FeTextureContainer::get_play_state() const
+{
+#ifndef NO_MOVIE
+	if ( m_movie )
+		return m_movie->is_playing();
+#endif
+
+	return false;
+}
+
 void FeTextureContainer::set_vol( float vol )
 {
 #ifndef NO_MOVIE
-	if (m_movie)
+	if ( (m_movie) && !(m_video_flags & VF_NoAudio) )
 		m_movie->setVolume( vol );
 #endif
 }
 
-FeImage::FeImage( FeTextureContainer *tc )
+void FeTextureContainer::set_index_offset( int io )
+{
+	if ( m_index_offset != io )
+	{
+		m_index_offset = io;
+		script_do_update( this );
+	}
+}
+
+int FeTextureContainer::get_index_offset() const
+{
+	return m_index_offset;
+}
+
+void FeTextureContainer::set_video_flags( FeVideoFlags f )
+{
+	m_video_flags = f;
+
+#ifndef NO_MOVIE
+	if ( m_movie )
+	{
+		m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
+
+		// TODO: Shut down the audio process?  Right now we just
+		// mute it if there is one...
+		//
+		if (m_video_flags & VF_NoAudio)
+			m_movie->setVolume( 0.f );
+	}
+#endif
+
+}
+
+FeVideoFlags FeTextureContainer::get_video_flags() const
+{
+	return m_video_flags;
+}
+
+FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )
+{
+	m_texture.create( width, height );
+	m_texture.setSmooth( true );
+}
+
+FeSurfaceTextureContainer::~FeSurfaceTextureContainer()
+{
+	while ( !m_draw_list.empty() )
+	{
+		FeBasePresentable *p = m_draw_list.back();
+		m_draw_list.pop_back();
+		delete p;
+	}
+}
+
+const sf::Texture &FeSurfaceTextureContainer::get_texture()
+{
+	return m_texture.getTexture();
+}
+
+void FeSurfaceTextureContainer::on_new_selection( FeSettings *s )
+{
+	for ( std::vector<FeBasePresentable *>::iterator itr = m_draw_list.begin();
+				itr != m_draw_list.end(); ++itr )
+		(*itr)->on_new_selection( s );
+}
+
+void FeSurfaceTextureContainer::on_new_list( FeSettings *s, float scale_x, float scale_y )
+{
+	//
+	// The scale factors passed to this function are ignored on purpose.
+	//
+	// We don't do any scaling of the objects when they are being drawn
+	// to the surface.
+	//
+	for ( std::vector<FeBasePresentable *>::iterator itr = m_draw_list.begin();
+				itr != m_draw_list.end(); ++itr )
+		(*itr)->on_new_list( s, 1.f, 1.f );
+}
+
+bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies )
+{
+	//
+	// Draw the surface's draw list to the render texture
+	//
+	m_texture.clear();
+	for ( std::vector<FeBasePresentable *>::const_iterator itr = m_draw_list.begin();
+				itr != m_draw_list.end(); ++itr )
+		m_texture.draw( (*itr)->drawable() );
+
+	m_texture.display();
+	return true;
+}
+
+FeImage *FeSurfaceTextureContainer::add_image(const char *n, int x, int y, int w, int h)
+{
+	FePresent *fep = helper_get_fep();
+
+	if ( fep )
+		return fep->add_image( false, n, x, y, w, h, m_draw_list );
+
+	return NULL;
+}
+
+FeImage *FeSurfaceTextureContainer::add_artwork(const char *l, int x, int y, int w, int h )
+{
+	FePresent *fep = helper_get_fep();
+
+	if ( fep )
+		return fep->add_image( true, l, x, y, w, h, m_draw_list );
+
+	return NULL;
+}
+
+FeImage *FeSurfaceTextureContainer::add_clone(FeImage *i )
+{
+	FePresent *fep = helper_get_fep();
+
+	if ( fep )
+		return fep->add_clone( i, m_draw_list );
+
+	return NULL;
+}
+
+FeText *FeSurfaceTextureContainer::add_text(const char *t, int x, int y, int w, int h)
+{
+	FePresent *fep = helper_get_fep();
+
+	if ( fep )
+		return fep->add_text( t, x, y, w, h, m_draw_list );
+
+	return NULL;
+}
+
+FeListBox *FeSurfaceTextureContainer::add_listbox(int x, int y, int w, int h)
+{
+	FePresent *fep = helper_get_fep();
+
+	if ( fep )
+		return fep->add_listbox( x, y, w, h, m_draw_list );
+
+	return NULL;
+}
+
+FeImage *FeSurfaceTextureContainer::add_surface(int w, int h)
+{
+	FePresent *fep = helper_get_fep();
+
+	if ( fep )
+		return fep->add_surface( w, h, m_draw_list );
+
+	return NULL;
+}
+
+FeImage::FeImage( FeBaseTextureContainer *tc, float x, float y, float w, float h )
 	: FeBasePresentable( true ),
 	m_tex( tc ),
-	m_pos( 0, 0 ),
-	m_size( 0, 0 ),
+	m_pos( x, y ),
+	m_size( w, h ),
 	m_preserve_aspect_ratio( false )
 {
 	ASSERT( m_tex );
-
-	if (!m_tex->m_is_artwork)
-		m_sprite.setTexture( m_tex->load( m_tex->m_name ), true );
-
-	m_tex->m_images.push_back( this );
+	m_tex->register_image( this );
+	scale();
 }
 
 FeImage::FeImage( FeImage *o )
@@ -272,7 +620,7 @@ FeImage::FeImage( FeImage *o )
 	m_size( o->m_size ),
 	m_preserve_aspect_ratio( o->m_preserve_aspect_ratio )
 {
-	m_tex->m_images.push_back( this );
+	m_tex->register_image( this );
 }
 
 FeImage::~FeImage()
@@ -294,23 +642,14 @@ void FeImage::texture_changed()
 	scale();
 }
 
-void FeImage::loadFromFile( const std::string &file )
-{
-  	m_sprite.setTexture( m_tex->load( file ), true );
-}
-
 int FeImage::getIndexOffset() const
 {
-	return m_tex->m_index_offset;
+	return m_tex->get_index_offset();
 }
 
 void FeImage::setIndexOffset( int io )
 {
-	if ( m_tex->m_index_offset != io )
-	{
-		m_tex->m_index_offset = io;
-		script_do_update( m_tex );
-	}
+	m_tex->set_index_offset( io );
 }
 
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -329,13 +668,17 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 void FeImage::scale()
 {
 	sf::IntRect texture_rect = m_sprite.getTextureRect();
+
+	if (( texture_rect.width == 0 ) || ( texture_rect.height == 0 ))
+		return;
+
 	bool scale=false;
 	float scale_x( 1.0 ), scale_y( 1.0 );
 	sf::Vector2f final_pos = m_pos;
 
 	if ( m_size.x > 0.0 )
 	{
-		scale_x = (float) m_size.x / texture_rect.width;
+		scale_x = (float) m_size.x / abs( texture_rect.width );
 
 		if ( m_preserve_aspect_ratio )
 			scale_y = scale_x;
@@ -345,7 +688,7 @@ void FeImage::scale()
 
 	if ( m_size.y > 0.0 )
 	{
-		scale_y = (float) m_size.y / texture_rect.height;
+		scale_y = (float) m_size.y / abs( texture_rect.height );
 
 		if ( m_preserve_aspect_ratio )
 		{
@@ -359,9 +702,9 @@ void FeImage::scale()
 				// ratio, so calculate how we will centre the image in the space we have
 				//
 				if ( scale_x > scale_y ) // centre in x direction
-					final_pos.x += ( m_size.x - ( texture_rect.width * scale_y )) / 2.0;
+					final_pos.x += ( m_size.x - ( abs( texture_rect.width ) * scale_y )) / 2.0;
 				else // centre in y direction
-					final_pos.y += ( m_size.y - ( texture_rect.height * scale_x )) / 2.0;
+					final_pos.y += ( m_size.y - ( abs( texture_rect.height ) * scale_x )) / 2.0;
 			}
 		}
 
@@ -445,38 +788,41 @@ void FeImage::setTextureRect( const sf::IntRect &r )
 	script_flag_redraw();
 }
 
+int FeImage::getVideoFlags() const
+{
+	return (int)m_tex->get_video_flags();
+}
+
+void FeImage::setVideoFlags( int f )
+{
+	m_tex->set_video_flags( (FeVideoFlags)f );
+}
+
+bool FeImage::getVideoPlaying() const
+{
+	return m_tex->get_play_state();
+}
+
+void FeImage::setVideoPlaying( bool f )
+{
+	m_tex->set_play_state( f );
+}
+
 bool FeImage::getMovieEnabled() const
 {
-	return ( (m_tex->m_movie_status != FeTextureContainer::LockNoPlay)
-		? true : false );
+	return !(m_tex->get_video_flags() & VF_DisableVideo );
 }
 
 void FeImage::setMovieEnabled( bool f )
 {
-	if ( f == false )
-	{
-#ifndef NO_MOVIE
-		if ( m_tex->m_movie )
-		{
-			delete m_tex->m_movie;
-			m_tex->m_movie=NULL;
-		}
-#endif
-		m_tex->m_movie_status = FeTextureContainer::LockNoPlay;
+	int c = (int)m_tex->get_video_flags();
 
-		for ( unsigned int i=0; i < m_tex->m_images.size(); i++ )
-			m_tex->m_images[i]->texture_changed();
-
-		script_flag_redraw();
-	}
+	if ( f )
+		c |= VF_DisableVideo;
 	else
-	{
-		if ( m_tex->m_movie_status == FeTextureContainer::LockNoPlay )
-		{
-			m_tex->m_movie_status = FeTextureContainer::NoPlay;
-			script_flag_redraw();
-		}
-	}
+		c &= ~VF_DisableVideo;
+
+	m_tex->set_video_flags( (FeVideoFlags)c );
 }
 
 int FeImage::get_skew_x() const
@@ -589,4 +935,54 @@ void FeImage::set_subimg_height( int h )
 void FeImage::set_preserve_aspect_ratio( bool p )
 {
 	m_preserve_aspect_ratio = p;
+}
+
+FeImage *FeImage::add_image(const char *n, int x, int y, int w, int h)
+{
+	return m_tex->add_image( n, x, y, w, h );
+}
+
+FeImage *FeImage::add_image(const char *n, int x, int y )
+{
+	return add_image( n, x, y, 0, 0 );
+}
+
+FeImage *FeImage::add_image(const char *n )
+{
+	return add_image( n, 0, 0, 0, 0 );
+}
+
+FeImage *FeImage::add_artwork(const char *l, int x, int y, int w, int h )
+{
+	return m_tex->add_artwork( l, x, y, w, h );
+}
+
+FeImage *FeImage::add_artwork(const char *l, int x, int y)
+{
+	return add_artwork( l, x, y, 0, 0 );
+}
+
+FeImage *FeImage::add_artwork(const char *l )
+{
+	return add_artwork( l, 0, 0, 0, 0 );
+}
+
+FeImage *FeImage::add_clone(FeImage *i )
+{
+	return m_tex->add_clone( i );
+}
+
+FeText *FeImage::add_text(const char *t, int x, int y, int w, int h)
+{
+	return m_tex->add_text( t, x, y, w, h );
+}
+
+FeListBox *FeImage::add_listbox(int x, int y, int w, int h)
+{
+	return m_tex->add_listbox( x, y, w, h );
+}
+
+FeImage *FeImage::add_surface(int w, int h)
+{
+	return m_tex->add_surface( w, h );
 }

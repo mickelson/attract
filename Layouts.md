@@ -4,6 +4,47 @@ Attract-Mode Frontend
 Layout and Plug-in Programming Reference
 ----------------------------------------
 
+Contents
+--------
+   * [Overview](#overview)
+   * [Squirrel Language](#squirrel)
+   * [Frontend Binding](#binding)
+   * [Functions](#functions)
+      * [`fe.add_image()`](#add_image)
+      * [`fe.add_artwork()`](#add_artwork)
+      * [`fe.add_surface()`](#add_surface)
+      * [`fe.add_clone()`](#add_clone)
+      * [`fe.add_text()`](#add_text)
+      * [`fe.add_listbox()`](#add_listbox)
+      * [`fe.add_shader()`](#add_shader)
+      * [`fe.add_sound()`](#add_sound)
+      * [`fe.add_ticks_callback()`](#add_ticks_callback)
+      * [`fe.add_transition_callback()`](#add_transition_callback)
+      * [`fe.game_info()`](#game_info)
+      * [`fe.get_input_state()`](#get_input_state)
+      * [`fe.get_input_pos()`](#get_input_pos)
+      * [`fe.do_nut()`](#do_nut)
+      * [`fe.plugin_command()`](#plugin_command)
+      * [`fe.plugin_command_bg()`](#plugin_command_bg)
+      * [`fe.path_expand()`](#path_expand)
+      * [`fe.get_config()`](#get_config)
+   * [Objects and Variables](#objects)
+      * [`fe.layout`](#layout)
+      * [`fe.list`](#list)
+      * [`fe.objs`](#objs)
+      * [`fe.init_name`](#init_name)
+   * [Classes](#classes)
+      * [`fe.LayoutGlobals`](#LayoutGlobals)
+      * [`fe.CurrentList`](#CurrentList)
+      * [`fe.Image`](#Image)
+      * [`fe.Text`](#Text)
+      * [`fe.ListBox`](#ListBox)
+      * [`fe.Sound`](#Sound)
+      * [`fe.Shader`](#Shader)
+   * [Constants](#constants)
+
+
+<a name="overview" />
 Overview
 --------
 
@@ -25,6 +66,7 @@ The Attract-Mode screen saver is really just a special case layout that is
 loaded after a user-configured period of inactivity.  The screen saver script
 is located in the "screensaver.nut" file stored in the "layouts" subdirectory.
 
+<a name="squirrel" />
 Squirrel Language
 -----------------
 
@@ -39,6 +81,7 @@ Squirrel and using its standard libraries, consult the Squirrel manuals:
 [SQREFMAN]: http://www.squirrel-lang.org/doc/squirrel3.html
 [SQLIBMAN]: http://www.squirrel-lang.org/doc/sqstdlib3.html
 
+<a name="binding" />
 Frontend Binding
 ----------------
 
@@ -56,21 +99,24 @@ Example:
 The remainder of this document describes the functions, objects, classes
 and constants that are exposed to layout and plug-in scripts.
 
+<a name="functions" />
 Functions
 ---------
 
+<a name="add_image" />
 #### `fe.add_image()` ####
 
-    fe.add_image( name )	
+    fe.add_image( name )
     fe.add_image( name, x, y )	
     fe.add_image( name, x, y, w, h )
  
-Add a static image to the end of Attract-Mode's draw list.  
+Add a static image or video to the end of Attract-Mode's draw list.
  
 Parameters:   
 
-   * name - the name of an image file located in the layout directory. 
-     Supported file formats include: PNG, JPEG, GIF, BMP and TGA.
+   * name - the name of an image/video file located in the layout directory.
+     Supported image formats are: PNG, JPEG, GIF, BMP and TGA.  Videos can be
+     in any format supported by FFmpeg.
    * x - the x coordinate of the top left corner of the image (in layout 
      coordinates).
    * y - the y coordinate of the top left corner of the image (in layout 
@@ -84,19 +130,20 @@ Parameters:
  
 Return Value:
 
-   * An instance of the class `fe.Image` which can be used to interact with
-     the added image.
+   * An instance of the class [`fe.Image`](#Image) which can be used to
+     interact with the added image/video.
 
 
+<a name="add_artwork" />
 #### `fe.add_artwork()` ####
 
     fe.add_artwork( label )	
     fe.add_artwork( label, x, y )	
     fe.add_artwork( label, x, y, w, h )
 
-Add an artwork to the end of Attract-Mode's draw list.  The image displayed
-in an artwork is updated automatically whenever the user changes the game
-selection.
+Add an artwork to the end of Attract-Mode's draw list.  The image/video
+displayed in an artwork is updated automatically whenever the user changes
+the game selection.
 
 Parameters:   
 
@@ -116,29 +163,53 @@ Parameters:
 
 Return Value:
 
-   * An instance of the class `fe.Image` which can be used to interact with
-     the added artwork.
+   * An instance of the class [`fe.Image`](#Image) which can be used to
+     interact with the added artwork.
 
 
+<a name="add_surface" />
+#### `fe.add_surface()` ####
+
+    fe.add_surface( w, h )
+
+Add a surface to the end of Attract-Mode's draw list.  A surface is an off-
+screen texture upon which you can draw other image, artwork, text, listbox
+and surface objects.  The resulting texture is treated as a static image by
+Attract-Mode which can in turn have any of the image effects applied to it
+(pinch, skew, shaders, etc) when it is drawn.
+
+Parameters:
+
+   * w - the width of the surface texture (in pixels).
+   * h - the height of the surface texture (in pixels).
+
+Return Value:
+
+   * An instance of the class [`fe.Image`](#Image) which can be used to
+     interact with the added surface.
+
+
+<a name="add_clone" />
 #### `fe.add_clone()` ####
 
     fe.add_clone( img )	
 
-Clone an image or artwork and add the clone to the back of Attract-Mode's 
-draw list.  The texture pixel data of the original and clone is shared 
-as a result.
+Clone an image, artwork or surface object and add the clone to the back
+of Attract-Mode's draw list.  The texture pixel data of the original and
+clone is shared as a result.
 
 Parameters:   
 
-   * img - the image or artwork object to clone.  This needs to be an 
-     instance of the class `fe.Image`.
+   * img - the image, artwork or surface object to clone.  This needs to
+     be an instance of the class `fe.Image`.
 
 Return Value:
 
-   * An instance of the class `fe.Image` which can be used to interact with
-     the added clone.
+   * An instance of the class [`fe.Image`](#Image) which can be used to
+     interact with the added clone.
 
 
+<a name="add_text" />
 #### `fe.add_text()` ####
 
     fe.add_text( msg, x, y, w, h )
@@ -177,10 +248,11 @@ Parameters:
 
 Return Value:
 
-   * An instance of the class `fe.Text` which can be used to interact with
-     the added text.
+   * An instance of the class [`fe.Text`](#Text) which can be used to
+     interact with the added text.
 
 
+<a name="add_listbox" />
 #### `fe.add_listbox()` ####
 
     fe.add_listbox( x, y, w, h )
@@ -198,10 +270,11 @@ Parameters:
 
 Return Value:
 
-   * An instance of the class `fe.ListBox` which can be used to interact with
-     the added text.
+   * An instance of the class [`fe.ListBox`](#ListBox) which can be used to
+     interact with the added text.
 
 
+<a name="add_shader" />
 #### `fe.add_shader()` ####
 
     fe.add_shader( type, file1, file2 )
@@ -228,8 +301,8 @@ Parameters:
 
 Return Value:
 
-   * An instance of the class `fe.Shader` which can be used to interact with
-     the added shader.
+   * An instance of the class [`fe.Shader`](#Shader) which can be used to
+     interact with the added shader.
 
 #### Implementation note for GLSL shaders in Attract-Mode: ####
 
@@ -264,6 +337,7 @@ The minimal fragment shader expected is as follows:
     }
 
 
+<a name="add_sound" />
 #### `fe.add_sound()` ####
 
     fe.add_sound( name )
@@ -277,10 +351,11 @@ Parameters:
 
 Return Value:
 
-   * An instance of the class `fe.Sound` which can be used to interact with
-     the added sound.
+   * An instance of the class [`fe.Sound`](#Sound) which can be used to
+     interact with the added sound.
 
 
+<a name="add_ticks_callback" />
 #### `fe.add_ticks_callback()` ####
 
     fe.add_ticks_callback( function_name )
@@ -306,6 +381,7 @@ Return Value:
    * None.
 
 
+<a name="add_transition_callback" />
 #### `fe.add_transition_callback()` ####
 
     fe.add_transition_callback( function_name )
@@ -387,6 +463,7 @@ Return Value:
    * None.
 
 
+<a name="game_info" />
 #### `fe.game_info()` ####
 
     fe.game_info( id )
@@ -411,6 +488,7 @@ Parameters:
       - `Info.Status`
       - `Info.DisplayCount`
       - `Info.DisplayType`
+      - `Info.Favourite`
    * index_offset - the offset (from the current selection) of the game to 
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.
@@ -420,6 +498,7 @@ Return Value:
    * A string containing the requested information.
 
 
+<a name="get_input_state" />
 #### `fe.get_input_state()` ####
 
     fe.get_input_state( input_id )
@@ -442,6 +521,7 @@ Return Value:
    * `true` if input is pressed, `false` otherwise.
 
 
+<a name="get_input_pos" />
 #### `fe.get_input_pos()` ####
 
     fe.get_input_pos( input_id )
@@ -459,6 +539,7 @@ Return Value:
    * Current position of the specified axis, in range [0..100].
 
 
+<a name="do_nut" />
 #### `fe.do_nut()` ####
 
     fe.do_nut( name )
@@ -473,6 +554,8 @@ Return Value:
 
    * None.
 
+
+<a name="plugin_command" />
 #### `fe.plugin_command()` ####
 
     fe.plugin_command( plugin_name, arg_string )
@@ -499,6 +582,8 @@ Return Value:
 
    * None.
 
+
+<a name="plugin_command_bg" />
 #### `fe.plugin_command_bg()` ####
 
     fe.plugin_command_bg( plugin_name, arg_string )
@@ -514,7 +599,11 @@ Return Value:
 
    * None.
 
-#### `fe.path_expand( path )` ####
+
+<a name="path_expand" />
+#### `fe.path_expand()` ####
+
+    fe.path_expand( path )
 
 Expand the given path name.  A leading `~` or `$HOME` token will be become
 the user's home directory.  On Windows systems, a leading `%SYSTEMROOT%` 
@@ -530,6 +619,7 @@ Return Value:
    * The expansion of path. 
 
 
+<a name="get_config" />
 #### `fe.get_config()` ####
 
 Get the user configured settings for this layout/plugin/screensaver.
@@ -554,36 +644,44 @@ Return Value:
      Mode or the "Attrac-Man" layout.
 
 
+<a name="objects" />
 Objects and Variables
 ---------------------
 
+<a name="layout" />
 #### `fe.layout` ####
 
 `fe.layout` is an instance of the `fe.LayoutGlobals` class and is where
 global layout settings are stored.
 
 
+<a name="list" />
 #### `fe.list` ####
 
 `fe.list` is an instance of the `fe.CurrentList` class and is where current
 list settings are stored.
 
 
+<a name="objs" />
 #### `fe.objs` ####
 
 `fe.objs` contains the Attract-Mode draw list.  It is an array of `fe.Image`,
 `fe.Text` and `fe.ListBox` instances.
 
 
+<a name="init_name" />
 #### `fe.init_name` ####
 
 When Attract-Mode runs a plug-in script, `fe.init_name` is set to the 
 name of the plug-in.  NOTE this variable will *not* be valid when callback
 functions are executed.
 
+
+<a name="classes" />
 Classes
 -------
 
+<a name="LayoutGlobals" />
 #### `fe.LayoutGlobals` ####
 
 This class is a container for global layout settings.  The instance of this
@@ -603,6 +701,7 @@ Attributes:
       - `RotateScreen.Flip`
       - `RotateScreen.Left`
 
+<a name="CurrentList" />
 #### `fe.CurrentList` ####
 
 This class is a container for current list settings.  The instance of this
@@ -617,13 +716,14 @@ Attributes:
    * `index` - Get/set the current list selection index.
 
 
+<a name="Image" />
 #### `fe.Image` ####
 
 The class representing an image in Attract-Mode.  Instances of this class
-are returned by the `fe.add_image()`, `fe.add_artwork()` and 
-`fe.add_clone()` functions and also appear in the `fe.objs` array (the 
-Attract-Mode draw list).  This class cannot be otherwise instantiated
-in a script.
+are returned by the `add_image()`, `add_artwork()`, `add_surface` and
+`add_clone()` functions and also appear in the `fe.objs` array (the
+Attract-Mode draw list).  This class cannot be otherwise instantiated in
+a script.
 
 Attributes:   
 
@@ -671,24 +771,59 @@ Attributes:
      to display.  Default value is `texture_width`.
    * `subimg_height` - Get/set the height of the image texture sub-rectangle 
      to display.  Default value is `texture_height`.
-   * `movie_enabled` - [artwork only] Get/set whether movies may be displayed
-     in the artwork if configured by the user (boolean).  Default value is 
-     `true`.  
+   * `video_flags` - [image & artwork only] Get/set video flags for this
+     object.  These flags allow you to override Attract-Mode's default video
+     playback behaviour.  Can be set to any combination of none or more of the
+     following (i.e. `Vid.NoAudio | Vid.NoLoop`):
+      - `Vid.Default`
+      - `Vid.ImagesOnly` (disable video playback, display images instead)
+      - `Vid.NoAudio` (silence the audio track)
+      - `Vid.NoAutoStart` (don't automatically start video playback)
+      - `Vid.NoLoop` (don't loop video playback)
+   * `video_playing` - [image & artwork only] Get/set whether video is
+     currently playing in this artwork (boolean).
    * `preserve_aspect_ratio` - Get/set whether the aspect ratio from the source
      image is to be preserved.  Default value is `false`.
    * `shader` - Get/set the GLSL shader for this image. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 
-Functions:   
+Member Functions:
 
    * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the 
      image.  Range is [0 ... 255].
-     
+   * `set_pos( x, y )` - Set the image position (in layout coordinates).
+   * `set_pos( x, y, width, height )` - Set the image position and size (in
+     layout coordinates).
+   * `add_image()` - [surface only] add an image to the end of this surface's
+     draw list (see [`fe.add_image()`](#add_image) for parameters and return
+     value).
+   * `add_artwork()` - [surface only] add an artwork to the end of this
+     surface's draw list (see [`fe.add_artwork()`](#add_artwork) for parameters
+     and return value).
+   * `add_clone()` - [surface only] add a clone to the end of this surface's
+     draw list (see [`fe.add_clone()`](#add_clone) for parameters and return
+     value).
+   * `add_text()` - [surface only] add a text to the end of this surface's draw
+     list (see [`fe.add_text()`](#add_text) for parameters and return value).
+   * `add_listbox()` - [surface only] add a listbox to the end of this
+     surface's draw list (see [`fe.add_listbox()`](#add_listbox) for parameters
+     and return value).
+   * `add_surface()` - [surface only] add a surface to the end of this
+     surface's draw list (see [`fe.add_surface()`](#add_surface) for parameters
+     and return value).
 
+Notes:
+
+   * To flip an image vertically, set the `subimg_height` property to
+     `-1 * texture_height` and `subimg_y` to `texture_width`.
+   * To flip an image horizontally, set the `subimg_width` property to
+     `-1 * texture_width` and `subimg_x` to `texture_height`.
+
+<a name="Text" />
 #### `fe.Text` ####
 
 The class representing a text label in Attract-Mode.  Instances of this 
-class are returned by the `fe.add_text()` function and also appear in the 
+class are returned by the `add_text()` functions and also appear in the
 `fe.objs` array (the Attract-Mode draw list).  This class cannot be 
 otherwise instantiated in a script.
 
@@ -762,18 +897,22 @@ Attributes:
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 
-Functions:   
+Member Functions:
 
    * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the 
      text.  Range is [0 ... 255].
    * `set_bg_rgb( r, g, b )` - Set the red, green and blue colour values for 
      the text background.  Range is [0 ... 255].
+   * `set_pos( x, y )` - Set the text position (in layout coordinates).
+   * `set_pos( x, y, width, height )` - Set the text position and size (in
+     layout coordinates).
 
 
+<a name="ListBox" />
 #### `fe.ListBox` ####
 
 The class representing the listbox in Attract-Mode.  Instances of this 
-class are returned by the `fe.add_listbox()` function and also appear in the 
+class are returned by the `add_listbox()` functions and also appear in the
 `fe.objs` array (the Attract-Mode draw list).  This class cannot be 
 otherwise instantiated in a script.
 
@@ -846,7 +985,7 @@ Attributes:
    * `shader` - Get/set the GLSL shader for this listbox. This can only be set
      to an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 
-Functions:
+Member Functions:
 
    * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the 
      text.  Range is [0 ... 255].
@@ -856,8 +995,12 @@ Functions:
      for the selection text.  Range is [0 ... 255].
    * `set_selbg_rgb( r, g, b )` - Set the red, green and blue colour values 
      for the selection background.  Range is [0 ... 255].
+   * `set_pos( x, y )` - Set the listbox position (in layout coordinates).
+   * `set_pos( x, y, width, height )` - Set the listbox position and size (in
+     layout coordinates).
 
 
+<a name="Sound" />
 #### `fe.Sound` ####
 
 The class representing a sound sample.  Instances of this class are returned 
@@ -872,11 +1015,12 @@ Attributes:
    * `y` - Get/set the y position of the sound.  Default value is 0.
    * `z` - Get/set the z position of the sound.  Default value is 0.
 
-Functions:
+Member Functions:
 
    * `play()` - Play the sound.
 
 
+<a name="Shader" />
 #### `fe.Shader` ####
 
 The class representing a GLSL shader.  Instances of this class are returned
@@ -891,7 +1035,7 @@ Attributes:
       - `Shader.Fragment`
       - `Shader.Empty`
 
-Functions:
+Member Functions:
 
    * `set_param( name, f )` - Set the float variable (float GLSL type) with
      the specified name to the value of f.
@@ -910,6 +1054,7 @@ Functions:
      "image" must be an instance of the `fe.Image` class.
 
 
+<a name="constants" />
 Constants
 ---------
 
@@ -936,21 +1081,3 @@ The Operating System that Attract-Mode is running under.  Will be one of:
 
 true if GLSL shaders are available on this system, false otherwise.
 
-
-Deprecated Functions and Objects
---------------------------------
-#### `fe.is_keypressed()` ####
-#### `fe.is_joybuttonpressed()` ####
-
-The fe.is_keypressed() and fe.is_joybuttonpressed() functions are deprecated as
-of version 1.2.  Use `fe.get_input_state()` instead.
-
-#### `fe.get_joyaxispos()` ####
-
-The fe.get_joyaxispos() function is deprecated as of version 1.2.  Use
-`fe.get_input_pos()` instead.
-
-#### `fe.uconfig` ####
-
-The fe.uconfig object is deprecated as of version 1.2.  Use the `fe.get_config`
-function instead

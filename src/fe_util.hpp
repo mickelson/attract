@@ -79,8 +79,11 @@ bool run_program( const std::string &prog,
 //
 // Utility functions for file processing:
 //
-// return true if file exists
+// return true if file exists (file or directory)
 bool file_exists( const std::string &file );
+
+// return true if specified path is an existing directory
+bool directory_exists( const std::string &file );
 
 // clean the path string for usage.  Performs substitution of $HOME etc...
 std::string clean_path( const std::string &path,
@@ -118,20 +121,16 @@ bool get_basename_from_extension(
 			bool strip_extension = true );
 
 //
-// Return "list" of filenames in "path" where the file basename is in "baselist"
-// Ordering of returned "list" corresponds to ordering of baselist
+// Return "in_list" of filenames in "path" where the base filename is "base_name"
 //
-// if filter_excludes is false and ext_filter is non-NULL: Only include
-// files with an extension in the "ext_filter" NULL terminated list.
+// if filter is non-NULL: Only include files with an extension in the "ext_filter"
+// NULL terminated list in "in_list".  All others go in "out_list".
 //
-// if filter_excludes is true and ext_filter is non-NULL: Don't include
-// files with an extension in the "ext_filter" NULL terminated list.
-//
-bool get_filename_from_base( std::vector<std::string> &list,
+bool get_filename_from_base( std::vector<std::string> &in_list,
+				std::vector<std::string> &out_list,
 				const std::string &path,
-				const std::vector<std::string> &base_list,
-				const char **ext_filter=NULL,
-				bool filter_excludes=false );
+				const std::string &base_name,
+				const char **ext_filter=NULL );
 
 //
 // Get a filename that does not currently exist.

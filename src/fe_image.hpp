@@ -30,48 +30,145 @@
 class FeSettings;
 class FeMedia;
 class FeImage;
+class FeText;
+class FeListBox;
 
-class FeTextureContainer
+enum FeVideoFlags
 {
-friend class FeImage;
+	VF_Normal			= 0,
+	VF_DisableVideo	= 0x01,
+	VF_NoLoop			= 0x02,
+	VF_NoAutoStart		= 0x04,
+	VF_NoAudio			= 0x08
+};
 
+class FeBaseTextureContainer
+{
+public:
+	virtual ~FeBaseTextureContainer();
+
+	virtual const sf::Texture &get_texture()=0;
+
+	virtual void on_new_selection( FeSettings *feSettings );
+	virtual void on_new_list( FeSettings *, float, float );
+
+	virtual bool tick( FeSettings *feSettings, bool play_movies )=0; // returns true if redraw required
+	virtual void set_play_state( bool play );
+	virtual bool get_play_state() const;
+	virtual void set_vol( float vol );
+
+	virtual void set_index_offset( int io );
+	virtual int get_index_offset() const;
+
+	virtual void set_video_flags( FeVideoFlags );
+	virtual FeVideoFlags get_video_flags() const;
+
+	//
+	// Callback functions for use with surface objects
+	//
+	virtual FeImage *add_image(const char *,int, int, int, int);
+	virtual FeImage *add_artwork(const char *,int, int, int, int);
+	virtual FeImage *add_clone(FeImage *);
+	virtual FeText *add_text(const char *,int, int, int, int);
+	virtual FeListBox *add_listbox(int, int, int, int);
+	virtual FeImage *add_surface(int, int);
+
+	void register_image( FeImage * );
+
+protected:
+	FeBaseTextureContainer();
+	FeBaseTextureContainer( const FeBaseTextureContainer & );
+	FeBaseTextureContainer &operator=( const FeBaseTextureContainer & );
+
+	// call this to notify registered images that the texture has changed
+	void notify_texture_change();
+
+private:
+	std::vector< FeImage * > m_images;
+};
+
+class FeTextureContainer : public FeBaseTextureContainer
+{
 public:
 	enum MovieStatus
 	{
-		Delayed,			// short delay so that we don't play movie
-							// if the user is just scrolling past
-		Loading,			// processing first frames but display not ready
+		Uninitialized,
+		Loaded,			// Movie is loaded but not yet playing
 		Playing,			// play movie
-		NoPlay,			// don't play this movie, show image instead
-		LockNoPlay		// don't ever play a movie
+		NoPlay			// don't play this movie, show image instead
 	};
 
-	FeTextureContainer();
 	FeTextureContainer( bool is_artwork, const std::string &name );
 	~FeTextureContainer();
 
-	const sf::Texture &load( const std::string & );
 	const sf::Texture &get_texture();
 
 	void on_new_selection( FeSettings *feSettings );
-	bool tick( FeSettings *feSettings ); // returns true if redraw required
+	bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
 	void set_play_state( bool play );
+	bool get_play_state() const;
 	void set_vol( float vol );
 
+	void set_index_offset( int io );
+	int get_index_offset() const;
+
+	void set_video_flags( FeVideoFlags );
+	FeVideoFlags get_video_flags() const;
+
+	void load_now();
+
 private:
+
+	bool load( const std::vector <std::string> &art_paths,
+		const std::string &target_name );
+	bool load( const std::string &file_name );
+
+	bool common_load(
+		std::vector<std::string> &non_image_names,
+		std::vector<std::string> &image_names );
+
 	sf::Texture m_texture;
 	std::string m_name;
 	int m_index_offset;
 	bool m_is_artwork;
 	FeMedia *m_movie;
 	MovieStatus m_movie_status;
-	std::vector< FeImage * > m_images;
+	FeVideoFlags m_video_flags;
+};
+
+class FeSurfaceTextureContainer : public FeBaseTextureContainer
+{
+public:
+
+	FeSurfaceTextureContainer( int width, int height );
+	~FeSurfaceTextureContainer();
+
+	const sf::Texture &get_texture();
+
+	void on_new_selection( FeSettings *feSettings );
+	void on_new_list( FeSettings *, float, float );
+
+	bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
+
+	//
+	// Callback functions for use with surface objects
+	//
+	FeImage *add_image(const char *,int, int, int, int);
+	FeImage *add_artwork(const char *,int, int, int, int);
+	FeImage *add_clone(FeImage *);
+	FeText *add_text(const char *,int, int, int, int);
+	FeListBox *add_listbox(int, int, int, int);
+	FeImage *add_surface(int, int);
+
+private:
+	sf::RenderTexture m_texture;
+	std::vector <FeBasePresentable *> m_draw_list;
 };
 
 class FeImage : public sf::Drawable, public FeBasePresentable
 {
 protected:
-	FeTextureContainer *m_tex;
+	FeBaseTextureContainer *m_tex;
 	FeSprite m_sprite;
 	sf::Vector2f m_pos;
 	sf::Vector2f m_size;
@@ -83,13 +180,11 @@ protected:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
 public:
-	FeImage( FeTextureContainer * );
+	FeImage( FeBaseTextureContainer *, float x, float y, float w, float h );
 	FeImage( FeImage * ); // clone the given image (texture is not copied)
 	~FeImage();
 
 	const sf::Texture *get_texture();
-
-	void loadFromFile( const std::string & );
 
 	const sf::Vector2f &getSize() const;
 	void setSize( const sf::Vector2f &s );
@@ -106,12 +201,18 @@ public:
 	const sf::Vector2u getTextureSize() const;
 	const sf::IntRect &getTextureRect() const;
 	void setTextureRect( const sf::IntRect &);
+	int getVideoFlags() const;
+	void setVideoFlags( int f );
+	bool getVideoPlaying() const;
+	void setVideoPlaying( bool );
+
+	// deprecated as of 1.3, use video_flags instead:
 	bool getMovieEnabled() const;
 	void setMovieEnabled( bool );
 
 	// Overrides from base class:
 	//
-	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
+	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
 	void texture_changed();
 
 	int get_skew_x() const ;
@@ -135,8 +236,22 @@ public:
 	void set_subimg_width( int w );
 	void set_subimg_height( int h );
 	void set_preserve_aspect_ratio( bool p );
+
+	//
+	// Callback functions for use with surface objects
+	//
+	FeImage *add_image(const char *,int, int, int, int);
+	FeImage *add_image(const char *, int, int);
+	FeImage *add_image(const char *);
+	FeImage *add_artwork(const char *,int, int, int, int);
+	FeImage *add_artwork(const char *, int, int);
+	FeImage *add_artwork(const char *);
+	FeImage *add_clone(FeImage *);
+	FeText *add_text(const char *,int, int, int, int);
+	FeListBox *add_listbox(int, int, int, int);
+	FeImage *add_surface(int, int);
 };
 
-void script_do_update( FeTextureContainer * );
+void script_do_update( FeBaseTextureContainer * );
 
 #endif

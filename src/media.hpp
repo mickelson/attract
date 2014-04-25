@@ -37,7 +37,7 @@ class FeMedia : private sf::SoundStream
 friend class FeVideoImp;
 
 public:
-	enum Type 
+	enum Type
 	{
 		Audio=0x01,
 		Video=0x02,
@@ -61,7 +61,7 @@ public:
 	void stop();
 	void close();
 
-	// tick() needs to be called regularly on video media to update the display 
+	// tick() needs to be called regularly on video media to update the display
 	// texture. Returns true if display refresh required.  false if no update
 	//
 	bool tick();
@@ -69,7 +69,6 @@ public:
 	void setLoop( bool );
 
 	bool is_playing();
-	bool get_display_ready() const; // true if a video image is available for display
 
 	//
 	// return true if the given filename is a media file that can be opened

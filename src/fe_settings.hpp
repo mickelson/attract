@@ -27,6 +27,8 @@
 #include "fe_info.hpp"
 #include "fe_input.hpp"
 
+extern const char *FE_ART_EXTENSIONS[];
+
 extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_EMULATOR_SUBDIR;
 
@@ -34,6 +36,7 @@ extern const char *FE_ROMLIST_FILE_EXTENSION;
 extern const char *FE_EMULATOR_FILE_EXTENSION;
 
 extern const char *FE_LAYOUT_UI_KEY_FILE;
+
 
 // A container for each task when importing/building romlists from the command line
 class FeImportTask
@@ -120,9 +123,6 @@ private:
 
 	void set_current_rom(int );
 
-	void internal_get_art_file( std::vector<std::string> &,
-							std::string &, int, const std::string &, bool  ) const;
-
 	void internal_gather_config_files(
 			std::vector<std::string> &ll,
 			const std::vector<std::string> &extension_list,
@@ -198,14 +198,6 @@ public:
 
 	const std::string &get_plugin_command( const std::string &name ) const;
 	std::string get_plugin_full_path( const std::string &label ) const;
-
-	//
-	// Returns filenames to use for artwork. prefer the files earlier in the list
-	//
-	void get_art_file( int offset, const std::string &artwork, std::vector<std::string> &filenames );
-	void get_movie_file( int offset, std::vector<std::string> &filenames );
-
-	const std::string &get_movie_artwork();
 
 	std::string get_screensaver_file() const;
 	FeLayoutInfo &get_screensaver_config() { return m_saver_params; }

@@ -20,8 +20,6 @@ Rom Path;Chemin des ROM
 Rom Extension(s);Extension(s) des ROM
 Additional Import Files;Fichiers additionels
 XML Mode;Mode XML
-Movie Path;Chemin des vidéos
-Movie Artwork;Artwork alternatif
 Add Artwork;Ajouter Artwork
 Generate Romlist;Générer la liste de ROM
 Delete this Emulator;Supprimer cet émulateur
@@ -42,8 +40,6 @@ _help_emu_executable;Chemin et nom de l'executable de l'émulateur. $HOME sera r
 _help_emu_args;Arguments de la ligne de commande de cet émulateur. Options de substitution: [name], [romext], [rompath], [emulator], [romfilename]
 _help_emu_rompath;Chemin des ROM pour cet émulateur
 _help_emu_romext;Extension des ROM pour cet émulateur (ex .zip).  Possibilité d'utiliser des extensions multiples separées par un point-virgule
-_help_emu_movie_path;Chemin des vidéos attract-mode (si il y en a) pour cet emulateur
-_help_emu_movie_artwork;Ressource d'Artwork utilisée pour afficher les films
 _help_emu_import_extras;Fichiers additionels nécessitant d'être lus lors de la generation de la liste de ROM pour cet émulateur. Fichiers supportés: catver.ini (catégories) et nplayers.ini (nombre de joueur). Plusieurs fichiers peuvent etre saisis si separés par un point-virgule
 _help_emu_listxml;Les valeurs valides pour le mode XML sont "mame" (si c'est une version récente de mame proposant l'option -listxml) ou "mess <system>" (si c'est une version récente de mess proposant l'option -listsoftware). Pour tout autre émulateur laisser vide
 _help_emu_gen_romlist;Génére une liste de ROM en cherchant dans le chemin des ROM avec l'extension choisie, incorporant l'XML et les fichiers additionels d'information dans la liste générée (si disponible)

@@ -45,7 +45,7 @@ public:
 	virtual void on_new_selection( FeSettings * );
 	virtual void on_new_list( FeSettings *, float, float );
 
-	virtual const sf::Drawable &drawable()=0;
+	virtual const sf::Drawable &drawable() const=0;
 	virtual const sf::Vector2f &getPosition() const=0;
 	virtual void setPosition( const sf::Vector2f & )=0;
 	virtual const sf::Vector2f &getSize() const=0;
@@ -69,6 +69,9 @@ public:
 	float get_height() const;
 	void set_width( float w );
 	void set_height( float h );
+
+	void set_pos(float x, float y);
+	void set_pos(float x, float y, float w, float h);
 
 	int get_r() const;
 	int get_g() const;

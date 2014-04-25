@@ -575,12 +575,6 @@ void FeSettings::dump() const
 			itl != m_lists.end(); ++itl )
 			(*itl).dump();
 
-	std::cout << "*** Dump of available emulators:" << std::endl;
-	for ( std::vector<FeEmulatorInfo>::const_iterator ite=m_emulators.begin();
-			ite != m_emulators.end(); ++ite )
-			(*ite).dump();
-
-
 	std::cout << "*** Dump of current rom list:" << std::endl;
 
 	for ( int i=0; i < m_rl.size(); i++ )
@@ -1102,7 +1096,6 @@ FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
 		// the FeEmulator::Command field.
 		//
 		emulator_substitution( new_emu, FeEmulatorInfo::Rom_path, emu );
-		emulator_substitution( new_emu, FeEmulatorInfo::Movie_path, emu );
 
 		std::vector<std::pair<std::string,std::string> > al;
 		std::vector<std::pair<std::string,std::string> >::iterator itr;
@@ -1111,7 +1104,10 @@ FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
 		{
 			std::string temp = (*itr).second;
 			if ( perform_substitution( temp, EMU_TOKEN, emu ) )
-				new_emu.set_artwork( (*itr).first, temp );
+			{
+				new_emu.delete_artwork( (*itr).first );
+				new_emu.add_artwork( (*itr).first, temp );
+			}
 		}
 	}
 
@@ -1143,101 +1139,6 @@ void FeSettings::delete_emulator( const std::string & emu )
 			break;
 		}
 	}
-}
-
-void FeSettings::internal_get_art_file(
-		std::vector<std::string> &result,
-		std::string &ap,				// artwork/movie path
-		int curr_rom,				// rom index
-		const std::string &artlabel,
-		bool is_movie ) const
-{
-	std::string layout_path = get_current_layout_dir();
-
-	std::string current_emu;
-	if ( !m_rl.empty() )
-		current_emu = m_rl[ curr_rom ].get_info(
-				FeRomInfo::Emulator );
-
-	if (( !ap.empty() ) && ( !m_rl.empty() ))
-	{
-		std::vector<std::string> test_list;
-		std::string artpath = clean_path( ap, true );
-		perform_substitution( artpath, "$LAYOUT", layout_path );
-
-		// test for "romname" specific
-		test_list.push_back( m_rl[curr_rom].get_info( FeRomInfo::Romname ) + '.' );
-
-		// then "cloneof" specific
-		std::string cloneof = m_rl[curr_rom].get_info( FeRomInfo::Cloneof );
-		if ( !cloneof.empty() )
-			test_list.push_back( cloneof + '.' );
-
-		// then "emulator"
-		test_list.push_back( current_emu );
-
-		get_filename_from_base( result, artpath, test_list,
-								FE_ART_EXTENSIONS, is_movie );
-	}
-
-	if ( !layout_path.empty() )
-	{
-		std::vector<std::string> test_list;
-
-		if ( !current_emu.empty() )
-		{
-			// check for "[emulator]-[artlabel]" image in layout directory
-			std::string test = current_emu;
-			test += "-";
-			test += artlabel;
-			test_list.push_back( test );
-		}
-
-		// check for file named with the artwork label in layout directory
-		test_list.push_back( artlabel );
-
-		get_filename_from_base( result, layout_path, test_list,
-								FE_ART_EXTENSIONS, is_movie );
-	}
-}
-
-void FeSettings::get_art_file( int offset,
-					const std::string &artlabel,
-					std::vector<std::string> &filelist )
-{
-	std::string artpath;
-	FeEmulatorInfo *cur_emu_info = get_current_emulator();
-	if ( cur_emu_info != NULL )
-		cur_emu_info->get_artwork( artlabel, artpath );
-
-	internal_get_art_file( filelist, artpath, get_rom_index( offset ),
-							artlabel, false );
-}
-
-void FeSettings::get_movie_file( int offset, std::vector<std::string> &filename_list )
-{
-	std::string mpath;
-	std::string artlabel;
-	FeEmulatorInfo *cur_emu_info = get_current_emulator();
-
-	if ( cur_emu_info != NULL )
-	{
-		artlabel = cur_emu_info->get_info( FeEmulatorInfo::Movie_artwork );
-		mpath = cur_emu_info->get_info( FeEmulatorInfo::Movie_path );
-
-		internal_get_art_file( filename_list, mpath,
-							get_rom_index( offset ),
-							artlabel, true );
-	}
-}
-
-const std::string &FeSettings::get_movie_artwork()
-{
-	FeEmulatorInfo *cur_emu_info = get_current_emulator();
-	if ( cur_emu_info != NULL )
-		return cur_emu_info->get_info( FeEmulatorInfo::Movie_artwork );
-
-	return FE_EMPTY_STRING;
 }
 
 bool FeSettings::get_font_file( std::string &fontpath,

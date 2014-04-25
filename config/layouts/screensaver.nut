@@ -56,7 +56,7 @@ local screen_count=1;
 // Initialize artwork resources
 //
 local art = fe.add_artwork( "", 0, 0, ScreenWidth, ScreenHeight );
-art.movie_enabled = false;
+art.video_flags = Vid.ImagesOnly;
 art.index_offset = rand();
 
 local PH = ScreenHeight / 4;
@@ -69,7 +69,7 @@ for ( local i=0; i<4; i++ )
 	{
 		group.append( fe.add_artwork( "", i * PW, j * PH, PW, PH ) );
 		group.top().visible = false;
-		group.top().movie_enabled = false;
+		group.top().video_flags = Vid.ImagesOnly;
 	}
 }
 
@@ -112,11 +112,11 @@ function saver_tick( stime )
 
 			if ( cycle[current_mode] == Mode.Movie )
 			{
-				art.movie_enabled = true;
+				art.video_flags = Vid.Default;
 			}
 			else
 			{
-				art.movie_enabled = false;
+				art.video_flags = Vid.ImagesOnly;
 				screen_count = 1;
 			}
 		}

@@ -803,8 +803,6 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"romext",
 	"import_extras",
 	"listxml",
-	"movie_path",
-	"movie_artwork",
 	NULL
 };
 
@@ -817,8 +815,6 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Rom Extension(s)",
 	"Additional Import Files",
 	"XML Mode",
-	"Movie Path",
-	"Movie Artwork",
 	NULL
 };
 
@@ -859,63 +855,85 @@ const std::vector<std::string> &FeEmulatorInfo::get_extensions() const
 
 bool FeEmulatorInfo::get_artwork( const std::string &label, std::string &artwork ) const
 {
-	std::map<std::string, std::string>::const_iterator it;
-
-	if (( label.empty() ) && ( !m_artwork.empty() ))
-		it = m_artwork.begin();
-	else
-		it=m_artwork.find( label );
-
-	if ( it == m_artwork.end() )
-	{
+	std::map<std::string, std::vector<std::string> >::const_iterator itm;
+	itm = m_artwork.find( label );
+	if ( itm == m_artwork.end() )
 		return false;
+
+	artwork.clear();
+	for ( std::vector<std::string>::const_iterator its = (*itm).second.begin();
+			its != (*itm).second.end(); ++its )
+	{
+		if ( !artwork.empty() )
+			artwork += ";";
+
+		artwork += (*its);
 	}
 
-	artwork = (*it).second;
 	return true;
 }
 
-void FeEmulatorInfo::set_artwork( const std::string &label, const std::string &artwork )
+bool FeEmulatorInfo::get_artwork( const std::string &label, std::vector< std::string > &artwork ) const
 {
-	m_artwork[ label ] = artwork;
+	std::map<std::string, std::vector<std::string> >::const_iterator itm;
+	itm = m_artwork.find( label );
+	if ( itm == m_artwork.end() )
+		return false;
+
+	artwork.clear();
+	for ( std::vector<std::string>::const_iterator its = (*itm).second.begin();
+			its != (*itm).second.end(); ++its )
+		artwork.push_back( *its );
+
+	return true;
+}
+
+
+void FeEmulatorInfo::add_artwork( const std::string &label,
+							const std::string &artwork )
+{
+	//
+	// This will create a new "label" entry in our map if one doesn't exist, and will
+	// return the existing entry if one does.
+	//
+	std::vector<std::string> &my_list = m_artwork[ label ];
+
+	size_t pos=0;
+	do
+	{
+		std::string path;
+		token_helper( artwork, pos, path );
+		my_list.push_back( path );
+	} while ( pos < artwork.size() );
 }
 
 void FeEmulatorInfo::get_artwork_list(
-			std::vector< std::pair< std::string, std::string > > &list ) const
+			std::vector< std::pair< std::string, std::string > > &out_list ) const
 {
-	list.clear();
-	std::map<std::string, std::string>::const_iterator it;
+	out_list.clear();
+	std::map<std::string, std::vector<std::string> >::const_iterator itm;
 
-	for ( it=m_artwork.begin(); it != m_artwork.end(); ++it )
-		list.push_back( std::pair<std::string, std::string>(
-									(*it).first,
-									(*it).second ) );
+	for ( itm=m_artwork.begin(); itm != m_artwork.end(); ++itm )
+	{
+		std::string path_list;
+		for ( std::vector<std::string>::const_iterator its = (*itm).second.begin();
+				its != (*itm).second.end(); ++its )
+		{
+			if ( !path_list.empty() )
+				path_list += ";";
+
+			path_list += (*its);
+		}
+		out_list.push_back( std::pair<std::string,std::string>( (*itm).first, path_list ) );
+	}
 }
 
 void FeEmulatorInfo::delete_artwork( const std::string &label )
 {
-	std::map<std::string, std::string>::iterator it;
-
-	it=m_artwork.find( label );
-	if ( it == m_artwork.end() )
-		return;
-
-	m_artwork.erase( it );
-}
-
-void FeEmulatorInfo::dump( void ) const
-{
-	std::cout << '\t';
-	for ( int i=0; i < LAST_INDEX; i++ )
-		std::cout << " " << i << "=["
-			<< get_info((Index)i) << "]";
-
-	for ( std::map<std::string,std::string>::const_iterator itl=m_artwork.begin();
-			itl != m_artwork.end(); ++itl )
-			std::cout << "artwork " << (*itl).first << "=["
-				<< (*itl).second << "]";
-
-	std::cout << std::endl;
+	std::map<std::string, std::vector<std::string> >::iterator itm;
+	itm = m_artwork.find( label );
+	if ( itm != m_artwork.end() )
+		m_artwork.erase( itm );
 }
 
 int FeEmulatorInfo::process_setting( const std::string &setting,
@@ -935,13 +953,48 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 		}
 	}
 
+	//
+	// Special case for migration from versions <1.2.2
+	//
+	// version 1.2.2 and earlier had "movie_path" and
+	// "movie_artwork" settings which are now deprecated.
+	// Handle them in a way that gets things working in the
+	// new method of configuration...
+	//
+	// Assumption: these settings will always be encountered
+	// before the other artwork settings, which is true unless
+	// the user did manual sorting of the .cfg file...
+	//
+	if ( setting.compare( "movie_path" ) == 0 )
+	{
+		add_artwork( FE_DEFAULT_ARTWORK, value );
+		return 0;
+	}
+	else if ( setting.compare( "movie_artwork" ) == 0 )
+	{
+		if ( value.compare( FE_DEFAULT_ARTWORK ) != 0 )
+		{
+			// We guessed wrong, user didn't have snaps set as the movie artwork
+			// so go in and change the snaps artwork to the one the user configured
+			//
+			std::string temp;
+			get_artwork( FE_DEFAULT_ARTWORK, temp );
+			delete_artwork( FE_DEFAULT_ARTWORK );
+			add_artwork( value, temp );
+		}
+		return 0;
+	}
+	//
+	// End migration code
+	//
+
 	if ( setting.compare( stokens[0] ) == 0 ) // artwork
 	{
 		size_t pos=0;
 		std::string label, path;
-  		token_helper( value, pos, label, FE_WHITESPACE );
-  		token_helper( value, pos, path );
-		m_artwork[ label ] = path;
+		token_helper( value, pos, label, FE_WHITESPACE );
+		token_helper( value, pos, path, "\n" );
+		add_artwork( label, path );
 	}
 	else
 	{
@@ -979,8 +1032,12 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 							<< ' ' << val << endl;
 		}
 
-		for ( std::map<string, string>::const_iterator itr=m_artwork.begin();
-					itr != m_artwork.end(); ++itr )
+		std::vector< std::pair< std::string, std::string > > art_list;
+
+		get_artwork_list( art_list );
+
+		for (	std::vector< std::pair< std::string, std::string > >::iterator itr=art_list.begin();
+				itr != art_list.end(); ++itr )
 		{
 			std::string label;
 			if ( (*itr).first.find_first_of( ' ' ) != std::string::npos )

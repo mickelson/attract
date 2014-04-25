@@ -36,6 +36,8 @@ const char *FE_VERSION 			= FE_VERSION_D;
 
 const char *FE_WHITESPACE=" \t\r";
 
+const char *FE_DEFAULT_ARTWORK		= "snap";
+
 void FeBaseConfigurable::invalid_setting(
 					const std::string & fn,
 					const char *base,

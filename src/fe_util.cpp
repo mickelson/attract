@@ -111,6 +111,13 @@ bool file_exists( const std::string &file )
 	return (( access( file.c_str(), 0 ) == -1 ) ? false : true);
 }
 
+bool directory_exists( const std::string &file )
+{
+	struct stat st;
+	stat( file.c_str(), &st );
+	return ( S_ISDIR( st.st_mode ) );
+}
+
 std::string clean_path( const std::string &path, bool require_trailing_slash )
 {
 	std::string retval = path;
@@ -161,10 +168,10 @@ bool search_for_file( const std::string &base_path,
 						std::string &result )
 {
 	std::vector<std::string> result_list;
-	std::vector<std::string> bn;
-	bn.push_back( base_name );
+	std::vector<std::string> ignore_list;
+
 	if ( get_filename_from_base(
-					result_list, base_path, bn, valid_exts, false )  )
+		result_list, ignore_list, base_path, base_name, valid_exts )  )
 	{
 		result = result_list.front();
 		return true;
@@ -239,7 +246,7 @@ bool get_basename_from_extension(
 				continue;
 
 			std::vector<std::string>::const_iterator itr;
-			for ( itr = extensions.begin(); itr != extensions.end(); ++ itr )
+			for ( itr = extensions.begin(); itr != extensions.end(); ++itr )
 			{
 				if ( tail_compare( what, *itr ) )
 				{
@@ -266,91 +273,82 @@ bool get_basename_from_extension(
 	return !(list.empty());
 }
 
-bool get_filename_from_base( std::vector<std::string> &list,
-            const std::string &path,
-				const std::vector <std::string> &base_list,
-				const char **filter, bool filter_excludes )
+bool get_filename_from_base(
+	std::vector<std::string> &in_list,
+	std::vector<std::string> &out_list,
+	const std::string &path,
+	const std::string &base_name,
+	const char **filter )
 {
-	if ( base_list.empty() )
+#ifdef SFML_SYSTEM_WINDOWS
+	std::string temp = path + base_name + "*";
+
+	struct _finddata_t t;
+	intptr_t srch = _findfirst( temp.c_str(), &t );
+
+	if  ( srch < 0 )
 		return false;
 
-#ifdef SFML_SYSTEM_WINDOWS
-	for ( std::vector<std::string>::const_iterator itr = base_list.begin();
-			itr < base_list.end(); ++itr )
+	do
 	{
-		std::string temp = path + (*itr) + "*";
-		struct _finddata_t t;
-		intptr_t srch = _findfirst( temp.c_str(), &t );
+		std::string what;
+		str_from_c( what, t.name );
 
-		if  ( srch < 0 )
-			continue;
-		do
+		if (( what.compare( "." ) != 0 )
+				&& ( what.compare( ".." ) != 0 ))
 		{
-			std::string what;
-			str_from_c( what, t.name );
 #else
 
 	DIR *dir;
 	struct dirent *ent;
 
-	if ( (dir = opendir( path.c_str() )) != NULL )
+	if ( (dir = opendir( path.c_str() )) == NULL )
+		return false;
+
+	while ((ent = readdir( dir )) != NULL )
 	{
-		for ( std::vector<std::string>::const_iterator itr = base_list.begin();
-				itr < base_list.end(); ++itr )
+		std::string what;
+		str_from_c( what, ent->d_name );
+
+		if (( what.compare( "." ) != 0 )
+				&& ( what.compare( ".." ) != 0 )
+				&& ( what.size() >= base_name.size() )
+				&& ( what.compare( 0, base_name.size(), base_name ) == 0 ))
 		{
-			rewinddir( dir );
-			while ((ent = readdir( dir )) != NULL )
+#endif // SFML_SYSTEM_WINDOWS
+			if ( filter )
 			{
-				std::string what;
-				str_from_c( what, ent->d_name );
-
-				if (( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ))
-					continue;
-
-				if (( what.size() >= (*itr).size() ) &&
-					( what.compare( 0, (*itr).size(), (*itr) ) == 0 ))
+				bool add=false;
+				int i=0;
+				while ( filter[i] != NULL )
 				{
-#endif // SFML_SYSTEM_WINDOWS
-
-					bool add=true;
-					if ( filter )
+					if ( tail_compare( what, filter[i] ) )
 					{
-						if ( !filter_excludes )
-							add=false;
-						int i=0;
-						while ( filter[i] != NULL )
-						{
-							if ( tail_compare( what, filter[i] ) )
-							{
-								if ( !filter_excludes )
-									add=true;
-								else
-									add=false;
-								break;
-							}
-							i++;
-						}
+						add=true;
+						break;
 					}
-
-					if ( add )
-						list.push_back( path + what );
-
-#ifdef SFML_SYSTEM_WINDOWS
-		} while ( _findnext( srch, &t ) == 0 );
-		_findclose( srch );
-	}
-#else
+					i++;
 				}
-			}
-		}
-		closedir( dir );
-	}
 
+				if ( add )
+					in_list.push_back( path + what );
+				else
+					out_list.push_back( path + what );
+			}
+			else
+				in_list.push_back( path + what );
+#ifdef SFML_SYSTEM_WINDOWS
+		}
+	} while ( _findnext( srch, &t ) == 0 );
+	_findclose( srch );
+#else
+		}
+	}
+	closedir( dir );
 #endif // SFML_SYSTEM_WINDOWS
 
-	return !(list.empty());
+	return !(in_list.empty());
 }
-
 
 bool token_helper( const std::string &from,
 	size_t &pos, std::string &token, const char *sep )
@@ -469,14 +467,14 @@ void delete_file( const std::string &file )
 
 bool confirm_directory( const std::string &base, const std::string &sub )
 {
-	if ( !file_exists( base ) )
+	if ( !directory_exists( base ) )
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( base.c_str() );
 #else
 		mkdir( base.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
 
-	if ( (!sub.empty()) && (!file_exists( base + sub )) )
+	if ( (!sub.empty()) && (!directory_exists( base + sub )) )
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( (base + sub).c_str() );
 #else

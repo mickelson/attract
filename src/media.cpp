@@ -167,13 +167,13 @@ public:
 	//
 	sf::Mutex image_swap_mutex;
 	sf::Uint8 *display_frame;
-	bool display_ready;
 
 	FeVideoImp( FeMedia *parent );
 	void play();
 	void stop();
 	void close();
 
+	void preload();
 	void video_thread();
 };
 
@@ -292,8 +292,7 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		m_video_thread( &FeVideoImp::video_thread, this ),
 		m_parent( p ),
 		run_video_thread( false ),
-		display_frame( NULL ),
-		display_ready( false )
+		display_frame( NULL )
 {
 }
 
@@ -318,8 +317,6 @@ void FeVideoImp::stop()
 void FeVideoImp::close()
 {
 	stop();
-
-	display_ready=false;
 	FeBaseStream::close();
 }
 
@@ -344,6 +341,87 @@ namespace
 		c->skip_loop_filter = d;
 		c->skip_idct = d;
 		c->skip_frame = d;
+	}
+}
+
+void FeVideoImp::preload()
+{
+	bool keep_going = true;
+	while ( keep_going )
+	{
+		AVPacket *packet = pop_packet();
+		if ( packet == NULL )
+		{
+			if ( !m_parent->end_of_file() )
+				m_parent->read_packet();
+			else
+				keep_going = false;
+		}
+		else
+		{
+			//
+			// decompress packet and put it in our frame queue
+			//
+			int got_frame = 0;
+			AVFrame *raw_frame = avcodec_alloc_frame();
+
+			int len = avcodec_decode_video2( codec_ctx, raw_frame,
+									&got_frame, packet );
+			if ( len < 0 )
+			{
+				std::cout << "error decoding video" << std::endl;
+				free_frame( raw_frame );
+				free_packet( packet );
+				return;
+			}
+
+			if ( got_frame )
+			{
+				AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
+				avpicture_alloc( my_pict, PIX_FMT_RGBA,
+										codec_ctx->width,
+										codec_ctx->height );
+
+				if ( !my_pict )
+				{
+					std::cerr << "Error allocating AVPicture during preload" << std::endl;
+					free_frame( raw_frame );
+					free_packet( packet );
+					return;
+				}
+
+				SwsContext *sws_ctx = sws_getContext(
+								codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
+								codec_ctx->width, codec_ctx->height, PIX_FMT_RGBA,
+								SWS_FAST_BILINEAR, NULL, NULL, NULL );
+
+				if ( !sws_ctx )
+				{
+					std::cerr << "Error allocating SwsContext during preload" << std::endl;
+					avpicture_free( my_pict );
+					av_free( my_pict );
+					free_frame( raw_frame );
+					free_packet( packet );
+					return;
+				}
+
+				sws_scale( sws_ctx, raw_frame->data, raw_frame->linesize,
+							0, codec_ctx->height, my_pict->data,
+							my_pict->linesize );
+
+				sf::Lock l( image_swap_mutex );
+				display_texture.update( my_pict->data[0] );
+
+				keep_going = false;
+
+				sws_freeContext( sws_ctx );
+				avpicture_free( my_pict );
+				av_free( my_pict );
+			}
+
+			free_frame( raw_frame );
+			free_packet( packet );
+		}
 	}
 }
 
@@ -541,11 +619,14 @@ the_end:
 	}
 #ifdef FE_DEBUG
 
+	int total_shown = displayed + discarded;
+	int average = ( total_shown == 0 ) ? qscore_accum : ( qscore_accum / total_shown );
+
 	std::cout << "End Video Thread - " << m_parent->m_format_ctx->filename << std::endl
 				<< " - bit_rate=" << codec_ctx->bit_rate
 				<< ", width=" << codec_ctx->width << ", height=" << codec_ctx->height << std::endl
 				<< " - displayed=" << displayed << ", discarded=" << discarded << std::endl
-				<< " - average qscore=" << ( qscore_accum / ( displayed + discarded ) )
+				<< " - average qscore=" << average
 				<< std::endl;
 #endif
 }
@@ -588,14 +669,6 @@ sf::Texture *FeMedia::get_texture()
 	if ( m_video )
 		return &(m_video->display_texture);
 	return NULL;
-}
-
-bool FeMedia::get_display_ready() const
-{
-	if ( m_video )
-		return m_video->display_ready;
-	else
-		return false;
 }
 
 sf::Time FeMedia::get_video_time()
@@ -784,6 +857,7 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_video->display_texture.create( m_video->codec_ctx->width,
 											m_video->codec_ctx->height );
 				m_video->display_texture.setSmooth( true );
+				m_video->preload();
 			}
 		}
 	}
@@ -839,7 +913,6 @@ bool FeMedia::tick()
 		{
 			m_video->display_texture.update( m_video->display_frame );
 			m_video->display_frame = NULL;
-			m_video->display_ready = true;
 			return true;
 		}
 	}

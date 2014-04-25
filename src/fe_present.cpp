@@ -109,7 +109,7 @@ void FePresent::clear()
 
 	while ( !m_texturePool.empty() )
 	{
-		FeTextureContainer *t = m_texturePool.back();
+		FeBaseTextureContainer *t = m_texturePool.back();
 		m_texturePool.pop_back();
 		delete t;
 	}
@@ -162,7 +162,8 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 	}
 }
 
-FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int y, int w, int h )
+FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int y, int w, int h,
+										std::vector<FeBasePresentable *> &l )
 {
 	std::string name;
 	if ( is_artwork )
@@ -171,26 +172,31 @@ FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int
 		name = m_feSettings->get_current_layout_dir() + n;
 
 	FeTextureContainer *new_tex = new FeTextureContainer( is_artwork, name );
-	FeImage *new_image = new FeImage( new_tex );
-	new_image->setPosition( x, y );
-	new_image->setSize( w, h );
+	FeImage *new_image = new FeImage( new_tex, x, y, w, h );
+
+	// if this is a non-artwork (i.e. static image/video) then load it now
+	//
+	if ( !is_artwork )
+		new_tex->load_now();
 
 	m_redrawTriggered = true;
 	m_texturePool.push_back( new_tex );
-	m_elements.push_back( new_image );
+	l.push_back( new_image );
 
 	return new_image;
 }
 
-FeImage *FePresent::add_clone( FeImage *o )
+FeImage *FePresent::add_clone( FeImage *o,
+			std::vector<FeBasePresentable *> &l )
 {
 	FeImage *new_image = new FeImage( o );
 	m_redrawTriggered = true;
-	m_elements.push_back( new_image );
+	l.push_back( new_image );
 	return new_image;
 }
 
-FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h )
+FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h,
+			std::vector<FeBasePresentable *> &l )
 {
 	FeText *new_text = new FeText( n, x, y, w, h );
 
@@ -198,11 +204,12 @@ FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h )
 	new_text->setFont( m_currentFont->get_font() );
 
 	m_redrawTriggered = true;
-	m_elements.push_back( new_text );
+	l.push_back( new_text );
 	return new_text;
 }
 
-FeListBox *FePresent::add_listbox( int x, int y, int w, int h )
+FeListBox *FePresent::add_listbox( int x, int y, int w, int h,
+			std::vector<FeBasePresentable *> &l )
 {
 	FeListBox *new_lb = new FeListBox( x, y, w, h );
 
@@ -211,8 +218,25 @@ FeListBox *FePresent::add_listbox( int x, int y, int w, int h )
 
 	m_redrawTriggered = true;
 	m_listBox = new_lb;
-	m_elements.push_back( new_lb );
+	l.push_back( new_lb );
 	return new_lb;
+}
+
+FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> &l )
+{
+	FeSurfaceTextureContainer *new_surface = new FeSurfaceTextureContainer( w, h );
+
+	//
+	// Set the default sprite size to the same as the texture itself
+	//
+	FeImage *new_image = new FeImage( new_surface, 0, 0, w, h );
+
+	new_image->texture_changed();
+
+	m_redrawTriggered = true;
+	l.push_back( new_image );
+	m_texturePool.push_back( new_surface );
+	return new_image;
 }
 
 FeScriptSound *FePresent::add_sound( const std::string &n )
@@ -573,23 +597,26 @@ bool FePresent::handle_event( FeInputMap::Command c,
 
 int FePresent::update( bool new_list )
 {
+	std::vector<FeBaseTextureContainer *>::iterator itc;
 	std::vector<FeBasePresentable *>::iterator itl;
 	if ( new_list )
 	{
+		for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
+			(*itc)->on_new_list( m_feSettings,
+				m_layoutScale.x,
+				m_layoutScale.y );
+
 		for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 			(*itl)->on_new_list( m_feSettings,
 				m_layoutScale.x,
 				m_layoutScale.y );
 	}
 
-	std::vector<FeTextureContainer *>::iterator itc;
 	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
 		(*itc)->on_new_selection( m_feSettings );
 
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 		(*itl)->on_new_selection( m_feSettings );
-
-	m_movieStartTimer.restart();
 
 	return 0;
 }
@@ -744,18 +771,11 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 		}
 	}
 
-	//
-	// Start movies after a small delay
-	//
-	int time = m_movieStartTimer.getElapsedTime().asMilliseconds();
-	if (( time > 500 ) && ( m_playMovies ))
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
+			itm != m_texturePool.end(); ++itm )
 	{
-		for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
-				itm != m_texturePool.end(); ++itm )
-		{
-			if ( (*itm)->tick( m_feSettings ) )
-				ret_val=true;
-		}
+		if ( (*itm)->tick( m_feSettings, m_playMovies ) )
+			ret_val=true;
 	}
 
 	if ( vm_on_tick())
@@ -806,7 +826,7 @@ int FePresent::get_page_size() const
 
 void FePresent::on_stop_frontend( sf::RenderWindow *wnd )
 {
-	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
 
@@ -815,7 +835,7 @@ void FePresent::on_stop_frontend( sf::RenderWindow *wnd )
 
 void FePresent::pre_run( sf::RenderWindow *wnd )
 {
-	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
 
@@ -827,7 +847,7 @@ void FePresent::post_run( sf::RenderWindow *wnd )
 	perform_autorotate();
 	vm_on_transition( FromGame, FromToNoValue, wnd );
 
-	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( m_playMovies );
 
@@ -838,7 +858,7 @@ void FePresent::toggle_movie()
 {
 	m_playMovies = !m_playMovies;
 
-	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( m_playMovies );
 }
@@ -848,7 +868,7 @@ void FePresent::toggle_mute()
 	int movie_vol = m_feSettings->get_play_volume( FeSoundInfo::Movie );
 	int sound_vol = m_feSettings->get_play_volume( FeSoundInfo::Sound );
 
-	for ( std::vector<FeTextureContainer *>::iterator itm=m_texturePool.begin();
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_vol( movie_vol );
 
@@ -957,7 +977,7 @@ FeImage* FePresent::cb_add_image(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
-	FeImage *ret = fep->add_image( false, n, x, y, w, h );
+	FeImage *ret = fep->add_image( false, n, x, y, w, h, fep->m_elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -983,7 +1003,7 @@ FeImage* FePresent::cb_add_artwork(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
-	FeImage *ret = fep->add_image( true, n, x, y, w, h );
+	FeImage *ret = fep->add_image( true, n, x, y, w, h, fep->m_elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1009,7 +1029,7 @@ FeImage* FePresent::cb_add_clone( FeImage *o )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
-	FeImage *ret = fep->add_clone( o );
+	FeImage *ret = fep->add_clone( o, fep->m_elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1025,7 +1045,7 @@ FeText* FePresent::cb_add_text(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
-	FeText *ret = fep->add_text( n, x, y, w, h );
+	FeText *ret = fep->add_text( n, x, y, w, h, fep->m_elements );
 
 	// Add the text to the "fe.obj" array in Squirrel
 	//
@@ -1041,9 +1061,25 @@ FeListBox* FePresent::cb_add_listbox(int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 
-	FeListBox *ret = fep->add_listbox( x, y, w, h );
+	FeListBox *ret = fep->add_listbox( x, y, w, h, fep->m_elements );
 
 	// Add the listbox to the "fe.obj" array in Squirrel
+	//
+	Sqrat::Object fe ( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+	Sqrat::Array obj( fe.GetSlot( _SC("obj") ) );
+	obj.SetInstance( obj.GetSize(), ret );
+
+	return ret;
+}
+
+FeImage* FePresent::cb_add_surface( int w, int h )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+
+	FeImage *ret = fep->add_surface( w, h, fep->m_elements );
+
+	// Add the surface to the "fe.obj" array in Squirrel
 	//
 	Sqrat::Object fe ( Sqrat::RootTable().GetSlot( _SC("fe") ) );
 	Sqrat::Array obj( fe.GetSlot( _SC("obj") ) );
@@ -1354,6 +1390,13 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 			.Const( _SC("Fragment"), FeShader::Fragment )
 			.Const( _SC("Empty"), FeShader::Empty )
 			)
+		.Enum( _SC("Vid"), Enumeration()
+			.Const( _SC("Default"), VF_Normal )
+			.Const( _SC("ImagesOnly"), VF_DisableVideo )
+			.Const( _SC("NoAudio"), VF_NoAudio )
+			.Const( _SC("NoAutoStart"), VF_NoAutoStart )
+			.Const( _SC("NoLoop"), VF_NoLoop )
+			)
 		;
 
 	// The "Key" enum is deprecated along with fe.get_keypressed() as of version 1.2
@@ -1414,6 +1457,8 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("index_offset"), &FeBasePresentable::getIndexOffset, &FeBasePresentable::setIndexOffset )
 		.Prop(_SC("shader"), &FeBasePresentable::script_get_shader, &FeBasePresentable::script_set_shader )
 		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
+		.Overload<void (FeBasePresentable::*)(float, float)>(_SC("set_pos"), &FeBasePresentable::set_pos)
+		.Overload<void (FeBasePresentable::*)(float, float, float, float)>(_SC("set_pos"), &FeBasePresentable::set_pos)
 	);
 
 	fe.Bind( _SC("Image"),
@@ -1434,9 +1479,26 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("subimg_y"), &FeImage::get_subimg_y, &FeImage::set_subimg_y )
 		.Prop(_SC("subimg_width"), &FeImage::get_subimg_width, &FeImage::set_subimg_width )
 		.Prop(_SC("subimg_height"), &FeImage::get_subimg_height, &FeImage::set_subimg_height )
+		// "movie_enabled" deprecated as of version 1.3, use the video_flags property instead:
 		.Prop(_SC("movie_enabled"), &FeImage::getMovieEnabled, &FeImage::setMovieEnabled )
+		.Prop(_SC("video_flags"), &FeImage::getVideoFlags, &FeImage::setVideoFlags )
+		.Prop(_SC("video_playing"), &FeImage::getVideoPlaying, &FeImage::setVideoPlaying )
 		.Prop(_SC("preserve_aspect_ratio"), &FeImage::get_preserve_aspect_ratio,
 				&FeImage::set_preserve_aspect_ratio )
+
+		//
+		// Surface-specific functionality:
+		//
+		.Overload<FeImage * (FeImage::*)(const char *, int, int, int, int)>(_SC("add_image"), &FeImage::add_image)
+		.Overload<FeImage * (FeImage::*)(const char *, int, int)>(_SC("add_image"), &FeImage::add_image)
+		.Overload<FeImage * (FeImage::*)(const char *)>(_SC("add_image"), &FeImage::add_image)
+		.Overload<FeImage * (FeImage::*)(const char *, int, int, int, int)>(_SC("add_artwork"), &FeImage::add_artwork)
+		.Overload<FeImage * (FeImage::*)(const char *, int, int)>(_SC("add_artwork"), &FeImage::add_artwork)
+		.Overload<FeImage * (FeImage::*)(const char *)>(_SC("add_artwork"), &FeImage::add_artwork)
+		.Func( _SC("add_clone"), &FeImage::add_clone )
+		.Func( _SC("add_text"), &FeImage::add_text )
+		.Func( _SC("add_listbox"), &FeImage::add_listbox )
+		.Func( _SC("add_surface"), &FeImage::add_surface )
 	);
 
 	fe.Bind( _SC("Text"),
@@ -1528,6 +1590,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 
 	fe.Overload<FeText* (*)(const char *, int, int, int, int)>(_SC("add_text"), &FePresent::cb_add_text);
 	fe.Func<FeListBox* (*)(int, int, int, int)>(_SC("add_listbox"), &FePresent::cb_add_listbox);
+	fe.Func<FeImage* (*)(int, int)>(_SC("add_surface"), &FePresent::cb_add_surface);
 	fe.Func<FeScriptSound* (*)(const char *)>(_SC("add_sound"), &FePresent::cb_add_sound);
 	fe.Overload<FeShader* (*)(int, const char *, const char *)>(_SC("add_shader"), &FePresent::cb_add_shader);
 	fe.Overload<FeShader* (*)(int, const char *)>(_SC("add_shader"), &FePresent::cb_add_shader);
@@ -1771,18 +1834,15 @@ FeShader *FePresent::get_empty_shader()
 	return m_emptyShader;
 }
 
-namespace
+FePresent *helper_get_fep()
 {
-	FePresent *helper_get_fep()
-	{
-		HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 
-		if ( !vm )
-			return NULL;
+	if ( !vm )
+		return NULL;
 
-		return (FePresent *)sq_getforeignptr( vm );
-	}
-};
+	return (FePresent *)sq_getforeignptr( vm );
+}
 
 void script_do_update( FeBasePresentable *bp )
 {
@@ -1800,7 +1860,7 @@ void script_do_update( FeBasePresentable *bp )
 	}
 }
 
-void script_do_update( FeTextureContainer *tc )
+void script_do_update( FeBaseTextureContainer *tc )
 {
 	FePresent *fep = helper_get_fep();
 

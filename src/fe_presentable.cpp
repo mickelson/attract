@@ -78,7 +78,18 @@ void FeBasePresentable::set_width( float w )
 
 void FeBasePresentable::set_height( float h )
 {
-	setSize( sf::Vector2f( get_width(), h ));
+	setSize( sf::Vector2f( get_width(), h ) );
+}
+
+void FeBasePresentable::set_pos(float x, float y)
+{
+	setPosition( sf::Vector2f( x, y ) );
+}
+
+void FeBasePresentable::set_pos(float x, float y, float w, float h)
+{
+	setPosition( sf::Vector2f( x, y ) );
+	setSize( sf::Vector2f( w, h ) );
 }
 
 int FeBasePresentable::get_r() const

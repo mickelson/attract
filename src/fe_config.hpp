@@ -189,8 +189,8 @@ protected:
 		FeScriptConfigurable &configurable );
 
 private:
-	static const int OPAQUE_BASE=100;
-	static const int INPUT_OPAQUE_BASE=200;
+	static const int OPAQUE_BASE;
+	static const int INPUT_OPAQUE_BASE;
 
 	std::vector<std::string>m_params;
 };

@@ -79,7 +79,7 @@ public:
 	void on_new_list( FeSettings *, float, float );
 	void on_new_selection( FeSettings * );
 
-	const sf::Drawable &drawable() { return (const sf::Drawable &)*this; };
+	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
 
 	int get_bgr();
 	int get_bgg();

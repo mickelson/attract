@@ -51,7 +51,7 @@ class Marquee {
 		xl=pxl; xm=pxm; xr=pxr; sl=psl; sm=psm; sr=psr;
 		orig_ob = ob = fe.add_artwork( my_config["orbit_art"] );
 		ob.preserve_aspect_ratio=true;
-		ob.movie_enabled = false;
+		ob.video_flags = Vid.ImagesOnly;
 		ob.index_offset = base_io = pio;
 		reset();
 	}
