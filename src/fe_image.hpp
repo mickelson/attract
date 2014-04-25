@@ -36,9 +36,9 @@ class FeListBox;
 enum FeVideoFlags
 {
 	VF_Normal			= 0,
-	VF_DisableVideo	= 0x01,
+	VF_DisableVideo			= 0x01,
 	VF_NoLoop			= 0x02,
-	VF_NoAutoStart		= 0x04,
+	VF_NoAutoStart			= 0x04,
 	VF_NoAudio			= 0x08
 };
 
@@ -90,14 +90,6 @@ private:
 class FeTextureContainer : public FeBaseTextureContainer
 {
 public:
-	enum MovieStatus
-	{
-		Uninitialized,
-		Loaded,			// Movie is loaded but not yet playing
-		Playing,			// play movie
-		NoPlay			// don't play this movie, show image instead
-	};
-
 	FeTextureContainer( bool is_artwork, const std::string &name );
 	~FeTextureContainer();
 
@@ -132,7 +124,7 @@ private:
 	int m_index_offset;
 	bool m_is_artwork;
 	FeMedia *m_movie;
-	MovieStatus m_movie_status;
+	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
 	FeVideoFlags m_video_flags;
 };
 

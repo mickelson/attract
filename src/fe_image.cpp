@@ -122,6 +122,17 @@ void FeBaseTextureContainer::notify_texture_change()
 		(*itr)->texture_changed();
 }
 
+namespace
+{
+	//
+	// The number of "ticks" after a video is first loaded before
+	// playing starts.  This should be 2 or higher since there is
+	// a tick between each selection when the user is scrolling
+	// quickly between the the menu items with a key held down.
+	//
+	const int PLAY_COUNT=2;
+};
+
 FeTextureContainer::FeTextureContainer(
 	bool is_artwork,
 	const std::string &name )
@@ -129,7 +140,7 @@ FeTextureContainer::FeTextureContainer(
 	m_index_offset( 0 ),
 	m_is_artwork( is_artwork ),
 	m_movie( NULL ),
-	m_movie_status( Uninitialized ),
+	m_movie_status( 0 ),
 	m_video_flags( VF_Normal )
 {
 	if (( m_is_artwork ) && ( m_name.empty() ))
@@ -245,11 +256,7 @@ bool FeTextureContainer::common_load(
 			}
 		}
 
-		if ( movie_file.empty() )
-		{
-			m_movie_status = NoPlay;
-		}
-		else
+		if ( !movie_file.empty() )
  		{
 			// We should have deleted this above...
 			ASSERT( m_movie == NULL );
@@ -259,13 +266,13 @@ bool FeTextureContainer::common_load(
 
 			if (!m_movie->openFromFile( movie_file ))
 			{
-				std::cout << "ERROR loading movie: " << movie_file << std::endl;
-				m_movie_status = NoPlay;
+				std::cout << "ERROR loading movie: "
+					<< movie_file << std::endl;
 			}
 			else
 			{
 				loaded = true;
-				m_movie_status = Loaded;
+				m_movie_status = 1;
 			}
 		}
 	}
@@ -279,7 +286,6 @@ bool FeTextureContainer::common_load(
 			if ( m_texture.loadFromFile( *itr ) )
 			{
 				m_texture.setSmooth( true );
-				m_movie_status = NoPlay;
 				loaded = true;
 				break;
 			}
@@ -297,6 +303,8 @@ void FeTextureContainer::load_now()
 	if ( !m_is_artwork )
 	{
 		m_texture = sf::Texture();
+		m_movie_status = 0;
+
 		load( m_name );
 		notify_texture_change();
 	}
@@ -321,6 +329,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 		return;
 
 	m_texture = sf::Texture();
+	m_movie_status = 0;
 
 	std::vector<std::string> movie_list;
 	std::vector<std::string> image_list;
@@ -392,22 +401,34 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 		&& ( !(m_video_flags & VF_DisableVideo) )
 		&& ( m_movie ))
 	{
-		if ( m_movie_status == Loaded )
+		if (( m_movie_status > 0 )
+			&& ( m_movie_status < PLAY_COUNT ))
 		{
+			//
+			// We skip the first few "ticks" after the movie
+			// is first loaded because the user may just be
+			// scrolling rapidly through the game list (there
+			// are ticks between each selection scrolling by)
+			//
+			m_movie_status++;
+			return false;
+		}
+		else if ( m_movie_status == PLAY_COUNT )
+		{
+			m_movie_status++;
+
 			//
 			// Start playing now if this is a video...
 			//
 			if ( m_video_flags & VF_NoAudio )
 				m_movie->setVolume( 0.f );
 			else
-				m_movie->setVolume( feSettings->get_play_volume( FeSoundInfo::Movie ) );
+				m_movie->setVolume(feSettings->get_play_volume( FeSoundInfo::Movie ) );
 
 			m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
 
 			if ( !(m_video_flags & VF_NoAutoStart) )
 				m_movie->play();
-
-			m_movie_status = Playing;
 		}
 		return m_movie->tick();
 	}
@@ -419,7 +440,7 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 void FeTextureContainer::set_play_state( bool play )
 {
 #ifndef NO_MOVIE
-	if (m_movie && ( m_movie_status == Playing ))
+	if (m_movie && ( m_movie_status >= PLAY_COUNT ))
 	{
 		if ( play )
 			m_movie->play();
