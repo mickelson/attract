@@ -85,6 +85,9 @@ bool file_exists( const std::string &file );
 // return true if specified path is an existing directory
 bool directory_exists( const std::string &file );
 
+// return true if the specified path is a relative path
+bool is_relative_path( const std::string &file );
+
 // clean the path string for usage.  Performs substitution of $HOME etc...
 std::string clean_path( const std::string &path,
 		bool require_trailing_slash = false );

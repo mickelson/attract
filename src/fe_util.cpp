@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <cctype>
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -116,6 +117,19 @@ bool directory_exists( const std::string &file )
 	struct stat st;
 	stat( file.c_str(), &st );
 	return ( S_ISDIR( st.st_mode ) );
+}
+
+bool is_relative_path( const std::string &name )
+{
+#ifdef SFML_SYSTEM_WINDOWS
+	if (( name.size() > 2 )
+			&& ( isalpha( name[0] ) )
+			&& ( name[1] == ':' )
+			&& (( name[2] == '\\' ) || ( name[2] == '/' )))
+		return false;
+#endif
+
+	return (( !name.empty() ) && ( name[0] != '/' ));
 }
 
 std::string clean_path( const std::string &path, bool require_trailing_slash )

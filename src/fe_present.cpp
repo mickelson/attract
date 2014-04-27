@@ -169,7 +169,14 @@ FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int
 	if ( is_artwork )
 		name = n;
 	else
-		name = m_feSettings->get_current_layout_dir() + n;
+	{
+		// If it is a relative path we assume it is in the layout directory
+		//
+		if ( is_relative_path( n ) )
+			name = m_feSettings->get_current_layout_dir() + n;
+		else
+			name = n;
+	}
 
 	FeTextureContainer *new_tex = new FeTextureContainer( is_artwork, name );
 	FeImage *new_image = new FeImage( new_tex, x, y, w, h );
@@ -177,7 +184,7 @@ FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int
 	// if this is a non-artwork (i.e. static image/video) then load it now
 	//
 	if ( !is_artwork )
-		new_tex->load_now();
+		new_tex->load_now( name );
 
 	m_redrawTriggered = true;
 	m_texturePool.push_back( new_tex );
@@ -771,15 +778,15 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 		}
 	}
 
+	if ( vm_on_tick())
+		ret_val = true;
+
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 			itm != m_texturePool.end(); ++itm )
 	{
 		if ( (*itm)->tick( m_feSettings, m_playMovies ) )
 			ret_val=true;
 	}
-
-	if ( vm_on_tick())
-		ret_val = true;
 
 	//
 	// Only check to switch to screensaver if wnd is not NULL
@@ -1485,6 +1492,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Prop(_SC("video_playing"), &FeImage::getVideoPlaying, &FeImage::setVideoPlaying )
 		.Prop(_SC("preserve_aspect_ratio"), &FeImage::get_preserve_aspect_ratio,
 				&FeImage::set_preserve_aspect_ratio )
+		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
 
 		//
 		// Surface-specific functionality:

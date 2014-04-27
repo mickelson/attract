@@ -784,6 +784,9 @@ Attributes:
      currently playing in this artwork (boolean).
    * `preserve_aspect_ratio` - Get/set whether the aspect ratio from the source
      image is to be preserved.  Default value is `false`.
+   * `file_name` - [image & artwork only] Get/set the name of the image/video
+     file being shown.  Note that if you set this on an "artwork" object it will
+     get reset the next time the user changes the game selection.
    * `shader` - Get/set the GLSL shader for this image. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 

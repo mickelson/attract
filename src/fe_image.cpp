@@ -80,6 +80,15 @@ FeVideoFlags FeBaseTextureContainer::get_video_flags() const
 	return VF_Normal;
 }
 
+void FeBaseTextureContainer::set_file_name( const char *n )
+{
+}
+
+const char *FeBaseTextureContainer::get_file_name() const
+{
+	return NULL;
+}
+
 FeImage *FeBaseTextureContainer::add_image(const char *,int, int, int, int)
 {
 	return NULL;
@@ -135,16 +144,20 @@ namespace
 
 FeTextureContainer::FeTextureContainer(
 	bool is_artwork,
-	const std::string &name )
-	: m_name( name ),
-	m_index_offset( 0 ),
+	const std::string &art_name )
+	: m_index_offset( 0 ),
 	m_is_artwork( is_artwork ),
 	m_movie( NULL ),
 	m_movie_status( 0 ),
 	m_video_flags( VF_Normal )
 {
-	if (( m_is_artwork ) && ( m_name.empty() ))
-		m_name = FE_DEFAULT_ARTWORK;
+	if ( m_is_artwork )
+	{
+		if ( art_name.empty() )
+			m_art_name = FE_DEFAULT_ARTWORK;
+		else
+			m_art_name = art_name;
+	}
 }
 
 FeTextureContainer::~FeTextureContainer()
@@ -272,6 +285,7 @@ bool FeTextureContainer::common_load(
 			else
 			{
 				loaded = true;
+				m_file_name = movie_file;
 				m_movie_status = 1;
 			}
 		}
@@ -286,6 +300,7 @@ bool FeTextureContainer::common_load(
 			if ( m_texture.loadFromFile( *itr ) )
 			{
 				m_texture.setSmooth( true );
+				m_file_name = *itr;
 				loaded = true;
 				break;
 			}
@@ -298,16 +313,13 @@ bool FeTextureContainer::common_load(
 	return loaded;
 }
 
-void FeTextureContainer::load_now()
+void FeTextureContainer::load_now( const std::string &filename )
 {
-	if ( !m_is_artwork )
-	{
-		m_texture = sf::Texture();
-		m_movie_status = 0;
+	m_texture = sf::Texture();
+	m_movie_status = 0;
 
-		load( m_name );
-		notify_texture_change();
-	}
+	load( filename );
+	notify_texture_change();
 }
 
 const sf::Texture &FeTextureContainer::get_texture()
@@ -330,6 +342,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 
 	m_texture = sf::Texture();
 	m_movie_status = 0;
+	m_file_name.clear();
 
 	std::vector<std::string> movie_list;
 	std::vector<std::string> image_list;
@@ -345,7 +358,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 	if ( emu_info )
 	{
 		std::vector < std::string > temp_list;
-		emu_info->get_artwork( m_name, temp_list );
+		emu_info->get_artwork( m_art_name, temp_list );
 		for ( std::vector< std::string >::iterator itr = temp_list.begin();
 				itr != temp_list.end(); ++itr )
 		{
@@ -378,12 +391,12 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 		if ( !emu_name.empty() )
 		{
 			// check for "[emulator]-[artlabel]" in layout directory
-			if ( load( layout_paths, emu_name + "-" + m_name ) )
+			if ( load( layout_paths, emu_name + "-" + m_art_name ) )
 				goto the_end;
 		}
 
 		// check for file named with the artwork label in layout directory
-		if ( load( layout_paths, m_name ) )
+		if ( load( layout_paths, m_art_name ) )
 			goto the_end;
 	}
 
@@ -504,6 +517,35 @@ void FeTextureContainer::set_video_flags( FeVideoFlags f )
 FeVideoFlags FeTextureContainer::get_video_flags() const
 {
 	return m_video_flags;
+}
+
+
+void FeTextureContainer::set_file_name( const char *n )
+{
+	std::string name = n;
+
+	// If it is a relative path we assume it is in the layout directory
+	//
+	if ( is_relative_path( name ) )
+	{
+		FePresent *fep = helper_get_fep();
+		if ( fep )
+		{
+			FeSettings *fes = fep->get_fes();
+			if ( fes )
+			{
+				name = fes->get_current_layout_dir() + std::string( n );
+			}
+		}
+	}
+
+	if (( !name.empty() ) && ( m_file_name.compare( name ) != 0 ))
+		load_now( name );
+}
+
+const char *FeTextureContainer::get_file_name() const
+{
+	return m_file_name.c_str();
 }
 
 FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )
@@ -827,6 +869,16 @@ bool FeImage::getVideoPlaying() const
 void FeImage::setVideoPlaying( bool f )
 {
 	m_tex->set_play_state( f );
+}
+
+const char *FeImage::getFileName() const
+{
+	return m_tex->get_file_name();
+}
+
+void FeImage::setFileName( const char *n )
+{
+	m_tex->set_file_name( n );
 }
 
 bool FeImage::getMovieEnabled() const

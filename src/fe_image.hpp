@@ -63,6 +63,8 @@ public:
 	virtual void set_video_flags( FeVideoFlags );
 	virtual FeVideoFlags get_video_flags() const;
 
+	virtual void set_file_name( const char *n );
+	virtual const char *get_file_name() const;
 	//
 	// Callback functions for use with surface objects
 	//
@@ -90,7 +92,7 @@ private:
 class FeTextureContainer : public FeBaseTextureContainer
 {
 public:
-	FeTextureContainer( bool is_artwork, const std::string &name );
+	FeTextureContainer( bool is_artwork, const std::string &art_name="" );
 	~FeTextureContainer();
 
 	const sf::Texture &get_texture();
@@ -107,7 +109,10 @@ public:
 	void set_video_flags( FeVideoFlags );
 	FeVideoFlags get_video_flags() const;
 
-	void load_now();
+	void set_file_name( const char *n );
+	const char *get_file_name() const;
+
+	void load_now( const std::string &filename );
 
 private:
 
@@ -120,7 +125,8 @@ private:
 		std::vector<std::string> &image_names );
 
 	sf::Texture m_texture;
-	std::string m_name;
+	std::string m_art_name; // artwork label for artworks
+	std::string m_file_name; // the name of the loaded file
 	int m_index_offset;
 	bool m_is_artwork;
 	FeMedia *m_movie;
@@ -197,6 +203,8 @@ public:
 	void setVideoFlags( int f );
 	bool getVideoPlaying() const;
 	void setVideoPlaying( bool );
+	const char *getFileName() const;
+	void setFileName( const char * );
 
 	// deprecated as of 1.3, use video_flags instead:
 	bool getMovieEnabled() const;
