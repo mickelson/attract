@@ -486,6 +486,12 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	if ( emu == NULL )
 		return false;
 
+	//
+	// Put up the "building romlist" message at 0 percent while we get going...
+	//
+	if ( uiu )
+		uiu( uid, 0 );
+
 	std::list<FeRomInfo> romlist;
 	build_basic_romlist( *emu, romlist );
 
