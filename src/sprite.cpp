@@ -311,20 +311,19 @@ void FeSprite::updateGeometry()
 	else
 	{
 		//
-		// If we aren't pinching the image, then we stick with SFML's
-		// method for sprite drawing, which is to draw it on a single quad.
+		// If we aren't pinching the image, then we draw it on two triangles.
 		//
 		m_vertices.resize( 4 );
-		m_vertices.setPrimitiveType( sf::Quads );
+		m_vertices.setPrimitiveType( sf::TrianglesStrip );
 
 		m_vertices[0].position = sf::Vector2f(0, 0);
 		m_vertices[1].position = sf::Vector2f(m_skew.x, bounds.height);
-		m_vertices[2].position = sf::Vector2f(bounds.width + m_skew.x, bounds.height + m_skew.y);
-		m_vertices[3].position = sf::Vector2f(bounds.width, m_skew.y );
+		m_vertices[2].position = sf::Vector2f(bounds.width, m_skew.y );
+		m_vertices[3].position = sf::Vector2f(bounds.width + m_skew.x, bounds.height + m_skew.y);
 
 		m_vertices[0].texCoords = sf::Vector2f(left, top);
 		m_vertices[1].texCoords = sf::Vector2f(left, bottom);
-		m_vertices[2].texCoords = sf::Vector2f(right, bottom);
-		m_vertices[3].texCoords = sf::Vector2f(right, top);
+		m_vertices[2].texCoords = sf::Vector2f(right, top);
+		m_vertices[3].texCoords = sf::Vector2f(right, bottom);
 	}
 }
