@@ -37,34 +37,45 @@ namespace {
 void build_basic_romlist( const FeEmulatorInfo &emulator,
 				std::list<FeRomInfo> &romlist )
 {
-	std::string rom_path = clean_path( emulator.get_info(
-					FeEmulatorInfo::Rom_path ) );
+	const std::vector<std::string> &paths = emulator.get_paths();
+	std::vector<std::string>::const_iterator itr, ite, its;
 
 	const std::vector<std::string> &extensions = emulator.get_extensions();
 
-	std::vector<std::string> base_list;
-	get_basename_from_extension( base_list, rom_path, extensions );
-
-	for ( std::vector<std::string>::iterator its=base_list.begin();
-				its != base_list.end(); ++its )
+	for ( itr = paths.begin(); itr != paths.end(); ++itr )
 	{
-		FeRomInfo new_rom;
-		new_rom.set_info( FeRomInfo::Romname, (*its) );
-		new_rom.set_info( FeRomInfo::Title, (*its) );
-		new_rom.set_info( FeRomInfo::Emulator, emulator.get_info(
-															FeEmulatorInfo::Name ));
+		std::string path = clean_path( *itr, true );
+		int count=0;
 
-		romlist.push_back( new_rom );
+		for ( ite = extensions.begin(); ite != extensions.end(); ++ite )
+		{
+			std::vector<std::string> base_list;
+			if ( (*ite).compare( FE_DIR_TOKEN ) == 0 )
+				get_subdirectories( base_list, path );
+			else
+				get_basename_from_extension( base_list, path, (*ite), true );
+
+			for ( its=base_list.begin(); its != base_list.end(); ++its )
+			{
+				FeRomInfo new_rom;
+				new_rom.set_info( FeRomInfo::Romname, (*its) );
+				new_rom.set_info( FeRomInfo::Title, (*its) );
+				new_rom.set_info( FeRomInfo::Emulator, emulator.get_info(
+																FeEmulatorInfo::Name ));
+
+				romlist.push_back( new_rom );
+				count++;
+			}
+		}
+
+		std::cout << "Found " << count
+			<< " files with rom extension(s):";
+
+		for ( ite=extensions.begin(); ite != extensions.end(); ++ite )
+			std::cout << " " << (*ite);
+
+		std::cout << ".  Directory: " << path << std::endl;
 	}
-
-	std::cout << "Found " << romlist.size()
-		<< " unique files with rom extension(s):";
-
-	for ( std::vector<std::string>::const_iterator itr=extensions.begin();
-			itr != extensions.end(); ++itr )
-		std::cout << " " << (*itr);
-
-	std::cout << ".  Directory: " << rom_path << std::endl;
 }
 
 void apply_listxml( const FeEmulatorInfo &emulator,
@@ -242,32 +253,20 @@ void ini_import( const std::string &filename,
 void apply_import_extras( const FeEmulatorInfo &emulator,
 				std::list<FeRomInfo> &romlist )
 {
-	std::string iextras = emulator.get_info( FeEmulatorInfo::Import_extras );
+	const std::vector< std::string > &extras = emulator.get_import_extras();
 
-	if ( iextras.empty() )
-		return;
-
-	size_t pos=0;
-	do
+	for ( std::vector< std::string >::const_iterator itr = extras.begin();
+			itr != extras.end(); ++itr )
 	{
-		std::string val, path;
-		token_helper( iextras, pos, val );
-		path = clean_path( val );
+		std::string path = clean_path( *itr );
 
 		if ( tail_compare( path, "catver.ini" ) )
-		{
 			ini_import( path, romlist, FeRomInfo::Category, "[Category]" );
-		}
-		else if ( tail_compare( val, "nplayers.ini" ) )
-		{
+		else if ( tail_compare( path, "nplayers.ini" ) )
 			ini_import( path, romlist, FeRomInfo::Players, "[NPlayers]" );
-		}
 		else
-		{
 			std::cout << "Unsupported import_extras file: " << path << std::endl;
-		}
-
-	} while ( pos < iextras.size() );
+	}
 }
 
 bool import_mamewah( const std::string &input_filename,
@@ -459,6 +458,10 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 	total_romlist.sort( FeRomListCompare::cmp );
 	FeRomListCompare::close_rex();
 
+	// strip duplicate entries
+	std::cout << "Removing any duplicate entries..." << std::endl;
+	total_romlist.unique();
+
 	if ( task_list.size() > 1 )
 		best_name = "multi";
 
@@ -504,10 +507,17 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	romlist.sort( FeRomListCompare::cmp );
 	FeRomListCompare::close_rex();
 
+	// strip duplicate entries
+	std::cout << "Removing any duplicate entries..." << std::endl;
+	romlist.unique();
+
 	size = romlist.size();
 
 	std::string filename = get_config_dir();
 	confirm_directory( filename, FE_ROMLIST_SUBDIR );
+
+	if ( uiu )
+		uiu( uid, 100 );
 
 	filename += FE_ROMLIST_SUBDIR;
 	filename += emu_name;

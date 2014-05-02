@@ -114,9 +114,12 @@ bool file_exists( const std::string &file )
 
 bool directory_exists( const std::string &file )
 {
-	struct stat st;
-	stat( file.c_str(), &st );
-	return ( S_ISDIR( st.st_mode ) );
+	if (( file.empty() )
+			|| ( file[ file.size()-1 ] == '/' )
+			|| ( file[ file.size()-1 ] == '\\' ))
+		return file_exists( file );
+	else
+		return file_exists( file + '/' );
 }
 
 bool is_relative_path( const std::string &name )
@@ -192,14 +195,14 @@ bool search_for_file( const std::string &base_path,
 	}
 
 	std::vector<std::string> subs;
-	get_subdirectories( subs, base_path, true );
+	get_subdirectories( subs, base_path );
 
 	std::vector<std::string>::iterator itr;
 	for ( itr = subs.begin(); itr != subs.end(); ++itr )
 	{
 
 		if ( search_for_file(
-				base_path + (*itr),
+				base_path + (*itr) + "/",
 				base_name,
 				valid_exts,
 				result ) )
@@ -213,75 +216,123 @@ bool search_for_file( const std::string &base_path,
 
 bool get_subdirectories(
 			std::vector<std::string> &list,
-			const std::string &path, bool append_slash )
+			const std::string &path )
 {
+#ifdef SFML_SYSTEM_WINDOWS
+	std::string temp = path + "*";
+
+	struct _finddata_t t;
+	intptr_t srch = _findfirst( temp.c_str(), &t );
+
+	if  ( srch < 0 )
+		return false;
+
+	do
+	{
+		std::string what;
+		str_from_c( what, t.name );
+
+		if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) )
+			continue;
+
+		if ( t.attrib & _A_SUBDIR )
+			list.push_back( what );
+
+	} while ( _findnext( srch, &t ) == 0 );
+	_findclose( srch );
+
+#else
+
 	DIR *dir;
 	struct dirent *ent;
-	if ( (dir = opendir( path.c_str() )) != NULL )
+	if ( (dir = opendir( path.c_str() )) == NULL )
+		return false;
+
+	while ((ent = readdir( dir )) != NULL )
 	{
-		while ((ent = readdir( dir )) != NULL )
-		{
-			if (( strcmp( ent->d_name, "." ) == 0 )
-					|| ( strcmp( ent->d_name, ".." ) == 0 ))
-				continue;
+		std::string name;
+		str_from_c( name, ent->d_name );
 
-			std::string name;
-			str_from_c( name, ent->d_name );
+		if (( name.compare( "." ) == 0 )
+				|| ( name.compare( ".." ) == 0 ))
+			continue;
 
-			struct stat st;
-			stat( (path + "/" + name).c_str(), &st );
+		struct stat st;
+		stat( (path + name).c_str(), &st );
 
-			if ( S_ISDIR( st.st_mode ) )
-				list.push_back( append_slash ? name + '/' : name );
-		}
-		closedir( dir );
-		return true;
+		if ( S_ISDIR( st.st_mode ) )
+			list.push_back( name );
 	}
-	return false;
+	closedir( dir );
+
+#endif
+
+	return true;
 }
 
 bool get_basename_from_extension(
 			std::vector<std::string> &list,
 			const std::string &path,
-			const std::vector <std::string> &extensions,
+			const std::string &extension,
 			bool strip_extension )
 {
+#ifdef SFML_SYSTEM_WINDOWS
+	std::string temp = path + "*" + extension;
+
+	struct _finddata_t t;
+	intptr_t srch = _findfirst( temp.c_str(), &t );
+
+	if  ( srch < 0 )
+		return false;
+
+	do
+	{
+		std::string what;
+		str_from_c( what, t.name );
+
+		// I don't know why but the search filespec we are using
+		// "path/*.ext"seems to also match "path/*.ext*"... so we
+		// do the tail comparison below on purpose to catch this...
+#else
 	DIR *dir;
 	struct dirent *ent;
 
-	if ( (dir = opendir( path.c_str() )) != NULL )
+	if ( (dir = opendir( path.c_str() )) == NULL )
+		return false;
+
+	while ((ent = readdir( dir )) != NULL )
 	{
-		while ((ent = readdir( dir )) != NULL )
+		std::string what;
+		str_from_c( what, ent->d_name );
+#endif
+
+		if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) )
+			continue;
+
+		if ( tail_compare( what, extension ) )
 		{
-			std::string what;
-			str_from_c( what, ent->d_name );
-
-			if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) )
-				continue;
-
-			std::vector<std::string>::const_iterator itr;
-			for ( itr = extensions.begin(); itr != extensions.end(); ++itr )
+			if ( strip_extension && ( what.size() > extension.size() ))
 			{
-				if ( tail_compare( what, *itr ) )
-				{
-					if ( strip_extension && ( what.size() > (*itr).size() ))
-					{
-						std::string bname = what.substr( 0,
-							what.size() - (*itr).size() );
+				std::string bname = what.substr( 0,
+					what.size() - extension.size() );
 
-						// don't add duplicates if we are stripping extension
-						// example: if there is both foo.zip and foo.7z
-						//
-						if ( list.empty() || ( bname.compare( list.back() ) != 0 ))
-							list.push_back( bname );
-					}
-					else
-						list.push_back( what );
-				}
+				// don't add duplicates if we are stripping extension
+				// example: if there is both foo.zip and foo.7z
+				//
+				if ( list.empty() || ( bname.compare( list.back() ) != 0 ))
+					list.push_back( bname );
 			}
+			else
+				list.push_back( what );
+
 		}
-		closedir( dir );
+#ifdef SFML_SYSTEM_WINDOWS
+	} while ( _findnext( srch, &t ) == 0 );
+	_findclose( srch );
+#else
 	}
+	closedir( dir );
+#endif
 
 	std::sort( list.begin(), list.end() );
 	return !(list.empty());
@@ -410,7 +461,8 @@ bool token_helper( const std::string &from,
 	// clean out leading and trailing whitespace from token
 	//
 	size_t f= from.find_first_not_of( FE_WHITESPACE, old_pos );
-	if ( f == std::string::npos )
+
+	if (( f == std::string::npos ) || ( f == end ))
 	{
 		token.clear();
 	}

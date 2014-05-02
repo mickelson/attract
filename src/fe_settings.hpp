@@ -36,6 +36,7 @@ extern const char *FE_ROMLIST_FILE_EXTENSION;
 extern const char *FE_EMULATOR_FILE_EXTENSION;
 
 extern const char *FE_LAYOUT_UI_KEY_FILE;
+extern const char *FE_DIR_TOKEN;
 
 
 // A container for each task when importing/building romlists from the command line
@@ -125,7 +126,7 @@ private:
 
 	void internal_gather_config_files(
 			std::vector<std::string> &ll,
-			const std::vector<std::string> &extension_list,
+			const std::string &extension,
 			const char *subdir ) const;
 
 	bool internal_resolve_config_file(

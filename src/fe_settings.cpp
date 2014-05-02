@@ -113,6 +113,7 @@ const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
 const char *FE_LIST_DEFAULT			= "default-list.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
+const char *FE_DIR_TOKEN				= "<DIR>";
 
 const std::string FE_EMPTY_STRING;
 
@@ -200,7 +201,7 @@ void FeSettings::load()
 			to_path += FE_EMULATOR_SUBDIR;
 
 			std::vector<std::string> ll;
-			get_basename_from_extension( ll, from_path, std::vector<std::string>(1, FE_EMULATOR_FILE_EXTENSION), false );
+			get_basename_from_extension( ll, from_path, FE_EMULATOR_FILE_EXTENSION, false );
 
 			for( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
 			{
@@ -630,8 +631,7 @@ std::string FeSettings::get_current_layout_file() const
 	if ( file.empty() )
 	{
 		std::vector<std::string> my_list;
-		get_basename_from_extension( my_list, path,
-			std::vector<std::string>(1, FE_LAYOUT_FILE_EXTENSION) );
+		get_basename_from_extension( my_list, path, FE_LAYOUT_FILE_EXTENSION );
 
 		if ( my_list.empty() )
 			return FE_EMPTY_STRING;
@@ -853,7 +853,7 @@ void FeSettings::toggle_layout()
 	get_basename_from_extension(
 			list,
 			get_current_layout_dir(),
-			std::vector<std::string>(1,FE_LAYOUT_FILE_EXTENSION) );
+			FE_LAYOUT_FILE_EXTENSION );
 
 	unsigned int index=0;
 	for ( unsigned int i=0; i< list.size(); i++ )
@@ -922,8 +922,7 @@ void FeSettings::set_sound_file( FeInputMap::Command c, const std::string &s )
 
 void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 {
-	std::vector<std::string> ext_list( 1, "" );
-	internal_gather_config_files( ll, ext_list, FE_SOUND_SUBDIR );
+	internal_gather_config_files( ll, "", FE_SOUND_SUBDIR );
 }
 
 int FeSettings::run()
@@ -939,31 +938,86 @@ int FeSettings::run()
 	m_last_launch_rom = get_rom_index();
 
 	rom = m_rl[ m_last_launch_rom ].get_info( FeRomInfo::Romname );
-	rom_path = clean_path( emu->get_info( FeEmulatorInfo::Rom_path ));
-
-	const std::vector<std::string> &exts = emu->get_extensions();
-
-	// construct base romfilename (minus extension)
-	romfilename = rom_path + rom;
 
 	std::vector<std::string>::const_iterator itr;
-	bool found=false;
 
-	for ( itr = exts.begin(); itr != exts.end(); ++itr )
+	const std::vector<std::string> &exts = emu->get_extensions();
+	const char *my_filter[ exts.size() + 1 ];
+	bool check_subdirs = false;
+
+	unsigned int i=0;
+	for ( std::vector<std::string>::const_iterator itr= exts.begin();
+			itr != exts.end(); ++itr )
 	{
-		if ( file_exists( romfilename + (*itr) ) )
+		if ( exts[i].compare( FE_DIR_TOKEN ) == 0 )
+			check_subdirs = true;
+		else
 		{
-			extension = (*itr);
-			found=true;
+			my_filter[i] = (*itr).c_str();
+			i++;
+		}
+	}
+	my_filter[ i ] = NULL;
+
+	const std::vector<std::string> &paths = emu->get_paths();
+
+	//
+	// Search for the rom
+	//
+	bool found=false;
+	for ( itr = paths.begin(); itr != paths.end(); ++itr )
+	{
+		std::string path = clean_path( *itr, true );
+
+		std::vector < std::string > in_list;
+		std::vector < std::string > out_list;
+
+		get_filename_from_base( in_list, out_list, path, rom, my_filter );
+
+		if (( check_subdirs ) && ( directory_exists( path + rom ) ))
+			in_list.push_back( path + rom );
+
+		if ( !in_list.empty() )
+		{
+			//
+			// Found the rom to run
+			//
+			rom_path = path;
+			romfilename = in_list.front();
+			found = true;
 			break;
 		}
 	}
 
-	if ( !found && !exts.empty() )
-		extension = exts.front();
+	if ( found )
+	{
+		//
+		// figure out the extension
+		//
+		for ( itr = exts.begin(); itr != exts.end(); ++itr )
+		{
+			if ( ( (*itr).compare( FE_DIR_TOKEN ) == 0 )
+					? directory_exists( romfilename )
+					: tail_compare( romfilename, (*itr) ) )
+			{
+				extension = (*itr);
+				break;
+			}
+		}
+	}
+	else
+	{
+		if ( !exts.empty() )
+			extension = exts.front();
 
-	// we have the extension now
-	romfilename += extension;
+		if ( !paths.empty() )
+			rom_path = clean_path( paths.front(), true );
+
+		romfilename = rom_path + rom + extension;
+
+		std::cout << "Warning: could not locate rom.  Best guess: "
+				<< romfilename << std::endl;
+	}
 
 	args = emu->get_info( FeEmulatorInfo::Command );
 	perform_substitution( args, "[name]", rom );
@@ -1058,20 +1112,6 @@ FeEmulatorInfo *FeSettings::get_emulator( const std::string & emu )
 	return NULL;
 }
 
-namespace
-{
-	const char *EMU_TOKEN = "[emulator]";
-
-	void emulator_substitution( FeEmulatorInfo &emu,
-		FeEmulatorInfo::Index i,
-		const std::string &name )
-	{
-		std::string temp = emu.get_info( i );
-		if ( perform_substitution( temp, EMU_TOKEN, name ) )
-			emu.set_info( i, temp );
-	}
-}
-
 FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
 {
 	// If an emulator with the given name already exists we return it
@@ -1095,7 +1135,11 @@ FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
 		// name.  This is only done in the path fields.  It is not done for
 		// the FeEmulator::Command field.
 		//
-		emulator_substitution( new_emu, FeEmulatorInfo::Rom_path, emu );
+		const char *EMU_TOKEN = "[emulator]";
+
+		std::string temp = new_emu.get_info( FeEmulatorInfo::Rom_path );
+		if ( perform_substitution( temp, EMU_TOKEN, emu ) )
+			new_emu.set_info( FeEmulatorInfo::Rom_path, temp );
 
 		std::vector<std::pair<std::string,std::string> > al;
 		std::vector<std::pair<std::string,std::string> >::iterator itr;
@@ -1634,7 +1678,7 @@ void FeSettings::get_available_plugins( std::vector < std::string > &ll ) const
 {
 	internal_gather_config_files(
 		ll,
-		std::vector<std::string>(1, FE_PLUGIN_FILE_EXTENSION),
+		FE_PLUGIN_FILE_EXTENSION,
 		FE_PLUGIN_SUBDIR );
 }
 
@@ -1686,7 +1730,7 @@ void FeSettings::get_languages_list( std::vector < std::string > &ll ) const
 {
 	internal_gather_config_files(
 		ll,
-		std::vector<std::string>(1, FE_LANGUAGE_FILE_EXTENSION),
+		FE_LANGUAGE_FILE_EXTENSION,
 		FE_LANGUAGE_SUBDIR );
 
 	if ( ll.empty() )
@@ -1697,14 +1741,14 @@ void FeSettings::get_romlists_list( std::vector < std::string > &ll ) const
 {
 	internal_gather_config_files(
 		ll,
-		std::vector<std::string>(1, FE_ROMLIST_FILE_EXTENSION),
+		FE_ROMLIST_FILE_EXTENSION,
 		FE_ROMLIST_SUBDIR );
 }
 
 
 void FeSettings::internal_gather_config_files(
 			std::vector<std::string> &ll,
-			const std::vector<std::string> &extension_list,
+			const std::string &extension,
 			const char *subdir ) const
 {
 	ll.clear();
@@ -1712,7 +1756,7 @@ void FeSettings::internal_gather_config_files(
 
 	// check the config directory first
 	if ( file_exists( config_path ) )
-		get_basename_from_extension( ll, config_path, extension_list );
+		get_basename_from_extension( ll, config_path, extension );
 
 	// then the data directory
 	if ( FE_DATA_PATH != NULL )
@@ -1720,7 +1764,7 @@ void FeSettings::internal_gather_config_files(
 		std::string data_path = FE_DATA_PATH;
 		data_path += subdir;
 
-		get_basename_from_extension( ll, data_path, extension_list );
+		get_basename_from_extension( ll, data_path, extension );
 	}
 
 	// Sort the list and remove duplicates

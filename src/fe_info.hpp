@@ -77,6 +77,8 @@ public:
 
 	void clear();
 
+	bool operator==( const FeRomInfo & );
+
 private:
 	FeRomInfo &operator=( const FeRomInfo & );
 	std::string get_info_escaped( int ) const;
@@ -281,7 +283,7 @@ public:
 		Executable,
 		Command,
 		Rom_path,
-		Rom_extension,  // this value gets split and duplicated in m_extensions
+		Rom_extension,
 		Import_extras,
 		Listxml,
 		LAST_INDEX
@@ -292,7 +294,7 @@ public:
 	FeEmulatorInfo();
 	FeEmulatorInfo( const std::string &name );
 
-	const std::string &get_info( int ) const;
+	const std::string get_info( int ) const;
 	void set_info( enum Index, const std::string & );
 
 	// get artwork path.  Multiple paths are semicolon separated
@@ -309,7 +311,9 @@ public:
 
 	void delete_artwork( const std::string & );
 
+	const std::vector<std::string> &get_paths() const;
 	const std::vector<std::string> &get_extensions() const;
+	const std::vector<std::string> &get_import_extras() const;
 
 	int process_setting( const std::string &setting,
 								const std::string &value,
@@ -318,7 +322,18 @@ public:
 	void save( const std::string &filename ) const;
 
 private:
-	std::string m_info[LAST_INDEX];
+	std::string vector_to_string( const std::vector< std::string > &vec ) const;
+	void string_to_vector( const std::string &input, std::vector< std::string > &vec,
+								bool allow_empty = false ) const;
+
+	std::string m_name;
+	std::string m_executable;
+	std::string m_command;
+	std::string m_listxml;
+
+	std::vector<std::string> m_paths;
+	std::vector<std::string> m_extensions;
+	std::vector<std::string> m_import_extras;
 
 	//
 	// Considered using a std::multimap here but C++98 doesn't guarantee the
@@ -326,7 +341,6 @@ private:
 	// we can maintain the precedence ordering of our artwork paths...
 	//
 	std::map<std::string, std::vector<std::string> > m_artwork;
-	std::vector<std::string> m_extensions;
 };
 
 class FeScriptConfigurable : public FeBaseConfigurable

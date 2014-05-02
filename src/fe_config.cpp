@@ -291,14 +291,20 @@ bool FeEmulatorEditMenu::on_option_select(
 
 			// Do some checks and confirmation before launching the Generator
 			//
-			std::string rom_path = clean_path(
-				m_emulator->get_info( FeEmulatorInfo::Rom_path ) );
+			std::vector<std::string> paths = m_emulator->get_paths();
 
-			if ( !file_exists( rom_path ) )
+			for ( std::vector<std::string>::const_iterator itr = paths.begin();
+					itr != paths.end(); ++itr )
 			{
-				if ( ctx.confirm_dialog( "Rom path '$1' not found, proceed anyways?",
-									rom_path ) == false )
-					return false;
+				std::string rom_path = clean_path( *itr );
+				if ( !directory_exists( rom_path ) )
+				{
+					if ( ctx.confirm_dialog( "Rom path '$1' not found, proceed anyways?",
+										rom_path ) == false )
+						return false;
+					else
+						break; // only bug the user once if there are multiple paths configured
+				}
 			}
 
 			std::string emu_name = m_emulator->get_info( FeEmulatorInfo::Name );
@@ -400,7 +406,7 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 	get_basename_from_extension(
 			emu_file_list,
 			path,
-			std::vector<std::string>(1, FE_EMULATOR_FILE_EXTENSION) );
+			FE_EMULATOR_FILE_EXTENSION );
 
 	for ( std::vector<std::string>::iterator itr=emu_file_list.begin();
 			itr < emu_file_list.end(); ++itr )

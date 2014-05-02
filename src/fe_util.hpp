@@ -109,8 +109,7 @@ bool search_for_file( const std::string &base_path,
 //
 bool get_subdirectories(
 			std::vector<std::string> &list,
-			const std::string &path,
-			bool append_trailing_slash = false );
+			const std::string &path );
 //
 // Return "list" of the base filenames in "path" where the file extension
 // is in the vector "extensions"
@@ -120,7 +119,7 @@ bool get_subdirectories(
 bool get_basename_from_extension(
 			std::vector<std::string> &list,
 			const std::string &path,
-			const std::vector< std::string > &extensions,
+			const std::string &extension,
 			bool strip_extension = true );
 
 //

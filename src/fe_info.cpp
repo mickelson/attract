@@ -126,6 +126,12 @@ void FeRomInfo::clear()
 		m_info[i].clear();
 }
 
+bool FeRomInfo::operator==( const FeRomInfo &o )
+{
+	return (( m_info[Romname].compare( o.m_info[Romname] ) == 0 )
+				&& ( m_info[Emulator].compare( o.m_info[Emulator] ) == 0 ));
+}
+
 SQRex *FeRomListCompare::m_rex = NULL;
 
 void FeRomListCompare::init_rex( const std::string &re_mask )
@@ -823,34 +829,69 @@ FeEmulatorInfo::FeEmulatorInfo()
 }
 
 FeEmulatorInfo::FeEmulatorInfo( const std::string &n )
+: m_name( n )
 {
-	m_info[Name] = n;
 }
 
-const std::string &FeEmulatorInfo::get_info( int i ) const
+const std::string FeEmulatorInfo::get_info( int i ) const
 {
-	return m_info[i];
+	switch ( (Index)i )
+	{
+	case Name:
+		return m_name;
+	case Executable:
+		return m_executable;
+	case Command:
+		return m_command;
+	case Rom_path:
+		return vector_to_string( m_paths );
+	case Rom_extension:
+		return vector_to_string( m_extensions );
+	case Import_extras:
+		return vector_to_string( m_import_extras );
+	case Listxml:
+		return m_listxml;
+	default:
+		return "";
+	}
 }
 
 void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 {
-	m_info[i] = s;
-	if ( i == Rom_extension )
+	switch ( i )
 	{
-		size_t pos=0;
-		m_extensions.clear();
-		do
-		{
-			std::string ext;
-  			token_helper( s, pos, ext );
-			m_extensions.push_back( ext );
-		} while ( pos < s.size() );
+	case Name:
+		m_name = s; break;
+	case Executable:
+		m_executable = s; break;
+	case Command:
+		m_command = s; break;
+	case Rom_path:
+		string_to_vector( s, m_paths ); break;
+	case Rom_extension:
+		string_to_vector( s, m_extensions, true ); break;
+	case Import_extras:
+		string_to_vector( s, m_import_extras ); break;
+	case Listxml:
+		m_listxml = s; break;
+	default:
+		break;
 	}
+}
+
+const std::vector<std::string> &FeEmulatorInfo::get_paths() const
+{
+	return m_paths;
 }
 
 const std::vector<std::string> &FeEmulatorInfo::get_extensions() const
 {
 	return m_extensions;
+}
+
+const std::vector<std::string> &FeEmulatorInfo::get_import_extras() const
+{
+	return m_import_extras;
 }
 
 bool FeEmulatorInfo::get_artwork( const std::string &label, std::string &artwork ) const
@@ -860,16 +901,7 @@ bool FeEmulatorInfo::get_artwork( const std::string &label, std::string &artwork
 	if ( itm == m_artwork.end() )
 		return false;
 
-	artwork.clear();
-	for ( std::vector<std::string>::const_iterator its = (*itm).second.begin();
-			its != (*itm).second.end(); ++its )
-	{
-		if ( !artwork.empty() )
-			artwork += ";";
-
-		artwork += (*its);
-	}
-
+	artwork = vector_to_string( (*itm).second );
 	return true;
 }
 
@@ -888,23 +920,10 @@ bool FeEmulatorInfo::get_artwork( const std::string &label, std::vector< std::st
 	return true;
 }
 
-
 void FeEmulatorInfo::add_artwork( const std::string &label,
 							const std::string &artwork )
 {
-	//
-	// This will create a new "label" entry in our map if one doesn't exist, and will
-	// return the existing entry if one does.
-	//
-	std::vector<std::string> &my_list = m_artwork[ label ];
-
-	size_t pos=0;
-	do
-	{
-		std::string path;
-		token_helper( artwork, pos, path );
-		my_list.push_back( path );
-	} while ( pos < artwork.size() );
+	string_to_vector( artwork, m_artwork[ label ] );
 }
 
 void FeEmulatorInfo::get_artwork_list(
@@ -915,15 +934,7 @@ void FeEmulatorInfo::get_artwork_list(
 
 	for ( itm=m_artwork.begin(); itm != m_artwork.end(); ++itm )
 	{
-		std::string path_list;
-		for ( std::vector<std::string>::const_iterator its = (*itm).second.begin();
-				its != (*itm).second.end(); ++its )
-		{
-			if ( !path_list.empty() )
-				path_list += ";";
-
-			path_list += (*its);
-		}
+		std::string path_list = vector_to_string( (*itm).second );
 		out_list.push_back( std::pair<std::string,std::string>( (*itm).first, path_list ) );
 	}
 }
@@ -1052,6 +1063,35 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 
 		outfile.close();
    }
+}
+
+std::string FeEmulatorInfo::vector_to_string( const std::vector< std::string > &vec ) const
+{
+	std::string ret_str;
+	for ( unsigned int i=0; i < vec.size(); i++ )
+	{
+		if ( i > 0 ) // there could be empty entries in the vector...
+			ret_str += ";";
+
+		ret_str += vec[i];
+	}
+	return ret_str;
+}
+
+void FeEmulatorInfo::string_to_vector(
+			const std::string &input, std::vector< std::string > &vec, bool allow_empty ) const
+{
+	size_t pos=0;
+	vec.clear();
+	do
+	{
+		std::string val;
+		token_helper( input, pos, val );
+
+		if ( ( !val.empty() ) || allow_empty )
+			vec.push_back( val );
+
+	} while ( pos < input.size() );
 }
 
 const char *FeScriptConfigurable::indexString = "param";
