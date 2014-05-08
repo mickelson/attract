@@ -59,6 +59,10 @@ public:
 	static const char *rotationTokens[];
 	static const char *rotationDispTokens[];
 
+	enum WindowType { Default=0, Fullscreen, Window };
+	static const char *windowModeTokens[];
+	static const char *windowModeDispTokens[];
+
 	enum ConfigSettingIndex
 	{
 		Language=0,
@@ -73,6 +77,7 @@ public:
 		ConfirmFavourites,
 		MouseThreshold,
 		JoystickThreshold,
+		WindowMode,
 		LAST_INDEX
 	};
 
@@ -111,6 +116,7 @@ private:
 	bool m_hide_brackets;
 	bool m_autolaunch_last_game;
 	bool m_confirm_favs;
+	WindowType m_window_mode;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
@@ -214,6 +220,7 @@ public:
 	bool get_font_file( std::string &fullpath, const std::string &filename="" ) const;
 
 	RotationState get_autorotate() const;
+	WindowType get_window_mode() const;
 	int get_screen_saver_timeout() const;
 	bool get_lists_menu_exit() const;
 

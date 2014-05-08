@@ -38,7 +38,6 @@ private:
 	sf::RenderWindow &m_wnd;
 	FeSettings &m_feSettings;
 	FePresent &m_fePresent;
-	int m_characterSize;
 	const sf::Color m_textColour;
 	const sf::Color m_bgColour;
 	const sf::Color m_selColour;
@@ -46,6 +45,8 @@ private:
 
 	FeOverlay( const FeOverlay & );
 	FeOverlay &operator=( const FeOverlay & );
+
+	int get_char_size() const;
 
 	int internal_dialog(
 			const std::string &msg_str,
@@ -71,8 +72,8 @@ public:
 
 	void splash_message( const std::string &, const std::string &rep="" );
 	int confirm_dialog( const std::string &msg, const std::string &rep="" );
-	bool config_dialog(); 
-	int lists_dialog(); 
+	bool config_dialog();
+	int lists_dialog();
 	int filters_dialog();
 	int languages_dialog();
 };

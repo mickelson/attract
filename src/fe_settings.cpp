@@ -136,6 +136,22 @@ const char *FeSettings::rotationDispTokens[]	=
 	NULL
 };
 
+const char *FeSettings::windowModeTokens[] =
+{
+	"default",
+	"fullscreen",
+	"window",
+	NULL
+};
+
+const char *FeSettings::windowModeDispTokens[] =
+{
+	"Fill Screen (Default)",
+	"Fullscreen Mode",
+	"Window",
+	NULL
+};
+
 FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
 	:  m_inputmap(),
@@ -151,7 +167,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_lists_menu_exit( true ),
 	m_hide_brackets( false ),
 	m_autolaunch_last_game( false ),
-	m_confirm_favs( false )
+	m_confirm_favs( false ),
+	m_window_mode( Default )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -267,6 +284,7 @@ const char *FeSettings::configSettingStrings[] =
 	"confirm_favourites",
 	"mouse_threshold",
 	"joystick_threshold",
+	"window_mode",
 	NULL
 };
 
@@ -1279,6 +1297,12 @@ FeSettings::RotationState FeSettings::get_autorotate() const
 	return m_autorotate;
 }
 
+FeSettings::WindowType FeSettings::get_window_mode() const
+{
+	return m_window_mode;
+}
+
+
 int FeSettings::get_screen_saver_timeout() const
 {
 	return m_ssaver_time;
@@ -1337,6 +1361,8 @@ const std::string FeSettings::get_info( int index ) const
 		return as_str( m_mouse_thresh );
 	case JoystickThreshold:
 		return as_str( m_joy_thresh );
+	case WindowMode:
+		return windowModeTokens[ m_window_mode ];
 	default:
 		break;
 	}
@@ -1424,6 +1450,24 @@ bool FeSettings::set_info( int index, const std::string &value )
 			m_joy_thresh=100;
 		else if ( m_joy_thresh < 1 )
 			m_joy_thresh=1;
+		break;
+
+	case WindowMode:
+		{
+			int i=0;
+			while ( windowModeTokens[i] != NULL )
+			{
+				if ( value.compare( windowModeTokens[i] ) == 0 )
+				{
+					m_window_mode = (WindowType)i;
+					break;
+				}
+				i++;
+			}
+
+			if ( windowModeTokens[i] == NULL )
+				return false;
+		}
 		break;
 
 	default:

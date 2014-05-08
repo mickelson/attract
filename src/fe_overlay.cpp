@@ -132,8 +132,12 @@ FeOverlay::FeOverlay( sf::RenderWindow &wnd,
 	m_selColour( sf::Color::Yellow ),
 	m_selBgColour( sf::Color( 0, 0, 200, 200 ) )
 {
-	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-	m_characterSize = vm.height / 12; // 64 on a 1024x768 display
+}
+
+int FeOverlay::get_char_size() const
+{
+	const sf::Vector2i &size = m_fePresent.get_output_size();
+	return (size.y / 12); // 64 on a 1024x768 full screen display
 }
 
 void FeOverlay::splash_message( const std::string &msg,
@@ -143,11 +147,11 @@ void FeOverlay::splash_message( const std::string &msg,
 		m_fePresent.get_font(),
 		m_textColour,
 		m_bgColour,
-		m_characterSize );
+		get_char_size() );
 
 	message.setWordWrap( true );
 
-	sf::Vector2u size = m_wnd.getSize();
+	const sf::Vector2i &size = m_fePresent.get_output_size();
 	message.setSize( size.x, size.y );
 
 	std::string msg_str;
@@ -179,7 +183,7 @@ int FeOverlay::confirm_dialog( const std::string &msg, const std::string &rep )
 
 int FeOverlay::lists_dialog()
 {
-	sf::Vector2u size = m_wnd.getSize();
+	const sf::Vector2i &size = m_fePresent.get_output_size();
 	std::vector<std::string> list;
 	m_feSettings.get_list_names( list );
 
@@ -189,8 +193,8 @@ int FeOverlay::lists_dialog()
 		m_bgColour,
 		m_selColour,
 		m_selBgColour,
-		m_characterSize,
-		size.y / m_characterSize );
+		get_char_size(),
+		size.y / get_char_size() );
 
 	dialog.setPosition( 0, 0 );
 	dialog.setSize( size.x, size.y );
@@ -225,7 +229,7 @@ int FeOverlay::lists_dialog()
 
 int FeOverlay::filters_dialog()
 {
-	sf::Vector2u size = m_wnd.getSize();
+	const sf::Vector2i &size = m_fePresent.get_output_size();
 	std::vector<std::string> list;
 	m_feSettings.get_current_list_filter_names( list );
 
@@ -235,8 +239,8 @@ int FeOverlay::filters_dialog()
 		m_bgColour,
 		m_selColour,
 		m_selBgColour,
-		m_characterSize,
-		size.y / m_characterSize );
+		get_char_size(),
+		size.y / get_char_size() );
 
 	dialog.setPosition( 0, 0 );
 	dialog.setSize( size.x, size.y );
@@ -295,15 +299,15 @@ int FeOverlay::languages_dialog()
 		i++;
 	}
 
-	sf::Vector2u size = m_wnd.getSize();
+	const sf::Vector2i &size = m_fePresent.get_output_size();
 	FeListBox dialog(
 		m_fePresent.get_font(),
 		m_textColour,
 		m_bgColour,
 		m_selColour,
 		m_selBgColour,
-		m_characterSize,
-		size.y / m_characterSize );
+		get_char_size(),
+		size.y / get_char_size() );
 
 	dialog.setPosition( 0, 0 );
 	dialog.setSize( size.x, size.y );
@@ -326,14 +330,14 @@ int FeOverlay::internal_dialog(
 			const std::string &msg_str,
 			const std::vector<std::string> &list )
 {
-	sf::Vector2u size = m_wnd.getSize();
+	const sf::Vector2i &size = m_fePresent.get_output_size();
 	float slice = size.y / 2;
 
 	FeTextPrimative message(
 		m_fePresent.get_font(),
 		m_textColour,
 		m_bgColour,
-		m_characterSize );
+		get_char_size() );
 	message.setWordWrap( true );
 
 	FeListBox dialog(
@@ -342,8 +346,8 @@ int FeOverlay::internal_dialog(
 		m_bgColour,
 		m_selColour,
 		m_selBgColour,
-		m_characterSize,
-		( size.y - slice ) / m_characterSize );
+		get_char_size(),
+		( size.y - slice ) / get_char_size() );
 
 	message.setSize( size.x, slice );
 	message.setString( msg_str );
@@ -369,13 +373,13 @@ void FeOverlay::edit_dialog(
 			std::string &text )
 {
 	FeTextPrimative message( m_fePresent.get_font(), m_textColour,
-		m_bgColour, m_characterSize );
+		m_bgColour, get_char_size() );
 	message.setWordWrap( true );
 
 	FeTextPrimative tp( m_fePresent.get_font(), m_textColour,
-		m_bgColour, m_characterSize );
+		m_bgColour, get_char_size() );
 
-	sf::Vector2u size = m_wnd.getSize();
+	const sf::Vector2i &size = m_fePresent.get_output_size();
 	float slice = size.y / 3;
 
 	message.setSize( size.x, slice );
@@ -404,10 +408,10 @@ void FeOverlay::input_map_dialog(
 			FeInputMap::Command &conflict )
 {
 	FeTextPrimative message( m_fePresent.get_font(), m_textColour,
-		m_bgColour, m_characterSize );
+		m_bgColour, get_char_size() );
 	message.setWordWrap( true );
 
-	sf::Vector2u s = m_wnd.getSize();
+	sf::Vector2i s = m_fePresent.get_output_size();
 
 	// Make sure the appropriate mouse capture variables are set, in case
 	// the user has just changed the mouse threshold
@@ -485,7 +489,7 @@ int FeOverlay::display_config_dialog(
 	//
 	const sf::Font *font = m_fePresent.get_font();
 	std::vector<sf::Drawable *> draw_list;
-	sf::Vector2u size = m_wnd.getSize();
+	const sf::Vector2i &size = m_fePresent.get_output_size();
 	float slice = size.y / 8;
 
 	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
@@ -494,7 +498,7 @@ int FeOverlay::display_config_dialog(
 	bg.setOutlineThickness( -2 );
 	draw_list.push_back( &bg );
 
-	FeTextPrimative heading( font, m_selColour, sf::Color::Transparent, m_characterSize / 2 );
+	FeTextPrimative heading( font, m_selColour, sf::Color::Transparent, get_char_size() / 2 );
 	heading.setSize( size.x, slice );
 	heading.setOutlineColor( m_textColour );
 	heading.setOutlineThickness( -2 );
@@ -505,7 +509,7 @@ int FeOverlay::display_config_dialog(
 	if ( ctx.style == FeConfigContext::EditList )
 		width = size.x / 2 - 2;
 
-	int rows = ( size.y - slice * 2 ) / ( m_characterSize / 2 );
+	int rows = ( size.y - slice * 2 ) / ( get_char_size() / 2 );
 
 	//
 	// The "settings" (left) list, also used to list submenu and exit options...
@@ -516,7 +520,7 @@ int FeOverlay::display_config_dialog(
 		sf::Color::Transparent,
 		m_selColour,
 		sf::Color( 0, 0, 200, 200 ),
-		m_characterSize / 2,
+		get_char_size() / 2,
 		rows );
 
 	sdialog.setPosition( 2, slice );
@@ -533,7 +537,7 @@ int FeOverlay::display_config_dialog(
 		sf::Color::Transparent,
 		m_textColour,
 		sf::Color( 0, 0, 200, 200 ),
-		m_characterSize / 2,
+		get_char_size() / 2,
 		rows );
 
 	if ( ctx.style == FeConfigContext::EditList )
@@ -550,7 +554,7 @@ int FeOverlay::display_config_dialog(
 	FeTextPrimative footer( font,
 				m_textColour,
 				sf::Color::Transparent,
-				m_characterSize / 3 );
+				get_char_size() / 3 );
 
 	footer.setPosition( 0, size.y - slice );
 	footer.setSize( size.x, slice );
@@ -850,7 +854,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					redraw = true;
 					break;
 
-				case 9: // horizontal tab 
+				case 9: // horizontal tab
 				case 10: // linefeed
 				case 13: // Return (ignore here, deal with as keypress event)
 					break;

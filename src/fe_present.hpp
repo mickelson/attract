@@ -201,7 +201,7 @@ public:
 	// Get a font from the font pool, loading it if necessary
 	const FeFontContainer *get_pooled_font( const std::string &n );
 
-	sf::Vector2i get_output_size() const { return m_outputSize; }
+	const sf::Vector2i &get_output_size() const { return m_outputSize; }
 
 	void perform_autorotate();
 

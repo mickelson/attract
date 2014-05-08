@@ -32,6 +32,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <fstream>
 
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -45,6 +46,53 @@
 #ifndef NO_MOVIE
 #include <Audio/AudioDevice.hpp>
 #endif
+
+class FeWindowPosition : public FeBaseConfigurable
+{
+public:
+	sf::Vector2i m_pos;
+	sf::Vector2u m_size;
+
+	static const char *FILENAME;
+
+	int process_setting( const std::string &setting,
+								const std::string &value,
+								const std::string &filename )
+	{
+		size_t pos=0;
+		std::string token;
+		if ( setting.compare( "position" ) == 0 )
+		{
+			token_helper( value, pos, token, "," );
+			m_pos.x = as_int( token );
+
+			token_helper( value, pos, token );
+			m_pos.y = as_int( token );
+		}
+		else if ( setting.compare( "size" ) == 0 )
+		{
+			token_helper( value, pos, token, "," );
+			m_size.x = as_int( token );
+
+			token_helper( value, pos, token );
+			m_size.y = as_int( token );
+		}
+		return 1;
+	};
+
+	void save( const std::string &filename )
+	{
+		std::ofstream outfile( filename.c_str() );
+		if ( outfile.is_open() )
+		{
+			outfile << "position " << m_pos.x << "," << m_pos.y << std::endl;
+			outfile << "size " << m_size.x << "," << m_size.y << std::endl;
+		}
+		outfile.close();
+	}
+};
+
+const char *FeWindowPosition::FILENAME = "window.am";
 
 void process_args( int argc, char *argv[],
 			std::string &config_path,
@@ -274,11 +322,29 @@ int main(int argc, char *argv[])
 
 	sf::VideoMode mode = sf::VideoMode::getDesktopMode();
 
+	int style_map[3] =
+	{
+		sf::Style::None, 									// FeSettings::Default
+		sf::Style::Fullscreen,							// FeSettings::Fullscreen
+		sf::Style::Titlebar | sf::Style::Resize	// FeSettings::Window
+	};
+
+	int win_mode = feSettings.get_window_mode();
+
 	// Create window
 	sf::RenderWindow window(
 			mode,
 			"Attract-Mode",
-			sf::Style::None );
+			style_map[ win_mode ] );
+
+	if ( win_mode == FeSettings::Window )
+	{
+		FeWindowPosition win_pos;
+		win_pos.load_from_file( feSettings.get_config_dir() + FeWindowPosition::FILENAME );
+
+		window.setPosition( win_pos.m_pos );
+		window.setSize( win_pos.m_size );
+	}
 
 #ifdef SFML_SYSTEM_WINDOWS
 	// In Windows, the "WS_POPUP" style creates grief switching to MAME.
@@ -299,8 +365,11 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef SFML_SYSTEM_MACOS
-	osx_hide_menu_bar();
-	window.setPosition( sf::Vector2i( 0, 0 ) );
+	if ( win_mode == FeSettings::Default )
+	{
+		osx_hide_menu_bar();
+		window.setPosition( sf::Vector2i( 0, 0 ) );
+	}
 #else
 	// We don't set the icon on OS X, it looks like crap (too low res).
 	window.setIcon( fe_icon.width, fe_icon.height, fe_icon.pixel_data );
@@ -318,13 +387,15 @@ int main(int argc, char *argv[])
 
 	FeOverlay feOverlay( window, feSettings, fePresent );
 
+	bool exit_selected=false;
+
 	if ( feSettings.get_language().empty() )
 	{
 		// If our language isn't set at this point, we want to prompt the user for the language
 		// they wish to use
 		//
 		if ( feOverlay.languages_dialog() < 0 )
-			window.close();
+			exit_selected = true;
 	}
 
 	soundsys.sound_event( FeInputMap::EventStartup );
@@ -336,8 +407,7 @@ int main(int argc, char *argv[])
 	// go straight into config mode if there are no lists configured for
 	// display
 	//
-	bool config_mode = ( feSettings.lists_count() < 1 ) ? true : false;
-	bool exit_selected=false;
+	bool config_mode = ( feSettings.lists_count() < 1 );
 
 	while (window.isOpen() && (!exit_selected))
 	{
@@ -362,8 +432,8 @@ int main(int argc, char *argv[])
 				soundsys.play_ambient();
 				initialize_mouse_capture( feSettings, window );
 			}
-			redraw=true;
 			config_mode=false;
+			redraw=true;
 		}
 		else if ( launch_game )
 		{
@@ -384,50 +454,75 @@ int main(int argc, char *argv[])
 		{
 			FeInputMap::Command c = feSettings.map_input( ev );
 
-			if ( ev.type == sf::Event::Closed )
+			//
+			// Special case handling based on event type
+			//
+			switch ( ev.type )
 			{
-				window.close();
-			}
-			else if (( ev.type == sf::Event::MouseMoved )
-					&& ( feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y )))
-			{
-				// We reset the mouse if we are capturing it and it has moved outside of its bounding box
-				//
-				sf::Vector2u s = window.getSize();
-				sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), window );
+				case sf::Event::Closed:
+					exit_selected = true;
+					break;
+
+				case sf::Event::MouseMoved:
+					if ( feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y ))
+					{
+						// We reset the mouse if we are capturing it and it has moved
+						// outside of its bounding box
+						//
+						sf::Vector2u s = window.getSize();
+						sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), window );
+					}
+					break;
+
+				case sf::Event::KeyReleased:
+				case sf::Event::MouseButtonReleased:
+				case sf::Event::JoystickButtonReleased:
+					//
+					// We always want to reset the screen saver on these events,
+					// even if they aren't mapped otherwise (mapped events cause
+					// a reset too)
+					//
+					if (( c == FeInputMap::LAST_COMMAND )
+							&& ( fePresent.reset_screen_saver( &window ) ))
+						redraw = true;
+					break;
+
+				case sf::Event::GainedFocus:
+				case sf::Event::Resized:
+					redraw = true;
+					break;
+
+
+				case sf::Event::JoystickMoved:
+					if ( c == FeInputMap::LAST_COMMAND )
+					{
+						if (( (int)ev.joystickMove.joystickId == guard_joyid )
+							&& ( ev.joystickMove.axis == guard_axis ))
+						{
+							// Reset the joystick guard because the axis we are guarding has moved
+							// below the joystick threshold
+							guard_joyid = -1;
+							guard_axis = -1;
+						}
+					}
+					else
+					{
+						// Only allow one mapped "Joystick Moved" input through at a time
+						//
+						if ( guard_joyid != -1 )
+							continue;
+
+						guard_joyid = ev.joystickMove.joystickId;
+						guard_axis = ev.joystickMove.axis;
+					}
+					break;
+
+				default:
+					break;
 			}
 
 			if ( c == FeInputMap::LAST_COMMAND )
-			{
-				if (( ev.type == sf::Event::KeyReleased )
-					|| ( ev.type == sf::Event::MouseButtonReleased )
-					|| ( ev.type == sf::Event::JoystickButtonReleased ))
-				{
-					fePresent.reset_screen_saver( &window );
-				}
-				else if (( ev.type == sf::Event::JoystickMoved )
-						&& ( (int)ev.joystickMove.joystickId == guard_joyid )
-						&& ( ev.joystickMove.axis == guard_axis ))
-				{
-					// Reset the joystick guard because the axis we are guarding has moved
-					// below the joystick threshold
-					guard_joyid = -1;
-					guard_axis = -1;
-				}
-
 				continue;
-			}
-
-			// Only allow one mapped "Joystick Moved" input through at a time
-			//
-			if ( ev.type == sf::Event::JoystickMoved )
-			{
-				if ( guard_joyid != -1 )
-					continue;
-
-				guard_joyid = ev.joystickMove.joystickId;
-				guard_axis = ev.joystickMove.axis;
-			}
 
 			soundsys.sound_event( c );
 			if ( fePresent.handle_event( c, ev, &window ) )
@@ -505,7 +600,7 @@ int main(int argc, char *argv[])
 							// option.  We only want to run the exit command if the
 							// menu option was selected
 							//
-							window.close();
+							exit_selected = true;
 							if ( list_index < -1 )
 								feSettings.exit_command();
 						}
@@ -524,7 +619,7 @@ int main(int argc, char *argv[])
 					{
 						int list_index = feOverlay.filters_dialog();
 						if ( list_index < 0 )
-							window.close();
+							exit_selected = true;
 						else
 						{
 							feSettings.set_filter( list_index );
@@ -584,6 +679,14 @@ int main(int argc, char *argv[])
 		soundsys.tick();
 	}
 
+	if ( win_mode == FeSettings::Window )
+	{
+		FeWindowPosition win_pos;
+		win_pos.m_pos = window.getPosition();
+		win_pos.m_size = window.getSize();
+		win_pos.save( feSettings.get_config_dir() + FeWindowPosition::FILENAME );
+	}
+
 	if ( window.isOpen() )
 	{
 		fePresent.on_stop_frontend( &window );
@@ -596,5 +699,6 @@ int main(int argc, char *argv[])
 
 	soundsys.stop();
 	feSettings.save_state();
+
 	return 0;
 }
