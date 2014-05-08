@@ -818,9 +818,16 @@ Member Functions:
 Notes:
 
    * To flip an image vertically, set the `subimg_height` property to
-     `-1 * texture_height` and `subimg_y` to `texture_width`.
+     `-1 * texture_height` and `subimg_y` to `texture_height`.
    * To flip an image horizontally, set the `subimg_width` property to
-     `-1 * texture_width` and `subimg_x` to `texture_height`.
+     `-1 * texture_width` and `subimg_x` to `texture_width`.
+
+      // flip "img" vertically
+      function flip_y( img )
+      {
+         img.subimg_height = -1 * img.texture_height;
+         img.subimg_y = img.texture_height;
+      }
 
 <a name="Text" />
 #### `fe.Text` ####
