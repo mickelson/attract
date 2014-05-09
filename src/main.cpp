@@ -55,9 +55,15 @@ public:
 
 	static const char *FILENAME;
 
+	FeWindowPosition( const sf::Vector2i &pos, const sf::Vector2u &size )
+		: m_pos( pos ),
+		m_size( size )
+	{
+	}
+
 	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &filename )
+		const std::string &value,
+		const std::string &filename )
 	{
 		size_t pos=0;
 		std::string token;
@@ -324,9 +330,9 @@ int main(int argc, char *argv[])
 
 	int style_map[3] =
 	{
-		sf::Style::None, 									// FeSettings::Default
-		sf::Style::Fullscreen,							// FeSettings::Fullscreen
-		sf::Style::Titlebar | sf::Style::Resize	// FeSettings::Window
+		sf::Style::None,	// FeSettings::Default
+		sf::Style::Fullscreen,	// FeSettings::Fullscreen
+		sf::Style::Default	// FeSettings::Window
 	};
 
 	int win_mode = feSettings.get_window_mode();
@@ -339,7 +345,10 @@ int main(int argc, char *argv[])
 
 	if ( win_mode == FeSettings::Window )
 	{
-		FeWindowPosition win_pos;
+		FeWindowPosition win_pos( 
+			sf::Vector2i( 0, 0 ),
+			sf::Vector2u( mode.width / 2, mode.height / 2 ) );
+
 		win_pos.load_from_file( feSettings.get_config_dir() + FeWindowPosition::FILENAME );
 
 		window.setPosition( win_pos.m_pos );
@@ -681,9 +690,10 @@ int main(int argc, char *argv[])
 
 	if ( win_mode == FeSettings::Window )
 	{
-		FeWindowPosition win_pos;
-		win_pos.m_pos = window.getPosition();
-		win_pos.m_size = window.getSize();
+		FeWindowPosition win_pos(
+			window.getPosition(),
+			window.getSize() );
+
 		win_pos.save( feSettings.get_config_dir() + FeWindowPosition::FILENAME );
 	}
 
