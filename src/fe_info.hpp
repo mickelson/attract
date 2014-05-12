@@ -30,6 +30,7 @@
 #include <deque>
 
 struct SQRex;
+extern const char *FE_ROMLIST_FILE_EXTENSION;
 
 //
 // Class for storing information regarding a specific rom
@@ -53,6 +54,7 @@ public:
 		DisplayCount,
 		DisplayType,
 		Favourite,		// everything from Favourite on is not loaded from romlist
+		Tags,
 		LAST_INDEX
 	};
 
@@ -68,6 +70,8 @@ public:
 
 	const std::string &get_info( int ) const;
 	void set_info( enum Index, const std::string & );
+
+	void append_tag( const std::string &tag );
 
 	int process_setting( const std::string &setting,
 								const std::string &value,
@@ -229,19 +233,30 @@ private:
 	std::deque< FeFilter > m_filters;
 };
 
-class FeRomList : protected FeBaseConfigurable
+class FeRLLoadData;
+
+class FeRomList : public FeBaseConfigurable
 {
 private:
 	std::deque<FeRomInfo> m_list;
-	std::set<std::string> m_favs;
-	std::string m_fav_file;
+	std::map<std::string, bool> m_tags; // bool is flag of whether the tag has been changed
+	std::string m_user_path;
+	std::string m_romlist_name;
 	const FeFilter *m_filter;
+	FeRLLoadData *m_load_data; // temporarily used during romlist loading
 	bool m_fav_changed;
+	bool m_tags_changed;
 
 	FeRomList( const FeRomList & );
 	FeRomList &operator=( const FeRomList & );
 
 	bool apply_filter( const FeRomInfo &rom ) const;
+
+	void load_favs( const std::string &filename );
+	void load_tags( const std::string &path );
+
+	void save_favs() const;
+	void save_tags() const;
 
 public:
 	FeRomList();
@@ -252,16 +267,20 @@ public:
 	void set_filter( const FeFilter *f );
 
 	// base class has this function too!
-	bool load_from_file( const std::string &filename,
-					const char *sep=FE_WHITESPACE );
+	bool load_romlist( const std::string &romlist_path,
+					const std::string &romlist_name,
+					const std::string &user_path );
 
 	int process_setting( const std::string &setting,
 		const std::string &value,
 		const std::string &fn );
 
-	void load_fav_map( const std::string &filename );
-	void save_fav_map() const;
+	void save_state() const;
 	void set_fav( int idx, bool fav );
+
+	void get_tags_list( int idx,
+		std::vector< std::pair<std::string, bool> > &tags_list ) const;
+	void set_tag( int idx, const std::string &tag, bool flag );
 
 	bool empty() const { return m_list.empty(); };
 	int size() const { return (int)m_list.size(); };

@@ -76,6 +76,7 @@ public:
 	int lists_dialog();
 	int filters_dialog();
 	int languages_dialog();
+	int tags_dialog();
 };
 
 #endif

@@ -131,6 +131,8 @@ public:
 		ToggleFavourite,
 		PrevFavourite,
 		NextFavourite,
+		ToggleTags,
+		ScreenSaver,
 		LAST_COMMAND,
 
 		//

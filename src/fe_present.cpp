@@ -592,6 +592,10 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		}
 		break;
 
+	case FeInputMap::ScreenSaver:
+		load_screensaver( wnd );
+		break;
+
 	case FeInputMap::LAST_COMMAND:
 	default:
 		// Not handled by us, return false so calling function knows
@@ -788,26 +792,24 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 			ret_val=true;
 	}
 
-	//
-	// Only check to switch to screensaver if wnd is not NULL
-	// we are given a NULL wnd value when the overlay (config menu)
-	// is being displayed
-	//
-	if ( wnd )
+	return ret_val;
+}
+
+bool FePresent::saver_activation_check(  sf::RenderWindow *wnd )
+{
+	ASSERT( wnd );
+
+	int saver_timeout = m_feSettings->get_screen_saver_timeout();
+	if (( !m_screenSaverActive ) && ( saver_timeout > 0 ))
 	{
-		int saver_timeout = m_feSettings->get_screen_saver_timeout();
-		if (( !m_screenSaverActive ) && ( saver_timeout > 0 ))
+		if ( ( m_layoutTimer.getElapsedTime() - m_lastInput )
+				> sf::seconds( saver_timeout ) )
 		{
-		 	if ( ( m_layoutTimer.getElapsedTime() - m_lastInput )
-					> sf::seconds( saver_timeout ) )
-			{
-				load_screensaver( wnd );
-				ret_val = true;
-			}
+			load_screensaver( wnd );
+			return true;
 		}
 	}
-
-	return ret_val;
+	return false;
 }
 
 int FePresent::get_no_wrap_step( int step )

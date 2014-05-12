@@ -99,10 +99,8 @@ const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
 const char *FE_LAYOUT_UI_KEY_FILE		= "layout.nut";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
-const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
-const char *FE_FAVOURITE_FILE_EXTENSION = ".tag";
 const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
@@ -379,7 +377,7 @@ int FeSettings::process_setting( const std::string &setting,
 void FeSettings::init_list()
 {
 	if ( !m_rl.empty() )
-		m_rl.save_fav_map();
+		m_rl.save_state();
 
 	if ( m_current_list < 0 )
 		return;
@@ -395,47 +393,36 @@ void FeSettings::init_list()
 	else
 		m_rl.set_filter( NULL );
 
-	std::string romlist = m_lists[m_current_list].get_info(FeListInfo::Romlist);
+	const std::string &romlist = m_lists[m_current_list].get_info(FeListInfo::Romlist);
 
 	if ( romlist.empty() )
 		return;
 
-	std::string filename( m_config_path );
-	filename += FE_ROMLIST_SUBDIR;
-	filename += romlist;
-	std::string favfile( filename );
-
-	filename += FE_ROMLIST_FILE_EXTENSION;
-	favfile += FE_FAVOURITE_FILE_EXTENSION;
+	std::string path( m_config_path );
+	path += FE_ROMLIST_SUBDIR;
+	std::string user_path( path );
 
 	// Check for a romlist in the data path if there isn't one that matches in the
 	// config directory
 	//
-	if (( !file_exists( filename ) )
+	if (( !file_exists( path + romlist + FE_ROMLIST_FILE_EXTENSION ) )
 		&& ( FE_DATA_PATH != NULL ))
 	{
 		std::string temp = FE_DATA_PATH;
 		temp += FE_ROMLIST_SUBDIR;
-		temp += romlist;
-		temp += FE_ROMLIST_FILE_EXTENSION;
 
-		if ( file_exists( temp ) )
-			filename = temp;
+		if ( file_exists( temp + romlist + FE_ROMLIST_FILE_EXTENSION ) )
+			path = temp;
 	}
 
-	// We need to load the favourites map before we load the romlist, as
-	// it is used in the populating of each rom
-	//
-	m_rl.load_fav_map( favfile );
-
-	if ( m_rl.load_from_file( filename, ";" ) == false )
-		std::cout << "Error opening romlist: " << filename << std::endl;
+	if ( m_rl.load_romlist( path, romlist, user_path ) == false )
+		std::cout << "Error opening romlist: " << romlist << std::endl;
 }
 
 void FeSettings::save_state() const
 {
 	if ( !m_rl.empty() )
-		m_rl.save_fav_map();
+		m_rl.save_state();
 
 	std::string filename( m_config_path );
 	confirm_directory( m_config_path, FE_EMPTY_STRING );
@@ -858,6 +845,18 @@ int FeSettings::get_next_fav_offset() const
 	}
 
 	return 0;
+}
+
+void FeSettings::get_current_tags_list(
+	std::vector< std::pair<std::string, bool> > &tags_list ) const
+{
+	m_rl.get_tags_list( get_rom_index(), tags_list );
+}
+
+void FeSettings::set_current_tag(
+		const std::string &tag, bool flag )
+{
+	m_rl.set_tag( get_rom_index(), tag, flag );
 }
 
 void FeSettings::toggle_layout()

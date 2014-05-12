@@ -185,6 +185,7 @@ public:
 	void update_to_new_list( sf::RenderWindow *wnd );
 
 	bool tick( sf::RenderWindow *w ); // return true if display refresh required
+	bool saver_activation_check(  sf::RenderWindow *w );
 	void on_stop_frontend( sf::RenderWindow *w );
 	void pre_run( sf::RenderWindow *w );
 	void post_run( sf::RenderWindow *w );

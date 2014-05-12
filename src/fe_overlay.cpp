@@ -143,16 +143,22 @@ int FeOverlay::get_char_size() const
 void FeOverlay::splash_message( const std::string &msg,
 				const std::string &rep )
 {
+	const sf::Vector2i &size = m_fePresent.get_output_size();
+
+	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
+	bg.setFillColor( m_bgColour );
+	bg.setOutlineColor( m_textColour );
+	bg.setOutlineThickness( -2 );
+
 	FeTextPrimative message(
 		m_fePresent.get_font(),
 		m_textColour,
-		m_bgColour,
+		sf::Color::Transparent,
 		get_char_size() );
 
 	message.setWordWrap( true );
-
-	const sf::Vector2i &size = m_fePresent.get_output_size();
-	message.setSize( size.x, size.y );
+	message.setPosition( 2, 2 );
+	message.setSize( size.x - 4, size.y - 4 );
 
 	std::string msg_str;
 	m_feSettings.get_resource( msg, rep, msg_str );
@@ -165,6 +171,7 @@ void FeOverlay::splash_message( const std::string &msg,
 
 	m_wnd.clear();
 	m_wnd.draw( m_fePresent, t );
+	m_wnd.draw( bg, t );
 	m_wnd.draw( message, t );
 	m_wnd.display();
 }
@@ -187,23 +194,40 @@ int FeOverlay::lists_dialog()
 	std::vector<std::string> list;
 	m_feSettings.get_list_names( list );
 
+	std::vector<sf::Drawable *> draw_list;
+
+	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
+	bg.setFillColor( m_bgColour );
+	bg.setOutlineColor( m_textColour );
+	bg.setOutlineThickness( -2 );
+	draw_list.push_back( &bg );
+
+	FeTextPrimative heading( m_fePresent.get_font(), m_selColour, sf::Color::Transparent, get_char_size() );
+	heading.setSize( size.x, size.y / 8 );
+	heading.setOutlineColor( m_textColour );
+	heading.setOutlineThickness( -2 );
+
+	std::string temp;
+	m_feSettings.get_resource( "Lists", temp );
+
+	heading.setString( temp );
+	draw_list.push_back( &heading );
+
 	FeListBox dialog(
 		m_fePresent.get_font(),
 		m_textColour,
-		m_bgColour,
+		sf::Color::Transparent,
 		m_selColour,
 		m_selBgColour,
 		get_char_size(),
 		size.y / get_char_size() );
 
-	dialog.setPosition( 0, 0 );
-	dialog.setSize( size.x, size.y );
+	dialog.setPosition( 2, size.y / 8 );
+	dialog.setSize( size.x - 4, size.y * 7 / 8 );
 	dialog.init();
-
-	std::vector<sf::Drawable *> draw_list( 1, &dialog );
+	draw_list.push_back( &dialog );
 
 	int last_list = list.size() - 1;
-
 	if ( m_feSettings.get_lists_menu_exit() )
 	{
 		//
@@ -233,20 +257,37 @@ int FeOverlay::filters_dialog()
 	std::vector<std::string> list;
 	m_feSettings.get_current_list_filter_names( list );
 
+	std::vector<sf::Drawable *> draw_list;
+
+	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
+	bg.setFillColor( m_bgColour );
+	bg.setOutlineColor( m_textColour );
+	bg.setOutlineThickness( -2 );
+	draw_list.push_back( &bg );
+
+	FeTextPrimative heading( m_fePresent.get_font(), m_selColour, sf::Color::Transparent, get_char_size() );
+	heading.setSize( size.x, size.y / 8 );
+	heading.setOutlineColor( m_textColour );
+	heading.setOutlineThickness( -2 );
+	std::string temp;
+	m_feSettings.get_resource( "Filters", temp );
+	heading.setString( temp );
+	draw_list.push_back( &heading );
+
 	FeListBox dialog(
 		m_fePresent.get_font(),
 		m_textColour,
-		m_bgColour,
+		sf::Color::Transparent,
 		m_selColour,
 		m_selBgColour,
 		get_char_size(),
 		size.y / get_char_size() );
 
-	dialog.setPosition( 0, 0 );
-	dialog.setSize( size.x, size.y );
+	dialog.setPosition( 2, size.y / 8 );
+	dialog.setSize( size.x - 4, size.y * 7 / 8 );
 	dialog.init();
 
-	std::vector<sf::Drawable *> draw_list( 1, &dialog );
+	draw_list.push_back( &dialog );
 
 	int current_i = m_feSettings.get_current_filter_index();
 	int sel = current_i;
@@ -326,6 +367,85 @@ int FeOverlay::languages_dialog()
 	return sel;
 }
 
+int FeOverlay::tags_dialog()
+{
+	std::vector< std::pair<std::string, bool> > tags_list;
+	m_feSettings.get_current_tags_list( tags_list );
+
+	const sf::Vector2i &size = m_fePresent.get_output_size();
+	std::vector<std::string> list;
+
+	for ( std::vector< std::pair<std::string, bool> >::iterator itr=tags_list.begin();
+			itr!=tags_list.end(); ++itr )
+	{
+		std::string msg;
+		m_feSettings.get_resource(
+				(*itr).second ? "Remove tag: '$1'" : "Add tag: '$1'",
+				(*itr).first,
+				msg );
+
+		list.push_back( msg );
+	}
+
+	list.push_back( std::string() );
+	m_feSettings.get_resource( "Create new tag", list.back() );
+
+	std::vector<sf::Drawable *> draw_list;
+
+	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
+	bg.setFillColor( m_bgColour );
+	bg.setOutlineColor( m_textColour );
+	bg.setOutlineThickness( -2 );
+	draw_list.push_back( &bg );
+
+	FeTextPrimative heading( m_fePresent.get_font(), m_selColour, sf::Color::Transparent, get_char_size() );
+	heading.setSize( size.x, size.y / 8 );
+	heading.setOutlineColor( m_textColour );
+	heading.setOutlineThickness( -2 );
+	std::string temp;
+	m_feSettings.get_resource( "Tags", temp );
+	heading.setString( temp );
+	draw_list.push_back( &heading );
+
+	FeListBox dialog(
+		m_fePresent.get_font(),
+		m_textColour,
+		sf::Color::Transparent,
+		m_selColour,
+		m_selBgColour,
+		get_char_size(),
+		size.y / get_char_size() );
+
+	dialog.setPosition( 2, size.y / 8 );
+	dialog.setSize( size.x - 4, size.y * 7 / 8 );
+	dialog.init();
+
+	draw_list.push_back( &dialog );
+
+	int current_i = list.size();
+	int sel = current_i - 1;
+	dialog.setText( sel, list );
+	while ( event_loop( draw_list, sel, current_i, list.size() - 1 ) == false )
+		dialog.setText( sel, list );
+
+	if ( sel == (int)tags_list.size() )
+	{
+		std::string name;
+		edit_dialog( "Enter new tag name", name );
+
+		if ( !name.empty() )
+			m_feSettings.set_current_tag( name, true );
+	}
+	else if (( sel >=0 ) && ( sel < (int)tags_list.size() ))
+	{
+		m_feSettings.set_current_tag(
+				tags_list[sel].first,
+				!(tags_list[sel].second) );
+	}
+
+	return sel;
+}
+
 int FeOverlay::internal_dialog(
 			const std::string &msg_str,
 			const std::vector<std::string> &list )
@@ -333,30 +453,37 @@ int FeOverlay::internal_dialog(
 	const sf::Vector2i &size = m_fePresent.get_output_size();
 	float slice = size.y / 2;
 
+	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
+	bg.setFillColor( m_bgColour );
+	bg.setOutlineColor( m_textColour );
+	bg.setOutlineThickness( -2 );
+
 	FeTextPrimative message(
 		m_fePresent.get_font(),
 		m_textColour,
-		m_bgColour,
+		sf::Color::Transparent,
 		get_char_size() );
 	message.setWordWrap( true );
 
 	FeListBox dialog(
 		m_fePresent.get_font(),
 		m_textColour,
-		m_bgColour,
+		sf::Color::Transparent,
 		m_selColour,
 		m_selBgColour,
 		get_char_size(),
 		( size.y - slice ) / get_char_size() );
 
-	message.setSize( size.x, slice );
+	message.setPosition( 2, 2 );
+	message.setSize( size.x - 4, slice );
 	message.setString( msg_str );
 
-	dialog.setPosition( 0, slice );
-	dialog.setSize( size.x, size.y - slice );
+	dialog.setPosition( 2, slice );
+	dialog.setSize( size.x - 4, size.y - 4 - slice );
 	dialog.init();
 
 	std::vector<sf::Drawable *> draw_list;
+	draw_list.push_back( &bg );
 	draw_list.push_back( &message );
 	draw_list.push_back( &dialog );
 

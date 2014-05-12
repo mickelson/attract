@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
 
 	if ( win_mode == FeSettings::Window )
 	{
-		FeWindowPosition win_pos( 
+		FeWindowPosition win_pos(
 			sf::Vector2i( 0, 0 ),
 			sf::Vector2u( mode.width / 2, mode.height / 2 ) );
 
@@ -483,9 +483,9 @@ int main(int argc, char *argv[])
 					}
 					break;
 
-				case sf::Event::KeyReleased:
-				case sf::Event::MouseButtonReleased:
-				case sf::Event::JoystickButtonReleased:
+				case sf::Event::KeyPressed:
+				case sf::Event::MouseButtonPressed:
+				case sf::Event::JoystickButtonPressed:
 					//
 					// We always want to reset the screen saver on these events,
 					// even if they aren't mapped otherwise (mapped events cause
@@ -665,6 +665,11 @@ int main(int argc, char *argv[])
 					}
 					break;
 
+				case FeInputMap::ToggleTags:
+					if ( feOverlay.tags_dialog() < 0 )
+						exit_selected = true;
+					break;
+
 				default:
 					break;
 				}
@@ -673,6 +678,9 @@ int main(int argc, char *argv[])
 
 		if ( fePresent.tick( &window ) )
 			redraw=true;
+
+		if ( fePresent.saver_activation_check( &window ) )
+			soundsys.sound_event( FeInputMap::ScreenSaver );
 
 		if ( redraw )
 		{

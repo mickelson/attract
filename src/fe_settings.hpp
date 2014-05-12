@@ -32,7 +32,6 @@ extern const char *FE_ART_EXTENSIONS[];
 extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_EMULATOR_SUBDIR;
 
-extern const char *FE_ROMLIST_FILE_EXTENSION;
 extern const char *FE_EMULATOR_FILE_EXTENSION;
 
 extern const char *FE_LAYOUT_UI_KEY_FILE;
@@ -232,6 +231,11 @@ public:
 	int get_next_fav_offset() const;
 	bool confirm_favs() const { return m_confirm_favs; }
 
+	void get_current_tags_list(
+		std::vector< std::pair<std::string, bool> > &tags_list ) const;
+
+	void set_current_tag(
+			const std::string &tag, bool flag );
 	//
 	// This function implements command-line romlist generation/imports
 	// If output_name is empty, then a non-existing filename is chosen for
