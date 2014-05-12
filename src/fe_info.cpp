@@ -837,7 +837,7 @@ void FeRomList::load_tags( const std::string &path )
 	std::vector<std::string> temp_tags;
 	get_basename_from_extension( temp_tags, path, FE_FAVOURITE_FILE_EXTENSION );
 
-	for ( std::vector<std::string>::iterator itr=temp_tags.begin(); itr!=temp_tags.end(); )
+	for ( std::vector<std::string>::iterator itr=temp_tags.begin(); itr!=temp_tags.end(); ++itr )
 	{
 		if ( (*itr).empty() )
 			continue;
@@ -863,7 +863,6 @@ void FeRomList::load_tags( const std::string &path )
 		}
 
 		myfile.close();
-		++itr;
 	}
 }
 
