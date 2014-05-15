@@ -146,7 +146,7 @@ Exit (Confirm);Sortie (Confirmer)
 Exit to Desktop;Sortie vers le bureau
 Screenshot;Photo écran
 Configure;Configurer
-Random Game;Jeux au hasard
+Random Game;Jeu au hasard
 Add/Remove Favourite;Ajouter/Supprimer Favoris
 Next Favourite;Favoris suivant
 Previous Favourite;Favoris précédent
