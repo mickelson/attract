@@ -121,6 +121,34 @@ bool FeConfigContextImp::check_for_cancel()
 	return m_feo.check_for_cancel();
 }
 
+class FeEventLoopCtx
+{
+public:
+	FeEventLoopCtx(
+			const std::vector<sf::Drawable *> &in_draw_list,
+			int &in_sel, int in_default_sel, int in_max_sel );
+
+	const std::vector<sf::Drawable *> &draw_list; // [in] draw list
+	int &sel;				// [in,out] selection counter
+	int default_sel;	// [in] default selection
+	int max_sel;		// [in] maximum selection
+
+	sf::Event move_event;
+	sf::Clock move_timer;
+	FeInputMap::Command move_command;
+};
+
+FeEventLoopCtx::FeEventLoopCtx(
+			const std::vector<sf::Drawable *> &in_draw_list,
+			int &in_sel, int in_default_sel, int in_max_sel )
+	: draw_list( in_draw_list ),
+	sel( in_sel ),
+	default_sel( in_default_sel ),
+	max_sel( in_max_sel ),
+	move_command( FeInputMap::LAST_COMMAND )
+{
+}
+
 FeOverlay::FeOverlay( sf::RenderWindow &wnd,
 		FeSettings &fes,
 		FePresent &fep )
@@ -267,12 +295,10 @@ int FeOverlay::lists_dialog()
 	int sel = current_i;
 	dialog.setText( sel, list );
 
-	m_wnd.setKeyRepeatEnabled( true );
+	FeEventLoopCtx c( draw_list, sel, current_i, list.size() - 1 );
 
-	while ( event_loop( draw_list, sel, current_i, list.size() - 1 ) == false )
+	while ( event_loop( c ) == false )
 		dialog.setText( sel, list );
-
-	m_wnd.setKeyRepeatEnabled( false );
 
 	// test if the exit option selected, return -2 if it has been
 	if ( sel > last_list )
@@ -333,12 +359,10 @@ int FeOverlay::filters_dialog()
 	int sel = current_i;
 	dialog.setText( sel, list );
 
-	m_wnd.setKeyRepeatEnabled( true );
+	FeEventLoopCtx c( draw_list, sel, current_i, list.size() - 1 );
 
-	while ( event_loop( draw_list, sel, current_i, list.size() - 1 ) == false )
+	while ( event_loop( c ) == false )
 		dialog.setText( sel, list );
-
-	m_wnd.setKeyRepeatEnabled( false );
 
 	return sel;
 }
@@ -408,7 +432,10 @@ int FeOverlay::languages_dialog()
 
 	int sel = current_i;
 	dialog.setText( sel, pl );
-	while ( event_loop( draw_list, sel, current_i, pl.size() - 1 ) == false )
+
+	FeEventLoopCtx c( draw_list, sel, current_i, pl.size() - 1 );
+
+	while ( event_loop( c ) == false )
 		dialog.setText( sel, pl );
 
 	if ( sel >= 0 )
@@ -486,12 +513,10 @@ int FeOverlay::tags_dialog()
 	int sel = current_i - 1;
 	dialog.setText( sel, list );
 
-	m_wnd.setKeyRepeatEnabled( true );
+	FeEventLoopCtx c( draw_list, sel, current_i, list.size() - 1 );
 
-	while ( event_loop( draw_list, sel, current_i, list.size() - 1 ) == false )
+	while ( event_loop( c ) == false )
 		dialog.setText( sel, list );
-
-	m_wnd.setKeyRepeatEnabled( false );
 
 	if ( sel == (int)tags_list.size() )
 	{
@@ -560,7 +585,10 @@ int FeOverlay::internal_dialog(
 
 	int sel=1;
 	dialog.setText( sel, list );
-	while ( event_loop( draw_list, sel, 1, list.size() - 1 ) == false )
+
+	FeEventLoopCtx c( draw_list, sel, 1, list.size() - 1 );
+
+	while ( event_loop( c ) == false )
 		dialog.setText( sel, list );
 
 	return sel;
@@ -673,14 +701,10 @@ void FeOverlay::input_map_dialog(
 
 bool FeOverlay::config_dialog()
 {
-	m_wnd.setKeyRepeatEnabled( true );
-
 	FeConfigMenu m;
 	bool settings_changed=false;
 	if ( display_config_dialog( &m, settings_changed ) < 0 )
 		m_wnd.close();
-
-	m_wnd.setKeyRepeatEnabled( false );
 
 	return settings_changed;
 }
@@ -802,11 +826,9 @@ int FeOverlay::display_config_dialog(
 	//
 	while ( true )
 	{
-		while ( event_loop(
-				draw_list,
-				ctx.curr_sel,
-				ctx.exit_sel,
-				ctx.left_list.size() - 1 ) == false )
+		FeEventLoopCtx c( draw_list, ctx.curr_sel, ctx.exit_sel, ctx.left_list.size() - 1 );
+
+		while ( event_loop( c ) == false )
 		{
 			footer.setString( ctx.curr_opt().help_msg );
 			sdialog.setText( ctx.curr_sel, ctx.left_list );
@@ -902,10 +924,9 @@ int FeOverlay::display_config_dialog(
 				int original_value = ctx.curr_opt().get_vindex();
 				int new_value = original_value;
 
-				while ( event_loop(
-							draw_list,
-							new_value, -1,
-							ctx.curr_opt().values_list.size() - 1 ) == false )
+				FeEventLoopCtx c( draw_list, new_value, -1, ctx.curr_opt().values_list.size() - 1 );
+
+				while ( event_loop( c ) == false )
 				{
 					tp->setString(ctx.curr_opt().values_list[new_value]);
 				}
@@ -965,8 +986,7 @@ bool FeOverlay::check_for_cancel()
 // Return true if the user selected something.  False if they have simply
 // navigated the selection up or down.
 //
-bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
-			int &sel, int default_sel, int max_sel )
+bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 {
 	const sf::Transform &t = m_fePresent.get_transform();
 
@@ -982,29 +1002,37 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 			switch( c )
 			{
 			case FeInputMap::ExitMenu:
-				sel = default_sel;
+				ctx.sel = ctx.default_sel;
 				return true;
 			case FeInputMap::ExitNoMenu:
-				sel = -1;
+				ctx.sel = -1;
 				return true;
 			case FeInputMap::Select:
 				return true;
 			case FeInputMap::Up:
 			case FeInputMap::PageUp:
-				if ( sel > 0 )
-				{
-					sel--;
-					return false;
-				}
-				break;
+				if ( ctx.sel > 0 )
+					ctx.sel--;
+				else
+					ctx.sel=ctx.max_sel;
+
+				ctx.move_event = ev;
+				ctx.move_command = FeInputMap::Up;
+				ctx.move_timer.restart();
+				return false;
+
 			case FeInputMap::Down:
 			case FeInputMap::PageDown:
-				if ( sel < max_sel )
-				{
-					sel++;
-					return false;
-				}
-				break;
+				if ( ctx.sel < ctx.max_sel )
+					ctx.sel++;
+				else
+					ctx.sel = 0;
+
+				ctx.move_event = ev;
+				ctx.move_command = FeInputMap::Down;
+				ctx.move_timer.restart();
+				return false;
+
 			default:
 				break;
 			}
@@ -1018,8 +1046,8 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 
-			for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
-					itr < d.end(); ++itr )
+			for ( std::vector<sf::Drawable *>::const_iterator itr=ctx.draw_list.begin();
+					itr < ctx.draw_list.end(); ++itr )
 				m_wnd.draw( *(*itr), t );
 
 			m_wnd.display();
@@ -1028,6 +1056,67 @@ bool FeOverlay::event_loop( std::vector<sf::Drawable *> d,
 		else
 			sf::sleep( sf::milliseconds( 30 ) );
 
+		if ( ctx.move_command != FeInputMap::LAST_COMMAND )
+		{
+			bool cont=false;
+
+			switch ( ctx.move_event.type )
+			{
+			case sf::Event::KeyPressed:
+				if ( sf::Keyboard::isKeyPressed( ctx.move_event.key.code ) )
+					cont=true;
+				break;
+
+			case sf::Event::MouseButtonPressed:
+				if ( sf::Mouse::isButtonPressed( ctx.move_event.mouseButton.button ) )
+					cont=true;
+				break;
+
+			case sf::Event::JoystickButtonPressed:
+				if ( sf::Joystick::isButtonPressed(
+						ctx.move_event.joystickButton.joystickId,
+						ctx.move_event.joystickButton.button ) )
+					cont=true;
+				break;
+
+			case sf::Event::JoystickMoved:
+				{
+					sf::Joystick::update();
+
+					float pos = sf::Joystick::getAxisPosition(
+							ctx.move_event.joystickMove.joystickId,
+							ctx.move_event.joystickMove.axis );
+					if ( abs( pos ) > m_feSettings.get_joy_thresh() )
+						cont=true;
+				}
+				break;
+
+			default:
+				break;
+			}
+
+			if ( cont )
+			{
+				int t = ctx.move_timer.getElapsedTime().asMilliseconds();
+				if ( t > 500 )
+				{
+					if (( ctx.move_command == FeInputMap::Up )
+								&& ( ctx.sel > 0 ))
+					{
+						ctx.sel--;
+						return false;
+					}
+					else if (( ctx.move_command == FeInputMap::Down )
+								&& ( ctx.sel < ctx.max_sel ))
+					{
+						ctx.sel++;
+						return false;
+					}
+				}
+			}
+			else
+				ctx.move_command = FeInputMap::LAST_COMMAND;
+		}
 	}
 	return true;
 }

@@ -30,6 +30,8 @@ class FeSettings;
 class FeBaseConfigMenu;
 class FeTextPrimative;
 
+class FeEventLoopCtx;
+
 class FeOverlay
 {
 friend class FeConfigContextImp;
@@ -60,8 +62,7 @@ private:
 	void edit_dialog( const std::string &msg_str, std::string &text );
 	int display_config_dialog( FeBaseConfigMenu *, bool & );
 
-	bool event_loop( std::vector<sf::Drawable *> draw_list,
-			int &sel, int default_sel, int max_sel );
+	bool event_loop( FeEventLoopCtx & );
 
 	bool edit_loop( std::vector<sf::Drawable *> draw_list,
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
