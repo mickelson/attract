@@ -1089,11 +1089,17 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 	case Command:
 		m_command = s; break;
 	case Rom_path:
-		string_to_vector( s, m_paths ); break;
+		m_paths.clear();
+		string_to_vector( s, m_paths );
+		break;
 	case Rom_extension:
-		string_to_vector( s, m_extensions, true ); break;
+		m_extensions.clear();
+		string_to_vector( s, m_extensions, true );
+		break;
 	case Import_extras:
-		string_to_vector( s, m_import_extras ); break;
+		m_import_extras.clear();
+		string_to_vector( s, m_import_extras );
+		break;
 	case Listxml:
 		m_listxml = s; break;
 	default:
@@ -1145,6 +1151,10 @@ bool FeEmulatorInfo::get_artwork( const std::string &label, std::vector< std::st
 void FeEmulatorInfo::add_artwork( const std::string &label,
 							const std::string &artwork )
 {
+	// don't clear m_artwork[ label ], it may have entries already
+	// see process_setting() and special case for migrating movie settings
+	// from pre 1.2.2 versions
+	//
 	string_to_vector( artwork, m_artwork[ label ] );
 }
 
@@ -1304,7 +1314,6 @@ void FeEmulatorInfo::string_to_vector(
 			const std::string &input, std::vector< std::string > &vec, bool allow_empty ) const
 {
 	size_t pos=0;
-	vec.clear();
 	do
 	{
 		std::string val;
