@@ -22,9 +22,8 @@
 
 #include "fe_presentable.hpp"
 
-FeBasePresentable::FeBasePresentable( const bool draw_apply_scale )
+FeBasePresentable::FeBasePresentable()
 	: m_shader( NULL ),
-	m_draw_apply_scale( draw_apply_scale ),
 	m_visible( true )
 {
 }

@@ -94,7 +94,7 @@ void FePresent::clear()
 	m_listBox=NULL; // listbox gets deleted with the m_elements below
 	m_moveState = MoveNone;
 	m_baseRotation = FeSettings::RotateNone;
-	m_scaledTransform = m_rotationTransform = sf::Transform();
+	m_transform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	m_ticksList.clear();
@@ -148,17 +148,13 @@ void FePresent::clear()
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 {
-	sf::RenderStates scaled_states( states );
-	scaled_states.transform = m_scaledTransform;
-
-	states.transform = m_rotationTransform;
+	states.transform = m_transform;
 
 	std::vector<FeBasePresentable *>::const_iterator itl;
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 	{
 		if ( (*itl)->get_visible() )
-			target.draw( (*itl)->drawable(),
-				(*itl)->get_draw_apply_scale() ? scaled_states : states );
+			target.draw( (*itl)->drawable(), states );
 	}
 }
 
@@ -886,9 +882,9 @@ void FePresent::toggle_mute()
 		(*its)->set_volume( sound_vol );
 }
 
-const sf::Transform &FePresent::get_rotation_transform() const
+const sf::Transform &FePresent::get_transform() const
 {
-	return m_rotationTransform;
+	return m_transform;
 }
 
 const sf::Font *FePresent::get_font() const
@@ -909,7 +905,7 @@ void FePresent::toggle_rotate( FeSettings::RotationState r )
 
 void FePresent::set_transforms()
 {
-	m_rotationTransform = sf::Transform();
+	m_transform = sf::Transform();
 
 	FeSettings::RotationState actualRotation
 		= (FeSettings::RotationState)(( m_baseRotation + m_toggleRotation ) % 4);
@@ -920,25 +916,24 @@ void FePresent::set_transforms()
 		// do nothing
 		break;
 	case FeSettings::RotateRight:
-		m_rotationTransform.translate( m_outputSize.x, 0 );
-		m_rotationTransform.scale( (float) m_outputSize.x / m_outputSize.y,
+		m_transform.translate( m_outputSize.x, 0 );
+		m_transform.scale( (float) m_outputSize.x / m_outputSize.y,
 												(float) m_outputSize.y / m_outputSize.x );
-		m_rotationTransform.rotate(90);
+		m_transform.rotate(90);
 		break;
 	case FeSettings::RotateFlip:
-		m_rotationTransform.translate( m_outputSize.x, m_outputSize.y );
-		m_rotationTransform.rotate(180);
+		m_transform.translate( m_outputSize.x, m_outputSize.y );
+		m_transform.rotate(180);
 		break;
 	case FeSettings::RotateLeft:
-		m_rotationTransform.translate( 0, m_outputSize.y );
-		m_rotationTransform.scale( (float) m_outputSize.x / m_outputSize.y,
+		m_transform.translate( 0, m_outputSize.y );
+		m_transform.scale( (float) m_outputSize.x / m_outputSize.y,
 											(float) m_outputSize.y / m_outputSize.x );
-		m_rotationTransform.rotate(270);
+		m_transform.rotate(270);
 		break;
 	}
 
-	m_scaledTransform = m_rotationTransform;
-	m_scaledTransform.scale( m_layoutScale.x, m_layoutScale.y );
+	m_transform.scale( m_layoutScale.x, m_layoutScale.y );
 }
 
 void FePresent::perform_autorotate()

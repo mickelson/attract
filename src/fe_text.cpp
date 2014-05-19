@@ -27,7 +27,7 @@
 #include <iostream>
 
 FeText::FeText( const std::string &str, int x, int y, int w, int h )
-	: FeBasePresentable( false ),
+	: FeBasePresentable(),
 	m_string( str ),
 	m_index_offset( 0 ),
 	m_user_charsize( -1 ),
@@ -71,7 +71,7 @@ float FeText::getRotation() const
 void FeText::setRotation( float r )
 {
 	m_draw_text.setRotation( r );
-	script_flag_redraw();
+	script_do_update( this );
 }
 
 void FeText::setColor( const sf::Color &c )
@@ -101,24 +101,20 @@ int FeText::getIndexOffset() const
 
 void FeText::on_new_list( FeSettings *s, float scale_x, float scale_y )
 {
-	//
-	// Apply the scale factors using m_base_text to get m_draw_text
-	//
-	sf::Transform scaler;
-	scaler.scale( scale_x, scale_y );
+	float scale_factor( ( scale_x > scale_y ) ? scale_x : scale_y );
+	if ( scale_factor <= 0.f )
+		scale_factor = 1.f;
 
-	sf::Vector2f pos = scaler.transformPoint( getPosition() );
-	sf::Vector2f size = scaler.transformPoint( getSize() );
-
-	int char_size = 10;
+	int char_size = 8 * scale_factor;
 	if ( m_user_charsize > 0 )
-		char_size = m_user_charsize * scale_y;
-	else if ( size.y > 14 )
-		char_size = size.y - 4;
+		char_size = m_user_charsize * scale_factor;
+	else if ( m_size.y > 12 )
+		char_size = ( m_size.y - 4 ) * scale_factor;
 
-	m_draw_text.setPosition( pos );
-	m_draw_text.setSize( size );
+	m_draw_text.setTextScale( sf::Vector2f( 1.f / scale_factor, 1.f / scale_factor ) );
 	m_draw_text.setCharacterSize( char_size );
+	m_draw_text.setPosition( m_position );
+	m_draw_text.setSize( m_size );
 }
 
 void FeText::on_new_selection( FeSettings *feSettings )
@@ -202,6 +198,7 @@ void FeText::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 void FeText::set_word_wrap( bool w )
 {
 	m_draw_text.setWordWrap( w );
+	script_do_update( this );
 }
 
 bool FeText::get_word_wrap()
@@ -298,6 +295,10 @@ void FeText::set_bg_rgb(int r, int g, int b )
 	c.r=r;
 	c.g=g;
 	c.b=b;
+
+	if ( c.a == 0 )
+		c.a = 255;
+
 	m_draw_text.setBgColor(c);
 	script_flag_redraw();
 }
@@ -317,7 +318,7 @@ void FeText::set_style(int s)
 void FeText::set_align(int a)
 {
 	m_draw_text.setAlignment( (FeTextPrimative::Alignment)a);
-	script_flag_redraw();
+	script_do_update( this );
 }
 
 void FeText::set_font( const char *f )
@@ -329,6 +330,6 @@ void FeText::set_font( const char *f )
 		setFont( *font );
 		m_font_name = f;
 
-		script_flag_redraw();
+		script_do_update( this );
 	}
 }

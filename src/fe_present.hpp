@@ -101,8 +101,7 @@ private:
 
 	FeSettings::RotationState m_baseRotation;
 	FeSettings::RotationState m_toggleRotation;
-	sf::Transform m_rotationTransform;
-	sf::Transform m_scaledTransform;
+	sf::Transform m_transform;
 
 	std::vector<FeBasePresentable *> m_elements;
 	std::vector<FeBaseTextureContainer *> m_texturePool;
@@ -138,9 +137,6 @@ private:
 	// Overrides from base classes:
 	//
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-
-	float get_layout_scale_x() const;
-	float get_layout_scale_y() const;
 
 	// Scripting functionality
 	//
@@ -196,13 +192,16 @@ public:
 
 	FeSettings *get_fes() const { return m_feSettings; };
 	int get_page_size() const;
-	const sf::Transform &get_rotation_transform() const;
+	const sf::Transform &get_transform() const;
 	const sf::Font *get_font() const; // get the current font (used by overlay)
+
+	float get_layout_scale_x() const;
+	float get_layout_scale_y() const;
 
 	// Get a font from the font pool, loading it if necessary
 	const FeFontContainer *get_pooled_font( const std::string &n );
 
-	const sf::Vector2i &get_output_size() const { return m_outputSize; }
+	const sf::Vector2i &get_layout_size() const { return m_layoutSize; }
 
 	void perform_autorotate();
 

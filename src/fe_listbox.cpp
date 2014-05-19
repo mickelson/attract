@@ -26,7 +26,7 @@
 #include <iostream>
 
 FeListBox::FeListBox( int x, int y, int w, int h )
-	: FeBasePresentable( false ),
+	: FeBasePresentable(),
 	m_selColour( sf::Color::Yellow ),
 	m_selBg( sf::Color::Blue ),
 	m_selStyle( sf::Text::Regular ),
@@ -48,7 +48,7 @@ FeListBox::FeListBox(
 		const sf::Color &selbgcolour,
 		unsigned int charactersize,
 		int rows )
-	: FeBasePresentable( false ),
+	: FeBasePresentable(),
 	m_base_text( font, colour, bgcolour, charactersize, FeTextPrimative::Centre ),
 	m_selColour( selcolour ),
 	m_selBg( selbgcolour ),
@@ -98,22 +98,24 @@ const sf::Color &FeListBox::getColor() const
 
 void FeListBox::init( float scale_x, float scale_y )
 {
-	sf::Transform scaler;
-	scaler.scale( scale_x, scale_y );
+	sf::Vector2f size = getSize();
+	sf::Vector2f pos = getPosition();
 
-	sf::Vector2f size = scaler.transformPoint( getSize() );
-	sf::Vector2f pos = scaler.transformPoint( getPosition() );
+	float scale_factor( ( scale_x > scale_y ) ? scale_x : scale_y );
+	if ( scale_factor <= 0.f )
+		scale_factor = 1.f;
 
 	int actual_spacing = (int)size.y / m_rows;
-	int char_size = 10;
+	int char_size = 8 * scale_factor;
 
 	// Set the character size now
 	//
 	if ( m_userCharSize > 0 )
-		char_size = m_userCharSize * scale_y;
-	else if ( actual_spacing > 14 )
-		char_size = actual_spacing - 4;
+		char_size = m_userCharSize * scale_factor;
+	else if ( actual_spacing > 12 )
+		char_size = ( actual_spacing - 4 ) * scale_factor;
 
+	m_base_text.setTextScale( sf::Vector2f( 1.f / scale_factor, 1.f / scale_factor ) );
 	m_base_text.setCharacterSize( char_size );
 
 	m_texts.clear();
@@ -190,6 +192,14 @@ void FeListBox::setSelStyle( int s )
 int FeListBox::getSelStyle()
 {
 	return m_selStyle;
+}
+
+void FeListBox::setTextScale( const sf::Vector2f &scale )
+{
+	m_base_text.setTextScale( scale );
+
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+		m_texts[i].setTextScale( scale );
 }
 
 FeTextPrimative *FeListBox::setEditMode( bool e, sf::Color c )

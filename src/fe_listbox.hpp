@@ -64,6 +64,7 @@ public:
 	void setSelBgColor( const sf::Color & );
 	void setSelStyle( int );
 	int getSelStyle();
+	void setTextScale( const sf::Vector2f & );
 
 	FeTextPrimative *setEditMode( bool, sf::Color );
 

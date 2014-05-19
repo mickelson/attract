@@ -37,7 +37,7 @@ public:
 
 	FeTextPrimative();
 
-	FeTextPrimative( const sf::Font *font, 
+	FeTextPrimative( const sf::Font *font,
 			const sf::Color &colour,
 			const sf::Color &bgcolour,
 			unsigned int charactersize,
@@ -52,9 +52,9 @@ public:
 
 	//
 	// cursor_string_pos is the character in the string that the cursor
-	// should be under.  Valid positions are from 0 to t.size().  This 
-	// function returns the screen location of the cursor character PROVIDED 
-	// that WordWrap is set to false (cursor positioning is not supported 
+	// should be under.  Valid positions are from 0 to t.size().  This
+	// function returns the screen location of the cursor character PROVIDED
+	// that WordWrap is set to false (cursor positioning is not supported
 	// with // wordwrapping on)
 	//
 	sf::Vector2f setString( const std::basic_string<sf::Uint32> &t,
@@ -72,6 +72,7 @@ public:
 	void setOutlineColor( const sf::Color & );
 	void setOutlineThickness( int );
 	void setWordWrap( bool );
+	void setTextScale( const sf::Vector2f & );
 
 	const sf::Font *getFont() const;
 	const sf::Color &getColor() const;
@@ -83,30 +84,32 @@ public:
 	float getRotation() const;
 	int getStyle() const;
 	bool getWordWrap() const;
+	const sf::Vector2f &getTextScale() const;
 
 private:
+	sf::RectangleShape m_bgRect;
+	mutable std::vector<sf::Text> m_texts;
 	Alignment m_align;
 	bool m_wrap;
-	sf::RectangleShape m_bgRect;
-	std::vector<sf::Text> m_texts;
+	mutable bool m_needs_pos_set;
 
 	//
 	// Determines how to fit the given string "s" into the text space
 	// parameters:
 	//		[in] s 			- string to be displayed
-	//		[in] position	- If WordWrap is true, this is the first position in 
+	//		[in] position	- If WordWrap is true, this is the first position in
 	//							"s" that can be displayed.  If WordWrap is false, this
 	//							is the location of the cursor in "s".
 	//		[out] first_char	- position of the first character to display
 	//		[out] len			- len of substring in s to display
 	//
-	void fit_string( 
-			const std::basic_string<sf::Uint32> &s, 
-			int position, 
+	void fit_string(
+			const std::basic_string<sf::Uint32> &s,
+			int position,
 			int &first_char,
 			int &len );
 
-	void set_positions();
+	void set_positions() const;
 
 	// override from base
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;

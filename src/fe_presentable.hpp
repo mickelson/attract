@@ -32,14 +32,13 @@ class FeBasePresentable
 {
 private:
 	FeShader *m_shader;
-	const bool m_draw_apply_scale; // true for images, false for texts
 	bool m_visible;
 
 	FeBasePresentable( const FeBasePresentable & );
 	FeBasePresentable &operator=( const FeBasePresentable & );
 
 public:
-	FeBasePresentable( const bool draw_apply_scale );
+	FeBasePresentable();
 	virtual ~FeBasePresentable();
 
 	virtual void on_new_selection( FeSettings * );
@@ -89,8 +88,6 @@ public:
 	FeShader *get_shader() const;
 	FeShader *script_get_shader() const;
 	void script_set_shader( FeShader *s );
-
-	bool get_draw_apply_scale() const { return m_draw_apply_scale; };
 };
 
 void script_do_update( FeBasePresentable * );

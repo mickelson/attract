@@ -664,7 +664,7 @@ FeImage *FeSurfaceTextureContainer::add_surface(int w, int h)
 }
 
 FeImage::FeImage( FeBaseTextureContainer *tc, float x, float y, float w, float h )
-	: FeBasePresentable( true ),
+	: FeBasePresentable(),
 	m_tex( tc ),
 	m_pos( x, y ),
 	m_size( w, h ),
@@ -676,7 +676,7 @@ FeImage::FeImage( FeBaseTextureContainer *tc, float x, float y, float w, float h
 }
 
 FeImage::FeImage( FeImage *o )
-	: FeBasePresentable( true ),
+	: FeBasePresentable(),
 	m_tex( o->m_tex ),
 	m_sprite( o->m_sprite ),
 	m_pos( o->m_pos ),

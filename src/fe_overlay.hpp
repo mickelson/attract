@@ -46,7 +46,10 @@ private:
 	FeOverlay( const FeOverlay & );
 	FeOverlay &operator=( const FeOverlay & );
 
-	int get_char_size() const;
+	void get_common(
+		sf::Vector2i &size,
+		sf::Vector2f &text_scale,
+		int &char_size ) const;
 
 	int internal_dialog(
 			const std::string &msg_str,
