@@ -594,7 +594,7 @@ bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 	//
 	// Draw the surface's draw list to the render texture
 	//
-	m_texture.clear();
+	m_texture.clear( sf::Color::Transparent );
 	for ( std::vector<FeBasePresentable *>::const_iterator itr = m_draw_list.begin();
 				itr != m_draw_list.end(); ++itr )
 		m_texture.draw( (*itr)->drawable() );
