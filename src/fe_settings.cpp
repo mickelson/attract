@@ -200,6 +200,7 @@ void FeSettings::load()
 	if ( load_from_file( filename ) == false )
 	{
 		std::cout << "Config file not found: " << filename << ", performing initial setup." << std::endl;
+
 		//
 		// If there is no config file, then we do some initial setting up of the FE here, prompt
 		// the user to select a language and then launch straight into configuration mode.
@@ -209,29 +210,37 @@ void FeSettings::load()
 		//
 		if ( FE_DATA_PATH != NULL )
 		{
-			confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
-
-			std::string from_path( FE_DATA_PATH ), to_path( m_config_path );
-			from_path += FE_EMULATOR_SUBDIR;
-			to_path += FE_EMULATOR_SUBDIR;
-
-			std::vector<std::string> ll;
-			get_basename_from_extension( ll, from_path, FE_EMULATOR_FILE_EXTENSION, false );
-
-			for( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
+			if ( !directory_exists( FE_DATA_PATH ) )
 			{
-				std::string from = from_path + (*itr);
-				std::string to = to_path + (*itr);
+				std::cerr << "Warning: Attract-Mode was compiled to look for its default configuration files in: "
+					<< FE_DATA_PATH << "." << std::endl << "This path does not appear to exist on your system.";
+			}
+			else
+			{
+				confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
 
-				// Only copy if the destination file does not exist already
-				//
-				if ( !file_exists( to ) )
+				std::string from_path( FE_DATA_PATH ), to_path( m_config_path );
+				from_path += FE_EMULATOR_SUBDIR;
+				to_path += FE_EMULATOR_SUBDIR;
+
+				std::vector<std::string> ll;
+				get_basename_from_extension( ll, from_path, FE_EMULATOR_FILE_EXTENSION, false );
+
+				for( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
 				{
-					std::cout << "Copying: '" << from << "' to '" << to_path << "'" << std::endl;
+					std::string from = from_path + (*itr);
+					std::string to = to_path + (*itr);
 
-					std::ifstream src( from.c_str() );
-					std::ofstream dst( to.c_str() );
-					dst << src.rdbuf();
+					// Only copy if the destination file does not exist already
+					//
+					if ( !file_exists( to ) )
+					{
+						std::cout << "Copying: '" << from << "' to '" << to_path << "'" << std::endl;
+
+						std::ifstream src( from.c_str() );
+						std::ofstream dst( to.c_str() );
+						dst << src.rdbuf();
+					}
 				}
 			}
 		}
