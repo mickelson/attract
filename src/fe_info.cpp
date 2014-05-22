@@ -737,7 +737,7 @@ FeRomList::FeRomList()
 
 FeRomList::~FeRomList()
 {
-	ASSERT( !m_load );
+	ASSERT( !m_load_data );
 }
 
 void FeRomList::set_filter( const FeFilter *f )
