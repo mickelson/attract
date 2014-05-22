@@ -1121,6 +1121,23 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 	return true;
 }
 
+class FeKeyRepeat
+{
+private:
+	sf::RenderWindow &m_wnd;
+public:
+	FeKeyRepeat( sf::RenderWindow &wnd )
+	: m_wnd( wnd )
+	{
+		m_wnd.setKeyRepeatEnabled( true );
+	}
+
+	~FeKeyRepeat()
+	{
+		m_wnd.setKeyRepeatEnabled( false );
+	}
+};
+
 bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *tp )
 {
@@ -1136,6 +1153,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 	cursor.setPosition( tp->setString( str, cursor_pos ) );
 
 	bool redraw=true;
+	FeKeyRepeat key_repeat_enabler( m_wnd );
 
 	while ( m_wnd.isOpen() )
 	{
