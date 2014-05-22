@@ -436,7 +436,6 @@ void FeVideoImp::video_thread()
 	int displayed( 0 ), discarded( 0 ), qscore_accum( 0 );
 
 	std::queue<AVFrame *> frame_queue;
-	AVFrame *detached_frame = NULL;
 
 	AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
 	avpicture_alloc( my_pict, PIX_FMT_RGBA,
@@ -484,15 +483,7 @@ void FeVideoImp::video_thread()
 					sf::sleep( wait_time );
 
 				{
-					sf::Lock l( image_swap_mutex );
-
-					if ( detached_frame )
-					{
-						free_frame( detached_frame );
-						detached_frame=NULL;
-					}
-
-					detached_frame = frame_queue.front();
+					AVFrame *detached_frame = frame_queue.front();
 					frame_queue.pop();
 
 					qscore_accum += qscore;
@@ -502,6 +493,8 @@ void FeVideoImp::video_thread()
 						continue;
 					}
 
+					sf::Lock l( image_swap_mutex );
+
 					displayed++;
 
 					sws_scale( sws_ctx, detached_frame->data, detached_frame->linesize,
@@ -509,6 +502,7 @@ void FeVideoImp::video_thread()
 								my_pict->linesize );
 
 					display_frame = my_pict->data[0];
+					free_frame( detached_frame );
 				}
 
 				do_process = false;
@@ -596,8 +590,11 @@ the_end:
 
 	if ( my_pict )
 	{
+		sf::Lock l( image_swap_mutex );
+
 		avpicture_free( my_pict );
 		av_free( my_pict );
+		display_frame=NULL;
 	}
 
 	while ( !frame_queue.empty() )
@@ -609,14 +606,6 @@ the_end:
 			free_frame( f );
 	}
 
-	{
-		sf::Lock l( image_swap_mutex );
-
-		if (detached_frame)
-			free_frame( detached_frame );
-
-		display_frame=NULL;
-	}
 #ifdef FE_DEBUG
 
 	int total_shown = displayed + discarded;
