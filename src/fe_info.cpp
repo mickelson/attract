@@ -214,6 +214,25 @@ bool FeRomListCompare::cmp( const FeRomInfo &one_info, const FeRomInfo &two_info
 	return ( one.compare( one_begin, one_len, two, two_begin, two_len ) < 0 );
 }
 
+const char FeRomListCompare::get_first_letter( const FeRomInfo &one_info )
+{
+	const std::string &name = one_info.get_info( FeRomInfo::Title );
+	if ( name.empty() )
+		return '0';
+
+	size_t b( 0 );
+
+	if ( m_rex )
+	{
+		const SQChar *bp;
+		const SQChar *ep;
+		if ( sqstd_rex_search( m_rex, name.c_str(), &bp, &ep ) == SQTrue )
+			b = ep - name.c_str();
+	}
+
+	return name.at( b );
+}
+
 const char *FeRule::indexString = "rule";
 
 const char *FeRule::filterCompStrings[] =

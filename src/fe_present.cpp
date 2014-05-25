@@ -576,10 +576,31 @@ bool FePresent::handle_event( FeInputMap::Command c,
 
 	case FeInputMap::PrevFavourite:
 	case FeInputMap::NextFavourite:
+	case FeInputMap::PrevLetter:
+	case FeInputMap::NextLetter:
 		{
-			int step = ( c == FeInputMap::PrevFavourite )
-					? m_feSettings->get_prev_fav_offset()
-					: m_feSettings->get_next_fav_offset();
+			int step( 0 );
+			switch ( c )
+			{
+				case FeInputMap::PrevFavourite:
+					step = m_feSettings->get_prev_fav_offset();
+					break;
+
+				case FeInputMap::NextFavourite:
+					step = m_feSettings->get_next_fav_offset();
+					break;
+
+				case FeInputMap::PrevLetter:
+					step = m_feSettings->get_next_letter_offset( -1 );
+					break;
+
+				case FeInputMap::NextLetter:
+					step = m_feSettings->get_next_letter_offset( 1 );
+					break;
+
+				default:
+					break;
+			}
 
 			if ( step != 0 )
 			{

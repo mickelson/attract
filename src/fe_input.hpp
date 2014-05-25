@@ -133,6 +133,8 @@ public:
 		NextFavourite,
 		ToggleTags,
 		ScreenSaver,
+		PrevLetter,
+		NextLetter,
 		LAST_COMMAND,
 
 		//

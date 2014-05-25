@@ -102,6 +102,8 @@ public:
 	static void init_rex( const std::string &re );
 	static void close_rex();
 	static bool cmp( const FeRomInfo &one, const FeRomInfo &two );
+
+	static const char get_first_letter( const FeRomInfo &one );
 };
 
 //

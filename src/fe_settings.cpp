@@ -861,6 +861,39 @@ int FeSettings::get_next_fav_offset() const
 	return 0;
 }
 
+int FeSettings::get_next_letter_offset( int step ) const
+{
+	std::string rex_str;
+	get_resource( "_sort_regexp", rex_str );
+	FeRomListCompare::init_rex( rex_str );
+
+	int idx = get_rom_index();
+	const char curr_l = FeRomListCompare::get_first_letter( m_rl[ idx ] );
+	bool is_alpha = std::isalpha( curr_l );
+	int retval = 0;
+
+	for ( int i=1; i < m_rl.size(); i++ )
+	{
+		int t_idx;
+		if ( step > 0 )
+			t_idx = ( idx + i ) % m_rl.size();
+		else
+			t_idx = ( i <= idx ) ? ( idx - i ) : ( m_rl.size() - ( i - idx ) );
+
+		const char test_l = FeRomListCompare::get_first_letter( m_rl[ t_idx ] );
+
+		if ((( is_alpha ) && ( test_l != curr_l ))
+				|| ((!is_alpha) && ( std::isalpha( test_l ) )))
+		{
+			retval = t_idx - idx;
+			break;
+		}
+	}
+
+	FeRomListCompare::close_rex();
+	return retval;
+}
+
 void FeSettings::get_current_tags_list(
 	std::vector< std::pair<std::string, bool> > &tags_list ) const
 {

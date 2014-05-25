@@ -234,6 +234,8 @@ public:
 	int get_next_fav_offset() const;
 	bool confirm_favs() const { return m_confirm_favs; }
 
+	int get_next_letter_offset( int step ) const;
+
 	void get_current_tags_list(
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
 
