@@ -1379,12 +1379,15 @@ void FeScriptConfigurable::save( std::ofstream &f ) const
 	std::map<std::string,std::string>::const_iterator itr;
 	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
 	{
-		f << '\t' << std::setw(20) << std::left << indexString << ' '
-			<< (*itr).first << ' ' << (*itr).second << std::endl;
+		if ( !(*itr).first.empty() )
+		{
+			f << '\t' << std::setw(20) << std::left << indexString << ' '
+				<< (*itr).first << ' ' << (*itr).second << std::endl;
+		}
 	}
 }
 
-const char *FePlugInfo::indexStrings[] = { "command","enabled","param",NULL };
+const char *FePlugInfo::indexStrings[] = { "enabled","param",NULL };
 
 FePlugInfo::FePlugInfo( const std::string & n )
 	: m_name( n ), m_enabled( false )
@@ -1394,9 +1397,7 @@ FePlugInfo::FePlugInfo( const std::string & n )
 int FePlugInfo::process_setting( const std::string &setting,
          const std::string &value, const std::string &fn )
 {
-	if ( setting.compare( indexStrings[0] ) == 0 ) // command
-		set_command( value );
-	else if ( setting.compare( indexStrings[1] ) == 0 ) // enabled
+	if ( setting.compare( indexStrings[0] ) == 0 ) // enabled
 		set_enabled( config_str_to_bool( value ) );
 	else if ( FeScriptConfigurable::process_setting( setting, value, fn ) ) // params
 	{
@@ -1408,16 +1409,9 @@ int FePlugInfo::process_setting( const std::string &setting,
 
 void FePlugInfo::save( std::ofstream &f ) const
 {
-	if (( m_command.empty() ) && ( !m_enabled ))
-		return;
-
 	f << std::endl << "plugin" << '\t' << m_name << std::endl;
 
-	if ( !m_command.empty() )
-		f << '\t' << std::setw(20) << std::left
-			<< indexStrings[0] << ' ' << get_command() << std::endl;
-
-	f << '\t' << std::setw(20) << std::left << indexStrings[1]
+	f << '\t' << std::setw(20) << std::left << indexStrings[0]
 		<< ( m_enabled ? " yes" : " no" ) << std::endl;
 
 	FeScriptConfigurable::save( f );

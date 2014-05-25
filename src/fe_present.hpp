@@ -142,7 +142,7 @@ private:
 	//
 	void vm_close();
 	void vm_init();
-	void vm_on_new_layout( const std::string &filename, const FeLayoutInfo &layout_params );
+	void vm_on_new_layout( const std::string &path, const std::string &filename, const FeLayoutInfo &layout_params );
 	bool vm_on_tick();
 	bool vm_on_transition( FeTransitionType, int var, sf::RenderWindow *wnd );
 
@@ -169,6 +169,9 @@ private:
 	void set_layout_orient( int );
 	void set_layout_font( const char * );
 	FeShader *get_empty_shader();
+
+	static bool internal_do_nut(const std::string &, const std::string &);
+
 
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
@@ -229,6 +232,7 @@ public:
 	static bool cb_get_input_state( const char *input );
 	static int cb_get_input_pos( const char *input );
 	static void do_nut(const char *);
+	static bool load_module( const char *module_file );
 	static bool cb_plugin_command(const char *, const char *, const char *);
 	static bool cb_plugin_command(const char *, const char *);
 	static bool cb_plugin_command_bg(const char *, const char *);

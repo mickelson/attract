@@ -21,17 +21,19 @@
 // from Attract-Mode's configuration menu
 //
 class UserConfig </ help="Integration plug-in for use with eSpeak Speech Synthesizer: http://espeak.sourceforge.net" /> {
-	</ label="Voice", help="Select Voice", options="Default, Male1, Male2, Male3,Female1, Female2, Female3, MBrola_en1" />
-	a_voice="Default";
+	</ label="Command", help="Path to the eSpeak executable", order=1 />
+	command="espeak.exe";
 
-	</ label="Welcome Message", help="Message to play on startup" />
-	b_welcome="Welcome";
+	</ label="Voice", help="Select Voice", order=2, options="Default, Male1, Male2, Male3,Female1, Female2, Female3, MBrola_en1" />
+	voice="Default";
 
-	</ label="Goodbye Message", help="Message to play on exit" />
-	c_goodbye="Goodbye";
+	</ label="Welcome Message", help="Message to play on startup", order=3 />
+	welcome="Welcome";
+
+	</ label="Goodbye Message", help="Message to play on exit", order=4 />
+	goodbye="Goodbye";
 }
 
-local espeak=fe.init_name;
 local config=fe.get_config(); // get the plugin settings configured by the user
 
 local v_map = {
@@ -45,7 +47,7 @@ local v_map = {
 	MBrola_en1="-v mb-en1 "
 };
 
-local options = v_map[ config["a_voice"] ];
+local options = v_map[ config["voice"] ];
 
 fe.add_transition_callback( "espeak_plugin_transition" );
 
@@ -57,13 +59,13 @@ function espeak_plugin_transition( ttype, var, ttime ) {
 	switch ( ttype )
 	{
 	case Transition.StartLayout:
-		if (( var == FromTo.Frontend ) && ( config["b_welcome"].len() > 0 ))
-			fe.plugin_command_bg( espeak, options + "\"" + config["b_welcome"] + "\"" );
+		if (( var == FromTo.Frontend ) && ( config["welcome"].len() > 0 ))
+			fe.plugin_command_bg( config["command"], options + "\"" + config["welcome"] + "\"" );
 		break;
 
 	case Transition.EndLayout:
-		if (( var == FromTo.Frontend ) && ( config["c_goodbye"].len() > 0 ))
-			fe.plugin_command_bg( espeak, options + "\"" + config["c_goodbye"] + "\"" );
+		if (( var == FromTo.Frontend ) && ( config["goodbye"].len() > 0 ))
+			fe.plugin_command_bg( config["command"], options + "\"" + config["goodbye"] + "\"" );
 		break;
 
 	case Transition.ToGame:
@@ -73,7 +75,7 @@ function espeak_plugin_transition( ttype, var, ttime ) {
 		local speech = split( fe.game_info( Info.Title ), "([{<" );
 
 		if ( speech.len() > 0 )
-			fe.plugin_command_bg( espeak, options + "\"" + speech[0] + "\"" );
+			fe.plugin_command_bg( config["command"], options + "\"" + speech[0] + "\"" );
 		break;
 	}
 

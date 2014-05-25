@@ -59,14 +59,23 @@ private:
 
 public:
 	int type;					// see Opt namespace for values
-	int opaque;					// private variable available to the menu to track
 	std::string setting;		// the name of the setting
 	std::string help_msg;	// the help message for this option
 	std::vector<std::string> values_list; // list options
 
+	int opaque;					// private variables available to the menu to track menu options
+	std::string opaque_str;
+
 	FeMenuOpt(int t,
 		const std::string &set,
 		const std::string &val="" );
+
+	FeMenuOpt(int t,
+		const std::string &set,
+		const std::string &val,
+		const std::string &help,
+		int opq,
+		const std::string &opq_str );
 
 	void set_value( const std::string & );
 	void set_value( int );
@@ -187,12 +196,6 @@ protected:
 
 	bool save_helper( FeConfigContext &ctx,
 		FeScriptConfigurable &configurable );
-
-private:
-	static const int OPAQUE_BASE;
-	static const int INPUT_OPAQUE_BASE;
-
-	std::vector<std::string>m_params;
 };
 
 class FeLayoutEditMenu : public FeScriptConfigMenu

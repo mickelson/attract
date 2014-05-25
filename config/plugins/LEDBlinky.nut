@@ -15,9 +15,12 @@
 // 3.  Run Attract-Mode and configure the LEDBlinky plugin from config mode.
 //
 ///////////////////////////////////////////////////
-class UserConfig </ help="Integration plug-in for use with LEDBlinky: http://www.ledblinky.net" /> { };
+class UserConfig </ help="Integration plug-in for use with LEDBlinky: http://www.ledblinky.net" /> {
+	</ label="Command", help="Path to the LEDBlinky executable", order=1 />
+	command = "LEDBlinky.exe";
+};
 
-local ledblinky=fe.init_name;
+local config=fe.get_config();
 fe.add_transition_callback( "ledblinky_plugin_transition" );
 
 function ledblinky_plugin_transition( ttype, var, ttime ) {
@@ -28,24 +31,24 @@ function ledblinky_plugin_transition( ttype, var, ttime ) {
 	switch ( ttype )
 	{
 	case Transition.ToGame:
-		fe.plugin_command( ledblinky, 
+		fe.plugin_command( config["command"], 
 			"\"" + fe.game_info( Info.Name ) + "\" \"" 
 			+ fe.game_info( Info.Emulator ) + "\"" );
 		break;
 
 	case Transition.FromGame:
-		fe.plugin_command( ledblinky, "4" );
+		fe.plugin_command( config["command"], "4" );
 		break;
 
 	case Transition.StartLayout:
 		switch ( var )
 		{
 		case FromTo.ScreenSaver: // leaving screensaver
-			fe.plugin_command( ledblinky, "6" );
+			fe.plugin_command( config["command"], "6" );
 			break;
 
 		case FromTo.Frontend: // starting frontend
-			fe.plugin_command( ledblinky, "1" );
+			fe.plugin_command( config["command"], "1" );
 			break;
 		}
 		break;
@@ -54,19 +57,19 @@ function ledblinky_plugin_transition( ttype, var, ttime ) {
 		switch ( var )
 		{
 		case FromTo.ScreenSaver: // starting screensaver
-			fe.plugin_command( ledblinky, "5" );
+			fe.plugin_command( config["command"], "5" );
 			break;
 
 		case FromTo.Frontend: // ending frontend
-			fe.plugin_command( ledblinky, "2" );
+			fe.plugin_command( config["command"], "2" );
 			break;
 		}
 		break;
 
 	case Transition.ToNewList:
-		// ignore this event if leaving screensaver or starting FE
-		if ( var == FromTo.NoValue )
-			fe.plugin_command( ledblinky, "8" );
+		// TODO: don't do this one when screensaver is stopping
+		// or frontend is first beginning
+		fe.plugin_command( config["command"], "8" );
 		break;
 	}
 

@@ -661,7 +661,10 @@ bool run_program( const std::string &prog,
 	delete [] cmdline;
 
 	if ( ret == false )
+	{
+		std::cerr << "Error executing command: '" << comstr << "'" << std::endl;
 		return false;
+	}
 
 	if (( NULL != callback ) && ( block ))
 	{

@@ -32,7 +32,8 @@ Contents
       * [`fe.layout`](#layout)
       * [`fe.list`](#list)
       * [`fe.objs`](#objs)
-      * [`fe.init_name`](#init_name)
+      * [`fe.script_dir`](#script_dir)
+      * [`fe.script_file`](#script_file)
    * [Classes](#classes)
       * [`fe.LayoutGlobals`](#LayoutGlobals)
       * [`fe.CurrentList`](#CurrentList)
@@ -49,31 +50,41 @@ Overview
 --------
 
 The Attract-mode layout sets out what gets displayed to the user. Layouts
-consist of at least one script file and a collection of related resources
-(images, etc.) used by the script.
+consist of a "layout.nut" script file and a collection of related resources
+(images, other scripts, etc.) used by the script.
 
 Layouts are stored under the "layouts" subdirectory of the Attract-Mode 
 config directory.  Each layout gets its own separate subdirectory.  Each
-layout can have one or more ".nut" script files in it.  The "Toggle Layout" 
-command in Attract-Mode allows users to cycle between each of the ".nut" 
-script files located in the layout's directory.  Attract-Mode remembers the 
-last file toggled to for each layout and will go back to that same file the 
-next time the layout is loaded.  This allows for variations of a particular 
-layout to be implemented and easily selected by the user (for example, a 
-layout could provide "landscape" and "portrait" versions).
+layout can have one or more "layout*.nut" script files in it.  The "Toggle
+Layout" command in Attract-Mode allows users to cycle between each of the 
+"layout*.nut" script files located in the layout's directory.  Attract-Mode
+remembers the last layout file toggled to for each layout and will go back
+to that same file the next time the layout is loaded.  This allows for
+variations of a particular layout to be implemented and easily selected by
+the user (for example, a layout could provide a "layout.nut" for horizontal
+monitor orientations and a "layout-vert.nut" for vertical).
 
 The Attract-Mode screen saver is really just a special case layout that is 
 loaded after a user-configured period of inactivity.  The screen saver script
 is located in the "screensaver.nut" file stored in the "layouts" subdirectory.
+
+Plug-ins are similar to layouts in that they consist of at least one squirrel
+script file and a collection of related resources.  Plug-ins are stored in the
+"plugins" subdirectory of the Attract-Mode config directory.  Plug-ins can be a
+single ".nut" file stored in this subdirectory or they can also have their own
+separate subdirectory (in which case the script itself needs to be in a file
+called "plugin.nut").
+
 
 <a name="squirrel" />
 Squirrel Language
 -----------------
 
 Attract-Mode's layouts are scripts written in the Squirrel programming
-language.  Squirrel's standard "Math" and "String" library functions are 
-available for use in a script. For more information on programming in 
-Squirrel and using its standard libraries, consult the Squirrel manuals:
+language.  Squirrel's standard "Blob", "IO", "Math", "String" and "System"
+library functions are available for use in a script. For more information on
+programming in Squirrel and using its standard libraries, consult the Squirrel
+manuals:
 
    * [Squirrel 3.0 Reference Manual][SQREFMAN]
    * [Squirrel 3.0 Standard Library Manual][SQLIBMAN]
@@ -426,8 +437,8 @@ upon the value of `ttype`:
      one position in the list, -1 after moving forward one position, -2 after
      moving forward two positions, etc.)
 
-   * When `ttype` is `Transition.StartLayout` or `Transition.ToNewList`, 
-     `var` will be one of the following: 
+   * When `ttype` is `Transition.StartLayout`, `var` will be one of the
+     following: 
       - `FromTo.Frontend` if the frontend is just starting,
       - `FromTo.ScreenSaver` if the layout is starting (or the list is being
         loaded) because the built-in screen saver has stopped, or
@@ -439,8 +450,8 @@ upon the value of `ttype`:
         screen saver is starting, or 
       - `FromTo.NoValue` otherwise.
 
-   * When `ttype` is `Transition.ToGame` or `Transition.FromGame`, `var` 
-     will be `FromTo.NoValue`.
+   * When `ttype` is `Transition.ToGame`, `Transition.FromGame`, or
+     `Transition.ToNewList`, `var` will be `FromTo.NoValue`.
 
 The `transition_time` parameter passed to the transition function is the
 amount of time (in milliseconds) since the transition began.
@@ -489,6 +500,7 @@ Parameters:
       - `Info.DisplayCount`
       - `Info.DisplayType`
       - `Info.Favourite`
+      - `Info.Tags`
    * index_offset - the offset (from the current selection) of the game to 
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.
@@ -548,35 +560,55 @@ Execute another Squirrel script.
 
 Parameters:
 
-   * name - the name of the script file located in the layout directory. 
+   * name - the name of the script file.  If a relative path is provided,
+     it is treated as relative to the directory for the current layout. 
 
 Return Value:
 
    * None.
 
+<a name="load_module" />
+#### `fe.load_module()` ####
+
+    fe.load_module( name )
+
+Loads a module (a "library" Squirrel script).
+
+Parameters:
+
+   * name - the name of the library module to load.  This should
+     correspond to a script file in the "modules" subdirectory of your
+     Attract-Mode configuration (without the file extension).
+
+     Note that as of this writing there are no modules provided with
+     Attract-Mode's default installation.
+
+Return Value:
+
+   * `true` if the module was loaded, `false' if it was not found.
+
 
 <a name="plugin_command" />
 #### `fe.plugin_command()` ####
 
-    fe.plugin_command( plugin_name, arg_string )
-    fe.plugin_command( plugin_name, arg_string, callback_function )
+    fe.plugin_command( executable, arg_string )
+    fe.plugin_command( executable, arg_string, callback_function )
 
 Execute a plug-in command and wait until the command is done.
 
 Parameters:
 
-   * plugin_name - the name of the plug-in command to run.
-   * arg_string - the arguments to pass when the plug-in command is executed.
+   * executable - the name of the executable to run.
+   * arg_string - the arguments to pass when running the executable.
    * callback_function - a string containing the name of the function in 
-     Squirrel to call with any output that the plug-in command provides on 
-     stdout.  The function should be in the following form:
+     Squirrel to call with any output that the executable provides on stdout.
+     The function should be in the following form:
 
         function callback_function( op )
         {
         }
 
-     If provided, this function will be called with each line of output from 
-     the plug-in command in the `op` parameter.
+     If provided, this function will be called with each output line in `op`.
 
 Return Value:
 
@@ -586,14 +618,14 @@ Return Value:
 <a name="plugin_command_bg" />
 #### `fe.plugin_command_bg()` ####
 
-    fe.plugin_command_bg( plugin_name, arg_string )
+    fe.plugin_command_bg( executable, arg_string )
 
 Execute a plug-in command in the background and return immediately.
 
 Parameters:
 
-   * plugin_name - the name of the plug-in command to run.
-   * arg_string - the arguments to pass when the plug-in command is executed.
+   * executable - the name of the executable to run.
+   * arg_string - the arguments to pass when running the executable.
 
 Return Value:
 
@@ -669,12 +701,19 @@ list settings are stored.
 `fe.Text` and `fe.ListBox` instances.
 
 
-<a name="init_name" />
-#### `fe.init_name` ####
+<a name="script_dir" />
+#### `fe.script_dir` ####
 
-When Attract-Mode runs a plug-in script, `fe.init_name` is set to the 
-name of the plug-in.  NOTE this variable will *not* be valid when callback
-functions are executed.
+When Attract-Mode runs a layout or plug-in script, `fe.script_dir` is set to
+the layout or plug-in's directory.  NOTE this variable will *not* be valid
+when callback functions are executed.
+
+<a name="script_file" />
+#### `fe.script_file` ####
+
+When Attract-Mode runs a layout or plug-in script, `fe.script_file` is set to
+the name of the layout or plug-in script file.  NOTE this variable will *not*
+be valid when callback functions are executed.
 
 
 <a name="classes" />
@@ -1072,6 +1111,10 @@ Constants
 #### `FeVersionNum` [int] ####
 
 The current Attract-Mode version.
+
+#### `FeConfigDirectory` [string] ####
+
+The path to Attract-Mode's config directory.
 
 #### `ScreenWidth` [int] ####
 #### `ScreenHeight` [int] ####

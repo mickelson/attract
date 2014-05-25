@@ -97,7 +97,8 @@ const char *FE_DATA_PATH = NULL;
 const char *FE_CFG_FILE					= "attract.cfg";
 const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
-const char *FE_LAYOUT_UI_KEY_FILE		= "layout.nut";
+const char *FE_PLUGIN_FILE				= "plugin.nut";
+const char *FE_LAYOUT_FILE_BASE		= "layout";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
@@ -108,6 +109,7 @@ const char *FE_EMULATOR_SUBDIR		= "emulators/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
 const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
+const char *FE_MODULES_SUBDIR			= "modules/";
 const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
 const char *FE_LIST_DEFAULT			= "default-list.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
@@ -197,6 +199,12 @@ void FeSettings::load()
 	std::string load_language( "en" );
 	std::string filename = m_config_path + FE_CFG_FILE;
 
+	if (( FE_DATA_PATH != NULL ) && ( !directory_exists( FE_DATA_PATH ) ))
+	{
+		std::cerr << "Warning: Attract-Mode was compiled to look for its default configuration files in: "
+			<< FE_DATA_PATH << ", which is not available." << std::endl;
+	}
+
 	if ( load_from_file( filename ) == false )
 	{
 		std::cout << "Config file not found: " << filename << ", performing initial setup." << std::endl;
@@ -208,39 +216,31 @@ void FeSettings::load()
 		// Setup step: if there is a Data directory, then copy the default emulator configurations provided
 		// in that directory over to the user's configuration directory.
 		//
-		if ( FE_DATA_PATH != NULL )
+		if (( FE_DATA_PATH != NULL ) && ( directory_exists( FE_DATA_PATH ) ))
 		{
-			if ( !directory_exists( FE_DATA_PATH ) )
+			confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
+
+			std::string from_path( FE_DATA_PATH ), to_path( m_config_path );
+			from_path += FE_EMULATOR_SUBDIR;
+			to_path += FE_EMULATOR_SUBDIR;
+
+			std::vector<std::string> ll;
+			get_basename_from_extension( ll, from_path, FE_EMULATOR_FILE_EXTENSION, false );
+
+			for( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
 			{
-				std::cerr << "Warning: Attract-Mode was compiled to look for its default configuration files in: "
-					<< FE_DATA_PATH << "." << std::endl << "This path does not appear to exist on your system.";
-			}
-			else
-			{
-				confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
+				std::string from = from_path + (*itr);
+				std::string to = to_path + (*itr);
 
-				std::string from_path( FE_DATA_PATH ), to_path( m_config_path );
-				from_path += FE_EMULATOR_SUBDIR;
-				to_path += FE_EMULATOR_SUBDIR;
-
-				std::vector<std::string> ll;
-				get_basename_from_extension( ll, from_path, FE_EMULATOR_FILE_EXTENSION, false );
-
-				for( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
+				// Only copy if the destination file does not exist already
+				//
+				if ( !file_exists( to ) )
 				{
-					std::string from = from_path + (*itr);
-					std::string to = to_path + (*itr);
+					std::cout << "Copying: '" << from << "' to '" << to_path << "'" << std::endl;
 
-					// Only copy if the destination file does not exist already
-					//
-					if ( !file_exists( to ) )
-					{
-						std::cout << "Copying: '" << from << "' to '" << to_path << "'" << std::endl;
-
-						std::ifstream src( from.c_str() );
-						std::ofstream dst( to.c_str() );
-						dst << src.rdbuf();
-					}
+					std::ifstream src( from.c_str() );
+					std::ofstream dst( to.c_str() );
+					dst << src.rdbuf();
 				}
 			}
 		}
@@ -425,7 +425,7 @@ void FeSettings::init_list()
 	}
 
 	if ( m_rl.load_romlist( path, romlist, user_path ) == false )
-		std::cout << "Error opening romlist: " << romlist << std::endl;
+		std::cerr << "Error opening romlist: " << romlist << std::endl;
 }
 
 void FeSettings::save_state() const
@@ -605,7 +605,7 @@ void FeSettings::dump() const
 	std::cout << "*** Dump of current state: " << std::endl
 			<< '\t' << get_current_list_title()
 			<< ", " << get_rom_index()
-			<< ", " << get_current_layout_file() << std::endl;
+			<< ", " << get_current_layout_dir() + get_current_layout_file() << std::endl;
 
 }
 
@@ -626,13 +626,21 @@ const std::string &FeSettings::get_rom_info( int offset, FeRomInfo::Index index 
 	return m_rl[rom].get_info( index );
 }
 
-std::string FeSettings::get_screensaver_file() const
+void FeSettings::get_screensaver_file( std::string &path, std::string &file ) const
 {
 	std::string temp;
-	if ( !internal_resolve_config_file( temp, FE_LAYOUT_SUBDIR, FE_SCREENSAVER_FILE ) )
-		std::cerr << "Error loading screensaver: " << FE_SCREENSAVER_FILE << std::endl;
+	if ( internal_resolve_config_file( temp, FE_LAYOUT_SUBDIR, FE_SCREENSAVER_FILE ) )
+	{
+		size_t len = temp.find_last_of( "/\\" );
+		ASSERT( len != std::string::npos );
 
-	return temp;
+		path = temp.substr( 0, len + 1 );
+		file = FE_SCREENSAVER_FILE;
+	}
+	else
+	{
+		std::cerr << "Error loading screensaver: " << FE_SCREENSAVER_FILE << std::endl;
+	}
 }
 
 std::string FeSettings::get_current_layout_file() const
@@ -640,19 +648,18 @@ std::string FeSettings::get_current_layout_file() const
 	if ( m_current_list < 0 )
 		return FE_EMPTY_STRING;
 
-	std::string path = get_current_layout_dir();
 	std::string file = m_lists[m_current_list].get_current_layout_file();
 	if ( file.empty() )
 	{
 		std::vector<std::string> my_list;
-		get_basename_from_extension( my_list, path, FE_LAYOUT_FILE_EXTENSION );
+		get_basename_from_extension( my_list, get_current_layout_dir(), FE_LAYOUT_FILE_EXTENSION );
 
 		if ( my_list.empty() )
 			return FE_EMPTY_STRING;
 
 		for ( std::vector<std::string>::iterator itr=my_list.begin(); itr!=my_list.end(); ++itr )
 		{
-			if ( (*itr).compare( "layout" ) == 0 )
+			if ( (*itr).compare( FE_LAYOUT_FILE_BASE ) == 0 )
 			{
 				file = (*itr);
 				break;
@@ -663,10 +670,8 @@ std::string FeSettings::get_current_layout_file() const
 			file = my_list.front();
 	}
 
-	path += file;
-	path += FE_LAYOUT_FILE_EXTENSION;
-
-	return path;
+	file += FE_LAYOUT_FILE_EXTENSION;
+	return file;
 }
 
 std::string FeSettings::get_current_layout_dir() const
@@ -729,7 +734,7 @@ bool FeSettings::set_list( int index )
 	if ( m_current_list < 0 )
 		return false;
 
-	std::string old = get_current_layout_file();
+	std::string old = get_current_layout_dir() + get_current_layout_file();
 
 	if ( index >= (int)m_lists.size() )
 		m_current_list = 0;
@@ -739,7 +744,7 @@ bool FeSettings::set_list( int index )
 		m_current_list = index;
 
 	init_list();
-	return ( old.compare( get_current_layout_file() ) == 0 ) ? false : true;
+	return ( old.compare( get_current_layout_dir() + get_current_layout_file() ) == 0 ) ? false : true;
 }
 
 bool FeSettings::next_list()
@@ -881,6 +886,15 @@ void FeSettings::toggle_layout()
 			get_current_layout_dir(),
 			FE_LAYOUT_FILE_EXTENSION );
 
+	int test_len = strlen( FE_LAYOUT_FILE_BASE );
+	for ( std::vector< std::string >::iterator itr=list.begin(); itr != list.end(); )
+	{
+		if ( (*itr).compare( 0, test_len, FE_LAYOUT_FILE_BASE ) != 0 )
+			itr = list.erase( itr );
+		else
+			++itr;
+	}
+
 	unsigned int index=0;
 	for ( unsigned int i=0; i< list.size(); i++ )
 	{
@@ -948,6 +962,7 @@ void FeSettings::set_sound_file( FeInputMap::Command c, const std::string &s )
 
 void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 {
+	ll.clear();
 	internal_gather_config_files( ll, "", FE_SOUND_SUBDIR );
 }
 
@@ -1041,7 +1056,7 @@ int FeSettings::run()
 
 		romfilename = rom_path + rom + extension;
 
-		std::cout << "Warning: could not locate rom.  Best guess: "
+		std::cerr << "Warning: could not locate rom.  Best guess: "
 				<< romfilename << std::endl;
 	}
 
@@ -1289,13 +1304,13 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	// fall back to default font
 	if ( m_default_font.compare( fontname ) != 0 )
 	{
-		std::cout << "Could not find font: " << fontname
+		std::cerr << "Could not find font: " << fontname
 					<< ", trying default_font" << std::endl;
 		return get_font_file( fontpath, m_default_font );
 	}
 
 	// should only get here if the default font is not found
-	std::cout << "Could not find default font \""
+	std::cerr << "Could not find default font \""
 					<< fontname << "\"" << std::endl;
 	return false;
 }
@@ -1712,26 +1727,34 @@ int FeSettings::lists_count() const
 	return m_lists.size();
 }
 
-const std::string &FeSettings::get_plugin_command(
-			const std::string &label ) const
-{
-	std::vector< FePlugInfo >::const_iterator itr;
-
-	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
-	{
-		if ( label.compare( (*itr).get_name() ) == 0 )
-			return (*itr).get_command();
-	}
-
-	return FE_EMPTY_STRING;
-}
-
 void FeSettings::get_available_plugins( std::vector < std::string > &ll ) const
 {
+	//
+	// Gather plugins that are subdirectories in the plugins directory
+	//
+	get_subdirectories( ll, m_config_path + FE_PLUGIN_SUBDIR );
+
+	if ( FE_DATA_PATH != NULL )
+	{
+		std::string t = FE_DATA_PATH;
+		t += FE_PLUGIN_SUBDIR;
+		get_subdirectories( ll, t );
+	}
+
+	//
+	// Also gather plugins that are lone .nut files in the plugins directory
+	//
 	internal_gather_config_files(
 		ll,
 		FE_PLUGIN_FILE_EXTENSION,
 		FE_PLUGIN_SUBDIR );
+
+	if ( !ll.empty() )
+	{
+		// Sort the list and remove duplicates
+		std::sort( ll.begin(), ll.end() );
+		ll.erase( std::unique( ll.begin(), ll.end() ), ll.end() );
+	}
 }
 
 FePlugInfo *FeSettings::get_plugin( const std::string &label )
@@ -1749,13 +1772,37 @@ FePlugInfo *FeSettings::get_plugin( const std::string &label )
 	return &(m_plugins.back());
 }
 
-std::string FeSettings::get_plugin_full_path( const std::string &label ) const
+void FeSettings::get_plugin_full_path(
+				const std::string &label,
+				std::string &path,
+				std::string &filename ) const
 {
 	std::string temp;
-	if ( !internal_resolve_config_file( temp, FE_PLUGIN_SUBDIR, label + FE_PLUGIN_FILE_EXTENSION ) )
-		std::cerr << "Plugin file not found: " << label << std::cerr;
 
-	return temp;
+	//
+	// There are two valid locations for plugins:
+	//
+	// <config_dir>/plugins/<name>/plugin.nut
+	// <config_dir>/plugins/<name>.nut
+	//
+	if ( internal_resolve_config_file( temp, FE_PLUGIN_SUBDIR, label + "/" ) )
+	{
+		path.swap( temp );
+		filename = FE_PLUGIN_FILE;
+		return;
+	}
+
+	if ( internal_resolve_config_file( temp, FE_PLUGIN_SUBDIR, label + FE_PLUGIN_FILE_EXTENSION ) )
+	{
+		size_t len = temp.find_last_of( "/\\" );
+		ASSERT( len != std::string::npos );
+
+		path = temp.substr( 0, len + 1 );
+		filename = label + FE_PLUGIN_FILE_EXTENSION;
+		return;
+	}
+
+	std::cerr << "Plugin file not found: " << label << std::cerr;
 }
 
 void FeSettings::internal_load_language( const std::string &lang )
@@ -1780,6 +1827,7 @@ void FeSettings::set_language( const std::string &s )
 
 void FeSettings::get_languages_list( std::vector < std::string > &ll ) const
 {
+	ll.clear();
 	internal_gather_config_files(
 		ll,
 		FE_LANGUAGE_FILE_EXTENSION,
@@ -1791,6 +1839,7 @@ void FeSettings::get_languages_list( std::vector < std::string > &ll ) const
 
 void FeSettings::get_romlists_list( std::vector < std::string > &ll ) const
 {
+	ll.clear();
 	internal_gather_config_files(
 		ll,
 		FE_ROMLIST_FILE_EXTENSION,
@@ -1803,7 +1852,6 @@ void FeSettings::internal_gather_config_files(
 			const std::string &extension,
 			const char *subdir ) const
 {
-	ll.clear();
 	std::string config_path = m_config_path + subdir;
 
 	// check the config directory first
@@ -1822,6 +1870,13 @@ void FeSettings::internal_gather_config_files(
 	// Sort the list and remove duplicates
 	std::sort( ll.begin(), ll.end() );
 	ll.erase( std::unique( ll.begin(), ll.end() ), ll.end() );
+}
+
+std::string FeSettings::get_module_dir( const std::string &module_file ) const
+{
+	std::string temp;
+	internal_resolve_config_file( temp, FE_MODULES_SUBDIR, module_file );
+	return temp;
 }
 
 bool FeSettings::internal_resolve_config_file(

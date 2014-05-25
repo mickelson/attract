@@ -33,8 +33,9 @@ extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_EMULATOR_SUBDIR;
 
 extern const char *FE_EMULATOR_FILE_EXTENSION;
+extern const char *FE_LAYOUT_FILE_BASE;
+extern const char *FE_LAYOUT_FILE_EXTENSION;
 
-extern const char *FE_LAYOUT_UI_KEY_FILE;
 extern const char *FE_DIR_TOKEN;
 
 
@@ -201,11 +202,11 @@ public:
 	void get_available_plugins( std::vector < std::string > &list ) const;
 	std::vector<FePlugInfo> &get_plugins() { return m_plugins; }
 	FePlugInfo *get_plugin( const std::string &label );
+	void get_plugin_full_path( const std::string &label,
+			std::string &path,
+			std::string &filename ) const;
 
-	const std::string &get_plugin_command( const std::string &name ) const;
-	std::string get_plugin_full_path( const std::string &label ) const;
-
-	std::string get_screensaver_file() const;
+	void get_screensaver_file( std::string &path, std::string &filename ) const;
 	FeLayoutInfo &get_screensaver_config() { return m_saver_params; }
 	std::string get_current_layout_file() const;
 	std::string get_current_layout_dir() const;
@@ -213,6 +214,8 @@ public:
 	void get_layouts_list( std::vector<std::string> &layouts ) const;
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
 	FeLayoutInfo &get_current_layout_config();
+
+	std::string get_module_dir( const std::string &module_file ) const;
 
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;

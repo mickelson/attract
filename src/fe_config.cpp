@@ -35,7 +35,27 @@
 #include <sqrat.h>
 
 FeMenuOpt::FeMenuOpt( int t, const std::string &set, const std::string &val )
-	: m_list_index( -1 ), type( t ), opaque( 0 ), setting( set )
+	: m_list_index( -1 ),
+	type( t ),
+	setting( set ),
+	opaque( 0 )
+{
+	if ( !val.empty() )
+		set_value( val );
+}
+
+FeMenuOpt::FeMenuOpt(int t,
+		const std::string &set,
+		const std::string &val,
+		const std::string &help,
+		int opq,
+		const std::string &opq_str )
+	: m_list_index( -1 ),
+	type( t ),
+	setting( set ),
+	help_msg( help ),
+	opaque( opq ),
+	opaque_str( opq_str )
 {
 	if ( !val.empty() )
 		set_value( val );
@@ -902,6 +922,16 @@ bool FeInputEditMenu::on_option_select(
 	{
 	case 0:
 		{
+			if (( m_mapping->input_list.size() <= 1 ) && (
+					( m_mapping->command == FeInputMap::Select )
+					|| ( m_mapping->command == FeInputMap::Up )
+					|| ( m_mapping->command == FeInputMap::Down ) ) )
+			{
+				// We don't let the user unmap all "Up", "Down" or "Select" controls.
+				// Doing so would prevent them from further navigating configure mode.
+				break;
+			}
+
 			std::vector< std::string >::iterator it;
 			for ( it=m_mapping->input_list.begin();
 					it<m_mapping->input_list.end(); ++it )
@@ -1272,17 +1302,12 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
-const int FeScriptConfigMenu::OPAQUE_BASE=100;
-const int FeScriptConfigMenu::INPUT_OPAQUE_BASE=200;
-
 void FeScriptConfigMenu::get_options_helper(
 		FeConfigContext &ctx,
 		std::string &gen_help,
 		FeScriptConfigurable &configurable,
 		const std::string &script_file )
 {
-	m_params.clear();
-
 	if ( !script_file.empty() )
 	{
 		HSQUIRRELVM stored_vm = Sqrat::DefaultVM::Get();
@@ -1318,49 +1343,52 @@ void FeScriptConfigMenu::get_options_helper(
 					temp_vm,
 					uConfig.GetObject(), "", "help", gen_help );
 
-				// Get the keys from the UserConfig class and put them in alphabetical order
-				std::vector<std::string> key_list;
+				// Now Ccnstruct the UI elements for plug-in/layout specific configuration
+				//
+				std::multimap<int,FeMenuOpt> my_opts;
+
 				Sqrat::Object::iterator it;
 				while ( uConfig.Next( it ) )
 				{
 					std::string key;
 					fe_get_object_string( temp_vm, it.getKey(), key );
-					key_list.push_back( key );
-				}
 
-				std::sort( key_list.begin(), key_list.end() );
-
-				// Now Ccnstruct the UI elements for plug-in/layout specific configuration
-				//
-				for ( std::vector < std::string >::iterator itr=key_list.begin(); itr!=key_list.end(); ++itr )
-				{
-					int opaque_base = OPAQUE_BASE;
 					std::string value, label, help, options, is_input;
 
 					// use the default value from the script if a value has
 					// not already been configured
 					//
-					if ( !configurable.get_param( *itr, value ) )
-						fe_get_object_string( temp_vm, uConfig.GetSlot( (*itr).c_str() ), value );
+					if ( !configurable.get_param( key, value ) )
+						fe_get_object_string( temp_vm, uConfig.GetSlot( key.c_str() ), value );
 
 					fe_get_attribute_string(
 							temp_vm,
-							uConfig.GetObject(), *itr, "label", label);
+							uConfig.GetObject(), key, "label", label);
 
 					if ( label.empty() )
-						label = *itr;
+						label = key;
 
 					fe_get_attribute_string(
 							temp_vm,
-							uConfig.GetObject(), *itr, "help", help);
+							uConfig.GetObject(), key, "help", help);
 
 					fe_get_attribute_string(
 							temp_vm,
-							uConfig.GetObject(), *itr, "options", options);
+							uConfig.GetObject(), key, "options", options);
 
 					fe_get_attribute_string(
 							temp_vm,
-							uConfig.GetObject(), *itr, "is_input", is_input);
+							uConfig.GetObject(), key, "is_input", is_input);
+
+					std::string otmp;
+					int order=-1;
+					fe_get_attribute_string(
+							temp_vm,
+							uConfig.GetObject(), key, "order", otmp);
+
+					if ( !otmp.empty() )
+						order = as_int( otmp );
+
 
 					if ( !options.empty() )
 					{
@@ -1373,22 +1401,31 @@ void FeScriptConfigMenu::get_options_helper(
 							options_list.push_back( temp );
 						} while ( pos < options.size() );
 
-						ctx.add_optl( Opt::LIST, label, value, help );
-						ctx.back_opt().append_vlist( options_list );
+						std::multimap<int,FeMenuOpt>::iterator it = my_opts.insert(
+								std::pair <int, FeMenuOpt>(
+									order,
+									FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
+
+						(*it).second.append_vlist( options_list );
 					}
-					else if ( is_input.compare( "yes" ) == 0 )
+					else if ( config_str_to_bool( is_input ) )
 					{
-						opaque_base = INPUT_OPAQUE_BASE;
-						ctx.add_optl( Opt::RELOAD, label, value, help );
+						my_opts.insert(
+								std::pair <int, FeMenuOpt>(
+									order,
+									FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
 					}
 					else
 					{
-						ctx.add_optl( Opt::EDIT, label, value, help );
+						my_opts.insert(
+								std::pair <int, FeMenuOpt>(
+									order,
+									FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
 					}
-
-					m_params.push_back( *itr );
-					ctx.back_opt().opaque = opaque_base + m_params.size() - 1;
 				}
+
+				for ( std::multimap<int,FeMenuOpt>::iterator itr = my_opts.begin(); itr != my_opts.end(); ++itr )
+					ctx.opt_list.push_back( (*itr).second );
 			}
 		}
 
@@ -1403,7 +1440,7 @@ bool FeScriptConfigMenu::on_option_select(
 {
 	FeMenuOpt &o = ctx.curr_opt();
 
-	if ( o.opaque >= INPUT_OPAQUE_BASE )
+	if ( o.opaque == 1 )
 	{
 		std::string res;
 		FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
@@ -1429,15 +1466,9 @@ bool FeScriptConfigMenu::save_helper( FeConfigContext &ctx,
 
 	for ( unsigned int i=0; i < ctx.opt_list.size(); i++ )
 	{
-		int op = ctx.opt_list[i].opaque;
-		if ( op >= OPAQUE_BASE )
-		{
-			int decrement = ( op >= INPUT_OPAQUE_BASE ) ? INPUT_OPAQUE_BASE : OPAQUE_BASE;
-
-			configurable.set_param(
-				m_params[ op - decrement ],
-				ctx.opt_list[i].get_value() );
-		}
+		configurable.set_param(
+			ctx.opt_list[i].opaque_str,
+			ctx.opt_list[i].get_value() );
 	}
 
 	return true;
@@ -1458,9 +1489,6 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::INFO, "Name", m_plugin->get_name(),
 		"_help_plugin_name" );
 
-	ctx.add_optl( Opt::EDIT, "Command", m_plugin->get_command(),
-		"_help_plugin_command" );
-
 	std::vector<std::string> opts( 2 );
 	ctx.fe_settings.get_resource( "Yes", opts[0] );
 	ctx.fe_settings.get_resource( "No", opts[1] );
@@ -1475,11 +1503,12 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	// If it is, then its members and member attributes set out what it is
 	// that the plug-in needs configured by the user.
 	//
-	std::string script_file = ctx.fe_settings.get_plugin_full_path(
-			m_plugin->get_name() );
+	std::string plug_path, plug_name;
+
+	ctx.fe_settings.get_plugin_full_path( m_plugin->get_name(), plug_path, plug_name );
 
 	std::string gen_help;
-	FeScriptConfigMenu::get_options_helper( ctx, gen_help, *m_plugin, script_file );
+	FeScriptConfigMenu::get_options_helper( ctx, gen_help, *m_plugin, plug_path + plug_name );
 
 	if ( !gen_help.empty() )
 		ctx.opt_list[0].help_msg = gen_help;
@@ -1492,11 +1521,8 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 	if ( m_plugin == NULL )
 		return false;
 
-	m_plugin->set_command(
-		ctx.opt_list[1].get_value() );
-
 	m_plugin->set_enabled(
-		ctx.opt_list[2].get_vindex() == 0 ? true : false );
+		ctx.opt_list[1].get_vindex() == 0 ? true : false );
 
 	return FeScriptConfigMenu::save_helper( ctx, *m_plugin );
 }
@@ -1550,7 +1576,8 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl( Opt::INFO, "Name", name, "_help_layout_name" );
 
 		std::string script_file;
-		script_file = ctx.fe_settings.get_layout_dir( name ) + FE_LAYOUT_UI_KEY_FILE;
+		script_file = ctx.fe_settings.get_layout_dir( name )
+				+ FE_LAYOUT_FILE_BASE + FE_LAYOUT_FILE_EXTENSION;
 
 		std::string gen_help;
 		FeScriptConfigMenu::get_options_helper( ctx, gen_help, *m_layout, script_file );
@@ -1583,10 +1610,12 @@ void FeSaverEditMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ),
 			"_help_screen_saver_timeout" );
 
-	std::string gen_help;
+	std::string gen_help, path, filename;
+	ctx.fe_settings.get_screensaver_file( path, filename );
+
 	FeScriptConfigMenu::get_options_helper( ctx, gen_help,
 					ctx.fe_settings.get_screensaver_config(),
-					ctx.fe_settings.get_screensaver_file() );
+					path + filename );
 
 	if ( !gen_help.empty() )
 		ctx.opt_list[0].help_msg = gen_help;

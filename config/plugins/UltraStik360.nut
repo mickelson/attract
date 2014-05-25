@@ -13,27 +13,29 @@
 //
 class UserConfig </ help="Integration plug-in for use with the UltraStik360 mapping software provided by Ultimarc: http://www.ultimarc.com" /> {
 
-	</ label="Config Extension", help="The extension of your mapping configuration files", options=".ugc,.um" />
-	a_maps_ext=".ugc";
+	</ label="Command", help="Path to the mapping executable", order=1 />
+	command="ultrastikcmd";
 
-	</ label="Config Directory", help="The directory that contains your mapping configuration files" />
-	b_maps_dir="$HOME/UltraMap/Maps/";
+	</ label="Config Extension", help="The extension of your mapping configuration files", options=".ugc,.um", order=2 />
+	maps_ext=".ugc";
 
-	</ label="Default Config Name", help="The name of your default mapping (minus extension)" />
-	c_default_map="8 Way";
+	</ label="Config Directory", help="The directory that contains your mapping configuration files", order=3 />
+	maps_dir="$HOME/UltraMap/Maps/";
 
-	</ label="Game Info", help="The game info field that corresponds to the name of your mapping configuration files", options="Name,Control" />
-	d_maps_info="Name";
+	</ label="Default Config Name", help="The name of your default mapping (minus extension)", order=4 />
+	default_map="8 Way";
+
+	</ label="Game Info", help="The game info field that corresponds to the name of your mapping configuration files", options="Name,Control", order=5 />
+	maps_info="Name";
 }
 
-local ultra=fe.init_name;
 local config=fe.get_config(); // get user config settings corresponding to the UserConfig class above
 
 //
 // Copy the configured values from uconfig so we can use them
 // whenever the transition callback function gets called
 //
-local maps_dir = fe.path_expand( config["b_maps_dir"] );
+local maps_dir = fe.path_expand( config["maps_dir"] );
 
 // make sure the directory ends in a slash
 if (( maps_dir.len() > 0 ) 
@@ -44,7 +46,7 @@ if (( maps_dir.len() > 0 )
 }
 
 local maps_info=Info.Name;
-if ( config["d_maps_info"] == "Control" )
+if ( config["maps_info"] == "Control" )
 	maps_info=Info.Control;
 
 fe.add_transition_callback( "ultra_plugin_transition" );
@@ -57,17 +59,17 @@ function ultra_plugin_transition( ttype, var, ttime ) {
 	switch ( ttype )
 	{
 	case Transition.ToGame:
-		fe.plugin_command( ultra, 
+		fe.plugin_command( config["command"], 
 			"\"" + maps_dir 
 			+ fe.game_info( maps_info ) 
-			+ config["a_maps_ext"] + "\"" );
+			+ config["maps_ext"] + "\"" );
 		break;
 
 	case Transition.FromGame:
-		fe.plugin_command( ultra, 
+		fe.plugin_command( config["command"], 
 			"\"" + maps_dir 
-			+ config["c_default_map"]
-			+ config["a_maps_ext"] + "\"" );
+			+ config["default_map"]
+			+ config["maps_ext"] + "\"" );
 		break;
 	}
 

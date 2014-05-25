@@ -30,8 +30,11 @@
 
 #include <sqrat.h>
 
+#include <sqstdblob.h>
+#include <sqstdio.h>
 #include <sqstdmath.h>
 #include <sqstdstring.h>
+#include <sqstdsystem.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -639,7 +642,10 @@ void FePresent::load_screensaver( sf::RenderWindow *wnd )
 	// Run the script which actually sets up the screensaver
 	//
 	m_layoutTimer.restart();
-	vm_on_new_layout( m_feSettings->get_screensaver_file(), m_feSettings->get_screensaver_config() );
+	std::string path, filename;
+	m_feSettings->get_screensaver_file( path, filename );
+
+	vm_on_new_layout( path, filename, m_feSettings->get_screensaver_config() );
 
 	//
 	// if there is no screen saver script then do a blank screen
@@ -668,7 +674,10 @@ void FePresent::load_layout( sf::RenderWindow *wnd, bool initial_load )
 	// Run the script which actually sets up the layout
 	//
 	m_layoutTimer.restart();
-	vm_on_new_layout( m_feSettings->get_current_layout_file(), m_feSettings->get_current_layout_config() );
+	vm_on_new_layout(
+		m_feSettings->get_current_layout_dir(),
+		m_feSettings->get_current_layout_file(),
+		m_feSettings->get_current_layout_config() );
 
 	// make things usable if the layout is empty
 	//
@@ -1170,33 +1179,64 @@ int FePresent::cb_get_input_pos( const char *input )
 	return FeInputSource( input ).get_current_pos();
 }
 
+// return false if file not found
+bool FePresent::internal_do_nut( const std::string &work_dir,
+			const std::string &script_file )
+{
+	std::string path;
+
+	if ( is_relative_path( script_file) )
+	{
+		path = work_dir;
+		path += script_file;
+	}
+	else
+		path = script_file;
+
+
+	if ( !file_exists( path ) )
+		return false;
+
+	try
+	{
+		Sqrat::Script sc;
+		sc.CompileFile( path );
+		sc.Run();
+	}
+	catch( Sqrat::Exception e )
+	{
+		std::cout << "Script Error in " << path
+			<< " - " << e.Message() << std::endl;
+	}
+
+	return true;
+}
+
 void FePresent::do_nut( const char *script_file )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
 	FeSettings *fes = fep->get_fes();
 
-	std::string path = fes->get_current_layout_dir();
-	path += script_file;
+	internal_do_nut( fes->get_current_layout_dir(), script_file );
+}
 
-	if ( !file_exists( path ) )
-	{
-		std::cout << "File not found: " << path << std::endl;
-	}
-	else
-	{
-		try
-		{
-			Sqrat::Script sc;
-			sc.CompileFile( path );
-			sc.Run();
-		}
-		catch( Sqrat::Exception e )
-		{
-			std::cout << "Script Error in " << path
-				<< " - " << e.Message() << std::endl;
-		}
-	}
+bool FePresent::load_module( const char *module_file )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
+	FeSettings *fes = fep->get_fes();
+
+	std::string fixed_file = module_file;
+	if ( !tail_compare( fixed_file, FE_LAYOUT_FILE_EXTENSION ) )
+		fixed_file += FE_LAYOUT_FILE_EXTENSION;
+
+	std::string temp = fes->get_module_dir( fixed_file );
+	size_t len = temp.find_last_of( "/\\" );
+	ASSERT( len != std::string::npos );
+
+	std::string path = temp.substr( 0, len + 1 );
+	return internal_do_nut( path, fixed_file );
 }
 
 bool my_callback( const char *buffer, void *opaque )
@@ -1209,45 +1249,21 @@ bool my_callback( const char *buffer, void *opaque )
 	return true; // return false to cancel callbacks
 }
 
-bool FePresent::cb_plugin_command( const char *label,
+bool FePresent::cb_plugin_command( const char *command,
 		const char *args,
 		const char *output_callback )
 {
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
-	FeSettings *fes = fep->get_fes();
-
-	const std::string &command = fes->get_plugin_command( label );
-	if ( command.empty() )
-		return false;
-
 	return run_program( clean_path( command ),
 		args, my_callback, (void *)output_callback );
 }
 
-bool FePresent::cb_plugin_command( const char *label, const char *args )
+bool FePresent::cb_plugin_command( const char *command, const char *args )
 {
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
-	FeSettings *fes = fep->get_fes();
-
-	const std::string &command = fes->get_plugin_command( label );
-	if ( command.empty() )
-		return false;
-
 	return run_program( clean_path( command ), args );
 }
 
-bool FePresent::cb_plugin_command_bg( const char *label, const char *args )
+bool FePresent::cb_plugin_command_bg( const char *command, const char *args )
 {
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FePresent *fep = (FePresent *)sq_getforeignptr( vm );
-	FeSettings *fes = fep->get_fes();
-
-	const std::string &command = fes->get_plugin_command( label );
-	if ( command.empty() )
-		return false;
-
 	return run_program( clean_path( command ), args, NULL, NULL, false );
 }
 
@@ -1327,14 +1343,18 @@ void FePresent::vm_init()
 	sq_pushroottable( vm );
 	sq_setforeignptr( vm, this );
 
+	sqstd_register_bloblib( vm );
+	sqstd_register_iolib( vm );
 	sqstd_register_mathlib( vm );
 	sqstd_register_stringlib( vm );
+	sqstd_register_systemlib( vm );
 	sqstd_seterrorhandlers( vm );
 
 	Sqrat::DefaultVM::Set( vm );
 }
 
-void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayoutInfo &layout_params )
+void FePresent::vm_on_new_layout( const std::string &path,
+			const std::string &filename, const FeLayoutInfo &layout_params )
 {
 	using namespace Sqrat;
 
@@ -1354,6 +1374,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
 		.Const( _SC("OS"), get_OS_string() )
 		.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
+		.Const( _SC("FeConfigDirectory"), m_feSettings->get_config_dir().c_str() )
 
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
@@ -1605,6 +1626,7 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 	fe.Func<bool (*)(const char *)>(_SC("get_input_state"), &FePresent::cb_get_input_state);
 	fe.Func<int (*)(const char *)>(_SC("get_input_pos"), &FePresent::cb_get_input_pos);
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FePresent::do_nut);
+	fe.Func<bool (*)(const char *)>(_SC("load_module"), &FePresent::load_module);
 	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FePresent::cb_game_info);
 	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FePresent::cb_game_info);
 	fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FePresent::cb_plugin_command);
@@ -1638,22 +1660,27 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 	//
 	// Run the layout script
 	//
-	if ( file_exists( layout_file ) )
+	if ( file_exists( path + filename ) )
 	{
-		fe.SetValue( _SC("init_name"), layout_file );
+		fe.SetValue( _SC("script_dir"), path );
+		fe.SetValue( _SC("script_file"), filename );
 		m_currentScriptConfig = &layout_params;
 
 		try
 		{
 			Script sc;
-			sc.CompileFile( layout_file );
+			sc.CompileFile( path + filename );
 			sc.Run();
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in " << layout_file
+			std::cerr << "Script Error in " << path + filename
 				<< " - " << e.Message() << std::endl;
 		}
+	}
+	else
+	{
+		std::cerr << "Script file not found: " << path + filename << std::endl;
 	}
 
 	//
@@ -1668,53 +1695,35 @@ void FePresent::vm_on_new_layout( const std::string &layout_file, const FeLayout
 		if ( (*itr).get_enabled() == false )
 			continue;
 
-		std::string plugin_file = m_feSettings->get_plugin_full_path(
-				(*itr).get_name() );
+		std::string plug_path, plug_name;
+		m_feSettings->get_plugin_full_path(
+				(*itr).get_name(),
+				plug_path,
+				plug_name );
 
-		if ( !plugin_file.empty() )
+		if ( !plug_name.empty() )
 		{
-			//
-			// fe.init_name in squirrel is set to the plugin name
-			//
-			fe.SetValue( _SC("init_name"), (*itr).get_name() );
-
-			//
-			// fe.uconfig in squirrel is set to a table of the user config
-			// settings
-			//
-			// The uconfig table is deprecated as of version 1.2 (use fe.get_config() instead).
-			//
-			Table uconfig;
-			fe.Bind( _SC("uconfig"), uconfig );
-
-			std::vector<std::string> params;
-			(*itr).get_param_labels( params );
-
-			for ( std::vector<std::string>::iterator itp=params.begin();
-				itp!=params.end(); ++itp )
-			{
-				std::string v;
-				(*itr).get_param( (*itp), v );
-				uconfig.SetValue( (*itp).c_str(), v.c_str() );
-			}
-
+			fe.SetValue( _SC("script_dir"), plug_path );
+			fe.SetValue( _SC("script_file"), plug_name );
 			m_currentScriptConfig = &(*itr);
+
 			try
 			{
 				Script sc;
-				sc.CompileFile( plugin_file );
+				sc.CompileFile( plug_path + plug_name );
 				sc.Run();
 			}
 			catch( Exception e )
 			{
-				std::cout << "Script Error in " << plugin_file
+				std::cout << "Script Error in " << plug_path + plug_name
 					<< " - " << e.Message() << std::endl;
 			}
 		}
 	}
 
+	fe.SetValue( _SC("script_dir"), "" );
+	fe.SetValue( _SC("script_file"), "" );
 	m_currentScriptConfig = NULL;
-	fe.SetValue( _SC("init_name"), "" );
 }
 
 bool FePresent::vm_on_tick()

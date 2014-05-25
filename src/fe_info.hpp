@@ -390,9 +390,6 @@ public:
 	FePlugInfo( const std::string &name );
 	const std::string &get_name() const { return m_name; };
 
-	const std::string &get_command() const { return m_command; };
-	void set_command( const std::string &c ) { m_command=c; };
-
 	bool get_enabled() const { return m_enabled; };
 	void set_enabled( bool e ) { m_enabled=e; };
 
@@ -406,7 +403,6 @@ private:
 	static const char *indexStrings[];
 
 	std::string m_name;
-	std::string m_command;
 	bool m_enabled;
 };
 
