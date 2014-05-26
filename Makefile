@@ -303,6 +303,7 @@ SQSTDLIBOBJS= \
 	$(SQSTDLIB_OBJ_DIR)/sqstdmath.o \
 	$(SQSTDLIB_OBJ_DIR)/sqstdstring.o \
 	$(SQSTDLIB_OBJ_DIR)/sqstdaux.o \
+	$(SQSTDLIB_OBJ_DIR)/sqstdsystem.o \
 	$(SQSTDLIB_OBJ_DIR)/sqstdrex.o
 
 $(OBJ_DIR)/libsqstdlib.a: $(SQSTDLIBOBJS) | $(SQSTDLIB_OBJ_DIR)
