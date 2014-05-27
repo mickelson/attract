@@ -272,7 +272,7 @@ int FeOverlay::lists_dialog()
 		m_selColour,
 		m_selBgColour,
 		char_size,
-		size.y / char_size );
+		size.y / ( char_size * 1.5 * text_scale.y ) );
 
 	dialog.setPosition( 2, size.y / 8 );
 	dialog.setSize( size.x - 4, size.y * 7 / 8 );
@@ -346,7 +346,7 @@ int FeOverlay::filters_dialog()
 		m_selColour,
 		m_selBgColour,
 		char_size,
-		size.y / char_size );
+		size.y / ( char_size * 1.5 * text_scale.y ) );
 
 	dialog.setPosition( 2, size.y / 8 );
 	dialog.setSize( size.x - 4, size.y * 7 / 8 );
@@ -421,7 +421,7 @@ int FeOverlay::languages_dialog()
 		m_selColour,
 		m_selBgColour,
 		char_size,
-		size.y / char_size );
+		size.y / ( char_size * 1.5 * text_scale.y ) );
 
 	dialog.setPosition( 0, 0 );
 	dialog.setSize( size.x, size.y );
@@ -500,7 +500,7 @@ int FeOverlay::tags_dialog()
 		m_selColour,
 		m_selBgColour,
 		char_size,
-		size.y / char_size );
+		size.y / ( char_size * 1.5 * text_scale.y ) );
 
 	dialog.setPosition( 2, size.y / 8 );
 	dialog.setSize( size.x - 4, size.y * 7 / 8 );
@@ -567,7 +567,7 @@ int FeOverlay::internal_dialog(
 		m_selColour,
 		m_selBgColour,
 		char_size,
-		( size.y - slice ) / char_size );
+		( size.y - slice ) / ( char_size * 1.5 * text_scale.y ) );
 
 	message.setPosition( 2, 2 );
 	message.setSize( size.x - 4, slice );
@@ -746,7 +746,7 @@ int FeOverlay::display_config_dialog(
 	if ( ctx.style == FeConfigContext::EditList )
 		width = size.x / 2 - 2;
 
-	int rows = ( size.y - slice * 2 ) / ( char_size / 2 );
+	int rows = ( size.y - slice * 2 ) / ( char_size * 0.75 * text_scale.y );
 
 	//
 	// The "settings" (left) list, also used to list submenu and exit options...

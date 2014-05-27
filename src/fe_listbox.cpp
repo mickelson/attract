@@ -54,7 +54,7 @@ FeListBox::FeListBox(
 	m_selBg( selbgcolour ),
 	m_selStyle( sf::Text::Regular ),
 	m_rows( rows ),
-	m_userCharSize( 0 ),
+	m_userCharSize( charactersize ),
 	m_rotation( 0.0 )
 {
 }
