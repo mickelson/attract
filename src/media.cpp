@@ -456,6 +456,7 @@ void FeVideoImp::video_thread()
 	while ( run_video_thread )
 	{
 		bool do_process = true;
+		bool discard_frames = false;
 
 		//
 		// First, display queued frames if they are coming up
@@ -469,41 +470,54 @@ void FeVideoImp::video_thread()
 			if ( wait_time < max_sleep )
 			{
 				if ( wait_time < -time_base )
+
 				{
 					// If we are falling behind, we may need to start discarding
 					// frames to catch up
 					//
 					qscore -= qadjust;
 					set_avdiscard_from_qscore( codec_ctx, qscore );
+					discard_frames = ( codec_ctx->skip_frame == AVDISCARD_ALL );
 				}
-				//
-				// sleep until presentation time and then display
-				//
 				else if ( wait_time >= sf::Time::Zero )
-					sf::sleep( wait_time );
-
 				{
-					AVFrame *detached_frame = frame_queue.front();
-					frame_queue.pop();
-
-					qscore_accum += qscore;
-					if ( codec_ctx->skip_frame == AVDISCARD_ALL )
+					if ( discard_frames )
 					{
-						discarded++;
-						continue;
+						//
+						// Only stop discarding frames once we have caught up and are
+						// time_base ahead of the desired presentation time
+						//
+						if ( wait_time >= time_base )
+							discard_frames = false;
 					}
-
-					sf::Lock l( image_swap_mutex );
-
-					displayed++;
-
-					sws_scale( sws_ctx, detached_frame->data, detached_frame->linesize,
-								0, codec_ctx->height, my_pict->data,
-								my_pict->linesize );
-
-					display_frame = my_pict->data[0];
-					free_frame( detached_frame );
+					else
+					{
+						//
+						// Otherwise, we are ahead and can sleep until presentation time
+						//
+						sf::sleep( wait_time );
+					}
 				}
+
+				AVFrame *detached_frame = frame_queue.front();
+				frame_queue.pop();
+
+				qscore_accum += qscore;
+				if ( discard_frames )
+				{
+					discarded++;
+					continue;
+				}
+
+				sf::Lock l( image_swap_mutex );
+				displayed++;
+
+				sws_scale( sws_ctx, detached_frame->data, detached_frame->linesize,
+							0, codec_ctx->height, my_pict->data,
+							my_pict->linesize );
+
+				display_frame = my_pict->data[0];
+				free_frame( detached_frame );
 
 				do_process = false;
 			}
@@ -808,6 +822,14 @@ bool FeMedia::openFromFile( const std::string &name )
 					m_audio->codec_ctx->sample_rate );
 
 				sf::SoundStream::setLoop( false );
+
+#ifndef DO_RESAMPLE
+				if ( m_audio->codec_ctx->sample_fmt != AV_SAMPLE_FMT_S16 )
+				{
+					std::cerr << "Warning: Attract-Mode was compiled without an audio resampler (libswresample or libavresample)." << std::endl
+						<< "The audio format in " << name << " appears to need resampling.  It will likely sound like garbage." << std::endl;
+				}
+#endif
 			}
 		}
 	}
