@@ -95,7 +95,7 @@ void FeTextPrimative::fit_string(
 
 	const sf::Font *font = getFont();
 	unsigned int charsize = getCharacterSize() * m_texts[0].getScale().x;
-	float width = m_bgRect.getLocalBounds().width;
+	float width = m_bgRect.getLocalBounds().width * 0.95;
 
 	int running_total( charsize * 2 ); // measure of line's pixel width
 
@@ -103,6 +103,7 @@ void FeTextPrimative::fit_string(
 	int i( (position == (int)s.size()) ? position : position + 1 );
 	int j( position );
 	int last_space( i );
+
 	bool found_space( false );
 
 	while (( running_total < width )
