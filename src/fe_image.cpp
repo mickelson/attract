@@ -148,7 +148,7 @@ FeTextureContainer::FeTextureContainer(
 	: m_index_offset( 0 ),
 	m_is_artwork( is_artwork ),
 	m_movie( NULL ),
-	m_movie_status( 0 ),
+	m_movie_status( -1 ),
 	m_video_flags( VF_Normal )
 {
 	if ( m_is_artwork )
@@ -286,7 +286,11 @@ bool FeTextureContainer::common_load(
 			{
 				loaded = true;
 				m_file_name = movie_file;
-				m_movie_status = 1;
+
+				if (m_video_flags & VF_NoAutoStart)
+					m_movie_status = 0; // 0=loaded but not on track to play
+				else
+					m_movie_status = 1; // 1=on track to be played
 			}
 		}
 	}
@@ -316,7 +320,7 @@ bool FeTextureContainer::common_load(
 void FeTextureContainer::load_now( const std::string &filename )
 {
 	m_texture = sf::Texture();
-	m_movie_status = 0;
+	m_movie_status = -1;
 
 	load( filename );
 	notify_texture_change();
@@ -341,7 +345,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 		return;
 
 	m_texture = sf::Texture();
-	m_movie_status = 0;
+	m_movie_status = -1;
 	m_file_name.clear();
 
 	std::vector<std::string> movie_list;
@@ -439,9 +443,7 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 				m_movie->setVolume(feSettings->get_play_volume( FeSoundInfo::Movie ) );
 
 			m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
-
-			if ( !(m_video_flags & VF_NoAutoStart) )
-				m_movie->play();
+			m_movie->play();
 		}
 		return m_movie->tick();
 	}
@@ -453,12 +455,23 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 void FeTextureContainer::set_play_state( bool play )
 {
 #ifndef NO_MOVIE
-	if (m_movie && ( m_movie_status >= PLAY_COUNT ))
+	if (m_movie)
 	{
-		if ( play )
-			m_movie->play();
-		else
-			m_movie->stop();
+		if ( m_movie_status >= PLAY_COUNT )
+		{
+			if ( play )
+				m_movie->play();
+			else
+				m_movie->stop();
+		}
+		else if (( m_movie_status == 0 )
+				&& ( play ))
+		{
+			// m_movie_status is 0 if a movie is loaded but the VF_NoAutoStart flag is set.
+			// If movie is in this state and user wants to play then put it on track to be played.
+			//
+			m_movie_status = 1;
+		}
 	}
 #endif
 }
