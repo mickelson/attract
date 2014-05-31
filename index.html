@@ -35,6 +35,40 @@ Attract-Mode is a graphical front-end for command line emulators such as MAME, M
 
         <h2><a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News</h2>
 
+	<h4>May 31, 2014: Version 1.3 released.</h4>
+Release Notes:
+
+<p><b>General</b></p>
+<ul>
+<li>Added the ability to mark and filter games using custom tags.</li>
+<li>Multiple rom paths can now be specified in each emulator configuration.</li>
+<li>Multiple paths can now be specified for each artwork resource.</li>
+<li>If an artwork path contains a subdirectory that matches a rom's name, then a random video or image from that subdirectory is loaded.</li>
+<li>Added support for setups where each rom is stored in a separate subdirectory.</li>
+<li>The frontend can now run in windowed, fullscreen, or the default "fill screen" mode</li>
+<li>There is no longer a special "movie" artwork. Any artwork or static image can now contain images or videos. Videos are given preference if found.</li>
+<li>Added commands to add/remove custom tags, jump to the next letter, jump to the previous letter, and to launch the screensaver.</li>
+<li>Fixed image flipping on scaled images</li>
+<li>Fixed text scaling</li>
+<li>Fixed video crash</li>
+<li>Various small improvements to the overlay menus</li>
+<li>Improved screensaver</li>
+</ul>
+<p><b>Layouts and Plug-ins</b></p>
+<ul>
+<li>Added "Surface" objects for layouts, which are offscreen textures that other images, videos, texts and surfaces can be drawn onto. The surface itself is treated like any other image and can have effects such as skew, pinch, shaders, etc. applied to it.</li>
+<li>Improved layout control over video playback (see the "video_flags" and "video_playing" attributes)</li>
+<li>Added a file_name attribute so that scripts can directly get/set the image/video filename for any artwork or static image</li>
+<li>Layout and plugin scripts now have access to squirrel's standard "blob", "io", and "system" libraries.</li>
+<li>Reworked and simplified the interface for how plug-ins can access to external commands (the "fe.plugin_command()" functions).</li>
+<li>Added initial support for script library modules.</li>
+</ul>
+<p><b>Notes for those upgrading</b></p>
+<p>
+This update will likely break existing plug-ins (any plug-in that interfaces with an external program using the fe.plugin_command() functions)..
+</p>
+<a href="download.html">Download here.</a>
+
 	<h4>May 14, 2014: Extended Object and Animate library WIP</h4>
 
 	Liquid8 has begun work on a very cool and much needed squirrel library to extend functionality and make it easy to add animation to objects in your Attract-Mode layout... still early development but well worth checking out:
@@ -53,7 +87,6 @@ Release Notes:
 	<li>Added pinch and skew effects for layout images and videos</li>
 	<li>Added pre-compiled OS X app bundle</li>
 </ul>
-<a href="download.html">Download here.</a>
 
 
 	<h4>March 26, 2014: Version 1.2.1 released.</h4>

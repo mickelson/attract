@@ -1,0 +1,116 @@
+<html>
+	<head>
+		    <link rel="stylesheet" type="text/css" media="screen" href="/stylesheets/stylesheet.css">
+		<title>Attract-Mode Readme</title>
+	</head>
+	<body>
+
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+[<a href="/">Main Page</a>]
+
+<h2>Compiling Attract-Mode</h2>
+
+<p>Before you begin: These instructions require that you have the GNU
+C/C++ compilers and basic build utilities (make, pkg-config, ar) on your
+system.  This means:</p>
+
+<ul>
+<li><p>the "build-essential" and "pkg-config" packages on Debian or Ubuntu-based
+Linux distributions.  Other distributions should have similar packages
+available.</p></li>
+<li><p>"MinGW" (<a href="http://mingw.org">http://mingw.org</a>) and "pkg-config" on Windows 
+(see <a href="http://sourceforge.net/projects/pkgconfiglite/">http://sourceforge.net/projects/pkgconfiglite/</a> for what looks to be
+the least painful way of getting pkg-config on Windows).</p></li>
+<li><p>"X-Code" on OS X.</p></li>
+</ul>
+
+<p>Build instructions are set out by operating system below:</p>
+
+<h2>Linux, FreeBSD and Windows:</h2>
+
+<ol>
+<li><p>Install the following libraries and related headers on your system:</p>
+
+<ul><li>Required:
+<ul><li>SFML SDK version 2.x (<a href="http://sfml-dev.org">http://sfml-dev.org</a>)</li>
+<li>OpenAL (this is used by SFML as well)</li></ul></li>
+<li>Optional:
+<ul><li>The following FFmpeg libraries (required for movies): avformat,
+avcodec, swscale and either swresample or avresample.</li>
+<li>Fontconfig (Linux/FreeBSD only - to assist with font configuration).</li></ul></li></ul></li>
+<li><p>Extract the Attract-Mode source to your system.</p></li>
+<li><p>From the directory you extracted the source into, run:</p>
+
+<pre><code>   make
+</code></pre>
+
+<p>or, to build without movie support: </p>
+
+<pre><code>   make NO_MOVIE=1
+</code></pre>
+
+<p>This step will create the "attract" executable file.</p>
+
+<p>On Windows: Remember to set the MinGW environment variables first and 
+to use the MINGW make command.</p></li>
+<li><p>The final step is to actually copy the Attract-Mode executable and data
+to a location where they can be used.  On Linux and FreeBSD, you can run:</p>
+
+<pre><code>   sudo make install
+</code></pre>
+
+<p>to install on a system-wide basis, available to all users.  This will copy
+the 'attract' executable to /usr/local/bin/ and data to
+/usr/local/share/attract/</p>
+
+<p>On Windows systems (or if you prefer to do a single user install on Linux or
+FreeBSD) you can complete this step by copying the contents of the "config"
+directory from the Attract-Mode source directory to the location that you
+will use as your Attract-Mode config directory.  By default, this config
+directory is located in "$HOME/.attract" on Linux/FreeBSD and in the current
+working directory on Windows.</p></li>
+</ol>
+
+<h2>OS X:</h2>
+
+<ol>
+<li><p>Install Homebrew (<a href="http://brew.sh">http://brew.sh</a>).  This can be done by running the
+following command at a terminal command prompt:</p>
+
+<pre><code>   ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+</code></pre></li>
+<li><p>Install the "pkg-config", "ffmpeg" and "sfml" homebrew recipes:</p>
+
+<pre><code>   brew update
+   brew install pkg-config ffmpeg sfml
+   </code></pre></li>
+   <li><p>Extract the Attract-Mode source to your system.</p></li>
+   <li><p>From the directory you extracted the Attract-Mode source into, run:</p>
+
+   <pre><code>   make
+   </code></pre>
+
+   <p>This step will create the "attract" executable file.</p></li>
+   <li><p>The final step is to actually copy the Attract-Mode executable and data to
+   the location where they will be used.  You can run:</p>
+
+   <pre><code>   sudo make install
+   </code></pre>
+
+   <p>to install on a system-wide basis.  This will copy the 'attract' executable
+   to /usr/local/bin/ and data to /usr/local/share/attract/</p>
+
+   <p>If you prefer to do a single user install, you can complete this step by
+   copying the contents of the "config" directory from the Attract-Mode
+   source directory to the location that you will use as your Attract-Mode
+   config directory.  By default, this config directory is "$HOME/.attract" on
+   OS X.</p></li>
+   </ol>
+
+
+
+
+</section></div>
+</body>
+</html>
