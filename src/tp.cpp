@@ -95,8 +95,7 @@ void FeTextPrimative::fit_string(
 
 	const sf::Font *font = getFont();
 	unsigned int charsize = getCharacterSize();
-	float width = m_bgRect.getLocalBounds().width;
-	float x_scale = m_texts[0].getScale().x;
+	float width = m_bgRect.getLocalBounds().width / m_texts[0].getScale().x;
 
 	int running_total( charsize * 2 ); // measure of line's pixel width
 
@@ -113,7 +112,7 @@ void FeTextPrimative::fit_string(
 		if ( i < (int)s.size() )
 		{
 			sf::Glyph g = font->getGlyph( s[i], charsize, false );
-			running_total += g.bounds.width * x_scale;
+			running_total += g.advance;
 
 			if ( s[i] == L' ' )
 			{
@@ -127,7 +126,7 @@ void FeTextPrimative::fit_string(
 		if (!m_wrap && ( j > 0 ) && ( running_total < width ))
 		{
 			sf::Glyph g = font->getGlyph( s[j], charsize, false );
-			running_total += g.bounds.width * x_scale;
+			running_total += g.advance;
 			j--;
 		}
 	}
