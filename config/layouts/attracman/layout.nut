@@ -60,4 +60,4 @@ l.set_rgb( 80, 80, 80 );
 //
 // Now run the game...
 //
-fe.do_nut( "engine.nutr" );
+fe.do_nut( "engine.nut" );

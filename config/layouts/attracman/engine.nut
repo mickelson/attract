@@ -12,7 +12,7 @@
 /////////////////////////////////////////////////////////
 
 // Load playfield info
-fe.do_nut("field.nutr");
+fe.do_nut("field.nut");
 
 const SpriteFile = "resource.png";
 const SpriteSize = 32;

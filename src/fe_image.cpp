@@ -464,13 +464,15 @@ void FeTextureContainer::set_play_state( bool play )
 			else
 				m_movie->stop();
 		}
-		else if (( m_movie_status == 0 )
-				&& ( play ))
+		else if ( m_movie_status >= 0 )
 		{
 			// m_movie_status is 0 if a movie is loaded but the VF_NoAutoStart flag is set.
 			// If movie is in this state and user wants to play then put it on track to be played.
 			//
-			m_movie_status = 1;
+			if (( m_movie_status == 0 ) && ( play ))
+				m_movie_status = 1;
+			else if ( !play )
+				m_movie_status = 0;
 		}
 	}
 #endif
@@ -480,7 +482,13 @@ bool FeTextureContainer::get_play_state() const
 {
 #ifndef NO_MOVIE
 	if ( m_movie )
-		return m_movie->is_playing();
+	{
+		if ( m_movie_status >= PLAY_COUNT )
+			return m_movie->is_playing();
+		else
+			// if status > 0, we are in the process of starting to play
+			return ( m_movie_status > 0 );
+	}
 #endif
 
 	return false;
