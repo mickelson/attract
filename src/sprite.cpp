@@ -199,12 +199,20 @@ float FeSprite::getPinchY() const
 
 void FeSprite::setSkewX( float x )
 {
-	m_skew.x = x;
+	if ( x != m_skew.x )
+	{
+		m_skew.x = x;
+		updateGeometry();
+	}
 }
 
 void FeSprite::setSkewY( float y )
 {
-	m_skew.y = y;
+	if ( y != m_skew.y )
+	{
+		m_skew.y = y;
+		updateGeometry();
+	}
 }
 
 void FeSprite::setPinchX( float x )
