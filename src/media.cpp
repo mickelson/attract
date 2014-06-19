@@ -1138,3 +1138,24 @@ bool FeMedia::is_supported_media_file( const std::string &filename )
 					filename.c_str(),
 					NULL ) != NULL ) ? true : false;
 }
+
+
+int FeMedia::number_of_frames() const
+{
+	if ( m_video )
+		return m_format_ctx->streams[ m_video->stream_id ]->nb_frames;
+
+	return 0;
+}
+
+sf::Time FeMedia::get_duration() const
+{
+	if ( m_video )
+	{
+		return sf::seconds(
+				av_q2d( m_format_ctx->streams[m_video->stream_id]->time_base ) *
+							m_format_ctx->streams[ m_video->stream_id ]->duration );
+	}
+
+	return sf::Time::Zero;
+}

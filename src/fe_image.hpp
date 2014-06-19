@@ -62,9 +62,12 @@ public:
 
 	virtual void set_video_flags( FeVideoFlags );
 	virtual FeVideoFlags get_video_flags() const;
+	virtual int get_video_duration() const;
+	virtual int get_video_time() const;
 
 	virtual void set_file_name( const char *n );
 	virtual const char *get_file_name() const;
+
 	//
 	// Callback functions for use with surface objects
 	//
@@ -108,6 +111,8 @@ public:
 
 	void set_video_flags( FeVideoFlags );
 	FeVideoFlags get_video_flags() const;
+	int get_video_duration() const;
+	int get_video_time() const;
 
 	void set_file_name( const char *n );
 	const char *get_file_name() const;
@@ -203,6 +208,8 @@ public:
 	void setVideoFlags( int f );
 	bool getVideoPlaying() const;
 	void setVideoPlaying( bool );
+	int getVideoDuration() const;
+	int getVideoTime() const;
 	const char *getFileName() const;
 	void setFileName( const char * );
 

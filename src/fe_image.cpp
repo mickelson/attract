@@ -80,6 +80,16 @@ FeVideoFlags FeBaseTextureContainer::get_video_flags() const
 	return VF_Normal;
 }
 
+int FeBaseTextureContainer::get_video_duration() const
+{
+	return 0;
+}
+
+int FeBaseTextureContainer::get_video_time() const
+{
+	return 0;
+}
+
 void FeBaseTextureContainer::set_file_name( const char *n )
 {
 }
@@ -248,10 +258,8 @@ bool FeTextureContainer::common_load(
 	bool loaded=false;
 #ifndef NO_MOVIE
 	// If a movie is running, close it...
-	//
 	if ( m_movie )
 	{
-		m_movie->close();
 		delete m_movie;
 		m_movie=NULL;
 	}
@@ -279,7 +287,7 @@ bool FeTextureContainer::common_load(
 
 			if (!m_movie->openFromFile( movie_file ))
 			{
-				std::cout << "ERROR loading movie: "
+				std::cout << "ERROR loading video: "
 					<< movie_file << std::endl;
 			}
 			else
@@ -287,7 +295,17 @@ bool FeTextureContainer::common_load(
 				loaded = true;
 				m_file_name = movie_file;
 
-				if (m_video_flags & VF_NoAutoStart)
+				if ( m_movie->number_of_frames() == 1 )
+				{
+					m_movie_status = -1; // don't play if there is only one frame
+
+					// if there is only one frame, then we can update the texture immediately
+					// (the frame will have been preloaded) and delete our movie object now
+					notify_texture_change();
+					delete m_movie;
+					m_movie = NULL;
+				}
+				else if (m_video_flags & VF_NoAutoStart)
 					m_movie_status = 0; // 0=loaded but not on track to play
 				else
 					m_movie_status = 1; // 1=on track to be played
@@ -540,6 +558,25 @@ FeVideoFlags FeTextureContainer::get_video_flags() const
 	return m_video_flags;
 }
 
+int FeTextureContainer::get_video_duration() const
+{
+#ifndef NO_MOVIE
+	if ( m_movie )
+		return m_movie->get_duration().asMilliseconds();
+#endif
+
+	return 0;
+}
+
+int FeTextureContainer::get_video_time() const
+{
+#ifndef NO_MOVIE
+	if ( m_movie )
+		return m_movie->get_video_time().asMilliseconds();
+#endif
+
+	return 0;
+}
 
 void FeTextureContainer::set_file_name( const char *n )
 {
@@ -890,6 +927,16 @@ bool FeImage::getVideoPlaying() const
 void FeImage::setVideoPlaying( bool f )
 {
 	m_tex->set_play_state( f );
+}
+
+int FeImage::getVideoDuration() const
+{
+	return m_tex->get_video_duration();
+}
+
+int FeImage::getVideoTime() const
+{
+	return m_tex->get_video_time();
 }
 
 const char *FeImage::getFileName() const

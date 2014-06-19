@@ -24,6 +24,7 @@ Contents
       * [`fe.get_input_state()`](#get_input_state)
       * [`fe.get_input_pos()`](#get_input_pos)
       * [`fe.do_nut()`](#do_nut)
+      * [`fe.load_module()`](#load_module)
       * [`fe.plugin_command()`](#plugin_command)
       * [`fe.plugin_command_bg()`](#plugin_command_bg)
       * [`fe.path_expand()`](#path_expand)
@@ -31,7 +32,7 @@ Contents
    * [Objects and Variables](#objects)
       * [`fe.layout`](#layout)
       * [`fe.list`](#list)
-      * [`fe.objs`](#objs)
+      * [`fe.obj`](#obj)
       * [`fe.script_dir`](#script_dir)
       * [`fe.script_file`](#script_file)
    * [Classes](#classes)
@@ -53,10 +54,10 @@ The Attract-mode layout sets out what gets displayed to the user. Layouts
 consist of a "layout.nut" script file and a collection of related resources
 (images, other scripts, etc.) used by the script.
 
-Layouts are stored under the "layouts" subdirectory of the Attract-Mode 
+Layouts are stored under the "layouts" subdirectory of the Attract-Mode
 config directory.  Each layout gets its own separate subdirectory.  Each
 layout can have one or more "layout*.nut" script files in it.  The "Toggle
-Layout" command in Attract-Mode allows users to cycle between each of the 
+Layout" command in Attract-Mode allows users to cycle between each of the
 "layout*.nut" script files located in the layout's directory.  Attract-Mode
 remembers the last layout file toggled to for each layout and will go back
 to that same file the next time the layout is loaded.  This allows for
@@ -64,7 +65,7 @@ variations of a particular layout to be implemented and easily selected by
 the user (for example, a layout could provide a "layout.nut" for horizontal
 monitor orientations and a "layout-vert.nut" for vertical).
 
-The Attract-Mode screen saver is really just a special case layout that is 
+The Attract-Mode screen saver is really just a special case layout that is
 loaded after a user-configured period of inactivity.  The screen saver script
 is located in the "screensaver.nut" file stored in the "layouts" subdirectory.
 
@@ -96,8 +97,8 @@ manuals:
 Frontend Binding
 ----------------
 
-All of the functions, objects and classes that Attract-Mode exposes to 
-Squirrel are arranged under the `fe` table, which is bound to Squirrel's 
+All of the functions, objects and classes that Attract-Mode exposes to
+Squirrel are arranged under the `fe` table, which is bound to Squirrel's
 root table.
 
 Example:
@@ -118,27 +119,27 @@ Functions
 #### `fe.add_image()` ####
 
     fe.add_image( name )
-    fe.add_image( name, x, y )	
+    fe.add_image( name, x, y )
     fe.add_image( name, x, y, w, h )
- 
+
 Add a static image or video to the end of Attract-Mode's draw list.
- 
-Parameters:   
+
+Parameters:
 
    * name - the name of an image/video file located in the layout directory.
      Supported image formats are: PNG, JPEG, GIF, BMP and TGA.  Videos can be
      in any format supported by FFmpeg.
-   * x - the x coordinate of the top left corner of the image (in layout 
+   * x - the x coordinate of the top left corner of the image (in layout
      coordinates).
-   * y - the y coordinate of the top left corner of the image (in layout 
+   * y - the y coordinate of the top left corner of the image (in layout
      coordinates).
-   * w - the width of the image (in layout coordinates).  Image will be 
+   * w - the width of the image (in layout coordinates).  Image will be
      scaled accordingly.  If set to 0 image is left unscaled.  Default value
      is 0.
-   * h - the height of the image (in layout coordinates).  Image will be 
+   * h - the height of the image (in layout coordinates).  Image will be
      scaled accordingly.  If set to 0 image is left unscaled.  Default value
      is 0.
- 
+
 Return Value:
 
    * An instance of the class [`fe.Image`](#Image) which can be used to
@@ -148,28 +149,28 @@ Return Value:
 <a name="add_artwork" />
 #### `fe.add_artwork()` ####
 
-    fe.add_artwork( label )	
-    fe.add_artwork( label, x, y )	
+    fe.add_artwork( label )
+    fe.add_artwork( label, x, y )
     fe.add_artwork( label, x, y, w, h )
 
 Add an artwork to the end of Attract-Mode's draw list.  The image/video
 displayed in an artwork is updated automatically whenever the user changes
 the game selection.
 
-Parameters:   
+Parameters:
 
    * label - the label of the artwork to display.  This needs to correspond
-     to an artwork resource configured in Attract-Mode (artworks are 
-     configured per emulator in Attract-Mode's configuration mode).  
-   * x - the x coordinate of the top left corner of the artwork (in layout 
-     coordinates). 
-   * y - the y coordinate of the top left corner of the artwork (in layout 
+     to an artwork resource configured in Attract-Mode (artworks are
+     configured per emulator in Attract-Mode's configuration mode).
+   * x - the x coordinate of the top left corner of the artwork (in layout
      coordinates).
-   * w - the width of the artwork (in layout coordinates).  Artworks will be 
-     scaled accordingly.  If set to 0 artwork is left unscaled.  Default 
+   * y - the y coordinate of the top left corner of the artwork (in layout
+     coordinates).
+   * w - the width of the artwork (in layout coordinates).  Artworks will be
+     scaled accordingly.  If set to 0 artwork is left unscaled.  Default
      value is 0.
-   * h - the height of the artwork (in layout coordinates).  Artworks will be 
-     scaled accordingly.  If set to 0 artwork is left unscaled.  Default 
+   * h - the height of the artwork (in layout coordinates).  Artworks will be
+     scaled accordingly.  If set to 0 artwork is left unscaled.  Default
      value is 0.
 
 Return Value:
@@ -203,13 +204,13 @@ Return Value:
 <a name="add_clone" />
 #### `fe.add_clone()` ####
 
-    fe.add_clone( img )	
+    fe.add_clone( img )
 
 Clone an image, artwork or surface object and add the clone to the back
 of Attract-Mode's draw list.  The texture pixel data of the original and
 clone is shared as a result.
 
-Parameters:   
+Parameters:
 
    * img - the image, artwork or surface object to clone.  This needs to
      be an instance of the class `fe.Image`.
@@ -225,9 +226,9 @@ Return Value:
 
     fe.add_text( msg, x, y, w, h )
 
-Add a text label to the end of Attract-Mode's draw list.  
+Add a text label to the end of Attract-Mode's draw list.
 
-Parameters:   
+Parameters:
 
    * msg - the text to display.  The tokens below that appear in the 'msg'
      string will be substituted appropriately:
@@ -239,7 +240,7 @@ Parameters:
       - `[Name]` - the short name of the selected game
       - `[Title]` - the full name of the selected game
       - `[Emulator]` - the emulator to use for the selected game
-      - `[CloneOf]` - the short name of the game that the selection is a 
+      - `[CloneOf]` - the short name of the game that the selection is a
         clone of
       - `[Year]` - the year for the current selected game
       - `[Manufacturer]` - the manufacturer for the selected game
@@ -250,9 +251,9 @@ Parameters:
       - `[Status]` - the status for the selected game
       - `[DisplayCount]` - the number of displays for the selected game
       - `[DisplayType]` - the display type for the selected game
-   * x - the x coordinate of the top left corner of the text (in layout 
+   * x - the x coordinate of the top left corner of the text (in layout
      coordinates).
-   * y - the y coordinate of the top left corner of the text (in layout 
+   * y - the y coordinate of the top left corner of the text (in layout
      coordinates).
    * w - the width of the text (in layout coordinates).
    * h - the height of the text (in layout coordinates).
@@ -268,16 +269,16 @@ Return Value:
 
     fe.add_listbox( x, y, w, h )
 
-Add a listbox to the end of Attract-Mode's draw list.  
+Add a listbox to the end of Attract-Mode's draw list.
 
-Parameters:   
+Parameters:
 
-   * x - the x coordinate of the top left corner of the listbox (in layout 
+   * x - the x coordinate of the top left corner of the listbox (in layout
      coordinates).
-   * y - the y coordinate of the top left corner of the listbox (in layout 
+   * y - the y coordinate of the top left corner of the listbox (in layout
      coordinates).
-   * w - the width of the listbox (in layout coordinates). 
-   * h - the height of the listbox (in layout coordinates). 
+   * w - the width of the listbox (in layout coordinates).
+   * h - the height of the listbox (in layout coordinates).
 
 Return Value:
 
@@ -353,12 +354,12 @@ The minimal fragment shader expected is as follows:
 
     fe.add_sound( name )
 
-Add a small sound sample for the layout to play.  The entire file is loaded 
+Add a small sound sample for the layout to play.  The entire file is loaded
 into memory.
 
 Parameters:
 
-   * name - the name of the sound file located in the layout directory. 
+   * name - the name of the sound file located in the layout directory.
 
 Return Value:
 
@@ -380,10 +381,10 @@ registered should be in the following form:
        // do stuff...
     }
 
-The single parameter passed to the tick function is the amount of time (in 
+The single parameter passed to the tick function is the amount of time (in
 milliseconds) since the layout began.
 
-Parameters:   
+Parameters:
 
    * function_name - a string naming the function to be called.
 
@@ -398,7 +399,7 @@ Return Value:
     fe.add_transition_callback( function_name )
 
 Register a function in your script to get transition callbacks.  Transition
-callbacks are triggered by certain events in the frontend.  The function 
+callbacks are triggered by certain events in the frontend.  The function
 that is registered should be in the following form:
 
     function transition( ttype, var, transition_time )
@@ -427,8 +428,8 @@ happening.  It will have one of the following values:
 The value of the `var` parameter passed to the transition function depends
 upon the value of `ttype`:
 
-   * When `ttype` is `Transition.ToNewSelection`, `var` indicates the index 
-     offset of the selection being transitioned to (i.e. -1 when moving back 
+   * When `ttype` is `Transition.ToNewSelection`, `var` indicates the index
+     offset of the selection being transitioned to (i.e. -1 when moving back
      one position in the list, 1 when moving forward one position, 2 when
      moving forward two positions, etc.)
 
@@ -438,16 +439,16 @@ upon the value of `ttype`:
      moving forward two positions, etc.)
 
    * When `ttype` is `Transition.StartLayout`, `var` will be one of the
-     following: 
+     following:
       - `FromTo.Frontend` if the frontend is just starting,
       - `FromTo.ScreenSaver` if the layout is starting (or the list is being
         loaded) because the built-in screen saver has stopped, or
       - `FromTo.NoValue` otherwise.
 
    * When `ttype` is `Transition.EndLayout`, `var` will be:
-      - `FromTo.Frontend` if the frontend is shutting down, 
-      - `FromTo.ScreenSaver` if the layout is stopping because the built-in 
-        screen saver is starting, or 
+      - `FromTo.Frontend` if the frontend is shutting down,
+      - `FromTo.ScreenSaver` if the layout is stopping because the built-in
+        screen saver is starting, or
       - `FromTo.NoValue` otherwise.
 
    * When `ttype` is `Transition.ToGame`, `Transition.FromGame`, or
@@ -458,14 +459,14 @@ amount of time (in milliseconds) since the transition began.
 
 The transition function must return a boolean value.  It should return
 `true` if a redraw is required, in which case Attract-Mode will redraw the
-screen and immediately call the transition function again with an updated 
+screen and immediately call the transition function again with an updated
 `transition_time`.
 
-**The transition function must eventually return `false` to notify 
-Attract-Mode that the transition effect is done, allowing the normal 
+**The transition function must eventually return `false` to notify
+Attract-Mode that the transition effect is done, allowing the normal
 operation of the frontend to proceed.**
 
-Parameters:   
+Parameters:
 
    * function_name - a string naming the function to be called.
 
@@ -480,11 +481,11 @@ Return Value:
     fe.game_info( id )
     fe.game_info( id, index_offset )
 
-Get information about the selected game.  
+Get information about the selected game.
 
-Parameters:   
+Parameters:
 
-   * id - id of the information attribute to get.  Can be one of the 
+   * id - id of the information attribute to get.  Can be one of the
      following values:
       - `Info.Name`
       - `Info.Title`
@@ -501,7 +502,7 @@ Parameters:
       - `Info.DisplayType`
       - `Info.Favourite`
       - `Info.Tags`
-   * index_offset - the offset (from the current selection) of the game to 
+   * index_offset - the offset (from the current selection) of the game to
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.
 
@@ -561,7 +562,7 @@ Execute another Squirrel script.
 Parameters:
 
    * name - the name of the script file.  If a relative path is provided,
-     it is treated as relative to the directory for the current layout. 
+     it is treated as relative to the directory for the current layout.
 
 Return Value:
 
@@ -600,7 +601,7 @@ Parameters:
 
    * executable - the name of the executable to run.
    * arg_string - the arguments to pass when running the executable.
-   * callback_function - a string containing the name of the function in 
+   * callback_function - a string containing the name of the function in
      Squirrel to call with any output that the executable provides on stdout.
      The function should be in the following form:
 
@@ -638,7 +639,7 @@ Return Value:
     fe.path_expand( path )
 
 Expand the given path name.  A leading `~` or `$HOME` token will be become
-the user's home directory.  On Windows systems, a leading `%SYSTEMROOT%` 
+the user's home directory.  On Windows systems, a leading `%SYSTEMROOT%`
 token will become the path to the Windows directory and a leading
 `%PROGRAMFILES%` will become the path to the "Program Files" directory.
 
@@ -648,7 +649,7 @@ Parameters:
 
 Return Value:
 
-   * The expansion of path. 
+   * The expansion of path.
 
 
 <a name="get_config" />
@@ -694,10 +695,10 @@ global layout settings are stored.
 list settings are stored.
 
 
-<a name="objs" />
-#### `fe.objs` ####
+<a name="obj" />
+#### `fe.obj` ####
 
-`fe.objs` contains the Attract-Mode draw list.  It is an array of `fe.Image`,
+`fe.obj` contains the Attract-Mode draw list.  It is an array of `fe.Image`,
 `fe.Text` and `fe.ListBox` instances.
 
 
@@ -727,13 +728,13 @@ This class is a container for global layout settings.  The instance of this
 class is the `fe.layout` object.  This class cannot be otherwise instantiated
 in a script.
 
-Attributes:   
+Attributes:
 
    * `width` - Get/set the layout width.  Default value is `ScreenWidth`.
    * `height` - Get/set the layout height.  Default value is `ScreenHeight`.
    * `font` - Get/set the layout font name.  Default value is the default
      font configured for Attract-Mode.
-   * `orient` - Get/set the global layout orientation.  Can be one of the 
+   * `orient` - Get/set the global layout orientation.  Can be one of the
      following values:
       - `RotateScreen.None` (default)
       - `RotateScreen.Right`
@@ -747,7 +748,7 @@ This class is a container for current list settings.  The instance of this
 class is the `fe.list` object.  This class cannot be otherwise instantiated
 in a script.
 
-Attributes:   
+Attributes:
 
    * `name` - Get the name of the current list.
    * `filter` - Get the name of the current list filter.
@@ -760,15 +761,15 @@ Attributes:
 
 The class representing an image in Attract-Mode.  Instances of this class
 are returned by the `add_image()`, `add_artwork()`, `add_surface` and
-`add_clone()` functions and also appear in the `fe.objs` array (the
+`add_clone()` functions and also appear in the `fe.obj` array (the
 Attract-Mode draw list).  This class cannot be otherwise instantiated in
 a script.
 
-Attributes:   
+Attributes:
 
-   * `x` - Get/set x position of top left corner (in layout coordinates). 
-   * `y` - Get/set y position of top left corner (in layout coordinates). 
-   * `width` - Get/set width of image (in layout coordinates), 0 if the 
+   * `x` - Get/set x position of top left corner (in layout coordinates).
+   * `y` - Get/set y position of top left corner (in layout coordinates).
+   * `width` - Get/set width of image (in layout coordinates), 0 if the
      image is unscaled.  Default value is 0.
    * `height` - Get/set height of image (in layout coordinates), if 0 the
      image is unscaled.  Default value is 0.
@@ -782,10 +783,10 @@ Attributes:
      Default value is 255.
    * `blue` - Get/set blue colour level for image. Range is [0 ... 255].
      Default value is 255.
-   * `alpha` - Get/set alpha level for image. Range is [0 ... 255].  Default 
+   * `alpha` - Get/set alpha level for image. Range is [0 ... 255].  Default
      value is 255.
-   * `index_offset` - [artwork only] Get/set offset from current selection 
-     for the artwork to display.  For example, set to -1 for the image 
+   * `index_offset` - [artwork only] Get/set offset from current selection
+     for the artwork to display.  For example, set to -1 for the image
      corresponding to the previous list entry, or 1 for the next list entry,
      etc.  Default value is 0.
    * `skew_x` - Get/set the amount of x-direction image skew (in layout
@@ -802,13 +803,13 @@ Attributes:
      towards the right instead.
    * `texture_width` - Get the width of the image texture (in pixels).
    * `texture_height` - Get the height of the image texture (in pixels).
-   * `subimg_x` - Get/set the x position of top left corner of the image 
+   * `subimg_x` - Get/set the x position of top left corner of the image
      texture sub-rectangle to display.  Default value is 0.
-   * `subimg_y` - Get/set the y position of top left corner of the image 
+   * `subimg_y` - Get/set the y position of top left corner of the image
      texture sub-rectangle to display.  Default value is 0.
-   * `subimg_width` - Get/set the width of the image texture sub-rectangle 
+   * `subimg_width` - Get/set the width of the image texture sub-rectangle
      to display.  Default value is `texture_width`.
-   * `subimg_height` - Get/set the height of the image texture sub-rectangle 
+   * `subimg_height` - Get/set the height of the image texture sub-rectangle
      to display.  Default value is `texture_height`.
    * `video_flags` - [image & artwork only] Get/set video flags for this
      object.  These flags allow you to override Attract-Mode's default video
@@ -821,6 +822,8 @@ Attributes:
       - `Vid.NoLoop` (don't loop video playback)
    * `video_playing` - [image & artwork only] Get/set whether video is
      currently playing in this artwork (boolean).
+   * `video_duration` - Get the video duration (in milliseconds).
+   * `video_time` - Get the time that the video is current at (in milliseconds).
    * `preserve_aspect_ratio` - Get/set whether the aspect ratio from the source
      image is to be preserved.  Default value is `false`.
    * `file_name` - [image & artwork only] Get/set the name of the image/video
@@ -831,7 +834,7 @@ Attributes:
 
 Member Functions:
 
-   * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the 
+   * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the
      image.  Range is [0 ... 255].
    * `set_pos( x, y )` - Set the image position (in layout coordinates).
    * `set_pos( x, y, width, height )` - Set the image position and size (in
@@ -871,12 +874,12 @@ Notes:
 <a name="Text" />
 #### `fe.Text` ####
 
-The class representing a text label in Attract-Mode.  Instances of this 
+The class representing a text label in Attract-Mode.  Instances of this
 class are returned by the `add_text()` functions and also appear in the
-`fe.objs` array (the Attract-Mode draw list).  This class cannot be 
+`fe.obj` array (the Attract-Mode draw list).  This class cannot be
 otherwise instantiated in a script.
 
-Attributes:   
+Attributes:
 
    * `msg` - Get/set the text label's message.  The tokens below that appear
      in the 'msg' string will be substituted appropriately:
@@ -888,7 +891,7 @@ Attributes:
       - `[Name]` - the short name of the selected game
       - `[Title]` - the full name of the selected game
       - `[Emulator]` - the emulator to use for the selected game
-      - `[CloneOf]` - the short name of the game that the selection is a 
+      - `[CloneOf]` - the short name of the game that the selection is a
         clone of
       - `[Year]` - the year for the current selected game
       - `[Manufacturer]` - the manufacturer for the selected game
@@ -899,8 +902,8 @@ Attributes:
       - `[Status]` - the status for the selected game
       - `[DisplayCount]` - the number of displays for the selected game
       - `[DisplayType]` - the display type for the selected game
-   * `x` - Get/set x position of top left corner (in layout coordinates). 
-   * `y` - Get/set y position of top left corner (in layout coordinates). 
+   * `x` - Get/set x position of top left corner (in layout coordinates).
+   * `y` - Get/set y position of top left corner (in layout coordinates).
    * `width` - Get/set width of text (in layout coordinates).
    * `height` - Get/set height of text (in layout coordinates).
    * `visible` - Get/set whether text is visible (boolean).  Default value
@@ -913,20 +916,20 @@ Attributes:
      Default value is 255.
    * `blue` - Get/set blue colour level for text. Range is [0 ... 255].
      Default value is 255.
-   * `alpha` - Get/set alpha level for text. Range is [0 ... 255].  Default 
+   * `alpha` - Get/set alpha level for text. Range is [0 ... 255].  Default
      value is 255.
-   * `index_offset` - Get/set offset from current game selection for text 
-     info to display.  For example, set to -1 to show text info for the 
+   * `index_offset` - Get/set offset from current game selection for text
+     info to display.  For example, set to -1 to show text info for the
      previous list entry, or 1 for the next list entry.  Default value is 0.
-   * `bg_red` - Get/set red colour level for text background. Range is 
+   * `bg_red` - Get/set red colour level for text background. Range is
      [0 ... 255].  Default value is 0.
-   * `bg_green` - Get/set green colour level for text background. Range is 
+   * `bg_green` - Get/set green colour level for text background. Range is
      [0 ... 255].  Default value is 0.
-   * `bg_blue` - Get/set blue colour level for text background. Range is 
+   * `bg_blue` - Get/set blue colour level for text background. Range is
      [0 ... 255].  Default value is 0.
-   * `bg_alpha` - Get/set alpha level for text background. Range is [0 ... 
+   * `bg_alpha` - Get/set alpha level for text background. Range is [0 ...
      255].  Default value is 0 (transparent).
-   * `charsize` - Get/set the forced character size.  If this is <= 0 
+   * `charsize` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on `height`.  Default value is -1.
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
@@ -934,7 +937,7 @@ Attributes:
       - `Style.Bold`
       - `Style.Italic`
       - `Style.Underlined`
-   * `align` - Get/set the text alignment.  Can be one of the following 
+   * `align` - Get/set the text alignment.  Can be one of the following
      values:
       - `Align.Centre` (default)
       - `Align.Left`
@@ -948,9 +951,9 @@ Attributes:
 
 Member Functions:
 
-   * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the 
+   * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the
      text.  Range is [0 ... 255].
-   * `set_bg_rgb( r, g, b )` - Set the red, green and blue colour values for 
+   * `set_bg_rgb( r, g, b )` - Set the red, green and blue colour values for
      the text background.  Range is [0 ... 255].
    * `set_pos( x, y )` - Set the text position (in layout coordinates).
    * `set_pos( x, y, width, height )` - Set the text position and size (in
@@ -960,15 +963,15 @@ Member Functions:
 <a name="ListBox" />
 #### `fe.ListBox` ####
 
-The class representing the listbox in Attract-Mode.  Instances of this 
+The class representing the listbox in Attract-Mode.  Instances of this
 class are returned by the `add_listbox()` functions and also appear in the
-`fe.objs` array (the Attract-Mode draw list).  This class cannot be 
+`fe.obj` array (the Attract-Mode draw list).  This class cannot be
 otherwise instantiated in a script.
 
-Attributes:   
+Attributes:
 
-   * `x` - Get/set x position of top left corner (in layout coordinates). 
-   * `y` - Get/set y position of top left corner (in layout coordinates). 
+   * `x` - Get/set x position of top left corner (in layout coordinates).
+   * `y` - Get/set y position of top left corner (in layout coordinates).
    * `width` - Get/set width of listbox (in layout coordinates).
    * `height` - Get/set height of listbox (in layout coordinates).
    * `visible` - Get/set whether listbox is visible (boolean).  Default value
@@ -981,35 +984,35 @@ Attributes:
      Default value is 255.
    * `blue` - Get/set blue colour level for text. Range is [0 ... 255].
      Default value is 255.
-   * `alpha` - Get/set alpha level for text. Range is [0 ... 255].  
+   * `alpha` - Get/set alpha level for text. Range is [0 ... 255].
      Default value is 255.
    * `index_offset` - Not used.
-   * `bg_red` - Get/set red colour level for background. Range is 
+   * `bg_red` - Get/set red colour level for background. Range is
      [0 ... 255].  Default value is 0.
-   * `bg_green` - Get/set green colour level for background. Range is 
+   * `bg_green` - Get/set green colour level for background. Range is
      [0 ... 255].  Default value is 0.
-   * `bg_blue` - Get/set blue colour level for background. Range is 
+   * `bg_blue` - Get/set blue colour level for background. Range is
      [0 ... 255].  Default value is 0.
-   * `bg_alpha` - Get/set alpha level for background. Range is [0 ... 
+   * `bg_alpha` - Get/set alpha level for background. Range is [0 ...
      255].  Default value is 0 (transparent).
-   * `sel_red` - Get/set red colour level for selection text. Range is 
+   * `sel_red` - Get/set red colour level for selection text. Range is
      [0 ... 255].  Default value is 255.
-   * `sel_green` - Get/set green colour level for selection text. Range is 
+   * `sel_green` - Get/set green colour level for selection text. Range is
      [0 ... 255].  Default value is 255.
-   * `sel_blue` - Get/set blue colour level for selection text. Range is 
+   * `sel_blue` - Get/set blue colour level for selection text. Range is
      [0 ... 255].  Default value is 0.
-   * `sel_alpha` - Get/set alpha level for selection text. Range is 
+   * `sel_alpha` - Get/set alpha level for selection text. Range is
      [0 ... 255].  Default value is 255.
-   * `selbg_red` - Get/set red colour level for selection background. Range 
+   * `selbg_red` - Get/set red colour level for selection background. Range
      is [0 ... 255].  Default value is 0.
-   * `selbg_green` - Get/set green colour level for selection background. 
+   * `selbg_green` - Get/set green colour level for selection background.
      Range is  [0 ... 255].  Default value is 0.
-   * `selbg_blue` - Get/set blue colour level for selection background. 
+   * `selbg_blue` - Get/set blue colour level for selection background.
      Range is [0 ... 255].  Default value is 255.
-   * `selbg_alpha` - Get/set alpha level for selection background. Range is 
+   * `selbg_alpha` - Get/set alpha level for selection background. Range is
      [0 ... 255].  Default value is 255.
    * `rows` - Get/set the number of listbox rows.  Default value is 11.
-   * `charsize` - Get/set the forced character size.  If this is <= 0 
+   * `charsize` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on the value of `height`/`rows`.
      Default value is -1.
    * `style` - Get/set the text style.  Can be a combination of one or more
@@ -1018,12 +1021,12 @@ Attributes:
       - `Style.Bold`
       - `Style.Italic`
       - `Style.Underlined`
-   * `align` - Get/set the text alignment.  Can be one of the following 
+   * `align` - Get/set the text alignment.  Can be one of the following
      values:
       - `Align.Centre` (default)
       - `Align.Left`
       - `Align.Right`
-   * `sel_style` - Get/set the selection text style.  Can be a combination 
+   * `sel_style` - Get/set the selection text style.  Can be a combination
      of one or more of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)
       - `Style.Bold`
@@ -1036,13 +1039,13 @@ Attributes:
 
 Member Functions:
 
-   * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the 
+   * `set_rgb( r, g, b )` - Set the red, green and blue colour values for the
      text.  Range is [0 ... 255].
-   * `set_bg_rgb( r, g, b )` - Set the red, green and blue colour values for 
+   * `set_bg_rgb( r, g, b )` - Set the red, green and blue colour values for
      the text background.  Range is [0 ... 255].
-   * `set_sel_rgb( r, g, b )` - Set the red, green and blue colour values 
+   * `set_sel_rgb( r, g, b )` - Set the red, green and blue colour values
      for the selection text.  Range is [0 ... 255].
-   * `set_selbg_rgb( r, g, b )` - Set the red, green and blue colour values 
+   * `set_selbg_rgb( r, g, b )` - Set the red, green and blue colour values
      for the selection background.  Range is [0 ... 255].
    * `set_pos( x, y )` - Set the listbox position (in layout coordinates).
    * `set_pos( x, y, width, height )` - Set the listbox position and size (in
@@ -1052,13 +1055,13 @@ Member Functions:
 <a name="Sound" />
 #### `fe.Sound` ####
 
-The class representing a sound sample.  Instances of this class are returned 
-by the `fe.add_sound()` function.  This class cannot be otherwise 
+The class representing a sound sample.  Instances of this class are returned
+by the `fe.add_sound()` function.  This class cannot be otherwise
 instantiated in a script.
 
-Attributes:   
+Attributes:
 
-   * `is_playing` - Get whether the sound is currently playing (boolean). 
+   * `is_playing` - Get whether the sound is currently playing (boolean).
    * `pitch` - Get/set the sound's pitch (float). Default value is 1.
    * `x` - Get/set the x position of the sound.  Default value is 0.
    * `y` - Get/set the y position of the sound.  Default value is 0.

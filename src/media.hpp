@@ -69,6 +69,10 @@ public:
 	void setLoop( bool );
 
 	bool is_playing();
+	int number_of_frames() const;
+
+	sf::Time get_video_time();
+	sf::Time get_duration() const;
 
 	//
 	// return true if the given filename is a media file that can be opened
@@ -84,7 +88,6 @@ protected:
 
 	bool read_packet();
 	bool end_of_file();
-	sf::Time get_video_time();
 
 private:
 	Type m_type;
