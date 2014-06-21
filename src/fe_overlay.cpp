@@ -524,13 +524,15 @@ int FeOverlay::tags_dialog()
 		edit_dialog( "Enter new tag name", name );
 
 		if ( !name.empty() )
-			m_feSettings.set_current_tag( name, true );
+		{
+			if ( m_feSettings.set_current_tag( name, true ) )
+				m_fePresent.update_to_new_list( &m_wnd ); // changing tag status altered our current list
+		}
 	}
 	else if (( sel >=0 ) && ( sel < (int)tags_list.size() ))
 	{
-		m_feSettings.set_current_tag(
-				tags_list[sel].first,
-				!(tags_list[sel].second) );
+		if ( m_feSettings.set_current_tag( tags_list[sel].first, !(tags_list[sel].second) ) )
+			m_fePresent.update_to_new_list( &m_wnd ); // changing tag status altered our current list
 	}
 
 	return sel;

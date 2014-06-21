@@ -229,7 +229,9 @@ public:
 	void dump( void ) const;
 
 	bool get_current_fav() const;
-	void set_current_fav( bool );
+
+	// returns true if the current list chnaged as a result of setting the tag
+	bool set_current_fav( bool );
 	int get_prev_fav_offset() const;
 	int get_next_fav_offset() const;
 	bool confirm_favs() const { return m_confirm_favs; }
@@ -239,7 +241,8 @@ public:
 	void get_current_tags_list(
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
 
-	void set_current_tag(
+	// returns true if the current list chnaged as a result of setting the tag
+	bool set_current_tag(
 			const std::string &tag, bool flag );
 	//
 	// This function implements command-line romlist generation/imports

@@ -84,7 +84,6 @@ public:
 	bool operator==( const FeRomInfo & );
 
 private:
-	FeRomInfo &operator=( const FeRomInfo & );
 	std::string get_info_escaped( int ) const;
 
 	std::string m_info[LAST_INDEX];
@@ -242,10 +241,11 @@ class FeRomList : public FeBaseConfigurable
 private:
 	std::deque<FeRomInfo> m_list;
 	std::map<std::string, bool> m_tags; // bool is flag of whether the tag has been changed
+	mutable std::set<std::string> m_extra_favs; // store for favourites that are currently filtered out
+	mutable std::multimap< std::string, const char * > m_extra_tags; // store for tags that are currenlty filtered out
 	std::string m_user_path;
 	std::string m_romlist_name;
 	const FeFilter *m_filter;
-	FeRLLoadData *m_load_data; // temporarily used during romlist loading
 	bool m_fav_changed;
 	bool m_tags_changed;
 
@@ -278,11 +278,11 @@ public:
 		const std::string &fn );
 
 	void save_state() const;
-	void set_fav( int idx, bool fav );
+	bool set_fav( int idx, bool fav );
 
 	void get_tags_list( int idx,
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
-	void set_tag( int idx, const std::string &tag, bool flag );
+	bool set_tag( int idx, const std::string &tag, bool flag );
 
 	bool empty() const { return m_list.empty(); };
 	int size() const { return (int)m_list.size(); };

@@ -654,20 +654,24 @@ int main(int argc, char *argv[])
 									msg,
 									feSettings.get_rom_info( 0, FeRomInfo::Title ) ) == 0 )
 							{
-								feSettings.set_current_fav( new_state );
+								if ( feSettings.set_current_fav( new_state ) )
+									fePresent.update_to_new_list( &window ); // changing fav status altered the current list
 							}
-							redraw=true;
 						}
 						else
 						{
-							feSettings.set_current_fav( new_state );
+							if ( feSettings.set_current_fav( new_state ) )
+								fePresent.update_to_new_list( &window ); // changing fav status altered the current list
 						}
+						redraw = true;
 					}
 					break;
 
 				case FeInputMap::ToggleTags:
 					if ( feOverlay.tags_dialog() < 0 )
 						exit_selected = true;
+
+					redraw = true;
 					break;
 
 				default:

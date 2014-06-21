@@ -385,8 +385,7 @@ int FeSettings::process_setting( const std::string &setting,
 
 void FeSettings::init_list()
 {
-	if ( !m_rl.empty() )
-		m_rl.save_state();
+	m_rl.save_state();
 
 	if ( m_current_list < 0 )
 		return;
@@ -430,8 +429,7 @@ void FeSettings::init_list()
 
 void FeSettings::save_state() const
 {
-	if ( !m_rl.empty() )
-		m_rl.save_state();
+	m_rl.save_state();
 
 	std::string filename( m_config_path );
 	confirm_directory( m_config_path, FE_EMPTY_STRING );
@@ -828,9 +826,9 @@ bool FeSettings::get_current_fav() const
 		return true;
 }
 
-void FeSettings::set_current_fav( bool status )
+bool FeSettings::set_current_fav( bool status )
 {
-	m_rl.set_fav( get_rom_index(), status );
+	return m_rl.set_fav( get_rom_index(), status );
 }
 
 int FeSettings::get_prev_fav_offset() const
@@ -900,10 +898,10 @@ void FeSettings::get_current_tags_list(
 	m_rl.get_tags_list( get_rom_index(), tags_list );
 }
 
-void FeSettings::set_current_tag(
+bool FeSettings::set_current_tag(
 		const std::string &tag, bool flag )
 {
-	m_rl.set_tag( get_rom_index(), tag, flag );
+	return m_rl.set_tag( get_rom_index(), tag, flag );
 }
 
 void FeSettings::toggle_layout()
