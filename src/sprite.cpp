@@ -260,7 +260,7 @@ void FeSprite::updateGeometry()
 		// SLICES needs to be an odd number... We draw our surface using
 		// SLICES+3 vertices
 		//
-		const int SLICES = 61;
+		const int SLICES = 253;
 
 		float bws = (float)bounds.width / SLICES;
 		float pys = (float)m_pinch.y / SLICES;
