@@ -429,7 +429,7 @@ the_end:
 	notify_texture_change();
 }
 
-bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
+bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
 {
 #ifndef NO_MOVIE
 	if (( play_movies )
@@ -437,7 +437,8 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 		&& ( m_movie ))
 	{
 		if (( m_movie_status > 0 )
-			&& ( m_movie_status < PLAY_COUNT ))
+			&& ( m_movie_status < PLAY_COUNT )
+			&& ( ok_to_start ))
 		{
 			//
 			// We skip the first few "ticks" after the movie
@@ -448,7 +449,7 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 			m_movie_status++;
 			return false;
 		}
-		else if ( m_movie_status == PLAY_COUNT )
+		else if (( m_movie_status == PLAY_COUNT ) && ( ok_to_start ))
 		{
 			m_movie_status++;
 
@@ -647,7 +648,7 @@ void FeSurfaceTextureContainer::on_new_list( FeSettings *s, float scale_x, float
 		(*itr)->on_new_list( s, 1.f, 1.f );
 }
 
-bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies )
+bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
 {
 	//
 	// Draw the surface's draw list to the render texture

@@ -814,7 +814,7 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 			itm != m_texturePool.end(); ++itm )
 	{
-		if ( (*itm)->tick( m_feSettings, m_playMovies ) )
+		if ( (*itm)->tick( m_feSettings, m_playMovies, true ) )
 			ret_val=true;
 	}
 
@@ -1853,6 +1853,13 @@ bool FePresent::vm_on_transition(
 		//
 		if (( !worklist.empty() ) && ( wnd ))
 		{
+			for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
+					itm != m_texturePool.end(); ++itm )
+			{
+				// don't start a video during transition, but keep playing one if it is already playing
+				(*itm)->tick( m_feSettings, m_playMovies, false );
+			}
+
 			wnd->clear();
 			wnd->draw( *this );
 			wnd->display();

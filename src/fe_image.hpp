@@ -52,7 +52,7 @@ public:
 	virtual void on_new_selection( FeSettings *feSettings );
 	virtual void on_new_list( FeSettings *, float, float );
 
-	virtual bool tick( FeSettings *feSettings, bool play_movies )=0; // returns true if redraw required
+	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )=0; // returns true if redraw required
 	virtual void set_play_state( bool play );
 	virtual bool get_play_state() const;
 	virtual void set_vol( float vol );
@@ -101,7 +101,7 @@ public:
 	const sf::Texture &get_texture();
 
 	void on_new_selection( FeSettings *feSettings );
-	bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
+	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 	void set_play_state( bool play );
 	bool get_play_state() const;
 	void set_vol( float vol );
@@ -151,7 +151,7 @@ public:
 	void on_new_selection( FeSettings *feSettings );
 	void on_new_list( FeSettings *, float, float );
 
-	bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
+	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 
 	//
 	// Callback functions for use with surface objects
