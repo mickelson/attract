@@ -4,15 +4,23 @@
 //
 ///////////////////////////////////////////////////
 class UserConfig {
-	</ label="Movie Collage", help="Enable movie collage mode", options="Yes,No" />
+	</ label="Movie Collage", help="Enable movie collage mode", options="Yes,No", order=1 />
 	movie_collage="Yes";
 
-	</ label="Image Collage", help="Enable 4x4 image collage mode", options="Yes,No" />
+	</ label="Image Collage", help="Enable 4x4 image collage mode", options="Yes,No", order=2 />
 	image_collage="Yes";
+
+	</ label="Show Wheel", help="Overlay wheel artwork on movies", options="Yes,No", order=3 />
+	overlay_wheel="Yes";
+
+	</ label="Play Sound", help="Play video sounds during screensaver", options="Yes,No", order=4 />
+	sound="Yes";
 }
 
-fe.layout.width=100;
-fe.layout.height=100;
+fe.layout.width=ScreenWidth;
+fe.layout.height=ScreenHeight;
+
+local config = fe.get_config();
 
 function get_new_offset( obj )
 {
@@ -28,19 +36,90 @@ function get_new_offset( obj )
 }
 
 //
+// Container for a wheel image w/ shadow effect
+//
+class WheelOverlay
+{
+	logo=0;
+	logo_shadow=0;
+	in_time=0;
+	out_time=0;
+
+	constructor( x, y, width, shadow_offset )
+	{
+		if ( config["overlay_wheel"] == "Yes" )
+		{
+			logo_shadow = fe.add_artwork( "wheel", x + shadow_offset, y + shadow_offset, 0, width );
+			logo_shadow.preserve_aspect_ratio = true;
+
+			logo = fe.add_clone( logo_shadow );
+			logo.set_pos( x, y );
+
+			logo_shadow.set_rgb( 0, 0, 0 );
+			logo_shadow.visible = logo.visible = false;
+		}
+	}
+
+	function init( index_offset, ttime, duration )
+	{
+		if ( config["overlay_wheel"] == "Yes" )
+		{
+			logo.index_offset = index_offset;
+			logo.visible = logo_shadow.visible = true;
+			logo.alpha = logo_shadow.alpha = 0;
+			in_time = ttime + 1000; // start fade in one second in
+			out_time = ttime + duration - 2000; // start fade out 2 seconds before video ends
+		}
+	}
+
+	function reset()
+	{
+		if ( config["overlay_wheel"] == "Yes" )
+		{
+			logo.visible = logo_shadow.visible = false;
+		}
+	}
+
+	function on_tick( ttime )
+	{
+		if (( config["overlay_wheel"] == "Yes" )
+			&& ( logo.visible ))
+		{
+			if ( ttime > out_time + 1000 )
+			{
+				logo.visible = logo_shadow.visible = false;
+			}
+			else if ( ttime > out_time )
+			{
+				logo.alpha = logo_shadow.alpha = 255 - ( 255 * ( ttime - out_time ) / 1000.0 );
+			}
+			else if ( ( ttime < in_time + 1000 ) && ( ttime > in_time ) )
+			{
+				logo.alpha = logo_shadow.alpha = ( 255 * ( ttime - in_time ) / 1000.0 );
+			}
+		}
+	}
+};
+
+//
 // Default mode - just play a video through once
 //
 class MovieMode
 {
 	MIN_TIME = 4000; // the minimum amount of time this mode should run for (in milliseconds)
-
 	obj=0;
+	logo=0;
 	start_time=0;
 
 	constructor()
 	{
-		obj = fe.add_artwork( "", 0, 0, 100, 100 );
-		obj.video_flags = Vid.NoAutoStart | Vid.NoLoop;
+		obj = fe.add_artwork( "", 0, 0, fe.layout.width, fe.layout.height );
+		if ( config["sound"] == "No" )
+			obj.video_flags = Vid.NoAudio | Vid.NoAutoStart | Vid.NoLoop;
+		else
+			obj.video_flags = Vid.NoAutoStart | Vid.NoLoop;
+
+		logo = WheelOverlay( 20, ScreenHeight - 220, 200, 2 );
 	}
 
 	function init( ttime )
@@ -49,11 +128,14 @@ class MovieMode
 		obj.visible = true;
 		get_new_offset( obj );
 		obj.video_playing = true;
+
+		logo.init( obj.index_offset, ttime, obj.video_duration );
 	}
 
 	function reset()
 	{
 		obj.visible = false;
+		logo.reset();
 	}
 
 	// return true if mode should continue, false otherwise
@@ -65,7 +147,7 @@ class MovieMode
 
 	function on_tick( ttime )
 	{
-		// nothing to do
+		logo.on_tick( ttime );
 	}
 
 };
@@ -76,6 +158,7 @@ class MovieMode
 class MovieCollageMode
 {
 	objs = [];
+	logos = [];
 	ignore = [];
 	ignore_checked = false;
 	chance = 25; // precentage chance that this mode is triggered
@@ -85,15 +168,21 @@ class MovieCollageMode
 		objs.append( _add_obj( 0, 0 ) );
 		objs.append( _add_obj( 1, 0 ) );
 		objs.append( _add_obj( 0, 1 ) );
-		objs.append( _add_obj( 1, 1, Vid.NoAutoStart | Vid.NoLoop ) );
+		if ( config["sound"] == "No" )
+			objs.append( _add_obj( 1, 1 ) );
+		else
+			objs.append( _add_obj( 1, 1, Vid.NoAutoStart | Vid.NoLoop ) );
 
 		for ( local i=0; i<objs.len(); i++ )
+		{
 			ignore.append( false );
+			logos.append( WheelOverlay( objs[i].x + 10, objs[i].y + objs[i].height - 110, 100, 1 ) ); 
+		}
 	}
 
 	function _add_obj( x, y, vf=Vid.NoAudio | Vid.NoAutoStart | Vid.NoLoop )
 	{
-		local temp = fe.add_artwork( "", x*50, y*50, 50, 50 );
+		local temp = fe.add_artwork( "", x*fe.layout.width/2, y*fe.layout.height/2, fe.layout.width/2, fe.layout.height/2 );
 		temp.visible = false;
 		temp.video_flags = vf;
 		return temp;
@@ -109,7 +198,10 @@ class MovieCollageMode
 		}
 
 		for ( local i=0; i<objs.len(); i++ )
+		{
 			ignore[i] = false;
+			logos[i].init( objs[i].index_offset, ttime, objs[i].video_duration );
+		}
 
 		ignore_checked = false;
 	}
@@ -118,6 +210,9 @@ class MovieCollageMode
 	{
 		foreach ( o in objs )
 			o.visible = false;
+
+		foreach ( l in logos )
+			l.reset();
 	}
 
 	// return true if mode should continue, false otherwise
@@ -155,7 +250,8 @@ class MovieCollageMode
 
 	function on_tick( ttime )
 	{
-		// nothing to do
+		foreach ( l in logos )
+			l.on_tick( ttime );
 	}
 };
 
@@ -173,11 +269,13 @@ class ImageCollageMode
 
 	constructor()
 	{
+		local width = fe.layout.width / 4;
+		local height = fe.layout.height / 4;
 		for ( local i=0; i<4; i++ )
 		{
 			for ( local j=0; j<4; j++ )
 			{
-				objs.append( fe.add_artwork( "", i * 25, j * 25, 25, 25 ) );
+				objs.append( fe.add_artwork( "", i * width, j * height, width, height ) );
 				objs.top().visible = false;
 				objs.top().video_flags = Vid.ImagesOnly;
 			}
@@ -221,8 +319,6 @@ class ImageCollageMode
 //
 local modes = [];
 local default_mode = MovieMode();
-
-local config = fe.get_config();
 
 if ( config["movie_collage"] == "Yes" )
 	modes.append( MovieCollageMode() );
