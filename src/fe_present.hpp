@@ -157,7 +157,8 @@ private:
 	void add_transition_callback(const std::string &);
 	int get_layout_width() const;
 	int get_layout_height() const;
-	int get_layout_orient() const;
+	int get_base_rotation() const;
+	int get_toggle_rotation() const;
 	const char *get_list_name() const;
 	const char *get_filter_name() const;
 	int get_list_size() const;
@@ -166,7 +167,8 @@ private:
 	const char *get_layout_font() const;
 	void set_layout_width( int );
 	void set_layout_height( int );
-	void set_layout_orient( int );
+	void set_base_rotation( int );
+	void set_toggle_rotation( int );
 	void set_layout_font( const char * );
 	FeShader *get_empty_shader();
 

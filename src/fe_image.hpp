@@ -49,7 +49,7 @@ public:
 
 	virtual const sf::Texture &get_texture()=0;
 
-	virtual void on_new_selection( FeSettings *feSettings );
+	virtual void on_new_selection( FeSettings *feSettings )=0;
 	virtual void on_new_list( FeSettings *, float, float );
 
 	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )=0; // returns true if redraw required
@@ -117,13 +117,12 @@ public:
 	void set_file_name( const char *n );
 	const char *get_file_name() const;
 
-	void load_now( const std::string &filename );
+	bool load_static( const std::string &file_name );
 
 private:
 
-	bool load( const std::vector <std::string> &art_paths,
+	bool load_artwork( const std::vector <std::string> &art_paths,
 		const std::string &target_name );
-	bool load( const std::string &file_name );
 
 	bool common_load(
 		std::vector<std::string> &non_image_names,

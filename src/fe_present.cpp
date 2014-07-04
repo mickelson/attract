@@ -183,7 +183,7 @@ FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int
 	// if this is a non-artwork (i.e. static image/video) then load it now
 	//
 	if ( !is_artwork )
-		new_tex->load_now( name );
+		new_tex->load_static( name );
 
 	m_redrawTriggered = true;
 	m_texturePool.push_back( new_tex );
@@ -382,16 +382,28 @@ const char *FePresent::get_layout_font() const
 	return m_layoutFontName.c_str();
 }
 
-void FePresent::set_layout_orient( int r )
+void FePresent::set_base_rotation( int r )
 {
 	m_baseRotation = (FeSettings::RotationState)r;
 	set_transforms();
 	m_redrawTriggered = true;
 }
 
-int FePresent::get_layout_orient() const
+int FePresent::get_base_rotation() const
 {
 	return m_baseRotation;
+}
+
+void FePresent::set_toggle_rotation( int r )
+{
+	m_toggleRotation = (FeSettings::RotationState)r;
+	set_transforms();
+	m_redrawTriggered = true;
+}
+
+int FePresent::get_toggle_rotation() const
+{
+	return m_toggleRotation;
 }
 
 const char *FePresent::get_list_name() const
@@ -456,8 +468,10 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			m_moveState=MoveDown;
 			m_moveEvent = ev;
 			vm_on_transition( ToNewSelection, 1, wnd );
+
 			m_feSettings->change_rom( 1 );
 			update( false );
+
 			vm_on_transition( FromOldSelection, -1, wnd );
 		}
 		break;
@@ -469,8 +483,10 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			m_moveState=MoveUp;
 			m_moveEvent = ev;
 			vm_on_transition( ToNewSelection, -1, wnd );
+
 			m_feSettings->change_rom( -1 );
 			update( false );
+
 			vm_on_transition( FromOldSelection, 1, wnd );
 		}
 		break;
@@ -486,8 +502,10 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			if ( step != 0 )
 			{
 				vm_on_transition( ToNewSelection, step, wnd );
+
 				m_feSettings->change_rom( step );
 				update( false );
+
 				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
@@ -503,8 +521,10 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			if ( step != 0 )
 			{
 				vm_on_transition( ToNewSelection, step, wnd );
+
 				m_feSettings->change_rom( step );
 				update( false );
+
 				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
@@ -516,8 +536,10 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			if ( step != 0 )
 			{
 				vm_on_transition( ToNewSelection, step, wnd );
+
 				m_feSettings->change_rom( step );
 				update( false );
+
 				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
@@ -605,8 +627,10 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			if ( step != 0 )
 			{
 				vm_on_transition( ToNewSelection, step, wnd );
+
 				m_feSettings->change_rom( step );
 				update( false );
+
 				vm_on_transition( FromOldSelection, -step, wnd );
 			}
 		}
@@ -794,10 +818,11 @@ bool FePresent::tick( sf::RenderWindow *wnd )
 				if ( real_step != 0 )
 				{
 					vm_on_transition( ToNewSelection, real_step, wnd );
-					m_feSettings->change_rom( real_step );
 
+					m_feSettings->change_rom( real_step );
 					ret_val=true;
 					update( false );
+
 					vm_on_transition( FromOldSelection, -real_step, wnd );
 				}
 			}
@@ -1594,7 +1619,10 @@ void FePresent::vm_on_new_layout( const std::string &path,
 		.Prop( _SC("width"), &FePresent::get_layout_width, &FePresent::set_layout_width )
 		.Prop( _SC("height"), &FePresent::get_layout_height, &FePresent::set_layout_height )
 		.Prop( _SC("font"), &FePresent::get_layout_font, &FePresent::set_layout_font )
-		.Prop( _SC("orient"), &FePresent::get_layout_orient, &FePresent::set_layout_orient )
+		// orient property deprecated as of 1.3.2, use "base_rotation" instead
+		.Prop( _SC("orient"), &FePresent::get_base_rotation, &FePresent::set_base_rotation )
+		.Prop( _SC("base_rotation"), &FePresent::get_base_rotation, &FePresent::set_base_rotation )
+		.Prop( _SC("toggle_rotation"), &FePresent::get_toggle_rotation, &FePresent::set_toggle_rotation )
 	);
 
 	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()

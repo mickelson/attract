@@ -41,10 +41,6 @@ FeBaseTextureContainer::~FeBaseTextureContainer()
 {
 }
 
-void FeBaseTextureContainer::on_new_selection( FeSettings *feSettings )
-{
-}
-
 void FeBaseTextureContainer::on_new_list( FeSettings *, float, float )
 {
 }
@@ -181,9 +177,21 @@ FeTextureContainer::~FeTextureContainer()
 #endif
 }
 
-bool FeTextureContainer::load(
+bool FeTextureContainer::load_static(
 	const std::string &file_name )
 {
+	m_texture = sf::Texture();
+	m_movie_status = -1;
+
+#ifndef NO_MOVIE
+	// If a movie is running, close it...
+	if ( m_movie )
+	{
+		delete m_movie;
+		m_movie=NULL;
+	}
+#endif
+
 	std::vector<std::string> image_names;
 	std::vector<std::string> non_image_names;
 
@@ -201,10 +209,13 @@ bool FeTextureContainer::load(
 	if ( image_names.empty() )
 		non_image_names.push_back( file_name );
 
-	return common_load( non_image_names, image_names );
+	bool retval = common_load( non_image_names, image_names );
+
+	notify_texture_change();
+	return retval;
 }
 
-bool FeTextureContainer::load(
+bool FeTextureContainer::load_artwork(
 	const std::vector < std::string > &art_paths,
 	const std::string &target_name )
 {
@@ -257,12 +268,8 @@ bool FeTextureContainer::common_load(
 {
 	bool loaded=false;
 #ifndef NO_MOVIE
-	// If a movie is running, close it...
-	if ( m_movie )
-	{
-		delete m_movie;
-		m_movie=NULL;
-	}
+
+	ASSERT( !m_movie ); // m_movie should always be empty at this point...
 
 	if ( !(m_video_flags & VF_DisableVideo) )
 	{
@@ -335,15 +342,6 @@ bool FeTextureContainer::common_load(
 	return loaded;
 }
 
-void FeTextureContainer::load_now( const std::string &filename )
-{
-	m_texture = sf::Texture();
-	m_movie_status = -1;
-
-	load( filename );
-	notify_texture_change();
-}
-
 const sf::Texture &FeTextureContainer::get_texture()
 {
 #ifndef NO_MOVIE
@@ -366,13 +364,22 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 	m_movie_status = -1;
 	m_file_name.clear();
 
+#ifndef NO_MOVIE
+	// If a movie is running, close it...
+	if ( m_movie )
+	{
+		delete m_movie;
+		m_movie=NULL;
+	}
+#endif
+
+	const std::string &emu_name
+		= feSettings->get_rom_info( m_index_offset, FeRomInfo::Emulator );
+
 	std::vector<std::string> movie_list;
 	std::vector<std::string> image_list;
 
 	std::string layout_path = feSettings->get_current_layout_dir();
-
-	const std::string &emu_name
-		= feSettings->get_rom_info( m_index_offset, FeRomInfo::Emulator );
 
 	FeEmulatorInfo *emu_info = feSettings->get_emulator( emu_name );
 
@@ -392,16 +399,16 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 	if ( !art_paths.empty() )
 	{
 		// test for "romname" specific
-		if ( load( art_paths, feSettings->get_rom_info( m_index_offset, FeRomInfo::Romname ) ) )
+		if ( load_artwork( art_paths, feSettings->get_rom_info( m_index_offset, FeRomInfo::Romname ) ) )
 			goto the_end;
 
 		// then "cloneof" specific
-		const std::string cloneof = feSettings->get_rom_info( m_index_offset, FeRomInfo::Cloneof );
-		if ( !cloneof.empty() && load( art_paths, cloneof ) )
+		const std::string &cloneof = feSettings->get_rom_info( m_index_offset, FeRomInfo::Cloneof );
+		if ( !cloneof.empty() && load_artwork( art_paths, cloneof ) )
 			goto the_end;
 
 		// then "emulator"
-		if ( !emu_name.empty() && load( art_paths, emu_name ) )
+		if ( !emu_name.empty() && load_artwork( art_paths, emu_name ) )
 			goto the_end;
 	}
 
@@ -413,12 +420,12 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 		if ( !emu_name.empty() )
 		{
 			// check for "[emulator]-[artlabel]" in layout directory
-			if ( load( layout_paths, emu_name + "-" + m_art_name ) )
+			if ( load_artwork( layout_paths, emu_name + "-" + m_art_name ) )
 				goto the_end;
 		}
 
 		// check for file named with the artwork label in layout directory
-		if ( load( layout_paths, m_art_name ) )
+		if ( load_artwork( layout_paths, m_art_name ) )
 			goto the_end;
 	}
 
@@ -599,7 +606,7 @@ void FeTextureContainer::set_file_name( const char *n )
 	}
 
 	if (( !name.empty() ) && ( m_file_name.compare( name ) != 0 ))
-		load_now( name );
+		load_static( name );
 }
 
 const char *FeTextureContainer::get_file_name() const

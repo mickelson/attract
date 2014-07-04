@@ -103,7 +103,7 @@ root table.
 
 Example:
 
-		fe.layout.orient = RotateScreen.Right;
+		fe.layout.base_rotation = RotateScreen.Right;
 		fe.add_image( "bg.png", 0, 0 );
 		local marquee = fe.add_artwork( "marquee", 256, 20, 512, 256 );
 		marquee.set_rgb( 100, 100, 100 );
@@ -734,12 +734,26 @@ Attributes:
    * `height` - Get/set the layout height.  Default value is `ScreenHeight`.
    * `font` - Get/set the layout font name.  Default value is the default
      font configured for Attract-Mode.
-   * `orient` - Get/set the global layout orientation.  Can be one of the
-     following values:
+   * `base_rotation` - Get/set the base (i.e the default) orientation of the
+     layout.  This can be one of the following values:
       - `RotateScreen.None` (default)
       - `RotateScreen.Right`
       - `RotateScreen.Flip`
       - `RotateScreen.Left`
+   * `toggle_rotation` - Get/set the "toggle" orientation of the layout.  The
+     toggle rotation is added to the `base_rotation` to determine what the
+     actual rotation is at any given time.  The user can change this value
+     using the Rotation Toggle inputs.  This can be one of the following values:
+      - `RotateScreen.None` (default)
+      - `RotateScreen.Right`
+      - `RotateScreen.Flip`
+      - `RotateScreen.Left`
+
+Notes:
+
+   * The actual rotation of the layout can be determined using the following
+     equation: `( fe.layout.base_rotation + fe.layout.toggle_rotation ) % 4`
+
 
 <a name="CurrentList" />
 #### `fe.CurrentList` ####
