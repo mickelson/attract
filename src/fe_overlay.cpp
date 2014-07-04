@@ -1227,6 +1227,16 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				case sf::Keyboard::Escape:
 					return false;
 
+				case sf::Keyboard::End:
+					cursor_pos = str.size();
+					redraw = true;
+					break;
+
+				case sf::Keyboard::Home:
+					cursor_pos = 0;
+					redraw = true;
+					break;
+
 				default:
 					break;
 				}
