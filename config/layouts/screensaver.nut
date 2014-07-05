@@ -15,10 +15,27 @@ class UserConfig {
 
 	</ label="Play Sound", help="Play video sounds during screensaver", options="Yes,No", order=4 />
 	sound="Yes";
+
+	</ label="Preserve Aspect Ratio", help="Preserve the aspect ratio of screensaver snaps/videos", options="Yes,No", order=5 />
+	preserve_ar="No";
 }
 
-fe.layout.width=ScreenWidth;
-fe.layout.height=ScreenHeight;
+local actual_rotation = (fe.layout.base_rotation + fe.layout.toggle_rotation)%4;
+if (( actual_rotation == RotateScreen.Left )
+	|| ( actual_rotation == RotateScreen.Right ))
+{
+	// Vertical orientation
+	//
+	fe.layout.height = 1024;
+	fe.layout.width = 1024 * ScreenHeight / ScreenWidth;
+}
+else
+{
+	// Horizontal orientation
+	//
+	fe.layout.width = 1024;
+	fe.layout.height = 1024 * ScreenHeight / ScreenWidth;
+}
 
 local config = fe.get_config();
 
@@ -119,7 +136,10 @@ class MovieMode
 		else
 			obj.video_flags = Vid.NoAutoStart | Vid.NoLoop;
 
-		logo = WheelOverlay( 20, ScreenHeight - 220, 200, 2 );
+		if ( config["preserve_ar"] == "Yes" )
+			obj.preserve_aspect_ratio = true;
+
+		logo = WheelOverlay( 20, fe.layout.height - 220, 200, 2 );
 	}
 
 	function init( ttime )
@@ -185,6 +205,10 @@ class MovieCollageMode
 		local temp = fe.add_artwork( "", x*fe.layout.width/2, y*fe.layout.height/2, fe.layout.width/2, fe.layout.height/2 );
 		temp.visible = false;
 		temp.video_flags = vf;
+
+		if ( config["preserve_ar"] == "Yes" )
+			temp.preserve_aspect_ratio = true;
+
 		return temp;
 	}
 
@@ -278,6 +302,9 @@ class ImageCollageMode
 				objs.append( fe.add_artwork( "", i * width, j * height, width, height ) );
 				objs.top().visible = false;
 				objs.top().video_flags = Vid.ImagesOnly;
+
+				if ( config["preserve_ar"] == "Yes" )
+					objs.top().preserve_aspect_ratio = true;
 			}
 		}
 	}
