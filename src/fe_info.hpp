@@ -234,8 +234,6 @@ private:
 	std::deque< FeFilter > m_filters;
 };
 
-class FeRLLoadData;
-
 class FeRomList : public FeBaseConfigurable
 {
 private:

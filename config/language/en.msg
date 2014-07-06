@@ -67,7 +67,7 @@ _help_lists_menu_exit;Configure whether an Exit option should be provided in the
 _help_hide_brackets;Hide text in brackets when showing game titles
 _help_autolaunch_last_game;Automatically launch the last game played on startup
 _help_confirm_favs;Confirm the addition/removal of Favourites
-_help_window_mode;Set whether Attract-Mode fills the screen or runs in a window.  Changes require a program restart to take effect
+_help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
 _help_emulators;Configure emulator settings
 _help_lists;Configure display lists
 _help_controls;Configure controls

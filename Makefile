@@ -77,6 +77,7 @@ _DEP =\
 	fe_sound.hpp \
 	fe_shader.hpp \
 	fe_overlay.hpp \
+	fe_window.hpp \
 	tp.hpp \
 	fe_text.hpp \
 	fe_listbox.hpp \
@@ -99,6 +100,7 @@ _OBJ =\
 	fe_sound.o \
 	fe_shader.o \
 	fe_overlay.o \
+	fe_window.o \
 	tp.o \
 	fe_text.o \
 	fe_listbox.o \
