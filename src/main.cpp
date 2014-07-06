@@ -449,7 +449,33 @@ int main(int argc, char *argv[])
 			soundsys.stop();
 
 			fePresent.pre_run( &window );
+
+#ifdef SFML_SYSTEM_LINUX
+			//
+			// On Linux, fullscreen mode is confirmed to block the emulator
+			// from running...  So we close our main window each time we run
+			// an emulator and then recreate it when the emulator is done.
+			//
+			if ( win_mode == FeSettings::Fullscreen )
+			{
+				window.close();
+
+				feSettings.run();
+
+				window.create( mode, "Attract-Mode", sf::Style::Fullscreen );
+				window.setVerticalSyncEnabled(true);
+				window.setKeyRepeatEnabled(false);
+				window.setMouseCursorVisible(false);
+				window.setJoystickThreshold( 1.0 );
+			}
+			else
+			{
+				feSettings.run();
+			}
+#else
 			feSettings.run();
+#endif
+
 			fePresent.post_run( &window );
 
 			soundsys.sound_event( FeInputMap::EventGameReturn );
