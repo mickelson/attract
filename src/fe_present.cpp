@@ -668,7 +668,7 @@ int FePresent::update( bool new_list )
 	}
 
 	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
-		(*itc)->on_new_selection( m_feSettings );
+		(*itc)->on_new_selection( m_feSettings, m_screenSaverActive );
 
 	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 		(*itl)->on_new_selection( m_feSettings );
@@ -1938,7 +1938,7 @@ void script_do_update( FeBaseTextureContainer *tc )
 
 	if ( fep )
 	{
-		tc->on_new_selection( fep->get_fes() );
+		tc->on_new_selection( fep->get_fes(), fep->get_screensaver_active() );
 		fep->flag_redraw();
 	}
 }

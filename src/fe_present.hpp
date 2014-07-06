@@ -210,6 +210,8 @@ public:
 
 	void perform_autorotate();
 
+	bool get_screensaver_active() { return m_screenSaverActive; }
+
 	void flag_redraw();
 
 	static FeImage *cb_add_image(const char *,int, int, int, int);

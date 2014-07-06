@@ -355,7 +355,7 @@ const sf::Texture &FeTextureContainer::get_texture()
 	return m_texture;
 }
 
-void FeTextureContainer::on_new_selection( FeSettings *feSettings )
+void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_saver_active )
 {
 	if ( !m_is_artwork )
 		return;
@@ -379,7 +379,16 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 	std::vector<std::string> movie_list;
 	std::vector<std::string> image_list;
 
-	std::string layout_path = feSettings->get_current_layout_dir();
+	std::string layout_path;
+	if ( screen_saver_active )
+	{
+		std::string dummy;
+		feSettings->get_screensaver_file( layout_path, dummy );
+	}
+	else
+	{
+		layout_path = feSettings->get_current_layout_dir();
+	}
 
 	FeEmulatorInfo *emu_info = feSettings->get_emulator( emu_name );
 
@@ -635,7 +644,7 @@ const sf::Texture &FeSurfaceTextureContainer::get_texture()
 	return m_texture.getTexture();
 }
 
-void FeSurfaceTextureContainer::on_new_selection( FeSettings *s )
+void FeSurfaceTextureContainer::on_new_selection( FeSettings *s, bool screen_saver_active )
 {
 	for ( std::vector<FeBasePresentable *>::iterator itr = m_draw_list.begin();
 				itr != m_draw_list.end(); ++itr )

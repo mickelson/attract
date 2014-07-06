@@ -4,14 +4,14 @@
 //
 ///////////////////////////////////////////////////
 class UserConfig {
-	</ label="Movie Collage", help="Enable movie collage mode", options="Yes,No", order=1 />
+	</ label="Movie Collage", help="Enable 2x2 movie collage mode", options="Yes,No", order=1 />
 	movie_collage="Yes";
 
 	</ label="Image Collage", help="Enable 4x4 image collage mode", options="Yes,No", order=2 />
 	image_collage="Yes";
 
-	</ label="Show Wheel", help="Overlay wheel artwork on movies", options="Yes,No", order=3 />
-	overlay_wheel="Yes";
+	</ label="Overlay Artwork", help="Artwork to overlay on videos", options="wheel,flyer,marquee,None", order=3 />
+	overlay_art="wheel";
 
 	</ label="Play Sound", help="Play video sounds during screensaver", options="Yes,No", order=4 />
 	sound="Yes";
@@ -55,18 +55,24 @@ function get_new_offset( obj )
 //
 // Container for a wheel image w/ shadow effect
 //
-class WheelOverlay
+class ArtOverlay
 {
 	logo=0;
 	logo_shadow=0;
 	in_time=0;
 	out_time=0;
 
-	constructor( x, y, width, shadow_offset )
+	constructor( x, y, width, height, shadow_offset )
 	{
-		if ( config["overlay_wheel"] == "Yes" )
+		if ( config["overlay_art"] != "None" )
 		{
-			logo_shadow = fe.add_artwork( "wheel", x + shadow_offset, y + shadow_offset, 0, width );
+			logo_shadow = fe.add_artwork(
+				config["overlay_art"],
+				x + shadow_offset,
+				y + shadow_offset,
+				width,
+				height );
+
 			logo_shadow.preserve_aspect_ratio = true;
 
 			logo = fe.add_clone( logo_shadow );
@@ -79,19 +85,30 @@ class WheelOverlay
 
 	function init( index_offset, ttime, duration )
 	{
-		if ( config["overlay_wheel"] == "Yes" )
+		if ( config["overlay_art"] != "None" )
 		{
 			logo.index_offset = index_offset;
 			logo.visible = logo_shadow.visible = true;
 			logo.alpha = logo_shadow.alpha = 0;
 			in_time = ttime + 1000; // start fade in one second in
-			out_time = ttime + duration - 2000; // start fade out 2 seconds before video ends
+
+			if ( config["overlay_art"] == "wheel" )
+			{
+				// start fade out 2 seconds before video ends
+				// for wheels
+				out_time = ttime + duration - 2000;
+			}
+			else
+			{
+				// otherwise just flash for 4 seconds
+				out_time = ttime + 4000;
+			}
 		}
 	}
 
 	function reset()
 	{
-		if ( config["overlay_wheel"] == "Yes" )
+		if ( config["overlay_art"] != "None" )
 		{
 			logo.visible = logo_shadow.visible = false;
 		}
@@ -99,7 +116,7 @@ class WheelOverlay
 
 	function on_tick( ttime )
 	{
-		if (( config["overlay_wheel"] == "Yes" )
+		if (( config["overlay_art"] != "None" )
 			&& ( logo.visible ))
 		{
 			if ( ttime > out_time + 1000 )
@@ -139,7 +156,7 @@ class MovieMode
 		if ( config["preserve_ar"] == "Yes" )
 			obj.preserve_aspect_ratio = true;
 
-		logo = WheelOverlay( 20, fe.layout.height - 220, 200, 2 );
+		logo = ArtOverlay( 10, fe.layout.height - 250, 520, 240, 2 );
 	}
 
 	function init( ttime )
@@ -196,7 +213,7 @@ class MovieCollageMode
 		for ( local i=0; i<objs.len(); i++ )
 		{
 			ignore.append( false );
-			logos.append( WheelOverlay( objs[i].x + 10, objs[i].y + objs[i].height - 110, 100, 1 ) ); 
+			logos.append( ArtOverlay( objs[i].x + 5, objs[i].y + objs[i].height - 125, 260, 120, 1 ) );
 		}
 	}
 
@@ -233,7 +250,10 @@ class MovieCollageMode
 	function reset()
 	{
 		foreach ( o in objs )
+		{
 			o.visible = false;
+			o.video_playing = false;
+		}
 
 		foreach ( l in logos )
 			l.reset();
