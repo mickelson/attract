@@ -171,6 +171,7 @@ public:
 	bool next_list();
 	bool prev_list();
 	int get_current_list_index() const;
+	int lists_count() const;
 
 	void init_list();
 
@@ -267,12 +268,13 @@ public:
 	//
 	// Functions used for configuration
 	//
-	void get_list_names( std::vector<std::string> &list ) const;
    const std::string get_info( int index ) const; // see "ConfigSettingIndex"
    bool set_info( int index, const std::string & );
-	FeListInfo *get_list( const std::string &n );
+
+	void get_list_names( std::vector<std::string> &list ) const;
+	FeListInfo *get_list( int index );
 	FeListInfo *create_list( const std::string &n );
-	void delete_list( const std::string &n );
+	void delete_list( int index );
 
 	void create_filter( FeListInfo &l, const std::string &name ) const;
 
@@ -286,8 +288,6 @@ public:
 	void get_resource( const std::string &token, std::string &str ) const;
 	void get_resource( const std::string &token, const std::string &rep,
 									std::string &str ) const;
-
-	int lists_count() const;
 
 	void set_language( const std::string &s );
 	const std::string &get_language() const { return m_language; }

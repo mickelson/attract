@@ -305,7 +305,7 @@ private:
 	FeFilterEditMenu m_filter_menu;
 	FeLayoutEditMenu m_layout_menu;
 	FeListInfo *m_list;
-	std::string m_name;
+	int m_index; // the index for m_list in FeSettings' master list
 
 public:
 	FeListEditMenu();
@@ -314,7 +314,7 @@ public:
 	bool on_option_select( FeConfigContext &ctx,
 						FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
-	void set_list( FeListInfo *list );
+	void set_list( FeListInfo *l, int index );
 };
 
 class FeListSelMenu : public FeBaseConfigMenu

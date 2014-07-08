@@ -1532,15 +1532,13 @@ bool FeSettings::set_info( int index, const std::string &value )
 }
 
 
-FeListInfo *FeSettings::get_list( const std::string &n )
+FeListInfo *FeSettings::get_list( int list_index )
 {
-	for ( std::vector<FeListInfo>::iterator itr=m_lists.begin();
-			itr < m_lists.end(); ++itr )
-	{
-		if ( n.compare( (*itr).get_info( FeListInfo::Name ) ) == 0 )
-			return &(*itr);
-	}
-	return NULL;
+	if ( ( list_index < 0 ) || ( list_index >= (int)m_lists.size() ))
+		return NULL;
+
+	std::vector<FeListInfo>::iterator itr=m_lists.begin() + list_index;
+	return &(*itr);
 }
 
 void FeSettings::create_filter( FeListInfo &l, const std::string &name ) const
@@ -1620,26 +1618,19 @@ void FeSettings::get_layouts_list( std::vector<std::string> &layouts ) const
 	}
 }
 
-void FeSettings::delete_list( const std::string &n )
+void FeSettings::delete_list( int list_index )
 {
-	int i=0;
-	for ( std::vector<FeListInfo>::iterator itr=m_lists.begin();
-			itr < m_lists.end(); ++itr )
-	{
-		if ( n.compare( (*itr).get_info( FeListInfo::Name ) ) == 0 )
-		{
-			m_lists.erase( itr );
+	if ( ( list_index < 0 ) || ( list_index >= (int)m_lists.size() ))
+		return;
 
-			if ( m_current_list >= i )
-				m_current_list--;
+	std::vector<FeListInfo>::iterator itr=m_lists.begin() + list_index;
+	m_lists.erase( itr );
 
-			if ( m_current_list < 0 )
-				m_current_list=0;
+	if ( m_current_list >= list_index )
+		m_current_list--;
 
-			return;
-		}
-		i++;
-	}
+	if ( m_current_list < 0 )
+		m_current_list=0;
 }
 
 void FeSettings::get_current_list_filter_names(

@@ -709,7 +709,8 @@ void FeFilterEditMenu::set_filter_index( FeListInfo *l, int i )
 }
 
 FeListEditMenu::FeListEditMenu()
-	: m_list( NULL )
+	: m_list( NULL ),
+	m_index( 0 )
 {
 }
 
@@ -804,10 +805,10 @@ bool FeListEditMenu::on_option_select(
 	else if ( o.opaque == 3 )
 	{
 		// "Delete this List"
-		if ( ctx.confirm_dialog( "Delete list '$1'?", m_name ) == false )
+		if ( ctx.confirm_dialog( "Delete list '$1'?", m_list->get_info( FeListInfo::Name ) ) == false )
 			return false;
 
-		ctx.fe_settings.delete_list( m_name );
+		ctx.fe_settings.delete_list( m_index );
 		m_list=NULL;
 		ctx.save_req=true;
 	}
@@ -826,10 +827,10 @@ bool FeListEditMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
-void FeListEditMenu::set_list( FeListInfo *l )
+void FeListEditMenu::set_list( FeListInfo *l, int index )
 {
 	m_list=l;
-	m_name = l->get_info( FeListInfo::Name );
+	m_index=index;
 }
 
 void FeListSelMenu::get_options( FeConfigContext &ctx )
@@ -839,12 +840,17 @@ void FeListSelMenu::get_options( FeConfigContext &ctx )
 	std::vector<std::string> name_list;
 	ctx.fe_settings.get_list_names( name_list );
 
+	int i=0;
 	for ( std::vector<std::string>::iterator itr=name_list.begin();
 			itr < name_list.end(); ++itr )
+	{
 		ctx.add_opt( Opt::MENU, (*itr), "", "_help_list_sel" );
+		ctx.back_opt().opaque = i;
+		i++;
+	}
 
 	ctx.add_optl( Opt::MENU, "Add New List", "", "_help_list_add" );
-	ctx.back_opt().opaque = 1;
+	ctx.back_opt().opaque = 100000;
 
 	FeBaseConfigMenu::get_options( ctx );
 }
@@ -858,8 +864,9 @@ bool FeListSelMenu::on_option_select(
 		return true;
 
 	FeListInfo *l( NULL );
+	int index(0);
 
-	if ( o.opaque == 1 )
+	if ( o.opaque == 100000 )
 	{
 		std::string res;
 		ctx.edit_dialog( "Enter List Name", res );
@@ -869,13 +876,17 @@ bool FeListSelMenu::on_option_select(
 
 		ctx.save_req=true;
 		l = ctx.fe_settings.create_list( res );
+		index = ctx.fe_settings.lists_count() - 1;
 	}
 	else
-		l = ctx.fe_settings.get_list( o.setting );
+	{
+		l = ctx.fe_settings.get_list( o.opaque );
+		index = o.opaque;
+	}
 
 	if ( l )
 	{
-		m_edit_menu.set_list( l );
+		m_edit_menu.set_list( l, index );
 		submenu = &m_edit_menu;
 	}
 
