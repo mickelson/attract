@@ -289,6 +289,7 @@ int main(int argc, char *argv[])
 			//
 			// Enter config mode
 			//
+			int old_mode = feSettings.get_window_mode();
 			if ( feOverlay.config_dialog() )
 			{
 				// Settings changed, reload
@@ -303,7 +304,13 @@ int main(int argc, char *argv[])
 
 				soundsys.stop();
 				soundsys.play_ambient();
-				window.initial_create();
+
+				// Recreate window if the window mode changed
+				if ( feSettings.get_window_mode() != old_mode )
+				{
+					window.on_exit();
+					window.initial_create();
+				}
 			}
 			config_mode=false;
 			redraw=true;

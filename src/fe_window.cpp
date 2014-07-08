@@ -166,11 +166,6 @@ void FeWindow::initial_create()
 	}
 #endif
 
-	initialize_mouse_capture();
-}
-
-void FeWindow::initialize_mouse_capture()
-{
 	sf::Vector2u wsize = getSize();
 	m_fes.init_mouse_capture( wsize.x, wsize.y );
 

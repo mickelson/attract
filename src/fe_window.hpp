@@ -39,8 +39,6 @@ public:
 	FeWindow( FeSettings &fes );
 
 	void initial_create();		// first time window creation
-	void initialize_mouse_capture();
-
 	void run();						// run the currently selected game
 	void on_exit();				// called before exiting frontend
 };
