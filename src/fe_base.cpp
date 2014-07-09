@@ -26,8 +26,8 @@
 #include <fstream>
 
 #define FE_NAME_D			"Attract-Mode"
-#define FE_VERSION_D 			"1.3.1"
-const int FE_VERSION_NUM		= 131;
+#define FE_VERSION_D 			"1.3.2"
+const int FE_VERSION_NUM		= 132;
 
 const char *FE_NAME			= FE_NAME_D;
 const char *FE_COPYRIGHT		= FE_NAME_D " " FE_VERSION_D \
