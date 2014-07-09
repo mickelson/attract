@@ -217,13 +217,15 @@ bool FeTextureContainer::load_static(
 
 bool FeTextureContainer::load_artwork(
 	const std::vector < std::string > &art_paths,
-	const std::string &target_name )
+	const std::string &target_name,
+	bool ignore_images )
 {
 	for ( std::vector< std::string >::const_iterator itr = art_paths.begin();
 			itr != art_paths.end(); ++itr )
 	{
 		std::vector<std::string> non_image_names;
 		std::vector<std::string> image_names;
+		std::vector<std::string> dummy;
 
 		get_filename_from_base(
 			image_names,
@@ -232,7 +234,8 @@ bool FeTextureContainer::load_artwork(
 			target_name + '.',
 			FE_ART_EXTENSIONS );
 
-		if ( common_load( non_image_names, image_names ) )
+		if ( common_load( non_image_names,
+				ignore_images ? dummy : image_names ) )
 			return true;
 
 		//
@@ -255,7 +258,8 @@ bool FeTextureContainer::load_artwork(
 			std::random_shuffle( non_image_names.begin(), non_image_names.end() );
 			std::random_shuffle( image_names.begin(), image_names.end() );
 
-			if ( common_load( non_image_names, image_names ) )
+			if ( common_load( non_image_names,
+					ignore_images ? dummy : image_names ) )
 				return true;
 		}
 	}
@@ -407,12 +411,22 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 
 	if ( !art_paths.empty() )
 	{
-		// test for "romname" specific
-		if ( load_artwork( art_paths, feSettings->get_rom_info( m_index_offset, FeRomInfo::Romname ) ) )
+		const std::string &romname = feSettings->get_rom_info( m_index_offset, FeRomInfo::Romname );
+		const std::string &cloneof = feSettings->get_rom_info( m_index_offset, FeRomInfo::Cloneof );
+
+		// test for "romname" specific videos
+		if ( load_artwork( art_paths, romname, true ) )
 			goto the_end;
 
-		// then "cloneof" specific
-		const std::string &cloneof = feSettings->get_rom_info( m_index_offset, FeRomInfo::Cloneof );
+		// then "cloneof" specific videos
+		if ( !cloneof.empty() && load_artwork( art_paths, cloneof, true ) )
+			goto the_end;
+
+		// test for "romname" specific images
+		if ( load_artwork( art_paths, romname ) )
+			goto the_end;
+
+		// then "cloneof" specific images
 		if ( !cloneof.empty() && load_artwork( art_paths, cloneof ) )
 			goto the_end;
 
