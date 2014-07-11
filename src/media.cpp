@@ -437,7 +437,11 @@ void FeVideoImp::preload()
 
 void FeVideoImp::video_thread()
 {
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 45, 0 ))
 	const unsigned int MAX_QUEUE( 4 ), MIN_QUEUE( 0 );
+#else
+	const unsigned int MAX_QUEUE( 1 ), MIN_QUEUE( 0 );
+#endif
 
 	bool exhaust_queue( false );
 	sf::Time max_sleep = time_base / (sf::Int64)2;
