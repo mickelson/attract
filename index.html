@@ -36,97 +36,34 @@ Attract-Mode is a graphical front-end for command line emulators such as MAME, M
 
         <h2><a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News</h2>
 
-	<h4>June 4, 2014: Support Forum Added.</h4>
-A little sparse at the moment: <a href="http://forum.attractmode.org">http://forum.attractmode.org</a>
-
-	<h4>May 31, 2014: Version 1.3 released.</h4>
-Release Notes:
-
-<p><b>General</b></p>
-<ul>
-<li>Added the ability to mark and filter games using custom tags.</li>
-<li>Multiple rom paths can now be specified in each emulator configuration.</li>
-<li>Multiple paths can now be specified for each artwork resource.</li>
-<li>If an artwork path contains a subdirectory that matches a rom's name, then a random video or image from that subdirectory is loaded.</li>
-<li>Added support for setups where each rom is stored in a separate subdirectory.</li>
-<li>The frontend can now run in windowed, fullscreen, or the default "fill screen" mode</li>
-<li>There is no longer a special "movie" artwork. Any artwork or static image can now contain images or videos. Videos are given preference if found.</li>
-<li>Added commands to add/remove custom tags, jump to the next letter, jump to the previous letter, and to launch the screensaver.</li>
-<li>Fixed image flipping on scaled images</li>
-<li>Fixed text scaling</li>
-<li>Fixed video crash</li>
-<li>Various small improvements to the overlay menus</li>
-<li>Improved screensaver</li>
-</ul>
-<p><b>Layouts and Plug-ins</b></p>
-<ul>
-<li>Added "Surface" objects for layouts, which are offscreen textures that other images, videos, texts and surfaces can be drawn onto. The surface itself is treated like any other image and can have effects such as skew, pinch, shaders, etc. applied to it.</li>
-<li>Improved layout control over video playback (see the "video_flags" and "video_playing" attributes)</li>
-<li>Added a file_name attribute so that scripts can directly get/set the image/video filename for any artwork or static image</li>
-<li>Layout and plugin scripts now have access to squirrel's standard "blob", "io", and "system" libraries.</li>
-<li>Reworked and simplified the interface for how plug-ins can access to external commands (the "fe.plugin_command()" functions).</li>
-<li>Added initial support for script library modules.</li>
-</ul>
-<p><b>Notes for those upgrading</b></p>
+	<h4><a href="http://forum.attractmode.org/index.php?topic=25.0">July 11, 2014 - Version 1.3.2 Released.</a></h4>
 <p>
-This update will likely break existing plug-ins (any plug-in that interfaces with an external program using the fe.plugin_command() functions)..
+A new version of Attract-Mode is now available!
+</p><p>
+This is primarily a bug fix release, here&#39;s what&#39;s new:
 </p>
-<a href="download.html">Download here.</a>
-
-	<h4>May 14, 2014: Extended Object and Animate library WIP</h4>
-
-	Liquid8 has begun work on a very cool and much needed squirrel library to extend functionality and make it easy to add animation to objects in your Attract-Mode layout... still early development but well worth checking out:
-
 <ul>
-	<li><a href="https://github.com/liquid8d/attract-extra/tree/master/layouts/extended">link to liquid8's github repository</a></li>
-	<li><a href="http://forum.arcadecontrols.com/index.php/topic,135704.msg1438888.html#msg1438888">link to forum discussion</a></li>
+	<li>fixes favourites and tags so they are no longer lost when entries are filtered out by the current filter</li>
+	<li>slight change to the artwork selection order: matched clone videos are now preferred over matched name images</li>
+	<li>[Linux] fix for emulator launching when running in &quot;Fullscreen Mode&quot;</li>
+	<li>video playback now keeps going during transition effects</li>
+	<li>fixed video stutter when using more recent versions of FFmpeg</li>
+	<li>updated the Windows binaries to use FFmpeg 2.2.4</li>
+	<li>layouts can now get and set the user-toggled rotation status</li>
+	<li>various screensaver improvements: added a mute option, added an option to overlay wheel artwork on the video and 2x2 video modes</li>
+	<li>various other small fixes and improvements</li>
 </ul>
-
-
-	<h4>April 10, 2014: Version 1.2.2 released.</h4>
-
-Release Notes:
-<ul>
-	<li>Fixed choppy video</li>
-	<li>Added pinch and skew effects for layout images and videos</li>
-	<li>Added pre-compiled OS X app bundle</li>
-</ul>
-
-
-	<h4>March 26, 2014: Version 1.2.1 released.</h4>
-
-This release fixes a couple of bugs found in version 1.2, including:
-<ul>
-	<li>incorrect clone information in generated MESS romlists</li>
-	<li>crashing on Windows XP when the system is shut down with Attract-Mode still running</li>
-	<li>garbled 8-bit WAV audio</li>
-</ul>
-
-
-	<h4>March 2, 2014: Version 1.2 released.</h4>
-
-	<p><b>What's new:</b></p>
-<ul>
-	<li>Favourites added. Favourites can now be marked, filtered and navigated through for each romlist</li>
-	<li>Added a French localization (thanks Nolan!)</li>
-	<li>Improved gamepad and analog joystick support</li>
-	<li>Added GLSL shader support to layouts</li>
-	<li>Import from Hyperspin and Mamewah/Wahcade! romlists</li>
-	<li>Support proper multi-user install on Linux and OS X</li>
-	<li>Added ability to filter based on display type and number of displays</li>
-	<li>Fixed crash when creating filters</li>
-	<li>Added 'relaunch last game' and an option to auto-relaunch on startup</li>
-	<li>Option to hide bracketed text in game titles</li>
-	<li>You can now configure layout-specific options from the configure menu</li>
-	<li>New included layout (thanks cools!)</li>
-	<li>many other bug fixes and improvements</li>
-</ul>
-<p><b>Notes for those upgrading:</b></p>
-<ul>
-	<li>All mouse and joystick mappings will have to be redone</li>
-	<li>The "screen" artwork from earlier versions has been renamed to "snap". If you update to a new layout and are no longer seeing images, you will need to rename the "screen" artwork to "snap" in your emulator configurations.</li>
-</ul>
-	
+<p>
+Downloads are available here: <a href="http://attractmode.org/download.html" class="bbc_link" target="_blank">http://attractmode.org/download.html</a>
+<br />
+Support Forum: <a href="http://forum.attractmode.org" class="bbc_link" target="_blank">http://forum.attractmode.org</a>
+<br />
+Enjoy!
+</p>
+	<h4><a href="http://forum.attractmode.org/index.php?topic=17.0">June 22, 2014 - Support Forum Added</a></h4>
+<p>
+A little sparse at the moment: <a href="http://forum.attractmode.org">http://forum.attractmode.org</a>
+</p>
 
       </section>
     </div>
