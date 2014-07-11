@@ -151,8 +151,10 @@ endif
 #
 # Check whether optional libs should be enabled
 #
-ifeq ($(shell $(PKG_CONFIG) --exists fontconfig && echo "1" || echo "0"), 1)
-USE_FONTCONFIG=1
+ifneq ($(FE_WINDOWS_COMPILE),1)
+ ifeq ($(shell $(PKG_CONFIG) --exists fontconfig && echo "1" || echo "0"), 1)
+ USE_FONTCONFIG=1
+ endif
 endif
 
 ifeq ($(shell $(PKG_CONFIG) --exists libswresample && echo "1" || echo "0"), 1)

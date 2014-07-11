@@ -244,10 +244,15 @@ void FeBaseStream::free_packet( AVPacket *pkt )
 
 void FeBaseStream::free_frame( AVFrame *frame )
 {
-#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 54, 28, 0 ))
-	avcodec_free_frame( &frame );
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 45, 0 ))
+	av_frame_unref( frame );
+	av_frame_free( &frame );
 #else
+ #if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 54, 28, 0 ))
+	avcodec_free_frame( &frame );
+ #else
 	av_free( frame );
+ #endif
 #endif
 }
 
@@ -363,7 +368,12 @@ void FeVideoImp::preload()
 			// decompress packet and put it in our frame queue
 			//
 			int got_frame = 0;
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 45, 0 ))
+			AVFrame *raw_frame = av_frame_alloc();
+			codec_ctx->refcounted_frames = 1;
+#else
 			AVFrame *raw_frame = avcodec_alloc_frame();
+#endif
 
 			int len = avcodec_decode_video2( codec_ctx, raw_frame,
 									&got_frame, packet );
@@ -550,7 +560,12 @@ void FeVideoImp::video_thread()
 					// decompress packet and put it in our frame queue
 					//
 					int got_frame = 0;
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 45, 0 ))
+					AVFrame *raw_frame = av_frame_alloc();
+					codec_ctx->refcounted_frames = 1;
+#else
 					AVFrame *raw_frame = avcodec_alloc_frame();
+#endif
 
 					int len = avcodec_decode_video2( codec_ctx, raw_frame,
 											&got_frame, packet );
@@ -989,8 +1004,12 @@ bool FeMedia::onGetData( Chunk &data )
 			}
 		}
 #else
+ #if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 45, 0 ))
+		AVFrame *frame = av_frame_alloc();
+		m_audio->codec_ctx->refcounted_frames = 1;
+ #else
 		AVFrame *frame = avcodec_alloc_frame();
-
+ #endif
 		//
 		// TODO: avcodec_decode_audio4() can return multiple frames per packet depending on the codec.
 		// We don't deal with this appropriately...
