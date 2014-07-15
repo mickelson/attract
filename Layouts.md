@@ -853,6 +853,10 @@ Member Functions:
    * `set_pos( x, y )` - Set the image position (in layout coordinates).
    * `set_pos( x, y, width, height )` - Set the image position and size (in
      layout coordinates).
+   * `swap( other_img )` - swap the texture contents of this object (and all
+     of its clones) with the contents of "other_img" (and all of its clones).
+     If an image or artwork is swapped, its video attributes (`video_flags`
+     and `video_playing`) will be swapped as well.
    * `add_image()` - [surface only] add an image to the end of this surface's
      draw list (see [`fe.add_image()`](#add_image) for parameters and return
      value).

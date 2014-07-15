@@ -95,6 +95,32 @@ const char *FeBaseTextureContainer::get_file_name() const
 	return NULL;
 }
 
+void FeBaseTextureContainer::transition_swap( FeBaseTextureContainer *o )
+{
+	//
+	// Swap image lists
+	//
+	m_images.swap( o->m_images );
+
+	//
+	// Now update the images to point at their new parent textures.
+	// texture_changed() will also cause them to update their sf::Sprite
+	// accordingly
+	//
+	std::vector< FeImage * >::iterator itr;
+
+	for ( itr = m_images.begin(); itr != m_images.end(); ++itr )
+		(*itr)->texture_changed( this );
+
+	for ( itr = o->m_images.begin(); itr != o->m_images.end(); ++itr )
+		(*itr)->texture_changed( o );
+}
+
+FeTextureContainer *FeBaseTextureContainer::get_derived_texture_container()
+{
+	return NULL;
+}
+
 FeImage *FeBaseTextureContainer::add_image(const char *,int, int, int, int)
 {
 	return NULL;
@@ -152,6 +178,7 @@ FeTextureContainer::FeTextureContainer(
 	bool is_artwork,
 	const std::string &art_name )
 	: m_index_offset( 0 ),
+	m_current_rom_index( -1 ),
 	m_is_artwork( is_artwork ),
 	m_movie( NULL ),
 	m_movie_status( -1 ),
@@ -363,6 +390,17 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 {
 	if ( !m_is_artwork )
 		return;
+
+	int new_rom_index = feSettings->get_rom_index( m_index_offset );
+
+	//
+	// Optimization opportunity: We could already be showing the artwork for new_rom_index if the
+	// layout uses the image swap() function... if we are, then there is no need to do anything...
+	//
+	if ( m_current_rom_index == new_rom_index )
+		return;
+
+	m_current_rom_index = new_rom_index;
 
 	m_texture = sf::Texture();
 	m_movie_status = -1;
@@ -637,6 +675,24 @@ const char *FeTextureContainer::get_file_name() const
 	return m_file_name.c_str();
 }
 
+void FeTextureContainer::transition_swap( FeBaseTextureContainer *o )
+{
+	FeTextureContainer *o_up = o->get_derived_texture_container();
+	if ( o_up )
+	{
+		m_art_name.swap( o_up->m_art_name );
+		std::swap( m_index_offset, o_up->m_index_offset );
+		std::swap( m_is_artwork, o_up->m_is_artwork );
+	}
+
+	FeBaseTextureContainer::transition_swap( o );
+}
+
+FeTextureContainer *FeTextureContainer::get_derived_texture_container()
+{
+	return this;
+}
+
 FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )
 {
 	m_texture.create( width, height );
@@ -788,8 +844,11 @@ const sf::Texture *FeImage::get_texture()
 }
 
 
-void FeImage::texture_changed()
+void FeImage::texture_changed( FeBaseTextureContainer *new_tex )
 {
+	if ( new_tex )
+		m_tex = new_tex;
+
 	m_sprite.setTexture( m_tex->get_texture(), true );
 	scale();
 }
@@ -1107,6 +1166,18 @@ void FeImage::set_subimg_height( int h )
 void FeImage::set_preserve_aspect_ratio( bool p )
 {
 	m_preserve_aspect_ratio = p;
+}
+
+void FeImage::transition_swap( FeImage *o )
+{
+	// if we're pointing at the same texture, don't do anything
+	//
+	if ( m_tex == o->m_tex )
+		return;
+
+	// otherwise swap the textures
+	//
+	m_tex->transition_swap( o->m_tex );
 }
 
 FeImage *FeImage::add_image(const char *n, int x, int y, int w, int h)

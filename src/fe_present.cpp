@@ -1559,6 +1559,7 @@ void FePresent::vm_on_new_layout( const std::string &path,
 		.Prop(_SC("preserve_aspect_ratio"), &FeImage::get_preserve_aspect_ratio,
 				&FeImage::set_preserve_aspect_ratio )
 		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
+		.Func( _SC("swap"), &FeImage::transition_swap )
 
 		//
 		// Surface-specific functionality:

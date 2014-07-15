@@ -32,14 +32,15 @@ class FeMedia;
 class FeImage;
 class FeText;
 class FeListBox;
+class FeTextureContainer;
 
 enum FeVideoFlags
 {
-	VF_Normal			= 0,
+	VF_Normal					= 0,
 	VF_DisableVideo			= 0x01,
-	VF_NoLoop			= 0x02,
-	VF_NoAutoStart			= 0x04,
-	VF_NoAudio			= 0x08
+	VF_NoLoop					= 0x02,
+	VF_NoAutoStart				= 0x04,
+	VF_NoAudio					= 0x08
 };
 
 class FeBaseTextureContainer
@@ -67,6 +68,7 @@ public:
 
 	virtual void set_file_name( const char *n );
 	virtual const char *get_file_name() const;
+	virtual void transition_swap( FeBaseTextureContainer *o );
 
 	//
 	// Callback functions for use with surface objects
@@ -85,11 +87,18 @@ protected:
 	FeBaseTextureContainer( const FeBaseTextureContainer & );
 	FeBaseTextureContainer &operator=( const FeBaseTextureContainer & );
 
+	//
+	// Return a pointer to the FeTextureContainer if this is that type of container
+	//
+	virtual FeTextureContainer *get_derived_texture_container();
+
 	// call this to notify registered images that the texture has changed
 	void notify_texture_change();
 
 private:
 	std::vector< FeImage * > m_images;
+
+	friend FeTextureContainer;
 };
 
 class FeTextureContainer : public FeBaseTextureContainer
@@ -117,7 +126,12 @@ public:
 	void set_file_name( const char *n );
 	const char *get_file_name() const;
 
+	void transition_swap( FeBaseTextureContainer *o );
+
 	bool load_static( const std::string &file_name );
+
+protected:
+	FeTextureContainer *get_derived_texture_container();
 
 private:
 
@@ -133,6 +147,7 @@ private:
 	std::string m_art_name; // artwork label for artworks
 	std::string m_file_name; // the name of the loaded file
 	int m_index_offset;
+	int m_current_rom_index;
 	bool m_is_artwork;
 	FeMedia *m_movie;
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
@@ -220,7 +235,8 @@ public:
 	// Overrides from base class:
 	//
 	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
-	void texture_changed();
+
+	void texture_changed( FeBaseTextureContainer *new_tex=NULL );
 
 	int get_skew_x() const ;
 	int get_skew_y() const;
@@ -243,6 +259,7 @@ public:
 	void set_subimg_width( int w );
 	void set_subimg_height( int h );
 	void set_preserve_aspect_ratio( bool p );
+	void transition_swap( FeImage * );
 
 	//
 	// Callback functions for use with surface objects

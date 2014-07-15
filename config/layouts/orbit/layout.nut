@@ -42,14 +42,13 @@ else
 
 class Marquee {
 	ob=null; 
-	orig_ob=null;
 	base_io=0;
 	xl=0; xm=0; xr=0; 
 	sl=0.0; sm=0.0; sr=0.0;
 
 	constructor( pio, pxl, pxm, pxr, psl, psm, psr ) {
 		xl=pxl; xm=pxm; xr=pxr; sl=psl; sm=psm; sr=psr;
-		orig_ob = ob = fe.add_artwork( my_config["orbit_art"] );
+		ob = fe.add_artwork( my_config["orbit_art"] );
 		ob.preserve_aspect_ratio=true;
 		ob.video_flags = Vid.ImagesOnly;
 		ob.index_offset = base_io = pio;
@@ -86,9 +85,7 @@ class Marquee {
 		set_bright( sm * 255, ob );
 	}
 	function swap_art( o ) {
-		local temp = o.ob;
-		o.ob = ob;
-		ob = temp;
+		ob.swap( o.ob );
 	}
 }
 
@@ -193,12 +190,30 @@ function orbit_transition( ttype, var, ttime ) {
 			return true;
 		}
 
+		//
+		// Optimization: Attract-Mode will reload artworks according to their
+		// index_offset once this transition is complete.  However it is smart
+		// enough to not reload where the container already holds an image/video
+		// for the game that is going to be displayed.  The following swaps put
+		// the artwork images in the right place to make use of this feature...
+		//
+		if ( var < 0 )
+		{
+			for ( local i=marquees.len()-1; i>0; i-- )
+				marquees[i].swap_art( marquees[i-1] );
+		}
+		else
+		{
+			for ( local i=0; i<marquees.len()-1; i++ )
+				marquees[i].swap_art( marquees[i+1] );
+		}
+
 		foreach ( m in marquees )
 		{
-			m.ob = m.orig_ob;
 			m.reset();
 			m.ob.index_offset = m.base_io;
 		}
+
 		marquees[2].ob.shader = yes_shader;
 		last_move=0;
 		break;
