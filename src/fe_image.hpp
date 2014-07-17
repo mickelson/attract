@@ -98,7 +98,7 @@ protected:
 private:
 	std::vector< FeImage * > m_images;
 
-	friend FeTextureContainer;
+	friend class FeTextureContainer;
 };
 
 class FeTextureContainer : public FeBaseTextureContainer
