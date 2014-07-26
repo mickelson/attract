@@ -117,7 +117,7 @@ OS X.
 
    to build the 32-bit version of Attract-Mode. To build 64-bit, run:
 
-           make WINDOWS_STATICS=1 CROSS=x86_64-w64-mingw32-
+           make WINDOWS_STATIC=1 CROSS=x86_64-w64-mingw32-
 
    This step will create the "attract.exe" executable file.
 
