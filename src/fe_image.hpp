@@ -276,6 +276,4 @@ public:
 	FeImage *add_surface(int, int);
 };
 
-void script_do_update( FeBaseTextureContainer * );
-
 #endif

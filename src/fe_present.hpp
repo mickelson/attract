@@ -28,6 +28,7 @@
 #include "fe_settings.hpp"
 #include "fe_sound.hpp"
 #include "fe_shader.hpp"
+#include "fe_vm.hpp"
 
 class FeImage;
 class FeBaseTextureContainer;
@@ -35,22 +36,6 @@ class FeText;
 class FeListBox;
 class FeFontContainer;
 class FeSurfaceTextureContainer;
-
-namespace Sqrat
-{
-	class Table;
-};
-
-enum FeTransitionType
-{
-	StartLayout=0,		// var: FromToScreenSaver, FromToFrontend or FromToNoValue
-	EndLayout,			// var: FromToScreenSaver, FromToFrontend or FromToNoValue
-	ToNewSelection,	// var = index_offset of new selection
-	FromOldSelection,	// var == index_offset of old selection
-	ToGame,				// var = 0
-	FromGame,			// var = 0
-	ToNewList			// var = 0
-};
 
 //
 // Container class for use in our font pool
@@ -71,13 +56,10 @@ private:
 class FePresent
 	: public sf::Drawable
 {
-	friend void script_do_update( FeBasePresentable * );
-	friend FeShader *script_get_empty_shader();
 	friend class FeSurfaceTextureContainer;
+	friend class FeVM;
 
 private:
-	static const char *transitionTypeStrings[];
-
 	enum FromToType
 	{
 		FromToNoValue=0,
@@ -86,7 +68,7 @@ private:
 	};
 
 	FeSettings *m_feSettings;
-	const FeScriptConfigurable *m_currentScriptConfig;
+	FeVM *m_vm;
 
 	const FeFontContainer *m_currentFont;
 	FeFontContainer &m_defaultFont;
@@ -108,14 +90,8 @@ private:
 	std::vector<FeScriptSound *> m_scriptSounds;
 	std::vector<FeShader *> m_scriptShaders;
 	std::vector<FeFontContainer *> m_fontPool;
-	std::vector<std::string> m_ticksList;
-	std::vector<std::string> m_transitionList;
 	bool m_playMovies;
 	bool m_screenSaverActive;
-
-	// flag if a redraw has been triggered during script callback execution
-	//
-	bool m_redrawTriggered;
 
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
@@ -138,14 +114,6 @@ private:
 	//
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
-	// Scripting functionality
-	//
-	void vm_close();
-	void vm_init();
-	void vm_on_new_layout( const std::string &path, const std::string &filename, const FeLayoutInfo &layout_params );
-	bool vm_on_tick();
-	bool vm_on_transition( FeTransitionType, int var, sf::RenderWindow *wnd );
-
 	FeImage *add_image(bool a, const std::string &n, int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
 	FeImage *add_clone(FeImage *, std::vector<FeBasePresentable *> &l);
 	FeText *add_text(const std::string &n, int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
@@ -153,8 +121,6 @@ private:
 	FeImage *add_surface(int w, int h, std::vector<FeBasePresentable *> &l);
 	FeScriptSound *add_sound(const std::string &n);
 	FeShader *add_shader(FeShader::Type type, const char *shader1, const char *shader2);
-	void add_ticks_callback(const std::string &);
-	void add_transition_callback(const std::string &);
 	int get_layout_width() const;
 	int get_layout_height() const;
 	int get_base_rotation() const;
@@ -170,30 +136,28 @@ private:
 	void set_base_rotation( int );
 	void set_toggle_rotation( int );
 	void set_layout_font( const char * );
-	FeShader *get_empty_shader();
-
-	static bool internal_do_nut(const std::string &, const std::string &);
-
 
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
 	~FePresent( void );
 
-	void load_screensaver( sf::RenderWindow *wnd );
-	void load_layout( sf::RenderWindow *wnd, bool initial_load=false );
+	void load_screensaver();
+	void load_layout( bool initial_load=false );
 
 	int update( bool reload_list=false );
-	void update_to_new_list( sf::RenderWindow *wnd );
+	void update_to_new_list();
 
-	bool tick( sf::RenderWindow *w ); // return true if display refresh required
-	bool saver_activation_check(  sf::RenderWindow *w );
-	void on_stop_frontend( sf::RenderWindow *w );
-	void pre_run( sf::RenderWindow *w );
-	void post_run( sf::RenderWindow *w );
+	bool tick(); // return true if display refresh required
+	bool video_tick(); // limited tick: videos only
+
+	bool saver_activation_check();
+	void on_stop_frontend();
+	void pre_run();
+	void post_run();
 	void toggle_mute();
 
-	bool reset_screen_saver( sf::RenderWindow *w );
-	bool handle_event( FeInputMap::Command, const sf::Event &ev, sf::RenderWindow *w );
+	bool reset_screen_saver();
+	bool handle_event( FeInputMap::Command, const sf::Event &ev );
 
 	FeSettings *get_fes() const { return m_feSettings; };
 	int get_page_size() const;
@@ -211,41 +175,10 @@ public:
 	void perform_autorotate();
 
 	bool get_screensaver_active() { return m_screenSaverActive; }
+	const sf::Vector2i &get_output_size() const { return m_outputSize; }
 
-	void flag_redraw();
-
-	static FeImage *cb_add_image(const char *,int, int, int, int);
-	static FeImage *cb_add_image(const char *, int, int);
-	static FeImage *cb_add_image(const char *);
-	static FeImage *cb_add_artwork(const char *,int, int, int, int);
-	static FeImage *cb_add_artwork(const char *, int, int);
-	static FeImage *cb_add_artwork(const char *);
-	static FeImage *cb_add_clone(FeImage *);
-	static FeText *cb_add_text(const char *,int, int, int, int);
-	static FeListBox *cb_add_listbox(int, int, int, int);
-	static FeImage *cb_add_surface(int, int);
-	static FeScriptSound *cb_add_sound(const char *);
-	static FeShader *cb_add_shader(int, const char *, const char *);
-	static FeShader *cb_add_shader(int, const char *);
-	static FeShader *cb_add_shader(int);
-	static void cb_add_ticks_callback(const char *);
-	static void cb_add_transition_callback(const char *);
-	static bool cb_is_keypressed(int);	// deprecated as of 1.2
-	static bool cb_is_joybuttonpressed(int,int);	// deprecated as of 1.2
-	static float cb_get_joyaxispos(int,int);	// deprecated as of 1.2
-	static bool cb_get_input_state( const char *input );
-	static int cb_get_input_pos( const char *input );
-	static void do_nut(const char *);
-	static bool load_module( const char *module_file );
-	static bool cb_plugin_command(const char *, const char *, const char *);
-	static bool cb_plugin_command(const char *, const char *);
-	static bool cb_plugin_command_bg(const char *, const char *);
-	static const char *cb_path_expand( const char *path );
-	static const char *cb_game_info(int,int);
-	static const char *cb_game_info(int);
-	static Sqrat::Table cb_get_config();
+	FeShader *get_empty_shader();
 };
 
-extern FePresent *helper_get_fep();
 
 #endif

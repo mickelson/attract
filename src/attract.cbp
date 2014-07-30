@@ -258,6 +258,8 @@
 		<Unit filename="fe_util.hpp" />
 		<Unit filename="fe_util_sq.cpp" />
 		<Unit filename="fe_util_sq.hpp" />
+		<Unit filename="fe_vm.cpp" />
+		<Unit filename="fe_vm.hpp" />
 		<Unit filename="fe_window.cpp" />
 		<Unit filename="fe_window.hpp" />
 		<Unit filename="fe_xml.cpp" />

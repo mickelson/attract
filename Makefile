@@ -81,6 +81,7 @@ _DEP =\
 	tp.hpp \
 	fe_text.hpp \
 	fe_listbox.hpp \
+	fe_vm.hpp \
 	fe_icon.hpp
 
 _OBJ =\
@@ -104,6 +105,7 @@ _OBJ =\
 	tp.o \
 	fe_text.o \
 	fe_listbox.o \
+	fe_vm.o \
 	main.o
 
 #

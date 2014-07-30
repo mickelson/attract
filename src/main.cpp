@@ -28,6 +28,7 @@
 #include "fe_sound.hpp"
 #include "fe_text.hpp"
 #include "fe_window.hpp"
+#include "fe_vm.hpp"
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
@@ -256,7 +257,9 @@ int main(int argc, char *argv[])
 	window.initial_create();
 
 	FePresent fePresent( &feSettings, defaultFont );
-	fePresent.load_layout( &window, true );
+	FeVM feVM( feSettings, fePresent, window );
+
+	fePresent.load_layout( true );
 
 	FeOverlay feOverlay( window, feSettings, fePresent );
 
@@ -300,7 +303,7 @@ int main(int argc, char *argv[])
 					defaultFont.set_font( defaultFontFile );
 
 				feSettings.init_list();
-				fePresent.load_layout( &window );
+				fePresent.load_layout();
 
 				soundsys.stop();
 				soundsys.play_ambient();
@@ -312,6 +315,7 @@ int main(int argc, char *argv[])
 					window.initial_create();
 				}
 			}
+			fePresent.reset_screen_saver();
 			config_mode=false;
 			redraw=true;
 		}
@@ -319,9 +323,9 @@ int main(int argc, char *argv[])
 		{
 			soundsys.stop();
 
-			fePresent.pre_run( &window );
+			fePresent.pre_run();
 			window.run();
-			fePresent.post_run( &window );
+			fePresent.post_run();
 
 			soundsys.sound_event( FeInputMap::EventGameReturn );
 			soundsys.play_ambient();
@@ -363,7 +367,7 @@ int main(int argc, char *argv[])
 					// a reset too)
 					//
 					if (( c == FeInputMap::LAST_COMMAND )
-							&& ( fePresent.reset_screen_saver( &window ) ))
+							&& ( fePresent.reset_screen_saver() ))
 						redraw = true;
 					break;
 
@@ -405,7 +409,7 @@ int main(int argc, char *argv[])
 				continue;
 
 			soundsys.sound_event( c );
-			if ( fePresent.handle_event( c, ev, &window ) )
+			if ( fePresent.handle_event( c, ev ) )
 				redraw = true;
 			else
 			{
@@ -437,9 +441,9 @@ int main(int argc, char *argv[])
 
 				case FeInputMap::ReplayLastGame:
 					if ( feSettings.select_last_launch() )
-						fePresent.load_layout( &window );
+						fePresent.load_layout();
 					else
-						fePresent.update_to_new_list( &window );
+						fePresent.update_to_new_list();
 
 					launch_game=true;
 					redraw=true;
@@ -487,9 +491,9 @@ int main(int argc, char *argv[])
 						else
 						{
 							if ( feSettings.set_list( list_index ) )
-								fePresent.load_layout( &window );
+								fePresent.load_layout();
 							else
-								fePresent.update_to_new_list( &window );
+								fePresent.update_to_new_list();
 						}
 						redraw=true;
 					}
@@ -503,7 +507,7 @@ int main(int argc, char *argv[])
 						else
 						{
 							feSettings.set_filter( list_index );
-							fePresent.update_to_new_list( &window );
+							fePresent.update_to_new_list();
 						}
 
 						redraw=true;
@@ -526,13 +530,13 @@ int main(int argc, char *argv[])
 									feSettings.get_rom_info( 0, FeRomInfo::Title ) ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
-									fePresent.update_to_new_list( &window ); // changing fav status altered the current list
+									fePresent.update_to_new_list(); // changing fav status altered the current list
 							}
 						}
 						else
 						{
 							if ( feSettings.set_current_fav( new_state ) )
-								fePresent.update_to_new_list( &window ); // changing fav status altered the current list
+								fePresent.update_to_new_list(); // changing fav status altered the current list
 						}
 						redraw = true;
 					}
@@ -551,10 +555,10 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if ( fePresent.tick( &window ) )
+		if ( fePresent.tick() )
 			redraw=true;
 
-		if ( fePresent.saver_activation_check( &window ) )
+		if ( fePresent.saver_activation_check() )
 			soundsys.sound_event( FeInputMap::ScreenSaver );
 
 		if ( redraw )
@@ -572,16 +576,10 @@ int main(int argc, char *argv[])
 	}
 
 	window.on_exit();
+	fePresent.on_stop_frontend();
 
 	if ( window.isOpen() )
-	{
-		fePresent.on_stop_frontend( &window );
 		window.close();
-	}
-	else
-	{
-		fePresent.on_stop_frontend( NULL );
-	}
 
 	soundsys.stop();
 	feSettings.save_state();

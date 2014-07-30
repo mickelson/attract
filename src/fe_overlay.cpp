@@ -211,7 +211,7 @@ void FeOverlay::splash_message( const std::string &msg,
 
 	const sf::Transform &t = m_fePresent.get_transform();
 
-	m_fePresent.tick( NULL );
+	m_fePresent.tick();
 
 	m_wnd.clear();
 	m_wnd.draw( m_fePresent, t );
@@ -526,13 +526,13 @@ int FeOverlay::tags_dialog()
 		if ( !name.empty() )
 		{
 			if ( m_feSettings.set_current_tag( name, true ) )
-				m_fePresent.update_to_new_list( &m_wnd ); // changing tag status altered our current list
+				m_fePresent.update_to_new_list(); // changing tag status altered our current list
 		}
 	}
 	else if (( sel >=0 ) && ( sel < (int)tags_list.size() ))
 	{
 		if ( m_feSettings.set_current_tag( tags_list[sel].first, !(tags_list[sel].second) ) )
-			m_fePresent.update_to_new_list( &m_wnd ); // changing tag status altered our current list
+			m_fePresent.update_to_new_list(); // changing tag status altered our current list
 	}
 
 	return sel;
@@ -685,7 +685,7 @@ void FeOverlay::input_map_dialog(
 				return;
 		}
 
-		if ( m_fePresent.tick( NULL ) )
+		if ( m_fePresent.tick() )
 			redraw = true;
 
 		if ( redraw )
@@ -1040,7 +1040,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 			}
 		}
 
-		if ( m_fePresent.tick( NULL ) )
+		if ( m_fePresent.tick() )
 			redraw = true;
 
 		if ( redraw )
@@ -1248,7 +1248,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				cursor.setPosition( tp->setString( str, cursor_pos ) );
 		}
 
-		if ( m_fePresent.tick( NULL ) )
+		if ( m_fePresent.tick() )
 			redraw = true;
 
 		if ( redraw )

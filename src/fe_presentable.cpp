@@ -21,6 +21,7 @@
  */
 
 #include "fe_presentable.hpp"
+#include "fe_present.hpp"
 
 FeBasePresentable::FeBasePresentable()
 	: m_shader( NULL ),
@@ -156,7 +157,7 @@ bool FeBasePresentable::get_visible() const
 void FeBasePresentable::set_visible( bool v )
 {
 	m_visible = v;
-	script_flag_redraw();
+	FeVM::script_flag_redraw();
 }
 
 FeShader *FeBasePresentable::get_shader() const
@@ -169,9 +170,11 @@ FeShader *FeBasePresentable::script_get_shader() const
 	if ( m_shader )
 		return m_shader;
 	else
-		return script_get_empty_shader();
+	{
+		FePresent *fep = FeVM::script_get_fep();
+		return fep->get_empty_shader();
+	}
 }
-
 
 void FeBasePresentable::script_set_shader( FeShader *sh )
 {

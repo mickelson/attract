@@ -90,9 +90,4 @@ public:
 	void script_set_shader( FeShader *s );
 };
 
-void script_do_update( FeBasePresentable * );
-void script_flag_redraw();
-const sf::Font *script_get_font( const std::string & );
-FeShader *script_get_empty_shader();
-
 #endif

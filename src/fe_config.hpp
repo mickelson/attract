@@ -185,12 +185,6 @@ public:
 class FeScriptConfigMenu : public FeBaseConfigMenu
 {
 protected:
-	void get_options_helper(
-		FeConfigContext &ctx,
-		std::string &gen_help,
-		FeScriptConfigurable &configurable,
-		const std::string &script_file );
-
 	bool on_option_select(
 			FeConfigContext &ctx, FeBaseConfigMenu *& submenu );
 

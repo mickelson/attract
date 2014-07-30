@@ -24,15 +24,14 @@
 #include "fe_info.hpp"
 #include "fe_settings.hpp"
 #include "fe_util.hpp"
-#include "fe_util_sq.hpp"
-#include <iostream>
+#include "fe_vm.hpp"
 
 #include <SFML/Graphics/Shader.hpp>
 #ifndef NO_MOVIE
 #include "media.hpp"
 #endif
 
-#include <sqrat.h>
+#include <iostream>
 
 FeMenuOpt::FeMenuOpt( int t, const std::string &set, const std::string &val )
 	: m_list_index( -1 ),
@@ -273,13 +272,16 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 	FeBaseConfigMenu::get_options( ctx );
 }
 
-bool my_ui_update( void *d, int i )
+namespace
 {
-	FeConfigContext *od = (FeConfigContext *)d;
+	bool my_ui_update( void *d, int i )
+	{
+		FeConfigContext *od = (FeConfigContext *)d;
 
-	od->splash_message( "Generating Rom List: $1%", as_str( i ) );
-	return !od->check_for_cancel();
-}
+		od->splash_message( "Generating Rom List: $1%", as_str( i ) );
+		return !od->check_for_cancel();
+	}
+};
 
 bool FeEmulatorEditMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
@@ -1313,139 +1315,6 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
-void FeScriptConfigMenu::get_options_helper(
-		FeConfigContext &ctx,
-		std::string &gen_help,
-		FeScriptConfigurable &configurable,
-		const std::string &script_file )
-{
-	if ( !script_file.empty() )
-	{
-		HSQUIRRELVM stored_vm = Sqrat::DefaultVM::Get();
-		HSQUIRRELVM temp_vm = sq_open( 1024 );
-		sq_pushroottable( temp_vm );
-		Sqrat::DefaultVM::Set( temp_vm );
-
-		Sqrat::ConstTable()
-			.Const( _SC("FeVersion"), FE_VERSION)
-			.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
-			.Const( _SC("OS"), get_OS_string() )
-			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() );
-
-		try
-		{
-			Sqrat::Script sc;
-			sc.CompileFile( script_file );
-			sc.Run();
-		}
-		catch( Sqrat::Exception e )
-		{
-			// ignore all errors, they are expected
-		}
-
-		// Control the scope of our Sqrat objects so they are destroyed
-		// before we call sq_close() on the vm below
-		//
-		{
-			Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
-			if ( !uConfig.IsNull() )
-			{
-				fe_get_attribute_string(
-					temp_vm,
-					uConfig.GetObject(), "", "help", gen_help );
-
-				// Now Ccnstruct the UI elements for plug-in/layout specific configuration
-				//
-				std::multimap<int,FeMenuOpt> my_opts;
-
-				Sqrat::Object::iterator it;
-				while ( uConfig.Next( it ) )
-				{
-					std::string key;
-					fe_get_object_string( temp_vm, it.getKey(), key );
-
-					std::string value, label, help, options, is_input;
-
-					// use the default value from the script if a value has
-					// not already been configured
-					//
-					if ( !configurable.get_param( key, value ) )
-						fe_get_object_string( temp_vm, uConfig.GetSlot( key.c_str() ), value );
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "label", label);
-
-					if ( label.empty() )
-						label = key;
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "help", help);
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "options", options);
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "is_input", is_input);
-
-					std::string otmp;
-					int order=-1;
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "order", otmp);
-
-					if ( !otmp.empty() )
-						order = as_int( otmp );
-
-
-					if ( !options.empty() )
-					{
-						std::vector<std::string> options_list;
-						size_t pos=0;
-						do
-						{
-							std::string temp;
-							token_helper( options, pos, temp, "," );
-							options_list.push_back( temp );
-						} while ( pos < options.size() );
-
-						std::multimap<int,FeMenuOpt>::iterator it = my_opts.insert(
-								std::pair <int, FeMenuOpt>(
-									order,
-									FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
-
-						(*it).second.append_vlist( options_list );
-					}
-					else if ( config_str_to_bool( is_input ) )
-					{
-						my_opts.insert(
-								std::pair <int, FeMenuOpt>(
-									order,
-									FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
-					}
-					else
-					{
-						my_opts.insert(
-								std::pair <int, FeMenuOpt>(
-									order,
-									FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
-					}
-				}
-
-				for ( std::multimap<int,FeMenuOpt>::iterator itr = my_opts.begin(); itr != my_opts.end(); ++itr )
-					ctx.opt_list.push_back( (*itr).second );
-			}
-		}
-
-		// reset to our usual VM and close the temp vm
-		Sqrat::DefaultVM::Set( stored_vm );
-		sq_close( temp_vm );
-	}
-}
-
 bool FeScriptConfigMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
@@ -1519,7 +1388,7 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_plugin_full_path( m_plugin->get_name(), plug_path, plug_name );
 
 	std::string gen_help;
-	FeScriptConfigMenu::get_options_helper( ctx, gen_help, *m_plugin, plug_path + plug_name );
+	FeVM::script_get_config_options( ctx, gen_help, *m_plugin, plug_path + plug_name );
 
 	if ( !gen_help.empty() )
 		ctx.opt_list[0].help_msg = gen_help;
@@ -1591,7 +1460,7 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 				+ FE_LAYOUT_FILE_BASE + FE_LAYOUT_FILE_EXTENSION;
 
 		std::string gen_help;
-		FeScriptConfigMenu::get_options_helper( ctx, gen_help, *m_layout, script_file );
+		FeVM::script_get_config_options( ctx, gen_help, *m_layout, script_file );
 
 		if ( !gen_help.empty() )
 			ctx.opt_list[0].help_msg = gen_help;
@@ -1624,7 +1493,7 @@ void FeSaverEditMenu::get_options( FeConfigContext &ctx )
 	std::string gen_help, path, filename;
 	ctx.fe_settings.get_screensaver_file( path, filename );
 
-	FeScriptConfigMenu::get_options_helper( ctx, gen_help,
+	FeVM::script_get_config_options( ctx, gen_help,
 					ctx.fe_settings.get_screensaver_config(),
 					path + filename );
 
