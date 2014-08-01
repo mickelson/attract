@@ -647,38 +647,54 @@ bool FeVM::on_transition(
 FePresent *FeVM::script_get_fep()
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-	return &(fev->m_fep);
+	if ( vm )
+	{
+		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+		if ( fev )
+			return &(fev->m_fep);
+	}
+
+	return NULL;
 }
 
 void FeVM::script_do_update( FeBasePresentable *bp )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+	if ( vm )
+	{
+		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	bp->on_new_list( &(fev->m_fes),
-		fev->m_fep.get_layout_scale_x(),
-		fev->m_fep.get_layout_scale_y() );
+		bp->on_new_list( &(fev->m_fes),
+			fev->m_fep.get_layout_scale_x(),
+			fev->m_fep.get_layout_scale_y() );
 
-	bp->on_new_selection( &(fev->m_fes) );
+		bp->on_new_selection( &(fev->m_fes) );
 
-	fev->flag_redraw();
+		fev->flag_redraw();
+	}
 }
 
 void FeVM::script_do_update( FeBaseTextureContainer *tc )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+	if ( vm )
+	{
+		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	tc->on_new_selection( &(fev->m_fes), fev->m_fep.get_screensaver_active() );
-	fev->flag_redraw();
+		tc->on_new_selection( &(fev->m_fes), fev->m_fep.get_screensaver_active() );
+		fev->flag_redraw();
+	}
 }
 
 void FeVM::script_flag_redraw()
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-	fev->flag_redraw();
+	if ( vm )
+	{
+		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+		fev->flag_redraw();
+	}
 }
 
 void FeVM::script_get_config_options(
