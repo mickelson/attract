@@ -172,8 +172,6 @@ public:
 
 	const sf::Vector2i &get_layout_size() const { return m_layoutSize; }
 
-	void perform_autorotate();
-
 	bool get_screensaver_active() { return m_screenSaverActive; }
 	const sf::Vector2i &get_output_size() const { return m_outputSize; }
 

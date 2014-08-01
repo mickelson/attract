@@ -58,7 +58,6 @@ _help_plugin_enabled;Set whether this plug-in is enabled
 _help_plugin_sel;Configure plug-in
 _help_volume;Valid volume settings are from 0 (mute) to 100 
 _help_sound_sel;Assign a sound to this event/action
-_help_autorot;Autorotate to match the rotation of the last game played
 _help_exit_command;Command to execute when Exit (Confirm) is selected [i.e. "sudo shutdown"]
 _help_default_font;The name of the default font to use
 _help_font_path;The directories containing fonts.  Multiple directories can be entered if separated by a semicolon.  Attract-Mode will recursively search these directories to find a specified font

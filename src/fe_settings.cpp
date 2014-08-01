@@ -117,25 +117,6 @@ const char *FE_DIR_TOKEN				= "<DIR>";
 
 const std::string FE_EMPTY_STRING;
 
-// NOTE: this has to remain aligned with the RotationState enum:
-const char *FeSettings::rotationTokens[]	=
-{
-	"none",
-	"right",
-	"flip",
-	"left",
-	NULL
-};
-
-const char *FeSettings::rotationDispTokens[]	=
-{
-	"None",
-	"Right",
-	"Flip",
-	"Left",
-	NULL
-};
-
 const char *FeSettings::windowModeTokens[] =
 {
 	"default",
@@ -156,7 +137,6 @@ FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
 	:  m_inputmap(),
 	m_current_list( -1 ),
-	m_autorotate( RotateNone ),
 	m_current_config_object( NULL ),
 	m_ssaver_time( 600 ),
 	m_last_launch_list( 0 ),
@@ -280,7 +260,6 @@ void FeSettings::load()
 const char *FeSettings::configSettingStrings[] =
 {
 	"language",
-	"autorotate",
 	"exit_command",
 	"default_font",
 	"font_path",
@@ -357,7 +336,7 @@ int FeSettings::process_setting( const std::string &setting,
 				{
 					invalid_setting( fn,
 						configSettingStrings[i],
-						value, rotationTokens, NULL, "value" );
+						value, NULL, NULL, "value" );
 					return 1;
 				}
 				return 0;
@@ -1346,11 +1325,6 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	return false;
 }
 
-FeSettings::RotationState FeSettings::get_autorotate() const
-{
-	return m_autorotate;
-}
-
 FeSettings::WindowType FeSettings::get_window_mode() const
 {
 	return m_window_mode;
@@ -1385,8 +1359,6 @@ const std::string FeSettings::get_info( int index ) const
 		return m_language;
 	case ExitCommand:
 		return m_exit_command;
-	case AutoRotate:
-		return rotationTokens[ m_autorotate ];
 	case DefaultFont:
 		return m_default_font;
 	case FontPath:
@@ -1433,24 +1405,6 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ExitCommand:
 		m_exit_command = value;
-		break;
-
-	case AutoRotate:
-		{
-			int i=0;
-			while ( rotationTokens[i] != NULL )
-			{
-				if ( value.compare( rotationTokens[i] ) == 0 )
-				{
-					m_autorotate = (RotationState)i;
-					break;
-				}
-				i++;
-			}
-
-			if ( rotationTokens[i] == NULL )
-				return false;
-		}
 		break;
 
 	case DefaultFont:

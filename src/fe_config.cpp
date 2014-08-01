@@ -1209,19 +1209,6 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_language" );
 	ctx.back_opt().append_vlist( disp_lang_list );
 
-	std::string autorot;
-	ctx.fe_settings.get_resource( FeSettings::rotationDispTokens[ ctx.fe_settings.get_autorotate() ], autorot );
-	std::vector < std::string > rotations;
-	i=0;
-	while ( FeSettings::rotationDispTokens[i] != 0 )
-	{
-		rotations.push_back( std::string() );
-		ctx.fe_settings.get_resource( FeSettings::rotationDispTokens[ i ], rotations.back() );
-		i++;
-	}
-	ctx.add_optl( Opt::LIST, "Auto Rotate", autorot, "_help_autorot" );
-	ctx.back_opt().append_vlist( rotations );
-
 	std::vector<std::string> bool_opts( 2 );
 	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
 	ctx.fe_settings.get_resource( "No", bool_opts[1] );
@@ -1285,32 +1272,29 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::AutoRotate,
-			FeSettings::rotationTokens[ ctx.opt_list[1].get_vindex() ] );
-
 	ctx.fe_settings.set_info( FeSettings::ListsMenuExit,
-			ctx.opt_list[2].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[1].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::HideBrackets,
-			ctx.opt_list[3].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[2].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame,
-			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[3].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
-			ctx.opt_list[5].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[6].get_value() );
+			ctx.opt_list[5].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::DefaultFont,
-			ctx.opt_list[7].get_value() );
+			ctx.opt_list[6].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::FontPath,
-			ctx.opt_list[8].get_value() );
+			ctx.opt_list[7].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
-			FeSettings::windowModeTokens[ ctx.opt_list[9].get_vindex() ] );
+			FeSettings::windowModeTokens[ ctx.opt_list[8].get_vindex() ] );
 
 	return true;
 }

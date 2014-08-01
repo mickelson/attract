@@ -130,7 +130,7 @@ Windows (native compile):
 
 It is possible (but not recommended or supported) to compile Attract-Mode
 natively on Windows-based systems.  If you can, you really should cross-compile
-followign the instructions above.
+following the instructions above.
 
 To build natively on Windows you might have luck following the instructions
 for compiling on Linux and FreeBSD with the following modifications:

@@ -56,8 +56,6 @@ class FeSettings : public FeBaseConfigurable
 {
 public:
    enum RotationState { RotateNone=0, RotateRight, RotateFlip, RotateLeft };
-	static const char *rotationTokens[];
-	static const char *rotationDispTokens[];
 
 	enum WindowType { Default=0, Fullscreen, Window };
 	static const char *windowModeTokens[];
@@ -66,7 +64,6 @@ public:
 	enum ConfigSettingIndex
 	{
 		Language=0,
-		AutoRotate,
 		ExitCommand,
 		DefaultFont,
 		FontPath,
@@ -104,7 +101,6 @@ private:
 	sf::IntRect m_mousecap_rect;
 
 	int m_current_list;
-	RotationState m_autorotate;
 	FeBaseConfigurable *m_current_config_object;
 	int m_ssaver_time;
 	int m_last_launch_list;
@@ -222,7 +218,6 @@ public:
 	bool config_file_exists() const;
 	bool get_font_file( std::string &fullpath, const std::string &filename="" ) const;
 
-	RotationState get_autorotate() const;
 	WindowType get_window_mode() const;
 	int get_screen_saver_timeout() const;
 	bool get_lists_menu_exit() const;

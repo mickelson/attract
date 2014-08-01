@@ -876,7 +876,6 @@ void FePresent::pre_run()
 
 void FePresent::post_run()
 {
-	perform_autorotate();
 	m_vm->on_transition( FromGame, FromToNoValue );
 
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
@@ -961,35 +960,6 @@ void FePresent::set_transforms()
 	}
 
 	m_transform.scale( m_layoutScale.x, m_layoutScale.y );
-}
-
-void FePresent::perform_autorotate()
-{
-	FeSettings::RotationState autorotate = m_feSettings->get_autorotate();
-
-	if ( autorotate == FeSettings::RotateNone )
-		return;
-
-	std::string rom_rot = m_feSettings->get_rom_info( 0,
-						FeRomInfo::Rotation );
-
-	m_toggleRotation = FeSettings::RotateNone;
-
-	switch ( m_baseRotation )
-	{
-	case FeSettings::RotateLeft:
-	case FeSettings::RotateRight:
-		if (( rom_rot.compare( "0" ) == 0 ) || ( rom_rot.compare( "180" ) == 0 ))
-			m_toggleRotation = autorotate;
-		break;
-	case FeSettings::RotateNone:
-	case FeSettings::RotateFlip:
-	default:
-		if (( rom_rot.compare( "90" ) == 0 ) || ( rom_rot.compare( "270" ) == 0 ))
-			m_toggleRotation = autorotate;
-	}
-
-	set_transforms();
 }
 
 FeShader *FePresent::get_empty_shader()

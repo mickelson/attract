@@ -177,7 +177,6 @@ _help_sound_sel;Assigner un son à cet événement/action
 # Miscellaneous Settings Configuration
 #
 Configure / Miscellaneous;Configuration / Divers
-Auto Rotate;Rotation automatique
 Hide Brackets in Game Title;Cacher les crochets dans le titre du jeu
 Launch Last Game on Startup;Lancer le dernier jeu au démarrage
 Confirm Favourites;Confirmer les favoris
@@ -195,7 +194,6 @@ Language;Langage
 en;Anglais
 fr;Français
 
-_help_autorot;Auto-rotation correspondant à la rotation du dernier jeu joué
 _help_exit_command;Commande à exécuter en quittant (Confirmer) [exemple "sudo shutdown"]
 _help_default_font;Le nom de la police par défaut à utiliser
 _help_font_path;Répertoires contenant les polices (séparés par des points virgules)
