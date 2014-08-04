@@ -44,6 +44,7 @@ private:
 	const sf::Color m_bgColour;
 	const sf::Color m_selColour;
 	const sf::Color m_selBgColour;
+	bool m_overlay_is_on;
 
 	FeOverlay( const FeOverlay & );
 	FeOverlay &operator=( const FeOverlay & );
@@ -53,13 +54,8 @@ private:
 		sf::Vector2f &text_scale,
 		int &char_size ) const;
 
-	int internal_dialog(
-			const std::string &msg_str,
-			const std::vector<std::string> &list );
-
 	void input_map_dialog( const std::string &msg_str, std::string &map_str,
 			FeInputMap::Command &conflict );
-	void edit_dialog( const std::string &msg_str, std::string &text );
 	int display_config_dialog( FeBaseConfigMenu *, bool & );
 
 	bool event_loop( FeEventLoopCtx & );
@@ -77,10 +73,24 @@ public:
 	void splash_message( const std::string &, const std::string &rep="" );
 	int confirm_dialog( const std::string &msg, const std::string &rep="" );
 	bool config_dialog();
-	int lists_dialog();
-	int filters_dialog();
 	int languages_dialog();
 	int tags_dialog();
+
+	int common_list_dialog(
+			const std::string &title,
+			const std::vector < std::string > &options,
+			int default_sel,
+			int cancel_sel );
+
+	int common_basic_dialog(
+			const std::string &message,
+			const std::vector<std::string> &options,
+			int default_sel,
+			int cancel_sel );
+
+	void edit_dialog( const std::string &msg_str, std::string &text );
+
+	bool overlay_is_on() const { return m_overlay_is_on; };
 };
 
 #endif

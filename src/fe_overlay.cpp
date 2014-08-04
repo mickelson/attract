@@ -72,14 +72,7 @@ void FeConfigContextImp::edit_dialog( const std::string &m, std::string &t )
 bool FeConfigContextImp::confirm_dialog( const std::string &msg,
 						const std::string &rep )
 {
-	std::string t;
-	fe_settings.get_resource( msg, rep, t );
-
-	std::vector<std::string> list(2);
-	fe_settings.get_resource( "Yes", list[0] );
-	fe_settings.get_resource( "No", list[1] );
-
-	return (( m_feo.internal_dialog( t, list ) == 0 ) ? true : false );
+	return m_feo.confirm_dialog( msg, rep );
 }
 
 void FeConfigContextImp::splash_message(
@@ -158,7 +151,8 @@ FeOverlay::FeOverlay( sf::RenderWindow &wnd,
 	m_textColour( sf::Color::White ),
 	m_bgColour( sf::Color( 0, 0, 0, 220 ) ),
 	m_selColour( sf::Color::Yellow ),
-	m_selBgColour( sf::Color( 0, 0, 200, 220 ) )
+	m_selBgColour( sf::Color( 0, 0, 200, 220 ) ),
+	m_overlay_is_on( false )
 {
 }
 
@@ -229,20 +223,21 @@ int FeOverlay::confirm_dialog( const std::string &msg, const std::string &rep )
 	m_feSettings.get_resource( "Yes", list[0] );
 	m_feSettings.get_resource( "No", list[1] );
 
-	return internal_dialog(	msg_str, list );
+	return common_basic_dialog(	msg_str, list, 1, 1 );
 }
 
-int FeOverlay::lists_dialog()
+int FeOverlay::common_list_dialog(
+			const std::string &title,
+			const std::vector < std::string > &options,
+			int default_sel,
+			int cancel_sel	)
 {
 	sf::Vector2i size;
 	sf::Vector2f text_scale;
 	int char_size;
 	get_common( size, text_scale, char_size );
 
-	std::vector<std::string> list;
-	m_feSettings.get_list_names( list );
-
-	if ( list.size() > 8 )
+	if ( options.size() > 8 )
 		char_size /= 2;
 
 	std::vector<sf::Drawable *> draw_list;
@@ -259,10 +254,7 @@ int FeOverlay::lists_dialog()
 	heading.setOutlineThickness( -2 );
 	heading.setTextScale( text_scale );
 
-	std::string temp;
-	m_feSettings.get_resource( "Lists", temp );
-
-	heading.setString( temp );
+	heading.setString( title );
 	draw_list.push_back( &heading );
 
 	FeListBox dialog(
@@ -280,89 +272,15 @@ int FeOverlay::lists_dialog()
 	dialog.setTextScale( text_scale );
 	draw_list.push_back( &dialog );
 
-	int last_list = list.size() - 1;
-	if ( m_feSettings.get_lists_menu_exit() )
-	{
-		//
-		// Add an exit option at the end of the lists menu
-		//
-		std::string exit_str;
-		m_feSettings.get_resource( "Exit Attract-Mode", exit_str );
-		list.push_back( exit_str );
-	}
+	int sel = default_sel;;
+	dialog.setText( sel, options );
 
-	int current_i = m_feSettings.get_current_list_index();
-	int sel = current_i;
-	dialog.setText( sel, list );
+	FeEventLoopCtx c( draw_list, sel, cancel_sel, options.size() - 1 );
 
-	FeEventLoopCtx c( draw_list, sel, current_i, list.size() - 1 );
-
+	m_overlay_is_on = true;
 	while ( event_loop( c ) == false )
-		dialog.setText( sel, list );
-
-	// test if the exit option selected, return -2 if it has been
-	if ( sel > last_list )
-		sel = -2;
-
-	return sel;
-}
-
-int FeOverlay::filters_dialog()
-{
-	sf::Vector2i size;
-	sf::Vector2f text_scale;
-	int char_size;
-	get_common( size, text_scale, char_size );
-
-	std::vector<std::string> list;
-	m_feSettings.get_current_list_filter_names( list );
-
-	if ( list.size() > 8 )
-		char_size /= 2;
-
-	std::vector<sf::Drawable *> draw_list;
-
-	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
-	bg.setFillColor( m_bgColour );
-	bg.setOutlineColor( m_textColour );
-	bg.setOutlineThickness( -2 );
-	draw_list.push_back( &bg );
-
-	FeTextPrimative heading( m_fePresent.get_font(), m_selColour, sf::Color::Transparent, char_size );
-	heading.setSize( size.x, size.y / 8 );
-	heading.setOutlineColor( m_textColour );
-	heading.setOutlineThickness( -2 );
-	heading.setTextScale( text_scale );
-
-	std::string temp;
-	m_feSettings.get_resource( "Filters", temp );
-	heading.setString( temp );
-	draw_list.push_back( &heading );
-
-	FeListBox dialog(
-		m_fePresent.get_font(),
-		m_textColour,
-		sf::Color::Transparent,
-		m_selColour,
-		m_selBgColour,
-		char_size,
-		size.y / ( char_size * 1.5 * text_scale.y ) );
-
-	dialog.setPosition( 2, size.y / 8 );
-	dialog.setSize( size.x - 4, size.y * 7 / 8 );
-	dialog.init();
-	dialog.setTextScale( text_scale );
-
-	draw_list.push_back( &dialog );
-
-	int current_i = m_feSettings.get_current_filter_index();
-	int sel = current_i;
-	dialog.setText( sel, list );
-
-	FeEventLoopCtx c( draw_list, sel, current_i, list.size() - 1 );
-
-	while ( event_loop( c ) == false )
-		dialog.setText( sel, list );
+		dialog.setText( sel, options );
+	m_overlay_is_on = false;
 
 	return sel;
 }
@@ -409,34 +327,9 @@ int FeOverlay::languages_dialog()
 		i++;
 	}
 
-	sf::Vector2i size;
-	sf::Vector2f text_scale;
-	int char_size;
-	get_common( size, text_scale, char_size );
-
-	FeListBox dialog(
-		m_fePresent.get_font(),
-		m_textColour,
-		m_bgColour,
-		m_selColour,
-		m_selBgColour,
-		char_size,
-		size.y / ( char_size * 1.5 * text_scale.y ) );
-
-	dialog.setPosition( 0, 0 );
-	dialog.setSize( size.x, size.y );
-	dialog.init();
-	dialog.setTextScale( text_scale );
-
-	std::vector<sf::Drawable *> draw_list( 1, &dialog );
-
-	int sel = current_i;
-	dialog.setText( sel, pl );
-
-	FeEventLoopCtx c( draw_list, sel, current_i, pl.size() - 1 );
-
-	while ( event_loop( c ) == false )
-		dialog.setText( sel, pl );
+	int sel = common_list_dialog( std::string(),
+					pl, current_i,
+					pl.size() - 1 );
 
 	if ( sel >= 0 )
 		m_feSettings.set_language( ll[sel] );
@@ -448,14 +341,6 @@ int FeOverlay::tags_dialog()
 {
 	std::vector< std::pair<std::string, bool> > tags_list;
 	m_feSettings.get_current_tags_list( tags_list );
-
-	sf::Vector2i size;
-	sf::Vector2f text_scale;
-	int char_size;
-	get_common( size, text_scale, char_size );
-
-	if ( tags_list.size() > 8 )
-		char_size /= 2;
 
 	std::vector<std::string> list;
 
@@ -474,49 +359,15 @@ int FeOverlay::tags_dialog()
 	list.push_back( std::string() );
 	m_feSettings.get_resource( "Create new tag", list.back() );
 
-	std::vector<sf::Drawable *> draw_list;
-
-	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
-	bg.setFillColor( m_bgColour );
-	bg.setOutlineColor( m_textColour );
-	bg.setOutlineThickness( -2 );
-	draw_list.push_back( &bg );
-
-	FeTextPrimative heading( m_fePresent.get_font(), m_selColour, sf::Color::Transparent, char_size );
-	heading.setSize( size.x, size.y / 8 );
-	heading.setOutlineColor( m_textColour );
-	heading.setOutlineThickness( -2 );
-	heading.setTextScale( text_scale );
+	list.push_back( std::string() );
+	m_feSettings.get_resource( "Back", list.back() );
 
 	std::string temp;
 	m_feSettings.get_resource( "Tags", temp );
-	heading.setString( temp );
-	draw_list.push_back( &heading );
 
-	FeListBox dialog(
-		m_fePresent.get_font(),
-		m_textColour,
-		sf::Color::Transparent,
-		m_selColour,
-		m_selBgColour,
-		char_size,
-		size.y / ( char_size * 1.5 * text_scale.y ) );
-
-	dialog.setPosition( 2, size.y / 8 );
-	dialog.setSize( size.x - 4, size.y * 7 / 8 );
-	dialog.init();
-	dialog.setTextScale( text_scale );
-
-	draw_list.push_back( &dialog );
-
-	int current_i = list.size();
-	int sel = current_i - 1;
-	dialog.setText( sel, list );
-
-	FeEventLoopCtx c( draw_list, sel, current_i, list.size() - 1 );
-
-	while ( event_loop( c ) == false )
-		dialog.setText( sel, list );
+	int sel = common_list_dialog( temp,
+					list, 0,
+					list.size() - 1 );
 
 	if ( sel == (int)tags_list.size() )
 	{
@@ -538,9 +389,11 @@ int FeOverlay::tags_dialog()
 	return sel;
 }
 
-int FeOverlay::internal_dialog(
+int FeOverlay::common_basic_dialog(
 			const std::string &msg_str,
-			const std::vector<std::string> &list )
+			const std::vector<std::string> &list,
+			int default_sel,
+			int cancel_sel )
 {
 	sf::Vector2i size;
 	sf::Vector2f text_scale;
@@ -585,13 +438,15 @@ int FeOverlay::internal_dialog(
 	draw_list.push_back( &message );
 	draw_list.push_back( &dialog );
 
-	int sel=1;
+	int sel=default_sel;
 	dialog.setText( sel, list );
 
-	FeEventLoopCtx c( draw_list, sel, 1, list.size() - 1 );
+	FeEventLoopCtx c( draw_list, sel, cancel_sel, list.size() - 1 );
 
+	m_overlay_is_on = true;
 	while ( event_loop( c ) == false )
 		dialog.setText( sel, list );
+	m_overlay_is_on = false;
 
 	return sel;
 }
@@ -629,11 +484,13 @@ void FeOverlay::edit_dialog(
 	std::basic_string<sf::Uint32> str;
 	sf::Utf8::toUtf32( text.begin(), text.end(), std::back_inserter( str ) );
 
+	m_overlay_is_on = true;
 	if ( edit_loop( draw_list, str, &tp ) == true )
 	{
 		text.clear();
 		sf::Utf32::toUtf8( str.begin(), str.end(), std::back_inserter( text ) );
 	}
+	m_overlay_is_on = false;
 }
 
 void FeOverlay::input_map_dialog(
@@ -672,6 +529,7 @@ void FeOverlay::input_map_dialog(
 	}
 
 	bool redraw=true;
+	m_overlay_is_on = true;
 
 	const sf::Transform &t = m_fePresent.get_transform();
 	while ( m_wnd.isOpen() )
@@ -679,10 +537,16 @@ void FeOverlay::input_map_dialog(
 		while (m_wnd.pollEvent(ev))
 		{
 			if ( ev.type == sf::Event::Closed )
+			{
+				m_overlay_is_on = false;
 				return;
+			}
 
 			if ( m_feSettings.config_map_input( ev, map_str, conflict ) )
+			{
+				m_overlay_is_on = false;
 				return;
+			}
 		}
 
 		if ( m_fePresent.tick() )
@@ -699,6 +563,7 @@ void FeOverlay::input_map_dialog(
 		else
 			sf::sleep( sf::milliseconds( 30 ) );
 	}
+	m_overlay_is_on = false;
 }
 
 bool FeOverlay::config_dialog()
@@ -830,12 +695,14 @@ int FeOverlay::display_config_dialog(
 	{
 		FeEventLoopCtx c( draw_list, ctx.curr_sel, ctx.exit_sel, ctx.left_list.size() - 1 );
 
+		m_overlay_is_on = true;
 		while ( event_loop( c ) == false )
 		{
 			footer.setString( ctx.curr_opt().help_msg );
 			sdialog.setText( ctx.curr_sel, ctx.left_list );
 			vdialog.setText( ctx.curr_sel, ctx.right_list );
 		}
+		m_overlay_is_on = false;
 
 		//
 		// User selected something, process it
@@ -928,10 +795,12 @@ int FeOverlay::display_config_dialog(
 
 				FeEventLoopCtx c( draw_list, new_value, -1, ctx.curr_opt().values_list.size() - 1 );
 
+				m_overlay_is_on = true;
 				while ( event_loop( c ) == false )
 				{
 					tp->setString(ctx.curr_opt().values_list[new_value]);
 				}
+				m_overlay_is_on = false;
 
 				if (( new_value >= 0 ) && ( new_value != original_value ))
 				{
@@ -947,6 +816,7 @@ int FeOverlay::display_config_dialog(
 				sf::Utf8::toUtf32( e_str.begin(), e_str.end(),
 						std::back_inserter( str ) );
 
+				m_overlay_is_on = true;
 				if ( edit_loop( draw_list, str, tp ) == true )
 				{
 					ctx.save_req = true;
@@ -959,6 +829,7 @@ int FeOverlay::display_config_dialog(
 					ctx.curr_opt().set_value( d_str );
 					ctx.right_list[ctx.curr_sel] = d_str;
 				}
+				m_overlay_is_on = false;
 			}
 
 			tp->setString( ctx.right_list[ctx.curr_sel] );

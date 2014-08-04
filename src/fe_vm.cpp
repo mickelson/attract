@@ -28,6 +28,7 @@
 #include "fe_image.hpp"
 #include "fe_shader.hpp"
 #include "fe_config.hpp"
+#include "fe_overlay.hpp"
 #include "fe_window.hpp"
 
 #include "fe_util.hpp"
@@ -82,10 +83,11 @@ const char *FeVM::transitionTypeStrings[] =
 		NULL
 };
 
-FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd )
+FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo )
 	: m_fes( fes ),
 	m_fep( fep ),
 	m_window( wnd ),
+	m_overlay( feo ),
 	m_redraw_triggered( false ),
 	m_script_cfg( NULL )
 {
@@ -434,6 +436,11 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FeVM::cb_plugin_command_bg);
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 	fe.Func<Sqrat::Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
+	fe.Overload<int (*)( Sqrat::Array, const char *, int, int )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
+	fe.Overload<int (*)( Sqrat::Array, const char *, int )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
+	fe.Overload<int (*)( Sqrat::Array, const char * )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
+	fe.Overload<int (*)( Sqrat::Array )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
+	fe.Func<const char* (*)(const char *, const char *)>(_SC("edit_dialog"), &FeVM::cb_edit_dialog);
 
 	// BEGIN deprecated functions
 	// is_keypressed() and is_joybuttonpressed() deprecated as of version 1.2.  Use get_input_state() instead
@@ -1040,7 +1047,6 @@ bool FeVM::internal_do_nut( const std::string &work_dir,
 	else
 		path = script_file;
 
-
 	if ( !file_exists( path ) )
 		return false;
 
@@ -1152,4 +1158,70 @@ Sqrat::Table FeVM::cb_get_config()
 	}
 
 	return retval;
+}
+
+int FeVM::cb_list_dialog( Sqrat::Array t, const char *title, int default_sel, int cancel_sel )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+	if ( fev->m_overlay.overlay_is_on() )
+		return cancel_sel;
+
+	std::vector < std::string > list_entries;
+
+	Sqrat::Object::iterator it;
+	while ( t.Next( it ) )
+	{
+		std::string value;
+		fe_get_object_string( vm, it.getValue(), value );
+
+		list_entries.push_back( value );
+	}
+
+	if ( list_entries.size() > 2 )
+	{
+		return fev->m_overlay.common_list_dialog(
+				std::string( title ),
+				list_entries,
+				default_sel,
+				cancel_sel );
+	}
+	else
+	{
+		return fev->m_overlay.common_basic_dialog(
+				std::string( title ),
+				list_entries,
+				default_sel,
+				cancel_sel );
+	}
+}
+
+int FeVM::cb_list_dialog( Sqrat::Array t, const char *title, int default_sel )
+{
+	return cb_list_dialog( t, title, default_sel, -1 );
+}
+
+int FeVM::cb_list_dialog( Sqrat::Array t, const char *title )
+{
+	return cb_list_dialog( t, title, 0, -1 );
+}
+
+int FeVM::cb_list_dialog( Sqrat::Array t )
+{
+	return cb_list_dialog( t, NULL, 0, -1 );
+}
+
+const char *FeVM::cb_edit_dialog( const char *msg, const char *txt )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+	static std::string local_copy;
+	local_copy = txt;
+
+	if ( !fev->m_overlay.overlay_is_on() )
+		fev->m_overlay.edit_dialog( msg, local_copy );
+
+	return local_copy.c_str();
 }

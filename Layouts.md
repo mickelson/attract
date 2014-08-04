@@ -29,6 +29,8 @@ Contents
       * [`fe.plugin_command_bg()`](#plugin_command_bg)
       * [`fe.path_expand()`](#path_expand)
       * [`fe.get_config()`](#get_config)
+      * [`fe.list_dialog()`](#list_dialog)
+      * [`fe.edit_dialog()`](#edit_dialog)
    * [Objects and Variables](#objects)
       * [`fe.layout`](#layout)
       * [`fe.list`](#list)
@@ -126,9 +128,10 @@ Add a static image or video to the end of Attract-Mode's draw list.
 
 Parameters:
 
-   * name - the name of an image/video file located in the layout directory.
-     Supported image formats are: PNG, JPEG, GIF, BMP and TGA.  Videos can be
-     in any format supported by FFmpeg.
+   * name - the name of an image/video file to show.  If a relative path is
+     provided (i.e. "bg.png") it is assumed to be relative to the current
+     layout directory.  Supported image formats are: PNG, JPEG, GIF, BMP and
+     TGA.  Videos can be in any format supported by FFmpeg.
    * x - the x coordinate of the top left corner of the image (in layout
      coordinates).
    * y - the y coordinate of the top left corner of the image (in layout
@@ -160,8 +163,9 @@ the game selection.
 Parameters:
 
    * label - the label of the artwork to display.  This needs to correspond
-     to an artwork resource configured in Attract-Mode (artworks are
-     configured per emulator in Attract-Mode's configuration mode).
+     to an artwork configured in Attract-Mode (such as "snap", "marquee",
+     "flyer", "wheel", etc.)  Artworks are configured per emulator in Attract-
+     Mode's configuration menu.
    * x - the x coordinate of the top left corner of the artwork (in layout
      coordinates).
    * y - the y coordinate of the top left corner of the artwork (in layout
@@ -187,8 +191,8 @@ Return Value:
 Add a surface to the end of Attract-Mode's draw list.  A surface is an off-
 screen texture upon which you can draw other image, artwork, text, listbox
 and surface objects.  The resulting texture is treated as a static image by
-Attract-Mode which can in turn have any of the image effects applied to it
-(pinch, skew, shaders, etc) when it is drawn.
+Attract-Mode which can in turn have image effects applied to it (scale, 
+position, pinch, skew, shaders, etc) when it is drawn.
 
 Parameters:
 
@@ -675,6 +679,44 @@ Return Value:
 
      For an example, please see one of the plug-ins included with Attract-
      Mode or the "Attrac-Man" layout.
+
+<a name="list_dialog" />
+#### `fe.list_dialog()` ####
+
+    fe.list_dialog( options, title, default_sel, cancel_sel )
+    fe.list_dialog( options, title, default_sel )
+    fe.list_dialog( options, title )
+    fe.list_dialog( options )
+
+Prompt the user with a menu containing a list of options, returning the
+index of the selection.
+
+Parameters:
+
+   * options - an array containing the menu options to display in the list
+   * title - the list caption
+   * default_sel - index of the initial selection.  Default value is 0.
+   * cancel_sel - index to return if the user cancels.  Default value is 0
+
+Return Value:
+
+   * the index of the user's selection
+
+<a name="edit_dialog" />
+#### `fe.edit_dialog()` ####
+
+    fe.edit_dialog( msg, text )
+
+Prompt the user to input/edit text.
+
+Parameters:
+
+   * msg - the prompt caption
+   * text - the initial text to be edited
+
+Return Value:
+
+   * the text edited by the user
 
 
 <a name="objects" />

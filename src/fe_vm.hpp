@@ -38,12 +38,14 @@ class FeScriptSound;
 class FeScriptConfigurable;
 class FeLayoutInfo;
 class FeWindow;
+class FeOverlay;
 class FeConfigContext;
 class FeScriptConfigurable;
 
 namespace Sqrat
 {
 	class Table;
+	class Array;
 };
 
 enum FeTransitionType
@@ -60,7 +62,6 @@ enum FeTransitionType
 class FeVM
 {
 private:
-	friend FePresent *helper_get_fep();
 	static const char *transitionTypeStrings[];
 
 	enum FromToType
@@ -73,6 +74,7 @@ private:
 	FeSettings &m_fes;
 	FePresent &m_fep;
 	FeWindow &m_window;
+	FeOverlay &m_overlay;
 
 	bool m_redraw_triggered;
 	const FeScriptConfigurable *m_script_cfg;
@@ -88,7 +90,7 @@ private:
 	static bool internal_do_nut(const std::string &, const std::string &);
 
 public:
-	FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd );
+	FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo );
 	~FeVM();
 
 	void flag_redraw() { m_redraw_triggered = true; };
@@ -149,6 +151,11 @@ public:
 	static const char *cb_game_info(int,int);
 	static const char *cb_game_info(int);
 	static Sqrat::Table cb_get_config();
+	static int cb_list_dialog( Sqrat::Array, const char *, int, int );
+	static int cb_list_dialog( Sqrat::Array, const char *, int );
+	static int cb_list_dialog( Sqrat::Array, const char * );
+	static int cb_list_dialog( Sqrat::Array );
+	static const char *cb_edit_dialog( const char *msg, const char *txt );
 };
 
 #endif

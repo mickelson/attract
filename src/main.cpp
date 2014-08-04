@@ -257,11 +257,10 @@ int main(int argc, char *argv[])
 	window.initial_create();
 
 	FePresent fePresent( &feSettings, defaultFont );
-	FeVM feVM( feSettings, fePresent, window );
+	FeOverlay feOverlay( window, feSettings, fePresent );
+	FeVM feVM( feSettings, fePresent, window, feOverlay );
 
 	fePresent.load_layout( true );
-
-	FeOverlay feOverlay( window, feSettings, fePresent );
 
 	bool exit_selected=false;
 
@@ -476,16 +475,42 @@ int main(int argc, char *argv[])
 
 				case FeInputMap::ListsMenu:
 					{
-						int list_index = feOverlay.lists_dialog();
-						if ( list_index < 0 )
+						std::vector<std::string> names_list;
+						feSettings.get_list_names( names_list );
+
+						std::string title;
+						feSettings.get_resource( "Lists", title );
+
+						int last_list = names_list.size() - 1;
+						if ( feSettings.get_lists_menu_exit() )
+						{
+							//
+							// Add an exit option at the end of the lists menu
+							//
+							std::string exit_str;
+							feSettings.get_resource( "Exit Attract-Mode", exit_str );
+							names_list.push_back( exit_str );
+						}
+
+						int list_index = feOverlay.common_list_dialog(
+										title,
+										names_list,
+										feSettings.get_current_list_index(),
+										names_list.size() - 1 );
+
+						// test if the exit option selected, return -2 if it has been
+						if ( list_index > last_list )
+							list_index = -2;
+
+						if (( list_index < 0 ) || ( list_index > last_list ))
 						{
 							// list index is -1 if user pressed the "exit no dialog"
-							// button, and -2 if they selected the "exit" menu
-							// option.  We only want to run the exit command if the
-							// menu option was selected
+							// button, and is > last_list if they selected the "exit"
+							// menu option.  We only want to run the exit command if
+							// the menu option was selected
 							//
 							exit_selected = true;
-							if ( list_index < -1 )
+							if ( list_index > last_list )
 								feSettings.exit_command();
 						}
 						else
@@ -501,7 +526,18 @@ int main(int argc, char *argv[])
 
 				case FeInputMap::FiltersMenu:
 					{
-						int list_index = feOverlay.filters_dialog();
+						std::vector<std::string> names_list;
+						feSettings.get_current_list_filter_names( names_list );
+
+						std::string title;
+						feSettings.get_resource( "Filters", title );
+
+						int list_index = feOverlay.common_list_dialog(
+										title,
+										names_list,
+										feSettings.get_current_filter_index(),
+										names_list.size() - 1 );
+
 						if ( list_index < 0 )
 							exit_selected = true;
 						else

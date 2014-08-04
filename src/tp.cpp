@@ -100,7 +100,7 @@ void FeTextPrimative::fit_string(
 	int running_total( charsize * 2 ); // measure of line's pixel width
 
 	// start from "position", "i" measures to right, "j" to the left
-	int i( (position == (int)s.size()) ? position : position + 1 );
+	int i( position );
 	int j( position );
 	int last_space( i );
 
@@ -118,6 +118,15 @@ void FeTextPrimative::fit_string(
 			{
 				found_space = true;
 				last_space = i;
+			}
+			else if ( s[i] == L'\n' )
+			{
+				// If we encounter a newline character, we break the
+				// string there
+				//
+				len = i - j + 1;
+				first_char = j;
+				return;
 			}
 
 			i++;
