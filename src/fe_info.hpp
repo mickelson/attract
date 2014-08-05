@@ -81,7 +81,7 @@ public:
 
 	void clear();
 
-	bool operator==( const FeRomInfo & );
+	bool operator==( const FeRomInfo & ) const;
 
 private:
 	std::string get_info_escaped( int ) const;

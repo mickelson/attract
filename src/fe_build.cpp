@@ -156,7 +156,7 @@ void write_romlist( const std::string &filename,
 
 struct myclasscmp
 {
-	bool operator() ( const std::string &lhs, const std::string &rhs )
+	bool operator() ( const std::string &lhs, const std::string &rhs ) const
 	{
 		return ( strcasecmp( lhs.c_str(), rhs.c_str() ) < 0 );
 	}

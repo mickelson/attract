@@ -145,7 +145,7 @@ void FeRomInfo::clear()
 		m_info[i].clear();
 }
 
-bool FeRomInfo::operator==( const FeRomInfo &o )
+bool FeRomInfo::operator==( const FeRomInfo &o ) const
 {
 	return (( m_info[Romname].compare( o.m_info[Romname] ) == 0 )
 				&& ( m_info[Emulator].compare( o.m_info[Emulator] ) == 0 ));
