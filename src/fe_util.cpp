@@ -771,6 +771,12 @@ bool run_program( const std::string &prog,
 			dup2( mypipe[1], fileno(stdout) );
 			close( mypipe[1] );
 		}
+
+		{
+			size_t pos = prog.find_last_of( "/" );
+			if ( pos != std::string::npos )
+				chdir( prog.substr( 0, pos ).c_str() );
+		}
 		execvp( prog.c_str(), arg_list );
 
 		// execvp doesn't return unless there is an error.
