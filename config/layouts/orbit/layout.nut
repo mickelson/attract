@@ -4,11 +4,14 @@
 //
 ///////////////////////////////////////////////////
 class UserConfig {
-	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel" />
+	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel", order=1 />
 	orbit_art="marquee";
 
-	</ label="Bloom Effect", help="Enable Bloom Effect (requires shader support)", options="Yes,No" />
+	</ label="Bloom Effect", help="Enable Bloom Effect (requires shader support)", options="Yes,No", order=2 />
 	enable_bloom="Yes";
+
+	</ label="Background", help="The filename of the image or video to display in the background", order=3 />
+	bg_image="";
 }
 
 local my_config = fe.get_config();
@@ -89,6 +92,11 @@ class Marquee {
 	}
 }
 
+if ( my_config[ "bg_image" ].len() > 0 )
+	fe.add_image( my_config[ "bg_image" ], 0, 0, fe.layout.width, fe.layout.height );
+
+local snapbg = fe.add_text( "", 224, 59, 352, 264 );
+snapbg.bg_alpha = 220;
 fe.add_artwork( "snap", 224, 59, 352, 264 );
 local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
 frame.shader = yes_shader;
