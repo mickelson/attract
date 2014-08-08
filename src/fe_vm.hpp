@@ -24,7 +24,10 @@
 #define FE_VM_HPP
 
 #include <vector>
+#include <queue>
 #include <string>
+
+#include "fe_input.hpp"
 
 class FeBaseTextureContainer;
 class FeBasePresentable;
@@ -46,6 +49,11 @@ namespace Sqrat
 {
 	class Table;
 	class Array;
+};
+
+namespace sf
+{
+	class Event;
 };
 
 enum FeTransitionType
@@ -78,14 +86,19 @@ private:
 
 	bool m_redraw_triggered;
 	const FeScriptConfigurable *m_script_cfg;
+
 	std::vector< std::string > m_ticks_list;
 	std::vector< std::string > m_transition_list;
+	std::vector< std::string > m_signal_handlers;
+	std::queue< FeInputMap::Command > m_posted_commands;
 
 	FeVM( const FeVM & );
 	FeVM &operator=( const FeVM & );
 
 	void add_ticks_callback(const std::string &);
 	void add_transition_callback(const std::string &);
+	void add_signal_handler( const std::string & );
+	void remove_signal_handler( const std::string & );
 
 	static bool internal_do_nut(const std::string &, const std::string &);
 
@@ -94,6 +107,7 @@ public:
 	~FeVM();
 
 	void flag_redraw() { m_redraw_triggered = true; };
+	bool poll_command( FeInputMap::Command &c, sf::Event &ev );
 	void clear();
 
 	// Scripting functionality
@@ -104,6 +118,7 @@ public:
 	bool on_tick();
 	bool on_transition( FeTransitionType, int var );
 
+	bool handle_event( FeInputMap::Command c );
 	//
 	// Script static functions
 	//
@@ -137,6 +152,8 @@ public:
 	static FeShader *cb_add_shader(int);
 	static void cb_add_ticks_callback(const char *);
 	static void cb_add_transition_callback(const char *);
+	static void cb_add_signal_handler( const char * );
+	static void cb_remove_signal_handler( const char * );
 	static bool cb_is_keypressed(int);	// deprecated as of 1.2
 	static bool cb_is_joybuttonpressed(int,int);	// deprecated as of 1.2
 	static float cb_get_joyaxispos(int,int);	// deprecated as of 1.2
@@ -155,7 +172,8 @@ public:
 	static int cb_list_dialog( Sqrat::Array, const char *, int );
 	static int cb_list_dialog( Sqrat::Array, const char * );
 	static int cb_list_dialog( Sqrat::Array );
-	static const char *cb_edit_dialog( const char *msg, const char *txt );
+	static const char *cb_edit_dialog( const char *, const char * );
+	static void cb_signal( const char * );
 };
 
 #endif

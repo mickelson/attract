@@ -275,7 +275,6 @@ int main(int argc, char *argv[])
 
 	soundsys.sound_event( FeInputMap::EventStartup );
 
-	sf::Event ev;
 	bool redraw=true;
 	int guard_joyid=-1, guard_axis=-1;
 
@@ -333,10 +332,10 @@ int main(int argc, char *argv[])
 			redraw=true;
 		}
 
-		while (window.pollEvent(ev))
+		FeInputMap::Command c;
+		sf::Event ev;
+		while ( feVM.poll_command( c, ev ) )
 		{
-			FeInputMap::Command c = feSettings.map_input( ev );
-
 			//
 			// Special case handling based on event type
 			//
@@ -400,11 +399,18 @@ int main(int argc, char *argv[])
 					}
 					break;
 
+				case sf::Event::Count:
 				default:
 					break;
 			}
 
 			if ( c == FeInputMap::LAST_COMMAND )
+				continue;
+
+			//
+			// Now handle the command appropriately.
+			//
+			if ( feVM.handle_event( c ) )
 				continue;
 
 			soundsys.sound_event( c );

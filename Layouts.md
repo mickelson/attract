@@ -23,6 +23,9 @@ Contents
       * [`fe.game_info()`](#game_info)
       * [`fe.get_input_state()`](#get_input_state)
       * [`fe.get_input_pos()`](#get_input_pos)
+      * [`fe.signal()`](#signal)
+      * [`fe.add_signal_handler()`](#add_signal_handler)
+      * [`fe.remove_signal_handler()`](#remove_signal_handler)
       * [`fe.do_nut()`](#do_nut)
       * [`fe.load_module()`](#load_module)
       * [`fe.plugin_command()`](#plugin_command)
@@ -556,6 +559,116 @@ Return Value:
    * Current position of the specified axis, in range [0..100].
 
 
+<a name="signal" />
+#### `fe.signal()` ####
+
+    fe.signal( signal_str )
+
+Signal that a particular frontend action should occur.
+
+Parameters:
+
+   * signal_str - the action to signal for.  Can be one of the
+     following strings:
+      - "select"
+      - "up"
+      - "down"
+      - "page_up"
+      - "page_down"
+      - "prev_list"
+      - "next_list"
+      - "lists_menu"
+      - "prev_filter"
+      - "next_filter"
+      - "filters_menu"
+      - "toggle_layout"
+      - "toggle_movie"
+      - "toggle_mute"
+      - "toggle_rotate_right"
+      - "toggle_flip"
+      - "toggle_rotate_left"
+      - "exit"
+      - "exit_no_menu"
+      - "screenshot"
+      - "configure"
+      - "random_game"
+      - "replay_last_game"
+      - "add_favourite"
+      - "prev_favourite"
+      - "next_favourite"
+      - "add_tags"
+      - "screen_saver"
+      - "prev_letter"
+      - "next_letter"
+      - "reset_window"
+
+
+Return Value:
+
+   * None.
+
+
+<a name="add_signal_handler" />
+#### `fe.add_signal_handler()` ####
+
+
+    fe.add_signal_handler( function_name )
+
+Register a function in your script to handle signals.  Signals are sent
+whenever a mapped control is used by the user or whenever a layout or
+plugin script uses the [`fe.signal()`](#signal) function.  The function
+that is registered should be in the following form:
+
+    function handler( signal_str )
+    {
+       local no_more_processing = false;
+
+       // do stuff...
+
+       if ( no_more_processing )
+          return true;
+
+       return false;
+    }
+
+The `signal_str` parameter passed to the handler function is a string
+that identifies the signal that has been given.  This string will
+correspond to the `signal_str` parameter values of [`fe.signal()`](#signal)
+
+The signal handler function should return a boolean value.  It should
+return `true` if no more processing should be done on this signal.
+It should return `false` if signal processing is to continue, in which
+case this signal will be dealt with in the default manner by the
+frontend.
+
+Parameters:
+
+   * function_name - a string naming the signal handler function to
+     be added.
+
+Return Value:
+
+   * None.
+
+
+<a name="remove_signal_handler" />
+#### `fe.remove_signal_handler()` ####
+
+    fe.remove_signal_handler( function_name )
+
+Remove a signal handler that has been added with the
+[`fe.add_signal_handler()`](#add_signal_handler) function.
+
+Parameters:
+
+   * function_name - a string naming the signal handler function to
+     remove.
+
+Return Value:
+
+   * None.
+
+
 <a name="do_nut" />
 #### `fe.do_nut()` ####
 
@@ -696,7 +809,7 @@ Parameters:
    * options - an array containing the menu options to display in the list
    * title - the list caption
    * default_sel - index of the initial selection.  Default value is 0.
-   * cancel_sel - index to return if the user cancels.  Default value is 0
+   * cancel_sel - index to return if the user cancels.  Default value is -1.
 
 Return Value:
 

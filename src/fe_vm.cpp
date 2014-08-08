@@ -103,10 +103,33 @@ FeVM::~FeVM()
 	vm_close();
 }
 
+bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev )
+{
+	if ( !m_posted_commands.empty( ))
+	{
+		c = (FeInputMap::Command)m_posted_commands.front();
+		m_posted_commands.pop();
+		ev.type = sf::Event::Count;
+
+		return true;
+	}
+	else if ( m_window.pollEvent( ev ) )
+	{
+		c = m_fes.map_input( ev );
+		return true;
+	}
+
+	return false;
+}
+
 void FeVM::clear()
 {
 	m_ticks_list.clear();
 	m_transition_list.clear();
+	m_signal_handlers.clear();
+
+	while ( !m_posted_commands.empty() )
+		m_posted_commands.pop();
 }
 
 void FeVM::add_ticks_callback( const std::string &n )
@@ -117,6 +140,24 @@ void FeVM::add_ticks_callback( const std::string &n )
 void FeVM::add_transition_callback( const std::string &n )
 {
 	m_transition_list.push_back( n );
+}
+
+void FeVM::add_signal_handler( const std::string &n )
+{
+	m_signal_handlers.push_back( n );
+}
+
+void FeVM::remove_signal_handler( const std::string &n )
+{
+	for ( std::vector<std::string>::iterator itr = m_signal_handlers.begin();
+			itr != m_signal_handlers.end(); ++itr )
+	{
+		if ( n.compare( *itr ) == 0 )
+		{
+			m_signal_handlers.erase( itr );
+			return;
+		}
+	}
 }
 
 void FeVM::vm_close()
@@ -425,6 +466,8 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Overload<FeShader* (*)(int)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Func<void (*)(const char *)>(_SC("add_ticks_callback"), &FeVM::cb_add_ticks_callback);
 	fe.Func<void (*)(const char *)>(_SC("add_transition_callback"), &FeVM::cb_add_transition_callback);
+	fe.Func<void (*)(const char *)>(_SC("add_signal_handler"), &FeVM::cb_add_signal_handler);
+	fe.Func<void (*)(const char *)>(_SC("remove_signal_handler"), &FeVM::cb_remove_signal_handler);
 	fe.Func<bool (*)(const char *)>(_SC("get_input_state"), &FeVM::cb_get_input_state);
 	fe.Func<int (*)(const char *)>(_SC("get_input_pos"), &FeVM::cb_get_input_pos);
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
@@ -441,6 +484,7 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Overload<int (*)( Sqrat::Array, const char * )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
 	fe.Overload<int (*)( Sqrat::Array )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
 	fe.Func<const char* (*)(const char *, const char *)>(_SC("edit_dialog"), &FeVM::cb_edit_dialog);
+	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
 
 	// BEGIN deprecated functions
 	// is_keypressed() and is_joybuttonpressed() deprecated as of version 1.2.  Use get_input_state() instead
@@ -598,7 +642,7 @@ bool FeVM::on_transition(
 	{
 		// Assumption: Transition list is empty if no vm is active
 		//
-		ASSERT( Sqrat::DefaultVM::Get() );
+		ASSERT( DefaultVM::Get() );
 
 		//
 		// Call each remaining transition callback on each pass through
@@ -646,6 +690,39 @@ bool FeVM::on_transition(
 	}
 
 	return m_redraw_triggered;
+}
+
+bool FeVM::handle_event( FeInputMap::Command c )
+{
+	using namespace Sqrat;
+
+	//
+	// Go through the list in reverse so that the most recently registered signal handler
+	// gets the first shot at handling the signal.
+	//
+	for ( std::vector<std::string>::reverse_iterator itr = m_signal_handlers.rbegin();
+		itr != m_signal_handlers.rend(); ++itr )
+	{
+		// Assumption: Handlers list is empty if no vm is active
+		//
+		ASSERT( DefaultVM::Get() );
+
+		try
+		{
+			Function func( RootTable(), (*itr).c_str() );
+
+			if (( !func.IsNull() )
+					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
+				return true;
+		}
+		catch( Exception e )
+		{
+			std::cout << "Script Error in " << (*itr)
+				<< "(): " << e.Message() << std::endl;
+		}
+	}
+
+	return false;
 }
 
 //
@@ -1004,6 +1081,22 @@ void FeVM::cb_add_transition_callback( const char *n )
 	fev->add_transition_callback( n );
 }
 
+void FeVM::cb_add_signal_handler( const char *n )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+	fev->add_signal_handler( n );
+}
+
+void FeVM::cb_remove_signal_handler( const char *n )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+	fev->remove_signal_handler( n );
+}
+
 bool FeVM::cb_is_keypressed( int k )
 {
 	return sf::Keyboard::isKeyPressed( (sf::Keyboard::Key)k );
@@ -1224,4 +1317,67 @@ const char *FeVM::cb_edit_dialog( const char *msg, const char *txt )
 		fev->m_overlay.edit_dialog( msg, local_copy );
 
 	return local_copy.c_str();
+}
+
+void FeVM::cb_signal( const char *sig )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+	//
+	// First check for signals corresponding to input actions
+	//
+	int i=0, index=-1;
+	while ( FeInputMap::commandStrings[i] != 0 )
+	{
+		if ( strcmp( FeInputMap::commandStrings[i], sig ) == 0 )
+		{
+			index = i;
+			break;
+		}
+		i++;
+	}
+
+	if ( index > -1 )
+	{
+		//
+		// Post the command so it can be handled the next time we are
+		// processing events...
+		//
+		fev->m_posted_commands.push( (FeInputMap::Command)index );
+		return;
+	}
+
+	//
+	// Next check for special case signals
+	//
+	const char *signals[] =
+	{
+		"reset_window",
+		NULL
+	};
+
+	i=0;
+	while ( signals[i] != 0 )
+	{
+		if ( strcmp( signals[i], sig ) == 0 )
+		{
+			index = i;
+			break;
+		}
+		i++;
+	}
+
+	switch (index)
+	{
+	case 0: // "reset_window"
+		fev->m_window.on_exit();
+		fev->m_window.initial_create();
+		break;
+
+	default:
+		std::cerr << "Error, unrecognized signal: " << sig << std::endl;
+		break;
+
+	}
 }
