@@ -76,3 +76,15 @@ bool fe_get_attribute_string(
 
 	return fe_get_object_string( vm, attVal.GetObject(), out_string );
 }
+
+int fe_obj_compare(
+	HSQUIRRELVM vm,
+	HSQOBJECT obj1,
+	HSQOBJECT obj2 )
+{
+	sq_pushobject(vm, obj2);
+	sq_pushobject(vm, obj1);
+	int retval = sq_cmp( vm );
+	sq_pop( vm, 2 );
+	return retval;
+}

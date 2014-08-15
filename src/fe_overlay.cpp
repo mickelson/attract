@@ -672,7 +672,7 @@ int FeOverlay::display_config_dialog(
 
 	ctx.curr_sel = sdialog.getRowCount() / 2;
 	if ( ctx.curr_sel >= (int)ctx.left_list.size() )
-		ctx.curr_sel = ctx.left_list.size() - 1;
+		ctx.curr_sel = 0;
 
 	sdialog.setText( ctx.curr_sel, ctx.left_list );
 	vdialog.setText( ctx.curr_sel, ctx.right_list );

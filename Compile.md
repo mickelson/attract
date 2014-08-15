@@ -68,6 +68,12 @@ These instructions assume that you have X Code installed.
            brew update
            brew install pkg-config ffmpeg sfml
 
+   NOTE (XCODE 5 or LATER): The homebrew version of SFML seems to produce
+   linker errors with Xcode 5 and clang.  If you have Xcode 5 or later then
+   it is recommended that you install the SFML SDK using the package from
+   the SFML website instead of using the homebrew recipe:
+   <http://www.sfml-dev.org/download/sfml/2.1/SFML-2.1-osx-clang-universal.tar.gz>
+
 3. Extract the Attract-Mode source to your system.
 
 4. From the directory you extracted the Attract-Mode source into, run:

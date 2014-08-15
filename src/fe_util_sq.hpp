@@ -41,4 +41,9 @@ bool fe_get_attribute_string(
 	const std::string &attribute,
 	std::string & out_string);
 
+int fe_obj_compare(
+	HSQUIRRELVM vm,
+	HSQOBJECT obj1,
+	HSQOBJECT obj2 );
+
 #endif

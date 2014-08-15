@@ -146,6 +146,7 @@ public:
 	FeInputMap::Command map_input( const sf::Event &e );
 	bool config_map_input( const sf::Event &e, std::string &s, FeInputMap::Command &conflict );
 
+	bool get_current_state( FeInputMap::Command c );
 	void get_input_mappings( std::vector < FeMapping > &l ) const { m_inputmap.get_mappings( l ); };
 	void set_input_mapping( FeMapping &m ) { m_inputmap.set_mapping( m ); };
 

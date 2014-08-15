@@ -63,8 +63,6 @@ private:
 	bool edit_loop( std::vector<sf::Drawable *> draw_list,
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
 
-	bool check_for_cancel();
-
 public:
 	FeOverlay( sf::RenderWindow &wnd,
 		FeSettings &fes,
@@ -91,6 +89,8 @@ public:
 	void edit_dialog( const std::string &msg_str, std::string &text );
 
 	bool overlay_is_on() const { return m_overlay_is_on; };
+
+	bool check_for_cancel();
 };
 
 #endif

@@ -26,7 +26,7 @@
 FeTextPrimative::FeTextPrimative( )
 	: m_texts( 1, sf::Text() ),
 	m_align( Centre ),
-	m_wrap( false ),
+	m_first_line( -1 ),
 	m_needs_pos_set( false )
 {
 	setColor( sf::Color::White );
@@ -41,7 +41,7 @@ FeTextPrimative::FeTextPrimative(
          Alignment align )
 	: m_texts( 1, sf::Text() ),
 	m_align( align ),
-	m_wrap( false ),
+	m_first_line( -1 ),
 	m_needs_pos_set( false )
 {
 	if ( font )
@@ -56,7 +56,7 @@ FeTextPrimative::FeTextPrimative( const FeTextPrimative &c )
 	: m_bgRect( c.m_bgRect ),
 	m_texts( c.m_texts ),
 	m_align( c.m_align ),
-	m_wrap( c.m_wrap ),
+	m_first_line( c.m_first_line ),
 	m_needs_pos_set( c.m_needs_pos_set )
 {
 }
@@ -107,7 +107,7 @@ void FeTextPrimative::fit_string(
 	bool found_space( false );
 
 	while (( running_total < width )
-			&& (( i < (int)s.size() ) || ( !m_wrap && ( j > 0 ))))
+			&& (( i < (int)s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
 	{
 		if ( i < (int)s.size() )
 		{
@@ -132,7 +132,7 @@ void FeTextPrimative::fit_string(
 			i++;
 		}
 
-		if (!m_wrap && ( j > 0 ) && ( running_total < width ))
+		if (( m_first_line < 0 ) && ( j > 0 ) && ( running_total < width ))
 		{
 			sf::Glyph g = font->getGlyph( s[j], charsize, false );
 			running_total += g.advance;
@@ -146,7 +146,7 @@ void FeTextPrimative::fit_string(
 	// If we are word wrapping and found a space, then break at the space.
 	// Otherwise, fit as much on this line as we can
 	//
-	if ( m_wrap && found_space && ( i != (int)s.size() ))
+	if ( ( m_first_line >= 0 ) && found_space && ( i != (int)s.size() ))
 		len = last_space - j + 1;
 	else
 		len = i - j + 1;
@@ -172,16 +172,23 @@ sf::Vector2f FeTextPrimative::setString(
 	// Cut string if it is too big to fit our dimension
 	//
 	int first_char, len, disp_cpos;
-	if ( m_wrap ) position = 0;
+	std::vector< int > fc_list;
+	std::vector< int > len_list;
+
+	if ( m_first_line >= 0 )
+		position = 0;
 
 	fit_string( t, position, first_char, len );
-	m_texts[0].setString( t.substr( first_char, len ) );
+
+	fc_list.push_back( first_char );
+	len_list.push_back( len );
+
 	disp_cpos = position - first_char;
 
 	if ( m_texts.size() > 1 )
 		m_texts.resize( 1 );
 
-	if (( m_wrap ) && ( len < (int)t.size() ))
+	if (( m_first_line >= 0 ) && ( len < (int)t.size() ))
 	{
 		//
 		// Calculate the number of lines we can fit in our RectShape
@@ -195,20 +202,42 @@ sf::Vector2f FeTextPrimative::setString(
 		int line_count = rectSize.height / spacing;
 
 		//
-		// Create the wrapped lines
+		// Calculate the wrapped lines
 		//
-		position = len;
+		position += len;
 		int i=0;
-		while (( position < (int)t.size() - 1 ) && ( i < line_count ))
+		int actual_first_line=0;
+		while (( position < (int)t.size() - 1 ) && ( i < line_count + m_first_line ))
 		{
+			if ( i >= line_count )
+				actual_first_line++;
+
 			fit_string( t, position, first_char, len );
-			sf::Text new_text( m_texts[0] );
-			new_text.setString( t.substr( first_char, len ) );
+
+			fc_list.push_back( first_char );
+			len_list.push_back( len );
 			position += len;
-			m_texts.push_back( new_text );
 			i++;
 		}
+
+		m_first_line = actual_first_line;
+
+		int actual_lines = ( (int)fc_list.size() < line_count ) ? fc_list.size() : line_count;
+		int first_fc = fc_list.size() - actual_lines;
+
+		//
+		// Now create the wrapped lines
+		//
+		m_texts[0].setString( t.substr( fc_list[first_fc], len_list[first_fc] ) );
+		for ( i = first_fc + 1; i < (int)fc_list.size(); i++ )
+		{
+			m_texts.push_back( m_texts[0] );
+			m_texts.back().setString( t.substr( fc_list[i], len_list[i] ) );
+		}
 	}
+	else
+		// create the no-wrap or single non-clipped line
+		m_texts[0].setString( t.substr( fc_list.front(), len_list.front() ) );
 
 	set_positions(); // we need to set the positions now for findCharacterPos() to work below
 	return m_texts[0].findCharacterPos( disp_cpos );
@@ -354,9 +383,14 @@ int FeTextPrimative::getStyle() const
 	return m_texts[0].getStyle();
 }
 
-void FeTextPrimative::setWordWrap( bool w )
+void FeTextPrimative::setFirstLineHint( int line )
 {
-	m_wrap = w;
+	m_first_line = ( line < 0 ) ? 0 : line;
+}
+
+void FeTextPrimative::setWordWrap( bool wrap )
+{
+	m_first_line = wrap ? 0 : -1;
 }
 
 void FeTextPrimative::setTextScale( const sf::Vector2f &s )
@@ -372,9 +406,9 @@ const sf::Vector2f &FeTextPrimative::getTextScale() const
 		return m_texts[0].getScale();
 }
 
-bool FeTextPrimative::getWordWrap() const
+int FeTextPrimative::getFirstLineHint() const
 {
-	return m_wrap;
+	return m_first_line;
 }
 
 void FeTextPrimative::draw( sf::RenderTarget &target, sf::RenderStates states ) const

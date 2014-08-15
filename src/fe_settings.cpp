@@ -503,6 +503,11 @@ bool FeSettings::config_map_input( const sf::Event &e, std::string &s, FeInputMa
 	return true;
 }
 
+bool FeSettings::get_current_state( FeInputMap::Command c )
+{
+	return m_inputmap.get_current_state( c, m_joy_thresh );
+}
+
 void FeSettings::init_mouse_capture( int window_x, int window_y )
 {
 	int radius = window_x * m_mouse_thresh / 400;

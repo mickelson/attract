@@ -1320,17 +1320,26 @@ bool FeScriptConfigMenu::on_option_select(
 		o.set_value( res );
 		ctx.save_req = true;
 	}
+	else if (( o.opaque == 2 ) && ( m_configurable ))
+	{
+		save( ctx );
+		FeVM::script_run_config_function(
+				*m_configurable,
+				m_file_path,
+				m_file_name,
+				o.opaque_str,
+				ctx.help_msg );
+	}
 	return true;
 }
 
-bool FeScriptConfigMenu::save_helper( FeConfigContext &ctx,
-		FeScriptConfigurable &configurable )
+bool FeScriptConfigMenu::save_helper( FeConfigContext &ctx )
 {
-	configurable.clear_params();
+	m_configurable->clear_params();
 
 	for ( unsigned int i=0; i < ctx.opt_list.size(); i++ )
 	{
-		configurable.set_param(
+		m_configurable->set_param(
 			ctx.opt_list[i].opaque_str,
 			ctx.opt_list[i].get_value() );
 	}
@@ -1367,12 +1376,11 @@ void FePluginEditMenu::get_options( FeConfigContext &ctx )
 	// If it is, then its members and member attributes set out what it is
 	// that the plug-in needs configured by the user.
 	//
-	std::string plug_path, plug_name;
-
-	ctx.fe_settings.get_plugin_full_path( m_plugin->get_name(), plug_path, plug_name );
+	ctx.fe_settings.get_plugin_full_path( m_plugin->get_name(), m_file_path, m_file_name );
+	m_configurable = m_plugin;
 
 	std::string gen_help;
-	FeVM::script_get_config_options( ctx, gen_help, *m_plugin, plug_path + plug_name );
+	FeVM::script_get_config_options( ctx, gen_help, *m_plugin, m_file_path, m_file_name );
 
 	if ( !gen_help.empty() )
 		ctx.opt_list[0].help_msg = gen_help;
@@ -1388,7 +1396,7 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 	m_plugin->set_enabled(
 		ctx.opt_list[1].get_vindex() == 0 ? true : false );
 
-	return FeScriptConfigMenu::save_helper( ctx, *m_plugin );
+	return FeScriptConfigMenu::save_helper( ctx );
 }
 
 void FePluginEditMenu::set_plugin( FePlugInfo *plugin )
@@ -1444,7 +1452,13 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 				+ FE_LAYOUT_FILE_BASE + FE_LAYOUT_FILE_EXTENSION;
 
 		std::string gen_help;
-		FeVM::script_get_config_options( ctx, gen_help, *m_layout, script_file );
+		m_file_path = ctx.fe_settings.get_layout_dir( name );
+		m_file_name = FE_LAYOUT_FILE_BASE;
+		m_file_name += FE_LAYOUT_FILE_EXTENSION;
+		m_configurable = m_layout;
+
+		FeVM::script_get_config_options( ctx, gen_help, *m_layout,
+				m_file_path, m_file_name );
 
 		if ( !gen_help.empty() )
 			ctx.opt_list[0].help_msg = gen_help;
@@ -1457,7 +1471,7 @@ bool FeLayoutEditMenu::save( FeConfigContext &ctx )
 	if ( m_layout == NULL )
 		return false;
 
-	return FeScriptConfigMenu::save_helper( ctx, *m_layout );
+	return FeScriptConfigMenu::save_helper( ctx );
 }
 
 void FeLayoutEditMenu::set_layout( FeLayoutInfo *layout )
@@ -1474,12 +1488,13 @@ void FeSaverEditMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::ScreenSaverTimeout ),
 			"_help_screen_saver_timeout" );
 
-	std::string gen_help, path, filename;
-	ctx.fe_settings.get_screensaver_file( path, filename );
+	std::string gen_help;
+	ctx.fe_settings.get_screensaver_file( m_file_path, m_file_name );
+	m_configurable = &(ctx.fe_settings.get_screensaver_config());
 
 	FeVM::script_get_config_options( ctx, gen_help,
 					ctx.fe_settings.get_screensaver_config(),
-					path + filename );
+					m_file_path, m_file_name );
 
 	if ( !gen_help.empty() )
 		ctx.opt_list[0].help_msg = gen_help;
@@ -1492,7 +1507,7 @@ bool FeSaverEditMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout,
 			ctx.opt_list[0].get_value() );
 
-	return FeScriptConfigMenu::save_helper( ctx, ctx.fe_settings.get_screensaver_config() );
+	return FeScriptConfigMenu::save_helper( ctx );
 }
 
 void FeConfigMenu::get_options( FeConfigContext &ctx )

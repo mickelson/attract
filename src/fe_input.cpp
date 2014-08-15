@@ -635,6 +635,22 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 	return (*it).second;
 }
 
+bool FeInputMap::get_current_state( FeInputMap::Command c, int joy_thresh ) const
+{
+	std::map< FeInputSource, Command >::const_iterator it;
+
+	for ( it=m_map.begin(); it!=m_map.end(); ++it )
+	{
+		if ( (*it).second == c )
+		{
+			if ( (*it).first.get_current_state( joy_thresh ) )
+				return true;
+		}
+	}
+
+	return false;
+}
+
 void FeInputMap::get_mappings( std::vector< FeMapping > &mappings ) const
 {
 	//

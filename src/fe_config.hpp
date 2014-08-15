@@ -185,11 +185,17 @@ public:
 class FeScriptConfigMenu : public FeBaseConfigMenu
 {
 protected:
+
+	virtual bool save( FeConfigContext &ctx )=0;
+
 	bool on_option_select(
 			FeConfigContext &ctx, FeBaseConfigMenu *& submenu );
 
-	bool save_helper( FeConfigContext &ctx,
-		FeScriptConfigurable &configurable );
+	bool save_helper( FeConfigContext &ctx );
+
+	FeScriptConfigurable *m_configurable;
+	std::string m_file_path;
+	std::string m_file_name;
 };
 
 class FeLayoutEditMenu : public FeScriptConfigMenu

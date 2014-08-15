@@ -154,6 +154,11 @@ public:
 
 	Command map_input( const sf::Event &, const sf::IntRect &mc_rect, const int joy_thresh );
 
+	//
+	// Test if any of the inputs mapped to command c are pressed
+	//
+	bool get_current_state( FeInputMap::Command c, int joy_thresh ) const;
+
 	void get_mappings( std::vector< FeMapping > &mappings ) const;
 	void set_mapping( const FeMapping &mapping );
 	void default_mappings();

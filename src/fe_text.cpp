@@ -204,7 +204,23 @@ void FeText::set_word_wrap( bool w )
 
 bool FeText::get_word_wrap()
 {
-	return m_draw_text.getWordWrap();
+	return ( m_draw_text.getFirstLineHint() >= 0 );
+}
+
+void FeText::set_first_line_hint( int l )
+{
+	if ( l != m_draw_text.getFirstLineHint() )
+	{
+		m_draw_text.setFirstLineHint( l );
+		m_draw_text.setString( m_string );
+
+		FeVM::script_do_update( this );
+	}
+}
+
+int FeText::get_first_line_hint()
+{
+	return m_draw_text.getFirstLineHint();
 }
 
 const char *FeText::get_string()

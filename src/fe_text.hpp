@@ -61,6 +61,9 @@ public:
 	void set_word_wrap( bool );
 	bool get_word_wrap();
 
+	void set_first_line_hint( int l );
+	int get_first_line_hint();
+
 	const char *get_string();
 	void set_string(const char *s);
 

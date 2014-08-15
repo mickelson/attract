@@ -71,6 +71,7 @@ public:
 	void setRotation( float );
 	void setOutlineColor( const sf::Color & );
 	void setOutlineThickness( int );
+	void setFirstLineHint( int );
 	void setWordWrap( bool );
 	void setTextScale( const sf::Vector2f & );
 
@@ -83,14 +84,21 @@ public:
 	const sf::Vector2f &getSize() const;
 	float getRotation() const;
 	int getStyle() const;
-	bool getWordWrap() const;
+	int getFirstLineHint() const;
 	const sf::Vector2f &getTextScale() const;
 
 private:
 	sf::RectangleShape m_bgRect;
 	mutable std::vector<sf::Text> m_texts;
 	Alignment m_align;
-	bool m_wrap;
+
+	// this is set to -1 when "no word wrapping" is set.
+	// otherwise it is a value of 0+ and corresponds to the first line
+	// of text being displayed in the control.  The user can change this
+	// to control scrolling text where the text set into the control is
+	// larger than the area available to display it.
+	int m_first_line;
+
 	mutable bool m_needs_pos_set;
 
 	//

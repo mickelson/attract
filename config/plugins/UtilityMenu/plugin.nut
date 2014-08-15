@@ -14,7 +14,7 @@ class UserConfig </ help="Menu for running utility commands and scripts" /> {
 	</ label="Control", help="The control to press to display the utility menu", is_input=true, order=1 />
 	button="U";
 
-	</ label="Item 1 Menu Text", help=OPT_HELP, order=2 /> opt1="Any Command";
+	</ label="Item 1 Menu Text", help=OPT_HELP, order=2 /> opt1="Shell Command";
 	</ label="Item 1 Command",   help=CMD_HELP, order=3 /> opt1_cmd="@any_command.nut";
 
 	</ label="Item 2 Menu Text", help=OPT_HELP, order=4 /> opt2="";
@@ -73,7 +73,7 @@ function utility_menu_plugin_tick( ttime )
 {
 	if ( fe.get_input_state( config["button"] ) )
 	{
-		local res = fe.list_dialog( items, "Utility Menu", items.len() / 2 );
+		local res = fe.overlay.list_dialog( items, "Utility Menu", items.len() / 2 );
 		if (( res < 0 ) || ( res >= actions.len() ) || ( actions[res].len() < 1 ))
 			return;
 

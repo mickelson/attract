@@ -62,12 +62,21 @@ namespace
 
 	bool my_callback( const char *buffer, void *opaque )
 	{
-		Sqrat::Function func( Sqrat::RootTable(), (const char *)opaque );
+		try
+		{
+			Sqrat::Function func( Sqrat::RootTable(), (const char *)opaque );
 
-		if ( !func.IsNull() )
-			func.Execute( buffer );
+			if ( !func.IsNull() )
+				func.Execute( buffer );
 
-		return true; // return false to cancel callbacks
+			return true; // return false to cancel callbacks
+		}
+		catch( Sqrat::Exception e )
+		{
+			std::cout << "Script Error: " << e.Message() << std::endl;
+		}
+
+		return false;
 	}
 };
 
@@ -100,6 +109,7 @@ FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo )
 FeVM::~FeVM()
 {
 	clear();
+
 	vm_close();
 }
 
@@ -124,37 +134,38 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev )
 
 void FeVM::clear()
 {
-	m_ticks_list.clear();
-	m_transition_list.clear();
-	m_signal_handlers.clear();
+	m_ticks.clear();
+	m_trans.clear();
+	m_sig_handlers.clear();
 
 	while ( !m_posted_commands.empty() )
 		m_posted_commands.pop();
 }
 
-void FeVM::add_ticks_callback( const std::string &n )
+void FeVM::add_ticks_callback( Sqrat::Object func, const char *slot )
 {
-	m_ticks_list.push_back( n );
+	m_ticks.push_back( std::pair< Sqrat::Object, std::string >( func, slot ) );
 }
 
-void FeVM::add_transition_callback( const std::string &n )
+void FeVM::add_transition_callback( Sqrat::Object func, const char *slot )
 {
-	m_transition_list.push_back( n );
+	m_trans.push_back( std::pair< Sqrat::Object, std::string >( func, slot ) );
 }
 
-void FeVM::add_signal_handler( const std::string &n )
+void FeVM::add_signal_handler( Sqrat::Object func, const char *slot )
 {
-	m_signal_handlers.push_back( n );
+	m_sig_handlers.push_back( std::pair< Sqrat::Object, std::string >( func, slot ) );
 }
 
-void FeVM::remove_signal_handler( const std::string &n )
+void FeVM::remove_signal_handler( Sqrat::Object func, const char *slot )
 {
-	for ( std::vector<std::string>::iterator itr = m_signal_handlers.begin();
-			itr != m_signal_handlers.end(); ++itr )
+	for ( std::vector<std::pair< Sqrat::Object, std::string > >::iterator itr = m_sig_handlers.begin();
+			itr != m_sig_handlers.end(); ++itr )
 	{
-		if ( n.compare( *itr ) == 0 )
+		if (( (*itr).second.compare( slot ) == 0 )
+				&& ( fe_obj_compare( func.GetVM(), func.GetObject(), (*itr).first.GetObject() ) == 0 ))
 		{
-			m_signal_handlers.erase( itr );
+			m_sig_handlers.erase( itr );
 			return;
 		}
 	}
@@ -230,17 +241,6 @@ void FeVM::on_new_layout( const std::string &path,
 			.Const( _SC("Flip"), FeSettings::RotateFlip )
 			.Const( _SC("Left"), FeSettings::RotateLeft )
 			)
-		// The "Axis" enum is deprecated along with fe.get_joyaxispos() as of version 1.2
-		.Enum( _SC("Axis"), Enumeration()
-			.Const( _SC("X"), sf::Joystick::X )
-			.Const( _SC("Y"), sf::Joystick::Y )
-			.Const( _SC("Z"), sf::Joystick::Z )
-			.Const( _SC("R"), sf::Joystick::R )
-			.Const( _SC("U"), sf::Joystick::U )
-			.Const( _SC("V"), sf::Joystick::V )
-			.Const( _SC("PovX"), sf::Joystick::PovX )
-			.Const( _SC("PovY"), sf::Joystick::PovY )
-			)
 		.Enum( _SC("FromTo"), Enumeration()
 			.Const( _SC("NoValue"), FromToNoValue )
 			.Const( _SC("ScreenSaver"), FromToScreenSaver )
@@ -261,19 +261,8 @@ void FeVM::on_new_layout( const std::string &path,
 			)
 		;
 
-	// The "Key" enum is deprecated along with fe.get_keypressed() as of version 1.2
-	Enumeration keys;
-	int i=0;
-	while ( FeInputSource::keyStrings[i] != NULL )
-	{
-		keys.Const( FeInputSource::keyStrings[i], i );
-		i++;
-	}
-
-	ConstTable().Enum( _SC("Key"), keys);
-
 	Enumeration info;
-	i=0;
+	int i=0;
 	while ( FeRomInfo::indexStrings[i] != NULL )
 	{
 		info.Const( FeRomInfo::indexStrings[i], i );
@@ -325,12 +314,6 @@ void FeVM::on_new_layout( const std::string &path,
 
 	fe.Bind( _SC("Image"),
 		DerivedClass<FeImage, FeBasePresentable, NoConstructor>()
-
-		// Misnamed: shear_x and shear_y deprecated as of version 1.3, more accurately named
-		// skew_x and skew_y instead
-		.Prop(_SC("shear_x"), &FeImage::get_skew_x, &FeImage::set_skew_x )
-		.Prop(_SC("shear_y"), &FeImage::get_skew_y, &FeImage::set_skew_y )
-
 		.Prop(_SC("skew_x"), &FeImage::get_skew_x, &FeImage::set_skew_x )
 		.Prop(_SC("skew_y"), &FeImage::get_skew_y, &FeImage::set_skew_y )
 		.Prop(_SC("pinch_x"), &FeImage::get_pinch_x, &FeImage::set_pinch_x )
@@ -378,6 +361,7 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop(_SC("style"), &FeText::get_style, &FeText::set_style )
 		.Prop(_SC("align"), &FeText::get_align, &FeText::set_align )
 		.Prop(_SC("word_wrap"), &FeText::get_word_wrap, &FeText::set_word_wrap )
+		.Prop(_SC("first_line_hint"), &FeText::get_first_line_hint, &FeText::set_first_line_hint )
 		.Prop(_SC("font"), &FeText::get_font, &FeText::set_font )
 		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
@@ -424,6 +408,16 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop( _SC("index"), &FePresent::get_list_index, &FePresent::set_list_index )
 	);
 
+	fe.Bind( _SC("Overlay"), Class <FeVM, NoConstructor>()
+		.Prop( _SC("is_up"), &FeVM::overlay_is_on )
+		.Overload<int (FeVM::*)(Sqrat::Array, const char *, int, int)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Overload<int (FeVM::*)(Sqrat::Array, const char *, int)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Overload<int (FeVM::*)(Sqrat::Array, const char *)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Overload<int (FeVM::*)(Sqrat::Array)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Func( _SC("edit_dialog"), &FeVM::edit_dialog )
+		.Func( _SC("splash_message"), &FeVM::splash_message )
+	);
+
 	fe.Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
 		.Func( _SC("play"), &FeScriptSound::play )
 		.Prop( _SC("is_playing"), &FeScriptSound::is_playing )
@@ -464,10 +458,14 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Overload<FeShader* (*)(int, const char *, const char *)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Overload<FeShader* (*)(int, const char *)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Overload<FeShader* (*)(int)>(_SC("add_shader"), &FeVM::cb_add_shader);
-	fe.Func<void (*)(const char *)>(_SC("add_ticks_callback"), &FeVM::cb_add_ticks_callback);
-	fe.Func<void (*)(const char *)>(_SC("add_transition_callback"), &FeVM::cb_add_transition_callback);
-	fe.Func<void (*)(const char *)>(_SC("add_signal_handler"), &FeVM::cb_add_signal_handler);
-	fe.Func<void (*)(const char *)>(_SC("remove_signal_handler"), &FeVM::cb_remove_signal_handler);
+	fe.Overload<void (*)(const char *)>(_SC("add_ticks_callback"), &FeVM::cb_add_ticks_callback);
+	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("add_ticks_callback"), &FeVM::cb_add_ticks_callback);
+	fe.Overload<void (*)(const char *)>(_SC("add_transition_callback"), &FeVM::cb_add_transition_callback);
+	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("add_transition_callback"), &FeVM::cb_add_transition_callback);
+	fe.Overload<void (*)(const char *)>(_SC("add_signal_handler"), &FeVM::cb_add_signal_handler);
+	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("add_signal_handler"), &FeVM::cb_add_signal_handler);
+	fe.Overload<void (*)(const char *)>(_SC("remove_signal_handler"), &FeVM::cb_remove_signal_handler);
+	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("remove_signal_handler"), &FeVM::cb_remove_signal_handler);
 	fe.Func<bool (*)(const char *)>(_SC("get_input_state"), &FeVM::cb_get_input_state);
 	fe.Func<int (*)(const char *)>(_SC("get_input_pos"), &FeVM::cb_get_input_pos);
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
@@ -479,20 +477,7 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FeVM::cb_plugin_command_bg);
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 	fe.Func<Sqrat::Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
-	fe.Overload<int (*)( Sqrat::Array, const char *, int, int )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
-	fe.Overload<int (*)( Sqrat::Array, const char *, int )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
-	fe.Overload<int (*)( Sqrat::Array, const char * )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
-	fe.Overload<int (*)( Sqrat::Array )>(_SC("list_dialog"), &FeVM::cb_list_dialog);
-	fe.Func<const char* (*)(const char *, const char *)>(_SC("edit_dialog"), &FeVM::cb_edit_dialog);
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
-
-	// BEGIN deprecated functions
-	// is_keypressed() and is_joybuttonpressed() deprecated as of version 1.2.  Use get_input_state() instead
-	fe.Func<bool (*)(int)>(_SC("is_keypressed"), &FeVM::cb_is_keypressed);
-	fe.Func<bool (*)(int, int)>(_SC("is_joybuttonpressed"), &FeVM::cb_is_joybuttonpressed);
-	// get_joyaxispos() deprecated as of version 1.2.  Use get_input_pos() instead
-	fe.Func<float (*)(int, int)>(_SC("get_joyaxispos"), &FeVM::cb_get_joyaxispos);
-	// END deprecated functions
 
 	//
 	// Define variables that get exposed to Squirrel
@@ -500,6 +485,7 @@ void FeVM::on_new_layout( const std::string &path,
 
 	fe.SetInstance( _SC("layout"), &m_fep );
 	fe.SetInstance( _SC("list"), &m_fep );
+	fe.SetInstance( _SC("overlay"), this );
 
 	// Each presentation object gets an instance in the
 	// "obj" table available in Squirrel
@@ -582,8 +568,8 @@ bool FeVM::on_tick()
 	using namespace Sqrat;
 	m_redraw_triggered = false;
 
-	for ( std::vector<std::string>::iterator itr = m_ticks_list.begin();
-		itr != m_ticks_list.end(); )
+	for ( std::vector<std::pair<Sqrat::Object, std::string> >::iterator itr = m_ticks.begin();
+		itr != m_ticks.end(); )
 	{
 		// Assumption: Ticks list is empty if no vm is active
 		//
@@ -592,15 +578,14 @@ bool FeVM::on_tick()
 		bool remove=false;
 		try
 		{
-			Function func( RootTable(), (*itr).c_str() );
-
+			Sqrat::Function func( (*itr).first, (*itr).second.c_str() );
 			if ( !func.IsNull() )
 				func.Execute( m_fep.m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in " << (*itr)
-				<< "(): " << e.Message() << std::endl;
+			std::cout << "Script Error in tick function: " << (*itr).second << " - "
+					<< e.Message() << std::endl;
 
 			// Knock out this entry.   If it causes a script error, we don't
 			// want to call it anymore
@@ -609,7 +594,7 @@ bool FeVM::on_tick()
 		}
 
 		if ( remove )
-			itr = m_ticks_list.erase( itr );
+			itr = m_ticks.erase( itr );
 		else
 			itr++;
 	}
@@ -630,9 +615,9 @@ bool FeVM::on_transition(
 	sf::Clock ttimer;
 	m_redraw_triggered = false;
 
-	std::vector<const char *> worklist( m_transition_list.size() );
-	for ( unsigned int i=0; i < m_transition_list.size(); i++ )
-		worklist[i] = m_transition_list[i].c_str();
+	std::vector<std::pair<Sqrat::Object, std::string>*> worklist( m_trans.size() );
+	for ( unsigned int i=0; i < m_trans.size(); i++ )
+		worklist[i] = &(m_trans[i]);
 
 	//
 	// A registered transition callback stays in the worklist for as long
@@ -648,13 +633,13 @@ bool FeVM::on_transition(
 		// Call each remaining transition callback on each pass through
 		// the worklist
 		//
-		for ( std::vector<const char *>::iterator itr=worklist.begin();
+		for ( std::vector<std::pair<Sqrat::Object, std::string>*>::iterator itr=worklist.begin();
 			itr != worklist.end(); )
 		{
 			bool keep=false;
 			try
 			{
-				Function func( RootTable(), (*itr) );
+				Sqrat::Function func( (*itr)->first, (*itr)->second.c_str() );
 				if ( !func.IsNull() )
 				{
 					keep = func.Evaluate<bool>(
@@ -665,8 +650,8 @@ bool FeVM::on_transition(
 			}
 			catch( Exception e )
 			{
-				std::cout << "Script Error in " << (*itr)
-					<< "(): " << e.Message() << std::endl;
+				std::cout << "Script Error in transition function: " << (*itr)->second << " - "
+						<< e.Message() << std::endl;
 			}
 
 			if ( !keep )
@@ -700,8 +685,8 @@ bool FeVM::handle_event( FeInputMap::Command c )
 	// Go through the list in reverse so that the most recently registered signal handler
 	// gets the first shot at handling the signal.
 	//
-	for ( std::vector<std::string>::reverse_iterator itr = m_signal_handlers.rbegin();
-		itr != m_signal_handlers.rend(); ++itr )
+	for ( std::vector<std::pair<Object, std::string> >::reverse_iterator itr = m_sig_handlers.rbegin();
+		itr != m_sig_handlers.rend(); ++itr )
 	{
 		// Assumption: Handlers list is empty if no vm is active
 		//
@@ -709,20 +694,92 @@ bool FeVM::handle_event( FeInputMap::Command c )
 
 		try
 		{
-			Function func( RootTable(), (*itr).c_str() );
-
+			Function func( (*itr).first, (*itr).second.c_str() );
 			if (( !func.IsNull() )
 					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
 				return true;
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in " << (*itr)
-				<< "(): " << e.Message() << std::endl;
+			std::cout << "Script Error in signal handler: " << (*itr).second << " - "
+					<< e.Message() << std::endl;
 		}
 	}
 
 	return false;
+}
+
+int FeVM::list_dialog( Sqrat::Array t, const char *title, int default_sel, int cancel_sel )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+
+	if ( m_overlay.overlay_is_on() )
+		return cancel_sel;
+
+	std::vector < std::string > list_entries;
+
+	Sqrat::Object::iterator it;
+	while ( t.Next( it ) )
+	{
+		std::string value;
+		fe_get_object_string( vm, it.getValue(), value );
+
+		list_entries.push_back( value );
+	}
+
+	if ( list_entries.size() > 2 )
+	{
+		return m_overlay.common_list_dialog(
+				std::string( title ),
+				list_entries,
+				default_sel,
+				cancel_sel );
+	}
+	else
+	{
+		return m_overlay.common_basic_dialog(
+				std::string( title ),
+				list_entries,
+				default_sel,
+				cancel_sel );
+	}
+}
+
+int FeVM::list_dialog( Sqrat::Array t, const char *title, int default_sel )
+{
+	return list_dialog( t, title, default_sel, -1 );
+}
+
+int FeVM::list_dialog( Sqrat::Array t, const char *title )
+{
+	return list_dialog( t, title, 0, -1 );
+}
+
+int FeVM::list_dialog( Sqrat::Array t )
+{
+	return list_dialog( t, NULL, 0, -1 );
+}
+
+const char *FeVM::edit_dialog( const char *msg, const char *txt )
+{
+	static std::string local_copy;
+	local_copy = txt;
+
+	if ( !m_overlay.overlay_is_on() )
+		m_overlay.edit_dialog( msg, local_copy );
+
+	return local_copy.c_str();
+}
+
+bool FeVM::overlay_is_on()
+{
+	return m_overlay.overlay_is_on();
+}
+
+bool FeVM::splash_message( const char *msg )
+{
+	m_overlay.splash_message( msg );
+	return m_overlay.check_for_cancel();
 }
 
 //
@@ -781,18 +838,37 @@ void FeVM::script_flag_redraw()
 	}
 }
 
-void FeVM::script_get_config_options(
-		FeConfigContext &ctx,
-		std::string &gen_help,
-		FeScriptConfigurable &configurable,
-		const std::string &script_file )
+//
+//
+//
+class FeConfigVM
 {
-	if ( !script_file.empty() )
+private:
+	HSQUIRRELVM m_stored_vm;
+	HSQUIRRELVM m_vm;
+
+public:
+	FeConfigVM(
+			const FeScriptConfigurable &configurable,
+			const std::string &script_path,
+			const std::string &script_file )
 	{
-		HSQUIRRELVM stored_vm = Sqrat::DefaultVM::Get();
-		HSQUIRRELVM temp_vm = sq_open( 1024 );
-		sq_pushroottable( temp_vm );
-		Sqrat::DefaultVM::Set( temp_vm );
+		m_stored_vm = Sqrat::DefaultVM::Get();
+		FeVM *fe_vm = (FeVM *)sq_getforeignptr( m_stored_vm );
+
+		m_vm = sq_open( 1024 );
+		sq_setforeignptr( m_vm, fe_vm );
+		sq_setprintfunc( m_vm, printFunc, printFunc );
+		sq_pushroottable( m_vm );
+
+		sqstd_register_bloblib( m_vm );
+		sqstd_register_iolib( m_vm );
+		sqstd_register_mathlib( m_vm );
+		sqstd_register_stringlib( m_vm );
+		sqstd_register_systemlib( m_vm );
+//		sqstd_seterrorhandlers( m_vm ); // don't set this on purpose
+
+		Sqrat::DefaultVM::Set( m_vm );
 
 		Sqrat::ConstTable()
 			.Const( _SC("FeVersion"), FE_VERSION)
@@ -800,117 +876,196 @@ void FeVM::script_get_config_options(
 			.Const( _SC("OS"), get_OS_string() )
 			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() );
 
+		Sqrat::ConstTable().Const( _SC("FeConfigDirectory"), fe_vm->m_fes.get_config_dir().c_str() );
+
+		Sqrat::Table fe;
+
+		//
+		// We only expose a very limited set of frontend functionality
+		// to scripts when they are run in the config mode
+		//
+		fe.Bind( _SC("Overlay"), Sqrat::Class <FeVM, Sqrat::NoConstructor>()
+			.Prop( _SC("is_on"), &FeVM::overlay_is_on )
+			.Func( _SC("splash_message"), &FeVM::splash_message )
+		);
+
+		fe.SetInstance( _SC("overlay"), fe_vm );
+		fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
+
+		Sqrat::RootTable().Bind( _SC("fe"),  fe );
+
+		fe.SetValue( _SC("script_dir"), script_path );
+		fe.SetValue( _SC("script_file"), script_file );
+		fe_vm->m_script_cfg = &configurable;
+
 		try
 		{
 			Sqrat::Script sc;
-			sc.CompileFile( script_file );
+			sc.CompileFile( script_path + script_file );
 			sc.Run();
 		}
 		catch( Sqrat::Exception e )
 		{
 			// ignore all errors, they are expected
 		}
+	};
 
-		// Control the scope of our Sqrat objects so they are destroyed
-		// before we call sq_close() on the vm below
-		//
+	~FeConfigVM()
+	{
+		// reset to our usual VM and close the temp vm
+		Sqrat::DefaultVM::Set( m_stored_vm );
+		sq_close( m_vm );
+	};
+
+	HSQUIRRELVM &get_vm() { return m_vm; };
+};
+
+void FeVM::script_run_config_function(
+		const FeScriptConfigurable &configurable,
+		const std::string &script_path,
+		const std::string &script_file,
+		const std::string &func_name,
+		std::string &return_message )
+{
+	FeConfigVM config_vm( configurable, script_path, script_file );
+	sqstd_seterrorhandlers( config_vm.get_vm() );
+
+	Sqrat::Function func( Sqrat::RootTable(), func_name.c_str() );
+
+	if ( !func.IsNull() )
+	{
+		const char *help_msg = NULL;
+		try
 		{
-			Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
-			if ( !uConfig.IsNull() )
-			{
-				fe_get_attribute_string(
-					temp_vm,
-					uConfig.GetObject(), "", "help", gen_help );
-
-				// Now Ccnstruct the UI elements for plug-in/layout specific configuration
-				//
-				std::multimap<int,FeMenuOpt> my_opts;
-
-				Sqrat::Object::iterator it;
-				while ( uConfig.Next( it ) )
-				{
-					std::string key;
-					fe_get_object_string( temp_vm, it.getKey(), key );
-
-					std::string value, label, help, options, is_input;
-
-					// use the default value from the script if a value has
-					// not already been configured
-					//
-					if ( !configurable.get_param( key, value ) )
-						fe_get_object_string( temp_vm, uConfig.GetSlot( key.c_str() ), value );
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "label", label);
-
-					if ( label.empty() )
-						label = key;
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "help", help);
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "options", options);
-
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "is_input", is_input);
-
-					std::string otmp;
-					int order=-1;
-					fe_get_attribute_string(
-							temp_vm,
-							uConfig.GetObject(), key, "order", otmp);
-
-					if ( !otmp.empty() )
-						order = as_int( otmp );
-
-
-					if ( !options.empty() )
-					{
-						std::vector<std::string> options_list;
-						size_t pos=0;
-						do
-						{
-							std::string temp;
-							token_helper( options, pos, temp, "," );
-							options_list.push_back( temp );
-						} while ( pos < options.size() );
-
-						std::multimap<int,FeMenuOpt>::iterator it = my_opts.insert(
-								std::pair <int, FeMenuOpt>(
-									order,
-									FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
-
-						(*it).second.append_vlist( options_list );
-					}
-					else if ( config_str_to_bool( is_input ) )
-					{
-						my_opts.insert(
-								std::pair <int, FeMenuOpt>(
-									order,
-									FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
-					}
-					else
-					{
-						my_opts.insert(
-								std::pair <int, FeMenuOpt>(
-									order,
-									FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
-					}
-				}
-
-				for ( std::multimap<int,FeMenuOpt>::iterator itr = my_opts.begin(); itr != my_opts.end(); ++itr )
-					ctx.opt_list.push_back( (*itr).second );
-			}
+			help_msg = func.Evaluate<const char *>( cb_get_config() );
+		}
+		catch( Sqrat::Exception e )
+		{
+			return_message = "Script error";
+			std::cout << "Script Error in " << script_file
+				<< " - " << e.Message() << std::endl;
 		}
 
-		// reset to our usual VM and close the temp vm
-		Sqrat::DefaultVM::Set( stored_vm );
-		sq_close( temp_vm );
+		if ( help_msg )
+			return_message = help_msg;
+	}
+}
+
+void FeVM::script_get_config_options(
+		FeConfigContext &ctx,
+		std::string &gen_help,
+		FeScriptConfigurable &configurable,
+		const std::string &script_path,
+		const std::string &script_file )
+{
+	if ( !script_file.empty() )
+	{
+		FeConfigVM config_vm( configurable, script_path, script_file );
+
+		Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
+		if ( !uConfig.IsNull() )
+		{
+			fe_get_attribute_string(
+				config_vm.get_vm(),
+				uConfig.GetObject(), "", "help", gen_help );
+
+			// Now Ccnstruct the UI elements for plug-in/layout specific configuration
+			//
+			std::multimap<int,FeMenuOpt> my_opts;
+
+			Sqrat::Object::iterator it;
+			while ( uConfig.Next( it ) )
+			{
+				std::string key;
+				fe_get_object_string( config_vm.get_vm(), it.getKey(), key );
+
+				std::string value, label, help, options, is_input, is_func;
+
+				// use the default value from the script if a value has
+				// not already been configured
+				//
+				if ( !configurable.get_param( key, value ) )
+					fe_get_object_string( config_vm.get_vm(), uConfig.GetSlot( key.c_str() ), value );
+
+				fe_get_attribute_string(
+						config_vm.get_vm(),
+						uConfig.GetObject(), key, "label", label);
+
+				if ( label.empty() )
+					label = key;
+
+				fe_get_attribute_string(
+						config_vm.get_vm(),
+						uConfig.GetObject(), key, "help", help);
+
+				fe_get_attribute_string(
+						config_vm.get_vm(),
+						uConfig.GetObject(), key, "options", options);
+
+				fe_get_attribute_string(
+						config_vm.get_vm(),
+						uConfig.GetObject(), key, "is_input", is_input);
+
+				fe_get_attribute_string(
+						config_vm.get_vm(),
+						uConfig.GetObject(), key, "is_function", is_func);
+
+				std::string otmp;
+				int order=-1;
+				fe_get_attribute_string(
+						config_vm.get_vm(),
+						uConfig.GetObject(), key, "order", otmp);
+
+				if ( !otmp.empty() )
+					order = as_int( otmp );
+
+				if ( !options.empty() )
+				{
+					std::vector<std::string> options_list;
+					size_t pos=0;
+					do
+					{
+						std::string temp;
+						token_helper( options, pos, temp, "," );
+						options_list.push_back( temp );
+					} while ( pos < options.size() );
+
+					std::multimap<int,FeMenuOpt>::iterator it = my_opts.insert(
+							std::pair <int, FeMenuOpt>(
+								order,
+								FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
+
+					(*it).second.append_vlist( options_list );
+				}
+				else if ( config_str_to_bool( is_input ) )
+				{
+					my_opts.insert(
+							std::pair <int, FeMenuOpt>(
+								order,
+								FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
+				}
+				else if ( config_str_to_bool( is_func ) )
+				{
+					FeMenuOpt temp_opt(Opt::SUBMENU, label, "", help, 2, key );
+					temp_opt.opaque_str = value;
+
+					my_opts.insert(
+							std::pair <int, FeMenuOpt>(
+								order,
+								temp_opt ) );
+				}
+				else
+				{
+					my_opts.insert(
+							std::pair <int, FeMenuOpt>(
+								order,
+								FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
+				}
+			}
+
+			for ( std::multimap<int,FeMenuOpt>::iterator itr = my_opts.begin(); itr != my_opts.end(); ++itr )
+				ctx.opt_list.push_back( (*itr).second );
+		}
 	}
 }
 
@@ -1065,52 +1220,60 @@ FeShader* FeVM::cb_add_shader( int type )
 	return cb_add_shader( type, NULL, NULL );
 }
 
-void FeVM::cb_add_ticks_callback( const char *n )
+void FeVM::cb_add_ticks_callback( Sqrat::Object obj, const char *slot )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	fev->add_ticks_callback( n );
+	fev->add_ticks_callback( obj, slot );
+}
+
+void FeVM::cb_add_ticks_callback( const char *n )
+{
+	Sqrat::RootTable rt;
+	cb_add_ticks_callback( rt, n );
+}
+
+void FeVM::cb_add_transition_callback( Sqrat::Object obj, const char *slot )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+	fev->add_transition_callback( obj, slot );
 }
 
 void FeVM::cb_add_transition_callback( const char *n )
 {
+	Sqrat::RootTable rt;
+	cb_add_transition_callback( rt, n );
+}
+
+void FeVM::cb_add_signal_handler( Sqrat::Object obj, const char *slot )
+{
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	fev->add_transition_callback( n );
+	fev->add_signal_handler( obj, slot );
 }
 
 void FeVM::cb_add_signal_handler( const char *n )
 {
+	Sqrat::RootTable rt;
+	cb_add_signal_handler( rt, n );
+}
+
+void FeVM::cb_remove_signal_handler( Sqrat::Object obj, const char *slot )
+{
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	fev->add_signal_handler( n );
+	fev->remove_signal_handler( obj, slot );
 }
 
 void FeVM::cb_remove_signal_handler( const char *n )
 {
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-
-	fev->remove_signal_handler( n );
-}
-
-bool FeVM::cb_is_keypressed( int k )
-{
-	return sf::Keyboard::isKeyPressed( (sf::Keyboard::Key)k );
-}
-
-bool FeVM::cb_is_joybuttonpressed( int num, int b )
-{
-	return sf::Joystick::isButtonPressed( num, b );
-}
-
-float FeVM::cb_get_joyaxispos( int num, int a )
-{
-	sf::Joystick::update();
-	return sf::Joystick::getAxisPosition( num, (sf::Joystick::Axis)a );
+	Sqrat::RootTable rt;
+	cb_remove_signal_handler( rt, n );
 }
 
 bool FeVM::cb_get_input_state( const char *input )
@@ -1118,6 +1281,18 @@ bool FeVM::cb_get_input_state( const char *input )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
+	//
+	// First test if a command has been provided
+	//
+	for ( int i=0; i<FeInputMap::LAST_COMMAND; i++ )
+	{
+		if ( strcmp( input, FeInputMap::commandStrings[i] ) == 0 )
+			return fev->m_fes.get_current_state( (FeInputMap::Command)i );
+	}
+
+	//
+	// If not, then test based on it being an input string
+	//
 	return FeInputSource( input ).get_current_state( fev->m_fes.get_joy_thresh() );
 }
 
@@ -1251,72 +1426,6 @@ Sqrat::Table FeVM::cb_get_config()
 	}
 
 	return retval;
-}
-
-int FeVM::cb_list_dialog( Sqrat::Array t, const char *title, int default_sel, int cancel_sel )
-{
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-
-	if ( fev->m_overlay.overlay_is_on() )
-		return cancel_sel;
-
-	std::vector < std::string > list_entries;
-
-	Sqrat::Object::iterator it;
-	while ( t.Next( it ) )
-	{
-		std::string value;
-		fe_get_object_string( vm, it.getValue(), value );
-
-		list_entries.push_back( value );
-	}
-
-	if ( list_entries.size() > 2 )
-	{
-		return fev->m_overlay.common_list_dialog(
-				std::string( title ),
-				list_entries,
-				default_sel,
-				cancel_sel );
-	}
-	else
-	{
-		return fev->m_overlay.common_basic_dialog(
-				std::string( title ),
-				list_entries,
-				default_sel,
-				cancel_sel );
-	}
-}
-
-int FeVM::cb_list_dialog( Sqrat::Array t, const char *title, int default_sel )
-{
-	return cb_list_dialog( t, title, default_sel, -1 );
-}
-
-int FeVM::cb_list_dialog( Sqrat::Array t, const char *title )
-{
-	return cb_list_dialog( t, title, 0, -1 );
-}
-
-int FeVM::cb_list_dialog( Sqrat::Array t )
-{
-	return cb_list_dialog( t, NULL, 0, -1 );
-}
-
-const char *FeVM::cb_edit_dialog( const char *msg, const char *txt )
-{
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-
-	static std::string local_copy;
-	local_copy = txt;
-
-	if ( !fev->m_overlay.overlay_is_on() )
-		fev->m_overlay.edit_dialog( msg, local_copy );
-
-	return local_copy.c_str();
 }
 
 void FeVM::cb_signal( const char *sig )

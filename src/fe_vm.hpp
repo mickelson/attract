@@ -44,9 +44,12 @@ class FeWindow;
 class FeOverlay;
 class FeConfigContext;
 class FeScriptConfigurable;
+class FeConfigVM;
+class FeVMImp;
 
 namespace Sqrat
 {
+	class Object;
 	class Table;
 	class Array;
 };
@@ -70,6 +73,8 @@ enum FeTransitionType
 class FeVM
 {
 private:
+	friend class FeConfigVM;
+
 	static const char *transitionTypeStrings[];
 
 	enum FromToType
@@ -86,19 +91,18 @@ private:
 
 	bool m_redraw_triggered;
 	const FeScriptConfigurable *m_script_cfg;
-
-	std::vector< std::string > m_ticks_list;
-	std::vector< std::string > m_transition_list;
-	std::vector< std::string > m_signal_handlers;
 	std::queue< FeInputMap::Command > m_posted_commands;
+	std::vector< std::pair< Sqrat::Object, std::string > > m_ticks;
+	std::vector< std::pair< Sqrat::Object, std::string > > m_trans;
+	std::vector< std::pair< Sqrat::Object, std::string > > m_sig_handlers;
 
 	FeVM( const FeVM & );
 	FeVM &operator=( const FeVM & );
 
-	void add_ticks_callback(const std::string &);
-	void add_transition_callback(const std::string &);
-	void add_signal_handler( const std::string & );
-	void remove_signal_handler( const std::string & );
+	void add_ticks_callback( Sqrat::Object, const char * );
+	void add_transition_callback( Sqrat::Object, const char * );
+	void add_signal_handler( Sqrat::Object, const char * );
+	void remove_signal_handler( Sqrat::Object, const char * );
 
 	static bool internal_do_nut(const std::string &, const std::string &);
 
@@ -119,6 +123,18 @@ public:
 	bool on_transition( FeTransitionType, int var );
 
 	bool handle_event( FeInputMap::Command c );
+
+	//
+	// overlay functions used from scripts
+	//
+	int list_dialog( Sqrat::Array, const char *, int, int );
+	int list_dialog( Sqrat::Array, const char *, int );
+	int list_dialog( Sqrat::Array, const char * );
+	int list_dialog( Sqrat::Array );
+	const char *edit_dialog( const char *, const char * );
+	bool overlay_is_on();
+	bool splash_message( const char * );
+
 	//
 	// Script static functions
 	//
@@ -131,7 +147,15 @@ public:
 			FeConfigContext &ctx,
 			std::string &gen_help,
 			FeScriptConfigurable &configurable,
+			const std::string &script_path,
 			const std::string &script_file );
+
+	static void script_run_config_function(
+			const FeScriptConfigurable &configurable,
+			const std::string &script_path,
+			const std::string &script_file,
+			const std::string &func_name,
+			std::string &returned_message );
 
 	//
 	// Script callback functions
@@ -150,13 +174,14 @@ public:
 	static FeShader *cb_add_shader(int, const char *, const char *);
 	static FeShader *cb_add_shader(int, const char *);
 	static FeShader *cb_add_shader(int);
+	static void cb_add_ticks_callback( Sqrat::Object, const char *);
 	static void cb_add_ticks_callback(const char *);
+	static void cb_add_transition_callback( Sqrat::Object, const char *);
 	static void cb_add_transition_callback(const char *);
+	static void cb_add_signal_handler( Sqrat::Object, const char *);
 	static void cb_add_signal_handler( const char * );
+	static void cb_remove_signal_handler( Sqrat::Object, const char *);
 	static void cb_remove_signal_handler( const char * );
-	static bool cb_is_keypressed(int);	// deprecated as of 1.2
-	static bool cb_is_joybuttonpressed(int,int);	// deprecated as of 1.2
-	static float cb_get_joyaxispos(int,int);	// deprecated as of 1.2
 	static bool cb_get_input_state( const char *input );
 	static int cb_get_input_pos( const char *input );
 	static void do_nut(const char *);
@@ -168,11 +193,6 @@ public:
 	static const char *cb_game_info(int,int);
 	static const char *cb_game_info(int);
 	static Sqrat::Table cb_get_config();
-	static int cb_list_dialog( Sqrat::Array, const char *, int, int );
-	static int cb_list_dialog( Sqrat::Array, const char *, int );
-	static int cb_list_dialog( Sqrat::Array, const char * );
-	static int cb_list_dialog( Sqrat::Array );
-	static const char *cb_edit_dialog( const char *, const char * );
 	static void cb_signal( const char * );
 };
 

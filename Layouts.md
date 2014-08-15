@@ -32,17 +32,17 @@ Contents
       * [`fe.plugin_command_bg()`](#plugin_command_bg)
       * [`fe.path_expand()`](#path_expand)
       * [`fe.get_config()`](#get_config)
-      * [`fe.list_dialog()`](#list_dialog)
-      * [`fe.edit_dialog()`](#edit_dialog)
    * [Objects and Variables](#objects)
       * [`fe.layout`](#layout)
       * [`fe.list`](#list)
+      * [`fe.overlay`](#overlay)
       * [`fe.obj`](#obj)
       * [`fe.script_dir`](#script_dir)
       * [`fe.script_file`](#script_file)
    * [Classes](#classes)
       * [`fe.LayoutGlobals`](#LayoutGlobals)
       * [`fe.CurrentList`](#CurrentList)
+      * [`fe.Overlay`](#Overlay)
       * [`fe.Image`](#Image)
       * [`fe.Text`](#Text)
       * [`fe.ListBox`](#ListBox)
@@ -377,6 +377,7 @@ Return Value:
 <a name="add_ticks_callback" />
 #### `fe.add_ticks_callback()` ####
 
+    fe.add_ticks_callback( environment, function_name )
     fe.add_ticks_callback( function_name )
 
 Register a function in your script to get "tick" callbacks.  Tick callbacks
@@ -393,6 +394,8 @@ milliseconds) since the layout began.
 
 Parameters:
 
+   * environment - the squirrel object that the function is associated with
+     (default value: the root table of the squirrel vm)
    * function_name - a string naming the function to be called.
 
 Return Value:
@@ -403,6 +406,7 @@ Return Value:
 <a name="add_transition_callback" />
 #### `fe.add_transition_callback()` ####
 
+    fe.add_transition_callback( environment, function_name )
     fe.add_transition_callback( function_name )
 
 Register a function in your script to get transition callbacks.  Transition
@@ -475,6 +479,8 @@ operation of the frontend to proceed.**
 
 Parameters:
 
+   * environment - the squirrel object that the function is associated with
+     (default value: the root table of the squirrel vm)
    * function_name - a string naming the function to be called.
 
 Return Value:
@@ -523,15 +529,18 @@ Return Value:
 
     fe.get_input_state( input_id )
 
-Check if a keyboard key, mouse button, joystick button or joystick
-direction is currently pressed.
+Check if a specific keyboard key, mouse button, joystick button or joystick
+direction is currently pressed, or check if any input mapped to a particular
+frontend action is pressed.
 
 Parameter:
 
-   * input_id - [string] the input to test.  The format of this string
-     is the same as that used in the attract.cfg file.  For example,
-     "LControl" is the left control key, "Joy0 Up" is the up direction on the
-     first joystick, "Mouse MiddleButton" is the middle mouse button...
+   * input_id - [string] the input to test.  This can be a string in the same
+     format as used in the attract.cfg file for input mappings.  For example,
+     "LControl" will check the left control key, "Joy0 Up" will check the up
+     direction on the first joystick, "Mouse MiddleButton" will check the
+     middle mouse button, and "select" will check for any input mapped to the
+     game select button...
 
      Note that mouse moves and mouse wheel movements are not available through
      this function.
@@ -612,6 +621,7 @@ Return Value:
 #### `fe.add_signal_handler()` ####
 
 
+    fe.add_signal_handler( environment, function_name )
     fe.add_signal_handler( function_name )
 
 Register a function in your script to handle signals.  Signals are sent
@@ -643,6 +653,8 @@ frontend.
 
 Parameters:
 
+   * environment - the squirrel object that the function is associated with
+     (default value: the root table of the squirrel vm)
    * function_name - a string naming the signal handler function to
      be added.
 
@@ -654,6 +666,7 @@ Return Value:
 <a name="remove_signal_handler" />
 #### `fe.remove_signal_handler()` ####
 
+    fe.remove_signal_handler( environment, function_name )
     fe.remove_signal_handler( function_name )
 
 Remove a signal handler that has been added with the
@@ -661,6 +674,8 @@ Remove a signal handler that has been added with the
 
 Parameters:
 
+   * environment - the squirrel object that the signal handler function
+     is associated with (default value: the root table of the squirrel vm)
    * function_name - a string naming the signal handler function to
      remove.
 
@@ -793,44 +808,6 @@ Return Value:
      For an example, please see one of the plug-ins included with Attract-
      Mode or the "Attrac-Man" layout.
 
-<a name="list_dialog" />
-#### `fe.list_dialog()` ####
-
-    fe.list_dialog( options, title, default_sel, cancel_sel )
-    fe.list_dialog( options, title, default_sel )
-    fe.list_dialog( options, title )
-    fe.list_dialog( options )
-
-Prompt the user with a menu containing a list of options, returning the
-index of the selection.
-
-Parameters:
-
-   * options - an array containing the menu options to display in the list
-   * title - the list caption
-   * default_sel - index of the initial selection.  Default value is 0.
-   * cancel_sel - index to return if the user cancels.  Default value is -1.
-
-Return Value:
-
-   * the index of the user's selection
-
-<a name="edit_dialog" />
-#### `fe.edit_dialog()` ####
-
-    fe.edit_dialog( msg, text )
-
-Prompt the user to input/edit text.
-
-Parameters:
-
-   * msg - the prompt caption
-   * text - the initial text to be edited
-
-Return Value:
-
-   * the text edited by the user
-
 
 <a name="objects" />
 Objects and Variables
@@ -848,6 +825,13 @@ global layout settings are stored.
 
 `fe.list` is an instance of the `fe.CurrentList` class and is where current
 list settings are stored.
+
+
+<a name="overlay" />
+#### `fe.overlay` ####
+
+`fe.overlay` is an instance of the `fe.Overlay` class and is where overlay
+functionality may be accessed.
 
 
 <a name="obj" />
@@ -923,6 +907,37 @@ Attributes:
    * `filter` - Get the name of the current list filter.
    * `size` - Get the size of the current list.
    * `index` - Get/set the current list selection index.
+
+
+<a name="Overlay" />
+#### `fe.Overlay` ####
+
+This class is a container for overlay functionality.  The instance of this
+class is the `fe.overlay` object.  This class cannot be otherwise instantiated
+in a script.
+
+Attributes:
+
+   * `is_up` - Get whether the overlay is currently being displayed (i.e. config
+     mode, etc).
+
+Member Functions:
+
+   * `list_dialog( options, title, default_sel, cancel_sel )`
+   * `list_dialog( options, title, default_sel )`
+   * `list_dialog( options, title )`
+   * `list_dialog( options )` - The list_dialog function prompts the user with a
+     menu containing a list of options, returning the index of the selection.
+     The `options` parameter is an array of strings that are the menu options to
+     display in the list.  The `title` parameter is a caption for the list.
+     `default_sel` is the index of the entry to be selected initially (default is
+     0).  `cancel_sel` is the index to return if the user cancels (default is -1).
+     The return value is the index selected by the user.
+   * `edit_dialog( msg, text )` - Prompt the user to input/edit text.  The `msg`
+     parameter is the prompt caption.  `text` is the initial text to be edited.
+     The return value a the string of text as edited by the user.
+   * `splash_message( msg )` - immediately provide a text message to the user.
+     This could be useful to provide feedback during time-intensive operations.
 
 
 <a name="Image" />
