@@ -42,7 +42,6 @@ class SubMenu
 	{
 		m_trigger = trigger;
 		fe.add_ticks_callback( this, "on_tick" );
-		fe.add_transition_callback( this, "on_transition" );
 	};
 
 	function on_tick( ttime )

@@ -45,7 +45,6 @@ class FeOverlay;
 class FeConfigContext;
 class FeScriptConfigurable;
 class FeConfigVM;
-class FeVMImp;
 
 namespace Sqrat
 {

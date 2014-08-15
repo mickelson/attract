@@ -171,7 +171,7 @@ namespace
 	// a tick between each selection when the user is scrolling
 	// quickly between the the menu items with a key held down.
 	//
-	const int PLAY_COUNT=2;
+	const int PLAY_COUNT=5;
 };
 
 FeTextureContainer::FeTextureContainer(

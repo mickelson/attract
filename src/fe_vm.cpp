@@ -885,7 +885,7 @@ public:
 		// to scripts when they are run in the config mode
 		//
 		fe.Bind( _SC("Overlay"), Sqrat::Class <FeVM, Sqrat::NoConstructor>()
-			.Prop( _SC("is_on"), &FeVM::overlay_is_on )
+			.Prop( _SC("is_up"), &FeVM::overlay_is_on )
 			.Func( _SC("splash_message"), &FeVM::splash_message )
 		);
 
