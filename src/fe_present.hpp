@@ -87,7 +87,7 @@ private:
 
 	std::vector<FeBasePresentable *> m_elements;
 	std::vector<FeBaseTextureContainer *> m_texturePool;
-	std::vector<FeScriptSound *> m_scriptSounds;
+	std::vector<FeSound *> m_sounds;
 	std::vector<FeShader *> m_scriptShaders;
 	std::vector<FeFontContainer *> m_fontPool;
 	bool m_playMovies;
@@ -119,7 +119,7 @@ private:
 	FeText *add_text(const std::string &n, int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
 	FeListBox *add_listbox(int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
 	FeImage *add_surface(int w, int h, std::vector<FeBasePresentable *> &l);
-	FeScriptSound *add_sound(const std::string &n);
+	FeSound *add_sound(const char *n);
 	FeShader *add_shader(FeShader::Type type, const char *shader1, const char *shader2);
 	int get_layout_width() const;
 	int get_layout_height() const;

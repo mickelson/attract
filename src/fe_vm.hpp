@@ -37,7 +37,7 @@ class FeListBox;
 class FeShader;
 class FeSettings;
 class FePresent;
-class FeScriptSound;
+class FeSound;
 class FeScriptConfigurable;
 class FeLayoutInfo;
 class FeWindow;
@@ -87,6 +87,7 @@ private:
 	FePresent &m_fep;
 	FeWindow &m_window;
 	FeOverlay &m_overlay;
+	FeSound &m_ambient_sound;
 
 	bool m_redraw_triggered;
 	const FeScriptConfigurable *m_script_cfg;
@@ -106,7 +107,7 @@ private:
 	static bool internal_do_nut(const std::string &, const std::string &);
 
 public:
-	FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo );
+	FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo, FeSound &ambient_sound );
 	~FeVM();
 
 	void flag_redraw() { m_redraw_triggered = true; };
@@ -169,7 +170,7 @@ public:
 	static FeText *cb_add_text(const char *,int, int, int, int);
 	static FeListBox *cb_add_listbox(int, int, int, int);
 	static FeImage *cb_add_surface(int, int);
-	static FeScriptSound *cb_add_sound(const char *);
+	static FeSound *cb_add_sound(const char *);
 	static FeShader *cb_add_shader(int, const char *, const char *);
 	static FeShader *cb_add_shader(int, const char *);
 	static FeShader *cb_add_shader(int);
@@ -185,6 +186,7 @@ public:
 	static int cb_get_input_pos( const char *input );
 	static void do_nut(const char *);
 	static bool load_module( const char *module_file );
+	static bool cb_plugin_command(const char *, const char *, Sqrat::Object, const char * );
 	static bool cb_plugin_command(const char *, const char *, const char *);
 	static bool cb_plugin_command(const char *, const char *);
 	static bool cb_plugin_command_bg(const char *, const char *);

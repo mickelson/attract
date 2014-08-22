@@ -89,10 +89,10 @@ void FePresent::clear()
 		delete t;
 	}
 
-	while ( !m_scriptSounds.empty() )
+	while ( !m_sounds.empty() )
 	{
-		FeScriptSound *s = m_scriptSounds.back();
-		m_scriptSounds.pop_back();
+		FeSound *s = m_sounds.back();
+		m_sounds.pop_back();
 		delete s;
 	}
 
@@ -217,17 +217,14 @@ FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> 
 	return new_image;
 }
 
-FeScriptSound *FePresent::add_sound( const std::string &n )
+FeSound *FePresent::add_sound( const char *n )
 {
-	std::string filename = m_feSettings->get_current_layout_dir();
-	filename += n;
-
-	FeScriptSound *new_sound = new FeScriptSound();
-	new_sound->load( filename );
+	FeSound *new_sound = new FeSound();
+	new_sound->load( n );
 	new_sound->set_volume(
 		m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
 
-	m_scriptSounds.push_back( new_sound );
+	m_sounds.push_back( new_sound );
 	return new_sound;
 }
 
@@ -817,6 +814,11 @@ bool FePresent::video_tick()
 			ret_val=true;
 	}
 
+	// Check if we need to loop any script sounds that are set to loop
+	for ( std::vector<FeSound *>::iterator its=m_sounds.begin();
+			its != m_sounds.end(); ++its )
+		(*its)->tick();
+
 	return ret_val;
 }
 
@@ -903,8 +905,8 @@ void FePresent::toggle_mute()
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_vol( movie_vol );
 
-	for ( std::vector<FeScriptSound *>::iterator its=m_scriptSounds.begin();
-				its != m_scriptSounds.end(); ++its )
+	for ( std::vector<FeSound *>::iterator its=m_sounds.begin();
+				its != m_sounds.end(); ++its )
 		(*its)->set_volume( sound_vol );
 }
 

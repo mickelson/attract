@@ -33,6 +33,7 @@ Contents
       * [`fe.path_expand()`](#path_expand)
       * [`fe.get_config()`](#get_config)
    * [Objects and Variables](#objects)
+      * [`fe.ambient_sound`](#ambient_sound)
       * [`fe.layout`](#layout)
       * [`fe.list`](#list)
       * [`fe.overlay`](#overlay)
@@ -361,12 +362,11 @@ The minimal fragment shader expected is as follows:
 
     fe.add_sound( name )
 
-Add a small sound sample for the layout to play.  The entire file is loaded
-into memory.
+Add an audio file to play.
 
 Parameters:
 
-   * name - the name of the sound file located in the layout directory.
+   * name - the name of the audio file.
 
 Return Value:
 
@@ -713,9 +713,6 @@ Parameters:
      correspond to a script file in the "modules" subdirectory of your
      Attract-Mode configuration (without the file extension).
 
-     Note that as of this writing there are no modules provided with
-     Attract-Mode's default installation.
-
 Return Value:
 
    * `true` if the module was loaded, `false' if it was not found.
@@ -725,6 +722,7 @@ Return Value:
 #### `fe.plugin_command()` ####
 
     fe.plugin_command( executable, arg_string )
+    fe.plugin_command( executable, arg_string, environment, callback_function )
     fe.plugin_command( executable, arg_string, callback_function )
 
 Execute a plug-in command and wait until the command is done.
@@ -733,6 +731,8 @@ Parameters:
 
    * executable - the name of the executable to run.
    * arg_string - the arguments to pass when running the executable.
+   * environment - the squirrel object that the callback function
+     is associated with.
    * callback_function - a string containing the name of the function in
      Squirrel to call with any output that the executable provides on stdout.
      The function should be in the following form:
@@ -812,6 +812,13 @@ Return Value:
 <a name="objects" />
 Objects and Variables
 ---------------------
+
+<a name="ambient_sound" />
+#### `fe.ambient_sound` ####
+
+`fe.ambient_sound` is an instance of the `fe.Sound` class and can be used to
+control the ambient sound track.
+
 
 <a name="layout" />
 #### `fe.layout` ####
@@ -1243,21 +1250,23 @@ Member Functions:
 <a name="Sound" />
 #### `fe.Sound` ####
 
-The class representing a sound sample.  Instances of this class are returned
-by the `fe.add_sound()` function.  This class cannot be otherwise
+The class representing an audio track.  Instances of this class are returned
+by the `fe.add_sound()` function.  This is also the class for the
+`fe.ambient_sound` object.  Object of this class cannot be otherwise
 instantiated in a script.
 
 Attributes:
 
-   * `is_playing` - Get whether the sound is currently playing (boolean).
-   * `pitch` - Get/set the sound's pitch (float). Default value is 1.
+   * `file_name` - Get/set the audio filename.
+   * `playing` - Get/set whether the track is currently playing (boolean).
+   * `loop` - Get/set whether the track should be looped (boolean).
+   * `pitch` - Get/set the audio pitch (float). Default value is 1.
    * `x` - Get/set the x position of the sound.  Default value is 0.
    * `y` - Get/set the y position of the sound.  Default value is 0.
    * `z` - Get/set the z position of the sound.  Default value is 0.
-
-Member Functions:
-
-   * `play()` - Play the sound.
+   * `duration` - Get the audio track duration (in milliseconds).
+   * `time` - Get the time that the audio track is current at (in
+     milliseconds).
 
 
 <a name="Shader" />

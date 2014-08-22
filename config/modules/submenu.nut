@@ -88,8 +88,12 @@ class SubMenu
 			m_curr_scroll_button = signal;
 			return true;
 		}
-		else if (( signal == "select" )
-			|| ( signal == "exit_no_menu" )
+		else if ( signal == "select" )
+		{
+			on_select();
+			return true;
+		}
+		else if (( signal == "exit_no_menu" )
 			|| ( signal == "exit" ))
 		{
 			show( false );
@@ -101,15 +105,15 @@ class SubMenu
 	{
 		if ( flag )
 		{
-			on_show();
 			m_up = true;
 			fe.add_signal_handler( this, "on_signal" );
+			on_show();
 		}
 		else
 		{
-			on_hide();
 			m_up = false;
 			fe.remove_signal_handler( this, "on_signal" );
+			on_hide();
 		}
 	}
 
@@ -121,4 +125,5 @@ class SubMenu
 	function on_hide() { print( "SubMenu::on_hide()\n" ); }
 	function on_scroll_up() {}
 	function on_scroll_down() {}
+	function on_select() { show( false ); }
 };

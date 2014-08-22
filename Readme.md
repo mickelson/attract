@@ -116,9 +116,7 @@ the selection order.
 **LAYOUTS:** See: [Layouts.md][]
 
 **PLUG-INS:** Plug-ins are scripts that need to be placed in the "plugins"
-subdirectory of your Attract-Mode config directory.  Their primary use is to
-allow for integration between Attract-Mode and other software that can
-benefit from knowing when events occur in the frontend.  Available plugins
+subdirectory of your Attract-Mode config directory.  Available plugins
 can be enabled/disabled and configured from the "Plug-Ins" menu when in
 config mode.
 

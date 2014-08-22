@@ -785,6 +785,11 @@ void FeMedia::setLoop( bool l )
 	m_loop=l;
 }
 
+bool FeMedia::getLoop() const
+{
+	return m_loop;
+}
+
 bool FeMedia::openFromFile( const std::string &name )
 {
 	close();

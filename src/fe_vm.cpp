@@ -64,10 +64,10 @@ namespace
 	{
 		try
 		{
-			Sqrat::Function func( Sqrat::RootTable(), (const char *)opaque );
+			Sqrat::Function *func = (Sqrat::Function *)opaque;
 
-			if ( !func.IsNull() )
-				func.Execute( buffer );
+			if ( !func->IsNull() )
+				func->Execute( buffer );
 
 			return true; // return false to cancel callbacks
 		}
@@ -92,11 +92,12 @@ const char *FeVM::transitionTypeStrings[] =
 		NULL
 };
 
-FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo )
+FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo, FeSound &ambient_sound )
 	: m_fes( fes ),
 	m_fep( fep ),
 	m_window( wnd ),
 	m_overlay( feo ),
+	m_ambient_sound( ambient_sound ),
 	m_redraw_triggered( false ),
 	m_script_cfg( NULL )
 {
@@ -410,21 +411,24 @@ void FeVM::on_new_layout( const std::string &path,
 
 	fe.Bind( _SC("Overlay"), Class <FeVM, NoConstructor>()
 		.Prop( _SC("is_up"), &FeVM::overlay_is_on )
-		.Overload<int (FeVM::*)(Sqrat::Array, const char *, int, int)>(_SC("list_dialog"), &FeVM::list_dialog)
-		.Overload<int (FeVM::*)(Sqrat::Array, const char *, int)>(_SC("list_dialog"), &FeVM::list_dialog)
-		.Overload<int (FeVM::*)(Sqrat::Array, const char *)>(_SC("list_dialog"), &FeVM::list_dialog)
-		.Overload<int (FeVM::*)(Sqrat::Array)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Overload<int (FeVM::*)(Array, const char *, int, int)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Overload<int (FeVM::*)(Array, const char *, int)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Overload<int (FeVM::*)(Array, const char *)>(_SC("list_dialog"), &FeVM::list_dialog)
+		.Overload<int (FeVM::*)(Array)>(_SC("list_dialog"), &FeVM::list_dialog)
 		.Func( _SC("edit_dialog"), &FeVM::edit_dialog )
 		.Func( _SC("splash_message"), &FeVM::splash_message )
 	);
 
-	fe.Bind( _SC("Sound"), Class <FeScriptSound, NoConstructor>()
-		.Func( _SC("play"), &FeScriptSound::play )
-		.Prop( _SC("is_playing"), &FeScriptSound::is_playing )
-		.Prop( _SC("pitch"), &FeScriptSound::get_pitch, &FeScriptSound::set_pitch )
-		.Prop( _SC("x"), &FeScriptSound::get_x, &FeScriptSound::set_x )
-		.Prop( _SC("y"), &FeScriptSound::get_y, &FeScriptSound::set_y )
-		.Prop( _SC("z"), &FeScriptSound::get_z, &FeScriptSound::set_z )
+	fe.Bind( _SC("Sound"), Class <FeSound, NoConstructor>()
+		.Prop( _SC("file_name"), &FeSound::get_file_name, &FeSound::load )
+		.Prop( _SC("playing"), &FeSound::get_playing, &FeSound::set_playing )
+		.Prop( _SC("loop"), &FeSound::get_loop, &FeSound::set_loop )
+		.Prop( _SC("pitch"), &FeSound::get_pitch, &FeSound::set_pitch )
+		.Prop( _SC("x"), &FeSound::get_x, &FeSound::set_x )
+		.Prop( _SC("y"), &FeSound::get_y, &FeSound::set_y )
+		.Prop( _SC("z"), &FeSound::get_z, &FeSound::set_z )
+		.Prop(_SC("duration"), &FeSound::get_duration )
+		.Prop(_SC("time"), &FeSound::get_time )
 	);
 
 	fe.Bind( _SC("Shader"), Class <FeShader, NoConstructor>()
@@ -454,29 +458,30 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Overload<FeText* (*)(const char *, int, int, int, int)>(_SC("add_text"), &FeVM::cb_add_text);
 	fe.Func<FeListBox* (*)(int, int, int, int)>(_SC("add_listbox"), &FeVM::cb_add_listbox);
 	fe.Func<FeImage* (*)(int, int)>(_SC("add_surface"), &FeVM::cb_add_surface);
-	fe.Func<FeScriptSound* (*)(const char *)>(_SC("add_sound"), &FeVM::cb_add_sound);
+	fe.Func<FeSound* (*)(const char *)>(_SC("add_sound"), &FeVM::cb_add_sound);
 	fe.Overload<FeShader* (*)(int, const char *, const char *)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Overload<FeShader* (*)(int, const char *)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Overload<FeShader* (*)(int)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Overload<void (*)(const char *)>(_SC("add_ticks_callback"), &FeVM::cb_add_ticks_callback);
-	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("add_ticks_callback"), &FeVM::cb_add_ticks_callback);
+	fe.Overload<void (*)(Object, const char *)>(_SC("add_ticks_callback"), &FeVM::cb_add_ticks_callback);
 	fe.Overload<void (*)(const char *)>(_SC("add_transition_callback"), &FeVM::cb_add_transition_callback);
-	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("add_transition_callback"), &FeVM::cb_add_transition_callback);
+	fe.Overload<void (*)(Object, const char *)>(_SC("add_transition_callback"), &FeVM::cb_add_transition_callback);
 	fe.Overload<void (*)(const char *)>(_SC("add_signal_handler"), &FeVM::cb_add_signal_handler);
-	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("add_signal_handler"), &FeVM::cb_add_signal_handler);
+	fe.Overload<void (*)(Object, const char *)>(_SC("add_signal_handler"), &FeVM::cb_add_signal_handler);
 	fe.Overload<void (*)(const char *)>(_SC("remove_signal_handler"), &FeVM::cb_remove_signal_handler);
-	fe.Overload<void (*)(Sqrat::Object, const char *)>(_SC("remove_signal_handler"), &FeVM::cb_remove_signal_handler);
+	fe.Overload<void (*)(Object, const char *)>(_SC("remove_signal_handler"), &FeVM::cb_remove_signal_handler);
 	fe.Func<bool (*)(const char *)>(_SC("get_input_state"), &FeVM::cb_get_input_state);
 	fe.Func<int (*)(const char *)>(_SC("get_input_pos"), &FeVM::cb_get_input_pos);
 	fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
 	fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
 	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FeVM::cb_game_info);
 	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FeVM::cb_game_info);
+	fe.Overload<bool (*)(const char *, const char *, Object, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FeVM::cb_plugin_command_bg);
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
-	fe.Func<Sqrat::Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
+	fe.Func<Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
 
 	//
@@ -486,6 +491,8 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.SetInstance( _SC("layout"), &m_fep );
 	fe.SetInstance( _SC("list"), &m_fep );
 	fe.SetInstance( _SC("overlay"), this );
+	fe.SetInstance( _SC("ambient_sound"), &m_ambient_sound );
+	fe.SetValue( _SC("plugin"), Table() ); // an empty table for plugins to use/abuse
 
 	// Each presentation object gets an instance in the
 	// "obj" table available in Squirrel
@@ -573,12 +580,12 @@ bool FeVM::on_tick()
 	{
 		// Assumption: Ticks list is empty if no vm is active
 		//
-		ASSERT( Sqrat::DefaultVM::Get() );
+		ASSERT( DefaultVM::Get() );
 
 		bool remove=false;
 		try
 		{
-			Sqrat::Function func( (*itr).first, (*itr).second.c_str() );
+			Function func( (*itr).first, (*itr).second.c_str() );
 			if ( !func.IsNull() )
 				func.Execute( m_fep.m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
@@ -615,7 +622,7 @@ bool FeVM::on_transition(
 	sf::Clock ttimer;
 	m_redraw_triggered = false;
 
-	std::vector<std::pair<Sqrat::Object, std::string>*> worklist( m_trans.size() );
+	std::vector<std::pair<Object, std::string>*> worklist( m_trans.size() );
 	for ( unsigned int i=0; i < m_trans.size(); i++ )
 		worklist[i] = &(m_trans[i]);
 
@@ -633,13 +640,13 @@ bool FeVM::on_transition(
 		// Call each remaining transition callback on each pass through
 		// the worklist
 		//
-		for ( std::vector<std::pair<Sqrat::Object, std::string>*>::iterator itr=worklist.begin();
+		for ( std::vector<std::pair<Object, std::string>*>::iterator itr=worklist.begin();
 			itr != worklist.end(); )
 		{
 			bool keep=false;
 			try
 			{
-				Sqrat::Function func( (*itr)->first, (*itr)->second.c_str() );
+				Function func( (*itr)->first, (*itr)->second.c_str() );
 				if ( !func.IsNull() )
 				{
 					keep = func.Evaluate<bool>(
@@ -1188,7 +1195,7 @@ FeImage* FeVM::cb_add_surface( int w, int h )
 	return ret;
 }
 
-FeScriptSound* FeVM::cb_add_sound( const char *s )
+FeSound* FeVM::cb_add_sound( const char *s )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
@@ -1360,10 +1367,20 @@ bool FeVM::load_module( const char *module_file )
 
 bool FeVM::cb_plugin_command( const char *command,
 		const char *args,
-		const char *output_callback )
+		Sqrat::Object obj,
+		const char *fn )
 {
+	Sqrat::Function func( obj, fn );
 	return run_program( clean_path( command ),
-		args, my_callback, (void *)output_callback );
+				args, my_callback, (void *)&func );
+}
+
+bool FeVM::cb_plugin_command( const char *command,
+		const char *args,
+		const char *fn )
+{
+	Sqrat::RootTable rt;
+	return cb_plugin_command( command, args, rt, fn );
 }
 
 bool FeVM::cb_plugin_command( const char *command, const char *args )

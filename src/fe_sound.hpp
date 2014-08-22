@@ -34,54 +34,38 @@
 
 class FeSettings;
 
-class FeSoundSystem
+class FeSound
 {
 private:
-	FeSoundSystem( const FeSoundSystem & );
-	FeSoundSystem &operator=( const FeSoundSystem & );
+	FeSound( const FeSound & );
+	FeSound &operator=( const FeSound & );
 
 #ifdef NO_MOVIE
-	sf::Music m_music;
 	sf::Music m_sound;
 #else
-	FeMedia m_music;
 	FeMedia m_sound;
 #endif
-	FeSettings *m_fes;
+	std::string m_file_name;
+	bool m_play_state;
 
 public:
-	FeSoundSystem( FeSettings * );
-	~FeSoundSystem();
+	FeSound( bool loop=false );
 
-	void sound_event( FeInputMap::Command );
-	void play_ambient();
-	void update_volumes();
-	void stop();
 	void tick();
-};
 
-class FeScriptSound
-{
-private:
-	FeScriptSound( const FeScriptSound & );
-	FeScriptSound &operator=( const FeScriptSound & );
+	void load( const char * );
+	const char *get_file_name();
 
-#ifdef NO_MOVIE
-	sf::Music m_sound;
-#else
-	FeMedia m_sound;
-#endif
-
-public:
-	FeScriptSound();
-
-	bool load( const std::string & );
-	void play();
 	void set_volume( int );
 
-	bool is_playing();
+	bool get_playing();
+	void set_playing( bool );
+
 	float get_pitch();
 	void set_pitch( float );
+
+	bool get_loop();
+	void set_loop( bool );
 
 	float get_x();
 	float get_y();
@@ -89,6 +73,32 @@ public:
 	void set_x( float );
 	void set_y( float );
 	void set_z( float );
+
+	int get_duration();
+	int get_time();
+};
+
+class FeSoundSystem
+{
+private:
+	FeSoundSystem( const FeSoundSystem & );
+	FeSoundSystem &operator=( const FeSoundSystem & );
+
+	FeSound m_sound;
+	FeSound m_music;
+	FeSettings *m_fes;
+
+public:
+	FeSoundSystem( FeSettings * );
+	~FeSoundSystem();
+
+	FeSound &get_ambient_sound();
+
+	void sound_event( FeInputMap::Command );
+	void play_ambient();
+	void update_volumes();
+	void stop();
+	void tick();
 };
 
 #endif

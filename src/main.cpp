@@ -251,6 +251,8 @@ int main(int argc, char *argv[])
 	sf::AudioDevice audio_device;
 #endif
 	FeSoundSystem soundsys( &feSettings );
+
+	soundsys.update_volumes();
 	soundsys.play_ambient();
 
 	FeWindow window( feSettings );
@@ -258,7 +260,7 @@ int main(int argc, char *argv[])
 
 	FePresent fePresent( &feSettings, defaultFont );
 	FeOverlay feOverlay( window, feSettings, fePresent );
-	FeVM feVM( feSettings, fePresent, window, feOverlay );
+	FeVM feVM( feSettings, fePresent, window, feOverlay, soundsys.get_ambient_sound() );
 
 	fePresent.load_layout( true );
 
@@ -295,8 +297,6 @@ int main(int argc, char *argv[])
 			{
 				// Settings changed, reload
 				//
-				soundsys.update_volumes();
-
 				if ( feSettings.get_font_file( defaultFontFile ) )
 					defaultFont.set_font( defaultFontFile );
 
@@ -304,6 +304,7 @@ int main(int argc, char *argv[])
 				fePresent.load_layout();
 
 				soundsys.stop();
+				soundsys.update_volumes();
 				soundsys.play_ambient();
 
 				// Recreate window if the window mode changed

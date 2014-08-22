@@ -43,6 +43,40 @@ local my_dir = fe.script_dir;
 local items = [];
 local actions = [];
 
+const MAX_OUTPUT_LINES = 40;
+
+fe.load_module( "submenu" );
+
+class AnyCommandOutput extends SubMenu
+{
+	m_t = "";
+
+	constructor()
+	{
+		base.constructor();
+		m_t = fe.add_text( "", 0, 0, fe.layout.width, fe.layout.height );
+		m_t.charsize=fe.layout.height / MAX_OUTPUT_LINES;
+		m_t.align=Align.Left;
+		m_t.word_wrap=true;
+		m_t.bg_alpha=180;
+		m_t.visible = false;
+	}
+
+	function on_show() { m_t.visible = true; }
+	function on_hide() { m_t.visible = false; }
+	function on_scroll_up() { m_t.first_line_hint--; }
+	function on_scroll_down() { m_t.first_line_hint++; }
+
+	function show_output( msg )
+	{
+		m_t.msg = msg;
+		m_t.first_line_hint=0;
+
+		show( true );
+	}
+};
+fe.plugin[ "Utility Menu" ] <- AnyCommandOutput();
+
 //
 // Load configured menu items into the menu
 //

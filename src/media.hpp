@@ -67,6 +67,7 @@ public:
 	bool tick();
 
 	void setLoop( bool );
+	bool getLoop() const;
 
 	bool is_playing();
 	int number_of_frames() const;

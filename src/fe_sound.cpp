@@ -25,157 +25,192 @@
 #include <iostream>
 
 FeSoundSystem::FeSoundSystem( FeSettings *fes )
-#ifdef NO_MOVIE
-	: m_music(),
-	m_sound(),
-#else
-	: m_music( FeMedia::Audio ),
-	m_sound( FeMedia::Audio ),
-#endif
+	: m_sound( false ),
+	m_music( true ),
 	m_fes( fes )
 {
-	m_music.setLoop( true );
-	m_sound.setLoop( false );
 }
 
 FeSoundSystem::~FeSoundSystem()
 {
 }
 
+FeSound &FeSoundSystem::get_ambient_sound()
+{
+	return m_music;
+}
+
 void FeSoundSystem::sound_event( FeInputMap::Command c )
 {
-	int volume = m_fes->get_play_volume( FeSoundInfo::Sound );
-
-	if ( volume <= 0 )
+	if ( m_fes->get_play_volume( FeSoundInfo::Sound ) <= 0 )
 		return;
 
 	std::string sound;
 	if ( !m_fes->get_sound_file( c, sound ) )
 		return;
 
-	if ( !m_sound.openFromFile( sound ) )
-		return;
+	if ( sound.compare( m_sound.get_file_name() ) != 0 )
+		m_sound.load( sound.c_str() );
 
-	m_sound.setVolume( volume );
-	m_sound.play();
+	m_sound.set_playing( true );
 }
 
 void FeSoundSystem::play_ambient()
 {
-	int volume = m_fes->get_play_volume( FeSoundInfo::Ambient );
-
-	if ( volume <= 0 )
+	if ( m_fes->get_play_volume( FeSoundInfo::Ambient ) <= 0 )
 		return;
 
 	std::string sound;
 	if ( !m_fes->get_sound_file( FeInputMap::AmbientSound, sound ) )
 		return;
 
-	if ( !m_music.openFromFile( sound ) )
-		return;
+	if ( sound.compare( m_music.get_file_name() ) != 0 )
+		m_music.load( sound.c_str() );
 
-	m_music.setVolume( volume );
-	m_music.play();
+	m_music.set_playing( true );
 }
 
 void FeSoundSystem::stop()
 {
-#ifdef NO_MOVIE
-	m_music.stop();
-#else
-	m_music.close();
-#endif
+	m_music.set_playing( false );
 }
 
 void FeSoundSystem::tick()
 {
-#ifndef NO_MOVIE
 	m_music.tick();
 	m_sound.tick();
-#endif
 }
 
 void FeSoundSystem::update_volumes()
 {
-	m_music.setVolume( m_fes->get_play_volume( FeSoundInfo::Ambient ) );
-	m_sound.setVolume( m_fes->get_play_volume( FeSoundInfo::Sound ) );
+	m_music.set_volume( m_fes->get_play_volume( FeSoundInfo::Ambient ) );
+	m_sound.set_volume( m_fes->get_play_volume( FeSoundInfo::Sound ) );
 }
 
-FeScriptSound::FeScriptSound()
+FeSound::FeSound( bool loop )
 #ifdef NO_MOVIE
-	: m_sound()
+	: m_sound(),
 #else
-	: m_sound( FeMedia::Audio )
+	: m_sound( FeMedia::Audio ),
 #endif
+	m_play_state( false )
 {
+	// default to no looping for script sounds
+	m_sound.setLoop( loop );
 }
 
-bool FeScriptSound::load( const std::string &n )
+void FeSound::tick()
+{
+#ifndef NO_MOVIE
+	if ( m_play_state )
+		m_sound.tick();
+#endif
+}
+
+void FeSound::load( const char *n )
 {
 	if ( !m_sound.openFromFile( n ) )
 	{
 		std::cout << "Error loading sound file: " << n << std::endl;
-		return false;
+		m_file_name = "";
 	}
-
-	m_sound.setLoop( false );
-	return true;
+	else
+	{
+		m_file_name = n;
+	}
 }
 
-void FeScriptSound::play()
+const char *FeSound::get_file_name()
 {
-	// call stop to reset to the beginning (if sound has previously been played)
-	//
-	m_sound.stop();
-	m_sound.play();
+	return m_file_name.c_str();
 }
 
-void FeScriptSound::set_volume( int v )
+void FeSound::set_volume( int v )
 {
 	m_sound.setVolume( v );
 }
 
-bool FeScriptSound::is_playing()
+void FeSound::set_playing( bool flag )
+{
+	m_play_state = flag;
+
+	// calling stop will reset to the beginning (if sound has previously been played)
+	//
+	m_sound.stop();
+
+	if ( m_play_state == true )
+		m_sound.play();
+}
+
+bool FeSound::get_playing()
 {
 	return ( m_sound.getStatus() == sf::SoundSource::Playing ) ? true : false;
 }
 
-float FeScriptSound::get_pitch()
+float FeSound::get_pitch()
 {
 	return m_sound.getPitch();
 }
 
-void FeScriptSound::set_pitch( float p )
+void FeSound::set_pitch( float p )
 {
 	m_sound.setPitch( p );
 }
 
-float FeScriptSound::get_x()
+bool FeSound::get_loop()
+{
+	return m_sound.getLoop();
+}
+
+void FeSound::set_loop( bool loop )
+{
+	m_sound.setLoop( loop );
+}
+
+float FeSound::get_x()
 {
 	return m_sound.getPosition().x;
 }
 
-float FeScriptSound::get_y()
+float FeSound::get_y()
 {
 	return m_sound.getPosition().y;
 }
 
-float FeScriptSound::get_z()
+float FeSound::get_z()
 {
 	return m_sound.getPosition().z;
 }
 
-void FeScriptSound::set_x( float v )
+void FeSound::set_x( float v )
 {
 	m_sound.setPosition( sf::Vector3f( v, get_y(), get_z() ) );
 }
 
-void FeScriptSound::set_y( float v )
+void FeSound::set_y( float v )
 {
 	m_sound.setPosition( sf::Vector3f( get_x(), v, get_z() ) );
 }
 
-void FeScriptSound::set_z( float v )
+void FeSound::set_z( float v )
 {
 	m_sound.setPosition( sf::Vector3f( get_x(), get_y(), v ) );
+}
+
+int FeSound::get_duration()
+{
+#ifndef NO_MOVIE
+	return m_sound.get_duration().asMilliseconds();
+#else
+	return 0;
+#endif
+}
+
+int FeSound::get_time()
+{
+#ifndef NO_MOVIE
+	return m_sound.get_video_time().asMilliseconds();
+#else
+	return 0;
+#endif
 }
