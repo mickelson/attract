@@ -973,7 +973,7 @@ bool FeInputEditMenu::on_option_select(
 			{
 				std::string command_str;
 				ctx.fe_settings.get_resource( FeInputMap::commandDispStrings[ conflict ], command_str );
-				save = ctx.confirm_dialog(
+				save = !ctx.confirm_dialog(
 					"This will overwrite an existing mapping ($1).  Proceed?", command_str  );
 			}
 
