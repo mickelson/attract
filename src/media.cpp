@@ -105,14 +105,15 @@ private:
 	sf::Mutex m_packetq_mutex;
 
 public:
+	virtual ~FeBaseStream();
+
 	bool at_end;					// set when at the end of our input
 	AVCodecContext *codec_ctx;
 	AVCodec *codec;
 	int stream_id;
 
 	FeBaseStream();
-	void close();
-	void stop();
+	virtual void stop();
 	AVPacket *pop_packet();
 	void push_packet( AVPacket *pkt );
 	void clear_packet_queue();
@@ -137,7 +138,6 @@ public:
 
 	FeAudioImp();
 	~FeAudioImp();
-	void close();
 };
 
 //
@@ -169,9 +169,10 @@ public:
 	sf::Uint8 *display_frame;
 
 	FeVideoImp( FeMedia *parent );
+	~FeVideoImp();
+
 	void play();
 	void stop();
-	void close();
 
 	void preload();
 	void video_thread();
@@ -185,7 +186,7 @@ FeBaseStream::FeBaseStream()
 {
 }
 
-void FeBaseStream::close()
+FeBaseStream::~FeBaseStream()
 {
 	if ( codec_ctx )
 	{
@@ -267,15 +268,11 @@ FeAudioImp::FeAudioImp()
 
 FeAudioImp::~FeAudioImp()
 {
-	close();
-}
+	sf::Lock l( buffer_mutex );
 
-void FeAudioImp::close()
-{
 #ifdef DO_RESAMPLE
 	if ( resample_ctx )
 	{
-		sf::Lock l( buffer_mutex );
 		resample_free( &resample_ctx );
 		resample_ctx = NULL;
 	}
@@ -283,13 +280,9 @@ void FeAudioImp::close()
 
 	if ( buffer )
 	{
-		sf::Lock l( buffer_mutex );
-
 		av_free( buffer );
 		buffer=NULL;
 	}
-
-	FeBaseStream::close();
 }
 
 FeVideoImp::FeVideoImp( FeMedia *p )
@@ -299,6 +292,11 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		run_video_thread( false ),
 		display_frame( NULL )
 {
+}
+
+FeVideoImp::~FeVideoImp()
+{
+	stop();
 }
 
 void FeVideoImp::play()
@@ -317,12 +315,6 @@ void FeVideoImp::stop()
 	}
 
 	FeBaseStream::stop();
-}
-
-void FeVideoImp::close()
-{
-	stop();
-	FeBaseStream::close();
 }
 
 namespace
@@ -747,14 +739,12 @@ void FeMedia::close()
 
 	if (m_audio)
 	{
-		m_audio->close();
 		delete m_audio;
 		m_audio=NULL;
 	}
 
 	if (m_video)
 	{
-		m_video->close();
 		delete m_video;
 		m_video=NULL;
 	}
@@ -1186,4 +1176,12 @@ sf::Time FeMedia::get_duration() const
 	}
 
 	return sf::Time::Zero;
+}
+
+const char *FeMedia::get_metadata( const char *tag )
+{
+	AVDictionaryEntry *entry = NULL;
+	entry = av_dict_get( m_format_ctx->metadata, tag, NULL, AV_DICT_IGNORE_SUFFIX );
+
+	return ( entry ? entry->value : "" );
 }

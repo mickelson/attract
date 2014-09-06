@@ -214,3 +214,12 @@ int FeSound::get_time()
 	return 0;
 #endif
 }
+
+const char *FeSound::get_metadata( const char *tag )
+{
+#ifndef NO_MOVIE
+	return m_sound.get_metadata( tag );
+#else
+	return "";
+#endif
+}

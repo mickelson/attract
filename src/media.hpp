@@ -75,6 +75,8 @@ public:
 	sf::Time get_video_time();
 	sf::Time get_duration() const;
 
+	const char *get_metadata( const char *tag );
+
 	//
 	// return true if the given filename is a media file that can be opened
 	//	by FeMedia

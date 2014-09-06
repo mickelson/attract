@@ -76,6 +76,7 @@ public:
 
 	int get_duration();
 	int get_time();
+	const char *get_metadata( const char * );
 };
 
 class FeSoundSystem
