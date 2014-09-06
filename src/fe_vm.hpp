@@ -122,7 +122,7 @@ public:
 	bool on_tick();
 	bool on_transition( FeTransitionType, int var );
 
-	bool handle_event( FeInputMap::Command c );
+	bool handle_event( FeInputMap::Command c, bool &redraw );
 
 	//
 	// overlay functions used from scripts

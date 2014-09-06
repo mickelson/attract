@@ -92,6 +92,7 @@ private:
 	std::vector<FeFontContainer *> m_fontPool;
 	bool m_playMovies;
 	bool m_screenSaverActive;
+	int m_user_page_size;
 
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
@@ -160,7 +161,10 @@ public:
 	bool handle_event( FeInputMap::Command, const sf::Event &ev );
 
 	FeSettings *get_fes() const { return m_feSettings; };
+
 	int get_page_size() const;
+	void set_page_size( int );
+
 	const sf::Transform &get_transform() const;
 	const sf::Font *get_font() const; // get the current font (used by overlay)
 

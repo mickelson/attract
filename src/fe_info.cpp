@@ -320,51 +320,39 @@ bool FeRule::apply_rule( const FeRomInfo &rom ) const
 	{
 	case FilterEquals:
 		if ( target.empty() )
-		{
-			if ( m_filter_what.empty() )
-				return true;
-			else
-				return false;
-		}
-		return (( sqstd_rex_match(
+			return ( m_filter_what.empty() );
+
+		return ( sqstd_rex_match(
 					m_rex,
-					(const SQChar *)target.c_str()
-					) == SQTrue ) ? true : false );
+					(const SQChar *)target.c_str() ) == SQTrue );
 
 	case FilterNotEquals:
 		if ( target.empty() )
-		{
-			if ( m_filter_what.empty() )
-				return false;
-			else
-				return true;
-		}
-		return (( sqstd_rex_match(
+			return ( !m_filter_what.empty() );
+
+		return ( sqstd_rex_match(
 					m_rex,
-					(const SQChar *)target.c_str()
-					) == SQTrue ) ? false : true );
+					(const SQChar *)target.c_str() ) != SQTrue );
 
 	case FilterContains:
 		if ( target.empty() )
 			return false;
 
-		return (( sqstd_rex_search(
+		return ( sqstd_rex_search(
 					m_rex,
 					(const SQChar *)target.c_str(),
 					&begin,
-					&end
-					) == SQTrue ) ? true : false );
+					&end ) == SQTrue );
 
 	case FilterNotContains:
 		if ( target.empty() )
 			return true;
 
-		return (( sqstd_rex_search(
+		return ( sqstd_rex_search(
 					m_rex,
 					(const SQChar *)target.c_str(),
 					&begin,
-					&end
-					) == SQTrue ) ? false : true );
+					&end ) != SQTrue );
 
 	default:
 		return true;

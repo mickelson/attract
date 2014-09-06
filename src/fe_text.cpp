@@ -151,7 +151,7 @@ void FeText::on_new_selection( FeSettings *feSettings )
 				as_str( feSettings->get_current_list_size() ) );
 
 		n -= perform_substitution( str, "[ListEntry]",
-				as_str( feSettings->get_rom_index() + 1 ) );
+				as_str( feSettings->get_rom_index( m_index_offset ) + 1 ) );
 	}
 
 	if ( n > 0 )

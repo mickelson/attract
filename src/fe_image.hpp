@@ -58,7 +58,7 @@ public:
 	virtual bool get_play_state() const;
 	virtual void set_vol( float vol );
 
-	virtual void set_index_offset( int io );
+	virtual void set_index_offset( int io, bool do_update=true );
 	virtual int get_index_offset() const;
 
 	virtual void set_video_flags( FeVideoFlags );
@@ -115,7 +115,7 @@ public:
 	bool get_play_state() const;
 	void set_vol( float vol );
 
-	void set_index_offset( int io );
+	void set_index_offset( int io, bool do_update );
 	int get_index_offset() const;
 
 	void set_video_flags( FeVideoFlags );
@@ -260,6 +260,8 @@ public:
 	void set_subimg_height( int h );
 	void set_preserve_aspect_ratio( bool p );
 	void transition_swap( FeImage * );
+
+	void rawset_index_offset( int io );
 
 	//
 	// Callback functions for use with surface objects

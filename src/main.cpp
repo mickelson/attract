@@ -411,7 +411,7 @@ int main(int argc, char *argv[])
 			//
 			// Now handle the command appropriately.
 			//
-			if ( feVM.handle_event( c ) )
+			if ( feVM.handle_event( c, redraw ) )
 				continue;
 
 			soundsys.sound_event( c );

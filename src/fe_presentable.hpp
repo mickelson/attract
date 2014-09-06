@@ -23,10 +23,16 @@
 #ifndef FE_PRESENTABLE_HPP
 #define FE_PRESENTABLE_HPP
 
-#include <SFML/Graphics.hpp>
+#include <SFML/System/Vector2.hpp>
 
 class FeSettings;
 class FeShader;
+
+namespace sf
+{
+	class Drawable;
+	class Color;
+};
 
 class FeBasePresentable
 {

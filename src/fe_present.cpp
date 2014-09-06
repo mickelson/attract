@@ -45,6 +45,7 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_toggleRotation( FeSettings::RotateNone ),
 	m_playMovies( true ),
 	m_screenSaverActive( false ),
+	m_user_page_size( -1 ),
 	m_listBox( NULL ),
 	m_emptyShader( NULL )
 {
@@ -72,6 +73,7 @@ void FePresent::clear()
 	m_transform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
+	m_user_page_size = -1;
 
 	m_vm->clear();
 
@@ -456,16 +458,13 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			m_moveState=MovePageDown;
 			m_moveEvent = ev;
 
-			int step = get_no_wrap_step( get_page_size() );
-			if ( step != 0 )
-			{
-				m_vm->on_transition( ToNewSelection, step );
+			int step = get_page_size();
+			m_vm->on_transition( ToNewSelection, step );
 
-				m_feSettings->change_rom( step );
-				update( false );
+			m_feSettings->change_rom( step );
+			update( false );
 
-				m_vm->on_transition( FromOldSelection, -step );
-			}
+			m_vm->on_transition( FromOldSelection, -step );
 		}
 		break;
 
@@ -475,16 +474,14 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			m_moveTimer.restart();
 			m_moveState=MovePageUp;
 			m_moveEvent = ev;
-			int step = get_no_wrap_step( -get_page_size() );
-			if ( step != 0 )
-			{
-				m_vm->on_transition( ToNewSelection, step );
 
-				m_feSettings->change_rom( step );
-				update( false );
+			int step = -get_page_size();
+			m_vm->on_transition( ToNewSelection, step );
 
-				m_vm->on_transition( FromOldSelection, -step );
-			}
+			m_feSettings->change_rom( step );
+			update( false );
+
+			m_vm->on_transition( FromOldSelection, -step );
 		}
 		break;
 
@@ -852,10 +849,20 @@ int FePresent::get_no_wrap_step( int step )
 
 int FePresent::get_page_size() const
 {
-	if ( m_listBox )
+	if ( m_user_page_size != -1 )
+		return m_user_page_size;
+	else if ( m_listBox )
 		return m_listBox->getRowCount();
 	else
 		return 5;
+}
+
+void FePresent::set_page_size( int ps )
+{
+	if ( ps > 0 )
+		m_user_page_size = ps;
+	else
+		m_user_page_size = -1;
 }
 
 void FePresent::on_stop_frontend()

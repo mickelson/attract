@@ -894,6 +894,8 @@ Attributes:
       - `RotateScreen.Right`
       - `RotateScreen.Flip`
       - `RotateScreen.Left`
+   * `page_size` - Get/set the number of entries to jump each time the "Page Up"
+     or "Page Down" button is pressed.
 
 Notes:
 
@@ -1267,6 +1269,11 @@ Attributes:
    * `duration` - Get the audio track duration (in milliseconds).
    * `time` - Get the time that the audio track is current at (in
      milliseconds).
+
+Member Functions:
+
+   * `get_metadata( tag )` - Get the meta data (if available in the source 
+     file) that corresponds to the specified tag (i.e. "artist", "album", etc.)
 
 
 <a name="Shader" />

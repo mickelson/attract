@@ -335,6 +335,7 @@ void FeVM::on_new_layout( const std::string &path,
 				&FeImage::set_preserve_aspect_ratio )
 		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
 		.Func( _SC("swap"), &FeImage::transition_swap )
+		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
 
 		//
 		// Surface-specific functionality:
@@ -400,6 +401,7 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop( _SC("orient"), &FePresent::get_base_rotation, &FePresent::set_base_rotation )
 		.Prop( _SC("base_rotation"), &FePresent::get_base_rotation, &FePresent::set_base_rotation )
 		.Prop( _SC("toggle_rotation"), &FePresent::get_toggle_rotation, &FePresent::set_toggle_rotation )
+		.Prop( _SC("page_size"), &FePresent::get_page_size, &FePresent::set_page_size )
 	);
 
 	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()
@@ -429,6 +431,7 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop( _SC("z"), &FeSound::get_z, &FeSound::set_z )
 		.Prop(_SC("duration"), &FeSound::get_duration )
 		.Prop(_SC("time"), &FeSound::get_time )
+		.Func( _SC("get_metadata"), &FeSound::get_metadata )
 	);
 
 	fe.Bind( _SC("Shader"), Class <FeShader, NoConstructor>()
@@ -684,9 +687,10 @@ bool FeVM::on_transition(
 	return m_redraw_triggered;
 }
 
-bool FeVM::handle_event( FeInputMap::Command c )
+bool FeVM::handle_event( FeInputMap::Command c, bool &redraw )
 {
 	using namespace Sqrat;
+	m_redraw_triggered = false;
 
 	//
 	// Go through the list in reverse so that the most recently registered signal handler
@@ -704,7 +708,12 @@ bool FeVM::handle_event( FeInputMap::Command c )
 			Function func( (*itr).first, (*itr).second.c_str() );
 			if (( !func.IsNull() )
 					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
+			{
+				if ( m_redraw_triggered )
+					redraw = true;
+
 				return true;
+			}
 		}
 		catch( Exception e )
 		{
@@ -712,6 +721,9 @@ bool FeVM::handle_event( FeInputMap::Command c )
 					<< e.Message() << std::endl;
 		}
 	}
+
+	if ( m_redraw_triggered )
+		redraw = true;
 
 	return false;
 }

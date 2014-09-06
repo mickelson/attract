@@ -58,7 +58,7 @@ void FeBaseTextureContainer::set_vol( float vol )
 {
 }
 
-void FeBaseTextureContainer::set_index_offset( int io )
+void FeBaseTextureContainer::set_index_offset( int io, bool do_update )
 {
 }
 
@@ -589,12 +589,14 @@ void FeTextureContainer::set_vol( float vol )
 #endif
 }
 
-void FeTextureContainer::set_index_offset( int io )
+void FeTextureContainer::set_index_offset( int io, bool do_update )
 {
 	if ( m_index_offset != io )
 	{
 		m_index_offset = io;
-		FeVM::script_do_update( this );
+
+		if ( do_update )
+			FeVM::script_do_update( this );
 	}
 }
 
@@ -861,6 +863,11 @@ int FeImage::getIndexOffset() const
 void FeImage::setIndexOffset( int io )
 {
 	m_tex->set_index_offset( io );
+}
+
+void FeImage::rawset_index_offset( int io )
+{
+	m_tex->set_index_offset( io, false );
 }
 
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const

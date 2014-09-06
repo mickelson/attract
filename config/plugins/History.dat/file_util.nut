@@ -94,22 +94,25 @@ function generate_index( config )
 			local bits = split( line, "$=" );
 			if ( bits.len() > 1 )
 			{
+				local systems = split( bits[0], "," );
 				local roms = split( bits[1], "," );
-				if ( !indices.rawin( bits[0] ) )
-				{
-					indices[ bits[0] ] <- {};
-				}
 
-				if ( config[ "index_clones" ] == "Yes" )
+				foreach ( s in systems )
 				{
-					foreach ( r in roms )
-						(indices[ bits[0] ])[ r ]
+					if ( !indices.rawin( s ) )
+						indices[ s ] <- {};
+
+					if ( config[ "index_clones" ] == "Yes" )
+					{
+						foreach ( r in roms )
+							(indices[ s ])[ r ]
+								<- ( base_pos + blb.tell() );
+					}
+					else if ( roms.len() > 0 )
+					{
+						(indices[ s ])[ roms[0] ]
 							<- ( base_pos + blb.tell() );
-				}
-				else if ( roms.len() > 0 )
-				{
-					(indices[ bits[0] ])[ roms[0] ]
-						<- ( base_pos + blb.tell() );
+					}
 				}
 			}
 		}
@@ -146,8 +149,6 @@ function get_history_entry( offset, config )
 	local entry = "\n\n"; // a bit of space to start
 	local open_entry = false;
 
-	// Find the next $xxx= tag
-	//
 	while ( !histf.eos() )
 	{
 		local blb = histf.readblob( READ_BLOCK_SIZE );
@@ -173,8 +174,8 @@ function get_history_entry( offset, config )
 					entry += "\n\n";
 					return entry;
 				}
-
-				entry += line + "\n";
+				else if (!(blb.eos() && ( line == "" )))
+					entry += line + "\n";
 			}
 		}
 	}
