@@ -11,7 +11,10 @@ class UserConfig </ help="A plugin to play background audio" /> {
 	</ label="Next Track", help="Button to press to jump to the next audio track", is_input=true, order=1 />
 	skip_button="";
 
-	</ label="Source Directory", help="The full path to the directory containing the audio files to play", order=2 />
+	</ label="Track Info", help="Button to press to display current audio track info", is_input=true, order=2 />
+	info_button="";
+
+	</ label="Source Directory", help="The full path to the directory containing the audio files to play", order=3 />
 	dir="";
 }
 
@@ -22,9 +25,24 @@ class AudioMode
 	m_input_block = false;
 	m_work = "";
 	m_config = {};
+	m_display_text = null;
+	m_display_time = 0;
 
 	constructor()
 	{
+		m_display_text = fe.add_text( "",
+			fe.layout.width/8,
+			fe.layout.height/2,
+			3*fe.layout.width/4,
+			fe.layout.height/4 );
+
+		m_display_text.word_wrap = true;
+		m_display_text.charsize = fe.layout.height/24;
+		m_display_text.set_rgb( 255, 255, 255 );
+		m_display_text.set_bg_rgb( 20, 20, 20 );
+		m_display_text.bg_alpha = 100;
+		m_display_text.visible = false;
+
 		fe.add_ticks_callback( this, "on_tick" );
 		fe.add_transition_callback( this, "on_transition" );
 
@@ -115,6 +133,42 @@ class AudioMode
 			= fe.path_expand( m_list[ m_index ] );
 
 		fe.ambient_sound.playing = true;
+		m_display_text.msg = get_track_msg();
+	}
+
+	function get_track_msg()
+	{
+		local title = fe.ambient_sound.get_metadata( "title" );
+		if ( title.len() < 1 )
+		{
+			local n = split( fe.ambient_sound.file_name, "\\/" );
+			if ( n.len() > 0 )
+				return "Now Playing: " + n[ n.len()-1 ];
+			else
+				return "";
+		}
+
+		return "Now Playing: " + title + " - "
+			+ fe.ambient_sound.get_metadata( "artist" ) + "\n\n"
+			+ fe.ambient_sound.get_metadata( "album" );
+	}
+
+	function show_track_msg( flag, ttime )
+	{
+		if ( flag )
+		{
+			m_display_text.msg = get_track_msg();
+
+ 			if ( m_display_text.msg.len() > 0 )
+			{
+				m_display_time = ttime;
+				m_display_text.visible = true;
+				return;
+			}
+		}
+
+		m_display_text.visible = false;
+		m_display_time = 0;
 	}
 
 	function on_tick( ttime )
@@ -122,15 +176,28 @@ class AudioMode
 		if ( fe.ambient_sound.playing == false )
 			change_track( 1 );
 
-		local next_sel = fe.get_input_state( m_config[ "skip_button" ] );
+		local next_sel = fe.get_input_state( m_config["skip_button"] );
+		local info_sel = fe.get_input_state( m_config["info_button"] );
 		if ( next_sel && !m_input_block )
 		{
 			change_track( 1 );
 			m_input_block = true;
 		}
-		else if ( !next_sel && m_input_block )
+		else if ( info_sel && !m_input_block )
+		{
+			show_track_msg( !m_display_text.visible, ttime );
+			m_input_block = true;
+		}
+		else if ( m_input_block && !next_sel && !info_sel )
 		{
 			m_input_block = false;
+		}
+
+		if ( m_display_time > 0 )
+		{
+			local dtime = ttime - m_display_time;
+			if ( dtime > 8000 )
+				show_track_msg( false, ttime );
 		}
 	}
 

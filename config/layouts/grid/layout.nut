@@ -144,6 +144,8 @@ class Grid extends Conveyor
 					local r = i % rows;
 					local c = i / rows;
 					local num = rows + cols - 2;
+					if ( num < 1 )
+						num = 1;
 
 					local temp = 510 * ( num - r - c ) / num * ttime / transition_ms;
 					m_objs[i].m_obj.alpha = ( temp > 255 ) ? 255 : temp;
@@ -174,6 +176,8 @@ class Grid extends Conveyor
 					local r = i % rows;
 					local c = i / rows;
 					local num = rows + cols - 2;
+					if ( num < 1 )
+						num = 1;
 
 					local temp = 255 - 510 * ( num - r - c ) / num * ttime / transition_ms;
 					m_objs[i].m_obj.alpha = ( temp < 0 ) ? 0 : temp;

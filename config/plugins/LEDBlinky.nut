@@ -20,58 +20,69 @@ class UserConfig </ help="Integration plug-in for use with LEDBlinky: http://www
 	command = "LEDBlinky.exe";
 };
 
-local config=fe.get_config();
-fe.add_transition_callback( "ledblinky_plugin_transition" );
+class LedBlinky
+{
+	config = null;
 
-function ledblinky_plugin_transition( ttype, var, ttime ) {
-
-	if ( ScreenSaverActive )
-		return false;
-
-	switch ( ttype )
+	constructor()
 	{
-	case Transition.ToGame:
-		fe.plugin_command( config["command"], 
-			"\"" + fe.game_info( Info.Name ) + "\" \"" 
-			+ fe.game_info( Info.Emulator ) + "\"" );
-		break;
-
-	case Transition.FromGame:
-		fe.plugin_command( config["command"], "4" );
-		break;
-
-	case Transition.StartLayout:
-		switch ( var )
-		{
-		case FromTo.ScreenSaver: // leaving screensaver
-			fe.plugin_command( config["command"], "6" );
-			break;
-
-		case FromTo.Frontend: // starting frontend
-			fe.plugin_command( config["command"], "1" );
-			break;
-		}
-		break;
-
-	case Transition.EndLayout:
-		switch ( var )
-		{
-		case FromTo.ScreenSaver: // starting screensaver
-			fe.plugin_command( config["command"], "5" );
-			break;
-
-		case FromTo.Frontend: // ending frontend
-			fe.plugin_command( config["command"], "2" );
-			break;
-		}
-		break;
-
-	case Transition.ToNewList:
-		// TODO: don't do this one when screensaver is stopping
-		// or frontend is first beginning
-		fe.plugin_command( config["command"], "8" );
-		break;
+		config=fe.get_config();
+		fe.add_transition_callback( this, "on_transition" );
 	}
 
-	return false;
+	function on_transition( ttype, var, ttime )
+	{
+
+		if ( ScreenSaverActive )
+			return false;
+
+		switch ( ttype )
+		{
+		case Transition.ToGame:
+			fe.plugin_command( config["command"],
+				"\"" + fe.game_info( Info.Name ) + "\" \""
+				+ fe.game_info( Info.Emulator ) + "\"" );
+			break;
+
+		case Transition.FromGame:
+			fe.plugin_command( config["command"], "4" );
+			break;
+
+		case Transition.StartLayout:
+			switch ( var )
+			{
+			case FromTo.ScreenSaver: // leaving screensaver
+				fe.plugin_command( config["command"], "6" );
+				break;
+
+			case FromTo.Frontend: // starting frontend
+				fe.plugin_command( config["command"], "1" );
+				break;
+			}
+			break;
+
+		case Transition.EndLayout:
+			switch ( var )
+			{
+			case FromTo.ScreenSaver: // starting screensaver
+				fe.plugin_command( config["command"], "5" );
+				break;
+
+			case FromTo.Frontend: // ending frontend
+				fe.plugin_command( config["command"], "2" );
+				break;
+			}
+			break;
+
+		case Transition.ToNewList:
+			// TODO: don't do this one when screensaver is stopping
+			// or frontend is first beginning
+			fe.plugin_command( config["command"], "8" );
+			break;
+		}
+
+		return false;
+	}
 }
+
+fe.plugin[ "LedBlinky" ] <- LedBlinky();
