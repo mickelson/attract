@@ -135,6 +135,8 @@ public:
 		ScreenSaver,
 		PrevLetter,
 		NextLetter,
+		Custom1,
+		Custom2,
 		LAST_COMMAND,
 
 		//

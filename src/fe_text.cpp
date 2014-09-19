@@ -162,20 +162,7 @@ void FeText::on_new_selection( FeSettings *feSettings )
 		n -= perform_substitution( str, "[TitleFull]", title_full );
 
 		if ( feSettings->hide_brackets() )
-		{
-			std::string title;
-			size_t pos = title_full.find_first_of( "([" );
-
-			if ( pos == std::string::npos )
-				title = title_full;
-			else
-			{
-				title = title_full.substr( 0,
-						title_full.find_last_of( FE_WHITESPACE, pos ) );
-			}
-
-			n -= perform_substitution( str, "[Title]", title );
-		}
+			n -= perform_substitution( str, "[Title]", name_with_brackets_stripped( title_full ) );
 		else
 			n -= perform_substitution( str, "[Title]", title_full );
 	}

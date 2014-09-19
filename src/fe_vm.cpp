@@ -269,6 +269,7 @@ void FeVM::on_new_layout( const std::string &path,
 		info.Const( FeRomInfo::indexStrings[i], i );
 		i++;
 	}
+	info.Const( "System", FeRomInfo::LAST_INDEX ); // special case
 	ConstTable().Enum( _SC("Info"), info);
 
 	Enumeration transition;
@@ -1417,6 +1418,18 @@ const char *FeVM::cb_game_info( int index, int offset )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+
+	if ( index == FeRomInfo::LAST_INDEX )
+	{
+		std::string emu_name = fev->m_fes.get_rom_info( offset, FeRomInfo::Emulator );
+		FeEmulatorInfo *emu = fev->m_fes.get_emulator( emu_name );
+		if ( emu )
+		{
+			static std::string sys_name;
+			sys_name = emu->get_info( FeEmulatorInfo::System );
+			return sys_name.c_str();
+		}
+	}
 
 	return (fev->m_fes.get_rom_info( offset, (FeRomInfo::Index)index )).c_str();
 }

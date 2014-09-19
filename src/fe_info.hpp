@@ -53,14 +53,15 @@ public:
 		Status,
 		DisplayCount,
 		DisplayType,
+		AltRomname,
+		AltTitle,
 		Favourite,		// everything from Favourite on is not loaded from romlist
 		Tags,
 		LAST_INDEX
 	};
 
-	// The Favourite and Category indexes get repurposed at certain stages of mess
+	// The Category index gets repurposed at certain stages of mess
 	// romlist building/importing...
-	static const Index BuildAltName;
 	static const Index BuildScratchPad;
 
 	static const char *indexStrings[];
@@ -303,8 +304,9 @@ public:
 		Command,
 		Rom_path,
 		Rom_extension,
+		System,
+		Info_source,
 		Import_extras,
-		Listxml,
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
@@ -332,6 +334,7 @@ public:
 
 	const std::vector<std::string> &get_paths() const;
 	const std::vector<std::string> &get_extensions() const;
+	const std::vector<std::string> &get_systems() const;
 	const std::vector<std::string> &get_import_extras() const;
 
 	int process_setting( const std::string &setting,
@@ -348,10 +351,11 @@ private:
 	std::string m_name;
 	std::string m_executable;
 	std::string m_command;
-	std::string m_listxml;
+	std::string m_info_source;
 
 	std::vector<std::string> m_paths;
 	std::vector<std::string> m_extensions;
+	std::vector<std::string> m_systems;
 	std::vector<std::string> m_import_extras;
 
 	//

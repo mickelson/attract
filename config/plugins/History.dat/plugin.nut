@@ -40,7 +40,6 @@ local config=fe.get_config();
 class HistoryViewer extends SubMenu
 {
 	m_text = "";
-	m_curr_sys = "";
 	m_curr_rom = "";
 
 	constructor()
@@ -56,24 +55,20 @@ class HistoryViewer extends SubMenu
 
 	function on_show()
 	{
-		local sys = fe.game_info( Info.Emulator );
-		if ( sys.slice( 0, 4 ) == "mame" )
-			sys = "mame";
-
+		local sys = split( fe.game_info( Info.System ), ";" );
 		local rom = fe.game_info( Info.Name );
 
 		//
 		// we only go to the trouble of loading the entry if
 		// it is not already currently loaded
 		//
-		if (( m_curr_rom != rom )
-			|| ( m_curr_sys != sys )) 
+		if ( m_curr_rom != rom )
 		{
 			m_curr_rom = rom;
-			m_curr_sys = sys;
+			local alt = fe.game_info( Info.AltRomname );
 			local cloneof = fe.game_info( Info.CloneOf );
 
-			local lookup = get_history_offset( sys, rom, cloneof );
+			local lookup = get_history_offset( sys, rom, alt, cloneof );
 
 			if ( lookup >= 0 )
 			{
@@ -86,7 +81,7 @@ class HistoryViewer extends SubMenu
 					m_text.msg = "Index file not found.  Try generating an index from the history.dat plug-in configuration menu.";
 				else	
 					m_text.msg = "Unable to locate: "
-						+ rom + " (" + sys + ")";
+						+ rom;
 			}
 		}
 
@@ -109,5 +104,4 @@ class HistoryViewer extends SubMenu
 	}
 }
 
-// Now instantiate an instance of the history viewer class above
-HistoryViewer();
+fe.plugin[ "History.dat" ] <- HistoryViewer();

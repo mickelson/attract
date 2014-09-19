@@ -1108,15 +1108,7 @@ void FeSettings::get_current_display_list( std::vector<std::string> &l ) const
 		for ( int i=0; i < m_rl.size(); i++ )
 		{
 			const std::string &temp = m_rl[i].get_info( FeRomInfo::Title );
-			size_t pos = temp.find_first_of( "([" );
-
-			if ( pos == std::string::npos )
-				l.push_back( temp );
-			else
-			{
-				l.push_back(
-					temp.substr( 0, temp.find_last_of( FE_WHITESPACE, pos ) ) );
-			}
+			l.push_back( name_with_brackets_stripped( temp ));
 		}
 	}
 	else

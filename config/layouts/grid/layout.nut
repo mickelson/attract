@@ -95,7 +95,7 @@ class Grid extends Conveyor
 			transition_swap_point=0.5;
 			break;
 		case "page_up":
-			if ( sel_x > 1 )
+			if ( sel_x > 0 )
 			{
 				sel_x--;
 				update_frame();
@@ -104,7 +104,7 @@ class Grid extends Conveyor
 			transition_swap_point=0.0;
 			break;
 		case "page_down":
-			if ( sel_x < cols - 2 )
+			if ( sel_x < cols - 1 )
 			{
 				sel_x++;
 				update_frame();

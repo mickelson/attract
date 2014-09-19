@@ -23,8 +23,11 @@
 #
 # BUILD CONFIGURATION OPTIONS:
 #
-# Uncomment next line to disable movie support (i.e. don't use FFmpeg).
+# Uncomment next line to disable movie support (i.e. no FFmpeg).
 #NO_MOVIE=1
+#
+# Uncomment next line to disable network support (i.e. no SFML Network).
+#NO_NET=1
 #
 # By default, if FontConfig gets enabled we link against the system's expat 
 # library (because FontConfig uses expat too).  If FontConfig is not used
@@ -138,9 +141,18 @@ ifeq ($(WINDOWS_STATIC),1)
  CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags sfml)
  FE_WINDOWS_COMPILE=1
 else
- LIBS += -lsfml-graphics \
+
+ ifeq ($(NO_NET),1)
+  LIBS += -lsfml-graphics \
 	-lsfml-window \
 	-lsfml-system
+  FE_FLAGS += -DNO_NET
+ else
+  LIBS += -lsfml-graphics \
+	-lsfml-window \
+	-lsfml-network \
+	-lsfml-system
+ endif
 endif
 
 ifeq ($(FE_WINDOWS_COMPILE),1)

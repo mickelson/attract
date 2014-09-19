@@ -72,7 +72,7 @@ void FeConfigContextImp::edit_dialog( const std::string &m, std::string &t )
 bool FeConfigContextImp::confirm_dialog( const std::string &msg,
 						const std::string &rep )
 {
-	return m_feo.confirm_dialog( msg, rep );
+	return !m_feo.confirm_dialog( msg, rep );
 }
 
 void FeConfigContextImp::splash_message(

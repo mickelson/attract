@@ -236,10 +236,24 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 			std::string help( "_help_emu_" );
 			help += FeEmulatorInfo::indexStrings[i];
 
-			ctx.add_optl( Opt::EDIT,
-					FeEmulatorInfo::indexDispStrings[i],
-					m_emulator->get_info( (FeEmulatorInfo::Index)i ),
-					help );
+			if ( i == FeEmulatorInfo::Info_source )
+			{
+				const char *source_options[] = { "", "mame", "mess", "thegamesdb.net", NULL };
+
+				ctx.add_optl( Opt::LIST,
+						FeEmulatorInfo::indexDispStrings[i],
+						m_emulator->get_info( (FeEmulatorInfo::Index)i ),
+						help );
+
+				ctx.back_opt().append_vlist( source_options );
+			}
+			else
+			{
+				ctx.add_optl( Opt::EDIT,
+						FeEmulatorInfo::indexDispStrings[i],
+						m_emulator->get_info( (FeEmulatorInfo::Index)i ),
+						help );
+			}
 		}
 
 		std::vector<std::pair<std::string, std::string> > alist;
@@ -973,7 +987,7 @@ bool FeInputEditMenu::on_option_select(
 			{
 				std::string command_str;
 				ctx.fe_settings.get_resource( FeInputMap::commandDispStrings[ conflict ], command_str );
-				save = !ctx.confirm_dialog(
+				save = ctx.confirm_dialog(
 					"This will overwrite an existing mapping ($1).  Proceed?", command_str  );
 			}
 

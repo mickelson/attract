@@ -515,6 +515,7 @@ Parameters:
       - `Info.DisplayType`
       - `Info.Favourite`
       - `Info.Tags`
+      - `Info.System`
    * index_offset - the offset (from the current selection) of the game to
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.

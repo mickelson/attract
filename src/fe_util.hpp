@@ -47,6 +47,10 @@ int perform_substitution( std::string &target,
                            const std::string &to );
 
 //
+//
+std::string name_with_brackets_stripped( const std::string &name );
+
+//
 // Case insensitive check if filename has the specified extension/ending.
 //
 bool tail_compare(

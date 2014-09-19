@@ -24,11 +24,18 @@
 #include "fe_info.hpp"
 #include "fe_settings.hpp"
 #include "fe_util.hpp"
+
+#include <iomanip>
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <list>
 #include <map>
 #include <strings.h> // strcasecmp()
+
+#ifndef NO_NET
+#include <SFML/Network.hpp>
+#endif // NO_NET
 
 extern const char *FE_ROMLIST_SUBDIR;
 
@@ -78,36 +85,56 @@ void build_basic_romlist( const FeEmulatorInfo &emulator,
 	}
 }
 
-void apply_listxml( const FeEmulatorInfo &emulator,
+std::string url_escape( const std::string &raw )
+{
+	std::ostringstream escaped;
+	escaped.fill('0');
+	escaped << std::hex;
+
+	for (std::string::const_iterator i = raw.begin(); i != raw.end(); ++i)
+	{
+		const unsigned char c = (*i);
+
+		// Keep alphanumeric and other accepted characters intact
+		if (isalnum( c ) || c == '-' || c == '_' || c == '.' || c == '~')
+		{
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << '%' << std::setw(2) << int(c);
+	}
+
+	return escaped.str();
+}
+
+void apply_xml_import( const FeEmulatorInfo &emulator,
 				std::list<FeRomInfo> &romlist,
 				FeXMLParser::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL )
 {
-	std::string listxml = emulator.get_info(
-				FeEmulatorInfo::Listxml );
+	std::string source = emulator.get_info(
+				FeEmulatorInfo::Info_source );
 
-	if ( listxml.empty() )
+	if ( source.empty() )
 		return;
 
 	std::string base_command = clean_path( emulator.get_info(
 				FeEmulatorInfo::Executable ) );
 
-	if ( listxml.compare( 0, 4, "mame" ) == 0 )
+	if ( source.compare( "mame" ) == 0 )
 	{
 		std::cout << "Obtaining -listxml info...";
 		FeMameXMLParser mamep( romlist, uiupdate, uiupdatedata );
 		mamep.parse( base_command );
 		std::cout << std::endl;
 	}
-	else if ( listxml.compare( 0, 4, "mess" ) == 0 )
+	else if ( source.compare( "mess" ) == 0 )
 	{
-		std::string system_name;
-		size_t pos=4;
-		token_helper( listxml, pos, system_name );
-
+		std::string system_name = emulator.get_info( FeEmulatorInfo::System );
 		if ( system_name.empty() )
 		{
-			std::cout << "Note: No system provided in \""
-				<< "listxml mess\" entry for emulator: "
+			std::cout << "Note: No system configured for emulator: "
 				<< emulator.get_info( FeEmulatorInfo::Name )
 				<< ", unable to obtain -listsoftware info."
 				<< std::endl;
@@ -119,9 +146,103 @@ void apply_listxml( const FeEmulatorInfo &emulator,
 		messp.parse( base_command, system_name );
 		std::cout << std::endl;
 	}
+#ifndef NO_NET
+	else if ( source.compare( "thegamesdb.net" ) == 0 )
+	{
+		const char *HOSTNAME = "http://thegamesdb.net";
+		const char *PLATFORM_REQ = "api/GetPlatformsList.php";
+		const char *GAME_REQ = "api/GetGame.php?name=$1&platform=$2";
+		const char *FROM_FIELD = "From";
+		const char *FROM_VALUE = "user@attractmode.org";
+		const char *UA_FIELD = "User-Agent";
+		const char *UA_VALUE = "Attract-Mode/1.x";
+
+		sf::Http http;
+		http.setHost( HOSTNAME );
+
+		//
+		// Get a list of valid platforms
+		//
+		sf::Http::Request req( PLATFORM_REQ );
+		req.setField( FROM_FIELD, FROM_VALUE );
+		req.setField( UA_FIELD, UA_VALUE );
+
+		sf::Http::Response resp = http.sendRequest( req );
+		sf::Http::Response::Status status = resp.getStatus();
+
+		if ( status != sf::Http::Response::Ok )
+		{
+			std::cout << "[thegamesdb.net scraper] Error getting platform list.  Code: " << status << std::endl;
+			return;
+		}
+
+		FeGameDBPlatformParser gdbpp;
+		gdbpp.parse( resp.getBody() );
+
+		const std::vector<std::string> &sl_temp = emulator.get_systems();
+		std::vector<std::string> system_list;
+		for ( std::vector<std::string>::const_iterator itr = sl_temp.begin(); itr!=sl_temp.end(); ++itr )
+		{
+			if ( gdbpp.m_set.find( *itr ) != gdbpp.m_set.end() )
+				system_list.push_back( *itr );
+			else
+				std::cout << "[thegamesdb.net scraper] System identifier '" << (*itr) << "' not recognized by "
+					<< HOSTNAME << std::endl;
+		}
+
+		if ( system_list.size() < 1 )
+		{
+			std::cout << "[thegamesdb.net scraper] Error, no valid system identifier available." << std::endl;
+			return;
+		}
+
+		int i=0;
+		for ( std::list<FeRomInfo>::iterator itr=romlist.begin(); itr!=romlist.end(); ++itr )
+		{
+			bool exact_match( false );
+			for ( std::vector<std::string>::iterator its=system_list.begin();
+					its!=system_list.end(); ++its )
+			{
+				std::string req_string = GAME_REQ;
+				std::string game = url_escape(
+						name_with_brackets_stripped( (*itr).get_info( FeRomInfo::Romname ) ) );
+
+				std::string system = url_escape( *its );
+
+				perform_substitution( req_string, "$1", game );
+				perform_substitution( req_string, "$2", system );
+
+				req.setUri( req_string );
+				resp = http.sendRequest( req );
+				status = resp.getStatus();
+
+				if ( uiupdate )
+				{
+					int p = i * 100 / romlist.size();
+					if ( uiupdate( uiupdatedata, p ) == false )
+						break;
+				}
+
+				if ( status != sf::Http::Response::Ok )
+				{
+					std::cout << "[thegamesdb.net scraper] Error getting game information.  Game: "
+						<< (*itr).get_info( FeRomInfo::Romname ) << ", Code: " << status << std::endl;
+					break;
+				}
+
+				FeGameDBParser gdbp( *itr );
+				gdbp.parse( resp.getBody(), exact_match );
+
+				if ( exact_match )
+					break;
+			}
+			i++;
+		}
+	}
+#endif
 	else
 	{
-		std::cout << "Unrecognized listxml setting: " << listxml
+		std::cout << "Unrecognized import_source setting: " << source
 					<< std::endl;
 	}
 }
@@ -179,7 +300,7 @@ void ini_import( const std::string &filename,
 		if ( !cloneof_key.empty() )
 			my_map[ cloneof_key ] = "";
 
-		const std::string &alt_key = (*itr).get_info( FeRomInfo::BuildAltName );
+		const std::string &alt_key = (*itr).get_info( FeRomInfo::AltRomname );
 		if ( !alt_key.empty() )
 			my_map[ alt_key ] = "";
 	}
@@ -234,7 +355,7 @@ void ini_import( const std::string &filename,
 		std::string val = my_map[ (*itr).get_info( FeRomInfo::Romname ) ];
 
 		if ( val.empty() )
-			val = my_map[ (*itr).get_info( FeRomInfo::BuildAltName ) ];
+			val = my_map[ (*itr).get_info( FeRomInfo::AltRomname ) ];
 
 		if ( val.empty() )
 			val = my_map[ (*itr).get_info( FeRomInfo::Cloneof ) ];
@@ -372,7 +493,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 
 				build_basic_romlist( *emu, romlist );
 
-				apply_listxml( *emu, romlist );
+				apply_xml_import( *emu, romlist );
 				apply_import_extras( *emu, romlist );
 
 				total_romlist.splice( total_romlist.end(), romlist );
@@ -498,7 +619,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	std::list<FeRomInfo> romlist;
 	build_basic_romlist( *emu, romlist );
 
-	apply_listxml( *emu, romlist, uiu, uid );
+	apply_xml_import( *emu, romlist, uiu, uid );
 	apply_import_extras( *emu, romlist );
 
 	std::string rex_str;

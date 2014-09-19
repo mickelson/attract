@@ -105,6 +105,8 @@ private:
 	std::string m_man;
 	std::string m_fuzzydesc;
 	std::string m_cloneof;
+	std::string m_altname;
+	std::string m_alttitle;
 
 	void set_info_values( FeRomInfo &r );
 
@@ -128,4 +130,30 @@ private:
 	bool m_collect_data;
 };
 
+class FeGameDBPlatformParser : private FeXMLParser
+{
+public:
+	bool parse( const std::string &filename );
+
+	std::set<std::string> m_set;
+
+private:
+	void start_element( const char *, const char ** );
+	void end_element( const char * );
+};
+
+class FeGameDBParser : private FeXMLParser
+{
+public:
+	FeGameDBParser( FeRomInfo & );
+	bool parse( const std::string &data, bool &exact_match );
+
+private:
+	void start_element( const char *, const char ** );
+	void end_element( const char * );
+
+	FeRomInfo &m_rom;
+	bool m_collect_data;
+	bool m_exact_match;
+};
 #endif

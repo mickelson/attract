@@ -35,7 +35,6 @@ const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_FAVOURITE_FILE_EXTENSION = ".tag";
 const char FE_TAGS_SEP = ';';
 
-const FeRomInfo::Index FeRomInfo::BuildAltName = FeRomInfo::Favourite;
 const FeRomInfo::Index FeRomInfo::BuildScratchPad = FeRomInfo::Category;
 
 const char *FeRomInfo::indexStrings[] =
@@ -53,6 +52,8 @@ const char *FeRomInfo::indexStrings[] =
 	"Status",
 	"DisplayCount",
 	"DisplayType",
+	"AltRomname",
+	"AltTitle",
 	"Favourite",
 	"Tags",
 	NULL
@@ -1109,8 +1110,9 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"args",
 	"rompath",
 	"romext",
+	"system",
+	"info_source",
 	"import_extras",
-	"listxml",
 	NULL
 };
 
@@ -1119,10 +1121,11 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Name",
 	"Executable",
 	"Command Arguments",
-	"Rom Path",
+	"Rom Path(s)",
 	"Rom Extension(s)",
-	"Additional Import Files",
-	"XML Mode",
+	"System Identifier",
+	"Info Source/Scraper",
+	"Additional Import File(s)",
 	NULL
 };
 
@@ -1149,10 +1152,12 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 		return vector_to_string( m_paths );
 	case Rom_extension:
 		return vector_to_string( m_extensions );
+	case System:
+		return vector_to_string( m_systems );
+	case Info_source:
+		return m_info_source;
 	case Import_extras:
 		return vector_to_string( m_import_extras );
-	case Listxml:
-		return m_listxml;
 	default:
 		return "";
 	}
@@ -1176,12 +1181,16 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 		m_extensions.clear();
 		string_to_vector( s, m_extensions, true );
 		break;
+	case System:
+		m_systems.clear();
+		string_to_vector( s, m_systems );
+		break;
+	case Info_source:
+		m_info_source = s; break;
 	case Import_extras:
 		m_import_extras.clear();
 		string_to_vector( s, m_import_extras );
 		break;
-	case Listxml:
-		m_listxml = s; break;
 	default:
 		break;
 	}
@@ -1195,6 +1204,11 @@ const std::vector<std::string> &FeEmulatorInfo::get_paths() const
 const std::vector<std::string> &FeEmulatorInfo::get_extensions() const
 {
 	return m_extensions;
+}
+
+const std::vector<std::string> &FeEmulatorInfo::get_systems() const
+{
+	return m_systems;
 }
 
 const std::vector<std::string> &FeEmulatorInfo::get_import_extras() const
@@ -1277,7 +1291,26 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 	}
 
 	//
-	// Special case for migration from versions <1.2.2
+	// Special case for migration from versions <=1.3.2
+	//
+	if ( setting.compare( "listxml" ) == 0 )
+	{
+		//
+		// value will one of the following:
+		//    mame
+		//    mess <system>
+		//
+		size_t pos=0;
+		token_helper( value, pos, m_info_source, FE_WHITESPACE );
+
+		std::string temp;
+		token_helper( value, pos, temp, "\n" );
+		m_systems.push_back( temp );
+		return 0;
+	}
+
+	//
+	// Special case for migration from versions <=1.2.2
 	//
 	// version 1.2.2 and earlier had "movie_path" and
 	// "movie_artwork" settings which are now deprecated.

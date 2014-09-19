@@ -820,3 +820,13 @@ bool run_program( const std::string &prog,
 	return true;
 }
 
+std::string name_with_brackets_stripped( const std::string &name )
+{
+	size_t pos = name.find_first_of( "([" );
+
+	if ( pos == std::string::npos )
+		return name;
+
+	return name.substr( 0,
+			name.find_last_of( FE_WHITESPACE, pos ) );
+}

@@ -533,6 +533,8 @@ const char *FeInputMap::commandStrings[] =
 	"screen_saver",
 	"prev_letter",
 	"next_letter",
+	"custom1",
+	"custom2",
 	NULL, // LAST_COMMAND... NULL required here
 	"ambient",
 	"startup",
@@ -572,6 +574,8 @@ const char *FeInputMap::commandDispStrings[] =
 	"Screen Saver",
 	"Previous Letter",
 	"Next Letter",
+	"Custom 1",
+	"Custom 2",
 	NULL, // LAST_COMMAND... NULL required here
 	"Ambient Sounds",
 	"Startup Sound",

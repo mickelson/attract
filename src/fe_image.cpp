@@ -450,22 +450,35 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 	if ( !art_paths.empty() )
 	{
 		const std::string &romname = feSettings->get_rom_info( m_index_offset, FeRomInfo::Romname );
+		const std::string &altname = feSettings->get_rom_info( m_index_offset, FeRomInfo::AltRomname );
 		const std::string &cloneof = feSettings->get_rom_info( m_index_offset, FeRomInfo::Cloneof );
 
 		// test for "romname" specific videos
 		if ( load_artwork( art_paths, romname, true ) )
 			goto the_end;
 
+		bool check_altname = ( !altname.empty() && ( romname.compare( altname ) != 0 ));
+
+		// test for "altname" specific videos
+		if ( check_altname && load_artwork( art_paths, altname, true ) )
+			goto the_end;
+
+		bool check_cloneof = ( !cloneof.empty() && (altname.compare( cloneof ) != 0 ));
+
 		// then "cloneof" specific videos
-		if ( !cloneof.empty() && load_artwork( art_paths, cloneof, true ) )
+		if ( check_cloneof && load_artwork( art_paths, cloneof, true ) )
 			goto the_end;
 
 		// test for "romname" specific images
 		if ( load_artwork( art_paths, romname ) )
 			goto the_end;
 
+		// test for "altname" specific images
+		if ( check_altname && load_artwork( art_paths, altname ) )
+			goto the_end;
+
 		// then "cloneof" specific images
-		if ( !cloneof.empty() && load_artwork( art_paths, cloneof ) )
+		if ( check_cloneof && load_artwork( art_paths, cloneof ) )
 			goto the_end;
 
 		// then "emulator"

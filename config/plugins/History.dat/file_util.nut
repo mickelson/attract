@@ -193,8 +193,6 @@ function load_index( sys )
 	if ( loaded_idx.rawin( sys ) )
 		return true;
 
-	loaded_idx[sys] <- {};
-
 	local idx;
 	try
 	{
@@ -202,8 +200,11 @@ function load_index( sys )
 	}
 	catch( e )
 	{
+		loaded_idx[sys] <- null;
 		return false;
 	}
+
+	loaded_idx[sys] <- {};
 
 	while ( !idx.eos() )
 	{
@@ -223,19 +224,27 @@ function load_index( sys )
 //
 // Return the index the history.dat entry for the specified system and rom
 //
-function get_history_offset( sys, rom, cloneof )
+function get_history_offset( sys, rom, alt, cloneof )
 {
-	if ( load_index( sys ) )
+	foreach ( s in sys )
 	{
-		if ( loaded_idx[sys].rawin( rom ) )
-			return (loaded_idx[sys])[rom];
-		else if ((cloneof.len() > 0 )
-				&& ( loaded_idx[sys].rawin( cloneof ) ))
-			return (loaded_idx[sys])[cloneof];
+		if (( load_index( s ) )
+			&& ( loaded_idx[s] != null ))
+		{
+			if ( loaded_idx[s].rawin( rom ) )
+				return (loaded_idx[s])[rom];
+			else if ((alt.len() > 0 )
+					&& ( loaded_idx[s].rawin( alt ) ))
+				return (loaded_idx[s])[alt];
+			else if ((cloneof.len() > 0 )
+					&& ( loaded_idx[s].rawin( cloneof ) ))
+				return (loaded_idx[s])[cloneof];
+		}
+
 	}
 
-	if ( sys != "info" )
-		return get_history_offset( "info", rom, cloneof );
+	if (( sys.len() != 1 ) || ( sys[0] != "info" ))
+		return get_history_offset( ["info"], rom, alt, cloneof );
 
 	return -1;
 }

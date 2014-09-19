@@ -168,6 +168,8 @@ void FeMameXMLParser::start_element(
 				}
 				else if ( strcmp( attribute[i], "cloneof" ) == 0 )
 					(*m_itr).set_info( FeRomInfo::Cloneof, attribute[i+1] );
+				else if ( strcmp( attribute[i], "romof" ) == 0 )
+					(*m_itr).set_info( FeRomInfo::AltRomname, attribute[i+1] );
 			}
 		}
 	}
@@ -397,6 +399,8 @@ void FeMessXMLParser::clear_parse_state()
 	m_man.clear();
 	m_fuzzydesc.clear();
 	m_cloneof.clear();
+	m_altname.clear();
+	m_alttitle.clear();
 }
 
 void FeMessXMLParser::start_element(
@@ -410,7 +414,7 @@ void FeMessXMLParser::start_element(
 		{
 			if ( strcmp( attribute[i], "name" ) == 0 )
 			{
-				m_name = attribute[i+1];
+				m_altname = m_name = attribute[i+1];
 
 				for ( m_itr=m_romlist.begin(); m_itr!=m_romlist.end(); ++m_itr )
 				{
@@ -434,6 +438,23 @@ void FeMessXMLParser::start_element(
 	{
 		m_element_open=true;
 	}
+	else if ( strcmp( element, "info" ) == 0 )
+	{
+		std::string value;
+		bool found=false;
+
+		for ( int i=0; attribute[i]; i+=2 )
+		{
+			if (( strcmp( attribute[i], "name" ) == 0 )
+						&& ( strcmp( attribute[i+1], "alt_title" ) == 0 ))
+				found = true;
+			else if ( strcmp( attribute[i], "value" ) == 0 )
+				value = attribute[i+1];
+		}
+
+		if ( found )
+			m_alttitle.swap( value );
+	}
 }
 
 void FeMessXMLParser::end_element( const char *element )
@@ -454,7 +475,7 @@ void FeMessXMLParser::end_element( const char *element )
 				{
 					set_info_values( *m_itr );
 				}
-				else if ( (*m_itr).get_info( FeRomInfo::BuildAltName ).empty() )
+				else if ( (*m_itr).get_info( FeRomInfo::AltRomname ).empty() )
 				{
 					// Try using a "fuzzy" match that ignores brackets.
 					//
@@ -494,7 +515,8 @@ void FeMessXMLParser::set_info_values( FeRomInfo &r )
 	r.set_info( FeRomInfo::Year, m_year );
 	r.set_info( FeRomInfo::Manufacturer, m_man );
 	r.set_info( FeRomInfo::Cloneof, m_cloneof );
-	r.set_info( FeRomInfo::BuildAltName, m_name );
+	r.set_info( FeRomInfo::AltRomname, m_altname );
+	r.set_info( FeRomInfo::AltTitle, m_alttitle );
 }
 
 bool FeMessXMLParser::parse( const std::string &prog,
@@ -646,5 +668,161 @@ bool FeHyperSpinXMLParser::parse( const std::string &filename )
 	XML_Parse( parser, 0, 0, XML_TRUE );
 	XML_ParserFree( parser );
 
+	return ret_val;
+}
+
+void FeGameDBPlatformParser::start_element(
+			const char *element,
+			const char **attribute )
+{
+	if ( strcmp( element, "name" ) == 0 )
+		m_element_open=true;
+}
+
+void FeGameDBPlatformParser::end_element( const char *element )
+{
+	if ( strcmp( element, "name" ) == 0 )
+	{
+		m_set.insert( m_current_data );
+		m_current_data.clear();
+		m_element_open=false;
+	}
+}
+
+bool FeGameDBPlatformParser::parse( const std::string &data )
+{
+	m_set.clear();
+	m_element_open=m_keep_rom=false;
+	m_continue_parse=true;
+	bool ret_val=true;
+
+	XML_Parser parser = XML_ParserCreate( NULL );
+	XML_SetUserData( parser, (void *)this );
+	XML_SetElementHandler( parser, exp_start_element, exp_end_element );
+	XML_SetCharacterDataHandler( parser, exp_handle_data );
+
+	if ( XML_Parse( parser, data.c_str(),
+			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
+	{
+		std::cout << "Error parsing xml." << std::endl;
+		ret_val = false;
+	}
+
+	// need to pass true to XML Parse on last line
+	XML_Parse( parser, 0, 0, XML_TRUE );
+	XML_ParserFree( parser );
+
+	return ret_val;
+}
+
+FeGameDBParser::FeGameDBParser( FeRomInfo &rom )
+	: m_rom( rom ),
+	m_collect_data( false ),
+	m_exact_match( false )
+{
+}
+
+void FeGameDBParser::start_element(
+			const char *element,
+			const char **attribute )
+{
+	if ( m_collect_data )
+	{
+		if (( strcmp( element, "ReleaseDate" ) == 0 )
+				|| ( strcmp( element, "genre" ) == 0 )
+				|| ( strcmp( element, "Players" ) == 0 )
+				|| ( strcmp( element, "Publisher" ) == 0 ))
+		{
+			m_element_open=true;
+		}
+
+		if ( strcmp( element, "Genres" ) == 0 )
+			m_rom.set_info( FeRomInfo::Category, "" );
+	}
+
+	if ( strcmp( element, "GameTitle" ) == 0 )
+		m_element_open=true;
+}
+
+void FeGameDBParser::end_element( const char *element )
+{
+	if ( m_element_open )
+	{
+		if ( strcmp( element, "GameTitle" ) == 0 )
+		{
+			bool m = ( m_current_data.compare(
+								name_with_brackets_stripped(
+								m_rom.get_info( FeRomInfo::Romname ) ) ) == 0 );
+
+			if ( m )
+				m_exact_match = true;
+
+			if ( m || m_collect_data )
+			{
+				m_rom.set_info( FeRomInfo::Title, m_current_data );
+				m_collect_data = true;
+			}
+		}
+		else if ( m_collect_data )
+		{
+			if ( strcmp( element, "ReleaseDate" ) == 0 )
+			{
+				size_t cut = m_current_data.find_last_of( "/" );
+
+				if ( cut != std::string::npos )
+					m_rom.set_info( FeRomInfo::Year, m_current_data.substr( cut+1 ) );
+				else
+					m_rom.set_info( FeRomInfo::Year, m_current_data );
+			}
+			else if ( strcmp( element, "genre" ) == 0 )
+			{
+				std::string cat = m_rom.get_info( FeRomInfo::Category );
+				if ( cat.size() == 0 )
+					cat = m_current_data;
+				else
+				{
+					cat += " / ";
+					cat += m_current_data;
+				}
+				m_rom.set_info( FeRomInfo::Category, cat );
+			}
+			else if ( strcmp( element, "Players" ) == 0 )
+				m_rom.set_info( FeRomInfo::Players, m_current_data );
+			else if ( strcmp( element, "Publisher" ) == 0 )
+				m_rom.set_info( FeRomInfo::Manufacturer, m_current_data );
+		}
+
+		m_element_open=false;
+		m_current_data.clear();
+	}
+
+	if ( strcmp( element, "Game" ) == 0 )
+		m_collect_data=false;
+}
+
+bool FeGameDBParser::parse( const std::string &data, bool &exact_match )
+{
+	m_exact_match=m_element_open=m_keep_rom=false;
+	m_collect_data= !exact_match;
+	m_continue_parse=true;
+	bool ret_val=true;
+
+	XML_Parser parser = XML_ParserCreate( NULL );
+	XML_SetUserData( parser, (void *)this );
+	XML_SetElementHandler( parser, exp_start_element, exp_end_element );
+	XML_SetCharacterDataHandler( parser, exp_handle_data );
+
+	if ( XML_Parse( parser, data.c_str(),
+			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
+	{
+		std::cout << "Error parsing xml." << std::endl;
+		ret_val = false;
+	}
+
+	// need to pass true to XML Parse on last line
+	XML_Parse( parser, 0, 0, XML_TRUE );
+	XML_ParserFree( parser );
+
+	exact_match = m_exact_match;
 	return ret_val;
 }
