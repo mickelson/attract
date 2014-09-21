@@ -1251,6 +1251,19 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_confirm_favs" );
 	ctx.back_opt().append_vlist( bool_opts );
 
+	std::string filterwrapmode;
+	ctx.fe_settings.get_resource( FeSettings::filterWrapDispTokens[ ctx.fe_settings.get_filter_wrap_mode() ], filterwrapmode );
+	std::vector < std::string > wrap_modes;
+	i=0;
+	while ( FeSettings::filterWrapDispTokens[i] != 0 )
+	{
+		wrap_modes.push_back( std::string() );
+		ctx.fe_settings.get_resource( FeSettings::filterWrapDispTokens[ i ], wrap_modes.back() );
+		i++;
+	}
+	ctx.add_optl( Opt::LIST, "Filter Wrap Mode", filterwrapmode, "_help_filter_wrap_mode" );
+	ctx.back_opt().append_vlist( wrap_modes );
+
 	ctx.add_optl( Opt::EDIT,
 			"Exit Command",
 			ctx.fe_settings.get_info( FeSettings::ExitCommand ),
@@ -1298,17 +1311,20 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
 			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
 
-	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[5].get_value() );
+	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
+			FeSettings::filterWrapTokens[ ctx.opt_list[5].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
+	ctx.fe_settings.set_info( FeSettings::ExitCommand,
 			ctx.opt_list[6].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath,
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[7].get_value() );
 
+	ctx.fe_settings.set_info( FeSettings::FontPath,
+			ctx.opt_list[8].get_value() );
+
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
-			FeSettings::windowModeTokens[ ctx.opt_list[8].get_vindex() ] );
+			FeSettings::windowModeTokens[ ctx.opt_list[9].get_vindex() ] );
 
 	return true;
 }

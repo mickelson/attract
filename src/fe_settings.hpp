@@ -61,6 +61,10 @@ public:
 	static const char *windowModeTokens[];
 	static const char *windowModeDispTokens[];
 
+	enum FilterWrapModeType { WrapWithinList=0, JumpToNextList, NoWrap };
+	static const char *filterWrapTokens[];
+	static const char *filterWrapDispTokens[];
+
 	enum ConfigSettingIndex
 	{
 		Language=0,
@@ -75,6 +79,7 @@ public:
 		MouseThreshold,
 		JoystickThreshold,
 		WindowMode,
+		FilterWrapMode,
 		LAST_INDEX
 	};
 
@@ -113,6 +118,7 @@ private:
 	bool m_autolaunch_last_game;
 	bool m_confirm_favs;
 	WindowType m_window_mode;
+	FilterWrapModeType m_filter_wrap_mode;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
@@ -165,10 +171,11 @@ public:
 	// returns true if the list change results in a new layout, false otherwise
 	//
 	bool set_list( int index );
-	bool next_list();
-	bool prev_list();
 	int get_current_list_index() const;
 	int lists_count() const;
+
+	bool navigate_list( int step, bool wrap_mode=false );
+	bool navigate_filter( int step );
 
 	void init_list();
 
@@ -220,6 +227,7 @@ public:
 	bool get_font_file( std::string &fullpath, const std::string &filename="" ) const;
 
 	WindowType get_window_mode() const;
+	FilterWrapModeType get_filter_wrap_mode() const;
 	int get_screen_saver_timeout() const;
 	bool get_lists_menu_exit() const;
 

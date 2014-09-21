@@ -133,6 +133,22 @@ const char *FeSettings::windowModeDispTokens[] =
 	NULL
 };
 
+const char *FeSettings::filterWrapTokens[] =
+{
+	"default",
+	"jump_to_next_list",
+	"no_wrap",
+	NULL
+};
+
+const char *FeSettings::filterWrapDispTokens[] =
+{
+	"Wrap within List (Default)",
+	"Jump to Next List",
+	"No Wrap",
+	NULL
+};
+
 FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
 	:  m_inputmap(),
@@ -148,7 +164,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_hide_brackets( false ),
 	m_autolaunch_last_game( false ),
 	m_confirm_favs( false ),
-	m_window_mode( Default )
+	m_window_mode( Default ),
+	m_filter_wrap_mode( WrapWithinList )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -271,6 +288,7 @@ const char *FeSettings::configSettingStrings[] =
 	"mouse_threshold",
 	"joystick_threshold",
 	"window_mode",
+	"filter_wrap_mode",
 	NULL
 };
 
@@ -484,6 +502,17 @@ void FeSettings::load_state()
 		m_current_list = m_lists.size() - 1;
 	if ( m_current_list < 0 )
 		m_current_list = 0;
+
+	// bound checking on the last launch state
+	if ( m_last_launch_list >= (int)m_lists.size() )
+		m_last_launch_list = m_lists.size() - 1;
+	if ( m_last_launch_list < 0 )
+		m_last_launch_list = 0;
+
+	if ( m_last_launch_filter >= m_lists[ m_last_launch_list ].get_filter_count() )
+		m_last_launch_filter = m_lists[ m_last_launch_list ].get_filter_count() - 1;
+	if ( m_last_launch_filter < 0 )
+		m_last_launch_filter = 0;
 }
 
 FeInputMap::Command FeSettings::map_input( const sf::Event &e )
@@ -711,6 +740,7 @@ bool FeSettings::config_file_exists() const
 	return file_exists( config_file );
 }
 
+// return true if layout needs to be reloaded as a result
 bool FeSettings::set_list( int index )
 {
 	if ( m_current_list < 0 )
@@ -726,17 +756,51 @@ bool FeSettings::set_list( int index )
 		m_current_list = index;
 
 	init_list();
-	return ( old.compare( get_current_layout_dir() + get_current_layout_file() ) == 0 ) ? false : true;
+	return ( old.compare( get_current_layout_dir() + get_current_layout_file() ) != 0 );
 }
 
-bool FeSettings::next_list()
+// return true if layout needs to be reloaded as a result
+bool FeSettings::navigate_list( int step, bool wrap_mode )
 {
-	return set_list( m_current_list + 1 );
+	bool retval = set_list( m_current_list + step );
+
+	if ( wrap_mode )
+	{
+		if ( step > 0 )
+			set_filter( 0 );
+		else if ( m_current_list >= 0 )
+			set_filter( m_lists[m_current_list].get_filter_count() - 1 );
+	}
+
+	return retval;
 }
 
-bool FeSettings::prev_list()
+// return true if layout needs to be reloaded as a result
+bool FeSettings::navigate_filter( int step )
 {
-	return set_list( m_current_list - 1 );
+	if ( m_current_list < 0 )
+		return false;
+
+	int filter_count = m_lists[m_current_list].get_filter_count();
+	int new_filter = m_lists[m_current_list].get_current_filter_index() + step;
+
+	if ( new_filter >= filter_count )
+	{
+		if ( m_filter_wrap_mode == JumpToNextList )
+			return navigate_list( 1, true );
+
+		new_filter = ( m_filter_wrap_mode == NoWrap ) ? filter_count - 1 : 0;
+	}
+	if ( new_filter < 0 )
+	{
+		if ( m_filter_wrap_mode == JumpToNextList )
+			return navigate_list( -1, true );
+
+		new_filter = ( m_filter_wrap_mode == NoWrap ) ? 0 : filter_count - 1;
+	}
+
+	set_filter( new_filter );
+	return false;
 }
 
 int FeSettings::get_current_list_index() const
@@ -748,13 +812,6 @@ void FeSettings::set_filter( int index )
 {
 	if ( m_current_list < 0 )
 		return;
-
-	int filter_count = m_lists[m_current_list].get_filter_count();
-
-	if ( index >= filter_count )
-		index = 0;
-	else if ( index < 0 )
-		index = filter_count - 1;
 
 	m_lists[m_current_list].set_current_filter_index( index );
 	init_list();
@@ -1327,6 +1384,10 @@ FeSettings::WindowType FeSettings::get_window_mode() const
 	return m_window_mode;
 }
 
+FeSettings::FilterWrapModeType FeSettings::get_filter_wrap_mode() const
+{
+	return m_filter_wrap_mode;
+}
 
 int FeSettings::get_screen_saver_timeout() const
 {
@@ -1386,6 +1447,8 @@ const std::string FeSettings::get_info( int index ) const
 		return as_str( m_joy_thresh );
 	case WindowMode:
 		return windowModeTokens[ m_window_mode ];
+	case FilterWrapMode:
+		return filterWrapTokens[ m_filter_wrap_mode ];
 	default:
 		break;
 	}
@@ -1471,6 +1534,24 @@ bool FeSettings::set_info( int index, const std::string &value )
 			}
 
 			if ( windowModeTokens[i] == NULL )
+				return false;
+		}
+		break;
+
+	case FilterWrapMode:
+		{
+			int i=0;
+			while ( filterWrapTokens[i] != NULL )
+			{
+				if ( value.compare( filterWrapTokens[i] ) == 0 )
+				{
+					m_filter_wrap_mode = (FilterWrapModeType)i;
+					break;
+				}
+				i++;
+			}
+
+			if ( filterWrapTokens[i] == NULL )
 				return false;
 		}
 		break;

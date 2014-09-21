@@ -517,19 +517,8 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		break;
 
 	case FeInputMap::NextList:
-		// next_list returns true if the layout changes with the new list
-		//
-		if ( m_feSettings->next_list() )
-			load_layout();
-		else
-			update_to_new_list();
-
-		break;
-
 	case FeInputMap::PrevList:
-		// prev_list returns true if the layout changes with the new list
-		//
-		if ( m_feSettings->prev_list() )
+		if ( m_feSettings->navigate_list( ( c == FeInputMap::NextList ) ? 1 : -1 ) )
 			load_layout();
 		else
 			update_to_new_list();
@@ -537,13 +526,12 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		break;
 
 	case FeInputMap::NextFilter:
-		m_feSettings->set_filter( m_feSettings->get_current_filter_index() + 1 );
-		update_to_new_list();
-		break;
-
 	case FeInputMap::PrevFilter:
-		m_feSettings->set_filter( m_feSettings->get_current_filter_index() - 1 );
-		update_to_new_list();
+		if ( m_feSettings->navigate_filter( ( c == FeInputMap::NextFilter ) ? 1 : -1 ) )
+			load_layout();
+		else
+			update_to_new_list();
+
 		break;
 
 	case FeInputMap::ToggleLayout:
