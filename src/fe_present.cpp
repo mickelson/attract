@@ -65,11 +65,13 @@ FePresent::~FePresent()
 void FePresent::clear()
 {
 	//
-	// keep toggle rotation state and mute state through clear
+	// keep toggle rotation, base rotation and mute state through clear
+	//
+	// Activating the screen saver keeps the previous base rotation, while
+	// mute and toggle rotation are kept whenever the layout is changed
 	//
 	m_listBox=NULL; // listbox gets deleted with the m_elements below
 	m_moveState = MoveNone;
-	m_baseRotation = FeSettings::RotateNone;
 	m_transform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
@@ -682,6 +684,8 @@ void FePresent::load_layout( bool initial_load )
 		var = FromToFrontend;
 
 	clear();
+	m_baseRotation = FeSettings::RotateNone;
+
 	set_transforms();
 	m_screenSaverActive=false;
 
