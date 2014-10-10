@@ -40,7 +40,21 @@ class UserConfig {
 fe.layout.width=456;
 fe.layout.height=336;
 
-local lb = fe.add_listbox( 24, 96, 192, 192 );
+//
+// Show the sort value if we have sorted this list by something other than the title
+//
+local lb_width = 192;
+if (( fe.list.sort_by != Info.NoSort ) && ( fe.list.sort_by != Info.Title ))
+{
+	lb_width = 157;
+	local sort_lb = fe.add_listbox( 176, 96, 45, 192 );
+	sort_lb.rows = 13;
+	sort_lb.charsize = 10;
+	sort_lb.set_rgb( 255, 255, 0 );
+	sort_lb.format_string = "[SortValue]";
+}
+
+local lb = fe.add_listbox( 24, 96, lb_width, 192 );
 lb.rows = 13;
 lb.charsize = 10;
 

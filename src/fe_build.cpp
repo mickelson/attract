@@ -573,11 +573,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 		}
 	}
 
-	std::string rex_str;
-	get_resource( "_sort_regexp", rex_str );
-	FeRomListCompare::init_rex( rex_str );
-	total_romlist.sort( FeRomListCompare::cmp );
-	FeRomListCompare::close_rex();
+	total_romlist.sort( FeRomListSorter() );
 
 	// strip duplicate entries
 	std::cout << "Removing any duplicate entries..." << std::endl;
@@ -622,11 +618,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	apply_xml_import( *emu, romlist, uiu, uid );
 	apply_import_extras( *emu, romlist );
 
-	std::string rex_str;
-	get_resource( "_sort_regexp", rex_str );
-	FeRomListCompare::init_rex( rex_str );
-	romlist.sort( FeRomListCompare::cmp );
-	FeRomListCompare::close_rex();
+	romlist.sort( FeRomListSorter() );
 
 	// strip duplicate entries
 	std::cout << "Removing any duplicate entries..." << std::endl;

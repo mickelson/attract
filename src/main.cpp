@@ -624,6 +624,8 @@ int main(int argc, char *argv[])
 	if ( window.isOpen() )
 		window.close();
 
+	FeRomListSorter::clear_title_rex();
+
 	soundsys.stop();
 	feSettings.save_state();
 

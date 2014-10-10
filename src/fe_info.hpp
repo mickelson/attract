@@ -57,6 +57,8 @@ public:
 		AltTitle,
 		Favourite,		// everything from Favourite on is not loaded from romlist
 		Tags,
+		PlayedCount,
+		PlayedTime,
 		LAST_INDEX
 	};
 
@@ -80,6 +82,9 @@ public:
 	void dump( void ) const;
 	std::string as_output( void ) const;
 
+	void load_stats( const std::string &path );
+	void update_stats( const std::string &path, int count_incr, int played_incr );
+
 	void clear();
 
 	bool operator==( const FeRomInfo & ) const;
@@ -93,17 +98,22 @@ private:
 //
 // Comparison used when sorting/merging FeRomLists
 //
-class FeRomListCompare
+class FeRomListSorter
 {
 private:
+	FeRomInfo::Index m_comp;
+	bool m_reverse;
 	static SQRex *m_rex;
 
 public:
-	static void init_rex( const std::string &re );
-	static void close_rex();
-	static bool cmp( const FeRomInfo &one, const FeRomInfo &two );
+	FeRomListSorter( FeRomInfo::Index c = FeRomInfo::Title, bool rev=false );
 
-	static const char get_first_letter( const FeRomInfo &one );
+	bool operator()( const FeRomInfo &obj1, const FeRomInfo &obj2 ) const;
+
+	const char get_first_letter( const FeRomInfo &one );
+
+	static void init_title_rex( const std::string & );
+	static void clear_title_rex();
 };
 
 //
@@ -156,7 +166,7 @@ private:
 class FeFilter : public FeBaseConfigurable
 {
 public:
-	static const char *indexString;
+	static const char *indexStrings[];
 
 	FeFilter( const std::string &name );
 	void init();
@@ -175,10 +185,22 @@ public:
 
 	std::vector<FeRule> &get_rules() { return m_rules; };
 
+	FeRomInfo::Index get_sort_by() const { return m_sort_by; }
+	bool get_reverse_order() const { return m_reverse_order; }
+	int get_list_limit() const { return m_list_limit; }
+
+	void set_sort_by( FeRomInfo::Index i ) { m_sort_by=i; }
+	void set_reverse_order( bool r ) { m_reverse_order=r; }
+	void set_list_limit( int p ) { m_list_limit=p; }
+
 private:
 	std::string m_name;
 	std::vector<FeRule> m_rules;
 	int m_rom_index;
+	int m_list_limit; // limit the number of list entries if non-zero.  Positive value limits to the first
+							// x values, Negative value limits to the last abs(x) values.
+	FeRomInfo::Index m_sort_by;
+	bool m_reverse_order;
 };
 
 //
@@ -241,8 +263,9 @@ private:
 	std::deque<FeRomInfo> m_list;
 	std::map<std::string, bool> m_tags; // bool is flag of whether the tag has been changed
 	mutable std::set<std::string> m_extra_favs; // store for favourites that are currently filtered out
-	mutable std::multimap< std::string, const char * > m_extra_tags; // store for tags that are currenlty filtered out
+	mutable std::multimap< std::string, const char * > m_extra_tags; // store for tags that are currently filtered out
 	std::string m_user_path;
+	std::string m_stat_path;
 	std::string m_romlist_name;
 	const FeFilter *m_filter;
 	bool m_fav_changed;
@@ -270,7 +293,8 @@ public:
 	// base class has this function too!
 	bool load_romlist( const std::string &romlist_path,
 					const std::string &romlist_name,
-					const std::string &user_path );
+					const std::string &user_path,
+					const std::string &stat_path );
 
 	int process_setting( const std::string &setting,
 		const std::string &value,

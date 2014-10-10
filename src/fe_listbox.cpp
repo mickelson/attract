@@ -24,6 +24,7 @@
 #include "fe_settings.hpp"
 #include "fe_shader.hpp"
 #include "fe_present.hpp"
+#include "fe_util.hpp"
 #include <iostream>
 
 FeListBox::FeListBox( int x, int y, int w, int h )
@@ -257,7 +258,36 @@ void FeListBox::on_new_list( FeSettings *s, float scale_x, float scale_y )
 {
 	init( scale_x, scale_y );
 
-	s->get_current_display_list( m_displayList );
+	int list_size = s->get_current_list_size();
+
+	m_displayList.clear();
+	m_displayList.reserve( list_size );
+
+	if ( !m_format_string.empty() )
+	{
+		for ( int i=0; i < list_size; i++ )
+		{
+			m_displayList.push_back( m_format_string );
+			s->do_text_substitutions_absolute( m_displayList.back(), i );
+		}
+	}
+	else
+	{
+		if ( s->hide_brackets() )
+		{
+			for ( int i=0; i < list_size; i++ )
+			{
+				const std::string &temp = s->get_rom_info_absolute( i, FeRomInfo::Title );
+				m_displayList.push_back( name_with_brackets_stripped( temp ));
+			}
+		}
+		else
+		{
+			for ( int i=0; i < list_size; i++ )
+				m_displayList.push_back( s->get_rom_info_absolute( i, FeRomInfo::Title ) );
+		}
+	}
+
 	setText( s->get_rom_index(), m_displayList );
 }
 
@@ -561,4 +591,15 @@ void FeListBox::set_font( const char *f )
 
 		FeVM::script_flag_redraw();
 	}
+}
+
+const char *FeListBox::get_format_string()
+{
+	return m_format_string.c_str();
+}
+
+void FeListBox::set_format_string( const char *s )
+{
+	m_format_string = s;
+	FeVM::script_do_update( this );
 }

@@ -23,6 +23,7 @@
 #include "fe_util.hpp"
 #include "fe_base.hpp"
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
@@ -177,6 +178,25 @@ std::string clean_path( const std::string &path, bool require_trailing_slash )
 		retval += '/';
 
 	return retval;
+}
+
+std::string absolute_path( const std::string &path )
+{
+#ifdef SFML_SYSTEM_WINDOWS
+	const int BUFF_SIZE = 512;
+	char buff[ BUFF_SIZE + 1 ];
+	buff[BUFF_SIZE] = 0;
+
+	if ( _fullpath( buff, path.c_str(), 512 ) )
+		return std::string( buff );
+#else
+	char buff[PATH_MAX+1];
+
+	if ( realpath( path.c_str(), buff ) )
+		return std::string( buff );
+#endif // SFML_SYSTEM_WINDOWS
+
+	return path;
 }
 
 bool search_for_file( const std::string &base_path,
@@ -556,6 +576,14 @@ std::string as_str( int i )
 	ss << i;
 	return ss.str();
 }
+
+std::string as_str( float f, int decimals )
+{
+	std::ostringstream ss;
+	ss << std::setprecision( decimals ) << std::fixed << f;
+	return ss.str();
+}
+
 
 int as_int( const std::string &s )
 {

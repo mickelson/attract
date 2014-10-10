@@ -113,12 +113,15 @@ public:
 	int get_selbgb();
 	int get_selbga();
 	const char *get_font();
+	const char *get_format_string();
+
 	void set_selbgr(int r);
 	void set_selbgg(int g);
 	void set_selbgb(int b);
 	void set_selbga(int a);
 	void set_selbg_rgb( int, int, int );
 	void set_font( const char *f );
+	void set_format_string( const char *s );
 
 private:
 	FeListBox( const FeListBox & );
@@ -128,6 +131,7 @@ private:
 	std::vector<std::string> m_displayList;
 	std::vector<FeTextPrimative> m_texts;
 	std::string m_font_name;
+	std::string m_format_string;
 	sf::Color m_selColour;
 	sf::Color m_selBg;
 	int m_selStyle;

@@ -120,52 +120,8 @@ void FeText::on_new_list( FeSettings *s, float scale_x, float scale_y )
 
 void FeText::on_new_selection( FeSettings *feSettings )
 {
-	//
-	// Perform substitutions of the [XXX] sequences occurring in m_string
-	//
-	size_t n = std::count( m_string.begin(), m_string.end(), '[' );
-
 	std::string str = m_string;
-	for ( int i=0; ((i< FeRomInfo::LAST_INDEX) && ( n > 0 )); i++ )
-	{
-		if ( i == FeRomInfo::Title ) // this is a special case dealt with below
-			continue;
-
-		std::string from = "[";
-		from += FeRomInfo::indexStrings[i];
-		from += "]";
-
-		n -= perform_substitution( str, from,
-				feSettings->get_rom_info( m_index_offset, (FeRomInfo::Index)i) );
-	}
-
-	if ( n > 0 )
-	{
-		n -= perform_substitution( str, "[ListTitle]",
-				feSettings->get_current_list_title() );
-
-		n -= perform_substitution( str, "[ListFilterName]",
-				feSettings->get_current_filter_name() );
-
-		n -= perform_substitution( str, "[ListSize]",
-				as_str( feSettings->get_current_list_size() ) );
-
-		n -= perform_substitution( str, "[ListEntry]",
-				as_str( feSettings->get_rom_index( m_index_offset ) + 1 ) );
-	}
-
-	if ( n > 0 )
-	{
-		const std::string &title_full =
-				feSettings->get_rom_info( m_index_offset, FeRomInfo::Title );
-
-		n -= perform_substitution( str, "[TitleFull]", title_full );
-
-		if ( feSettings->hide_brackets() )
-			n -= perform_substitution( str, "[Title]", name_with_brackets_stripped( title_full ) );
-		else
-			n -= perform_substitution( str, "[Title]", title_full );
-	}
+	feSettings->do_text_substitutions( str, m_index_offset );
 
 	m_draw_text.setString( str );
 }

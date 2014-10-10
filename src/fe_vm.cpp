@@ -269,7 +269,8 @@ void FeVM::on_new_layout( const std::string &path,
 		info.Const( FeRomInfo::indexStrings[i], i );
 		i++;
 	}
-	info.Const( "System", FeRomInfo::LAST_INDEX ); // special case
+	info.Const( "System", FeRomInfo::LAST_INDEX ); // special cases with same value
+	info.Const( "NoSort", FeRomInfo::LAST_INDEX ); //
 	ConstTable().Enum( _SC("Info"), info);
 
 	Enumeration transition;
@@ -389,6 +390,7 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop(_SC("align"), &FeListBox::get_align, &FeListBox::set_align )
 		.Prop(_SC("sel_style"), &FeListBox::getSelStyle, &FeListBox::setSelStyle )
 		.Prop(_SC("font"), &FeListBox::get_font, &FeListBox::set_font )
+		.Prop(_SC("format_string"), &FeListBox::get_format_string, &FeListBox::set_format_string )
 		.Func( _SC("set_bg_rgb"), &FeListBox::set_bg_rgb )
 		.Func( _SC("set_sel_rgb"), &FeListBox::set_sel_rgb )
 		.Func( _SC("set_selbg_rgb"), &FeListBox::set_selbg_rgb )
@@ -410,6 +412,9 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop( _SC("filter"), &FePresent::get_filter_name )
 		.Prop( _SC("size"), &FePresent::get_list_size )
 		.Prop( _SC("index"), &FePresent::get_list_index, &FePresent::set_list_index )
+		.Prop( _SC("sort_by"), &FePresent::get_sort_by )
+		.Prop( _SC("reverse_order"), &FePresent::get_reverse_order )
+		.Prop( _SC("list_limit"), &FePresent::get_list_limit )
 	);
 
 	fe.Bind( _SC("Overlay"), Class <FeVM, NoConstructor>()
@@ -1336,7 +1341,10 @@ bool FeVM::internal_do_nut( const std::string &work_dir,
 		path = script_file;
 
 	if ( !file_exists( path ) )
+	{
+		std::cout << "File not found: " << path << std::endl;
 		return false;
+	}
 
 	try
 	{
@@ -1375,6 +1383,11 @@ bool FeVM::load_module( const char *module_file )
 	ASSERT( len != std::string::npos );
 
 	std::string path = temp.substr( 0, len + 1 );
+
+	len = fixed_file.find_last_of( "/\\" );
+	if ( len != std::string::npos )
+		fixed_file = fixed_file.substr( len + 1 );
+
 	return internal_do_nut( path, fixed_file );
 }
 

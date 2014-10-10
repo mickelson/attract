@@ -38,6 +38,8 @@ extern const char *FE_LAYOUT_FILE_EXTENSION;
 
 extern const char *FE_DIR_TOKEN;
 
+extern const char *FE_CFG_YES_STR;
+extern const char *FE_CFG_NO_STR;
 
 // A container for each task when importing/building romlists from the command line
 class FeImportTask
@@ -80,6 +82,7 @@ public:
 		JoystickThreshold,
 		WindowMode,
 		FilterWrapMode,
+		TrackUsage,
 		LAST_INDEX
 	};
 
@@ -117,6 +120,7 @@ private:
 	bool m_hide_brackets;
 	bool m_autolaunch_last_game;
 	bool m_confirm_favs;
+	bool m_track_usage;
 	WindowType m_window_mode;
 	FilterWrapModeType m_filter_wrap_mode;
 
@@ -194,12 +198,17 @@ public:
 
 	void toggle_layout();
 
-	void get_current_display_list( std::vector<std::string> &list ) const;
 	int get_current_list_size() const { return m_rl.size(); };
 	int get_rom_index( int offset=0 ) const;
 
+	void do_text_substitutions( std::string &str, int index_offset );
+	void do_text_substitutions_absolute( std::string &str, int pos );
+
+	void get_current_sort( FeRomInfo::Index &idx, bool &rev, int &limit );
+
 	const std::string &get_current_list_title() const;
 	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
+	const std::string &get_rom_info_absolute( int pos, FeRomInfo::Index index ) const;
 	bool hide_brackets() const { return m_hide_brackets; }
 	bool autolaunch_last_game() const { return m_autolaunch_last_game; }
 
@@ -240,6 +249,8 @@ public:
 	int get_prev_fav_offset() const;
 	int get_next_fav_offset() const;
 	bool confirm_favs() const { return m_confirm_favs; }
+
+	bool track_usage() const { return m_track_usage; }
 
 	int get_next_letter_offset( int step ) const;
 

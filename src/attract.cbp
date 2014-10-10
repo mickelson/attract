@@ -19,6 +19,7 @@
 				<Linker>
 					<Add library="sfml-graphics-d" />
 					<Add library="sfml-window-d" />
+					<Add library="sfml-network-d" />
 					<Add library="sfml-system-d" />
 					<Add library="swscale" />
 					<Add library="avformat" />
@@ -39,6 +40,7 @@
 				<Linker>
 					<Add library="sfml-graphics" />
 					<Add library="sfml-window" />
+					<Add library="sfml-network" />
 					<Add library="sfml-system" />
 					<Add library="swscale" />
 					<Add library="avformat" />

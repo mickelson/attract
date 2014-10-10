@@ -29,6 +29,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <stdlib.h>
+
+#include <SFML/System/Clock.hpp>
 #include <SFML/Config.hpp>
 
 #ifdef USE_FONTCONFIG
@@ -110,10 +112,13 @@ const char *FE_SOUND_SUBDIR			= "sounds/";
 const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_MODULES_SUBDIR			= "modules/";
+const char *FE_STATS_SUBDIR			= "stats/";
 const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
 const char *FE_LIST_DEFAULT			= "default-list.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
 const char *FE_DIR_TOKEN				= "<DIR>";
+const char *FE_CFG_YES_STR				= "yes";
+const char *FE_CFG_NO_STR				= "no";
 
 const std::string FE_EMPTY_STRING;
 
@@ -164,6 +169,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_hide_brackets( false ),
 	m_autolaunch_last_game( false ),
 	m_confirm_favs( false ),
+	m_track_usage( true ),
 	m_window_mode( Default ),
 	m_filter_wrap_mode( WrapWithinList )
 {
@@ -172,9 +178,9 @@ FeSettings::FeSettings( const std::string &config_path,
 		m_font_paths.push_back( FE_DEFAULT_FONT_PATHS[i++] );
 
 	if ( config_path.empty() )
-		m_config_path = clean_path(FE_DEFAULT_CFG_PATH);
+		m_config_path = absolute_path( clean_path(FE_DEFAULT_CFG_PATH) );
 	else
-		m_config_path = clean_path( config_path, true );
+		m_config_path = absolute_path( clean_path( config_path, true ) );
 
 	m_default_font = cmdln_font;
 }
@@ -272,6 +278,13 @@ void FeSettings::load()
 	// preserves the previous behaviour for config files created in an earlier version)
 	//
 	internal_load_language( load_language );
+
+	//
+	// Initialize the regular expression used when sorting by title now...
+	//
+	std::string rex_str;
+	get_resource( "_sort_regexp", rex_str );
+	FeRomListSorter::init_title_rex( rex_str );
 }
 
 const char *FeSettings::configSettingStrings[] =
@@ -289,6 +302,7 @@ const char *FeSettings::configSettingStrings[] =
 	"joystick_threshold",
 	"window_mode",
 	"filter_wrap_mode",
+	"track_usage",
 	NULL
 };
 
@@ -403,24 +417,28 @@ void FeSettings::init_list()
 	if ( romlist.empty() )
 		return;
 
-	std::string path( m_config_path );
-	path += FE_ROMLIST_SUBDIR;
-	std::string user_path( path );
+	std::string stat_path;
+	if ( m_track_usage )
+		stat_path = m_config_path + FE_STATS_SUBDIR + romlist + "/";
+
+	std::string list_path( m_config_path );
+	list_path += FE_ROMLIST_SUBDIR;
+	std::string user_path( list_path );
 
 	// Check for a romlist in the data path if there isn't one that matches in the
 	// config directory
 	//
-	if (( !file_exists( path + romlist + FE_ROMLIST_FILE_EXTENSION ) )
+	if (( !file_exists( list_path + romlist + FE_ROMLIST_FILE_EXTENSION ) )
 		&& ( FE_DATA_PATH != NULL ))
 	{
 		std::string temp = FE_DATA_PATH;
 		temp += FE_ROMLIST_SUBDIR;
 
 		if ( file_exists( temp + romlist + FE_ROMLIST_FILE_EXTENSION ) )
-			path = temp;
+			list_path = temp;
 	}
 
-	if ( m_rl.load_romlist( path, romlist, user_path ) == false )
+	if ( m_rl.load_romlist( list_path, romlist, user_path, stat_path ) == false )
 		std::cerr << "Error opening romlist: " << romlist << std::endl;
 }
 
@@ -633,8 +651,12 @@ const std::string &FeSettings::get_rom_info( int offset, FeRomInfo::Index index 
 	if ( m_rl.empty() )
 		return FE_EMPTY_STRING;
 
-	int rom = get_rom_index( offset );
-	return m_rl[rom].get_info( index );
+	return get_rom_info_absolute( get_rom_index( offset ), index );
+}
+
+const std::string &FeSettings::get_rom_info_absolute( int pos, FeRomInfo::Index index ) const
+{
+	return m_rl[pos].get_info( index );
 }
 
 void FeSettings::get_screensaver_file( std::string &path, std::string &file ) const
@@ -839,6 +861,26 @@ const std::string &FeSettings::get_current_filter_name()
 	return f->get_name();
 }
 
+void FeSettings::get_current_sort( FeRomInfo::Index &idx, bool &rev, int &limit )
+{
+	idx = FeRomInfo::LAST_INDEX;
+	rev = false;
+	limit = 0;
+
+	if ( m_current_list < 0 )
+		return;
+
+	FeFilter *f = m_lists[m_current_list].get_filter(
+			m_lists[m_current_list].get_current_filter_index() );
+
+	if ( f )
+	{
+		idx = f->get_sort_by();
+		rev = f->get_reverse_order();
+		limit = f->get_list_limit();
+	}
+}
+
 void FeSettings::change_rom( int step )
 {
 	set_current_rom( get_rom_index( step ) );
@@ -902,12 +944,10 @@ int FeSettings::get_next_fav_offset() const
 
 int FeSettings::get_next_letter_offset( int step ) const
 {
-	std::string rex_str;
-	get_resource( "_sort_regexp", rex_str );
-	FeRomListCompare::init_rex( rex_str );
+	FeRomListSorter s;
 
 	int idx = get_rom_index();
-	const char curr_l = FeRomListCompare::get_first_letter( m_rl[ idx ] );
+	const char curr_l = s.get_first_letter( m_rl[ idx ] );
 	bool is_alpha = std::isalpha( curr_l );
 	int retval = 0;
 
@@ -919,7 +959,7 @@ int FeSettings::get_next_letter_offset( int step ) const
 		else
 			t_idx = ( i <= idx ) ? ( idx - i ) : ( m_rl.size() - ( i - idx ) );
 
-		const char test_l = FeRomListCompare::get_first_letter( m_rl[ t_idx ] );
+		const char test_l = s.get_first_letter( m_rl[ t_idx ] );
 
 		if ((( is_alpha ) && ( test_l != curr_l ))
 				|| ((!is_alpha) && ( std::isalpha( test_l ) )))
@@ -929,7 +969,6 @@ int FeSettings::get_next_letter_offset( int step ) const
 		}
 	}
 
-	FeRomListCompare::close_rex();
 	return retval;
 }
 
@@ -1040,7 +1079,7 @@ void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 
 int FeSettings::run()
 {
-	std::string command, args, rom_path, rom, extension, romfilename;
+	std::string command, args, rom_path, extension, romfilename;
 	const FeEmulatorInfo *emu = get_current_emulator();
 
 	if (( emu == NULL ) || (m_rl.empty()))
@@ -1050,7 +1089,8 @@ int FeSettings::run()
 	m_last_launch_filter = get_current_filter_index();
 	m_last_launch_rom = get_rom_index();
 
-	rom = m_rl[ m_last_launch_rom ].get_info( FeRomInfo::Romname );
+	FeRomInfo &rom = m_rl[ m_last_launch_rom ];
+	const std::string &rom_name = rom.get_info( FeRomInfo::Romname );
 
 	std::vector<std::string>::const_iterator itr;
 
@@ -1085,10 +1125,10 @@ int FeSettings::run()
 		std::vector < std::string > in_list;
 		std::vector < std::string > out_list;
 
-		get_filename_from_base( in_list, out_list, path, rom, my_filter );
+		get_filename_from_base( in_list, out_list, path, rom_name, my_filter );
 
-		if (( check_subdirs ) && ( directory_exists( path + rom ) ))
-			in_list.push_back( path + rom );
+		if (( check_subdirs ) && ( directory_exists( path + rom_name ) ))
+			in_list.push_back( path + rom_name );
 
 		if ( !in_list.empty() )
 		{
@@ -1126,14 +1166,14 @@ int FeSettings::run()
 		if ( !paths.empty() )
 			rom_path = clean_path( paths.front(), true );
 
-		romfilename = rom_path + rom + extension;
+		romfilename = rom_path + rom_name + extension;
 
 		std::cerr << "Warning: could not locate rom.  Best guess: "
 				<< romfilename << std::endl;
 	}
 
 	args = emu->get_info( FeEmulatorInfo::Command );
-	perform_substitution( args, "[name]", rom );
+	perform_substitution( args, "[name]", rom_name );
 	perform_substitution( args, "[rompath]", rom_path );
 	perform_substitution( args, "[romext]", extension );
 	perform_substitution( args, "[romfilename]", romfilename );
@@ -1143,7 +1183,21 @@ int FeSettings::run()
 	command = clean_path( emu->get_info( FeEmulatorInfo::Executable ) );
 
 	std::cout << "Running: " << command << " " << args << std::endl;
-	return run_program( command, args );
+
+	sf::Clock play_timer;
+	int retval = run_program( command, args );
+
+	if ( m_track_usage )
+	{
+		const std::string rl_name = m_lists[m_current_list].get_info( FeListInfo::Romlist );
+		std::string path = m_config_path + FE_STATS_SUBDIR;
+		confirm_directory( path, rl_name );
+
+		path += rl_name + "/";
+		rom.update_stats( path, 1, play_timer.getElapsedTime().asSeconds() );
+	}
+
+	return retval;
 }
 
 int FeSettings::exit_command() const
@@ -1155,23 +1209,117 @@ int FeSettings::exit_command() const
 	return r;
 }
 
-void FeSettings::get_current_display_list( std::vector<std::string> &l ) const
+void FeSettings::do_text_substitutions( std::string &str, int index_offset )
 {
-	l.clear();
-	l.reserve( m_rl.size() );
+	do_text_substitutions_absolute( str, get_rom_index( index_offset ) );
+}
 
-	if ( m_hide_brackets )
+void FeSettings::do_text_substitutions_absolute( std::string &str, int pos )
+{
+	//
+	// Perform substitutions of the [XXX] sequences occurring in str
+	//
+	size_t n = std::count( str.begin(), str.end(), '[' );
+
+	for ( int i=0; ((i< FeRomInfo::LAST_INDEX) && ( n > 0 )); i++ )
 	{
-		for ( int i=0; i < m_rl.size(); i++ )
-		{
-			const std::string &temp = m_rl[i].get_info( FeRomInfo::Title );
-			l.push_back( name_with_brackets_stripped( temp ));
-		}
+		if (( i == FeRomInfo::Title ) // these are special cases dealt with below
+				|| ( i == FeRomInfo::PlayedTime ))
+			continue;
+
+		std::string from = "[";
+		from += FeRomInfo::indexStrings[i];
+		from += "]";
+
+		n -= perform_substitution( str, from,
+				get_rom_info_absolute( pos, (FeRomInfo::Index)i) );
 	}
-	else
+
+	if ( n > 0 )
 	{
-		for ( int i=0; i < m_rl.size(); i++ )
-			l.push_back( m_rl[i].get_info( FeRomInfo::Title ) );
+		n -= perform_substitution( str, "[ListTitle]",
+				get_current_list_title() );
+
+		n -= perform_substitution( str, "[ListFilterName]",
+				get_current_filter_name() );
+
+		n -= perform_substitution( str, "[ListSize]",
+				as_str( get_current_list_size() ) );
+
+		n -= perform_substitution( str, "[ListEntry]",
+				as_str( pos + 1 ) );
+	}
+
+	if ( n > 0 )
+	{
+		const std::string &title_full =
+				get_rom_info_absolute( pos, FeRomInfo::Title );
+
+		n -= perform_substitution( str, "[TitleFull]", title_full );
+
+		if ( hide_brackets() )
+			n -= perform_substitution( str, "[Title]", name_with_brackets_stripped( title_full ) );
+		else
+			n -= perform_substitution( str, "[Title]", title_full );
+	}
+
+	std::string played_string;
+	if ( n > 0 )
+	{
+		std::string label;
+
+		int raw = as_int(
+			get_rom_info_absolute( pos, FeRomInfo::PlayedTime ) );
+		float num;
+
+		if ( raw < 3600 )
+		{
+			num = raw / 60.f;
+			label = "Minutes";
+		}
+		else if ( raw < 86400 )
+		{
+			num = raw / 3600.f;
+			label = "Hours";
+		}
+		else
+		{
+			num = raw / 86400.f;
+			label = "Days";
+		}
+
+		std::string op_label;
+		get_resource( label, op_label );
+
+		played_string = as_str( num, 1 ) + " " + op_label;
+
+		n -= perform_substitution( str, "[PlayedTime]", played_string );
+	}
+
+	if ( n > 0 )
+	{
+		FeRomInfo::Index sort_by;
+		bool reverse_sort;
+		int list_limit;
+		std::string sort_name;
+
+		get_current_sort( sort_by, reverse_sort, list_limit );
+
+		if ( sort_by == FeRomInfo::LAST_INDEX )
+		{
+			get_resource( "None", sort_name );
+			sort_by = FeRomInfo::Title;
+		}
+		else
+			get_resource( FeRomInfo::indexStrings[sort_by], sort_name );
+
+		n -= perform_substitution( str, "[SortName]", sort_name );
+
+		if ( sort_by == FeRomInfo::PlayedTime )
+			n -= perform_substitution( str, "[SortValue]", played_string );
+		else
+			n -= perform_substitution( str, "[SortValue]",
+					get_rom_info_absolute( pos, sort_by ) );
 	}
 }
 
@@ -1434,13 +1582,13 @@ const std::string FeSettings::get_info( int index ) const
 	case ScreenSaverTimeout:
 		return as_str( m_ssaver_time);
 	case ListsMenuExit:
-		return ( m_lists_menu_exit ? "yes" : "no" );
+		return ( m_lists_menu_exit ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case HideBrackets:
-		return ( m_hide_brackets ? "yes" : "no" );
+		return ( m_hide_brackets ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case AutoLaunchLastGame:
-		return ( m_autolaunch_last_game ? "yes" : "no" );
+		return ( m_autolaunch_last_game ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case ConfirmFavourites:
-		return ( m_confirm_favs ? "yes" : "no" );
+		return ( m_confirm_favs ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case MouseThreshold:
 		return as_str( m_mouse_thresh );
 	case JoystickThreshold:
@@ -1449,6 +1597,8 @@ const std::string FeSettings::get_info( int index ) const
 		return windowModeTokens[ m_window_mode ];
 	case FilterWrapMode:
 		return filterWrapTokens[ m_filter_wrap_mode ];
+	case TrackUsage:
+		return ( m_track_usage ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	default:
 		break;
 	}
@@ -1554,6 +1704,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 			if ( filterWrapTokens[i] == NULL )
 				return false;
 		}
+		break;
+
+	case TrackUsage:
+		m_track_usage = config_str_to_bool( value );
 		break;
 
 	default:

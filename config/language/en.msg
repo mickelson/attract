@@ -34,6 +34,8 @@ _help_emu_add;Add a new emulator
 _help_filter_name;The name for this filter
 _help_filter_rule;Configure filter rule
 _help_filter_add_rule;Add a rule to this filter
+_help_filter_sort_by;The game information attribute that you wish to sort this list by.  Set to "No Sort" to keep the ordering from the source romlist
+_help_filter_list_limit;Set this to a non-zero value if you wish to limit the size of a sorted list.  Use a positive value for the first X entries (i.e. "10" gives the first 10 entries), a negative value for the last X entries (i.e. "-25" gives the last 25 entries), or "0" for no limit
 _help_filter_delete;Delete this filter
 _help_rule_target;The game information attribute that you wish to filter based on
 _help_rule_comp;Comparison type for the filter

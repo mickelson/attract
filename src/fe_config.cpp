@@ -653,6 +653,30 @@ void FeFilterEditMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl(Opt::SUBMENU,"Add Rule","","_help_filter_add_rule");
 		ctx.back_opt().opaque = 1;
 
+		std::string no_sort_str, sort_val;
+		ctx.fe_settings.get_resource( "No Sort", no_sort_str );
+
+		if ( f->get_sort_by() != FeRomInfo::LAST_INDEX )
+			sort_val = FeRomInfo::indexStrings[f->get_sort_by()];
+		else
+			sort_val = no_sort_str;
+
+		std::vector< std::string > targets;
+		i=0;
+		while ( FeRomInfo::indexStrings[i] != 0 )
+		{
+			targets.push_back( std::string() );
+			ctx.fe_settings.get_resource( FeRomInfo::indexStrings[i], targets.back() );
+			i++;
+		}
+		targets.push_back( no_sort_str );
+
+		ctx.add_optl( Opt::LIST, "Sort By", sort_val, "_help_filter_sort_by" );
+		ctx.back_opt().append_vlist( targets );
+
+		ctx.add_optl( Opt::EDIT, "List Limit", as_str( f->get_list_limit() ),
+			"_help_filter_list_limit" );
+
 		ctx.add_optl(Opt::EXIT,"Delete this Filter","","_help_filter_delete");
 		ctx.back_opt().opaque = 2;
 
@@ -668,9 +692,10 @@ bool FeFilterEditMenu::on_option_select(
 		return true;
 
 	FeMenuOpt &o = ctx.curr_opt();
+	FeFilter *f = m_list->get_filter( m_index );
+
 	if (( o.opaque >= 100 ) || ( o.opaque == 1 ))
 	{
-		FeFilter *f = m_list->get_filter( m_index );
 		int r_index=0;
 
 		if ( o.opaque == 1 )
@@ -689,8 +714,6 @@ bool FeFilterEditMenu::on_option_select(
 	}
 	else if ( o.opaque == 2 )
 	{
-		FeFilter *f = m_list->get_filter( m_index );
-
 		// "Delete this Filter"
 		if ( ctx.confirm_dialog( "Delete filter '$1'?",
 				f->get_name() ) == false )
@@ -707,12 +730,35 @@ bool FeFilterEditMenu::on_option_select(
 
 bool FeFilterEditMenu::save( FeConfigContext &ctx )
 {
-	std::string name = ctx.opt_list[0].get_value();
-
 	if ( m_list )
 	{
 		FeFilter *f = m_list->get_filter( m_index );
+
+		std::string name = ctx.opt_list[0].get_value();
 		f->set_name( name );
+
+		int sort_pos = ctx.opt_list.size() - 4;
+		FeRomInfo::Index sort_by = (FeRomInfo::Index)ctx.opt_list[ sort_pos ].get_vindex();
+
+		f->set_sort_by( sort_by );
+
+		//
+		// TODO - make reverse order configurable from the config menu
+		//
+		// right now we just arbitrarily sort players, playcount and playtime in "reverse" order so
+		// higher values are first.
+		//
+		bool reverse_order( false );
+		if (( sort_by == FeRomInfo::Players )
+				|| ( sort_by == FeRomInfo::PlayedCount )
+				|| ( sort_by == FeRomInfo::PlayedTime ))
+			reverse_order = true;
+
+		f->set_reverse_order( reverse_order );
+
+		std::string limit_str = ctx.opt_list[ sort_pos + 1 ].get_value();
+		int list_limit = as_int( limit_str );
+		f->set_list_limit( list_limit );
 	}
 
 	return true;
@@ -1251,6 +1297,12 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_confirm_favs" );
 	ctx.back_opt().append_vlist( bool_opts );
 
+	ctx.add_optl( Opt::LIST,
+			"Track Usage",
+			ctx.fe_settings.track_usage() ? bool_opts[0] : bool_opts[1],
+			"_help_track_usage" );
+	ctx.back_opt().append_vlist( bool_opts );
+
 	std::string filterwrapmode;
 	ctx.fe_settings.get_resource( FeSettings::filterWrapDispTokens[ ctx.fe_settings.get_filter_wrap_mode() ], filterwrapmode );
 	std::vector < std::string > wrap_modes;
@@ -1300,31 +1352,34 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ListsMenuExit,
-			ctx.opt_list[1].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[1].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::HideBrackets,
-			ctx.opt_list[2].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[2].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame,
-			ctx.opt_list[3].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[3].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
-			ctx.opt_list[4].get_vindex() == 0 ? "yes" : "no" );
+			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	ctx.fe_settings.set_info( FeSettings::TrackUsage,
+			ctx.opt_list[5].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
-			FeSettings::filterWrapTokens[ ctx.opt_list[5].get_vindex() ] );
+			FeSettings::filterWrapTokens[ ctx.opt_list[6].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[6].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[7].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath,
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[8].get_value() );
 
+	ctx.fe_settings.set_info( FeSettings::FontPath,
+			ctx.opt_list[9].get_value() );
+
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
-			FeSettings::windowModeTokens[ ctx.opt_list[9].get_vindex() ] );
+			FeSettings::windowModeTokens[ ctx.opt_list[10].get_vindex() ] );
 
 	return true;
 }

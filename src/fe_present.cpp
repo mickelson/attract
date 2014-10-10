@@ -387,6 +387,36 @@ int FePresent::get_list_index() const
 	return m_feSettings->get_rom_index();
 }
 
+int FePresent::get_sort_by() const
+{
+	FeRomInfo::Index idx;
+	bool rev;
+	int limit;
+
+	m_feSettings->get_current_sort( idx, rev, limit );
+	return idx;
+}
+
+bool FePresent::get_reverse_order() const
+{
+	FeRomInfo::Index idx;
+	bool rev;
+	int limit;
+
+	m_feSettings->get_current_sort( idx, rev, limit );
+	return rev;
+}
+
+int FePresent::get_list_limit() const
+{
+	FeRomInfo::Index idx;
+	bool rev;
+	int limit;
+
+	m_feSettings->get_current_sort( idx, rev, limit );
+	return limit;
+}
+
 void FePresent::set_list_index( int index )
 {
 	int new_offset = index - get_list_index();
@@ -880,6 +910,7 @@ void FePresent::post_run()
 		(*itm)->set_play_state( m_playMovies );
 
 	reset_screen_saver();
+	update( true );
 }
 
 void FePresent::toggle_movie()

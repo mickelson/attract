@@ -317,48 +317,20 @@ bool FeMameXMLParser::parse( const std::string &prog )
 	std::list<FeRomInfo>::iterator itr;
 	m_percent=m_count=0;
 
-	if ( m_romlist.size() < 500 )
+	//
+	// run "mame -listxml" and find each rom.
+	//
+	m_map.clear();
+	for ( std::list<FeRomInfo>::iterator itr=m_romlist.begin();
+			itr != m_romlist.end(); ++itr )
+		m_map[ (*itr).get_info( FeRomInfo::Romname ).c_str() ] = itr;
+
+	std::cout << "    ";
+
+	if ( parse_internal( prog, base_args ) == false )
 	{
-		//
-		// Small List Strategy: run "mame -listxml <romname>" for each rom.
-		//
-		std::cout << "    ";
-		for ( itr = m_romlist.begin(); itr != m_romlist.end(); ++itr )
-		{
-			std::string args = base_args;
-			args += " ";
-			args += (*itr).get_info( FeRomInfo::Romname );
-
-			m_map.clear();
-			m_map[ (*itr).get_info( FeRomInfo::Romname ).c_str() ] = itr;
-
-			if ( parse_internal( prog, args ) == false )
-			{
-				std::cout << "No XML output found, command: " << prog << " "
-						<< args << std::endl;
-			}
-
-			if ( get_continue_parse() == false )
-				break;
-		}
-	}
-	else
-	{
-		//
-		// Large List Strategy: run "mame -listxml" and find each rom.
-		//
-		m_map.clear();
-		for ( std::list<FeRomInfo>::iterator itr=m_romlist.begin();
-				itr != m_romlist.end(); ++itr )
-			m_map[ (*itr).get_info( FeRomInfo::Romname ).c_str() ] = itr;
-
-		std::cout << "    ";
-
-		if ( parse_internal( prog, base_args ) == false )
-		{
-			std::cout << "No XML output found, command: " << prog << " "
-						<< base_args << std::endl;
-		}
+		std::cout << "No XML output found, command: " << prog << " "
+					<< base_args << std::endl;
 	}
 
 	std::cout << std::endl;

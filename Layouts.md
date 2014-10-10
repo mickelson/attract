@@ -245,6 +245,7 @@ Parameters:
       - `[ListEntry]` - the number of the current selection in the current
         display list
       - `[ListFilterName]` - the name of the current display list filter
+      - `[SortName]` - the attribute that the list was sorted by
       - `[Name]` - the short name of the selected game
       - `[Title]` - the full name of the selected game
       - `[Emulator]` - the emulator to use for the selected game
@@ -259,6 +260,12 @@ Parameters:
       - `[Status]` - the status for the selected game
       - `[DisplayCount]` - the number of displays for the selected game
       - `[DisplayType]` - the display type for the selected game
+      - `[PlayedTime]` - the amount of time the selected game has been
+        played
+      - `[PlayedCount]` - the number of times the selected game has been
+        played
+      - `[SortValue]` - the value used to order the selected game in the
+        list
    * x - the x coordinate of the top left corner of the text (in layout
      coordinates).
    * y - the y coordinate of the top left corner of the text (in layout
@@ -917,7 +924,28 @@ Attributes:
    * `filter` - Get the name of the current list filter.
    * `size` - Get the size of the current list.
    * `index` - Get/set the current list selection index.
-
+   * `sort_by` - Get the attribute that the list has been sorted by.  Will be
+     equal to one of the following values:
+      - `Info.NoSort`
+      - `Info.Name`
+      - `Info.Title`
+      - `Info.Emulator`
+      - `Info.CloneOf`
+      - `Info.Year`
+      - `Info.Manufacturer`
+      - `Info.Category`
+      - `Info.Players`
+      - `Info.Rotation`
+      - `Info.Control`
+      - `Info.Status`
+      - `Info.DisplayCount`
+      - `Info.DisplayType`
+      - `Info.Favourite`
+      - `Info.Tags`
+   * `reverse_order` - [bool] Will be equal to true if the list order has been
+     reversed.
+   * `list_limit` - Get the value of the list limit applied to the current
+     list.
 
 <a name="Overlay" />
 #### `fe.Overlay` ####
@@ -1086,6 +1114,7 @@ Attributes:
       - `[ListEntry]` - the number of the current selection in the current
         display list
       - `[ListFilterName]` - the name of the current display list filter
+      - `[SortName]` - the attribute that the list was sorted by
       - `[Name]` - the short name of the selected game
       - `[Title]` - the full name of the selected game
       - `[Emulator]` - the emulator to use for the selected game
@@ -1100,6 +1129,12 @@ Attributes:
       - `[Status]` - the status for the selected game
       - `[DisplayCount]` - the number of displays for the selected game
       - `[DisplayType]` - the display type for the selected game
+      - `[PlayedTime]` - the amount of time the selected game has been
+        played
+      - `[PlayedCount]` - the number of times the selected game has been
+        played
+      - `[SortValue]` - the value used to order the selected game in the
+        list
    * `x` - Get/set x position of top left corner (in layout coordinates).
    * `y` - Get/set y position of top left corner (in layout coordinates).
    * `width` - Get/set width of text (in layout coordinates).
@@ -1232,6 +1267,10 @@ Attributes:
       - `Style.Underlined`
    * `font` - Get/set the name of the font used for this listbox.  Default is
      the layout font name.
+   * `format_string` - Get/set the format for the text to display in each list
+    entry.  Supported format tokens are the same as for the [`fe.Text`](#Text)
+    class `msg` attribute.  If empty, game titles will be displayed (i.e. the
+    same behaviour as if set to "[Title]").  Default is an empty value.
    * `shader` - Get/set the GLSL shader for this listbox. This can only be set
      to an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 

@@ -96,6 +96,9 @@ bool is_relative_path( const std::string &file );
 std::string clean_path( const std::string &path,
 		bool require_trailing_slash = false );
 
+// return path as an absolute path
+std::string absolute_path( const std::string &path );
+
 //
 // Search "base_path"'s dir structure for a file with the given "base_name".
 // Valid extensions for the "result" file are in the NULL terminated list
@@ -167,6 +170,11 @@ void delete_file( const std::string &file );
 // Return integer as a string
 //
 std::string as_str( int i );
+
+//
+// Return float as a string
+//
+std::string as_str( float f, int decimals=3 );
 
 //
 // Return string as integer

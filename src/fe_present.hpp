@@ -130,6 +130,10 @@ private:
 	const char *get_filter_name() const;
 	int get_list_size() const;
 	int get_list_index() const;
+	int get_sort_by() const;
+	bool get_reverse_order() const;
+	int get_list_limit() const;
+
 	void set_list_index( int );
 	const char *get_layout_font() const;
 	void set_layout_width( int );
