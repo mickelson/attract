@@ -193,7 +193,13 @@ std::string absolute_path( const std::string &path )
 	char buff[PATH_MAX+1];
 
 	if ( realpath( path.c_str(), buff ) )
-		return std::string( buff );
+	{
+		std::string retval = buff;
+		if (( retval.size() > 0 ) && ( retval[ retval.size()-1 ] != '/' ))
+			retval += "/";
+
+		return retval;
+	}
 #endif // SFML_SYSTEM_WINDOWS
 
 	return path;
