@@ -323,7 +323,11 @@ int main(int argc, char *argv[])
 			soundsys.stop();
 
 			fePresent.pre_run();
-			window.run();
+
+			// window.run() returns true if our window has been closed while the other program was running
+			if ( !window.run() )
+				exit_selected = true;
+
 			fePresent.post_run();
 
 			soundsys.sound_event( FeInputMap::EventGameReturn );

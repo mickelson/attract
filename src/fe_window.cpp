@@ -37,6 +37,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <SFML/System/Sleep.hpp>
+
 class FeWindowPosition : public FeBaseConfigurable
 {
 public:
@@ -174,8 +176,10 @@ void FeWindow::initial_create()
 		sf::Mouse::setPosition( sf::Vector2i( wsize.x / 2, wsize.y / 2 ), *this );
 }
 
-void FeWindow::run()
+bool FeWindow::run()
 {
+	int min_run;
+
 #ifdef SFML_SYSTEM_LINUX
 	//
 	// On Linux, fullscreen mode is confirmed to block the emulator
@@ -185,17 +189,49 @@ void FeWindow::run()
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
 		close();
-		m_fes.run();
+		m_fes.run( min_run );
 		sf::VideoMode mode = sf::VideoMode::getDesktopMode();
 		create( mode, "Attract-Mode", sf::Style::Fullscreen );
+
+		return true;
 	}
-	else
-	{
-		m_fes.run();
-	}
-#else
-	m_fes.run();
 #endif
+
+	sf::Clock timer;
+
+	//
+	// For Steam support (at least on Windows) we have a "minimum run"
+	// value that can be set per emulator.  run() below sets this value.
+	// and we wait at least this amount of time (in seconds) and then wait
+	// for focus to return to Attract-Mode if this value is set greater than 0
+	//
+	m_fes.run( min_run );
+
+	if ( min_run <= 0 )
+		return true;
+
+	sf::Time elapsed = timer.getElapsedTime();
+	if ( elapsed < sf::seconds( min_run ) )
+		sf::sleep( sf::seconds( min_run ) - elapsed );
+
+	//
+	// Wait for focus to return
+	//
+	while ( isOpen() )
+	{
+		sf::Event ev;
+		while (pollEvent(ev))
+		{
+			if ( ev.type == sf::Event::GainedFocus )
+				return true;
+			else if ( ev.type == sf::Event::Closed )
+				return false;
+		}
+
+		sf::sleep( sf::milliseconds( 250 ) );
+	}
+
+	return false;
 }
 
 void FeWindow::on_exit()

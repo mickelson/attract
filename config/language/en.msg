@@ -26,7 +26,8 @@ _help_emu_rompath;The path to the roms for this emulator.  Multiple paths can be
 _help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple extensions can be entered if separated by a semicolon.  Specify "<DIR>" as an entry if games are stored in separate subdirectories
 _help_emu_import_extras;Path to any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories) and nplayers.ini (for number of players).  Multiple file paths can be entered if separated by a semicolon
 _help_emu_system;The system identifier(s) for this emulator.  Multiple values can be entered if separated by a semicolon
-_help_emu_info_source;Use "mame" if the emulator provides mame -listxml output, "mess" for mess -listsoftware output, or "thegamesdb.net" to scrape data from thegamesdb.net.  "mess" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
+_help_emu_info_source;Use "mame" if the emulator provides mame -listxml output, "mess" for mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, or "steam" to read from a steam installation.  "mess" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
+_help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
 _help_emu_delete;Delete the entry for this emulator
 _help_emu_sel;Configure emulator

@@ -1251,6 +1251,7 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"system",
 	"info_source",
 	"import_extras",
+	"minimum_run_time",
 	NULL
 };
 
@@ -1264,15 +1265,17 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"System Identifier",
 	"Info Source/Scraper",
 	"Additional Import File(s)",
+	"Minimum Run Time",
 	NULL
 };
 
 FeEmulatorInfo::FeEmulatorInfo()
+	: m_min_run( 0 )
 {
 }
 
 FeEmulatorInfo::FeEmulatorInfo( const std::string &n )
-: m_name( n )
+: m_name( n ), m_min_run( 0 )
 {
 }
 
@@ -1296,6 +1299,8 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 		return m_info_source;
 	case Import_extras:
 		return vector_to_string( m_import_extras );
+	case Minimum_run_time:
+		return as_str( m_min_run );
 	default:
 		return "";
 	}
@@ -1328,6 +1333,9 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 	case Import_extras:
 		m_import_extras.clear();
 		string_to_vector( s, m_import_extras );
+		break;
+	case Minimum_run_time:
+		m_min_run = as_int( s );
 		break;
 	default:
 		break;
@@ -1520,6 +1528,10 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 		//
 		for ( int i=1; i < LAST_INDEX; i++ )
 		{
+			// don't output minimum run time if it is zero
+			if (( i == Minimum_run_time ) && ( m_min_run == 0 ))
+				continue;
+
 			string val = get_info( (Index) i );
 			if ( !val.empty() )
 				outfile << setw(20) << left << indexStrings[i]

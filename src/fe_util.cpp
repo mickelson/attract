@@ -447,6 +447,17 @@ bool token_helper( const std::string &from,
 	bool retval( false ), in_quotes( false ), escaped( false );
 	size_t end;
 
+	//
+	// Skip leading whitespace
+	//
+	pos = from.find_first_not_of( FE_WHITESPACE, pos );
+	if ( pos == std::string::npos )
+	{
+		token.clear();
+		pos = from.size();
+		return false;
+	}
+
 	if ( from[pos] == '"' )
 	{
 		in_quotes = true;
@@ -486,7 +497,7 @@ bool token_helper( const std::string &from,
 
 	// clean out leading and trailing whitespace from token
 	//
-	size_t f= from.find_first_not_of( FE_WHITESPACE, old_pos );
+	size_t f = from.find_first_not_of( FE_WHITESPACE, old_pos );
 
 	if (( f == std::string::npos ) || ( f == end ))
 	{

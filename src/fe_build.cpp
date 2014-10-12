@@ -146,6 +146,66 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 		messp.parse( base_command, system_name );
 		std::cout << std::endl;
 	}
+	else if ( source.compare( "steam" ) == 0 )
+	{
+		const std::vector<std::string> &paths = emulator.get_paths();
+		const std::vector<std::string> &exts = emulator.get_extensions();
+		if ( paths.empty() || exts.empty() )
+			return;
+
+		std::string path = clean_path( paths.front(), true );
+		const std::string &extension = exts.front();
+
+		// A bit mislabelled: the steam import isn't really xml.
+		for ( std::list<FeRomInfo>::iterator itr = romlist.begin(); itr != romlist.end(); ++itr )
+		{
+			// We expect appmanifest_* entries in the romname field.  Open each of these files and
+			// extract the data we can use in our list
+			std::string fname = path + (*itr).get_info( FeRomInfo::Romname ) + extension;
+
+			std::ifstream myfile( fname.c_str() );
+
+			int fields_left( 3 );
+
+			if ( myfile.is_open() )
+			{
+				while ( myfile.good() && ( fields_left > 0 ) )
+				{
+					std::string line, val;
+					size_t pos( 0 );
+
+					getline( myfile, line );
+
+					token_helper( line, pos, val, FE_WHITESPACE );
+					if ( val.compare( "appid" ) == 0 )
+					{
+						std::string id;
+						token_helper( line, pos, id, FE_WHITESPACE );
+						(*itr).set_info( FeRomInfo::Romname, id );
+						fields_left--;
+					}
+					else if ( val.compare( "name" ) == 0 )
+					{
+						std::string name;
+						token_helper( line, pos, name, FE_WHITESPACE );
+						(*itr).set_info( FeRomInfo::Title, name );
+						fields_left--;
+					}
+					else if ( val.compare( "installdir" ) == 0 )
+					{
+						std::string altname;
+						token_helper( line, pos, altname, FE_WHITESPACE );
+						(*itr).set_info( FeRomInfo::AltRomname, altname );
+						fields_left--;
+					}
+				}
+
+				ASSERT( !fields_left );
+			}
+			else
+				std::cerr << "Error opening file: " << fname << std::endl;
+		}
+	}
 #ifndef NO_NET
 	else if ( source.compare( "thegamesdb.net" ) == 0 )
 	{

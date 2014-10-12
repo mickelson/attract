@@ -238,7 +238,15 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 			if ( i == FeEmulatorInfo::Info_source )
 			{
-				const char *source_options[] = { "", "mame", "mess", "thegamesdb.net", NULL };
+				const char *source_options[] =
+				{
+					"",
+					"mame",
+					"mess",
+					"thegamesdb.net",
+					"steam",
+					NULL
+				};
 
 				ctx.add_optl( Opt::LIST,
 						FeEmulatorInfo::indexDispStrings[i],

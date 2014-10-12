@@ -193,7 +193,7 @@ public:
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
-	int run(); // run current selection
+	int run( int &minimum_run_seconds ); // run current selection
 	int exit_command() const; // run configured exit command (if any)
 
 	void toggle_layout();

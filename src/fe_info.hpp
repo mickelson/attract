@@ -331,6 +331,7 @@ public:
 		System,
 		Info_source,
 		Import_extras,
+		Minimum_run_time,
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
@@ -381,6 +382,8 @@ private:
 	std::vector<std::string> m_extensions;
 	std::vector<std::string> m_systems;
 	std::vector<std::string> m_import_extras;
+
+	int m_min_run;
 
 	//
 	// Considered using a std::multimap here but C++98 doesn't guarantee the

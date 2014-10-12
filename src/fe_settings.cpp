@@ -1077,13 +1077,15 @@ void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 	internal_gather_config_files( ll, "", FE_SOUND_SUBDIR );
 }
 
-int FeSettings::run()
+int FeSettings::run( int &minimum_run_seconds )
 {
 	std::string command, args, rom_path, extension, romfilename;
 	const FeEmulatorInfo *emu = get_current_emulator();
 
 	if (( emu == NULL ) || (m_rl.empty()))
 		return -1;
+
+	minimum_run_seconds = as_int( emu->get_info( FeEmulatorInfo::Minimum_run_time ) );
 
 	m_last_launch_list = get_current_list_index();
 	m_last_launch_filter = get_current_filter_index();

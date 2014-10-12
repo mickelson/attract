@@ -39,7 +39,7 @@ public:
 	FeWindow( FeSettings &fes );
 
 	void initial_create();		// first time window creation
-	void run();						// run the currently selected game
+	bool run();						// run the currently selected game (blocking). returns false if window closed in the interim
 	void on_exit();				// called before exiting frontend
 };
 
