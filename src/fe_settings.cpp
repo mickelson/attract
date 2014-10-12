@@ -2012,7 +2012,7 @@ void FeSettings::get_plugin_full_path(
 		return;
 	}
 
-	std::cerr << "Plugin file not found: " << label << std::cerr;
+	std::cerr << "Plugin file not found: " << label << std::endl;
 }
 
 void FeSettings::internal_load_language( const std::string &lang )

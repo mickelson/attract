@@ -15,6 +15,11 @@ class UserConfig </ help="This plugin can automatically rotate the frontend disp
 	auto_rot="270";
 }
 
+// There is nothing to do if the screen saver is running
+//
+if ( ScreenSaverActive )
+	return;
+
 local config=fe.get_config();
 
 class AutoRotate
@@ -75,7 +80,7 @@ class AutoRotate
 			break;
 		}
 
-		if (( auto_rot != RotateScreen.None ) && ( !ScreenSaverActive ))
+		if ( auto_rot != RotateScreen.None )
 		{
 			//
 			// We only register the callback function if we will be doing
