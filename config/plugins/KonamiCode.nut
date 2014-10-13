@@ -45,20 +45,21 @@ class KonamiCode
 	m_last_time = 0;
 	m_pressed = false;
 	m_commands = null;
+	m_valid = [ "up", "down", "right", "left", "A", "B" ];
 
 	constructor()
 	{
 		m_config = fe.get_config();
 		local temp = split( m_config[ "code" ], "," );
-		local valid = [ "up", "down", "right", "left", "A", "B" ];
 
 		// Make sure m_commands only gets the values we expect
 		//
 		m_commands = [];
 		foreach ( c in temp )
 		{
-			if ( valid.find( c ) != null )
-				m_commands.append( c )
+			local cc = strip( c );
+			if ( m_valid.find( cc ) != null )
+				m_commands.append( cc )
 		}
 
 		if ( m_commands.len() > 0 )
@@ -67,6 +68,9 @@ class KonamiCode
 
 	function on_tick( ttime )
 	{
+		if ( fe.overlay.is_up )
+			return;
+
 		if ( m_current < m_commands.len() )
 		{
 			local down = fe.get_input_state( m_config[ m_commands[ m_current ] ] );
@@ -79,10 +83,28 @@ class KonamiCode
 				m_last_time = ttime;
 				m_pressed = false;
 			}
-			else if (( m_current > 0 )
-					&& ( ttime > m_last_time + RESET_TIME ))
+			else
 			{
-				m_current = 0;
+				// Check for whether we need to cancel the sequence
+				//
+				if (( m_current > 0 )
+					&& ( ttime > m_last_time + RESET_TIME ))
+				{
+					// timeout
+					m_current = 0;
+				}
+				else
+				{
+					foreach ( v in m_valid )
+					{
+						if ( fe.get_input_state( m_config[ v ] ) )
+						{
+							// wrong input in sequence
+							m_current=0;
+							break;
+						}
+					}
+				}
 			}
 		}
 		else
