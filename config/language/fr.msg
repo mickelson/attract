@@ -18,7 +18,7 @@ Executable;Exécutable
 Command Arguments;Ligne de commande
 Rom Path;Chemin des ROM
 Rom Extension(s);Extension(s) des ROM
-Additional Import Files;Fichiers additionnels
+Additional Import File(s);Fichiers additionnels
 XML Mode;Mode XML
 Add Artwork;Ajouter Artwork
 Generate Romlist;Générer la liste de ROM
@@ -244,3 +244,41 @@ _help_misc;Configurations diverses
 Exit menu;Quitter le menu
 
 _sort_regexp;^(Vs\. The |The |Vs\. )
+
+#
+# Strings needing translation:
+#
+System Identifier;System Identifier
+Info Source/Scraper;Info Source/Scraper
+Minimum Run Time;Minimum Run Time
+Sort By;Sort By
+No Sort;No Sort
+AltRomname;AltRomname
+AltTitle;AltTitle
+Tags;Tags
+PlayedCount;PlayedCount
+PlayedTime;PlayedTime
+List Limit;List Limit
+Add/Remove Tags;Add/Remove Tags
+Previous Letter;Previous Letter
+Next Letter;Next Letter
+Custom 1;Custom 1
+Custom 2;Custom 2
+Track Usage;Track Usage
+Filter Wrap Mode;Filter Wrap Mode
+Wrap within List (Default);Wrap within List (Default)
+Jump to Next List;Jump to Next List
+No Wrap;No Wrap
+Window Mode;Window Mode
+Fill Screen (Default);Fill Screen (Default)
+Fullscreen Mode;Fullscreen Mode
+Window;Window
+
+_help_emu_system;The system identifier(s) for this emulator.  Multiple values can be entered if separated by a semicolon
+_help_emu_info_source;Use "mame" if the emulator provides mame -listxml output, "mess" for mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, or "steam" to read from a steam installation.  "mess" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
+_help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
+_help_filter_sort_by;The game information attribute that you wish to sort this list by.  Set to "No Sort" to keep the ordering from the source romlist
+_help_filter_list_limit;Set this to a non-zero value if you wish to limit the size of a sorted list.  Use a positive value for the first X entries (i.e. "10" gives the first 10 entries), a negative value for the last X entries (i.e. "-25" gives the last 25 entries), or "0" for no limit
+_help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
+_help_filter_wrap_mode;Set what happens when the "Next Filter" or "Previous Filter" actions reach the end of the filter list
+_help_track_usage;Configure whether Attract-Mode should track usage (played time and play count for each game)

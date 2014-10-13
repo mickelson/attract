@@ -70,6 +70,7 @@ _help_lists_menu_exit;Configure whether an Exit option should be provided in the
 _help_hide_brackets;Hide text in brackets when showing game titles
 _help_autolaunch_last_game;Automatically launch the last game played on startup
 _help_confirm_favs;Confirm the addition/removal of Favourites
+_help_track_usage;Configure whether Attract-Mode should track usage (played time and play count for each game)
 _help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
 _help_filter_wrap_mode;Set what happens when the "Next Filter" or "Previous Filter" actions reach the end of the filter list
 _help_emulators;Configure emulator settings
