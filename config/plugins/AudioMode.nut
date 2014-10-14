@@ -64,13 +64,14 @@ class AudioMode
 		// Read the play directory
 		//
 		local command = "/bin/sh";
-		local param = "/c ls ";
+		local param = "-c \"ls ";
 		if ( OS == "Windows" )
 		{
 			command = "cmd";
-			param = " /c dir /b ";
+			param = " /c dir /b \"";
 		}
 		param += dir;
+		param += "\"";
 
 		m_work = "";
 
@@ -94,8 +95,8 @@ class AudioMode
 			local idx = rand() % temp_list.len();
 			m_list.append( dir + strip( temp_list[ idx ] ) );
 			temp_list.remove( idx );
-			
 		}
+		print( "AudioMode plugin: found " + m_list.len() + " file(s) in: " + dir + "\n" );
 	}
 
 	function index_to_current()

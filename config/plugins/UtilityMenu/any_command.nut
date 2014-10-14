@@ -28,7 +28,7 @@ if ( OS == "Windows" )
 }
 else
 {
-	fe.plugin_command( "/bin/sh", "-c " + command, "any_command_callback" );
+	fe.plugin_command( "/bin/sh", "-c \"" + command + "\"", "any_command_callback" );
 }
 
 if ( output.len() < 1 )

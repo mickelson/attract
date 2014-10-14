@@ -118,6 +118,11 @@ function generate_index( config )
 		}
 	}
 
+	//
+	// Make sure the directory we are writing to exists...
+	//
+	system( "mkdir \"" + idx_path + "\"" );
+
 	fe.overlay.splash_message( "Writing index file." );
 
 	//
