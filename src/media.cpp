@@ -1160,7 +1160,7 @@ bool FeMedia::is_supported_media_file( const std::string &filename )
 
 int FeMedia::number_of_frames() const
 {
-	if ( m_video )
+	if ( m_video && m_format_ctx )
 		return m_format_ctx->streams[ m_video->stream_id ]->nb_frames;
 
 	return 0;
@@ -1168,7 +1168,7 @@ int FeMedia::number_of_frames() const
 
 sf::Time FeMedia::get_duration() const
 {
-	if ( m_video )
+	if ( m_video && m_format_ctx )
 	{
 		return sf::seconds(
 				av_q2d( m_format_ctx->streams[m_video->stream_id]->time_base ) *
@@ -1180,6 +1180,9 @@ sf::Time FeMedia::get_duration() const
 
 const char *FeMedia::get_metadata( const char *tag )
 {
+	if ( !m_format_ctx )
+		return "";
+
 	AVDictionaryEntry *entry = NULL;
 	entry = av_dict_get( m_format_ctx->metadata, tag, NULL, AV_DICT_IGNORE_SUFFIX );
 

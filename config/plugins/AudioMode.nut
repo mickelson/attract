@@ -50,8 +50,16 @@ class AudioMode
 
 		m_config=fe.get_config();
 
-		load_playlist( fe.path_expand( m_config[ "dir" ] ) );
-		index_to_current();
+		local dir = fe.path_expand( m_config[ "dir" ] );
+		if ( dir.len() > 0 )
+		{
+			load_playlist( fe.path_expand( m_config[ "dir" ] ) );
+			index_to_current();
+		}
+		else
+		{
+			print( "AudioMode plugin error: no source directory configured\n" );
+		}
 	}
 
 	function _callback( msg )
@@ -139,6 +147,9 @@ class AudioMode
 
 	function get_track_msg()
 	{
+		if ( fe.ambient_sound.file_name.len() == 0 )
+			return "";
+
 		local title = fe.ambient_sound.get_metadata( "title" );
 		if ( title.len() < 1 )
 		{
