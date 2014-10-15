@@ -103,8 +103,8 @@ FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo, FeSo
 {
 	m_fep.m_vm = this;
 
-	Sqrat::DefaultVM::Set( NULL );
 	srand( time( NULL ) );
+	vm_init();
 }
 
 FeVM::~FeVM()
