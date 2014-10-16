@@ -1130,6 +1130,9 @@ void FeRomList::save_tags() const
 
 bool FeRomList::set_fav( int idx, bool fav )
 {
+	if (( idx < 0 ) || ( idx >= (int)m_list.size() ))
+		return false;
+
 	m_list[idx].set_info( FeRomInfo::Favourite, fav ? "1" : "" );
 	m_fav_changed=true;
 
@@ -1150,6 +1153,9 @@ bool FeRomList::set_fav( int idx, bool fav )
 void FeRomList::get_tags_list( int idx,
 		std::vector< std::pair<std::string, bool> > &tags_list ) const
 {
+	if (( idx < 0 ) || ( idx >= (int)m_list.size() ))
+		return;
+
 	std::string curr_tags = m_list[idx].get_info(FeRomInfo::Tags);
 
 	std::set<std::string> my_set;
@@ -1175,6 +1181,9 @@ void FeRomList::get_tags_list( int idx,
 
 bool FeRomList::set_tag( int idx, const std::string &tag, bool flag )
 {
+	if (( idx < 0 ) || ( idx >= (int)m_list.size() ))
+		return false;
+
 	std::string curr_tags = m_list[idx].get_info(FeRomInfo::Tags);
 	size_t pos = curr_tags.find( FE_TAGS_SEP + tag + FE_TAGS_SEP );
 

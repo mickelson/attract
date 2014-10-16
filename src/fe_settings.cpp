@@ -648,14 +648,14 @@ const std::string &FeSettings::get_current_list_title() const
 
 const std::string &FeSettings::get_rom_info( int offset, FeRomInfo::Index index ) const
 {
-	if ( m_rl.empty() )
-		return FE_EMPTY_STRING;
-
 	return get_rom_info_absolute( get_rom_index( offset ), index );
 }
 
 const std::string &FeSettings::get_rom_info_absolute( int pos, FeRomInfo::Index index ) const
 {
+	if ( m_rl.empty() )
+		return FE_EMPTY_STRING;
+
 	return m_rl[pos].get_info( index );
 }
 
@@ -902,6 +902,9 @@ bool FeSettings::select_last_launch()
 
 bool FeSettings::get_current_fav() const
 {
+	if ( m_rl.empty() )
+		return false;
+
 	const std::string &s = m_rl[get_rom_index()].get_info(FeRomInfo::Favourite);
 	if ( s.empty() || ( s.compare("1") != 0 ))
 		return false;
@@ -944,6 +947,9 @@ int FeSettings::get_next_fav_offset() const
 
 int FeSettings::get_next_letter_offset( int step ) const
 {
+	if ( m_rl.empty() )
+		return 0;
+
 	FeRomListSorter s;
 
 	int idx = get_rom_index();

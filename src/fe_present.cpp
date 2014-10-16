@@ -519,15 +519,19 @@ bool FePresent::handle_event( FeInputMap::Command c,
 
 	case FeInputMap::RandomGame:
 		{
-			int step = rand() % m_feSettings->get_current_list_size();
-			if ( step != 0 )
+			int ls = m_feSettings->get_current_list_size();
+			if ( ls > 0 )
 			{
-				m_vm->on_transition( ToNewSelection, step );
+				int step = rand() % ls;
+				if ( step != 0 )
+				{
+					m_vm->on_transition( ToNewSelection, step );
 
-				m_feSettings->change_rom( step );
-				update( false );
+					m_feSettings->change_rom( step );
+					update( false );
 
-				m_vm->on_transition( FromOldSelection, -step );
+					m_vm->on_transition( FromOldSelection, -step );
+				}
 			}
 		}
 		break;
