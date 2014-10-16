@@ -40,21 +40,14 @@ class UserConfig {
 fe.layout.width=456;
 fe.layout.height=336;
 
-//
-// Show the sort value if we have sorted this list by something other than the title
-//
-local lb_width = 192;
-if (( fe.list.sort_by != Info.NoSort ) && ( fe.list.sort_by != Info.Title ))
-{
-	lb_width = 157;
-	local sort_lb = fe.add_listbox( 176, 96, 45, 192 );
-	sort_lb.rows = 13;
-	sort_lb.charsize = 10;
-	sort_lb.set_rgb( 255, 255, 0 );
-	sort_lb.format_string = "[SortValue]";
-}
+local sort_lb = fe.add_listbox( 176, 96, 45, 192 );
+sort_lb.rows = 13;
+sort_lb.charsize = 10;
+sort_lb.set_rgb( 255, 255, 0 );
+sort_lb.format_string = "[SortValue]";
+sort_lb.visible = false;
 
-local lb = fe.add_listbox( 24, 96, lb_width, 192 );
+local lb = fe.add_listbox( 24, 96, 192, 192 );
 lb.rows = 13;
 lb.charsize = 10;
 
@@ -70,6 +63,30 @@ l.set_rgb( 80, 80, 80 );
 l = fe.add_text( "[ListFilterName]", 396, 322, 60, 10 );
 l.align = Align.Right;
 l.set_rgb( 80, 80, 80 );
+
+//
+// Update the listbox display to show the sort critera if we are showing
+// a filter that is sorted
+//
+fe.add_transition_callback( "attracman_transition" );
+function attracman_transition( ttype, var, ttime )
+{
+	if ( ttype == Transition.ToNewList )
+	{
+		if (( fe.list.sort_by != Info.NoSort )
+				&& ( fe.list.sort_by != Info.Title ))
+		{
+			lb.width = 157;
+			sort_lb.visible = true;
+		}
+		else
+		{
+			lb.width = 192;
+			sort_lb.visible = false;
+		}
+	}
+	return false;
+}
 
 //
 // Now run the game...
