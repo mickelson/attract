@@ -510,6 +510,11 @@ the_end:
 	notify_texture_change();
 }
 
+void FeTextureContainer::on_new_list( FeSettings *, float, float )
+{
+	m_current_rom_index = -1;
+}
+
 bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
 {
 #ifndef NO_MOVIE

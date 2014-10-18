@@ -110,6 +110,7 @@ public:
 	const sf::Texture &get_texture();
 
 	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
+	void on_new_list( FeSettings *, float, float );
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 	void set_play_state( bool play );
 	bool get_play_state() const;
