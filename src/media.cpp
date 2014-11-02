@@ -780,6 +780,20 @@ bool FeMedia::getLoop() const
 	return m_loop;
 }
 
+void FeMedia::setVolume(float volume)
+{
+	if ( m_audio )
+	{
+		AVDiscard d =( volume <= 0.f ) ? AVDISCARD_ALL : AVDISCARD_DEFAULT;
+
+		m_audio->codec_ctx->skip_loop_filter = d;
+		m_audio->codec_ctx->skip_idct = d;
+		m_audio->codec_ctx->skip_frame = d;
+	}
+
+	sf::SoundStream::setVolume( volume );
+}
+
 bool FeMedia::openFromFile( const std::string &name )
 {
 	close();

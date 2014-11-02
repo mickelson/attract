@@ -50,7 +50,6 @@ public:
 	bool openFromFile( const std::string &name );
 	sf::Texture *get_texture();
 
-	using sf::SoundStream::setVolume;
 	using sf::SoundStream::setPosition;
 	using sf::SoundStream::getPosition;
 	using sf::SoundStream::setPitch;
@@ -68,6 +67,8 @@ public:
 
 	void setLoop( bool );
 	bool getLoop() const;
+
+	void setVolume(float volume);
 
 	bool is_playing();
 	int number_of_frames() const;

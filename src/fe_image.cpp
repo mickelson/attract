@@ -320,8 +320,7 @@ bool FeTextureContainer::common_load(
 			// We should have deleted this above...
 			ASSERT( m_movie == NULL );
 
-			m_movie = new FeMedia( (m_video_flags & VF_NoAudio)
-											? FeMedia::Video : FeMedia::AudioVideo );
+			m_movie = new FeMedia( FeMedia::AudioVideo );
 
 			if (!m_movie->openFromFile( movie_file ))
 			{
@@ -632,14 +631,19 @@ void FeTextureContainer::set_video_flags( FeVideoFlags f )
 	{
 		m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
 
-		// TODO: Shut down the audio process?  Right now we just
-		// mute it if there is one...
-		//
 		if (m_video_flags & VF_NoAudio)
 			m_movie->setVolume( 0.f );
+		else
+		{
+			float volume( 100.f );
+			FePresent *fep = FeVM::script_get_fep();
+			if ( fep )
+				volume = fep->get_fes()->get_play_volume( FeSoundInfo::Movie );
+
+			m_movie->setVolume( volume );
+		}
 	}
 #endif
-
 }
 
 FeVideoFlags FeTextureContainer::get_video_flags() const
