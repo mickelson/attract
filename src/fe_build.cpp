@@ -161,7 +161,16 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 		{
 			// We expect appmanifest_* entries in the romname field.  Open each of these files and
 			// extract the data we can use in our list
-			std::string fname = path + (*itr).get_info( FeRomInfo::Romname ) + extension;
+			const std::string &n = (*itr).get_info( FeRomInfo::Romname );
+			std::string fname = path + n + extension;
+
+			//
+			// First, Fix the Romname entry in case we don't find it in the manifest
+			//
+			size_t start_pos = n.find_last_of( "_" );
+			if ( start_pos != std::string::npos )
+				(*itr).set_info( FeRomInfo::Romname,
+						n.substr( start_pos + 1 ) );
 
 			std::ifstream myfile( fname.c_str() );
 
@@ -177,21 +186,22 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 					getline( myfile, line );
 
 					token_helper( line, pos, val, FE_WHITESPACE );
-					if ( val.compare( "appid" ) == 0 )
+
+					if ( strcasecmp( val.c_str(), "appid" ) == 0 )
 					{
 						std::string id;
 						token_helper( line, pos, id, FE_WHITESPACE );
 						(*itr).set_info( FeRomInfo::Romname, id );
 						fields_left--;
 					}
-					else if ( val.compare( "name" ) == 0 )
+					else if ( strcasecmp( val.c_str(), "name" ) == 0 )
 					{
 						std::string name;
 						token_helper( line, pos, name, FE_WHITESPACE );
 						(*itr).set_info( FeRomInfo::Title, name );
 						fields_left--;
 					}
-					else if ( val.compare( "installdir" ) == 0 )
+					else if ( strcasecmp( val.c_str(), "installdir" ) == 0 )
 					{
 						std::string altname;
 						token_helper( line, pos, altname, FE_WHITESPACE );
