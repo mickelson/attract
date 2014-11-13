@@ -1039,7 +1039,6 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				return false;
 
 			case sf::Event::TextEntered:
-
 				switch ( ev.text.unicode )
 				{
 				case 8: // Backspace
@@ -1051,16 +1050,11 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					redraw = true;
 					break;
 
+				case 3: // break
 				case 9: // horizontal tab
 				case 10: // linefeed
 				case 13: // Return (ignore here, deal with as keypress event)
-					break;
-
 				case 127: // Delete
-					if ( cursor_pos < (int)str.size() )
-						str.erase( cursor_pos, 1 );
-
-					redraw = true;
 					break;
 
 				default: // General text entry
@@ -1105,6 +1099,13 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 
 				case sf::Keyboard::Home:
 					cursor_pos = 0;
+					redraw = true;
+					break;
+
+				case sf::Keyboard::Delete:
+					if ( cursor_pos < (int)str.size() )
+						str.erase( cursor_pos, 1 );
+
 					redraw = true;
 					break;
 
