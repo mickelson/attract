@@ -4,19 +4,22 @@
 //
 ///////////////////////////////////////////////////
 class UserConfig {
-	</ label="Movie Collage", help="Enable 2x2 movie collage mode", options="Yes,No", order=1 />
+	</ label="Basic Movie", help="Enable basic movie mode", options="Yes,No", order=1 />
+	basic_movie="Yes";
+
+	</ label="Movie Collage", help="Enable 2x2 movie collage mode", options="Yes,No", order=2 />
 	movie_collage="Yes";
 
-	</ label="Image Collage", help="Enable 4x4 image collage mode", options="Yes,No", order=2 />
+	</ label="Image Collage", help="Enable 4x4 image collage mode", options="Yes,No", order=3 />
 	image_collage="Yes";
 
-	</ label="Overlay Artwork", help="Artwork to overlay on videos", options="wheel,flyer,marquee,None", order=3 />
+	</ label="Overlay Artwork", help="Artwork to overlay on videos", options="wheel,flyer,marquee,None", order=4 />
 	overlay_art="wheel";
 
-	</ label="Play Sound", help="Play video sounds during screensaver", options="Yes,No", order=4 />
+	</ label="Play Sound", help="Play video sounds during screensaver", options="Yes,No", order=5 />
 	sound="Yes";
 
-	</ label="Preserve Aspect Ratio", help="Preserve the aspect ratio of screensaver snaps/videos", options="Yes,No", order=5 />
+	</ label="Preserve Aspect Ratio", help="Preserve the aspect ratio of screensaver snaps/videos", options="Yes,No", order=6 />
 	preserve_ar="No";
 }
 
@@ -144,6 +147,7 @@ class MovieMode
 	obj=0;
 	logo=0;
 	start_time=0;
+	is_exclusive=false;
 
 	constructor()
 	{
@@ -187,6 +191,11 @@ class MovieMode
 		logo.on_tick( ttime );
 	}
 
+	function on_select()
+	{
+		// select the presently displayed game
+		fe.list.index += obj.index_offset;
+	}
 };
 
 //
@@ -199,6 +208,7 @@ class MovieCollageMode
 	ignore = [];
 	ignore_checked = false;
 	chance = 25; // precentage chance that this mode is triggered
+	is_exclusive=false;
 
 	constructor()
 	{
@@ -229,19 +239,35 @@ class MovieCollageMode
 		return temp;
 	}
 
-	function init( ttime )
+	function obj_init( idx, ttime )
 	{
-		foreach ( o in objs )
+		objs[idx].visible = true;
+		get_new_offset( objs[idx] );
+
+		// try not to duplicate videos
+		if ( fe.list.size > 7 )
 		{
-			o.visible = true;
-			get_new_offset( o );
-			o.video_playing = true;
+			for ( local j=0; j<4; j++ )
+			{
+				if (( j != idx ) && ( objs[idx].file_name == objs[j].file_name ))
+				{
+					get_new_offset( objs[idx] );
+					break;
+				}
+			}
 		}
 
+		objs[idx].video_playing = true;
+
+		logos[idx].init( objs[idx].index_offset, ttime, objs[idx].video_duration );
+	}
+
+	function init( ttime )
+	{
 		for ( local i=0; i<objs.len(); i++ )
 		{
+			obj_init( i, ttime );
 			ignore[i] = false;
-			logos[i].init( objs[i].index_offset, ttime, objs[i].video_duration );
 		}
 
 		ignore_checked = false;
@@ -262,7 +288,7 @@ class MovieCollageMode
 	// return true if mode should continue, false otherwise
 	function check( ttime )
 	{
-		if ( ttime < 4000 )
+		if (( ttime < 4000 ) || ( is_exclusive ))
 			return true;
 		else if ( ignore_checked == false )
 		{
@@ -287,7 +313,7 @@ class MovieCollageMode
 		{
 			if (( objs[i].video_playing == false )
 					&& ( ignore[i] == false ))
-				return false;
+				return ( ( rand() % 2 ) == 0 ); // 50/50 chance of leaving mode
 		}
 		return true;
 	}
@@ -296,6 +322,18 @@ class MovieCollageMode
 	{
 		foreach ( l in logos )
 			l.on_tick( ttime );
+
+		for ( local i=0; i<objs.len(); i++ )
+		{
+			if ( objs[i].video_playing == false )
+				obj_init( i, ttime );	
+		}
+	}
+
+	function on_select()
+	{
+		// randomly select one of the presently displayed games
+		fe.list.index += objs[ rand() % 4 ].index_offset;
 	}
 };
 
@@ -310,6 +348,7 @@ class ImageCollageMode
 	start_time=0;
 	last_switch=0;
 	chance = 15; // precentage chance that this mode is triggered
+	is_exclusive=false;
 
 	constructor()
 	{
@@ -348,7 +387,10 @@ class ImageCollageMode
 	// return true if mode should continue, false otherwise
 	function check( ttime )
 	{
-		return (( ttime - start_time ) < LENGTH );
+		if ( is_exclusive )
+			return true;
+		else
+			return (( ttime - start_time ) < LENGTH );
 	}
 
 	function on_tick( ttime )
@@ -358,6 +400,12 @@ class ImageCollageMode
 			last_switch = ttime;
 			objs[ rand() % objs.len() ].index_offset = rand();
 		}
+	}
+
+	function on_select()
+	{
+		// randomly select one of the presently displayed games
+		fe.list.index += objs[ rand() % 16 ].index_offset;
 	}
 }
 
@@ -372,6 +420,15 @@ if ( config["movie_collage"] == "Yes" )
 
 if ( config["image_collage"] == "Yes" )
 	modes.append( ImageCollageMode() );
+
+if (( config["basic_movie"] == "No" ) && ( modes.len() > 0 ))
+{
+	default_mode = modes[0];
+	modes.remove( 0 );
+}
+
+if ( modes.len() == 0 )
+	default_mode.is_exclusive = true;
 
 local current_mode = default_mode;
 local first_time = true;
@@ -413,4 +470,14 @@ function saver_tick( ttime )
 	{
 		current_mode.on_tick( ttime );
 	}
+}
+
+fe.add_signal_handler( "saver_signal_handler" );
+
+function saver_signal_handler( sig )
+{
+	if ( sig == "select" )
+		current_mode.on_select();
+
+	return false;
 }
