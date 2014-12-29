@@ -440,7 +440,7 @@ local my_array = [];
 for ( local i=0; i<rows*cols; i++ )
 	my_array.push( MySlot( i ) );
 
-gridc.set_slots( my_array );
+gridc.set_slots( my_array, gridc.get_sel() );
 gridc.frame=fe.add_image( "frame.png", width * 2, height * 2, width, height );
 
 gridc.name_t =  fe.add_text( "[Title]", 0,
