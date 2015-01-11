@@ -74,10 +74,6 @@ private:
 	FeFontContainer &m_defaultFont;
 	std::string m_layoutFontName;
 
-	enum MoveState { MoveNone, MoveUp, MoveDown, MovePageUp, MovePageDown };
-	MoveState m_moveState;
-	sf::Event m_moveEvent;
-	sf::Clock m_moveTimer;
 	sf::Clock m_layoutTimer;
 	sf::Time m_lastInput;
 
@@ -104,7 +100,6 @@ private:
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );
 
-	int get_no_wrap_step( int step );
 	void clear();
 	void toggle_movie();
 
@@ -126,15 +121,17 @@ private:
 	int get_layout_height() const;
 	int get_base_rotation() const;
 	int get_toggle_rotation() const;
-	const char *get_list_name() const;
+	const char *get_display_name() const;
 	const char *get_filter_name() const;
+	int get_filter_index() const;
+	void set_filter_index( int );
 	int get_list_size() const;
-	int get_list_index() const;
+	int get_selection_index() const;
 	int get_sort_by() const;
 	bool get_reverse_order() const;
 	int get_list_limit() const;
 
-	void set_list_index( int );
+	void set_selection_index( int );
 	const char *get_layout_font() const;
 	void set_layout_width( int );
 	void set_layout_height( int );
@@ -150,10 +147,10 @@ public:
 	void load_layout( bool initial_load=false );
 
 	int update( bool reload_list=false );
-	void update_to_new_list();
+	void update_to_new_list( int var=0 );
 
-	bool tick(); // return true if display refresh required
-	bool video_tick(); // limited tick: videos only
+	bool tick(); // run vm on_tick and update videos.  return true if redraw required
+	bool video_tick(); // update videos only. return true if redraw required
 
 	bool saver_activation_check();
 	void on_stop_frontend();
@@ -162,7 +159,7 @@ public:
 	void toggle_mute();
 
 	bool reset_screen_saver();
-	bool handle_event( FeInputMap::Command, const sf::Event &ev );
+	bool handle_event( FeInputMap::Command );
 
 	FeSettings *get_fes() const { return m_feSettings; };
 

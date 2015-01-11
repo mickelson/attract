@@ -57,6 +57,8 @@ public:
 
 	int getIndexOffset() const;
 	void setIndexOffset( int );
+	int getFilterOffset() const;
+	void setFilterOffset( int );
 
 	void setColor( const sf::Color & );
 	void setBgColor( const sf::Color & );
@@ -137,6 +139,7 @@ private:
 	int m_selStyle;
 	int m_rows;
 	int m_userCharSize;
+	int m_filter_offset;
 	float m_rotation;
 
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;

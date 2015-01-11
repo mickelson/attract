@@ -6,7 +6,7 @@
 // module
 //
 ///////////////////////////////////////////////////
-const CONVEYOR_VERSION=1;
+const CONVEYOR_VERSION=2;
 
 ///////////////////////////////////////////////////
 //
@@ -25,10 +25,7 @@ const CONVEYOR_VERSION=1;
 ///////////////////////////////////////////////////
 class ConveyorSlot
 {
-	constructor( obj=null )
-	{
-		m_obj = obj;
-	}
+	constructor( obj=null ) { m_obj = obj; }
 
 	function get_base_progress() { return m_base_progress; }
 	function get_base_index_offset() { return m_base_io; }
@@ -49,7 +46,12 @@ class ConveyorSlot
 	// This function must be overridden in a class that extends this class
 	// for anything interesting to happen
 	//
-	function on_progress( progress, var ) {};
+	function on_progress( progress, var ) {}
+
+	// For convenience, we forward the setting of things that we
+	// don't know about to the underlying object
+	//
+	function _set( idx, val ) { m_obj[idx]=val; return val; }
 
 	//
 	// Implementation details that may change in future versions:
@@ -109,6 +111,11 @@ class Conveyor
 	// This gets set to the slot index that contains the current selection
 	//
 	selection_index		= 0;
+
+	//
+	// Set this to false to disable the conveyor
+	//
+	enabled			= true;
 
 	constructor()
 	{
@@ -187,7 +194,7 @@ class Conveyor
 
 	function on_transition( ttype, var, ttime )
 	{
-		if (( ttype != Transition.ToNewSelection ) || ( m_objs.len() < 1 ))
+		if ((!enabled) || ( ttype != Transition.ToNewSelection ) || ( m_objs.len() < 1 ))
 			return false;
 
 		if ( ttime < transition_ms )
@@ -270,7 +277,106 @@ class Conveyor
 		return false;
 	}
 
+	function reset_progress()
+	{
+		foreach ( o in m_objs )
+			o.on_progress( o.m_base_progress, 0 );
+	}
+
+	//
+	function _set( idx, val )
+	{
+		foreach ( o in m_objs )
+			o[idx]=val;
+
+		return val;
+	}
+
 	m_last_move = 0;
 	m_did_move_swap = false;
 	m_objs = [];
 };
+
+///////////////////////////////////////////////////
+// SimpleArtStripSlot class - used by SimpleArtStrip
+///////////////////////////////////////////////////
+class SimpleArtStripSlot extends ConveyorSlot
+{
+	m_p=null;
+	constructor( parent, artname )
+	{
+		m_p=parent;
+		base.constructor( ::fe.add_artwork( artname ) );
+	}
+
+	function on_progress( progress, var )
+	{
+		m_obj.width = m_p.m_width;
+		m_obj.height = m_p.m_height;
+		m_obj.x = m_p.m_x + progress * m_p.m_x_span;
+		m_obj.y = m_p.m_y + progress * m_p.m_y_span;
+	}
+};
+
+///////////////////////////////////////////////////
+//
+// SimpleArtStrip class
+//
+// Create a simple artwork strip that smoothly animates a transition when
+// the selection changes
+//
+// SimpleArtStrip( artwork_label,num_objs,x,y,width,height,pad=0 )
+//
+// Parameters:
+//
+//   artwork_label - the label of the artwork to show in the strip (i.e. "snap")
+//   num_objs - the number of artwork objects to show in the strip
+//   x - the x position of the top left corner of the strip
+//   y - the y position of the top left corner of the strip
+//   width - the width of the entire strip
+//   height - the height of the entire strip
+//   pad - the amount of padding to insert between each object in the strip
+//        (default value of 0)
+//
+// If height>width, you will get a vertical strip.  Otherwise the strip will
+//  be horizontal.
+//
+// Usage example.  The following code creates a strip of 5 snap artworks across
+// the top of the screen:
+//
+//    local my_strip = SimpleArtStrip( "snap", 5, 0, 0,
+//             fe.layout.width, fe.layout.height/3, 2 );
+//
+///////////////////////////////////////////////////
+class SimpleArtStrip extends Conveyor
+{
+	m_x=0; m_y=0; m_width=0; m_height=0; m_x_span=0; m_y_span=0;
+
+	constructor( artwork_label, num_objs, x, y, width, height, pad=0 )
+	{
+		base.constructor();
+		local my_list = [];
+		for ( local i=0; i<num_objs; i++ )
+			my_list.push( SimpleArtStripSlot(this,artwork_label) );
+		set_slots( my_list );
+
+		m_x=x+pad/2; m_y=y+pad/2;
+		if ( width < height )
+		{
+			m_x_span=0;
+			m_y_span=height;
+			m_width=width-pad;
+			m_height=height/m_objs.len()-pad;
+		}
+		else
+		{
+			m_x_span=width;
+			m_y_span=0;
+			m_width=width/m_objs.len()-pad;
+			m_height=height-pad;
+		}
+
+		reset_progress();
+	}
+};
+

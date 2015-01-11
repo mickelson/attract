@@ -79,7 +79,6 @@ public:
 	int process_setting( const std::string &setting,
 								const std::string &value,
 								const std::string &fn );
-	void dump( void ) const;
 	std::string as_output( void ) const;
 
 	void load_stats( const std::string &path );
@@ -114,6 +113,16 @@ public:
 
 	static void init_title_rex( const std::string & );
 	static void clear_title_rex();
+};
+
+class FeRomListSorter2
+{
+private:
+	FeRomListSorter m_sorter;
+
+public:
+	FeRomListSorter2( FeRomInfo::Index c = FeRomInfo::Title, bool rev=false ) : m_sorter( c, rev ) {};
+	bool operator()( const FeRomInfo *one, const FeRomInfo *two ) const { return m_sorter.operator()(*one,*two); };
 };
 
 //
@@ -180,8 +189,11 @@ public:
 	const std::string &get_name() const { return m_name; };
 	void set_name( const std::string &n ) { m_name = n; };
 
-	int get_current_rom_index() const { return m_rom_index; };
-	void set_current_rom_index( int i ) { m_rom_index=i; };
+	int get_rom_index() const { return m_rom_index; };
+	void set_rom_index( int i ) { m_rom_index=i; };
+
+	int get_size() const { return m_size; };
+	void set_size( int s ) { m_size=s; };
 
 	std::vector<FeRule> &get_rules() { return m_rules; };
 
@@ -193,12 +205,15 @@ public:
 	void set_reverse_order( bool r ) { m_reverse_order=r; }
 	void set_list_limit( int p ) { m_list_limit=p; }
 
+	bool test_for_target( FeRomInfo::Index target ) const; // do changes to the specified target affect this filter?
+
 private:
 	std::string m_name;
 	std::vector<FeRule> m_rules;
 	int m_rom_index;
 	int m_list_limit; // limit the number of list entries if non-zero.  Positive value limits to the first
 							// x values, Negative value limits to the last abs(x) values.
+	int m_size;
 	FeRomInfo::Index m_sort_by;
 	bool m_reverse_order;
 };
@@ -230,8 +245,6 @@ public:
 	int process_state( const std::string &state_string );
 	std::string state_as_output() const;
 
-	void dump( void ) const;
-
 	void set_current_filter_index( int i ) { m_filter_index=i; };
 	int get_current_filter_index() const { return m_filter_index; };
 	int get_filter_count() const { return m_filters.size(); };
@@ -243,8 +256,8 @@ public:
 	std::string get_current_layout_file() const;
 	void set_current_layout_file( const std::string & );
 
-	int get_current_rom_index() const;
-	void set_current_rom_index( int );
+	int get_rom_index( int filter_index ) const;
+	void set_rom_index( int filter_index, int rom_index );
 
 	void save( std::ofstream & ) const;
 
@@ -261,23 +274,20 @@ class FeRomList : public FeBaseConfigurable
 {
 private:
 	std::deque<FeRomInfo> m_list;
+	std::vector<std::vector<FeRomInfo * > > m_filtered_list;
+
 	std::map<std::string, bool> m_tags; // bool is flag of whether the tag has been changed
-	mutable std::set<std::string> m_extra_favs; // store for favourites that are currently filtered out
-	mutable std::multimap< std::string, const char * > m_extra_tags; // store for tags that are currently filtered out
 	std::string m_user_path;
-	std::string m_stat_path;
 	std::string m_romlist_name;
-	const FeFilter *m_filter;
 	bool m_fav_changed;
 	bool m_tags_changed;
 
 	FeRomList( const FeRomList & );
 	FeRomList &operator=( const FeRomList & );
 
-	bool apply_filter( const FeRomInfo &rom ) const;
-
-	void load_favs( const std::string &filename );
-	void load_tags( const std::string &path );
+	// Fix the filters list as needed given the filters in list_info and a change to "target"
+	// returns true if potential changes were made
+	bool fix_filters( FeListInfo &list_info, FeRomInfo::Index target );
 
 	void save_favs() const;
 	void save_tags() const;
@@ -286,31 +296,29 @@ public:
 	FeRomList();
 	~FeRomList();
 
-	void clear();
-
-	void set_filter( const FeFilter *f );
-
-	// base class has this function too!
 	bool load_romlist( const std::string &romlist_path,
 					const std::string &romlist_name,
 					const std::string &user_path,
-					const std::string &stat_path );
+					const std::string &stat_path,
+					FeListInfo &list_info );
 
 	int process_setting( const std::string &setting,
 		const std::string &value,
 		const std::string &fn );
 
 	void save_state() const;
-	bool set_fav( int idx, bool fav );
+	bool set_fav( int filter_index, int rom_index, FeListInfo &list_info, bool fav );
 
-	void get_tags_list( int idx,
+	void get_tags_list( int filter_index, int idx,
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
-	bool set_tag( int idx, const std::string &tag, bool flag );
+	bool set_tag( int filter_index, int rom_index, FeListInfo &list_info, const std::string &tag, bool flag );
 
-	bool empty() const { return m_list.empty(); };
-	int size() const { return (int)m_list.size(); };
-	const FeRomInfo &operator[](int idx) const { return m_list[idx]; };
-	FeRomInfo &operator[](int idx) { return m_list[idx]; };
+	bool is_filter_empty( int filter_idx ) const { return m_filtered_list[filter_idx].empty(); };
+	int filter_size( int filter_idx ) const { return (int)m_filtered_list[filter_idx].size(); };
+	const FeRomInfo &lookup( int filter_idx, int idx) const { return *(m_filtered_list[filter_idx][idx]); };
+	FeRomInfo &lookup( int filter_idx, int idx) { return *(m_filtered_list[filter_idx][idx]); };
+
+	std::deque<FeRomInfo> &get_list() { return m_list; };
 };
 
 

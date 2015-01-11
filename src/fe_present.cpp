@@ -40,7 +40,6 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_vm( NULL ),
 	m_currentFont( &defaultfont ),
 	m_defaultFont( defaultfont ),
-	m_moveState( MoveNone ),
 	m_baseRotation( FeSettings::RotateNone ),
 	m_toggleRotation( FeSettings::RotateNone ),
 	m_playMovies( true ),
@@ -71,7 +70,6 @@ void FePresent::clear()
 	// mute and toggle rotation are kept whenever the layout is changed
 	//
 	m_listBox=NULL; // listbox gets deleted with the m_elements below
-	m_moveState = MoveNone;
 	m_transform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
@@ -369,24 +367,41 @@ int FePresent::get_toggle_rotation() const
 	return m_toggleRotation;
 }
 
-const char *FePresent::get_list_name() const
+const char *FePresent::get_display_name() const
 {
 	return m_feSettings->get_current_list_title().c_str();
 }
 
 const char *FePresent::get_filter_name() const
 {
-	return m_feSettings->get_current_filter_name().c_str();
+	return m_feSettings->get_filter_name( m_feSettings->get_current_filter_index() ).c_str();
+}
+
+int FePresent::get_filter_index() const
+{
+	return m_feSettings->get_current_filter_index();
+}
+
+void FePresent::set_filter_index( int idx )
+{
+	int new_offset = idx - get_filter_index();
+	if ( new_offset != 0 )
+	{
+		if ( m_feSettings->navigate_filter( new_offset ) )
+			load_layout();
+		else
+			update_to_new_list( new_offset );
+	}
 }
 
 int FePresent::get_list_size() const
 {
-	return m_feSettings->get_current_list_size();
+	return m_feSettings->get_filter_size( m_feSettings->get_current_filter_index() );
 }
 
-int FePresent::get_list_index() const
+int FePresent::get_selection_index() const
 {
-	return m_feSettings->get_rom_index();
+	return m_feSettings->get_rom_index( m_feSettings->get_current_filter_index(), 0 );
 }
 
 int FePresent::get_sort_by() const
@@ -419,12 +434,12 @@ int FePresent::get_list_limit() const
 	return limit;
 }
 
-void FePresent::set_list_index( int index )
+void FePresent::set_selection_index( int index )
 {
-	int new_offset = index - get_list_index();
+	int new_offset = index - get_selection_index();
 	if ( new_offset != 0 )
 	{
-		m_feSettings->change_rom( index - get_list_index() );
+		m_feSettings->step_current_selection( new_offset );
 		update( false );
 	}
 }
@@ -443,57 +458,37 @@ bool FePresent::reset_screen_saver()
 	return false;
 }
 
-bool FePresent::handle_event( FeInputMap::Command c,
-	const sf::Event &ev )
+bool FePresent::handle_event( FeInputMap::Command c )
 {
-	m_moveState=MoveNone;
-
 	if ( reset_screen_saver() )
 		return true;
 
 	switch( c )
 	{
 	case FeInputMap::Down:
-		if ( m_moveState == MoveNone )
-		{
-			m_moveTimer.restart();
-			m_moveState=MoveDown;
-			m_moveEvent = ev;
-			m_vm->on_transition( ToNewSelection, 1 );
+		m_vm->on_transition( ToNewSelection, 1 );
 
-			m_feSettings->change_rom( 1 );
-			update( false );
+		m_feSettings->step_current_selection( 1 );
+		update( false );
 
-			m_vm->on_transition( FromOldSelection, -1 );
-		}
+		m_vm->on_transition( FromOldSelection, -1 );
 		break;
 
 	case FeInputMap::Up:
-		if ( m_moveState == MoveNone )
-		{
-			m_moveTimer.restart();
-			m_moveState=MoveUp;
-			m_moveEvent = ev;
-			m_vm->on_transition( ToNewSelection, -1 );
+		m_vm->on_transition( ToNewSelection, -1 );
 
-			m_feSettings->change_rom( -1 );
-			update( false );
+		m_feSettings->step_current_selection( -1 );
+		update( false );
 
-			m_vm->on_transition( FromOldSelection, 1 );
-		}
+		m_vm->on_transition( FromOldSelection, 1 );
 		break;
 
 	case FeInputMap::PageDown:
-		if ( m_moveState == MoveNone )
 		{
-			m_moveTimer.restart();
-			m_moveState=MovePageDown;
-			m_moveEvent = ev;
-
 			int step = get_page_size();
 			m_vm->on_transition( ToNewSelection, step );
 
-			m_feSettings->change_rom( step );
+			m_feSettings->step_current_selection( step );
 			update( false );
 
 			m_vm->on_transition( FromOldSelection, -step );
@@ -501,16 +496,11 @@ bool FePresent::handle_event( FeInputMap::Command c,
 		break;
 
 	case FeInputMap::PageUp:
-		if ( m_moveState == MoveNone )
 		{
-			m_moveTimer.restart();
-			m_moveState=MovePageUp;
-			m_moveEvent = ev;
-
 			int step = -get_page_size();
 			m_vm->on_transition( ToNewSelection, step );
 
-			m_feSettings->change_rom( step );
+			m_feSettings->step_current_selection( step );
 			update( false );
 
 			m_vm->on_transition( FromOldSelection, -step );
@@ -519,7 +509,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 
 	case FeInputMap::RandomGame:
 		{
-			int ls = m_feSettings->get_current_list_size();
+			int ls = m_feSettings->get_filter_size( m_feSettings->get_current_filter_index() );
 			if ( ls > 0 )
 			{
 				int step = rand() % ls;
@@ -527,7 +517,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 				{
 					m_vm->on_transition( ToNewSelection, step );
 
-					m_feSettings->change_rom( step );
+					m_feSettings->step_current_selection( step );
 					update( false );
 
 					m_vm->on_transition( FromOldSelection, -step );
@@ -563,11 +553,13 @@ bool FePresent::handle_event( FeInputMap::Command c,
 
 	case FeInputMap::NextFilter:
 	case FeInputMap::PrevFilter:
-		if ( m_feSettings->navigate_filter( ( c == FeInputMap::NextFilter ) ? 1 : -1 ) )
-			load_layout();
-		else
-			update_to_new_list();
-
+		{
+			int offset = ( c == FeInputMap::NextFilter ) ? 1 : -1;
+			if ( m_feSettings->navigate_filter( offset ) )
+				load_layout();
+			else
+				update_to_new_list( offset );
+		}
 		break;
 
 	case FeInputMap::ToggleLayout:
@@ -607,7 +599,7 @@ bool FePresent::handle_event( FeInputMap::Command c,
 			{
 				m_vm->on_transition( ToNewSelection, step );
 
-				m_feSettings->change_rom( step );
+				m_feSettings->step_current_selection( step );
 				update( false );
 
 				m_vm->on_transition( FromOldSelection, -step );
@@ -699,10 +691,11 @@ void FePresent::load_layout( bool initial_load )
 	//
 	// Run the script which actually sets up the layout
 	//
+	std::string layout_dir = m_feSettings->get_current_layout_dir();
+	std::string layout_file = m_feSettings->get_current_layout_file();
+
 	m_layoutTimer.restart();
-	m_vm->on_new_layout(
-		m_feSettings->get_current_layout_dir(),
-		m_feSettings->get_current_layout_file(),
+	m_vm->on_new_layout( layout_dir, layout_file,
 		m_feSettings->get_current_layout_config() );
 
 	// make things usable if the layout is empty
@@ -720,103 +713,23 @@ void FePresent::load_layout( bool initial_load )
 		FeVM::cb_add_listbox( 0, 0, m_layoutSize.x, m_layoutSize.y );
 	}
 
+	std::cout << " - Loaded layout: " << layout_dir << " (" << layout_file << ")" << std::endl;
+
 	update( true );
 
 	m_vm->on_transition( ToNewList, FromToNoValue );
 	m_vm->on_transition( StartLayout, var );
 }
 
-void FePresent::update_to_new_list()
+void FePresent::update_to_new_list( int var )
 {
 	update( true );
-	m_vm->on_transition( ToNewList, FromToNoValue );
+	m_vm->on_transition( ToNewList, var );
 }
 
 bool FePresent::tick()
 {
 	bool ret_val = false;
-	if ( m_moveState != MoveNone )
-	{
-		bool cont=false;
-
-		switch ( m_moveEvent.type )
-		{
-		case sf::Event::KeyPressed:
-			if ( sf::Keyboard::isKeyPressed( m_moveEvent.key.code ) )
-				cont=true;
-			break;
-
-		case sf::Event::MouseButtonPressed:
-			if ( sf::Mouse::isButtonPressed( m_moveEvent.mouseButton.button ) )
-				cont=true;
-			break;
-
-		case sf::Event::JoystickButtonPressed:
-			if ( sf::Joystick::isButtonPressed(
-					m_moveEvent.joystickButton.joystickId,
-					m_moveEvent.joystickButton.button ) )
-				cont=true;
-			break;
-
-		case sf::Event::JoystickMoved:
-			{
-				sf::Joystick::update();
-
-				float pos = sf::Joystick::getAxisPosition(
-						m_moveEvent.joystickMove.joystickId,
-						m_moveEvent.joystickMove.axis );
-				if ( abs( pos ) > m_feSettings->get_joy_thresh() )
-					cont=true;
-			}
-			break;
-
-		default:
-			break;
-		}
-
-		if ( cont )
-		{
-			const int TRIG_MS = 350;
-			int t = m_moveTimer.getElapsedTime().asMilliseconds();
-			if ( t > TRIG_MS )
-			{
-				// As the button is held down, the advancement accelerates
-				int shift = ( t / TRIG_MS ) - 3;
-				if ( shift < 0 )
-					shift = 0;
-				else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
-					shift = 7;
-
-				int step = 1 << ( shift );
-
-				switch ( m_moveState )
-				{
-					case MoveUp: step = -step; break;
-					case MoveDown: break; // do nothing
-					case MovePageUp: step *= -get_page_size(); break;
-					case MovePageDown: step *= get_page_size(); break;
-					default: break;
-				}
-
-				int real_step = get_no_wrap_step( step );
-				if ( real_step != 0 )
-				{
-					m_vm->on_transition( ToNewSelection, real_step );
-
-					m_feSettings->change_rom( real_step );
-					ret_val=true;
-					update( false );
-
-					m_vm->on_transition( FromOldSelection, -real_step );
-				}
-			}
-		}
-		else
-		{
-			m_moveState = MoveNone;
-		}
-	}
-
 	if ( m_vm->on_tick())
 		ret_val = true;
 
@@ -858,19 +771,6 @@ bool FePresent::saver_activation_check()
 		}
 	}
 	return false;
-}
-
-int FePresent::get_no_wrap_step( int step )
-{
-	int curr_sel = m_feSettings->get_rom_index( 0 );
-	if ( ( curr_sel + step ) < 0 )
-		return -curr_sel;
-
-	int list_size = m_feSettings->get_current_list_size();
-	if ( ( curr_sel + step ) >= list_size )
-		return list_size - curr_sel - 1;
-
-	return step;
 }
 
 int FePresent::get_page_size() const

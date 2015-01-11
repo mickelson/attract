@@ -29,6 +29,8 @@
 
 extern const char *FE_ART_EXTENSIONS[];
 
+extern const char *FE_CFG_FILE;
+
 extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_EMULATOR_SUBDIR;
 
@@ -131,10 +133,9 @@ private:
 						const std::string &,
 						const std::string & );
 
+	void init_list();
 	void load_state();
 	void clear();
-
-	void set_current_rom(int );
 
 	void internal_gather_config_files(
 			std::vector<std::string> &ll,
@@ -169,7 +170,8 @@ public:
 	void set_sound_file( FeInputMap::Command, const std::string &s );
 	void get_sounds_list( std::vector < std::string > &ll ) const;
 
-	void change_rom( int step );
+	void step_current_selection( int step );
+	void set_current_selection( int filter_index, int rom_index ); // use rom_index<0 to only change the filter
 
 	// Switches the display list
 	// returns true if the list change results in a new layout, false otherwise
@@ -181,12 +183,12 @@ public:
 	bool navigate_list( int step, bool wrap_mode=false );
 	bool navigate_filter( int step );
 
-	void init_list();
-
-	void set_filter( int index );
 	int get_current_filter_index() const;
-	const std::string &get_current_filter_name();
+	const std::string &get_filter_name( int filter_index );
 	void get_current_list_filter_names( std::vector<std::string> &list ) const;
+	int get_filter_index_from_offset( int offset ) const;
+	int get_filter_size( int filter_index ) const;
+	int get_filter_count() const;
 
 	bool select_last_launch();
 	int get_joy_thresh() const { return m_joy_thresh; }
@@ -198,17 +200,16 @@ public:
 
 	void toggle_layout();
 
-	int get_current_list_size() const { return m_rl.size(); };
-	int get_rom_index( int offset=0 ) const;
+	int get_rom_index( int filter_index, int offset ) const;
 
-	void do_text_substitutions( std::string &str, int index_offset );
-	void do_text_substitutions_absolute( std::string &str, int pos );
+	void do_text_substitutions( std::string &str, int filter_offset, int index_offset );
+	void do_text_substitutions_absolute( std::string &str, int filter_index, int rom_index );
 
 	void get_current_sort( FeRomInfo::Index &idx, bool &rev, int &limit );
 
 	const std::string &get_current_list_title() const;
-	const std::string &get_rom_info( int offset, FeRomInfo::Index index ) const;
-	const std::string &get_rom_info_absolute( int pos, FeRomInfo::Index index ) const;
+	const std::string &get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index ) const;
+	const std::string &get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index ) const;
 	bool hide_brackets() const { return m_hide_brackets; }
 	bool autolaunch_last_game() const { return m_autolaunch_last_game; }
 
@@ -239,8 +240,6 @@ public:
 	FilterWrapModeType get_filter_wrap_mode() const;
 	int get_screen_saver_timeout() const;
 	bool get_lists_menu_exit() const;
-
-	void dump( void ) const;
 
 	bool get_current_fav() const;
 

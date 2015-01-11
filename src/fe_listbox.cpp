@@ -34,6 +34,7 @@ FeListBox::FeListBox( int x, int y, int w, int h )
 	m_selStyle( sf::Text::Regular ),
 	m_rows( 11 ),
 	m_userCharSize( 0 ),
+	m_filter_offset( 0 ),
 	m_rotation( 0.0 )
 {
 	m_base_text.setPosition( sf::Vector2f( x, y ) );
@@ -57,6 +58,7 @@ FeListBox::FeListBox(
 	m_selStyle( sf::Text::Regular ),
 	m_rows( rows ),
 	m_userCharSize( charactersize ),
+	m_filter_offset( 0 ),
 	m_rotation( 0.0 )
 {
 }
@@ -258,42 +260,47 @@ void FeListBox::on_new_list( FeSettings *s, float scale_x, float scale_y )
 {
 	init( scale_x, scale_y );
 
-	int list_size = s->get_current_list_size();
+	int filter_index = s->get_filter_index_from_offset( m_filter_offset );
+	int filter_size = s->get_filter_size( filter_index );
 
 	m_displayList.clear();
-	m_displayList.reserve( list_size );
+	m_displayList.reserve( filter_size );
 
 	if ( !m_format_string.empty() )
 	{
-		for ( int i=0; i < list_size; i++ )
+		for ( int i=0; i < filter_size; i++ )
 		{
 			m_displayList.push_back( m_format_string );
-			s->do_text_substitutions_absolute( m_displayList.back(), i );
+			s->do_text_substitutions_absolute( m_displayList.back(), filter_index, i );
 		}
 	}
 	else
 	{
 		if ( s->hide_brackets() )
 		{
-			for ( int i=0; i < list_size; i++ )
+			for ( int i=0; i < filter_size; i++ )
 			{
-				const std::string &temp = s->get_rom_info_absolute( i, FeRomInfo::Title );
+				const std::string &temp = s->get_rom_info_absolute( filter_index, i, FeRomInfo::Title );
 				m_displayList.push_back( name_with_brackets_stripped( temp ));
 			}
 		}
 		else
 		{
-			for ( int i=0; i < list_size; i++ )
-				m_displayList.push_back( s->get_rom_info_absolute( i, FeRomInfo::Title ) );
+			for ( int i=0; i < filter_size; i++ )
+				m_displayList.push_back( s->get_rom_info_absolute( filter_index, i, FeRomInfo::Title ) );
 		}
 	}
 
-	setText( s->get_rom_index(), m_displayList );
+	setText(
+			s->get_rom_index( filter_index, 0 ),
+			m_displayList );
 }
 
 void FeListBox::on_new_selection( FeSettings *s )
 {
-	setText( s->get_rom_index(), m_displayList );
+	setText(
+			s->get_rom_index( s->get_filter_index_from_offset( m_filter_offset ), 0 ),
+			m_displayList );
 }
 
 void FeListBox::draw( sf::RenderTarget &target, sf::RenderStates states ) const
@@ -328,6 +335,16 @@ void FeListBox::setIndexOffset( int io )
 int FeListBox::getIndexOffset() const
 {
 	return 0;
+}
+
+void FeListBox::setFilterOffset( int fo )
+{
+	m_filter_offset = fo;
+}
+
+int FeListBox::getFilterOffset() const
+{
+	return m_filter_offset;
 }
 
 int FeListBox::get_bgr()

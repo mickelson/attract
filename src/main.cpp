@@ -207,7 +207,8 @@ void process_args( int argc, char *argv[],
 	if ( !task_list.empty() )
 	{
 		FeSettings feSettings( config_path, cmdln_font );
-		feSettings.load();
+		feSettings.load_from_file( feSettings.get_config_dir() + FE_CFG_FILE );
+
 		int retval = feSettings.build_romlist( task_list, output_name );
 		exit( retval );
 	}
@@ -223,6 +224,9 @@ int main(int argc, char *argv[])
 	//
 	// Run the front-end
 	//
+	std::cout << "Starting " << FE_NAME << " " << FE_VERSION
+			<< " (" << get_OS_string() << ")" << std::endl;
+
 	FeSettings feSettings( config_path, cmdln_font );
 	feSettings.load();
 
@@ -231,8 +235,6 @@ int main(int argc, char *argv[])
 		feSettings.select_last_launch();
 		launch_game=true;
 	}
-
-	feSettings.init_list();
 
 	std::string defaultFontFile;
 	if ( feSettings.get_font_file( defaultFontFile ) == false )
@@ -280,6 +282,12 @@ int main(int argc, char *argv[])
 	bool redraw=true;
 	int guard_joyid=-1, guard_axis=-1;
 
+	// variables used to track movement when a key is held down
+	FeInputMap::Command move_state( FeInputMap::LAST_COMMAND );
+	sf::Clock move_timer;
+	sf::Event move_event;
+	int move_last_triggered( 0 );
+
 	// go straight into config mode if there are no lists configured for
 	// display
 	//
@@ -300,7 +308,9 @@ int main(int argc, char *argv[])
 				if ( feSettings.get_font_file( defaultFontFile ) )
 					defaultFont.set_font( defaultFontFile );
 
-				feSettings.init_list();
+				feSettings.set_list(
+					feSettings.get_current_list_index() );
+
 				fePresent.load_layout();
 
 				soundsys.stop();
@@ -412,6 +422,19 @@ int main(int argc, char *argv[])
 			if ( c == FeInputMap::LAST_COMMAND )
 				continue;
 
+			move_state=FeInputMap::LAST_COMMAND;
+
+			if (( c == FeInputMap::Down )
+				|| ( c == FeInputMap::Up )
+				|| ( c == FeInputMap::PageDown )
+				|| ( c == FeInputMap::PageUp ))
+			{
+				// setup variables to test for when the navigation keys are held down
+				move_state = c;
+				move_timer.restart();
+				move_event = ev;
+			}
+
 			//
 			// Now handle the command appropriately.
 			//
@@ -419,7 +442,7 @@ int main(int argc, char *argv[])
 				continue;
 
 			soundsys.sound_event( c );
-			if ( fePresent.handle_event( c, ev ) )
+			if ( fePresent.handle_event( c ) )
 				redraw = true;
 			else
 			{
@@ -429,7 +452,6 @@ int main(int argc, char *argv[])
 				case FeInputMap::ExitMenu:
 					{
 						int retval = feOverlay.confirm_dialog( "Exit Attract-Mode?" );
-
 						//
 						// retval is 0 if the user confirmed exit.
 						// it is <0 if we are being forced to close
@@ -543,17 +565,17 @@ int main(int argc, char *argv[])
 						std::string title;
 						feSettings.get_resource( "Filters", title );
 
-						int list_index = feOverlay.common_list_dialog(
+						int filter_index = feOverlay.common_list_dialog(
 										title,
 										names_list,
 										feSettings.get_current_filter_index(),
 										names_list.size() - 1 );
 
-						if ( list_index < 0 )
+						if ( filter_index < 0 )
 							exit_selected = true;
 						else
 						{
-							feSettings.set_filter( list_index );
+							feSettings.set_current_selection( filter_index, -1 );
 							fePresent.update_to_new_list();
 						}
 
@@ -574,16 +596,16 @@ int main(int argc, char *argv[])
 							// returns 0 if user confirmed toggle
 							if ( feOverlay.confirm_dialog(
 									msg,
-									feSettings.get_rom_info( 0, FeRomInfo::Title ) ) == 0 )
+									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ) ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
-									fePresent.update_to_new_list(); // changing fav status altered the current list
+									fePresent.update_to_new_list(); // our current display might have changed, so update
 							}
 						}
 						else
 						{
 							if ( feSettings.set_current_fav( new_state ) )
-								fePresent.update_to_new_list(); // changing fav status altered the current list
+								fePresent.update_to_new_list(); // our current display might have changed, so update
 						}
 						redraw = true;
 					}
@@ -602,7 +624,112 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if ( fePresent.tick() )
+		//
+		// Determine if we have to do anything because a key is being held down
+		//
+		if ( move_state != FeInputMap::LAST_COMMAND )
+		{
+			bool cont=false;
+
+			switch ( move_event.type )
+			{
+			case sf::Event::KeyPressed:
+				if ( sf::Keyboard::isKeyPressed( move_event.key.code ) )
+					cont=true;
+				break;
+
+			case sf::Event::MouseButtonPressed:
+				if ( sf::Mouse::isButtonPressed( move_event.mouseButton.button ) )
+					cont=true;
+				break;
+
+			case sf::Event::JoystickButtonPressed:
+				if ( sf::Joystick::isButtonPressed(
+						move_event.joystickButton.joystickId,
+						move_event.joystickButton.button ) )
+					cont=true;
+				break;
+
+			case sf::Event::JoystickMoved:
+				{
+					sf::Joystick::update();
+
+					float pos = sf::Joystick::getAxisPosition(
+							move_event.joystickMove.joystickId,
+							move_event.joystickMove.axis );
+					if ( abs( pos ) > feSettings.get_joy_thresh() )
+						cont=true;
+				}
+				break;
+
+			default:
+				break;
+			}
+
+			if ( cont )
+			{
+				const int TRIG_CHANGE_MS = 400;
+				const int MIN_MOVE_MS = 40;
+
+				int t = move_timer.getElapsedTime().asMilliseconds();
+				if (( t > TRIG_CHANGE_MS ) && ( t - move_last_triggered > MIN_MOVE_MS ))
+				{
+					move_last_triggered = t;
+
+					// As the button is held down, the advancement accelerates
+					int shift = ( t / TRIG_CHANGE_MS ) - 3;
+					if ( shift < 0 )
+						shift = 0;
+					else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
+						shift = 7;
+
+					int step = 1 << ( shift );
+
+					switch ( move_state )
+					{
+						case FeInputMap::Up: step = -step; break;
+						case FeInputMap::Down: break; // do nothing
+						case FeInputMap::PageUp: step *= -fePresent.get_page_size(); break;
+						case FeInputMap::PageDown: step *= fePresent.get_page_size(); break;
+						default: break;
+					}
+
+					//
+					// Limit the size of our step so that there is no wrapping around at the end of the list
+					//
+					int curr_sel = feSettings.get_rom_index( feSettings.get_current_filter_index(), 0 );
+					if ( ( curr_sel + step ) < 0 )
+						step = -curr_sel;
+					else
+					{
+						int list_size = feSettings.get_filter_size( feSettings.get_current_filter_index() );
+						if ( ( curr_sel + step ) >= list_size )
+							step = list_size - curr_sel - 1;
+					}
+
+					if (( step != 0 ) && ( feVM.handle_event( move_state, redraw ) == false ))
+					{
+						feVM.on_transition( ToNewSelection, step );
+
+						feSettings.step_current_selection( step );
+						redraw=true;
+						fePresent.update( false );
+
+						feVM.on_transition( FromOldSelection, -step );
+					}
+				}
+			}
+			else
+			{
+				move_state = FeInputMap::LAST_COMMAND;
+				move_last_triggered = 0;
+			}
+		}
+
+		if ( feVM.on_tick() )
+			redraw=true;
+
+		if ( fePresent.video_tick() )
 			redraw=true;
 
 		if ( fePresent.saver_activation_check() )

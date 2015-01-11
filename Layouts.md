@@ -38,12 +38,14 @@ Contents
       * [`fe.list`](#list)
       * [`fe.overlay`](#overlay)
       * [`fe.obj`](#obj)
+      * [`fe.filters`](#filters)
       * [`fe.script_dir`](#script_dir)
       * [`fe.script_file`](#script_file)
    * [Classes](#classes)
       * [`fe.LayoutGlobals`](#LayoutGlobals)
       * [`fe.CurrentList`](#CurrentList)
       * [`fe.Overlay`](#Overlay)
+      * [`fe.Filter`](#Filter)
       * [`fe.Image`](#Image)
       * [`fe.Text`](#Text)
       * [`fe.ListBox`](#ListBox)
@@ -500,6 +502,7 @@ Return Value:
 
     fe.game_info( id )
     fe.game_info( id, index_offset )
+    fe.game_info( id, index_offset, filter_offset )
 
 Get information about the selected game.
 
@@ -526,6 +529,9 @@ Parameters:
    * index_offset - the offset (from the current selection) of the game to
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.
+   * filter_offset - the offset (from the current filter) of the filter
+     containing the selection to retrieve info on.  i.e. -1=previous filter,
+     0=current filter.  Default value is 0.
 
 Return Value:
 
@@ -856,6 +862,13 @@ functionality may be accessed.
 `fe.Text` and `fe.ListBox` instances.
 
 
+<a name="filters" />
+#### `fe.filters` ####
+
+`fe.filters` contains information on the available filters.  It is an array
+of `fe.Filter` instances.
+
+
 <a name="script_dir" />
 #### `fe.script_dir` ####
 
@@ -946,6 +959,7 @@ Attributes:
      reversed.
    * `list_limit` - Get the value of the list limit applied to the current
      list.
+   * `filter_index` - Get/set the current filter index.
 
 <a name="Overlay" />
 #### `fe.Overlay` ####
@@ -976,6 +990,20 @@ Member Functions:
      The return value a the string of text as edited by the user.
    * `splash_message( msg )` - immediately provide a text message to the user.
      This could be useful to provide feedback during time-intensive operations.
+
+
+<a name="Filter" />
+#### `fe.Filter` ####
+
+This class is a container for information about the avaiable filters.  Instances
+of this class are contained in the `fe.filters` array.  This class cannot
+otherwise be instantiated in a script.
+
+Attributes:
+
+   * `name` - Get the filter name.
+   * `index` - Get the index of the currently selected game in this filter.
+   * `size` - Get the size of the game list in this filter.
 
 
 <a name="Image" />
@@ -1011,6 +1039,10 @@ Attributes:
      for the artwork to display.  For example, set to -1 for the image
      corresponding to the previous list entry, or 1 for the next list entry,
      etc.  Default value is 0.
+   * `filter_offset` - [artwork only] Get/set filter offset from current
+     filter for the artwork to display.  For example, set to -1 for an image
+     indexed in the previous filter, or 1 for the next filter, etc.  Default
+     value is 0.
    * `skew_x` - Get/set the amount of x-direction image skew (in layout
      coordinates).  Default value is 0.  Use a negative value to skew the
      image to the left instead.
@@ -1154,6 +1186,10 @@ Attributes:
    * `index_offset` - Get/set offset from current game selection for text
      info to display.  For example, set to -1 to show text info for the
      previous list entry, or 1 for the next list entry.  Default value is 0.
+   * `filter_offset` - Get/set filter offset from current filter for the
+     text info to display.  For example, set to -1 to show text info for
+     a selection in the previous filter, or 1 for the next filter, etc.
+     Default value is 0.
    * `bg_red` - Get/set red colour level for text background. Range is
      [0 ... 255].  Default value is 0.
    * `bg_green` - Get/set green colour level for text background. Range is
@@ -1220,6 +1256,9 @@ Attributes:
    * `alpha` - Get/set alpha level for text. Range is [0 ... 255].
      Default value is 255.
    * `index_offset` - Not used.
+   * `filter_offset` - Get/set filter offset from current filter for the
+     text info to display.  For example, set to -1 to show info for the
+     previous filter, or 1 for the next filter, etc.  Default value is 0.
    * `bg_red` - Get/set red colour level for background. Range is
      [0 ... 255].  Default value is 0.
    * `bg_green` - Get/set green colour level for background. Range is

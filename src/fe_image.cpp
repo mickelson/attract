@@ -67,6 +67,15 @@ int FeBaseTextureContainer::get_index_offset() const
 	return 0;
 }
 
+void FeBaseTextureContainer::set_filter_offset( int fo, bool do_update )
+{
+}
+
+int FeBaseTextureContainer::get_filter_offset() const
+{
+	return 0;
+}
+
 void FeBaseTextureContainer::set_video_flags( FeVideoFlags f )
 {
 }
@@ -178,7 +187,9 @@ FeTextureContainer::FeTextureContainer(
 	bool is_artwork,
 	const std::string &art_name )
 	: m_index_offset( 0 ),
+	m_filter_offset( 0 ),
 	m_current_rom_index( -1 ),
+	m_current_filter_index( -1 ),
 	m_is_artwork( is_artwork ),
 	m_movie( NULL ),
 	m_movie_status( -1 ),
@@ -390,16 +401,24 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 	if ( !m_is_artwork )
 		return;
 
-	int new_rom_index = feSettings->get_rom_index( m_index_offset );
+	int filter_index = feSettings->get_filter_index_from_offset( m_filter_offset );
+	int rom_index = feSettings->get_rom_index( filter_index, m_index_offset );
 
 	//
-	// Optimization opportunity: We could already be showing the artwork for new_rom_index if the
+	// Optimization opportunity: We could already be showing the artwork for rom_index if the
 	// layout uses the image swap() function... if we are, then there is no need to do anything...
 	//
-	if ( m_current_rom_index == new_rom_index )
+	if (( m_current_rom_index == rom_index )
+				&& ( m_current_filter_index == filter_index ))
+	{
+#ifdef FE_DEBUG
+		std::cout << "Optimization: " << m_file_name << " not loaded." << std::endl;
+#endif
 		return;
+	}
 
-	m_current_rom_index = new_rom_index;
+	m_current_rom_index = rom_index;
+	m_current_filter_index = filter_index;
 
 	m_texture = sf::Texture();
 	m_movie_status = -1;
@@ -415,7 +434,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 #endif
 
 	const std::string &emu_name
-		= feSettings->get_rom_info( m_index_offset, FeRomInfo::Emulator );
+		= feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Emulator );
 
 	std::vector<std::string> movie_list;
 	std::vector<std::string> image_list;
@@ -448,9 +467,9 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 
 	if ( !art_paths.empty() )
 	{
-		const std::string &romname = feSettings->get_rom_info( m_index_offset, FeRomInfo::Romname );
-		const std::string &altname = feSettings->get_rom_info( m_index_offset, FeRomInfo::AltRomname );
-		const std::string &cloneof = feSettings->get_rom_info( m_index_offset, FeRomInfo::Cloneof );
+		const std::string &romname = feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Romname );
+		const std::string &altname = feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::AltRomname );
+		const std::string &cloneof = feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Cloneof );
 
 		// test for "romname" specific videos
 		if ( load_artwork( art_paths, romname, true ) )
@@ -507,11 +526,6 @@ the_end:
 	// Texture was replaced, so notify the attached images
 	//
 	notify_texture_change();
-}
-
-void FeTextureContainer::on_new_list( FeSettings *, float, float )
-{
-	m_current_rom_index = -1;
 }
 
 bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
@@ -622,6 +636,22 @@ int FeTextureContainer::get_index_offset() const
 	return m_index_offset;
 }
 
+void FeTextureContainer::set_filter_offset( int fo, bool do_update )
+{
+	if ( m_filter_offset != fo )
+	{
+		m_filter_offset = fo;
+
+		if ( do_update )
+			FeVM::script_do_update( this );
+	}
+}
+
+int FeTextureContainer::get_filter_offset() const
+{
+	return m_filter_offset;
+}
+
 void FeTextureContainer::set_video_flags( FeVideoFlags f )
 {
 	m_video_flags = f;
@@ -706,6 +736,7 @@ void FeTextureContainer::transition_swap( FeBaseTextureContainer *o )
 	{
 		m_art_name.swap( o_up->m_art_name );
 		std::swap( m_index_offset, o_up->m_index_offset );
+		std::swap( m_filter_offset, o_up->m_filter_offset );
 		std::swap( m_is_artwork, o_up->m_is_artwork );
 	}
 
@@ -887,10 +918,26 @@ void FeImage::setIndexOffset( int io )
 	m_tex->set_index_offset( io );
 }
 
+int FeImage::getFilterOffset() const
+{
+	return m_tex->get_filter_offset();
+}
+
+void FeImage::setFilterOffset( int fo )
+{
+	m_tex->set_filter_offset( fo );
+}
+
 void FeImage::rawset_index_offset( int io )
 {
 	m_tex->set_index_offset( io, false );
 }
+
+void FeImage::rawset_filter_offset( int fo )
+{
+	m_tex->set_filter_offset( fo, false );
+}
+
 
 void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {

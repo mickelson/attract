@@ -600,8 +600,10 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 				FeRomList temp_list;
 				temp_list.load_from_file( (*itr).file_name, ";" );
 
-				for ( int i=0; i< temp_list.size(); i++ )
-					romlist.push_back( temp_list[i] );
+				std::deque<FeRomInfo> &entries = temp_list.get_list();
+
+				for ( std::deque<FeRomInfo>::iterator itr = entries.begin(); itr != entries.end(); ++itr )
+					romlist.push_back( *itr );
 			}
 			else if ( tail_compare( (*itr).file_name, ".lst" ) )
 			{

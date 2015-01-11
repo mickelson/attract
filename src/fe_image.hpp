@@ -60,6 +60,8 @@ public:
 
 	virtual void set_index_offset( int io, bool do_update=true );
 	virtual int get_index_offset() const;
+	virtual void set_filter_offset( int fo, bool do_update=true );
+	virtual int get_filter_offset() const;
 
 	virtual void set_video_flags( FeVideoFlags );
 	virtual FeVideoFlags get_video_flags() const;
@@ -110,7 +112,6 @@ public:
 	const sf::Texture &get_texture();
 
 	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
-	void on_new_list( FeSettings *, float, float );
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 	void set_play_state( bool play );
 	bool get_play_state() const;
@@ -118,6 +119,8 @@ public:
 
 	void set_index_offset( int io, bool do_update );
 	int get_index_offset() const;
+	void set_filter_offset( int fo, bool do_update );
+	int get_filter_offset() const;
 
 	void set_video_flags( FeVideoFlags );
 	FeVideoFlags get_video_flags() const;
@@ -148,7 +151,9 @@ private:
 	std::string m_art_name; // artwork label for artworks
 	std::string m_file_name; // the name of the loaded file
 	int m_index_offset;
+	int m_filter_offset;
 	int m_current_rom_index;
+	int m_current_filter_index;
 	bool m_is_artwork;
 	FeMedia *m_movie;
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
@@ -217,6 +222,8 @@ public:
 	void setColor( const sf::Color & );
 	int getIndexOffset() const;
 	void setIndexOffset(int);
+	int getFilterOffset() const;
+	void setFilterOffset(int);
 	const sf::Vector2u getTextureSize() const;
 	const sf::IntRect &getTextureRect() const;
 	void setTextureRect( const sf::IntRect &);
@@ -263,6 +270,7 @@ public:
 	void transition_swap( FeImage * );
 
 	void rawset_index_offset( int io );
+	void rawset_filter_offset( int fo );
 
 	//
 	// Callback functions for use with surface objects

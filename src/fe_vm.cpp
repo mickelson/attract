@@ -309,6 +309,7 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop(_SC("blue"), &FeBasePresentable::get_b, &FeBasePresentable::set_b )
 		.Prop(_SC("alpha"), &FeBasePresentable::get_a, &FeBasePresentable::set_a )
 		.Prop(_SC("index_offset"), &FeBasePresentable::getIndexOffset, &FeBasePresentable::setIndexOffset )
+		.Prop(_SC("filter_offset"), &FeBasePresentable::getFilterOffset, &FeBasePresentable::setFilterOffset )
 		.Prop(_SC("shader"), &FeBasePresentable::script_get_shader, &FeBasePresentable::script_set_shader )
 		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
 		.Overload<void (FeBasePresentable::*)(float, float)>(_SC("set_pos"), &FeBasePresentable::set_pos)
@@ -338,6 +339,7 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
 		.Func( _SC("swap"), &FeImage::transition_swap )
 		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
+		.Func( _SC("rawset_filter_offset"), &FeImage::rawset_filter_offset )
 
 		//
 		// Surface-specific functionality:
@@ -408,13 +410,14 @@ void FeVM::on_new_layout( const std::string &path,
 	);
 
 	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()
-		.Prop( _SC("name"), &FePresent::get_list_name )
+		.Prop( _SC("name"), &FePresent::get_display_name )
 		.Prop( _SC("filter"), &FePresent::get_filter_name )
 		.Prop( _SC("size"), &FePresent::get_list_size )
-		.Prop( _SC("index"), &FePresent::get_list_index, &FePresent::set_list_index )
+		.Prop( _SC("index"), &FePresent::get_selection_index, &FePresent::set_selection_index )
 		.Prop( _SC("sort_by"), &FePresent::get_sort_by )
 		.Prop( _SC("reverse_order"), &FePresent::get_reverse_order )
 		.Prop( _SC("list_limit"), &FePresent::get_list_limit )
+		.Prop( _SC("filter_index"), &FePresent::get_filter_index, &FePresent::set_filter_index )
 	);
 
 	fe.Bind( _SC("Overlay"), Class <FeVM, NoConstructor>()
@@ -448,6 +451,12 @@ void FeVM::on_new_layout( const std::string &path,
 		.Overload<void (FeShader::*)(const char *, float, float, float, float)>(_SC("set_param"), &FeShader::set_param)
 		.Overload<void (FeShader::*)(const char *)>( _SC("set_texture_param"), &FeShader::set_texture_param )
 		.Overload<void (FeShader::*)(const char *, FeImage *)>( _SC("set_texture_param"), &FeShader::set_texture_param )
+	);
+
+	fe.Bind( _SC("Filter"), Class <FeFilter, NoConstructor>()
+		.Prop( _SC("name"), &FeFilter::get_name )
+		.Prop( _SC("index"), &FeFilter::get_rom_index )
+		.Prop( _SC("size"), &FeFilter::get_size )
 	);
 
 	//
@@ -485,6 +494,7 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
 	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FeVM::cb_game_info);
 	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FeVM::cb_game_info);
+	fe.Overload<const char* (*)(int, int, int)>(_SC("game_info"), &FeVM::cb_game_info);
 	fe.Overload<bool (*)(const char *, const char *, Object, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
@@ -496,6 +506,14 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	// Define variables that get exposed to Squirrel
 	//
+	FeListInfo *li = m_fes.get_list( m_fes.get_current_list_index() );
+
+	Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
+	fe.Bind( _SC("filters"), ftab );
+	Array farray( ftab.GetObject() );
+
+	for ( int i=0; i < li->get_filter_count(); i++ )
+		farray.SetInstance( farray.GetSize(), li->get_filter( i ) );
 
 	fe.SetInstance( _SC("layout"), &m_fep );
 	fe.SetInstance( _SC("list"), &m_fep );
@@ -504,9 +522,9 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.SetValue( _SC("plugin"), Table() ); // an empty table for plugins to use/abuse
 
 	// Each presentation object gets an instance in the
-	// "obj" table available in Squirrel
+	// "obj" array available in Squirrel
 	//
-	Table obj;
+	Table obj; // this must created as a Table (even though it is used as an Array) bug in sqrat?
 	fe.Bind( _SC("obj"), obj );
 	RootTable().Bind( _SC("fe"),  fe );
 
@@ -1427,14 +1445,14 @@ const char *FeVM::cb_path_expand( const char *path )
 		return internal_str.c_str();
 }
 
-const char *FeVM::cb_game_info( int index, int offset )
+const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
 	if ( index == FeRomInfo::LAST_INDEX )
 	{
-		std::string emu_name = fev->m_fes.get_rom_info( offset, FeRomInfo::Emulator );
+		std::string emu_name = fev->m_fes.get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
 		FeEmulatorInfo *emu = fev->m_fes.get_emulator( emu_name );
 		if ( emu )
 		{
@@ -1444,12 +1462,17 @@ const char *FeVM::cb_game_info( int index, int offset )
 		}
 	}
 
-	return (fev->m_fes.get_rom_info( offset, (FeRomInfo::Index)index )).c_str();
+	return (fev->m_fes.get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();
+}
+
+const char *FeVM::cb_game_info( int index, int offset )
+{
+	return cb_game_info( index, offset, 0 );
 }
 
 const char *FeVM::cb_game_info( int index )
 {
-	return cb_game_info( index, 0 );
+	return cb_game_info( index, 0, 0 );
 }
 
 Sqrat::Table FeVM::cb_get_config()

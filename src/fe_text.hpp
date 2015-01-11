@@ -57,6 +57,8 @@ public:
 
 	int getIndexOffset() const;
 	void setIndexOffset( int );
+	int getFilterOffset() const;
+	void setFilterOffset( int );
 
 	void set_word_wrap( bool );
 	bool get_word_wrap();
@@ -96,6 +98,7 @@ private:
 	std::string m_string;
 	std::string m_font_name;
 	int m_index_offset;
+	int m_filter_offset;
 	int m_user_charsize;	 	// -1 if no charsize specified
 	sf::Vector2f m_size;		// unscaled size
 	sf::Vector2f m_position;	// unscaled position

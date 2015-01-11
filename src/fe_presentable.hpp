@@ -61,6 +61,8 @@ public:
 	virtual void setColor( const sf::Color & )=0;
 	virtual int getIndexOffset() const=0;
 	virtual void setIndexOffset( int io )=0;
+	virtual int getFilterOffset() const=0;
+	virtual void setFilterOffset( int io )=0;
 
 	//
 	// Accessor functions used in scripting implementation
