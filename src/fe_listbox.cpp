@@ -35,7 +35,8 @@ FeListBox::FeListBox( int x, int y, int w, int h )
 	m_rows( 11 ),
 	m_userCharSize( 0 ),
 	m_filter_offset( 0 ),
-	m_rotation( 0.0 )
+	m_rotation( 0.0 ),
+	m_scripted( true )
 {
 	m_base_text.setPosition( sf::Vector2f( x, y ) );
 	m_base_text.setSize( sf::Vector2f( w, h ) );
@@ -59,7 +60,8 @@ FeListBox::FeListBox(
 	m_rows( rows ),
 	m_userCharSize( charactersize ),
 	m_filter_offset( 0 ),
-	m_rotation( 0.0 )
+	m_rotation( 0.0 ),
+	m_scripted( false )
 {
 }
 
@@ -76,7 +78,9 @@ const sf::Vector2f &FeListBox::getPosition() const
 void FeListBox::setPosition( const sf::Vector2f &p )
 {
 	m_base_text.setPosition( p );
-	FeVM::script_do_update( this );
+
+	if ( m_scripted )
+		FeVM::script_do_update( this );
 }
 
 const sf::Vector2f &FeListBox::getSize() const
@@ -87,7 +91,9 @@ const sf::Vector2f &FeListBox::getSize() const
 void FeListBox::setSize( const sf::Vector2f &s )
 {
 	m_base_text.setSize( s );
-	FeVM::script_do_update( this );
+
+	if ( m_scripted )
+		FeVM::script_do_update( this );
 }
 
 float FeListBox::getRotation() const
@@ -156,7 +162,8 @@ void FeListBox::setColor( const sf::Color &c )
 			m_texts[i].setColor( c );
 	}
 
-	FeVM::script_flag_redraw();
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 void FeListBox::setSelColor( const sf::Color &c )
@@ -168,7 +175,9 @@ void FeListBox::setSelColor( const sf::Color &c )
 		int sel = m_texts.size() / 2;
 		m_texts[ sel ].setColor( m_selColour );
 	}
-	FeVM::script_flag_redraw();
+
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 void FeListBox::setSelBgColor( const sf::Color &c )
@@ -179,7 +188,9 @@ void FeListBox::setSelBgColor( const sf::Color &c )
 		int sel = m_texts.size() / 2;
 		m_texts[ sel ].setBgColor( m_selBg );
 	}
-	FeVM::script_flag_redraw();
+
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 void FeListBox::setSelStyle( int s )
@@ -190,7 +201,9 @@ void FeListBox::setSelStyle( int s )
 		int sel = m_texts.size() / 2;
 		m_texts[ sel ].setStyle( m_selStyle );
 	}
-	FeVM::script_flag_redraw();
+
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 int FeListBox::getSelStyle()
@@ -253,7 +266,8 @@ void FeListBox::setRotation( float r )
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 		m_texts[i].setRotation( m_rotation );
 
-	FeVM::script_flag_redraw();
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 void FeListBox::on_new_list( FeSettings *s, float scale_x, float scale_y )
@@ -395,7 +409,9 @@ void FeListBox::setBgColor( const sf::Color &c )
 		if ( i != ( m_texts.size() / 2 ) )
 			m_texts[i].setBgColor( c );
 	}
-	FeVM::script_flag_redraw();
+
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 void FeListBox::set_bgr(int r)
@@ -433,7 +449,9 @@ void FeListBox::set_bg_rgb(int r, int g, int b )
 	c.g=g;
 	c.b=b;
 	m_base_text.setBgColor(c);
-	FeVM::script_flag_redraw();
+
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 void FeListBox::set_charsize(int s)
@@ -443,7 +461,8 @@ void FeListBox::set_charsize(int s)
 	// We call script_do_update to trigger a call to our init() function
 	// with the appropriate parameters
 	//
-	FeVM::script_do_update( this );
+	if ( m_scripted )
+		FeVM::script_do_update( this );
 }
 
 void FeListBox::set_rows(int r)
@@ -454,7 +473,9 @@ void FeListBox::set_rows(int r)
 	if ( m_rows > 0 )
 	{
 		m_rows = r;
-		FeVM::script_flag_redraw();
+
+		if ( m_scripted )
+			FeVM::script_flag_redraw();
 	}
 }
 
@@ -466,7 +487,9 @@ void FeListBox::set_style(int s)
 		if ( i != ( m_texts.size() / 2 ) )
 			m_texts[i].setStyle( s );
 	}
-	FeVM::script_flag_redraw();
+
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 void FeListBox::set_align(int a)
@@ -476,7 +499,8 @@ void FeListBox::set_align(int a)
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 		m_texts[i].setAlignment( (FeTextPrimative::Alignment)a );
 
-	FeVM::script_flag_redraw();
+	if ( m_scripted )
+		FeVM::script_flag_redraw();
 }
 
 int FeListBox::get_selr()
@@ -618,5 +642,7 @@ const char *FeListBox::get_format_string()
 void FeListBox::set_format_string( const char *s )
 {
 	m_format_string = s;
-	FeVM::script_do_update( this );
+
+	if ( m_scripted )
+		FeVM::script_do_update( this );
 }

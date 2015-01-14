@@ -35,8 +35,11 @@ class FeSettings;
 class FeListBox : public FeBasePresentable, public sf::Drawable
 {
 public:
+
+	// Constructor for use in scripts.  sets m_scripted to true
 	FeListBox( int x, int y, int w, int h );
 
+	// Constructor for use in overlay.  sets m_scripted to false
 	FeListBox( const sf::Font *font,
 			const sf::Color &colour,
 			const sf::Color &bgcolour,
@@ -141,6 +144,7 @@ private:
 	int m_userCharSize;
 	int m_filter_offset;
 	float m_rotation;
+	bool m_scripted;
 
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
 };
