@@ -38,6 +38,7 @@
 #include <dirent.h>
 
 #include <SFML/Config.hpp>
+#include <SFML/System/Utf.hpp>
 
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -95,7 +96,7 @@ bool tail_compare(
 {
 	unsigned int extlen = extension.size();
 
-	if ( extlen >= filename.size() )
+	if ( extlen > filename.size() )
 		return false;
 
 	for ( unsigned int i=0; i < extlen; i++ )
@@ -874,4 +875,40 @@ std::string name_with_brackets_stripped( const std::string &name )
 
 	return name.substr( 0,
 			name.find_last_of( FE_WHITESPACE, pos ) );
+}
+
+
+std::basic_string<sf::Uint32> clipboard_get_content()
+{
+	std::basic_string<sf::Uint32> retval;
+
+#ifdef SFML_SYSTEM_WINDOWS
+	if (!IsClipboardFormatAvailable(CF_UNICODETEXT))
+		return retval;
+
+	if (!OpenClipboard(NULL))
+		return retval;
+
+	HGLOBAL hglob = GetClipboardData(CF_UNICODETEXT);
+	if (hglob != NULL)
+	{
+		LPWSTR lptstr = (LPWSTR)GlobalLock(hglob);
+		if (lptstr != NULL)
+		{
+			std::wstring str = lptstr;
+
+			for ( std::wstring::iterator itr=str.begin(); itr!=str.end(); ++itr )
+			{
+				if ( *itr >= 32 ) // strip control characters such as line feeds, etc
+					retval += *itr;
+			}
+
+			GlobalUnlock(hglob);
+		}
+	}
+
+	CloseClipboard();
+#endif // if WINDOWS
+
+	return retval;
 }

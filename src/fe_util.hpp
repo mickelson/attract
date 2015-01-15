@@ -25,6 +25,7 @@
 
 #include <vector>
 #include <string>
+#include <SFML/Config.hpp>
 
 #ifdef FE_DEBUG
 #include <cassert>
@@ -190,6 +191,12 @@ bool config_str_to_bool( const std::string &s );
 // Return the name of the operating system.
 //
 const char *get_OS_string();
+
+//
+// return the contents of the clipboard (if implemented for OS)
+//
+std::basic_string<sf::Uint32> clipboard_get_content();
+
 
 #ifndef NO_MOVIE
 //

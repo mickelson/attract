@@ -790,23 +790,26 @@ int FeOverlay::display_config_dialog(
 
 			if ( t == Opt::LIST )
 			{
-				int original_value = ctx.curr_opt().get_vindex();
-				int new_value = original_value;
-
-				FeEventLoopCtx c( draw_list, new_value, -1, ctx.curr_opt().values_list.size() - 1 );
-
-				m_overlay_is_on = true;
-				while ( event_loop( c ) == false )
+				if ( !ctx.curr_opt().values_list.empty() )
 				{
-					tp->setString(ctx.curr_opt().values_list[new_value]);
-				}
-				m_overlay_is_on = false;
+					int original_value = ctx.curr_opt().get_vindex();
+					int new_value = original_value;
 
-				if (( new_value >= 0 ) && ( new_value != original_value ))
-				{
-					ctx.save_req = true;
-					ctx.curr_opt().set_value( new_value );
-					ctx.right_list[ctx.curr_sel] = ctx.curr_opt().get_value();
+					FeEventLoopCtx c( draw_list, new_value, -1, ctx.curr_opt().values_list.size() - 1 );
+
+					m_overlay_is_on = true;
+					while ( event_loop( c ) == false )
+					{
+						tp->setString(ctx.curr_opt().values_list[new_value]);
+					}
+					m_overlay_is_on = false;
+
+					if (( new_value >= 0 ) && ( new_value != original_value ))
+					{
+						ctx.save_req = true;
+						ctx.curr_opt().set_value( new_value );
+						ctx.right_list[ctx.curr_sel] = ctx.curr_opt().get_value();
+					}
 				}
 			}
 			else
@@ -1039,9 +1042,8 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				return false;
 
 			case sf::Event::TextEntered:
-				switch ( ev.text.unicode )
+				if ( ev.text.unicode == 8 ) // backspace
 				{
-				case 8: // Backspace
 					if ( cursor_pos > 0 )
 					{
 						str.erase( cursor_pos - 1, 1 );
@@ -1049,24 +1051,22 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					}
 					redraw = true;
 					break;
-
-				case 3: // break
-				case 9: // horizontal tab
-				case 10: // linefeed
-				case 13: // Return (ignore here, deal with as keypress event)
-				case 127: // Delete
-					break;
-
-				default: // General text entry
-					if ( cursor_pos < (int)str.size() )
-						str.insert( cursor_pos, 1, ev.text.unicode );
-					else
-						str += ev.text.unicode;
-
-					cursor_pos++;
-					redraw = true;
 				}
 
+				//
+				// Don't respond to control characters < 32 (line feeds etc.)
+				// and don't handle 127 (delete) here, it is dealt with as a keypress
+				//
+				if (( ev.text.unicode < 32 ) || ( ev.text.unicode == 127 ))
+					break;
+
+				if ( cursor_pos < (int)str.size() )
+					str.insert( cursor_pos, 1, ev.text.unicode );
+				else
+					str += ev.text.unicode;
+
+				cursor_pos++;
+				redraw = true;
 				break;
 
 			case sf::Event::KeyPressed:
@@ -1106,6 +1106,16 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					if ( cursor_pos < (int)str.size() )
 						str.erase( cursor_pos, 1 );
 
+					redraw = true;
+					break;
+
+				case sf::Keyboard::V:
+					if ( ev.key.control )
+					{
+						std::basic_string<sf::Uint32> temp = clipboard_get_content();
+						str.insert( cursor_pos, temp.c_str() );
+						cursor_pos += temp.length();
+					}
 					redraw = true;
 					break;
 

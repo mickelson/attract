@@ -838,6 +838,15 @@ FeRomList::~FeRomList()
 {
 }
 
+void FeRomList::init_as_empty_list()
+{
+	m_user_path.clear();
+	m_romlist_name.clear();
+	m_list.clear();
+	m_filtered_list.clear();
+	m_filtered_list.push_back( std::vector< FeRomInfo *>()  ); // there always has to be at least one filter
+}
+
 bool FeRomList::load_romlist( const std::string &path,
 			const std::string &romlist_name,
 			const std::string &user_path,

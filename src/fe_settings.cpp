@@ -202,8 +202,6 @@ void FeSettings::load()
 	std::string load_language( "en" );
 	std::string filename = m_config_path + FE_CFG_FILE;
 
-	std::cout << "Config: " << filename << std::endl;
-
 	if (( FE_DATA_PATH != NULL ) && ( !directory_exists( FE_DATA_PATH ) ))
 	{
 		std::cerr << "Warning: Attract-Mode was compiled to look for its default configuration files in: "
@@ -252,6 +250,8 @@ void FeSettings::load()
 	}
 	else
 	{
+		std::cout << "Config: " << filename << std::endl;
+
 		if ( m_language.empty() )
 			m_language = "en";
 
@@ -400,14 +400,19 @@ int FeSettings::process_setting( const std::string &setting,
 void FeSettings::init_list()
 {
 	if ( m_current_list < 0 )
+	{
+		m_rl.init_as_empty_list();
 		return;
-
-	std::cout << std::endl << "*** Initializing display: '" << get_current_list_title() << "'" << std::endl;
+	}
 
 	const std::string &romlist_name = m_lists[m_current_list].get_info(FeListInfo::Romlist);
-
 	if ( romlist_name.empty() )
+	{
+		m_rl.init_as_empty_list();
 		return;
+	}
+
+	std::cout << std::endl << "*** Initializing display: '" << get_current_list_title() << "'" << std::endl;
 
 	std::string stat_path;
 	if ( m_track_usage )

@@ -296,6 +296,8 @@ public:
 	FeRomList();
 	~FeRomList();
 
+	void init_as_empty_list();
+
 	bool load_romlist( const std::string &romlist_path,
 					const std::string &romlist_name,
 					const std::string &user_path,
