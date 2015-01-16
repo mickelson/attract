@@ -80,7 +80,7 @@ void FeListBox::setPosition( const sf::Vector2f &p )
 	m_base_text.setPosition( p );
 
 	if ( m_scripted )
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 }
 
 const sf::Vector2f &FeListBox::getSize() const
@@ -93,7 +93,7 @@ void FeListBox::setSize( const sf::Vector2f &s )
 	m_base_text.setSize( s );
 
 	if ( m_scripted )
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 }
 
 float FeListBox::getRotation() const
@@ -163,7 +163,7 @@ void FeListBox::setColor( const sf::Color &c )
 	}
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 void FeListBox::setSelColor( const sf::Color &c )
@@ -177,7 +177,7 @@ void FeListBox::setSelColor( const sf::Color &c )
 	}
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 void FeListBox::setSelBgColor( const sf::Color &c )
@@ -190,7 +190,7 @@ void FeListBox::setSelBgColor( const sf::Color &c )
 	}
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 void FeListBox::setSelStyle( int s )
@@ -203,7 +203,7 @@ void FeListBox::setSelStyle( int s )
 	}
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 int FeListBox::getSelStyle()
@@ -267,7 +267,7 @@ void FeListBox::setRotation( float r )
 		m_texts[i].setRotation( m_rotation );
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 void FeListBox::on_new_list( FeSettings *s, float scale_x, float scale_y )
@@ -411,7 +411,7 @@ void FeListBox::setBgColor( const sf::Color &c )
 	}
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 void FeListBox::set_bgr(int r)
@@ -451,7 +451,7 @@ void FeListBox::set_bg_rgb(int r, int g, int b )
 	m_base_text.setBgColor(c);
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 void FeListBox::set_charsize(int s)
@@ -462,7 +462,7 @@ void FeListBox::set_charsize(int s)
 	// with the appropriate parameters
 	//
 	if ( m_scripted )
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 }
 
 void FeListBox::set_rows(int r)
@@ -475,7 +475,7 @@ void FeListBox::set_rows(int r)
 		m_rows = r;
 
 		if ( m_scripted )
-			FeVM::script_flag_redraw();
+			FePresent::script_flag_redraw();
 	}
 }
 
@@ -489,7 +489,7 @@ void FeListBox::set_style(int s)
 	}
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 void FeListBox::set_align(int a)
@@ -500,7 +500,7 @@ void FeListBox::set_align(int a)
 		m_texts[i].setAlignment( (FeTextPrimative::Alignment)a );
 
 	if ( m_scripted )
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 }
 
 int FeListBox::get_selr()
@@ -614,7 +614,7 @@ void FeListBox::set_selbg_rgb(int r, int g, int b )
 
 void FeListBox::set_font( const char *f )
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 	if ( !fep )
 		return;
 
@@ -630,7 +630,7 @@ void FeListBox::set_font( const char *f )
 		setFont( *font );
 		m_font_name = f;
 
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 	}
 }
 
@@ -644,5 +644,5 @@ void FeListBox::set_format_string( const char *s )
 	m_format_string = s;
 
 	if ( m_scripted )
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 }

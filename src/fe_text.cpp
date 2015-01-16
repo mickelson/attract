@@ -51,7 +51,7 @@ const sf::Vector2f &FeText::getPosition() const
 void FeText::setPosition( const sf::Vector2f &p )
 {
 	m_position = p;
-	FeVM::script_do_update( this );
+	FePresent::script_do_update( this );
 }
 
 const sf::Vector2f &FeText::getSize() const
@@ -62,7 +62,7 @@ const sf::Vector2f &FeText::getSize() const
 void FeText::setSize( const sf::Vector2f &s )
 {
 	m_size = s;
-	FeVM::script_do_update( this );
+	FePresent::script_do_update( this );
 }
 
 float FeText::getRotation() const
@@ -73,13 +73,13 @@ float FeText::getRotation() const
 void FeText::setRotation( float r )
 {
 	m_draw_text.setRotation( r );
-	FeVM::script_do_update( this );
+	FePresent::script_do_update( this );
 }
 
 void FeText::setColor( const sf::Color &c )
 {
 	m_draw_text.setColor( c );
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 const sf::Color &FeText::getColor() const
@@ -92,7 +92,7 @@ void FeText::setIndexOffset( int io )
 	if ( m_index_offset != io )
 	{
 		m_index_offset=io;
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 	}
 }
 
@@ -106,7 +106,7 @@ void FeText::setFilterOffset( int fo )
 	if ( m_filter_offset != fo )
 	{
 		m_filter_offset=fo;
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 	}
 }
 
@@ -157,7 +157,7 @@ void FeText::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 void FeText::set_word_wrap( bool w )
 {
 	m_draw_text.setWordWrap( w );
-	FeVM::script_do_update( this );
+	FePresent::script_do_update( this );
 }
 
 bool FeText::get_word_wrap()
@@ -172,7 +172,7 @@ void FeText::set_first_line_hint( int l )
 		m_draw_text.setFirstLineHint( l );
 		m_draw_text.setString( m_string );
 
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 	}
 }
 
@@ -189,7 +189,7 @@ const char *FeText::get_string()
 void FeText::set_string(const char *s)
 {
 	m_string=s;
-	FeVM::script_do_update( this );
+	FePresent::script_do_update( this );
 }
 
 int FeText::get_bgr()
@@ -237,7 +237,7 @@ void FeText::set_bgr(int r)
 	sf::Color c=m_draw_text.getBgColor();
 	c.r=r;
 	m_draw_text.setBgColor(c);
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeText::set_bgg(int g)
@@ -245,7 +245,7 @@ void FeText::set_bgg(int g)
 	sf::Color c=m_draw_text.getBgColor();
 	c.g=g;
 	m_draw_text.setBgColor(c);
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeText::set_bgb(int b)
@@ -253,7 +253,7 @@ void FeText::set_bgb(int b)
 	sf::Color c=m_draw_text.getBgColor();
 	c.b=b;
 	m_draw_text.setBgColor(c);
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeText::set_bga(int a)
@@ -261,7 +261,7 @@ void FeText::set_bga(int a)
 	sf::Color c=m_draw_text.getBgColor();
 	c.a=a;
 	m_draw_text.setBgColor(c);
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeText::set_bg_rgb(int r, int g, int b )
@@ -275,30 +275,30 @@ void FeText::set_bg_rgb(int r, int g, int b )
 		c.a = 255;
 
 	m_draw_text.setBgColor(c);
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeText::set_charsize(int s)
 {
 	m_user_charsize = s;
-	FeVM::script_do_update( this );
+	FePresent::script_do_update( this );
 }
 
 void FeText::set_style(int s)
 {
 	m_draw_text.setStyle(s);
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeText::set_align(int a)
 {
 	m_draw_text.setAlignment( (FeTextPrimative::Alignment)a);
-	FeVM::script_do_update( this );
+	FePresent::script_do_update( this );
 }
 
 void FeText::set_font( const char *f )
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 	if ( !fep )
 		return;
 
@@ -313,6 +313,6 @@ void FeText::set_font( const char *f )
 		setFont( *font );
 		m_font_name = f;
 
-		FeVM::script_do_update( this );
+		FePresent::script_do_update( this );
 	}
 }

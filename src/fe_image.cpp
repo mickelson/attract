@@ -627,7 +627,7 @@ void FeTextureContainer::set_index_offset( int io, bool do_update )
 		m_index_offset = io;
 
 		if ( do_update )
-			FeVM::script_do_update( this );
+			FePresent::script_do_update( this );
 	}
 }
 
@@ -643,7 +643,7 @@ void FeTextureContainer::set_filter_offset( int fo, bool do_update )
 		m_filter_offset = fo;
 
 		if ( do_update )
-			FeVM::script_do_update( this );
+			FePresent::script_do_update( this );
 	}
 }
 
@@ -666,7 +666,7 @@ void FeTextureContainer::set_video_flags( FeVideoFlags f )
 		else
 		{
 			float volume( 100.f );
-			FePresent *fep = FeVM::script_get_fep();
+			FePresent *fep = FePresent::script_get_fep();
 			if ( fep )
 				volume = fep->get_fes()->get_play_volume( FeSoundInfo::Movie );
 
@@ -709,7 +709,7 @@ void FeTextureContainer::set_file_name( const char *n )
 	//
 	if ( is_relative_path( name ) )
 	{
-		FePresent *fep = FeVM::script_get_fep();
+		FePresent *fep = FePresent::script_get_fep();
 		if ( fep )
 		{
 			FeSettings *fes = fep->get_fes();
@@ -805,7 +805,7 @@ bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, 
 
 FeImage *FeSurfaceTextureContainer::add_image(const char *n, int x, int y, int w, int h)
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 
 	if ( fep )
 		return fep->add_image( false, n, x, y, w, h, m_draw_list );
@@ -815,7 +815,7 @@ FeImage *FeSurfaceTextureContainer::add_image(const char *n, int x, int y, int w
 
 FeImage *FeSurfaceTextureContainer::add_artwork(const char *l, int x, int y, int w, int h )
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 
 	if ( fep )
 		return fep->add_image( true, l, x, y, w, h, m_draw_list );
@@ -825,7 +825,7 @@ FeImage *FeSurfaceTextureContainer::add_artwork(const char *l, int x, int y, int
 
 FeImage *FeSurfaceTextureContainer::add_clone(FeImage *i )
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 
 	if ( fep )
 		return fep->add_clone( i, m_draw_list );
@@ -835,7 +835,7 @@ FeImage *FeSurfaceTextureContainer::add_clone(FeImage *i )
 
 FeText *FeSurfaceTextureContainer::add_text(const char *t, int x, int y, int w, int h)
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 
 	if ( fep )
 		return fep->add_text( t, x, y, w, h, m_draw_list );
@@ -845,7 +845,7 @@ FeText *FeSurfaceTextureContainer::add_text(const char *t, int x, int y, int w, 
 
 FeListBox *FeSurfaceTextureContainer::add_listbox(int x, int y, int w, int h)
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 
 	if ( fep )
 		return fep->add_listbox( x, y, w, h, m_draw_list );
@@ -855,7 +855,7 @@ FeListBox *FeSurfaceTextureContainer::add_listbox(int x, int y, int w, int h)
 
 FeImage *FeSurfaceTextureContainer::add_surface(int w, int h)
 {
-	FePresent *fep = FeVM::script_get_fep();
+	FePresent *fep = FePresent::script_get_fep();
 
 	if ( fep )
 		return fep->add_surface( w, h, m_draw_list );
@@ -1026,14 +1026,14 @@ void FeImage::setSize( const sf::Vector2f &s )
 {
 	m_size = s;
 	scale();
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeImage::setPosition( const sf::Vector2f &p )
 {
 	m_pos = p;
 	scale();
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 float FeImage::getRotation() const
@@ -1044,7 +1044,7 @@ float FeImage::getRotation() const
 void FeImage::setRotation( float r )
 {
 	m_sprite.setRotation( r );
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 const sf::Color &FeImage::getColor() const
@@ -1055,7 +1055,7 @@ const sf::Color &FeImage::getColor() const
 void FeImage::setColor( const sf::Color &c )
 {
 	m_sprite.setColor( c );
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 const sf::Vector2u FeImage::getTextureSize() const
@@ -1072,7 +1072,7 @@ void FeImage::setTextureRect( const sf::IntRect &r )
 {
 	m_sprite.setTextureRect( r );
 	scale();
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 int FeImage::getVideoFlags() const
@@ -1155,25 +1155,25 @@ int FeImage::get_pinch_y() const
 void FeImage::set_skew_x( int x )
 {
 	m_sprite.setSkewX( x );
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeImage::set_skew_y( int y )
 {
 	m_sprite.setSkewY( y );
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeImage::set_pinch_x( int x )
 {
 	m_sprite.setPinchX( x );
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 void FeImage::set_pinch_y( int y )
 {
 	m_sprite.setPinchY( y );
-	FeVM::script_flag_redraw();
+	FePresent::script_flag_redraw();
 }
 
 int FeImage::get_texture_width() const

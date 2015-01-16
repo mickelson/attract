@@ -92,17 +92,14 @@ const char *FeVM::transitionTypeStrings[] =
 		NULL
 };
 
-FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo, FeSound &ambient_sound )
-	: m_fes( fes ),
-	m_fep( fep ),
+FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound )
+	: FePresent( &fes, defaultfont ),
 	m_window( wnd ),
-	m_overlay( feo ),
+	m_overlay( NULL ),
 	m_ambient_sound( ambient_sound ),
 	m_redraw_triggered( false ),
 	m_script_cfg( NULL )
 {
-	m_fep.m_vm = this;
-
 	srand( time( NULL ) );
 	vm_init();
 }
@@ -110,8 +107,12 @@ FeVM::FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo, FeSo
 FeVM::~FeVM()
 {
 	clear();
-
 	vm_close();
+}
+
+void FeVM::set_overlay( FeOverlay *feo )
+{
+	m_overlay = feo;
 }
 
 bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev )
@@ -126,7 +127,7 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev )
 	}
 	else if ( m_window.pollEvent( ev ) )
 	{
-		c = m_fes.map_input( ev );
+		c = m_feSettings->map_input( ev );
 		return true;
 	}
 
@@ -135,6 +136,8 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev )
 
 void FeVM::clear()
 {
+	FePresent::clear();
+
 	m_ticks.clear();
 	m_trans.clear();
 	m_sig_handlers.clear();
@@ -211,19 +214,17 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	vm_init();
 
-	const sf::Vector2i &output_size = m_fep.get_output_size();
-
 	// Set fe-related constants
 	//
 	ConstTable()
 		.Const( _SC("FeVersion"), FE_VERSION)
 		.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
-		.Const( _SC("ScreenWidth"), (int)output_size.x )
-		.Const( _SC("ScreenHeight"), (int)output_size.y )
-		.Const( _SC("ScreenSaverActive"), m_fep.get_screensaver_active() )
+		.Const( _SC("ScreenWidth"), (int)m_outputSize.x )
+		.Const( _SC("ScreenHeight"), (int)m_outputSize.y )
+		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
 		.Const( _SC("OS"), get_OS_string() )
 		.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
-		.Const( _SC("FeConfigDirectory"), m_fes.get_config_dir().c_str() )
+		.Const( _SC("FeConfigDirectory"), m_feSettings->get_config_dir().c_str() )
 
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
@@ -506,7 +507,7 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	// Define variables that get exposed to Squirrel
 	//
-	FeListInfo *li = m_fes.get_list( m_fes.get_current_list_index() );
+	FeListInfo *li = m_feSettings->get_list( m_feSettings->get_current_list_index() );
 
 	Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("filters"), ftab );
@@ -515,8 +516,8 @@ void FeVM::on_new_layout( const std::string &path,
 	for ( int i=0; i < li->get_filter_count(); i++ )
 		farray.SetInstance( farray.GetSize(), li->get_filter( i ) );
 
-	fe.SetInstance( _SC("layout"), &m_fep );
-	fe.SetInstance( _SC("list"), &m_fep );
+	fe.SetInstance( _SC("layout"), (FePresent *)this );
+	fe.SetInstance( _SC("list"), (FePresent *)this );
 	fe.SetInstance( _SC("overlay"), this );
 	fe.SetInstance( _SC("ambient_sound"), &m_ambient_sound );
 	fe.SetValue( _SC("plugin"), Table() ); // an empty table for plugins to use/abuse
@@ -557,7 +558,7 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	// Now run any plugin script(s)
 	//
-	const std::vector< FePlugInfo > &plugins = m_fes.get_plugins();
+	const std::vector< FePlugInfo > &plugins = m_feSettings->get_plugins();
 
 	for ( std::vector< FePlugInfo >::const_iterator itr= plugins.begin();
 		itr != plugins.end(); ++itr )
@@ -567,7 +568,7 @@ void FeVM::on_new_layout( const std::string &path,
 			continue;
 
 		std::string plug_path, plug_name;
-		m_fes.get_plugin_full_path(
+		m_feSettings->get_plugin_full_path(
 				(*itr).get_name(),
 				plug_path,
 				plug_name );
@@ -614,7 +615,7 @@ bool FeVM::on_tick()
 		{
 			Function func( (*itr).first, (*itr).second.c_str() );
 			if ( !func.IsNull() )
-				func.Execute( m_fep.m_layoutTimer.getElapsedTime().asMilliseconds() );
+				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
 		catch( Exception e )
 		{
@@ -698,10 +699,10 @@ bool FeVM::on_transition(
 		//
 		if (( !worklist.empty() ) && ( m_window.isOpen() ))
 		{
-			m_fep.video_tick();
+			video_tick();
 
 			m_window.clear();
-			m_window.draw( m_fep );
+			m_window.draw( *this );
 			m_window.display();
 
 			m_redraw_triggered = false; // clear redraw flag
@@ -711,7 +712,7 @@ bool FeVM::on_transition(
 	return m_redraw_triggered;
 }
 
-bool FeVM::handle_event( FeInputMap::Command c, bool &redraw )
+bool FeVM::script_handle_event( FeInputMap::Command c, bool &redraw )
 {
 	using namespace Sqrat;
 	m_redraw_triggered = false;
@@ -756,7 +757,7 @@ int FeVM::list_dialog( Sqrat::Array t, const char *title, int default_sel, int c
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 
-	if ( m_overlay.overlay_is_on() )
+	if ( m_overlay->overlay_is_on() )
 		return cancel_sel;
 
 	std::vector < std::string > list_entries;
@@ -772,7 +773,7 @@ int FeVM::list_dialog( Sqrat::Array t, const char *title, int default_sel, int c
 
 	if ( list_entries.size() > 2 )
 	{
-		return m_overlay.common_list_dialog(
+		return m_overlay->common_list_dialog(
 				std::string( title ),
 				list_entries,
 				default_sel,
@@ -780,7 +781,7 @@ int FeVM::list_dialog( Sqrat::Array t, const char *title, int default_sel, int c
 	}
 	else
 	{
-		return m_overlay.common_basic_dialog(
+		return m_overlay->common_basic_dialog(
 				std::string( title ),
 				list_entries,
 				default_sel,
@@ -808,77 +809,33 @@ const char *FeVM::edit_dialog( const char *msg, const char *txt )
 	static std::string local_copy;
 	local_copy = txt;
 
-	if ( !m_overlay.overlay_is_on() )
-		m_overlay.edit_dialog( msg, local_copy );
+	if ( !m_overlay->overlay_is_on() )
+		m_overlay->edit_dialog( msg, local_copy );
 
 	return local_copy.c_str();
 }
 
 bool FeVM::overlay_is_on()
 {
-	return m_overlay.overlay_is_on();
+	return m_overlay->overlay_is_on();
 }
 
 bool FeVM::splash_message( const char *msg )
 {
-	m_overlay.splash_message( msg );
-	return m_overlay.check_for_cancel();
+	m_overlay->splash_message( msg );
+	return m_overlay->check_for_cancel();
 }
 
 //
 // Script static functions
 //
-FePresent *FeVM::script_get_fep()
+FePresent *FePresent::script_get_fep()
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	if ( vm )
-	{
-		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-
-		if ( fev )
-			return &(fev->m_fep);
-	}
+		return (FePresent *)sq_getforeignptr( vm );
 
 	return NULL;
-}
-
-void FeVM::script_do_update( FeBasePresentable *bp )
-{
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	if ( vm )
-	{
-		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-
-		bp->on_new_list( &(fev->m_fes),
-			fev->m_fep.get_layout_scale_x(),
-			fev->m_fep.get_layout_scale_y() );
-
-		bp->on_new_selection( &(fev->m_fes) );
-
-		fev->flag_redraw();
-	}
-}
-
-void FeVM::script_do_update( FeBaseTextureContainer *tc )
-{
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	if ( vm )
-	{
-		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-
-		tc->on_new_selection( &(fev->m_fes), fev->m_fep.get_screensaver_active() );
-		fev->flag_redraw();
-	}
-}
-
-void FeVM::script_flag_redraw()
-{
-	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-	if ( vm )
-	{
-		FeVM *fev = (FeVM *)sq_getforeignptr( vm );
-		fev->flag_redraw();
-	}
 }
 
 //
@@ -919,7 +876,7 @@ public:
 			.Const( _SC("OS"), get_OS_string() )
 			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() );
 
-		Sqrat::ConstTable().Const( _SC("FeConfigDirectory"), fe_vm->m_fes.get_config_dir().c_str() );
+		Sqrat::ConstTable().Const( _SC("FeConfigDirectory"), fe_vm->m_feSettings->get_config_dir().c_str() );
 
 		Sqrat::Table fe;
 
@@ -1120,7 +1077,7 @@ FeImage* FeVM::cb_add_image(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->m_fep.add_image( false, n, x, y, w, h, fev->m_fep.m_elements );
+	FeImage *ret = fev->add_image( false, n, x, y, w, h, fev->m_elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1146,7 +1103,7 @@ FeImage* FeVM::cb_add_artwork(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->m_fep.add_image( true, n, x, y, w, h, fev->m_fep.m_elements );
+	FeImage *ret = fev->add_image( true, n, x, y, w, h, fev->m_elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1172,7 +1129,7 @@ FeImage* FeVM::cb_add_clone( FeImage *o )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->m_fep.add_clone( o, fev->m_fep.m_elements );
+	FeImage *ret = fev->add_clone( o, fev->m_elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1188,7 +1145,7 @@ FeText* FeVM::cb_add_text(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeText *ret = fev->m_fep.add_text( n, x, y, w, h, fev->m_fep.m_elements );
+	FeText *ret = fev->add_text( n, x, y, w, h, fev->m_elements );
 
 	// Add the text to the "fe.obj" array in Squirrel
 	//
@@ -1204,7 +1161,7 @@ FeListBox* FeVM::cb_add_listbox(int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeListBox *ret = fev->m_fep.add_listbox( x, y, w, h, fev->m_fep.m_elements );
+	FeListBox *ret = fev->add_listbox( x, y, w, h, fev->m_elements );
 
 	// Add the listbox to the "fe.obj" array in Squirrel
 	//
@@ -1220,7 +1177,7 @@ FeImage* FeVM::cb_add_surface( int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->m_fep.add_surface( w, h, fev->m_fep.m_elements );
+	FeImage *ret = fev->add_surface( w, h, fev->m_elements );
 
 	// Add the surface to the "fe.obj" array in Squirrel
 	//
@@ -1236,7 +1193,7 @@ FeSound* FeVM::cb_add_sound( const char *s )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	return fev->m_fep.add_sound( s );
+	return fev->add_sound( s );
 	//
 	// We assume the script will keep a reference to the sound
 	//
@@ -1247,7 +1204,7 @@ FeShader* FeVM::cb_add_shader( int type, const char *shader1, const char *shader
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	return fev->m_fep.add_shader( (FeShader::Type)type, shader1, shader2 );
+	return fev->add_shader( (FeShader::Type)type, shader1, shader2 );
 	//
 	// We assume the script will keep a reference to the shader
 	//
@@ -1330,13 +1287,13 @@ bool FeVM::cb_get_input_state( const char *input )
 	for ( int i=0; i<FeInputMap::LAST_COMMAND; i++ )
 	{
 		if ( strcmp( input, FeInputMap::commandStrings[i] ) == 0 )
-			return fev->m_fes.get_current_state( (FeInputMap::Command)i );
+			return fev->m_feSettings->get_current_state( (FeInputMap::Command)i );
 	}
 
 	//
 	// If not, then test based on it being an input string
 	//
-	return FeInputSource( input ).get_current_state( fev->m_fes.get_joy_thresh() );
+	return FeInputSource( input ).get_current_state( fev->m_feSettings->get_joy_thresh() );
 }
 
 int FeVM::cb_get_input_pos( const char *input )
@@ -1384,7 +1341,7 @@ void FeVM::do_nut( const char *script_file )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	internal_do_nut( fev->m_fes.get_current_layout_dir(), script_file );
+	internal_do_nut( fev->m_feSettings->get_current_layout_dir(), script_file );
 }
 
 bool FeVM::load_module( const char *module_file )
@@ -1396,7 +1353,7 @@ bool FeVM::load_module( const char *module_file )
 	if ( !tail_compare( fixed_file, FE_LAYOUT_FILE_EXTENSION ) )
 		fixed_file += FE_LAYOUT_FILE_EXTENSION;
 
-	std::string temp = fev->m_fes.get_module_dir( fixed_file );
+	std::string temp = fev->m_feSettings->get_module_dir( fixed_file );
 	size_t len = temp.find_last_of( "/\\" );
 	ASSERT( len != std::string::npos );
 
@@ -1452,8 +1409,8 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 
 	if ( index == FeRomInfo::LAST_INDEX )
 	{
-		std::string emu_name = fev->m_fes.get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
-		FeEmulatorInfo *emu = fev->m_fes.get_emulator( emu_name );
+		std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
+		FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );
 		if ( emu )
 		{
 			static std::string sys_name;
@@ -1462,7 +1419,7 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 		}
 	}
 
-	return (fev->m_fes.get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();
+	return (fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();
 }
 
 const char *FeVM::cb_game_info( int index, int offset )
@@ -1567,4 +1524,17 @@ void FeVM::cb_signal( const char *sig )
 		break;
 
 	}
+}
+
+void FeVM::init_with_default_layout()
+{
+	//
+	// Default to a full screen list with the
+	// configured movie artwork as the background
+	//
+	FeImage *img = cb_add_artwork( "", 0, 0,
+		m_layoutSize.x, m_layoutSize.y );
+
+	img->setColor( sf::Color( 100, 100, 100, 180 ) );
+	cb_add_listbox( 0, 0, m_layoutSize.x, m_layoutSize.y );
 }

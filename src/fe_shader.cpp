@@ -23,7 +23,7 @@
 #include "fe_shader.hpp"
 #include "fe_presentable.hpp"
 #include "fe_image.hpp"
-#include "fe_vm.hpp"
+#include "fe_present.hpp"
 #include <iostream>
 
 FeShader::FeShader( Type t, const std::string &vert_shader, const std::string &frag_shader )
@@ -70,7 +70,7 @@ void FeShader::set_param( const char *name, float x )
 	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x );
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 	}
 }
 
@@ -79,7 +79,7 @@ void FeShader::set_param( const char *name, float x, float y )
 	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x, y );
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 	}
 }
 
@@ -88,7 +88,7 @@ void FeShader::set_param( const char *name, float x, float y, float z )
 	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x, y, z );
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 	}
 }
 
@@ -97,7 +97,7 @@ void FeShader::set_param( const char *name, float x, float y, float z, float w )
 	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, x, y, z, w );
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 	}
 }
 
@@ -106,7 +106,7 @@ void FeShader::set_texture_param( const char *name )
 	if ( m_type != Empty )
 	{
 		m_shader.setParameter( name, sf::Shader::CurrentTexture );
-		FeVM::script_flag_redraw();
+		FePresent::script_flag_redraw();
 	}
 }
 
@@ -119,7 +119,7 @@ void FeShader::set_texture_param( const char *name, FeImage *image )
 		if ( texture )
 		{
 			m_shader.setParameter( name, *texture );
-			FeVM::script_flag_redraw();
+			FePresent::script_flag_redraw();
 		}
 	}
 }

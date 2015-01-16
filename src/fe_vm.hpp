@@ -28,23 +28,11 @@
 #include <string>
 
 #include "fe_input.hpp"
+#include "fe_present.hpp"
 
-class FeBaseTextureContainer;
-class FeBasePresentable;
-class FeImage;
-class FeText;
-class FeListBox;
-class FeShader;
-class FeSettings;
-class FePresent;
-class FeSound;
-class FeScriptConfigurable;
-class FeLayoutInfo;
 class FeWindow;
 class FeOverlay;
 class FeConfigContext;
-class FeScriptConfigurable;
-class FeConfigVM;
 
 namespace Sqrat
 {
@@ -58,18 +46,7 @@ namespace sf
 	class Event;
 };
 
-enum FeTransitionType
-{
-	StartLayout=0,		// var: FromToScreenSaver, FromToFrontend or FromToNoValue
-	EndLayout,			// var: FromToScreenSaver, FromToFrontend or FromToNoValue
-	ToNewSelection,	// var = index_offset of new selection
-	FromOldSelection,	// var == index_offset of old selection
-	ToGame,				// var = 0
-	FromGame,			// var = 0
-	ToNewList			// var = 0
-};
-
-class FeVM
+class FeVM : public FePresent
 {
 private:
 	friend class FeConfigVM;
@@ -83,10 +60,8 @@ private:
 		FromToFrontend=2
 	};
 
-	FeSettings &m_fes;
-	FePresent &m_fep;
 	FeWindow &m_window;
-	FeOverlay &m_overlay;
+	FeOverlay *m_overlay;
 	FeSound &m_ambient_sound;
 
 	bool m_redraw_triggered;
@@ -107,12 +82,14 @@ private:
 	static bool internal_do_nut(const std::string &, const std::string &);
 
 public:
-	FeVM( FeSettings &fes, FePresent &fep, FeWindow &wnd, FeOverlay &feo, FeSound &ambient_sound );
+	FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound );
 	~FeVM();
+
+	void set_overlay( FeOverlay *feo );
 
 	void flag_redraw() { m_redraw_triggered = true; };
 	bool poll_command( FeInputMap::Command &c, sf::Event &ev );
-	void clear();
+	void clear(); // override of base class clear()
 
 	// Scripting functionality
 	//
@@ -121,8 +98,9 @@ public:
 	void on_new_layout( const std::string &path, const std::string &filename, const FeLayoutInfo &layout_params );
 	bool on_tick();
 	bool on_transition( FeTransitionType, int var );
+	void init_with_default_layout();
 
-	bool handle_event( FeInputMap::Command c, bool &redraw );
+	bool script_handle_event( FeInputMap::Command c, bool &redraw );
 
 	//
 	// overlay functions used from scripts
@@ -134,14 +112,6 @@ public:
 	const char *edit_dialog( const char *, const char * );
 	bool overlay_is_on();
 	bool splash_message( const char * );
-
-	//
-	// Script static functions
-	//
-	static FePresent *script_get_fep();
-	static void script_do_update( FeBaseTextureContainer * );
-	static void script_do_update( FeBasePresentable * );
-	static void script_flag_redraw();
 
 	static void script_get_config_options(
 			FeConfigContext &ctx,

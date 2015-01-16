@@ -28,7 +28,6 @@
 #include "fe_settings.hpp"
 #include "fe_sound.hpp"
 #include "fe_shader.hpp"
-#include "fe_vm.hpp"
 
 class FeImage;
 class FeBaseTextureContainer;
@@ -36,6 +35,17 @@ class FeText;
 class FeListBox;
 class FeFontContainer;
 class FeSurfaceTextureContainer;
+
+enum FeTransitionType
+{
+	StartLayout=0,		// var: FromToScreenSaver, FromToFrontend or FromToNoValue
+	EndLayout,			// var: FromToScreenSaver, FromToFrontend or FromToNoValue
+	ToNewSelection,	// var = index_offset of new selection
+	FromOldSelection,	// var == index_offset of old selection
+	ToGame,				// var = 0
+	FromGame,			// var = 0
+	ToNewList			// var = filter offset of new filter (if available), otherwise 0
+};
 
 //
 // Container class for use in our font pool
@@ -59,7 +69,7 @@ class FePresent
 	friend class FeSurfaceTextureContainer;
 	friend class FeVM;
 
-private:
+protected:
 	enum FromToType
 	{
 		FromToNoValue=0,
@@ -68,7 +78,6 @@ private:
 	};
 
 	FeSettings *m_feSettings;
-	FeVM *m_vm;
 
 	const FeFontContainer *m_currentFont;
 	FeFontContainer &m_defaultFont;
@@ -100,7 +109,7 @@ private:
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );
 
-	void clear();
+	virtual void clear();
 	void toggle_movie();
 
 	void toggle_rotate( FeSettings::RotationState ); // toggle between none and provided state
@@ -141,7 +150,7 @@ private:
 
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
-	~FePresent( void );
+	virtual ~FePresent( void );
 
 	void load_screensaver();
 	void load_layout( bool initial_load=false );
@@ -176,11 +185,23 @@ public:
 	const FeFontContainer *get_pooled_font( const std::string &n );
 
 	const sf::Vector2i &get_layout_size() const { return m_layoutSize; }
-
-	bool get_screensaver_active() { return m_screenSaverActive; }
-	const sf::Vector2i &get_output_size() const { return m_outputSize; }
-
 	FeShader *get_empty_shader();
+
+	//
+	// Script static functions
+	//
+	static FePresent *script_get_fep();
+	static void script_do_update( FeBaseTextureContainer * );
+	static void script_do_update( FeBasePresentable * );
+	static void script_flag_redraw();
+
+	//
+	//
+	virtual void on_new_layout( const std::string &path, const std::string &filename, const FeLayoutInfo &layout_params )=0;
+	virtual bool on_tick()=0;
+	virtual bool on_transition( FeTransitionType, int var )=0;
+	virtual void flag_redraw()=0;
+	virtual void init_with_default_layout()=0;
 };
 
 

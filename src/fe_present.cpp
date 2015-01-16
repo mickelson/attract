@@ -37,7 +37,6 @@ void FeFontContainer::set_font( const std::string &n )
 
 FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	: m_feSettings( fesettings ),
-	m_vm( NULL ),
 	m_currentFont( &defaultfont ),
 	m_defaultFont( defaultfont ),
 	m_baseRotation( FeSettings::RotateNone ),
@@ -58,7 +57,6 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 FePresent::~FePresent()
 {
 	clear();
-	m_vm->vm_close();
 }
 
 void FePresent::clear()
@@ -74,8 +72,6 @@ void FePresent::clear()
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	m_user_page_size = -1;
-
-	m_vm->clear();
 
 	while ( !m_elements.empty() )
 	{
@@ -159,7 +155,7 @@ FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int
 	if ( !is_artwork )
 		new_tex->load_static( name );
 
-	m_vm->flag_redraw();
+	flag_redraw();
 	m_texturePool.push_back( new_tex );
 	l.push_back( new_image );
 
@@ -170,7 +166,7 @@ FeImage *FePresent::add_clone( FeImage *o,
 			std::vector<FeBasePresentable *> &l )
 {
 	FeImage *new_image = new FeImage( o );
-	m_vm->flag_redraw();
+	flag_redraw();
 	l.push_back( new_image );
 	return new_image;
 }
@@ -183,7 +179,7 @@ FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h,
 	ASSERT( m_currentFont );
 	new_text->setFont( m_currentFont->get_font() );
 
-	m_vm->flag_redraw();
+	flag_redraw();
 	l.push_back( new_text );
 	return new_text;
 }
@@ -196,7 +192,7 @@ FeListBox *FePresent::add_listbox( int x, int y, int w, int h,
 	ASSERT( m_currentFont );
 	new_lb->setFont( m_currentFont->get_font() );
 
-	m_vm->flag_redraw();
+	flag_redraw();
 	m_listBox = new_lb;
 	l.push_back( new_lb );
 	return new_lb;
@@ -213,7 +209,7 @@ FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> 
 
 	new_image->texture_changed();
 
-	m_vm->flag_redraw();
+	flag_redraw();
 	l.push_back( new_image );
 	m_texturePool.push_back( new_surface );
 	return new_image;
@@ -287,7 +283,7 @@ void FePresent::set_layout_width( int w )
 	m_layoutSize.x = w;
 	m_layoutScale.x = (float) m_outputSize.x / w;
 	set_transforms();
-	m_vm->flag_redraw();
+	flag_redraw();
 }
 
 void FePresent::set_layout_height( int h )
@@ -295,7 +291,7 @@ void FePresent::set_layout_height( int h )
 	m_layoutSize.y = h;
 	m_layoutScale.y = (float) m_outputSize.y / h;
 	set_transforms();
-	m_vm->flag_redraw();
+	flag_redraw();
 }
 
 const FeFontContainer *FePresent::get_pooled_font( const std::string &n )
@@ -334,7 +330,7 @@ void FePresent::set_layout_font( const char *n )
 	{
 		m_layoutFontName = n;
 		m_currentFont = font;
-		m_vm->flag_redraw();
+		flag_redraw();
 	}
 }
 
@@ -347,7 +343,7 @@ void FePresent::set_base_rotation( int r )
 {
 	m_baseRotation = (FeSettings::RotationState)r;
 	set_transforms();
-	m_vm->flag_redraw();
+	flag_redraw();
 }
 
 int FePresent::get_base_rotation() const
@@ -359,7 +355,7 @@ void FePresent::set_toggle_rotation( int r )
 {
 	m_toggleRotation = (FeSettings::RotationState)r;
 	set_transforms();
-	m_vm->flag_redraw();
+	flag_redraw();
 }
 
 int FePresent::get_toggle_rotation() const
@@ -466,44 +462,44 @@ bool FePresent::handle_event( FeInputMap::Command c )
 	switch( c )
 	{
 	case FeInputMap::Down:
-		m_vm->on_transition( ToNewSelection, 1 );
+		on_transition( ToNewSelection, 1 );
 
 		m_feSettings->step_current_selection( 1 );
 		update( false );
 
-		m_vm->on_transition( FromOldSelection, -1 );
+		on_transition( FromOldSelection, -1 );
 		break;
 
 	case FeInputMap::Up:
-		m_vm->on_transition( ToNewSelection, -1 );
+		on_transition( ToNewSelection, -1 );
 
 		m_feSettings->step_current_selection( -1 );
 		update( false );
 
-		m_vm->on_transition( FromOldSelection, 1 );
+		on_transition( FromOldSelection, 1 );
 		break;
 
 	case FeInputMap::PageDown:
 		{
 			int step = get_page_size();
-			m_vm->on_transition( ToNewSelection, step );
+			on_transition( ToNewSelection, step );
 
 			m_feSettings->step_current_selection( step );
 			update( false );
 
-			m_vm->on_transition( FromOldSelection, -step );
+			on_transition( FromOldSelection, -step );
 		}
 		break;
 
 	case FeInputMap::PageUp:
 		{
 			int step = -get_page_size();
-			m_vm->on_transition( ToNewSelection, step );
+			on_transition( ToNewSelection, step );
 
 			m_feSettings->step_current_selection( step );
 			update( false );
 
-			m_vm->on_transition( FromOldSelection, -step );
+			on_transition( FromOldSelection, -step );
 		}
 		break;
 
@@ -515,12 +511,12 @@ bool FePresent::handle_event( FeInputMap::Command c )
 				int step = rand() % ls;
 				if ( step != 0 )
 				{
-					m_vm->on_transition( ToNewSelection, step );
+					on_transition( ToNewSelection, step );
 
 					m_feSettings->step_current_selection( step );
 					update( false );
 
-					m_vm->on_transition( FromOldSelection, -step );
+					on_transition( FromOldSelection, -step );
 				}
 			}
 		}
@@ -597,12 +593,12 @@ bool FePresent::handle_event( FeInputMap::Command c )
 
 			if ( step != 0 )
 			{
-				m_vm->on_transition( ToNewSelection, step );
+				on_transition( ToNewSelection, step );
 
 				m_feSettings->step_current_selection( step );
 				update( false );
 
-				m_vm->on_transition( FromOldSelection, -step );
+				on_transition( FromOldSelection, -step );
 			}
 		}
 		break;
@@ -649,7 +645,7 @@ int FePresent::update( bool new_list )
 
 void FePresent::load_screensaver()
 {
-	m_vm->on_transition( EndLayout, FromToScreenSaver );
+	on_transition( EndLayout, FromToScreenSaver );
 	clear();
 	set_transforms();
 	m_screenSaverActive=true;
@@ -661,13 +657,13 @@ void FePresent::load_screensaver()
 	std::string path, filename;
 	m_feSettings->get_screensaver_file( path, filename );
 
-	m_vm->on_new_layout( path, filename, m_feSettings->get_screensaver_config() );
+	on_new_layout( path, filename, m_feSettings->get_screensaver_config() );
 
 	//
 	// if there is no screen saver script then do a blank screen
 	//
 	update( true );
-	m_vm->on_transition( StartLayout, FromToNoValue );
+	on_transition( StartLayout, FromToNoValue );
 }
 
 void FePresent::load_layout( bool initial_load )
@@ -675,7 +671,7 @@ void FePresent::load_layout( bool initial_load )
 	int var = ( m_screenSaverActive ) ? FromToScreenSaver : FromToNoValue;
 
 	if ( !initial_load )
-		m_vm->on_transition( EndLayout, FromToNoValue );
+		on_transition( EndLayout, FromToNoValue );
 	else
 		var = FromToFrontend;
 
@@ -695,42 +691,32 @@ void FePresent::load_layout( bool initial_load )
 	std::string layout_file = m_feSettings->get_current_layout_file();
 
 	m_layoutTimer.restart();
-	m_vm->on_new_layout( layout_dir, layout_file,
+	on_new_layout( layout_dir, layout_file,
 		m_feSettings->get_current_layout_config() );
 
 	// make things usable if the layout is empty
 	//
 	if ( m_elements.empty() )
-	{
-		//
-		// Nothing loaded, default to a full screen list with the
-		// configured movie artwork as the background
-		//
-		FeImage *img = FeVM::cb_add_artwork( "", 0, 0,
-			m_layoutSize.x, m_layoutSize.y );
-
-		img->setColor( sf::Color( 100, 100, 100, 180 ) );
-		FeVM::cb_add_listbox( 0, 0, m_layoutSize.x, m_layoutSize.y );
-	}
+		init_with_default_layout();
 
 	std::cout << " - Loaded layout: " << layout_dir << " (" << layout_file << ")" << std::endl;
 
 	update( true );
 
-	m_vm->on_transition( ToNewList, FromToNoValue );
-	m_vm->on_transition( StartLayout, var );
+	on_transition( ToNewList, FromToNoValue );
+	on_transition( StartLayout, var );
 }
 
 void FePresent::update_to_new_list( int var )
 {
 	update( true );
-	m_vm->on_transition( ToNewList, var );
+	on_transition( ToNewList, var );
 }
 
 bool FePresent::tick()
 {
 	bool ret_val = false;
-	if ( m_vm->on_tick())
+	if ( on_tick())
 		ret_val = true;
 
 	if ( video_tick() )
@@ -797,7 +783,7 @@ void FePresent::on_stop_frontend()
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
 
-	m_vm->on_transition( EndLayout, FromToFrontend );
+	on_transition( EndLayout, FromToFrontend );
 }
 
 void FePresent::pre_run()
@@ -806,12 +792,12 @@ void FePresent::pre_run()
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
 
-	m_vm->on_transition( ToGame, FromToNoValue );
+	on_transition( ToGame, FromToNoValue );
 }
 
 void FePresent::post_run()
 {
-	m_vm->on_transition( FromGame, FromToNoValue );
+	on_transition( FromGame, FromToNoValue );
 
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
@@ -904,4 +890,36 @@ FeShader *FePresent::get_empty_shader()
 		m_emptyShader = new FeShader( FeShader::Empty, "", "" );
 
 	return m_emptyShader;
+}
+
+void FePresent::script_do_update( FeBasePresentable *bp )
+{
+	FePresent *fep = script_get_fep();
+	if ( fep )
+	{
+		bp->on_new_list( fep->m_feSettings,
+			fep->get_layout_scale_x(),
+			fep->get_layout_scale_y() );
+
+		bp->on_new_selection( fep->m_feSettings );
+
+		fep->flag_redraw();
+	}
+}
+
+void FePresent::script_do_update( FeBaseTextureContainer *tc )
+{
+	FePresent *fep = script_get_fep();
+	if ( fep )
+	{
+		tc->on_new_selection( fep->m_feSettings, fep->m_screenSaverActive );
+		fep->flag_redraw();
+	}
+}
+
+void FePresent::script_flag_redraw()
+{
+	FePresent *fep = script_get_fep();
+	if ( fep )
+		fep->flag_redraw();
 }

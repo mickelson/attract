@@ -260,11 +260,11 @@ int main(int argc, char *argv[])
 	FeWindow window( feSettings );
 	window.initial_create();
 
-	FePresent fePresent( &feSettings, defaultFont );
-	FeOverlay feOverlay( window, feSettings, fePresent );
-	FeVM feVM( feSettings, fePresent, window, feOverlay, soundsys.get_ambient_sound() );
+	FeVM feVM( feSettings, defaultFont, window, soundsys.get_ambient_sound() );
+	FeOverlay feOverlay( window, feSettings, feVM );
+	feVM.set_overlay( &feOverlay );
 
-	fePresent.load_layout( true );
+	feVM.load_layout( true );
 
 	bool exit_selected=false;
 
@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
 				feSettings.set_list(
 					feSettings.get_current_list_index() );
 
-				fePresent.load_layout();
+				feVM.load_layout();
 
 				soundsys.stop();
 				soundsys.update_volumes();
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
 					window.initial_create();
 				}
 			}
-			fePresent.reset_screen_saver();
+			feVM.reset_screen_saver();
 			config_mode=false;
 			redraw=true;
 		}
@@ -332,13 +332,13 @@ int main(int argc, char *argv[])
 		{
 			soundsys.stop();
 
-			fePresent.pre_run();
+			feVM.pre_run();
 
 			// window.run() returns true if our window has been closed while the other program was running
 			if ( !window.run() )
 				exit_selected = true;
 
-			fePresent.post_run();
+			feVM.post_run();
 
 			soundsys.sound_event( FeInputMap::EventGameReturn );
 			soundsys.play_ambient();
@@ -380,7 +380,7 @@ int main(int argc, char *argv[])
 					// a reset too)
 					//
 					if (( c == FeInputMap::LAST_COMMAND )
-							&& ( fePresent.reset_screen_saver() ))
+							&& ( feVM.reset_screen_saver() ))
 						redraw = true;
 					break;
 
@@ -438,11 +438,11 @@ int main(int argc, char *argv[])
 			//
 			// Now handle the command appropriately.
 			//
-			if ( feVM.handle_event( c, redraw ) )
+			if ( feVM.script_handle_event( c, redraw ) )
 				continue;
 
 			soundsys.sound_event( c );
-			if ( fePresent.handle_event( c ) )
+			if ( feVM.handle_event( c ) )
 				redraw = true;
 			else
 			{
@@ -473,9 +473,9 @@ int main(int argc, char *argv[])
 
 				case FeInputMap::ReplayLastGame:
 					if ( feSettings.select_last_launch() )
-						fePresent.load_layout();
+						feVM.load_layout();
 					else
-						fePresent.update_to_new_list();
+						feVM.update_to_new_list();
 
 					launch_game=true;
 					redraw=true;
@@ -488,7 +488,7 @@ int main(int argc, char *argv[])
 				case FeInputMap::ToggleMute:
 					feSettings.set_mute( !feSettings.get_mute() );
 					soundsys.update_volumes();
-					fePresent.toggle_mute();
+					feVM.toggle_mute();
 					break;
 
 				case FeInputMap::ScreenShot:
@@ -549,9 +549,9 @@ int main(int argc, char *argv[])
 						else
 						{
 							if ( feSettings.set_list( list_index ) )
-								fePresent.load_layout();
+								feVM.load_layout();
 							else
-								fePresent.update_to_new_list();
+								feVM.update_to_new_list();
 						}
 						redraw=true;
 					}
@@ -576,7 +576,7 @@ int main(int argc, char *argv[])
 						else
 						{
 							feSettings.set_current_selection( filter_index, -1 );
-							fePresent.update_to_new_list();
+							feVM.update_to_new_list();
 						}
 
 						redraw=true;
@@ -599,13 +599,13 @@ int main(int argc, char *argv[])
 									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ) ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
-									fePresent.update_to_new_list(); // our current display might have changed, so update
+									feVM.update_to_new_list(); // our current display might have changed, so update
 							}
 						}
 						else
 						{
 							if ( feSettings.set_current_fav( new_state ) )
-								fePresent.update_to_new_list(); // our current display might have changed, so update
+								feVM.update_to_new_list(); // our current display might have changed, so update
 						}
 						redraw = true;
 					}
@@ -689,8 +689,8 @@ int main(int argc, char *argv[])
 					{
 						case FeInputMap::Up: step = -step; break;
 						case FeInputMap::Down: break; // do nothing
-						case FeInputMap::PageUp: step *= -fePresent.get_page_size(); break;
-						case FeInputMap::PageDown: step *= fePresent.get_page_size(); break;
+						case FeInputMap::PageUp: step *= -feVM.get_page_size(); break;
+						case FeInputMap::PageDown: step *= feVM.get_page_size(); break;
 						default: break;
 					}
 
@@ -707,13 +707,13 @@ int main(int argc, char *argv[])
 							step = list_size - curr_sel - 1;
 					}
 
-					if (( step != 0 ) && ( feVM.handle_event( move_state, redraw ) == false ))
+					if (( step != 0 ) && ( feVM.script_handle_event( move_state, redraw ) == false ))
 					{
 						feVM.on_transition( ToNewSelection, step );
 
 						feSettings.step_current_selection( step );
 						redraw=true;
-						fePresent.update( false );
+						feVM.update( false );
 
 						feVM.on_transition( FromOldSelection, -step );
 					}
@@ -729,17 +729,17 @@ int main(int argc, char *argv[])
 		if ( feVM.on_tick() )
 			redraw=true;
 
-		if ( fePresent.video_tick() )
+		if ( feVM.video_tick() )
 			redraw=true;
 
-		if ( fePresent.saver_activation_check() )
+		if ( feVM.saver_activation_check() )
 			soundsys.sound_event( FeInputMap::ScreenSaver );
 
 		if ( redraw )
 		{
 			// begin drawing
 			window.clear();
-			window.draw( fePresent );
+			window.draw( feVM );
 			window.display();
 			redraw=false;
 		}
@@ -750,7 +750,7 @@ int main(int argc, char *argv[])
 	}
 
 	window.on_exit();
-	fePresent.on_stop_frontend();
+	feVM.on_stop_frontend();
 
 	if ( window.isOpen() )
 		window.close();
