@@ -159,6 +159,8 @@ public:
 	sf::Time time_base;
 	sf::Texture display_texture;
 	sf::Clock video_timer;
+	SwsContext *sws_ctx;
+	int sws_flags;
 
 	//
 	// The video thread sets display_frame and display_frame_ready when
@@ -290,6 +292,7 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		m_video_thread( &FeVideoImp::video_thread, this ),
 		m_parent( p ),
 		run_video_thread( false ),
+		sws_flags( SWS_FAST_BILINEAR ),
 		display_frame( NULL )
 {
 }
@@ -297,6 +300,9 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 FeVideoImp::~FeVideoImp()
 {
 	stop();
+
+	if (sws_ctx)
+		sws_freeContext(sws_ctx);
 }
 
 void FeVideoImp::play()
@@ -392,10 +398,13 @@ void FeVideoImp::preload()
 					return;
 				}
 
-				SwsContext *sws_ctx = sws_getContext(
+				if ( (codec_ctx->width & 0x7) || (codec_ctx->height & 0x7) )
+					sws_flags |= SWS_ACCURATE_RND;
+
+				sws_ctx = sws_getCachedContext( NULL,
 								codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
 								codec_ctx->width, codec_ctx->height, PIX_FMT_RGBA,
-								SWS_FAST_BILINEAR, NULL, NULL, NULL );
+								sws_flags, NULL, NULL, NULL );
 
 				if ( !sws_ctx )
 				{
@@ -416,7 +425,6 @@ void FeVideoImp::preload()
 
 				keep_going = false;
 
-				sws_freeContext( sws_ctx );
 				avpicture_free( my_pict );
 				av_free( my_pict );
 			}
@@ -447,11 +455,6 @@ void FeVideoImp::video_thread()
 	avpicture_alloc( my_pict, PIX_FMT_RGBA,
 							codec_ctx->width,
 							codec_ctx->height );
-
-	SwsContext *sws_ctx = sws_getContext(
-					codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
-					codec_ctx->width, codec_ctx->height, PIX_FMT_RGBA,
-					SWS_FAST_BILINEAR, NULL, NULL, NULL );
 
 	if ((!sws_ctx) || (!my_pict) )
 	{
@@ -611,7 +614,6 @@ the_end:
 	// shutdown the thread
 	//
 	at_end=true;
-	if (sws_ctx) sws_freeContext( sws_ctx );
 
 	if ( my_pict )
 	{
