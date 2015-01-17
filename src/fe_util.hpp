@@ -72,6 +72,10 @@ typedef bool (*output_callback_fn)( const char *, void * );
 //					doesn't care what this is.
 //		"block" - if true, don't return until program is done execution
 //					if false, "cb" and "opaque" are ignored
+//		"exit_hotkey" - hotkey that when pressed will force exit of program
+//					(use NULL for no hotkey checking)
+//		"joy_thresh" - joystick threshold, only used if exit_hotkey is mapped to
+//					a joystick
 //
 //	Returns true if program ran successfully
 //
@@ -79,7 +83,9 @@ bool run_program( const std::string &prog,
 	const::std::string &args,
 	output_callback_fn cb = NULL,
 	void *opaque=NULL,
-	bool block=true );
+	bool block=true,
+	const std::string &exit_hotkey="",
+	int joy_thresh=0 );
 
 //
 // Utility functions for file processing:

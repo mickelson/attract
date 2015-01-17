@@ -1233,7 +1233,14 @@ int FeSettings::run( int &minimum_run_seconds )
 	std::cout << "*** Running: " << command << " " << args << std::endl;
 
 	sf::Clock play_timer;
-	int retval = run_program( command, args );
+	int retval = run_program(
+				command,
+				args,
+				NULL,
+				NULL,
+				true,
+				emu->get_info( FeEmulatorInfo::Exit_hotkey ),
+				m_joy_thresh );
 
 	if ( m_track_usage )
 	{

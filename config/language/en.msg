@@ -29,6 +29,7 @@ _help_emu_system;The system identifier(s) for this emulator.  Multiple values ca
 _help_emu_info_source;Use "mame" if the emulator provides mame -listxml output, "mess" for mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, or "steam" to read from a steam installation.  "mess" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
 _help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
+_help_emu_exit_hotkey;Set a global hotkey to exit the emulator.  Attract-Mode will terminate the emulator process if this hotkey gets pressed
 _help_emu_delete;Delete the entry for this emulator
 _help_emu_sel;Configure emulator
 _help_emu_add;Add a new emulator

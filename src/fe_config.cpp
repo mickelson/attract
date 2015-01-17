@@ -255,6 +255,14 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 				ctx.back_opt().append_vlist( source_options );
 			}
+			else if ( i == FeEmulatorInfo::Exit_hotkey )
+			{
+				ctx.add_optl( Opt::RELOAD,
+						FeEmulatorInfo::indexDispStrings[i],
+						m_emulator->get_info( (FeEmulatorInfo::Index)i ),
+						help );
+				ctx.back_opt().opaque = 100;
+			}
 			else
 			{
 				ctx.add_optl( Opt::EDIT,
@@ -391,6 +399,32 @@ bool FeEmulatorEditMenu::on_option_select(
 
 			ctx.fe_settings.delete_emulator(
 					m_emulator->get_info(FeEmulatorInfo::Name) );
+		}
+		break;
+
+	case 100: // Hotkey input
+		{
+			std::string res;
+			FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
+			ctx.input_map_dialog( "Press Exit Hotkey", res, conflict );
+
+			bool save=false;
+			if ( o.get_value().compare( res ) != 0 )
+				save = true;
+			else
+			{
+				if ( ctx.confirm_dialog( "Clear Exit Hotkey?", res ))
+				{
+					res.clear();
+					save = true;
+				}
+			}
+
+			if ( save )
+			{
+				o.set_value( res );
+				ctx.save_req = true;
+			}
 		}
 		break;
 

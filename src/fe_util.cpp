@@ -22,6 +22,7 @@
 
 #include "fe_util.hpp"
 #include "fe_base.hpp"
+#include "fe_input.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -38,7 +39,6 @@
 #include <dirent.h>
 
 #include <SFML/Config.hpp>
-#include <SFML/System/Utf.hpp>
 
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -49,6 +49,7 @@
 #include <sys/wait.h>
 #include <pwd.h>
 #include <signal.h>
+#include <SFML/System/Sleep.hpp>
 #endif
 
 namespace {
@@ -642,8 +643,12 @@ bool run_program( const std::string &prog,
 	const::std::string &args,
 	output_callback_fn callback,
 	void *opaque,
-	bool block )
+	bool block,
+	const std::string &exit_hotkey,
+	int joy_thresh )
 {
+	const int POLL_FOR_EXIT_MS=100;
+
 	std::string comstr( prog );
 	comstr += " ";
 	comstr += args;
@@ -747,11 +752,14 @@ bool run_program( const std::string &prog,
 		}
 	}
 
+	DWORD timeout = exit_hotkey.empty() ? INFINITE : POLL_FOR_EXIT_MS;
+	FeInputSource exit_is( exit_hotkey );
+
 	bool keep_wait=block;
 	while (keep_wait)
 	{
 		switch (MsgWaitForMultipleObjects(1, &pi.hProcess,
-						FALSE, INFINITE, QS_ALLINPUT))
+						FALSE, timeout, QS_ALLINPUT))
 		{
 		case WAIT_OBJECT_0:
 			keep_wait=false;
@@ -763,6 +771,16 @@ bool run_program( const std::string &prog,
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
+			}
+			break;
+
+		case WAIT_TIMEOUT:
+			// We should only ever get here if an exit_hotkey was provided
+			//
+			if ( exit_is.get_current_state( joy_thresh ) )
+			{
+				TerminateProcess( pi.hProcess, 0 );
+				keep_wait=false;
 			}
 			break;
 
@@ -856,9 +874,24 @@ bool run_program( const std::string &prog,
 		if ( block )
 		{
 			int status;
+			int opt = exit_hotkey.empty() ? 0 : WNOHANG; // option for waitpid.  0= wait for process to complete, WNOHANG=return right away
+			FeInputSource exit_is( exit_hotkey );
+
 			do
 			{
-				waitpid( pid, &status, 0 ); // wait for child process to complete
+				if ( waitpid( pid, &status, opt ) == 0 )
+				{
+					// waitpid should only return 0 if WNOHANG is used and the child is still running, so we
+					// should only ever get here if there is an exit_hotkey provided
+					//
+					if ( exit_is.get_current_state( joy_thresh ) )
+					{
+						kill( pid, SIGTERM );
+						break; // leave do/while loop
+					}
+
+					sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
+				}
 			} while ( !WIFEXITED( status ) && !WIFSIGNALED( status ) );
 		}
 	}

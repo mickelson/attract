@@ -342,6 +342,7 @@ public:
 		Info_source,
 		Import_extras,
 		Minimum_run_time,
+		Exit_hotkey,
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
@@ -387,6 +388,7 @@ private:
 	std::string m_executable;
 	std::string m_command;
 	std::string m_info_source;
+	std::string m_exit_hotkey;
 
 	std::vector<std::string> m_paths;
 	std::vector<std::string> m_extensions;

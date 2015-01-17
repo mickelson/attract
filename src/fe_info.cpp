@@ -1280,6 +1280,7 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"info_source",
 	"import_extras",
 	"minimum_run_time",
+	"exit_hotkey",
 	NULL
 };
 
@@ -1294,6 +1295,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Info Source/Scraper",
 	"Additional Import File(s)",
 	"Minimum Run Time",
+	"Exit Hotkey",
 	NULL
 };
 
@@ -1329,6 +1331,8 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 		return vector_to_string( m_import_extras );
 	case Minimum_run_time:
 		return as_str( m_min_run );
+	case Exit_hotkey:
+		return m_exit_hotkey;
 	default:
 		return "";
 	}
@@ -1365,6 +1369,8 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 	case Minimum_run_time:
 		m_min_run = as_int( s );
 		break;
+	case Exit_hotkey:
+		m_exit_hotkey = s; break;
 	default:
 		break;
 	}
