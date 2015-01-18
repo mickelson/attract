@@ -122,7 +122,9 @@ FeMameXMLParser::FeMameXMLParser(
 	: FeXMLParser( u, d ),
 	m_romlist( romlist ),
 	m_count( 0 ),
-	m_displays( 0 )
+	m_displays( 0 ),
+	m_chd( false ),
+	m_mechanical( false )
 {
 }
 
@@ -145,6 +147,8 @@ void FeMameXMLParser::start_element(
 					m_itr = (*itr).second;
 					m_collect_data=true;
 					m_displays=0;
+					m_chd=false;
+					m_mechanical=false;
 					m_keep_rom=true;
 				}
 				else
@@ -170,6 +174,11 @@ void FeMameXMLParser::start_element(
 					(*m_itr).set_info( FeRomInfo::Cloneof, attribute[i+1] );
 				else if ( strcmp( attribute[i], "romof" ) == 0 )
 					(*m_itr).set_info( FeRomInfo::AltRomname, attribute[i+1] );
+				else if (( strcmp( attribute[i], "ismechanical" ) == 0 )
+					&& ( strcmp( attribute[i+1], "yes" ) == 0 ))
+				{
+					m_mechanical = true;
+				}
 			}
 		}
 	}
@@ -257,6 +266,10 @@ void FeMameXMLParser::start_element(
 			}
 			(*m_itr).set_info( FeRomInfo::Control, old_type + type );
 		}
+		else if ( strcmp( element, "disk" ) == 0 )
+		{
+			m_chd=true;
+		}
 		else if (( strcmp( element, "description" ) == 0 )
 				|| ( strcmp( element, "year" ) == 0 )
 				|| ( strcmp( element, "manufacturer" ) == 0 ))
@@ -277,8 +290,27 @@ void FeMameXMLParser::end_element( const char *element )
 
 			if ( !m_keep_rom )
 				m_discarded.push_back( m_itr );
+			else
+			{
+				//
+				// Construct the extra info now
+				//
+				std::string extra;
+				if ( m_chd )
+					extra += "chd";
 
-			(*m_itr).set_info( FeRomInfo::DisplayCount, as_str( m_displays ) );
+				if ( m_mechanical )
+				{
+					if ( !extra.empty() )
+						extra += ",";
+
+					extra += "mechanical";
+				}
+
+				(*m_itr).set_info( FeRomInfo::Extra, extra );
+				(*m_itr).set_info( FeRomInfo::DisplayCount, as_str( m_displays ) );
+			}
+
 			m_count++;
 
 			int percent = m_count * 100 / m_romlist.size();

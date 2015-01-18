@@ -85,6 +85,8 @@ private:
 	int m_percent;
 	int m_displays;
 	bool m_collect_data;
+	bool m_chd;
+	bool m_mechanical;
 
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
