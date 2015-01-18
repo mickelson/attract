@@ -292,6 +292,7 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		m_video_thread( &FeVideoImp::video_thread, this ),
 		m_parent( p ),
 		run_video_thread( false ),
+		sws_ctx( NULL ),
 		sws_flags( SWS_FAST_BILINEAR ),
 		display_frame( NULL )
 {
