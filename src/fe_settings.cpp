@@ -1184,7 +1184,9 @@ int FeSettings::run( int &minimum_run_seconds )
 			// Found the rom to run
 			//
 			rom_path = path;
-			romfilename = in_list.front();
+			for ( std::vector<std::string>::const_iterator i = in_list.begin(); i != in_list.end(); ++i )
+				if ( romfilename.empty() || romfilename.length() > i->length() )
+					romfilename = *i;
 			found = true;
 			break;
 		}
