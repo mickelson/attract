@@ -1110,7 +1110,11 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					break;
 
 				case sf::Keyboard::V:
+#ifdef SFML_SYSTEM_MACOS
+					if ( ev.key.system )
+#else
 					if ( ev.key.control )
+#endif
 					{
 						std::basic_string<sf::Uint32> temp = clipboard_get_content();
 						str.insert( cursor_pos, temp.c_str() );

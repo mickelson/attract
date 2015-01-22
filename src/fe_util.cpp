@@ -52,6 +52,10 @@
 #include <SFML/System/Sleep.hpp>
 #endif
 
+#ifdef SFML_SYSTEM_MACOS
+#include "fe_util_osx.hpp"
+#endif
+
 namespace {
 
 	void str_from_c( std::string &s, const char *c )
@@ -914,6 +918,10 @@ std::string name_with_brackets_stripped( const std::string &name )
 std::basic_string<sf::Uint32> clipboard_get_content()
 {
 	std::basic_string<sf::Uint32> retval;
+
+#ifdef SFML_SYSTEM_MACOS
+	retval = osx_clipboard_get_content();
+#endif
 
 #ifdef SFML_SYSTEM_WINDOWS
 	if (!IsClipboardFormatAvailable(CF_UNICODETEXT))

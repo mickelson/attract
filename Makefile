@@ -111,25 +111,27 @@ _OBJ =\
 	fe_vm.o \
 	main.o
 
-#
-# Test OS to set some defaults
-#
-ifeq ($(OS),Windows_NT)
+ifneq ($(FE_WINDOWS_COMPILE),1)
  #
- # Windows
+ # Test OS to set some defaults
  #
- FE_WINDOWS_COMPILE=1
-else
- UNAME = $(shell uname -a)
- ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+ ifeq ($(OS),Windows_NT)
   #
-  # Mac OS X
+  # Windows
   #
-  _DEP += fe_util_osx.hpp
-  _OBJ += fe_util_osx.o
-  LIBS += -framework Cocoa
+  FE_WINDOWS_COMPILE=1
+ else
+  UNAME = $(shell uname -a)
+  ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+   #
+   # Mac OS X
+   #
+   _DEP += fe_util_osx.hpp
+   _OBJ += fe_util_osx.o
+   LIBS += -framework Cocoa
 
-  FE_MACOSX_COMPILE=1
+   FE_MACOSX_COMPILE=1
+  endif
  endif
 endif
 

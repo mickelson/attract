@@ -23,9 +23,17 @@
 #ifndef FE_UTIL_OSX_HPP
 #define FE_UTIL_OSX_HPP
 
+#include <string>
+#include <SFML/Config.hpp>
+
 //
 // Hide the OS X menu bar.
 //
 void osx_hide_menu_bar();
+
+//
+// Get a string from the OS X clipboard.
+//
+std::basic_string<sf::Uint32> osx_clipboard_get_content();
 
 #endif
