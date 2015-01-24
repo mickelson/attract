@@ -180,6 +180,14 @@ bool FeWindow::run()
 {
 	int min_run;
 
+	sf::Vector2i reset_pos = sf::Mouse::getPosition();
+
+	sf::Vector2i hide_pos = getPosition();
+	hide_pos.x += getSize().x;
+	hide_pos.y += getSize().y;
+
+	sf::Mouse::setPosition( hide_pos );
+
 #ifdef SFML_SYSTEM_LINUX
 	//
 	// On Linux, fullscreen mode is confirmed to block the emulator
@@ -230,6 +238,8 @@ bool FeWindow::run()
 
 		sf::sleep( sf::milliseconds( 250 ) );
 	}
+
+	sf::Mouse::setPosition( reset_pos );
 
 	return false;
 }
