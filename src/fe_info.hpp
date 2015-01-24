@@ -60,6 +60,7 @@ public:
 		Tags,
 		PlayedCount,
 		PlayedTime,
+		FileIsAvailable,
 		LAST_INDEX
 	};
 
@@ -271,17 +272,22 @@ private:
 	std::deque< FeFilter > m_filters;
 };
 
+class FeEmulatorInfo;
+
 class FeRomList : public FeBaseConfigurable
 {
 private:
 	std::deque<FeRomInfo> m_list;
 	std::vector<std::vector<FeRomInfo * > > m_filtered_list;
+	std::vector<FeEmulatorInfo> m_emulators;
 
 	std::map<std::string, bool> m_tags; // bool is flag of whether the tag has been changed
 	std::string m_user_path;
 	std::string m_romlist_name;
+	const std::string &m_config_path;
 	bool m_fav_changed;
 	bool m_tags_changed;
+	bool m_availability_checked;
 
 	FeRomList( const FeRomList & );
 	FeRomList &operator=( const FeRomList & );
@@ -294,7 +300,7 @@ private:
 	void save_tags() const;
 
 public:
-	FeRomList();
+	FeRomList( const std::string &config_path );
 	~FeRomList();
 
 	void init_as_empty_list();
@@ -322,6 +328,13 @@ public:
 	FeRomInfo &lookup( int filter_idx, int idx) { return *(m_filtered_list[filter_idx][idx]); };
 
 	std::deque<FeRomInfo> &get_list() { return m_list; };
+
+	void get_file_availability();
+
+	FeEmulatorInfo *get_emulator( const std::string & );
+	FeEmulatorInfo *create_emulator( const std::string & );
+	void delete_emulator( const std::string & );
+	void clear_emulators() { m_emulators.clear(); }
 };
 
 
@@ -379,6 +392,8 @@ public:
 								const std::string &filename );
 
 	void save( const std::string &filename ) const;
+
+	void gather_rom_names( std::vector<std::string> &name_list ) const;
 
 private:
 	std::string vector_to_string( const std::vector< std::string > &vec ) const;

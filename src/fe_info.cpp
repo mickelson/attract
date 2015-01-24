@@ -62,6 +62,7 @@ const char *FeRomInfo::indexStrings[] =
 	"Tags",
 	"PlayedCount",
 	"PlayedTime",
+	"FileIsAvailable",
 	NULL
 };
 
@@ -829,9 +830,11 @@ void FeListInfo::save( std::ofstream &f ) const
 		(*itr).save( f );
 }
 
-FeRomList::FeRomList()
-	: m_fav_changed( false ),
-	m_tags_changed( false )
+FeRomList::FeRomList( const std::string &config_path )
+	: m_config_path( config_path ),
+	m_fav_changed( false ),
+	m_tags_changed( false ),
+	m_availability_checked( false )
 {
 }
 
@@ -846,6 +849,10 @@ void FeRomList::init_as_empty_list()
 	m_list.clear();
 	m_filtered_list.clear();
 	m_filtered_list.push_back( std::vector< FeRomInfo *>()  ); // there always has to be at least one filter
+	m_tags.clear();
+	m_availability_checked = false;
+	m_fav_changed=false;
+	m_tags_changed=false;
 }
 
 bool FeRomList::load_romlist( const std::string &path,
@@ -859,6 +866,7 @@ bool FeRomList::load_romlist( const std::string &path,
 
 	m_list.clear();
 	m_filtered_list.clear();
+	m_availability_checked = false;
 
 	bool retval = FeBaseConfigurable::load_from_file(
 			path + m_romlist_name + FE_ROMLIST_FILE_EXTENSION, ";" );
@@ -971,6 +979,9 @@ bool FeRomList::load_romlist( const std::string &path,
 		{
 			if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
 				m_filtered_list[i].reserve( f->get_size() );
+
+			if ( f->test_for_target( FeRomInfo::FileIsAvailable ) )
+				get_file_availability();
 
 			f->init();
 			for ( std::deque< FeRomInfo >::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
@@ -1268,6 +1279,154 @@ bool FeRomList::fix_filters( FeListInfo &list_info, FeRomInfo::Index target )
 	}
 
 	return retval;
+}
+
+void FeRomList::get_file_availability()
+{
+	if ( m_availability_checked )
+		return;
+
+	m_availability_checked = true;
+
+	std::map<std::string,std::vector<FeRomInfo *> > emu_map;
+
+	for ( std::deque<FeRomInfo>::iterator itr=m_list.begin(); itr != m_list.end(); ++itr )
+		emu_map[ ((*itr).get_info( FeRomInfo::Emulator )) ].push_back( &(*itr) );
+
+	// figure out what roms we have for each emulator
+	for ( std::map<std::string,std::vector<FeRomInfo *> >::iterator ite=emu_map.begin();
+					ite != emu_map.end(); ++ite )
+	{
+		FeEmulatorInfo *emu = get_emulator( (*ite).first );
+		if ( emu )
+		{
+			std::vector<std::string> name_vector;
+			emu->gather_rom_names( name_vector );
+
+			std::set<std::string> name_set;
+			for ( std::vector<std::string>::iterator itv=name_vector.begin(); itv!=name_vector.end(); ++itv )
+				name_set.insert( *itv );
+
+			for ( std::vector<FeRomInfo *>::iterator itp=(*ite).second.begin(); itp!=(*ite).second.end(); ++itp )
+			{
+				if ( name_set.find( (*itp)->get_info( FeRomInfo::Romname ) ) != name_set.end() )
+					(*itp)->set_info( FeRomInfo::FileIsAvailable, "1" );
+			}
+		}
+	}
+}
+
+FeEmulatorInfo *FeRomList::get_emulator( const std::string & emu )
+{
+	if ( emu.empty() )
+		return NULL;
+
+	// Check if we already haved loaded the matching emulator object
+	//
+	for ( std::vector<FeEmulatorInfo>::iterator ite=m_emulators.begin();
+			ite != m_emulators.end(); ++ite )
+	{
+		if ( emu.compare( (*ite).get_info( FeEmulatorInfo::Name ) ) == 0 )
+			return &(*ite);
+	}
+
+	// Emulator not loaded yet, load it now
+	//
+	std::string filename = m_config_path;
+	filename += FE_EMULATOR_SUBDIR;
+	filename += emu;
+	filename += FE_EMULATOR_FILE_EXTENSION;
+
+	FeEmulatorInfo new_emu( emu );
+	if ( new_emu.load_from_file( filename ) )
+	{
+		m_emulators.push_back( new_emu );
+		return &(m_emulators.back());
+	}
+
+	// Could not find emulator config
+	return NULL;
+}
+
+// NOTE: this function is implemented in fe_settings.cpp
+bool internal_resolve_config_file(
+						const std::string &config_path,
+						std::string &result,
+						const char *subdir,
+						const std::string &name  );
+
+
+FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu )
+{
+	// If an emulator with the given name already exists we return it
+	//
+	FeEmulatorInfo *tmp = get_emulator( emu );
+	if ( tmp != NULL )
+		return tmp;
+
+	//
+	// Fill in with default values if there is a "default" emulator
+	//
+	FeEmulatorInfo new_emu( emu );
+
+	std::string defaults_file;
+	if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
+	{
+		new_emu.load_from_file( defaults_file );
+
+		//
+		// Find and replace the [emulator] token, replace with the specified
+		// name.  This is only done in the path fields.  It is not done for
+		// the FeEmulator::Command field.
+		//
+		const char *EMU_TOKEN = "[emulator]";
+
+		std::string temp = new_emu.get_info( FeEmulatorInfo::Rom_path );
+		if ( perform_substitution( temp, EMU_TOKEN, emu ) )
+			new_emu.set_info( FeEmulatorInfo::Rom_path, temp );
+
+		std::vector<std::pair<std::string,std::string> > al;
+		std::vector<std::pair<std::string,std::string> >::iterator itr;
+		new_emu.get_artwork_list( al );
+		for ( itr=al.begin(); itr!=al.end(); ++itr )
+		{
+			std::string temp = (*itr).second;
+			if ( perform_substitution( temp, EMU_TOKEN, emu ) )
+			{
+				new_emu.delete_artwork( (*itr).first );
+				new_emu.add_artwork( (*itr).first, temp );
+			}
+		}
+	}
+
+	m_emulators.push_back( new_emu );
+	return &(m_emulators.back());
+}
+
+void FeRomList::delete_emulator( const std::string & emu )
+{
+	//
+	// Delete file
+	//
+	std::string path = m_config_path;
+	path += FE_EMULATOR_SUBDIR;
+	path += emu;
+	path += FE_EMULATOR_FILE_EXTENSION;
+
+	delete_file( path );
+
+	//
+	// Delete from our list if it has been loaded
+	//
+	for ( std::vector<FeEmulatorInfo>::iterator ite=m_emulators.begin();
+			ite != m_emulators.end(); ++ite )
+	{
+		if ( emu.compare( (*ite).get_info( FeEmulatorInfo::Name ) ) == 0 )
+		{
+			m_emulators.erase( ite );
+			break;
+		}
+	}
 }
 
 const char *FeEmulatorInfo::indexStrings[] =
@@ -1621,6 +1780,23 @@ void FeEmulatorInfo::string_to_vector(
 			vec.push_back( val );
 
 	} while ( pos < input.size() );
+}
+
+void FeEmulatorInfo::gather_rom_names( std::vector<std::string> &name_list ) const
+{
+	for ( std::vector<std::string>::const_iterator itr=m_paths.begin(); itr!=m_paths.end(); ++itr )
+	{
+		std::string path = clean_path( *itr, true );
+
+		for ( std::vector<std::string>::const_iterator ite = m_extensions.begin();
+						ite != m_extensions.end(); ++ite )
+		{
+			if ( (*ite).compare( FE_DIR_TOKEN ) == 0 )
+				get_subdirectories( name_list, path );
+			else
+				get_basename_from_extension( name_list, path, (*ite), true );
+		}
+	}
 }
 
 const char *FeScriptConfigurable::indexString = "param";

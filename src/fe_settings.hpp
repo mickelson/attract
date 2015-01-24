@@ -32,13 +32,8 @@ extern const char *FE_ART_EXTENSIONS[];
 extern const char *FE_CFG_FILE;
 
 extern const char *FE_ROMLIST_SUBDIR;
-extern const char *FE_EMULATOR_SUBDIR;
-
-extern const char *FE_EMULATOR_FILE_EXTENSION;
 extern const char *FE_LAYOUT_FILE_BASE;
 extern const char *FE_LAYOUT_FILE_EXTENSION;
-
-extern const char *FE_DIR_TOKEN;
 
 extern const char *FE_CFG_YES_STR;
 extern const char *FE_CFG_NO_STR;
@@ -99,7 +94,6 @@ private:
 
 	std::vector<std::string> m_font_paths;
 	std::vector<FeListInfo> m_lists;
-	std::vector<FeEmulatorInfo> m_emulators;
 	std::vector<FePlugInfo> m_plugins;
 	std::vector<FeLayoutInfo> m_layout_params;
 	FeRomList m_rl;
@@ -141,9 +135,6 @@ private:
 			std::vector<std::string> &ll,
 			const std::string &extension,
 			const char *subdir ) const;
-
-	bool internal_resolve_config_file(
-			std::string &result, const char *subdir, const std::string &config_file  ) const;
 
 	void internal_load_language( const std::string &lang );
 
@@ -195,7 +186,7 @@ public:
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
-	int run( int &minimum_run_seconds ); // run current selection
+	void run( int &minimum_run_seconds ); // run current selection
 	int exit_command() const; // run configured exit command (if any)
 
 	void toggle_layout();
@@ -208,8 +199,8 @@ public:
 	void get_current_sort( FeRomInfo::Index &idx, bool &rev, int &limit );
 
 	const std::string &get_current_list_title() const;
-	const std::string &get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index ) const;
-	const std::string &get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index ) const;
+	const std::string &get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index );
+	const std::string &get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index );
 	bool hide_brackets() const { return m_hide_brackets; }
 	bool autolaunch_last_game() const { return m_autolaunch_last_game; }
 
@@ -274,7 +265,6 @@ public:
 	typedef bool (*UiUpdate) ( void *, int );
 	bool build_romlist( const std::string &emu_name, UiUpdate, void *, int & );
 
-	FeEmulatorInfo *get_current_emulator();
 	FeEmulatorInfo *get_emulator( const std::string & );
 	FeEmulatorInfo *create_emulator( const std::string & );
 	void delete_emulator( const std::string & );

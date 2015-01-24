@@ -262,6 +262,8 @@ Parameters:
       - `[Status]` - the status for the selected game
       - `[DisplayCount]` - the number of displays for the selected game
       - `[DisplayType]` - the display type for the selected game
+      - `[AltRomname]` - the alternative romname for the selected game
+      - `[AltTitle]` - the alternative title for the selected game
       - `[PlayedTime]` - the amount of time the selected game has been
         played
       - `[PlayedCount]` - the number of times the selected game has been
@@ -523,8 +525,14 @@ Parameters:
       - `Info.Status`
       - `Info.DisplayCount`
       - `Info.DisplayType`
+      - `Info.AltRomname`
+      - `Info.AltTitle`
+      - `Info.Extra`
       - `Info.Favourite`
       - `Info.Tags`
+      - `Info.PlayedCount`
+      - `Info.PlayedTime`
+      - `Info.FileIsAvailable`
       - `Info.System`
    * index_offset - the offset (from the current selection) of the game to
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
@@ -953,8 +961,14 @@ Attributes:
       - `Info.Status`
       - `Info.DisplayCount`
       - `Info.DisplayType`
+      - `Info.AltRomname`
+      - `Info.AltTitle`
+      - `Info.Extra`
       - `Info.Favourite`
       - `Info.Tags`
+      - `Info.PlayedCount`
+      - `Info.PlayedTime`
+      - `Info.FileIsAvailable`
    * `reverse_order` - [bool] Will be equal to true if the list order has been
      reversed.
    * `list_limit` - Get the value of the list limit applied to the current
@@ -1161,6 +1175,8 @@ Attributes:
       - `[Status]` - the status for the selected game
       - `[DisplayCount]` - the number of displays for the selected game
       - `[DisplayType]` - the display type for the selected game
+      - `[AltRomname]` - the alternative romname for the selected game
+      - `[AltTitle]` - the alternative title for the selected game
       - `[PlayedTime]` - the amount of time the selected game has been
         played
       - `[PlayedCount]` - the number of times the selected game has been

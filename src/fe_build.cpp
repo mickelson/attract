@@ -44,45 +44,21 @@ namespace {
 void build_basic_romlist( const FeEmulatorInfo &emulator,
 				std::list<FeRomInfo> &romlist )
 {
-	const std::vector<std::string> &paths = emulator.get_paths();
-	std::vector<std::string>::const_iterator itr, ite, its;
+	std::vector<std::string> names_list;
+	emulator.gather_rom_names( names_list );
 
-	const std::vector<std::string> &extensions = emulator.get_extensions();
-
-	for ( itr = paths.begin(); itr != paths.end(); ++itr )
+	for ( std::vector<std::string>::const_iterator its=names_list.begin(); its != names_list.end(); ++its )
 	{
-		std::string path = clean_path( *itr, true );
-		int count=0;
+		FeRomInfo new_rom;
+		new_rom.set_info( FeRomInfo::Romname, (*its) );
+		new_rom.set_info( FeRomInfo::Title, (*its) );
+		new_rom.set_info( FeRomInfo::Emulator, emulator.get_info(
+														FeEmulatorInfo::Name ));
 
-		for ( ite = extensions.begin(); ite != extensions.end(); ++ite )
-		{
-			std::vector<std::string> base_list;
-			if ( (*ite).compare( FE_DIR_TOKEN ) == 0 )
-				get_subdirectories( base_list, path );
-			else
-				get_basename_from_extension( base_list, path, (*ite), true );
-
-			for ( its=base_list.begin(); its != base_list.end(); ++its )
-			{
-				FeRomInfo new_rom;
-				new_rom.set_info( FeRomInfo::Romname, (*its) );
-				new_rom.set_info( FeRomInfo::Title, (*its) );
-				new_rom.set_info( FeRomInfo::Emulator, emulator.get_info(
-																FeEmulatorInfo::Name ));
-
-				romlist.push_back( new_rom );
-				count++;
-			}
-		}
-
-		std::cout << "Found " << count
-			<< " files with rom extension(s):";
-
-		for ( ite=extensions.begin(); ite != extensions.end(); ++ite )
-			std::cout << " " << (*ite);
-
-		std::cout << ".  Directory: " << path << std::endl;
+		romlist.push_back( new_rom );
 	}
+
+	std::cout << "Found " << names_list.size() << " files." << std::endl;
 }
 
 std::string url_escape( const std::string &raw )
@@ -549,7 +525,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 		if ( (*itr).file_name.empty() )
 		{
 			// Build romlist task
-			FeEmulatorInfo *emu = get_emulator( (*itr).emulator_name );
+			FeEmulatorInfo *emu = m_rl.get_emulator( (*itr).emulator_name );
 			if ( emu == NULL )
 			{
 				std::cout << "Error: Invalid -build-rom-list target: " <<  (*itr).emulator_name
@@ -597,7 +573,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			{
 				// Attract-Mode format list
 				//
-				FeRomList temp_list;
+				FeRomList temp_list( m_config_path );
 				temp_list.load_from_file( (*itr).file_name, ";" );
 
 				std::deque<FeRomInfo> &entries = temp_list.get_list();
@@ -632,7 +608,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			std::cout << "[Import " << (*itr).file_name << "] - Imported " << romlist.size() << " entries."
 				<< std::endl;
 
-			FeEmulatorInfo *emu = get_emulator( emu_name );
+			FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
 			if ( emu == NULL )
 			{
 				std::cout << "Warning: The emulator specified with --import-rom-list was not found: "
@@ -674,7 +650,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 
 bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void *uid, int &size )
 {
-	FeEmulatorInfo *emu = get_emulator( emu_name );
+	FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
 	if ( emu == NULL )
 		return false;
 

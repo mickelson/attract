@@ -30,7 +30,12 @@ extern const char *FE_COPYRIGHT;
 extern const char *FE_VERSION;
 extern const int FE_VERSION_NUM;
 extern const char *FE_WHITESPACE;
+extern const char *FE_DIR_TOKEN;
 extern const char *FE_DEFAULT_ARTWORK;
+
+extern const char *FE_EMULATOR_SUBDIR;
+extern const char *FE_EMULATOR_FILE_EXTENSION;
+extern const char *FE_EMULATOR_DEFAULT;
 
 class FeBaseConfigurable
 {

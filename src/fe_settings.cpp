@@ -102,25 +102,54 @@ const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
 const char *FE_PLUGIN_FILE				= "plugin.nut";
 const char *FE_LAYOUT_FILE_BASE		= "layout";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
-const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
 const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
-const char *FE_EMULATOR_SUBDIR		= "emulators/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
 const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_MODULES_SUBDIR			= "modules/";
 const char *FE_STATS_SUBDIR			= "stats/";
-const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
 const char *FE_LIST_DEFAULT			= "default-list.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
-const char *FE_DIR_TOKEN				= "<DIR>";
 const char *FE_CFG_YES_STR				= "yes";
 const char *FE_CFG_NO_STR				= "no";
 
 const std::string FE_EMPTY_STRING;
+
+bool internal_resolve_config_file(
+						const std::string &config_path,
+						std::string &result,
+						const char *subdir,
+						const std::string &name  )
+{
+	std::string path;
+	path = config_path;
+	if ( subdir ) path += subdir;
+	path += name;
+
+	if ( file_exists( path ) )
+	{
+		result = path;
+		return true;
+	}
+
+	if ( FE_DATA_PATH != NULL )
+	{
+		path = FE_DATA_PATH;
+		if ( subdir ) path += subdir;
+		path += name;
+
+		if ( file_exists( path ) )
+		{
+			result = path;
+			return true;
+		}
+	}
+
+	return false;
+}
 
 const char *FeSettings::windowModeTokens[] =
 {
@@ -156,7 +185,8 @@ const char *FeSettings::filterWrapDispTokens[] =
 
 FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
-	:  m_inputmap(),
+	:  m_rl( config_path ),
+	m_inputmap(),
 	m_current_list( -1 ),
 	m_current_config_object( NULL ),
 	m_ssaver_time( 600 ),
@@ -191,7 +221,7 @@ void FeSettings::clear()
 	m_current_list = -1;
 
 	m_lists.clear();
-	m_emulators.clear();
+	m_rl.clear_emulators();
 	m_plugins.clear();
 }
 
@@ -653,7 +683,7 @@ const std::string &FeSettings::get_current_list_title() const
 	return m_lists[m_current_list].get_info( FeListInfo::Name );
 }
 
-const std::string &FeSettings::get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index ) const
+const std::string &FeSettings::get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index )
 {
 	int filter_index = get_filter_index_from_offset( filter_offset );
 	return get_rom_info_absolute(
@@ -662,10 +692,14 @@ const std::string &FeSettings::get_rom_info( int filter_offset, int rom_offset, 
 				index );
 }
 
-const std::string &FeSettings::get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index ) const
+const std::string &FeSettings::get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index )
 {
 	if ( m_rl.is_filter_empty( filter_index ) )
 		return FE_EMPTY_STRING;
+
+	// Make sure we have file availability information if user is requesting it.
+	if ( index == FeRomInfo::FileIsAvailable )
+		m_rl.get_file_availability();
 
 	return m_rl.lookup( filter_index, rom_index ).get_info( index );
 }
@@ -673,7 +707,7 @@ const std::string &FeSettings::get_rom_info_absolute( int filter_index, int rom_
 void FeSettings::get_screensaver_file( std::string &path, std::string &file ) const
 {
 	std::string temp;
-	if ( internal_resolve_config_file( temp, FE_LAYOUT_SUBDIR, FE_SCREENSAVER_FILE ) )
+	if ( internal_resolve_config_file( m_config_path, temp, FE_LAYOUT_SUBDIR, FE_SCREENSAVER_FILE ) )
 	{
 		size_t len = temp.find_last_of( "/\\" );
 		ASSERT( len != std::string::npos );
@@ -732,7 +766,7 @@ std::string FeSettings::get_current_layout_dir() const
 std::string FeSettings::get_layout_dir( const std::string &layout_name ) const
 {
 	std::string temp;
-	internal_resolve_config_file( temp, FE_LAYOUT_SUBDIR, layout_name + "/" );
+	internal_resolve_config_file( m_config_path, temp, FE_LAYOUT_SUBDIR, layout_name + "/" );
 	return temp;
 }
 
@@ -1096,7 +1130,7 @@ bool FeSettings::get_sound_file( FeInputMap::Command c, std::string &s, bool ful
 	{
 		if ( full_path )
 		{
-			if ( !internal_resolve_config_file( s, FE_SOUND_SUBDIR, filename ) )
+			if ( !internal_resolve_config_file( m_config_path, s, FE_SOUND_SUBDIR, filename ) )
 			{
 				std::cerr << "Sound file not found: " << filename << std::endl;
 				return false;
@@ -1121,24 +1155,28 @@ void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 	internal_gather_config_files( ll, "", FE_SOUND_SUBDIR );
 }
 
-int FeSettings::run( int &minimum_run_seconds )
+void FeSettings::run( int &minimum_run_seconds )
 {
-	std::string command, args, rom_path, extension, romfilename;
-	const FeEmulatorInfo *emu = get_current_emulator();
-
 	int filter_index = get_current_filter_index();
 
-	if (( emu == NULL ) || (m_rl.is_filter_empty( filter_index )))
-		return -1;
+	if ( m_rl.is_filter_empty( filter_index ) )
+		return;
 
+	int rom_index = get_rom_index( filter_index, 0 );
+	FeRomInfo &rom = m_rl.lookup( filter_index, rom_index );
+
+	const FeEmulatorInfo *emu = get_emulator( rom.get_info( FeRomInfo::Emulator ) );
+	if ( emu == NULL )
+		return;
+
+	const std::string &rom_name = rom.get_info( FeRomInfo::Romname );
 	minimum_run_seconds = as_int( emu->get_info( FeEmulatorInfo::Minimum_run_time ) );
 
 	m_last_launch_list = get_current_list_index();
 	m_last_launch_filter = filter_index;
-	m_last_launch_rom = get_rom_index( filter_index, 0 );
+	m_last_launch_rom = rom_index;
 
-	FeRomInfo &rom = m_rl.lookup( filter_index, m_last_launch_rom );
-	const std::string &rom_name = rom.get_info( FeRomInfo::Romname );
+	std::string command, args, rom_path, extension, romfilename;
 
 	std::vector<std::string>::const_iterator itr;
 
@@ -1235,7 +1273,7 @@ int FeSettings::run( int &minimum_run_seconds )
 	std::cout << "*** Running: " << command << " " << args << std::endl;
 
 	sf::Clock play_timer;
-	int retval = run_program(
+	run_program(
 				command,
 				args,
 				NULL,
@@ -1253,8 +1291,6 @@ int FeSettings::run( int &minimum_run_seconds )
 		path += rl_name + "/";
 		rom.update_stats( path, 1, play_timer.getElapsedTime().asSeconds() );
 	}
-
-	return retval;
 }
 
 int FeSettings::exit_command() const
@@ -1384,121 +1420,19 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 	}
 }
 
-FeEmulatorInfo *FeSettings::get_current_emulator()
+FeEmulatorInfo *FeSettings::get_emulator( const std::string &n )
 {
-	int filter_index = get_current_filter_index();
-
-	if ( m_rl.is_filter_empty( filter_index ) )
-		return NULL;
-
-	std::string current_emu = m_rl.lookup( filter_index, get_rom_index( filter_index, 0 ) ).get_info( FeRomInfo::Emulator );
-
-	return get_emulator( current_emu );
+	return m_rl.get_emulator( n );
 }
 
-FeEmulatorInfo *FeSettings::get_emulator( const std::string & emu )
+FeEmulatorInfo *FeSettings::create_emulator( const std::string &n )
 {
-	if ( emu.empty() )
-		return NULL;
-
-	// Check if we already haved loaded the matching emulator object
-	//
-	for ( std::vector<FeEmulatorInfo>::iterator ite=m_emulators.begin();
-			ite != m_emulators.end(); ++ite )
-	{
-		if ( emu.compare( (*ite).get_info( FeEmulatorInfo::Name ) ) == 0 )
-			return &(*ite);
-	}
-
-	// Emulator not loaded yet, load it now
-	//
-	std::string filename = m_config_path;
-	filename += FE_EMULATOR_SUBDIR;
-	filename += emu;
-	filename += FE_EMULATOR_FILE_EXTENSION;
-
-	FeEmulatorInfo new_emu( emu );
-	if ( new_emu.load_from_file( filename ) )
-	{
-		m_emulators.push_back( new_emu );
-		return &(m_emulators.back());
-	}
-
-	// Could not find emulator config
-	return NULL;
+	return m_rl.create_emulator( n );
 }
 
-FeEmulatorInfo *FeSettings::create_emulator( const std::string &emu )
+void FeSettings::delete_emulator( const std::string &n )
 {
-	// If an emulator with the given name already exists we return it
-	//
-	FeEmulatorInfo *tmp = get_emulator( emu );
-	if ( tmp != NULL )
-		return tmp;
-
-	//
-	// Fill in with default values if there is a "default" emulator
-	//
-	FeEmulatorInfo new_emu( emu );
-
-	std::string defaults_file;
-	if ( internal_resolve_config_file( defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
-	{
-		new_emu.load_from_file( defaults_file );
-
-		//
-		// Find and replace the [emulator] token, replace with the specified
-		// name.  This is only done in the path fields.  It is not done for
-		// the FeEmulator::Command field.
-		//
-		const char *EMU_TOKEN = "[emulator]";
-
-		std::string temp = new_emu.get_info( FeEmulatorInfo::Rom_path );
-		if ( perform_substitution( temp, EMU_TOKEN, emu ) )
-			new_emu.set_info( FeEmulatorInfo::Rom_path, temp );
-
-		std::vector<std::pair<std::string,std::string> > al;
-		std::vector<std::pair<std::string,std::string> >::iterator itr;
-		new_emu.get_artwork_list( al );
-		for ( itr=al.begin(); itr!=al.end(); ++itr )
-		{
-			std::string temp = (*itr).second;
-			if ( perform_substitution( temp, EMU_TOKEN, emu ) )
-			{
-				new_emu.delete_artwork( (*itr).first );
-				new_emu.add_artwork( (*itr).first, temp );
-			}
-		}
-	}
-
-	m_emulators.push_back( new_emu );
-	return &(m_emulators.back());
-}
-
-void FeSettings::delete_emulator( const std::string & emu )
-{
-	//
-	// Delete file
-	//
-	std::string path = m_config_path;
-	path += FE_EMULATOR_SUBDIR;
-	path += emu;
-	path += FE_EMULATOR_FILE_EXTENSION;
-
-	delete_file( path );
-
-	//
-	// Delete from our list if it has been loaded
-	//
-	for ( std::vector<FeEmulatorInfo>::iterator ite=m_emulators.begin();
-			ite != m_emulators.end(); ++ite )
-	{
-		if ( emu.compare( (*ite).get_info( FeEmulatorInfo::Name ) ) == 0 )
-		{
-			m_emulators.erase( ite );
-			break;
-		}
-	}
+	m_rl.delete_emulator( n );
 }
 
 bool FeSettings::get_font_file( std::string &fontpath,
@@ -1795,7 +1729,7 @@ void FeSettings::create_filter( FeListInfo &l, const std::string &name ) const
 	FeFilter new_filter( name );
 
 	std::string defaults_file;
-	if ( internal_resolve_config_file( defaults_file, NULL, FE_FILTER_DEFAULT ) )
+	if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_FILTER_DEFAULT ) )
 		new_filter.load_from_file( defaults_file );
 
 	l.append_filter( new_filter );
@@ -1809,7 +1743,7 @@ FeListInfo *FeSettings::create_list( const std::string &n )
 	FeListInfo new_list( n );
 
 	std::string defaults_file;
-	if ( internal_resolve_config_file( defaults_file, NULL, FE_LIST_DEFAULT ) )
+	if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_LIST_DEFAULT ) )
 		new_list.load_from_file( defaults_file );
 
 	// If there is no layout set, set a good default one now
@@ -2056,14 +1990,14 @@ void FeSettings::get_plugin_full_path(
 	// <config_dir>/plugins/<name>/plugin.nut
 	// <config_dir>/plugins/<name>.nut
 	//
-	if ( internal_resolve_config_file( temp, FE_PLUGIN_SUBDIR, label + "/" ) )
+	if ( internal_resolve_config_file( m_config_path, temp, FE_PLUGIN_SUBDIR, label + "/" ) )
 	{
 		path.swap( temp );
 		filename = FE_PLUGIN_FILE;
 		return;
 	}
 
-	if ( internal_resolve_config_file( temp, FE_PLUGIN_SUBDIR, label + FE_PLUGIN_FILE_EXTENSION ) )
+	if ( internal_resolve_config_file( m_config_path, temp, FE_PLUGIN_SUBDIR, label + FE_PLUGIN_FILE_EXTENSION ) )
 	{
 		size_t len = temp.find_last_of( "/\\" );
 		ASSERT( len != std::string::npos );
@@ -2081,7 +2015,7 @@ void FeSettings::internal_load_language( const std::string &lang )
 	m_resourcemap.clear();
 
 	std::string fname;
-	if ( internal_resolve_config_file( fname, FE_LANGUAGE_SUBDIR, lang + FE_LANGUAGE_FILE_EXTENSION ) )
+	if ( internal_resolve_config_file( m_config_path, fname, FE_LANGUAGE_SUBDIR, lang + FE_LANGUAGE_FILE_EXTENSION ) )
 		m_resourcemap.load_from_file( fname, ";" );
 	else
 		std::cerr << "Error loading language resource file: " << lang << std::endl;
@@ -2146,38 +2080,6 @@ void FeSettings::internal_gather_config_files(
 std::string FeSettings::get_module_dir( const std::string &module_file ) const
 {
 	std::string temp;
-	internal_resolve_config_file( temp, FE_MODULES_SUBDIR, module_file );
+	internal_resolve_config_file( m_config_path, temp, FE_MODULES_SUBDIR, module_file );
 	return temp;
-}
-
-bool FeSettings::internal_resolve_config_file(
-						std::string &result,
-						const char *subdir,
-						const std::string &name  ) const
-{
-	std::string path;
-	path = m_config_path;
-	if ( subdir ) path += subdir;
-	path += name;
-
-	if ( file_exists( path ) )
-	{
-		result = path;
-		return true;
-	}
-
-	if ( FE_DATA_PATH != NULL )
-	{
-		path = FE_DATA_PATH;
-		if ( subdir ) path += subdir;
-		path += name;
-
-		if ( file_exists( path ) )
-		{
-			result = path;
-			return true;
-		}
-	}
-
-	return false;
 }
