@@ -4,8 +4,11 @@
 fe.layout.width=640;
 fe.layout.height=480;
 
-fe.add_artwork( "snap", 348, 152, 262, 262 );
-fe.add_artwork( "marquee", 348, 64, 262, 72 );
+local t = fe.add_artwork( "snap", 348, 152, 262, 262 );
+t.trigger = Transition.EndNavigation;
+
+t = fe.add_artwork( "marquee", 348, 64, 262, 72 );
+t.trigger = Transition.EndNavigation;
 
 local l = fe.add_listbox( 32, 64, 262, 352 );
 l.charsize = 16;

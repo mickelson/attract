@@ -41,10 +41,6 @@ FeBaseTextureContainer::~FeBaseTextureContainer()
 {
 }
 
-void FeBaseTextureContainer::on_new_list( FeSettings *, float, float )
-{
-}
-
 void FeBaseTextureContainer::set_play_state( bool play )
 {
 }
@@ -102,6 +98,15 @@ void FeBaseTextureContainer::set_file_name( const char *n )
 const char *FeBaseTextureContainer::get_file_name() const
 {
 	return NULL;
+}
+
+void FeBaseTextureContainer::set_trigger( int t )
+{
+}
+
+int FeBaseTextureContainer::get_trigger() const
+{
+	return ToNewSelection;
 }
 
 void FeBaseTextureContainer::transition_swap( FeBaseTextureContainer *o )
@@ -176,9 +181,8 @@ namespace
 {
 	//
 	// The number of "ticks" after a video is first loaded before
-	// playing starts.  This should be 2 or higher since there is
-	// a tick between each selection when the user is scrolling
-	// quickly between the the menu items with a key held down.
+	// playing starts.  This should be 3 or higher (freezing has
+	// been experienced at 2 when returning from games).
 	//
 	const int PLAY_COUNT=5;
 };
@@ -191,6 +195,7 @@ FeTextureContainer::FeTextureContainer(
 	m_current_rom_index( -1 ),
 	m_current_filter_index( -1 ),
 	m_is_artwork( is_artwork ),
+	m_art_update_trigger( ToNewSelection ),
 	m_movie( NULL ),
 	m_movie_status( -1 ),
 	m_video_flags( VF_Normal )
@@ -218,17 +223,7 @@ FeTextureContainer::~FeTextureContainer()
 bool FeTextureContainer::load_static(
 	const std::string &file_name )
 {
-	m_texture = sf::Texture();
-	m_movie_status = -1;
-
-#ifndef NO_MOVIE
-	// If a movie is running, close it...
-	if ( m_movie )
-	{
-		delete m_movie;
-		m_movie=NULL;
-	}
-#endif
+	clear();
 
 	std::vector<std::string> image_names;
 	std::vector<std::string> non_image_names;
@@ -398,9 +393,24 @@ const sf::Texture &FeTextureContainer::get_texture()
 
 void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_saver_active )
 {
-	if ( !m_is_artwork )
-		return;
+	if (( m_is_artwork ) && ( m_art_update_trigger == ToNewSelection ))
+		internal_update_selection( feSettings, screen_saver_active );
+}
 
+void FeTextureContainer::on_new_list( FeSettings *feSettings, float, float, bool screen_saver_active )
+{
+	if (( m_is_artwork ) && ( m_art_update_trigger == EndNavigation ))
+		internal_update_selection( feSettings, screen_saver_active );
+}
+
+void FeTextureContainer::on_end_navigation( FeSettings *feSettings, bool screen_saver_active )
+{
+	if (( m_is_artwork ) && ( m_art_update_trigger == EndNavigation ))
+		internal_update_selection( feSettings, screen_saver_active );
+}
+
+void FeTextureContainer::internal_update_selection( FeSettings *feSettings, bool screen_saver_active )
+{
 	int filter_index = feSettings->get_filter_index_from_offset( m_filter_offset );
 	int rom_index = feSettings->get_rom_index( filter_index, m_index_offset );
 
@@ -420,18 +430,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 	m_current_rom_index = rom_index;
 	m_current_filter_index = filter_index;
 
-	m_texture = sf::Texture();
-	m_movie_status = -1;
-	m_file_name.clear();
-
-#ifndef NO_MOVIE
-	// If a movie is running, close it...
-	if ( m_movie )
-	{
-		delete m_movie;
-		m_movie=NULL;
-	}
-#endif
+	clear();
 
 	const std::string &emu_name
 		= feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Emulator );
@@ -705,6 +704,13 @@ void FeTextureContainer::set_file_name( const char *n )
 {
 	std::string name = n;
 
+	if ( name.empty() )
+	{
+		clear();
+		notify_texture_change();
+		return;
+	}
+
 	// If it is a relative path we assume it is in the layout directory
 	//
 	if ( is_relative_path( name ) )
@@ -720,7 +726,7 @@ void FeTextureContainer::set_file_name( const char *n )
 		}
 	}
 
-	if (( !name.empty() ) && ( m_file_name.compare( name ) != 0 ))
+	if ( m_file_name.compare( name ) != 0 )
 		load_static( name );
 }
 
@@ -728,6 +734,17 @@ const char *FeTextureContainer::get_file_name() const
 {
 	return m_file_name.c_str();
 }
+
+void FeTextureContainer::set_trigger( int t )
+{
+	m_art_update_trigger = t;
+}
+
+int FeTextureContainer::get_trigger() const
+{
+	return m_art_update_trigger;
+}
+
 
 void FeTextureContainer::transition_swap( FeBaseTextureContainer *o )
 {
@@ -738,6 +755,7 @@ void FeTextureContainer::transition_swap( FeBaseTextureContainer *o )
 		std::swap( m_index_offset, o_up->m_index_offset );
 		std::swap( m_filter_offset, o_up->m_filter_offset );
 		std::swap( m_is_artwork, o_up->m_is_artwork );
+		std::swap( m_art_update_trigger, o_up->m_art_update_trigger );
 	}
 
 	FeBaseTextureContainer::transition_swap( o );
@@ -746,6 +764,22 @@ void FeTextureContainer::transition_swap( FeBaseTextureContainer *o )
 FeTextureContainer *FeTextureContainer::get_derived_texture_container()
 {
 	return this;
+}
+
+void FeTextureContainer::clear()
+{
+	m_texture = sf::Texture();
+	m_movie_status = -1;
+	m_file_name.clear();
+
+#ifndef NO_MOVIE
+	// If a movie is running, close it...
+	if ( m_movie )
+	{
+		delete m_movie;
+		m_movie=NULL;
+	}
+#endif
 }
 
 FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )
@@ -776,7 +810,11 @@ void FeSurfaceTextureContainer::on_new_selection( FeSettings *s, bool screen_sav
 		(*itr)->on_new_selection( s );
 }
 
-void FeSurfaceTextureContainer::on_new_list( FeSettings *s, float scale_x, float scale_y )
+void FeSurfaceTextureContainer::on_end_navigation( FeSettings *feSettings, bool screen_saver_active )
+{
+}
+
+void FeSurfaceTextureContainer::on_new_list( FeSettings *s, float scale_x, float scale_y, bool )
 {
 	//
 	// The scale factors passed to this function are ignored on purpose.
@@ -1113,6 +1151,16 @@ const char *FeImage::getFileName() const
 void FeImage::setFileName( const char *n )
 {
 	m_tex->set_file_name( n );
+}
+
+int FeImage::getTrigger() const
+{
+	return m_tex->get_trigger();
+}
+
+void FeImage::setTrigger( int t )
+{
+	m_tex->set_trigger( t );
 }
 
 bool FeImage::getMovieEnabled() const

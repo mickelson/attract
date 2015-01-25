@@ -723,6 +723,9 @@ int main(int argc, char *argv[])
 			{
 				move_state = FeInputMap::LAST_COMMAND;
 				move_last_triggered = 0;
+
+				feVM.on_end_navigation();
+				redraw=true;
 			}
 		}
 

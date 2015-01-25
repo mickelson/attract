@@ -446,6 +446,7 @@ happening.  It will have one of the following values:
    * `Transition.ToGame`
    * `Transition.FromGame`
    * `Transition.ToNewList`
+   * `Transition.EndNavigation`
 
 The value of the `var` parameter passed to the transition function depends
 upon the value of `ttype`:
@@ -473,8 +474,12 @@ upon the value of `ttype`:
         screen saver is starting, or
       - `FromTo.NoValue` otherwise.
 
+   * When `ttype` is `Transition.ToNewList`, `var` indicates the filter index
+     offset of the filter being transitioned to (i.e. -1 when moving back one
+     filter, 1 when moving forward) if known, otherwise `var` is 0.
+
    * When `ttype` is `Transition.ToGame`, `Transition.FromGame`, or
-     `Transition.ToNewList`, `var` will be `FromTo.NoValue`.
+     `Transition.EndNavigation`, `var` will be `FromTo.NoValue`.
 
 The `transition_time` parameter passed to the transition function is the
 amount of time (in milliseconds) since the transition began.
@@ -1099,6 +1104,9 @@ Attributes:
      get reset the next time the user changes the game selection.
    * `shader` - Get/set the GLSL shader for this image. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
+   * trigger - Get/set the transition that triggers updates of this artwork.
+     Can be set to `Transition.ToNewSelection` or `Transition.EndNavigation`.
+     Default value is `Transition.ToNewSelection`.
 
 Member Functions:
 

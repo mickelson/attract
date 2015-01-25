@@ -3,6 +3,14 @@
 // Attract-Mode Frontend - Orbit layout
 //
 ///////////////////////////////////////////////////
+//
+// NOTES:
+//
+// - The looping static video is from the rec room website at:
+//   http://recroomhq.com/downloads/2010/04/14/tv-static-freebie.html
+//   It is licensed under the Creative Commons Attribution 3.0 License
+//
+///////////////////////////////////////////////////
 class UserConfig {
 	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel", order=1 />
 	orbit_art="marquee";
@@ -15,6 +23,12 @@ class UserConfig {
 
 	</ label="Satellite Count", help="The number of orbiting artworks", options="5,7,9,11,13,15", order=4 />
 	count="5";
+
+	</ label="Spin Time", help="The amount of time it takes to spin to the next selection (in milliseconds)", order=5 />
+	spin_ms="120";
+
+	</ label="Static Effect", help="Enable static effect", options="Yes,No", order=6 />
+	static_effect="Yes";
 }
 
 fe.load_module( "conveyor" );
@@ -25,10 +39,15 @@ fe.layout.height = 600
 
 const MWIDTH = 280;
 const MHEIGHT = 170;
-const SPIN_MS = 200;
+const SNAPBG_ALPHA = 200;
 
 local num_sats = fe.layout.page_size = my_config["count"].tointeger();
 local progress_correction = 1.0 / ( num_sats * 2 );
+
+local spin_ms = 120;
+try {
+	spin_ms = my_config["spin_ms"].tointeger();
+} catch ( e ) {}
 
 function get_y( x )
 {
@@ -111,9 +130,26 @@ if ( my_config[ "bg_image" ].len() > 0 )
 //
 // Initialize the video frame
 //
-local snapbg = fe.add_text( "", 224, 59, 352, 264 );
-snapbg.bg_alpha = 220;
-fe.add_artwork( "snap", 224, 59, 352, 264 );
+local snapbg=null;
+if ( my_config[ "static_effect" ] == "Yes" )
+{
+	snapbg = fe.add_image(
+		"static.mp4",
+		224, 59, 352, 264 );
+
+	snapbg.set_rgb( 150, 150, 150 );
+	snapbg.alpha = SNAPBG_ALPHA;
+}
+else
+{
+	local temp = fe.add_text(
+		"",
+		224, 59, 352, 264 );
+	temp.bg_alpha = SNAPBG_ALPHA;
+}
+
+local snap = fe.add_artwork( "snap", 224, 59, 352, 264 );
+snap.trigger = Transition.EndNavigation;
 local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
 
 //
@@ -142,7 +178,7 @@ for ( local i=0; i < ( num_sats + 1 ) / 2; i++ )
 // Initialize a conveyor to control the artworks
 //
 local orbital = Conveyor();
-orbital.transition_ms = SPIN_MS;
+orbital.transition_ms = spin_ms;
 orbital.transition_swap_point = 1.0;
 orbital.set_slots( sats );
 
@@ -207,6 +243,34 @@ function orbit_transition( ttype, var, ttime )
 {
 	switch ( ttype )
 	{
+	case Transition.ToNewSelection:
+		if ( snapbg )
+		{
+			if ( snap.file_name.len() > 0 )
+			{
+				if ( ttime < spin_ms )
+				{
+					snap.alpha = 255 - 255.0 * ttime / spin_ms;
+					return true;
+				}
+			}
+			snap.file_name="";
+			snap.alpha=0;
+		}
+		break;
+
+	case Transition.EndNavigation:
+		if ( snapbg )
+		{
+			if ( ttime < spin_ms )
+			{
+				snap.alpha = 255.0 * ttime / spin_ms;
+				return true;
+			}
+			snap.alpha = 255;
+		}
+		break;
+
 	case Transition.StartLayout:
 	case Transition.FromGame:
 		if ( ttime < 255 )
@@ -221,6 +285,8 @@ function orbit_transition( ttype, var, ttime )
 			foreach (o in fe.obj)
 				o.alpha = 255;
 		}
+		if ( snapbg )
+			snapbg.alpha=SNAPBG_ALPHA;
 		break;
 
 	case Transition.EndLayout:

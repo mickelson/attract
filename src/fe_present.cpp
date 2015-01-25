@@ -626,7 +626,8 @@ int FePresent::update( bool new_list )
 		for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
 			(*itc)->on_new_list( m_feSettings,
 				m_layoutScale.x,
-				m_layoutScale.y );
+				m_layoutScale.y,
+				m_screenSaverActive );
 
 		for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 			(*itl)->on_new_list( m_feSettings,
@@ -641,6 +642,16 @@ int FePresent::update( bool new_list )
 		(*itl)->on_new_selection( m_feSettings );
 
 	return 0;
+}
+
+void FePresent::on_end_navigation()
+{
+	std::vector<FeBaseTextureContainer *>::iterator itc;
+
+	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
+		(*itc)->on_end_navigation( m_feSettings, m_screenSaverActive );
+
+	on_transition( EndNavigation, 0 );
 }
 
 void FePresent::load_screensaver()
@@ -701,9 +712,7 @@ void FePresent::load_layout( bool initial_load )
 
 	std::cout << " - Loaded layout: " << layout_dir << " (" << layout_file << ")" << std::endl;
 
-	update( true );
-
-	on_transition( ToNewList, FromToNoValue );
+	update_to_new_list( FromToNoValue );
 	on_transition( StartLayout, var );
 }
 
@@ -788,20 +797,20 @@ void FePresent::on_stop_frontend()
 
 void FePresent::pre_run()
 {
+	on_transition( ToGame, FromToNoValue );
+
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( false );
-
-	on_transition( ToGame, FromToNoValue );
 }
 
 void FePresent::post_run()
 {
-	on_transition( FromGame, FromToNoValue );
-
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_play_state( m_playMovies );
+
+	on_transition( FromGame, FromToNoValue );
 
 	reset_screen_saver();
 	update( true );

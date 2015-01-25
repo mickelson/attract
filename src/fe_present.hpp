@@ -44,7 +44,8 @@ enum FeTransitionType
 	FromOldSelection,	// var == index_offset of old selection
 	ToGame,				// var = 0
 	FromGame,			// var = 0
-	ToNewList			// var = filter offset of new filter (if available), otherwise 0
+	ToNewList,			// var = filter offset of new filter (if available), otherwise 0
+	EndNavigation		// var = 0
 };
 
 //
@@ -157,6 +158,7 @@ public:
 
 	int update( bool reload_list=false );
 	void update_to_new_list( int var=0 );
+	void on_end_navigation();
 
 	bool tick(); // run vm on_tick and update videos.  return true if redraw required
 	bool video_tick(); // update videos only. return true if redraw required

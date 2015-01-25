@@ -15,6 +15,9 @@ class UserConfig {
 
 	</ label="Flow Direction", help="Select the flow direction for entries", options="Horizontal,Vertical", order=4 />
 	flow="Vertical";
+
+	</ label="Preserve Aspect Ratio", help="Preserve artwork aspect ratio", options="Yes,No", order=5 />
+	aspect_ratio="Yes";
 }
 
 fe.layout.width = 800;
@@ -88,6 +91,7 @@ for ( local i=0; i<ftr_count; i++ )
 	}
 	new_strip.set_selection( 0 );
 	new_strip.video_flags = Vid.NoAudio;
+	new_strip.preserve_aspect_ratio = (my_config["aspect_ratio"]=="Yes");
 
 	local temp = i - ftr_index;
 	if ( temp != 0 )

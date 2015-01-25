@@ -51,7 +51,8 @@ public:
 	virtual const sf::Texture &get_texture()=0;
 
 	virtual void on_new_selection( FeSettings *feSettings, bool screen_saver_active )=0;
-	virtual void on_new_list( FeSettings *, float, float );
+	virtual void on_end_navigation( FeSettings *feSettings, bool screen_saver_active )=0;
+	virtual void on_new_list( FeSettings *, float, float, bool )=0;
 
 	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )=0; // returns true if redraw required
 	virtual void set_play_state( bool play );
@@ -70,6 +71,9 @@ public:
 
 	virtual void set_file_name( const char *n );
 	virtual const char *get_file_name() const;
+	virtual void set_trigger( int );
+	virtual int get_trigger() const;
+
 	virtual void transition_swap( FeBaseTextureContainer *o );
 
 	//
@@ -112,6 +116,9 @@ public:
 	const sf::Texture &get_texture();
 
 	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
+	void on_end_navigation( FeSettings *feSettings, bool screen_saver_active );
+	void on_new_list( FeSettings *, float, float, bool );
+
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 	void set_play_state( bool play );
 	bool get_play_state() const;
@@ -129,6 +136,8 @@ public:
 
 	void set_file_name( const char *n );
 	const char *get_file_name() const;
+	void set_trigger( int );
+	int get_trigger() const;
 
 	void transition_swap( FeBaseTextureContainer *o );
 
@@ -147,6 +156,9 @@ private:
 		std::vector<std::string> &non_image_names,
 		std::vector<std::string> &image_names );
 
+	void internal_update_selection( FeSettings *feSettings, bool screen_saver_active );
+	void clear();
+
 	sf::Texture m_texture;
 	std::string m_art_name; // artwork label for artworks
 	std::string m_file_name; // the name of the loaded file
@@ -155,6 +167,7 @@ private:
 	int m_current_rom_index;
 	int m_current_filter_index;
 	bool m_is_artwork;
+	int m_art_update_trigger;
 	FeMedia *m_movie;
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
 	FeVideoFlags m_video_flags;
@@ -170,7 +183,8 @@ public:
 	const sf::Texture &get_texture();
 
 	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
-	void on_new_list( FeSettings *, float, float );
+	void on_end_navigation( FeSettings *feSettings, bool screen_saver_active );
+	void on_new_list( FeSettings *, float, float, bool );
 
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 
@@ -235,6 +249,8 @@ public:
 	int getVideoTime() const;
 	const char *getFileName() const;
 	void setFileName( const char * );
+	int getTrigger() const;
+	void setTrigger( int );
 
 	// deprecated as of 1.3, use video_flags instead:
 	bool getMovieEnabled() const;
