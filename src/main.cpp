@@ -669,21 +669,24 @@ int main(int argc, char *argv[])
 			if ( cont )
 			{
 				const int TRIG_CHANGE_MS = 400;
-				const int MIN_MOVE_MS = 40;
 
 				int t = move_timer.getElapsedTime().asMilliseconds();
-				if (( t > TRIG_CHANGE_MS ) && ( t - move_last_triggered > MIN_MOVE_MS ))
+				if (( t > TRIG_CHANGE_MS ) && ( t - move_last_triggered > feSettings.selection_speed() ))
 				{
 					move_last_triggered = t;
+					int step = 1;
 
-					// As the button is held down, the advancement accelerates
-					int shift = ( t / TRIG_CHANGE_MS ) - 3;
-					if ( shift < 0 )
-						shift = 0;
-					else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
-						shift = 7;
+					if ( feSettings.accelerate_selection() )
+					{
+						// As the button is held down, the advancement accelerates
+						int shift = ( t / TRIG_CHANGE_MS ) - 3;
+						if ( shift < 0 )
+							shift = 0;
+						else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
+							shift = 7;
 
-					int step = 1 << ( shift );
+						step = 1 << ( shift );
+					}
 
 					switch ( move_state )
 					{

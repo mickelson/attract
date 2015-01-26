@@ -201,7 +201,9 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_confirm_favs( false ),
 	m_track_usage( true ),
 	m_window_mode( Default ),
-	m_filter_wrap_mode( WrapWithinList )
+	m_filter_wrap_mode( WrapWithinList ),
+	m_accel_selection( true ),
+	m_selection_speed( 40 )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -336,6 +338,8 @@ const char *FeSettings::configSettingStrings[] =
 	"window_mode",
 	"filter_wrap_mode",
 	"track_usage",
+	"accelerate_selection",
+	"selection_speed_ms",
 	NULL
 };
 
@@ -1596,6 +1600,10 @@ const std::string FeSettings::get_info( int index ) const
 		return filterWrapTokens[ m_filter_wrap_mode ];
 	case TrackUsage:
 		return ( m_track_usage ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+	case AccelerateSelection:
+		return ( m_accel_selection ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+	case SelectionSpeed:
+		return as_str( m_selection_speed );
 	default:
 		break;
 	}
@@ -1705,6 +1713,16 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case TrackUsage:
 		m_track_usage = config_str_to_bool( value );
+		break;
+
+	case AccelerateSelection:
+		m_accel_selection = config_str_to_bool( value );
+		break;
+
+	case SelectionSpeed:
+		m_selection_speed = as_int( value );
+		if ( m_selection_speed < 0 )
+			m_selection_speed = 0;
 		break;
 
 	default:

@@ -80,6 +80,8 @@ public:
 		WindowMode,
 		FilterWrapMode,
 		TrackUsage,
+		AccelerateSelection,
+		SelectionSpeed,
 		LAST_INDEX
 	};
 
@@ -119,6 +121,8 @@ private:
 	bool m_track_usage;
 	WindowType m_window_mode;
 	FilterWrapModeType m_filter_wrap_mode;
+	bool m_accel_selection;
+	int m_selection_speed;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
@@ -203,6 +207,8 @@ public:
 	const std::string &get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index );
 	bool hide_brackets() const { return m_hide_brackets; }
 	bool autolaunch_last_game() const { return m_autolaunch_last_game; }
+	bool accelerate_selection() const { return m_accel_selection; }
+	int selection_speed() const { return m_selection_speed; }
 
 	// get a list of available plugins
 	void get_available_plugins( std::vector < std::string > &list ) const;
