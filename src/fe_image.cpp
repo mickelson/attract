@@ -399,6 +399,7 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 
 void FeTextureContainer::on_new_list( FeSettings *feSettings, float, float, bool screen_saver_active )
 {
+	m_current_rom_index = -1;
 	if (( m_is_artwork ) && ( m_art_update_trigger == EndNavigation ))
 		internal_update_selection( feSettings, screen_saver_active );
 }
