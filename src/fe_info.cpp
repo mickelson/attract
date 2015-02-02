@@ -1316,6 +1316,14 @@ void FeRomList::get_file_availability()
 	}
 }
 
+// NOTE: this function is implemented in fe_settings.cpp
+bool internal_resolve_config_file(
+						const std::string &config_path,
+						std::string &result,
+						const char *subdir,
+						const std::string &name  );
+
+
 FeEmulatorInfo *FeRomList::get_emulator( const std::string & emu )
 {
 	if ( emu.empty() )
@@ -1332,29 +1340,20 @@ FeEmulatorInfo *FeRomList::get_emulator( const std::string & emu )
 
 	// Emulator not loaded yet, load it now
 	//
-	std::string filename = m_config_path;
-	filename += FE_EMULATOR_SUBDIR;
-	filename += emu;
-	filename += FE_EMULATOR_FILE_EXTENSION;
-
-	FeEmulatorInfo new_emu( emu );
-	if ( new_emu.load_from_file( filename ) )
+	std::string filename;
+	if ( internal_resolve_config_file( m_config_path, filename, FE_EMULATOR_SUBDIR, emu + FE_EMULATOR_FILE_EXTENSION ) )
 	{
-		m_emulators.push_back( new_emu );
-		return &(m_emulators.back());
+		FeEmulatorInfo new_emu( emu );
+		if ( new_emu.load_from_file( filename ) )
+		{
+			m_emulators.push_back( new_emu );
+			return &(m_emulators.back());
+		}
 	}
 
 	// Could not find emulator config
 	return NULL;
 }
-
-// NOTE: this function is implemented in fe_settings.cpp
-bool internal_resolve_config_file(
-						const std::string &config_path,
-						std::string &result,
-						const char *subdir,
-						const std::string &name  );
-
 
 FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu )
 {

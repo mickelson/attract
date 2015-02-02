@@ -1419,6 +1419,10 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 			sys_name = emu->get_info( FeEmulatorInfo::System );
 			return sys_name.c_str();
 		}
+		else
+		{
+			return NULL;
+		}
 	}
 
 	return (fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();
