@@ -148,6 +148,7 @@ protected:
 	void set_base_rotation( int );
 	void set_toggle_rotation( int );
 	void set_layout_font( const char * );
+	void set_video_play_state( bool state );
 
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );

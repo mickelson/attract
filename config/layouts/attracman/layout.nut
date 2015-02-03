@@ -51,16 +51,20 @@ local lb = fe.add_listbox( 24, 96, 192, 192 );
 lb.rows = 13;
 lb.charsize = 10;
 
-fe.add_artwork( "marquee", 144, 24, 168, 48 );
-fe.add_artwork( "snap", 240, 96, 192, 192 );
+local tmp = fe.add_artwork( "marquee", 144, 24, 168, 48 );
+tmp.trigger = Transition.EndNavigation;
+
+tmp = fe.add_artwork( "snap", 240, 96, 192, 192 );
+tmp.trigger = Transition.EndNavigation;
+
 fe.add_image( "field.png", 0, 0, 456, 336 );
-fe.add_text( "[ListTitle]", 118, 316, 220, 14 );
+fe.add_text( "[DisplayName]", 118, 316, 220, 14 );
 
 local l = fe.add_text( "[ListEntry]/[ListSize]", 0, 322, 60, 10 );
 l.align = Align.Left;
 l.set_rgb( 80, 80, 80 );
 
-l = fe.add_text( "[ListFilterName]", 396, 322, 60, 10 );
+l = fe.add_text( "[FilterName]", 396, 322, 60, 10 );
 l.align = Align.Right;
 l.set_rgb( 80, 80, 80 );
 

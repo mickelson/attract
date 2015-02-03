@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 	// go straight into config mode if there are no lists configured for
 	// display
 	//
-	bool config_mode = ( feSettings.lists_count() < 1 );
+	bool config_mode = ( feSettings.displays_count() < 1 );
 
 	while (window.isOpen() && (!exit_selected))
 	{
@@ -308,8 +308,8 @@ int main(int argc, char *argv[])
 				if ( feSettings.get_font_file( defaultFontFile ) )
 					defaultFont.set_font( defaultFontFile );
 
-				feSettings.set_list(
-					feSettings.get_current_list_index() );
+				feSettings.set_display(
+					feSettings.get_current_display_index() );
 
 				feVM.load_layout();
 
@@ -506,16 +506,16 @@ int main(int argc, char *argv[])
 					config_mode = true;
 					break;
 
-				case FeInputMap::ListsMenu:
+				case FeInputMap::DisplaysMenu:
 					{
 						std::vector<std::string> names_list;
-						feSettings.get_list_names( names_list );
+						feSettings.get_display_names( names_list );
 
 						std::string title;
 						feSettings.get_resource( "Lists", title );
 
 						int last_list = names_list.size() - 1;
-						if ( feSettings.get_lists_menu_exit() )
+						if ( feSettings.get_displays_menu_exit() )
 						{
 							//
 							// Add an exit option at the end of the lists menu
@@ -528,7 +528,7 @@ int main(int argc, char *argv[])
 						int list_index = feOverlay.common_list_dialog(
 										title,
 										names_list,
-										feSettings.get_current_list_index(),
+										feSettings.get_current_display_index(),
 										names_list.size() - 1 );
 
 						// test if the exit option selected, return -2 if it has been
@@ -548,7 +548,7 @@ int main(int argc, char *argv[])
 						}
 						else
 						{
-							if ( feSettings.set_list( list_index ) )
+							if ( feSettings.set_display( list_index ) )
 								feVM.load_layout();
 							else
 								feVM.update_to_new_list();
@@ -560,7 +560,7 @@ int main(int argc, char *argv[])
 				case FeInputMap::FiltersMenu:
 					{
 						std::vector<std::string> names_list;
-						feSettings.get_current_list_filter_names( names_list );
+						feSettings.get_current_display_filter_names( names_list );
 
 						std::string title;
 						feSettings.get_resource( "Filters", title );

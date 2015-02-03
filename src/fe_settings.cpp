@@ -111,7 +111,7 @@ const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_MODULES_SUBDIR			= "modules/";
 const char *FE_STATS_SUBDIR			= "stats/";
-const char *FE_LIST_DEFAULT			= "default-list.cfg";
+const char *FE_LIST_DEFAULT			= "default-display.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
 const char *FE_CFG_YES_STR				= "yes";
 const char *FE_CFG_NO_STR				= "no";
@@ -170,15 +170,15 @@ const char *FeSettings::windowModeDispTokens[] =
 const char *FeSettings::filterWrapTokens[] =
 {
 	"default",
-	"jump_to_next_list",
+	"jump_to_next_display",
 	"no_wrap",
 	NULL
 };
 
 const char *FeSettings::filterWrapDispTokens[] =
 {
-	"Wrap within List (Default)",
-	"Jump to Next List",
+	"Wrap within Display (Default)",
+	"Jump to Next Display",
 	"No Wrap",
 	NULL
 };
@@ -187,21 +187,21 @@ FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
 	:  m_rl( config_path ),
 	m_inputmap(),
-	m_current_list( -1 ),
+	m_current_display( -1 ),
 	m_current_config_object( NULL ),
 	m_ssaver_time( 600 ),
-	m_last_launch_list( 0 ),
+	m_last_launch_display( 0 ),
 	m_last_launch_filter( 0 ),
 	m_last_launch_rom( 0 ),
 	m_joy_thresh( 75 ),
 	m_mouse_thresh( 10 ),
-	m_lists_menu_exit( true ),
+	m_displays_menu_exit( true ),
 	m_hide_brackets( false ),
 	m_autolaunch_last_game( false ),
 	m_confirm_favs( false ),
 	m_track_usage( true ),
 	m_window_mode( Default ),
-	m_filter_wrap_mode( WrapWithinList ),
+	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_accel_selection( true ),
 	m_selection_speed( 40 )
 {
@@ -220,9 +220,9 @@ FeSettings::FeSettings( const std::string &config_path,
 void FeSettings::clear()
 {
 	m_current_config_object=NULL;
-	m_current_list = -1;
+	m_current_display = -1;
 
-	m_lists.clear();
+	m_displays.clear();
 	m_rl.clear_emulators();
 	m_plugins.clear();
 }
@@ -291,7 +291,7 @@ void FeSettings::load()
 	}
 
 	load_state();
-	init_list();
+	init_display();
 
 	// Make sure we have some keyboard mappings
 	//
@@ -329,7 +329,7 @@ const char *FeSettings::configSettingStrings[] =
 	"default_font",
 	"font_path",
 	"screen_saver_timeout",
-	"lists_menu_exit",
+	"displays_menu_exit",
 	"hide_brackets",
 	"autolaunch_last_game",
 	"confirm_favourites",
@@ -345,7 +345,7 @@ const char *FeSettings::configSettingStrings[] =
 
 const char *FeSettings::otherSettingStrings[] =
 {
-	"list",
+	"display",
 	"sound",
 	"input_map",
 	"general",
@@ -360,11 +360,11 @@ int FeSettings::process_setting( const std::string &setting,
 					const std::string &value,
 					const std::string &fn )
 {
-	if ( setting.compare( otherSettingStrings[0] ) == 0 ) // list
+	if (( setting.compare( otherSettingStrings[0] ) == 0 ) // list
+		|| ( setting.compare( "list" ) == 0 )) // for backwards compatability.  As of 1.5, "list" became "display"
 	{
-		FeListInfo newList( value );
-		m_lists.push_back( newList );
-		m_current_config_object = &m_lists.back();
+		m_displays.push_back( FeDisplayInfo( value ) );
+		m_current_config_object = &m_displays.back();
 	}
 	else if ( setting.compare( otherSettingStrings[1] ) == 0 ) // sound
 		m_current_config_object = &m_sounds;
@@ -419,34 +419,38 @@ int FeSettings::process_setting( const std::string &setting,
 			return m_current_config_object->process_setting( setting, value, fn );
 		else
 		{
+			// For backwards compatability, as of 1.5 "lists_menu_exit" became "displays_menu_exit"
+			if ( setting.compare( "lists_menu_exit" ) == 0 )
+			{
+				set_info( DisplaysMenuExit, value );
+				return 0;
+			}
+
 			invalid_setting( fn,
 				"general", setting, otherSettingStrings, configSettingStrings );
 			return 1;
 		}
-
-		// shouldn't get here
-		ASSERT( 0 );
 	}
 
 	return 0;
 }
 
-void FeSettings::init_list()
+void FeSettings::init_display()
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 	{
 		m_rl.init_as_empty_list();
 		return;
 	}
 
-	const std::string &romlist_name = m_lists[m_current_list].get_info(FeListInfo::Romlist);
+	const std::string &romlist_name = m_displays[m_current_display].get_info(FeDisplayInfo::Romlist);
 	if ( romlist_name.empty() )
 	{
 		m_rl.init_as_empty_list();
 		return;
 	}
 
-	std::cout << std::endl << "*** Initializing display: '" << get_current_list_title() << "'" << std::endl;
+	std::cout << std::endl << "*** Initializing display: '" << get_current_display_title() << "'" << std::endl;
 
 	std::string stat_path;
 	if ( m_track_usage )
@@ -473,11 +477,11 @@ void FeSettings::init_list()
 				romlist_name,
 				user_path,
 				stat_path,
-				m_lists[m_current_list] ) == false )
+				m_displays[m_current_display] ) == false )
 		std::cerr << "Error opening romlist: " << romlist_name << std::endl;
 }
 
-void FeSettings::save_state() const
+void FeSettings::save_state()
 {
 	m_rl.save_state();
 
@@ -489,12 +493,12 @@ void FeSettings::save_state() const
 	std::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
-		outfile << m_current_list << ";"
-			<< m_last_launch_list << "," << m_last_launch_filter
+		outfile << m_current_display << ";"
+			<< m_last_launch_display << "," << m_last_launch_filter
 			<< "," << m_last_launch_rom << std::endl;
 
-		for ( std::vector<FeListInfo>::const_iterator itl=m_lists.begin();
-					itl != m_lists.end(); ++itl )
+		for ( std::vector<FeDisplayInfo>::const_iterator itl=m_displays.begin();
+					itl != m_displays.end(); ++itl )
 			outfile << (*itl).state_as_output() << std::endl;
 
 		outfile.close();
@@ -503,9 +507,9 @@ void FeSettings::save_state() const
 
 void FeSettings::load_state()
 {
-	if ( m_lists.empty() )
+	if ( m_displays.empty() )
 	{
-		m_current_list = -1;
+		m_current_display = -1;
 		return;
 	}
 
@@ -522,7 +526,7 @@ void FeSettings::load_state()
 		std::string tok;
 		token_helper( line, pos, tok, ";" );
 
-		m_current_list = as_int( tok );
+		m_current_display = as_int( tok );
 
 		int i=0;
 		while (( pos < line.size() ) && ( i < 3 ))
@@ -532,15 +536,15 @@ void FeSettings::load_state()
 
 			switch (i)
 			{
-				case 0: m_last_launch_list = temp; break;
+				case 0: m_last_launch_display = temp; break;
 				case 1: m_last_launch_filter = temp; break;
 				case 2: m_last_launch_rom = temp; break;
 			}
 			i++;
 		}
 
-		for ( std::vector<FeListInfo>::iterator itl=m_lists.begin();
-					itl != m_lists.end(); ++itl )
+		for ( std::vector<FeDisplayInfo>::iterator itl=m_displays.begin();
+					itl != m_displays.end(); ++itl )
 		{
 			if ( myfile.good() )
 			{
@@ -551,19 +555,19 @@ void FeSettings::load_state()
 	}
 
 	// bound checking on the current list state
-	if ( m_current_list >= (int)m_lists.size() )
-		m_current_list = m_lists.size() - 1;
-	if ( m_current_list < 0 )
-		m_current_list = 0;
+	if ( m_current_display >= (int)m_displays.size() )
+		m_current_display = m_displays.size() - 1;
+	if ( m_current_display < 0 )
+		m_current_display = 0;
 
 	// bound checking on the last launch state
-	if ( m_last_launch_list >= (int)m_lists.size() )
-		m_last_launch_list = m_lists.size() - 1;
-	if ( m_last_launch_list < 0 )
-		m_last_launch_list = 0;
+	if ( m_last_launch_display >= (int)m_displays.size() )
+		m_last_launch_display = m_displays.size() - 1;
+	if ( m_last_launch_display < 0 )
+		m_last_launch_display = 0;
 
-	if ( m_last_launch_filter >= m_lists[ m_last_launch_list ].get_filter_count() )
-		m_last_launch_filter = m_lists[ m_last_launch_list ].get_filter_count() - 1;
+	if ( m_last_launch_filter >= m_displays[ m_last_launch_display ].get_filter_count() )
+		m_last_launch_filter = m_displays[ m_last_launch_display ].get_filter_count() - 1;
 	if ( m_last_launch_filter < 0 )
 		m_last_launch_filter = 0;
 }
@@ -609,10 +613,10 @@ bool FeSettings::test_mouse_reset( int mouse_x, int mouse_y ) const
 
 int FeSettings::get_filter_index_from_offset( int offset ) const
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return 0;
 
-	int f_count = m_lists[m_current_list].get_filter_count();
+	int f_count = m_displays[m_current_display].get_filter_count();
 
 	if ( f_count == 0 )
 		return 0;
@@ -635,10 +639,10 @@ int FeSettings::get_filter_index_from_offset( int offset ) const
 
 int FeSettings::get_filter_count() const
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return 0;
 
-	return m_lists[m_current_list].get_filter_count();
+	return m_displays[m_current_display].get_filter_count();
 }
 
 int FeSettings::get_filter_size( int filter_index ) const
@@ -648,10 +652,10 @@ int FeSettings::get_filter_size( int filter_index ) const
 
 int FeSettings::get_rom_index( int filter_index, int offset ) const
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return -1;
 
-	int retval = m_lists[m_current_list].get_rom_index( filter_index );
+	int retval = m_displays[m_current_display].get_rom_index( filter_index );
 
 	// keep in bounds
 	int rl_size = m_rl.filter_size( filter_index );
@@ -679,12 +683,12 @@ int FeSettings::get_rom_index( int filter_index, int offset ) const
 	return retval;
 }
 
-const std::string &FeSettings::get_current_list_title() const
+const std::string &FeSettings::get_current_display_title() const
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return FE_EMPTY_STRING;
 
-	return m_lists[m_current_list].get_info( FeListInfo::Name );
+	return m_displays[m_current_display].get_info( FeDisplayInfo::Name );
 }
 
 const std::string &FeSettings::get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index )
@@ -727,10 +731,10 @@ void FeSettings::get_screensaver_file( std::string &path, std::string &file ) co
 
 std::string FeSettings::get_current_layout_file() const
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return FE_EMPTY_STRING;
 
-	std::string file = m_lists[m_current_list].get_current_layout_file();
+	std::string file = m_displays[m_current_display].get_current_layout_file();
 	if ( file.empty() )
 	{
 		std::vector<std::string> my_list;
@@ -758,13 +762,13 @@ std::string FeSettings::get_current_layout_file() const
 
 std::string FeSettings::get_current_layout_dir() const
 {
-	if (( m_current_list < 0 )
-		|| ( m_lists[ m_current_list ].get_info( FeListInfo::Layout ).empty() ))
+	if (( m_current_display < 0 )
+		|| ( m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ).empty() ))
 	{
 		return FE_EMPTY_STRING;
 	}
 
-	return get_layout_dir( m_lists[ m_current_list ].get_info( FeListInfo::Layout ));
+	return get_layout_dir( m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ));
 }
 
 std::string FeSettings::get_layout_dir( const std::string &layout_name ) const
@@ -789,13 +793,13 @@ FeLayoutInfo &FeSettings::get_layout_config( const std::string &layout_name )
 
 FeLayoutInfo &FeSettings::get_current_layout_config()
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 	{
 		ASSERT( 0 ); // This should not happen
 		return get_layout_config( "" );
 	}
 
-	return get_layout_config( m_lists[ m_current_list ].get_info( FeListInfo::Layout ) );
+	return get_layout_config( m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ) );
 }
 
 const std::string &FeSettings::get_config_dir() const
@@ -812,34 +816,34 @@ bool FeSettings::config_file_exists() const
 }
 
 // return true if layout needs to be reloaded as a result
-bool FeSettings::set_list( int index )
+bool FeSettings::set_display( int index )
 {
 	std::string old = get_current_layout_dir() + get_current_layout_file();
 
-	if ( index >= (int)m_lists.size() )
-		m_current_list = 0;
+	if ( index >= (int)m_displays.size() )
+		m_current_display = 0;
 	else if ( index < 0 )
-		m_current_list = m_lists.size() - 1;
+		m_current_display = m_displays.size() - 1;
 	else
-		m_current_list = index;
+		m_current_display = index;
 
 	m_rl.save_state();
-	init_list();
+	init_display();
 
 	return ( old.compare( get_current_layout_dir() + get_current_layout_file() ) != 0 );
 }
 
 // return true if layout needs to be reloaded as a result
-bool FeSettings::navigate_list( int step, bool wrap_mode )
+bool FeSettings::navigate_display( int step, bool wrap_mode )
 {
-	bool retval = set_list( m_current_list + step );
+	bool retval = set_display( m_current_display + step );
 
 	if ( wrap_mode )
 	{
 		if ( step > 0 )
 			set_current_selection( 0, -1 );
-		else if ( m_current_list >= 0 )
-			set_current_selection( m_lists[m_current_list].get_filter_count() - 1, -1 );
+		else if ( m_current_display >= 0 )
+			set_current_selection( m_displays[m_current_display].get_filter_count() - 1, -1 );
 	}
 
 	return retval;
@@ -848,23 +852,23 @@ bool FeSettings::navigate_list( int step, bool wrap_mode )
 // return true if layout needs to be reloaded as a result
 bool FeSettings::navigate_filter( int step )
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return false;
 
-	int filter_count = m_lists[m_current_list].get_filter_count();
-	int new_filter = m_lists[m_current_list].get_current_filter_index() + step;
+	int filter_count = m_displays[m_current_display].get_filter_count();
+	int new_filter = m_displays[m_current_display].get_current_filter_index() + step;
 
 	if ( new_filter >= filter_count )
 	{
-		if ( m_filter_wrap_mode == JumpToNextList )
-			return navigate_list( 1, true );
+		if ( m_filter_wrap_mode == JumpToNextDisplay )
+			return navigate_display( 1, true );
 
 		new_filter = ( m_filter_wrap_mode == NoWrap ) ? filter_count - 1 : 0;
 	}
 	if ( new_filter < 0 )
 	{
-		if ( m_filter_wrap_mode == JumpToNextList )
-			return navigate_list( -1, true );
+		if ( m_filter_wrap_mode == JumpToNextDisplay )
+			return navigate_display( -1, true );
 
 		new_filter = ( m_filter_wrap_mode == NoWrap ) ? 0 : filter_count - 1;
 	}
@@ -873,37 +877,37 @@ bool FeSettings::navigate_filter( int step )
 	return false;
 }
 
-int FeSettings::get_current_list_index() const
+int FeSettings::get_current_display_index() const
 {
-	return m_current_list;
+	return m_current_display;
 }
 
 // if rom_index < 0, then the rom index is left unchanged and only the filter index is changed
 void FeSettings::set_current_selection( int filter_index, int rom_index )
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return;
 
-	m_lists[m_current_list].set_current_filter_index( filter_index );
+	m_displays[m_current_display].set_current_filter_index( filter_index );
 
 	if ( rom_index >= 0 )
-		m_lists[m_current_list].set_rom_index( filter_index, rom_index );
+		m_displays[m_current_display].set_rom_index( filter_index, rom_index );
 }
 
 int FeSettings::get_current_filter_index() const
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return 0;
 
-	return m_lists[m_current_list].get_current_filter_index();
+	return m_displays[m_current_display].get_current_filter_index();
 }
 
 const std::string &FeSettings::get_filter_name( int filter_index )
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return FE_EMPTY_STRING;
 
-	FeFilter *f = m_lists[m_current_list].get_filter( filter_index );
+	FeFilter *f = m_displays[m_current_display].get_filter( filter_index );
 
 	if ( !f )
 		return FE_EMPTY_STRING;
@@ -917,11 +921,11 @@ void FeSettings::get_current_sort( FeRomInfo::Index &idx, bool &rev, int &limit 
 	rev = false;
 	limit = 0;
 
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return;
 
-	FeFilter *f = m_lists[m_current_list].get_filter(
-			m_lists[m_current_list].get_current_filter_index() );
+	FeFilter *f = m_displays[m_current_display].get_filter(
+			m_displays[m_current_display].get_current_filter_index() );
 
 	if ( f )
 	{
@@ -940,9 +944,9 @@ void FeSettings::step_current_selection( int step )
 bool FeSettings::select_last_launch()
 {
 	bool retval = false;
-	if ( m_current_list != m_last_launch_list )
+	if ( m_current_display != m_last_launch_display )
 	{
-		set_list( m_last_launch_list );
+		set_display( m_last_launch_display );
 		retval = true;
 	}
 
@@ -966,7 +970,7 @@ bool FeSettings::get_current_fav() const
 
 bool FeSettings::set_current_fav( bool status )
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return false;
 
 	int filter_index = get_current_filter_index();
@@ -974,7 +978,7 @@ bool FeSettings::set_current_fav( bool status )
 	return m_rl.set_fav(
 			filter_index,
 			get_rom_index( filter_index, 0 ),
-			m_lists[m_current_list],
+			m_displays[m_current_display],
 			status );
 }
 
@@ -1053,7 +1057,7 @@ void FeSettings::get_current_tags_list(
 bool FeSettings::set_current_tag(
 		const std::string &tag, bool flag )
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return false;
 
 	int filter_index = get_current_filter_index();
@@ -1061,18 +1065,18 @@ bool FeSettings::set_current_tag(
 	return m_rl.set_tag(
 			filter_index,
 			get_rom_index( filter_index, 0 ),
-			m_lists[m_current_list],
+			m_displays[m_current_display],
 			tag,
 			flag );
 }
 
 void FeSettings::toggle_layout()
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return;
 
 	std::vector<std::string> list;
-	std::string layout_file = m_lists[m_current_list].get_current_layout_file();
+	std::string layout_file = m_displays[m_current_display].get_current_layout_file();
 
 	get_basename_from_extension(
 			list,
@@ -1099,7 +1103,7 @@ void FeSettings::toggle_layout()
 	}
 
 	layout_file = list[ ( index + 1 ) % list.size() ];
-	m_lists[ m_current_list ].set_current_layout_file( layout_file );
+	m_displays[ m_current_display ].set_current_layout_file( layout_file );
 }
 
 void FeSettings::set_volume( FeSoundInfo::SoundType t, const std::string &v )
@@ -1176,7 +1180,7 @@ void FeSettings::run( int &minimum_run_seconds )
 	const std::string &rom_name = rom.get_info( FeRomInfo::Romname );
 	minimum_run_seconds = as_int( emu->get_info( FeEmulatorInfo::Minimum_run_time ) );
 
-	m_last_launch_list = get_current_list_index();
+	m_last_launch_display = get_current_display_index();
 	m_last_launch_filter = filter_index;
 	m_last_launch_rom = rom_index;
 
@@ -1288,7 +1292,7 @@ void FeSettings::run( int &minimum_run_seconds )
 
 	if ( m_track_usage )
 	{
-		const std::string rl_name = m_lists[m_current_list].get_info( FeListInfo::Romlist );
+		const std::string rl_name = m_displays[m_current_display].get_info( FeDisplayInfo::Romlist );
 		std::string path = m_config_path + FE_STATS_SUBDIR;
 		confirm_directory( path, rl_name );
 
@@ -1338,10 +1342,10 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 
 	if ( n > 0 )
 	{
-		n -= perform_substitution( str, "[ListTitle]",
-				get_current_list_title() );
+		n -= perform_substitution( str, "[DisplayName]",
+				get_current_display_title() );
 
-		n -= perform_substitution( str, "[ListFilterName]",
+		n -= perform_substitution( str, "[FilterName]",
 				get_filter_name( filter_index ) );
 
 		n -= perform_substitution( str, "[ListSize]",
@@ -1349,7 +1353,16 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 
 		n -= perform_substitution( str, "[ListEntry]",
 				as_str( rom_index + 1 ) );
-	}
+
+
+		// [ListTitle] deprecated as of 1.5
+		n -= perform_substitution( str, "[ListTitle]",
+				get_current_display_title() );
+
+		// [ListFilterName] deprecated as of 1.5
+		n -= perform_substitution( str, "[ListFilterName]",
+				get_filter_name( filter_index ) );
+}
 
 	if ( n > 0 )
 	{
@@ -1543,19 +1556,19 @@ int FeSettings::get_screen_saver_timeout() const
 	return m_ssaver_time;
 }
 
-bool FeSettings::get_lists_menu_exit() const
+bool FeSettings::get_displays_menu_exit() const
 {
-	return m_lists_menu_exit;
+	return m_displays_menu_exit;
 }
 
-void FeSettings::get_list_names( std::vector<std::string> &list ) const
+void FeSettings::get_display_names( std::vector<std::string> &list ) const
 {
 	list.clear();
-	list.reserve( m_lists.size() );
+	list.reserve( m_displays.size() );
 
-	for ( std::vector<FeListInfo>::const_iterator itr=m_lists.begin();
-			itr < m_lists.end(); ++itr )
-		list.push_back( (*itr).get_info( FeListInfo::Name ) );
+	for ( std::vector<FeDisplayInfo>::const_iterator itr=m_displays.begin();
+			itr < m_displays.end(); ++itr )
+		list.push_back( (*itr).get_info( FeDisplayInfo::Name ) );
 }
 
 const std::string FeSettings::get_info( int index ) const
@@ -1582,8 +1595,8 @@ const std::string FeSettings::get_info( int index ) const
 		break;
 	case ScreenSaverTimeout:
 		return as_str( m_ssaver_time);
-	case ListsMenuExit:
-		return ( m_lists_menu_exit ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+	case DisplaysMenuExit:
+		return ( m_displays_menu_exit ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case HideBrackets:
 		return ( m_hide_brackets ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case AutoLaunchLastGame:
@@ -1643,8 +1656,8 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_ssaver_time = as_int( value );
 		break;
 
-	case ListsMenuExit:
-		m_lists_menu_exit = config_str_to_bool( value );
+	case DisplaysMenuExit:
+		m_displays_menu_exit = config_str_to_bool( value );
 		break;
 
 	case HideBrackets:
@@ -1733,16 +1746,16 @@ bool FeSettings::set_info( int index, const std::string &value )
 }
 
 
-FeListInfo *FeSettings::get_list( int list_index )
+FeDisplayInfo *FeSettings::get_display( int index )
 {
-	if ( ( list_index < 0 ) || ( list_index >= (int)m_lists.size() ))
+	if ( ( index < 0 ) || ( index >= (int)m_displays.size() ))
 		return NULL;
 
-	std::vector<FeListInfo>::iterator itr=m_lists.begin() + list_index;
+	std::vector<FeDisplayInfo>::iterator itr=m_displays.begin() + index;
 	return &(*itr);
 }
 
-void FeSettings::create_filter( FeListInfo &l, const std::string &name ) const
+void FeSettings::create_filter( FeDisplayInfo &d, const std::string &name ) const
 {
 	FeFilter new_filter( name );
 
@@ -1750,31 +1763,31 @@ void FeSettings::create_filter( FeListInfo &l, const std::string &name ) const
 	if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_FILTER_DEFAULT ) )
 		new_filter.load_from_file( defaults_file );
 
-	l.append_filter( new_filter );
+	d.append_filter( new_filter );
 }
 
-FeListInfo *FeSettings::create_list( const std::string &n )
+FeDisplayInfo *FeSettings::create_display( const std::string &n )
 {
-	if ( m_current_list == -1 )
-		m_current_list=0;
+	if ( m_current_display == -1 )
+		m_current_display=0;
 
-	FeListInfo new_list( n );
+	FeDisplayInfo new_display( n );
 
 	std::string defaults_file;
 	if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_LIST_DEFAULT ) )
-		new_list.load_from_file( defaults_file );
+		new_display.load_from_file( defaults_file );
 
 	// If there is no layout set, set a good default one now
 	//
-	if ( new_list.get_info( FeListInfo::Layout ).empty() )
+	if ( new_display.get_info( FeDisplayInfo::Layout ).empty() )
 	{
-		if ( !m_lists.empty() )
+		if ( !m_displays.empty() )
 		{
 			// If other lists are configured, give the new list the same layout as
 			// the last configured list
 			//
-			new_list.set_info( FeListInfo::Layout,
-				m_lists.back().get_info( FeListInfo::Layout ) );
+			new_display.set_info( FeDisplayInfo::Layout,
+				m_displays.back().get_info( FeDisplayInfo::Layout ) );
 		}
 		else
 		{
@@ -1783,21 +1796,21 @@ FeListInfo *FeSettings::create_list( const std::string &n )
 			std::vector<std::string> layouts;
 			get_layouts_list( layouts ); // the returned list is sorted alphabetically
 			if ( !layouts.empty() )
-				new_list.set_info( FeListInfo::Layout, layouts.front() );
+				new_display.set_info( FeDisplayInfo::Layout, layouts.front() );
 		}
 	}
 
 	// If there is no romlist set, use the one from the last list created
 	//
-	if (( new_list.get_info( FeListInfo::Romlist ).empty() )
-		&& ( !m_lists.empty() ))
+	if (( new_display.get_info( FeDisplayInfo::Romlist ).empty() )
+		&& ( !m_displays.empty() ))
 	{
-		new_list.set_info( FeListInfo::Romlist,
-			m_lists.back().get_info( FeListInfo::Romlist ) );
+		new_display.set_info( FeDisplayInfo::Romlist,
+			m_displays.back().get_info( FeDisplayInfo::Romlist ) );
 	}
 
-	m_lists.push_back( new_list );
-	return &(m_lists.back());
+	m_displays.push_back( new_display );
+	return &(m_displays.back());
 }
 
 void FeSettings::get_layouts_list( std::vector<std::string> &layouts ) const
@@ -1819,36 +1832,36 @@ void FeSettings::get_layouts_list( std::vector<std::string> &layouts ) const
 	}
 }
 
-void FeSettings::delete_list( int list_index )
+void FeSettings::delete_display( int index )
 {
-	if ( ( list_index < 0 ) || ( list_index >= (int)m_lists.size() ))
+	if ( ( index < 0 ) || ( index >= (int)m_displays.size() ))
 		return;
 
-	std::vector<FeListInfo>::iterator itr=m_lists.begin() + list_index;
-	m_lists.erase( itr );
+	std::vector<FeDisplayInfo>::iterator itr=m_displays.begin() + index;
+	m_displays.erase( itr );
 
-	if ( m_current_list >= list_index )
-		m_current_list--;
+	if ( m_current_display >= index )
+		m_current_display--;
 
-	if ( m_current_list < 0 )
-		m_current_list=0;
+	if ( m_current_display < 0 )
+		m_current_display=0;
 }
 
-void FeSettings::get_current_list_filter_names(
+void FeSettings::get_current_display_filter_names(
 		std::vector<std::string> &list ) const
 {
-	if ( m_current_list < 0 )
+	if ( m_current_display < 0 )
 		return;
 
-	m_lists[ m_current_list ].get_filters_list( list );
+	m_displays[ m_current_display ].get_filters_list( list );
 }
 
 bool FeSettings::check_romlist_configured( const std::string &n ) const
 {
-	for ( std::vector<FeListInfo>::const_iterator itr=m_lists.begin();
-			itr!=m_lists.end(); ++itr )
+	for ( std::vector<FeDisplayInfo>::const_iterator itr=m_displays.begin();
+			itr!=m_displays.end(); ++itr )
 	{
-		if ( n.compare( (*itr).get_info( FeListInfo::Romlist ) ) == 0 )
+		if ( n.compare( (*itr).get_info( FeDisplayInfo::Romlist ) ) == 0 )
 			return true;
 	}
 
@@ -1877,8 +1890,8 @@ void FeSettings::save() const
 		outfile << "# Generated by " << FE_NAME << " " << FE_VERSION << std::endl
          << "#" << std::endl;
 
-		for ( std::vector<FeListInfo>::const_iterator it=m_lists.begin();
-						it != m_lists.end(); ++it )
+		for ( std::vector<FeDisplayInfo>::const_iterator it=m_displays.begin();
+						it != m_displays.end(); ++it )
 		{
 			(*it).save( outfile );
 			outfile << std::endl;
@@ -1945,9 +1958,9 @@ void FeSettings::get_resource( const std::string &token,
 		perform_substitution( str, "$1", rep );
 }
 
-int FeSettings::lists_count() const
+int FeSettings::displays_count() const
 {
-	return m_lists.size();
+	return m_displays.size();
 }
 
 void FeSettings::get_available_plugins( std::vector < std::string > &ll ) const

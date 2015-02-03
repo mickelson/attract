@@ -59,6 +59,7 @@ fe.layout.page_size=15;
 local surface = fe.add_surface( 480, 360 );
 local snap = surface.add_artwork( "snap", 0, 0, 480, 360 );
 snap.preserve_aspect_ratio = true;
+snap.trigger = Transition.EndNavigation;
 
 // position and pinch the surface
 //
@@ -281,11 +282,11 @@ l = fe.add_text( "[ListEntry]/[ListSize]", 370, 458, 240, 16 );
 l.set_rgb( 200, 200, 70 );
 l.align = Align.Right;
 
-l = fe.add_text( "[ListTitle]", 4, 4, 140, 16 );
+l = fe.add_text( "[DisplayName]", 4, 4, 140, 16 );
 l.set_rgb( 200, 200, 70 );
 l.align = Align.Left;
 
-l = fe.add_text( "[ListFilterName]", 370, 4, 240, 16 );
+l = fe.add_text( "[FilterName]", 370, 4, 240, 16 );
 l.set_rgb( 200, 200, 70 );
 l.align = Align.Right;
 
@@ -317,7 +318,6 @@ function update_lb( ttype, var, ttime )
 
 	case Transition.ToNewSelection:
 		info_bub.set_alpha( 0 );
-		do_fade_in = true;
 		fade_in_time = clock() * 1000 + 500;
 		break;
 
@@ -347,10 +347,13 @@ function update_lb( ttype, var, ttime )
 		{
 			info_bub.set_msg( "Copyright " + year + " " +
 			fe.game_info( Info.Manufacturer, 0 ) );
+			do_fade_in = true;
 		}
 		else
 		{
 			info_bub.set_msg( "" );
+			do_fade_in = false;
+			info_bub.set_alpha( 0 );
 		}
 		break;
 	}

@@ -29,7 +29,7 @@
 
 class FeSettings;
 class FeEmulatorInfo;
-class FeListInfo;
+class FeDisplayInfo;
 class FeFilter;
 class FeRule;
 class FePlugInfo;
@@ -285,7 +285,7 @@ public:
 class FeFilterEditMenu : public FeBaseConfigMenu
 {
 private:
-	FeListInfo *m_list;
+	FeDisplayInfo *m_display;
 	int m_index;
 	FeRuleEditMenu m_rule_menu;
 
@@ -296,31 +296,31 @@ public:
 	bool on_option_select( FeConfigContext &ctx,
 						FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
-	void set_filter_index( FeListInfo *l, int i );
+	void set_filter_index( FeDisplayInfo *d, int i );
 };
 
-class FeListEditMenu : public FeBaseConfigMenu
+class FeDisplayEditMenu : public FeBaseConfigMenu
 {
 private:
 	FeFilterEditMenu m_filter_menu;
 	FeLayoutEditMenu m_layout_menu;
-	FeListInfo *m_list;
-	int m_index; // the index for m_list in FeSettings' master list
+	FeDisplayInfo *m_display;
+	int m_index; // the index for m_display in FeSettings' master list
 
 public:
-	FeListEditMenu();
+	FeDisplayEditMenu();
 
 	void get_options( FeConfigContext &ctx );
 	bool on_option_select( FeConfigContext &ctx,
 						FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
-	void set_list( FeListInfo *l, int index );
+	void set_display( FeDisplayInfo *d, int index );
 };
 
-class FeListSelMenu : public FeBaseConfigMenu
+class FeDisplaySelMenu : public FeBaseConfigMenu
 {
 private:
-	FeListEditMenu m_edit_menu;
+	FeDisplayEditMenu m_edit_menu;
 
 public:
 	void get_options( FeConfigContext &ctx );
@@ -402,7 +402,7 @@ class FeConfigMenu : public FeBaseConfigMenu
 {
 private:
 	FeEmulatorSelMenu m_emu_menu;
-	FeListSelMenu m_list_menu;
+	FeDisplaySelMenu m_list_menu;
 	FeInputSelMenu m_input_menu;
 	FeSoundMenu m_sound_menu;
 	FeSaverEditMenu m_saver_menu;

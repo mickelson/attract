@@ -155,7 +155,7 @@ local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
 //
 // Initialize misc text
 //
-local l = fe.add_text( "[ListFilterName] [[ListEntry]/[ListSize]]", 400, 580, 400, 20 );
+local l = fe.add_text( "[FilterName] [[ListEntry]/[ListSize]]", 400, 580, 400, 20 );
 l.set_rgb( 180, 180, 70 );
 l.align = Align.Right;
 
@@ -185,7 +185,7 @@ orbital.set_slots( sats );
 //
 // Title text
 //
-l = fe.add_text( "[ListTitle]", 0, 0, 800, 55 );
+l = fe.add_text( "[DisplayName]", 0, 0, 800, 55 );
 l.set_rgb( 180, 180, 70 ); 
 l.style = Style.Bold;
 

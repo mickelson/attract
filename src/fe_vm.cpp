@@ -414,13 +414,15 @@ void FeVM::on_new_layout( const std::string &path,
 
 	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()
 		.Prop( _SC("name"), &FePresent::get_display_name )
-		.Prop( _SC("filter"), &FePresent::get_filter_name )
-		.Prop( _SC("size"), &FePresent::get_list_size )
 		.Prop( _SC("index"), &FePresent::get_selection_index, &FePresent::set_selection_index )
-		.Prop( _SC("sort_by"), &FePresent::get_sort_by )
-		.Prop( _SC("reverse_order"), &FePresent::get_reverse_order )
-		.Prop( _SC("list_limit"), &FePresent::get_list_limit )
 		.Prop( _SC("filter_index"), &FePresent::get_filter_index, &FePresent::set_filter_index )
+
+		// The following are deprecated as of version 1.5 in favour of using the fe.filters array:
+		.Prop( _SC("filter"), &FePresent::get_filter_name )	// deprecated as of 1.5
+		.Prop( _SC("size"), &FePresent::get_list_size )			// deprecated as of 1.5
+		.Prop( _SC("sort_by"), &FePresent::get_sort_by )		// deprecated as of 1.5
+		.Prop( _SC("reverse_order"), &FePresent::get_reverse_order ) // deprecated as of 1.5
+		.Prop( _SC("list_limit"), &FePresent::get_list_limit ) // deprecated as of 1.5
 	);
 
 	fe.Bind( _SC("Overlay"), Class <FeVM, NoConstructor>()
@@ -460,6 +462,9 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop( _SC("name"), &FeFilter::get_name )
 		.Prop( _SC("index"), &FeFilter::get_rom_index )
 		.Prop( _SC("size"), &FeFilter::get_size )
+		.Prop( _SC("sort_by"), &FeFilter::get_sort_by )
+		.Prop( _SC("reverse_order"), &FeFilter::get_reverse_order )
+		.Prop( _SC("list_limit"), &FeFilter::get_list_limit )
 	);
 
 	//
@@ -509,14 +514,14 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	// Define variables that get exposed to Squirrel
 	//
-	FeListInfo *li = m_feSettings->get_list( m_feSettings->get_current_list_index() );
+	FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
 
 	Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("filters"), ftab );
 	Array farray( ftab.GetObject() );
 
-	for ( int i=0; i < li->get_filter_count(); i++ )
-		farray.SetInstance( farray.GetSize(), li->get_filter( i ) );
+	for ( int i=0; i < di->get_filter_count(); i++ )
+		farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
 
 	fe.SetInstance( _SC("layout"), (FePresent *)this );
 	fe.SetInstance( _SC("list"), (FePresent *)this );
@@ -1474,27 +1479,14 @@ void FeVM::cb_signal( const char *sig )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	//
-	// First check for signals corresponding to input actions
-	//
-	int i=0, index=-1;
-	while ( FeInputMap::commandStrings[i] != 0 )
-	{
-		if ( strcmp( FeInputMap::commandStrings[i], sig ) == 0 )
-		{
-			index = i;
-			break;
-		}
-		i++;
-	}
-
-	if ( index > -1 )
+	FeInputMap::Command c = FeInputMap::string_to_command( sig );
+	if ( c != FeInputMap::LAST_COMMAND )
 	{
 		//
 		// Post the command so it can be handled the next time we are
 		// processing events...
 		//
-		fev->m_posted_commands.push( (FeInputMap::Command)index );
+		fev->m_posted_commands.push( c );
 		return;
 	}
 
@@ -1507,18 +1499,16 @@ void FeVM::cb_signal( const char *sig )
 		NULL
 	};
 
-	i=0;
+	int i=0;
 	while ( signals[i] != 0 )
 	{
 		if ( strcmp( signals[i], sig ) == 0 )
-		{
-			index = i;
 			break;
-		}
+
 		i++;
 	}
 
-	switch (index)
+	switch (i)
 	{
 	case 0: // "reset_window"
 		fev->m_window.on_exit();

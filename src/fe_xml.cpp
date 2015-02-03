@@ -116,7 +116,7 @@ bool FeMapComp::operator()(const char *lhs, const char *rhs) const
 // Mame XML Parser
 //
 FeMameXMLParser::FeMameXMLParser(
-		std::list <FeRomInfo> &romlist,
+		FeRomInfoListType &romlist,
 		UiUpdate u,
 		void *d )
 	: FeXMLParser( u, d ),
@@ -140,7 +140,7 @@ void FeMameXMLParser::start_element(
 		{
 			if ( strcmp( attribute[i], "name" ) == 0 )
 			{
-				std::map<const char *, std::list<FeRomInfo>::iterator, FeMapComp>::iterator itr;
+				std::map<const char *, FeRomInfoListType::iterator, FeMapComp>::iterator itr;
 				itr = m_map.find( attribute[i+1] );
 				if ( itr != m_map.end() )
 				{
@@ -346,14 +346,14 @@ void FeMameXMLParser::end_element( const char *element )
 bool FeMameXMLParser::parse( const std::string &prog )
 {
 	std::string base_args = "-listxml";
-	std::list<FeRomInfo>::iterator itr;
+	FeRomInfoListType::iterator itr;
 	m_percent=m_count=0;
 
 	//
 	// run "mame -listxml" and find each rom.
 	//
 	m_map.clear();
-	for ( std::list<FeRomInfo>::iterator itr=m_romlist.begin();
+	for ( FeRomInfoListType::iterator itr=m_romlist.begin();
 			itr != m_romlist.end(); ++itr )
 		m_map[ (*itr).get_info( FeRomInfo::Romname ).c_str() ] = itr;
 
@@ -371,7 +371,7 @@ bool FeMameXMLParser::parse( const std::string &prog )
 	{
 		std::cout << "Discarded " << m_discarded.size()
 				<< " entries based on xml info: ";
-		std::vector<std::list<FeRomInfo>::iterator>::iterator itr;
+		std::vector<FeRomInfoListType::iterator>::iterator itr;
 		for ( itr = m_discarded.begin(); itr != m_discarded.end(); ++itr )
 		{
 			std::cout << (*(*itr)).get_info( FeRomInfo::Romname ) << " ";
@@ -387,7 +387,7 @@ bool FeMameXMLParser::parse( const std::string &prog )
 // Mess XML Parser
 //
 FeMessXMLParser::FeMessXMLParser(
-	std::list <FeRomInfo> &romlist,
+	FeRomInfoListType &romlist,
 	UiUpdate u,
 	void *d )
 	: FeXMLParser( u, d ), m_romlist( romlist )
@@ -528,13 +528,13 @@ bool FeMessXMLParser::parse( const std::string &prog,
 {
 	// First get our machine -listxml settings
 	//
-	std::list<FeRomInfo> temp_list;
+	FeRomInfoListType temp_list;
 	temp_list.push_back( FeRomInfo( system_name ) );
 
 	FeMameXMLParser listxml( temp_list );
 	listxml.parse( prog );
 
-	std::list<FeRomInfo>::iterator itr;
+	FeRomInfoListType::iterator itr;
 	if ( !temp_list.empty() )
 	{
 		const FeRomInfo &ri = temp_list.front();
@@ -570,7 +570,7 @@ bool FeMessXMLParser::parse( const std::string &prog,
 	return retval;
 }
 
-FeHyperSpinXMLParser::FeHyperSpinXMLParser(  std::list<FeRomInfo> & li )
+FeHyperSpinXMLParser::FeHyperSpinXMLParser(  FeRomInfoListType & li )
 	: m_romlist( li ), m_collect_data( false )
 {
 }

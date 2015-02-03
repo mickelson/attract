@@ -365,7 +365,7 @@ int FePresent::get_toggle_rotation() const
 
 const char *FePresent::get_display_name() const
 {
-	return m_feSettings->get_current_list_title().c_str();
+	return m_feSettings->get_current_display_title().c_str();
 }
 
 const char *FePresent::get_filter_name() const
@@ -538,9 +538,9 @@ bool FePresent::handle_event( FeInputMap::Command c )
 		toggle_movie();
 		break;
 
-	case FeInputMap::NextList:
-	case FeInputMap::PrevList:
-		if ( m_feSettings->navigate_list( ( c == FeInputMap::NextList ) ? 1 : -1 ) )
+	case FeInputMap::NextDisplay:
+	case FeInputMap::PrevDisplay:
+		if ( m_feSettings->navigate_display( ( c == FeInputMap::NextDisplay ) ? 1 : -1 ) )
 			load_layout();
 		else
 			update_to_new_list();
@@ -692,7 +692,7 @@ void FePresent::load_layout( bool initial_load )
 	set_transforms();
 	m_screenSaverActive=false;
 
-	if ( m_feSettings->lists_count() < 1 )
+	if ( m_feSettings->displays_count() < 1 )
 		return;
 
 	//
@@ -788,28 +788,19 @@ void FePresent::set_page_size( int ps )
 
 void FePresent::on_stop_frontend()
 {
-	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
-				itm != m_texturePool.end(); ++itm )
-		(*itm)->set_play_state( false );
-
+	set_video_play_state( false );
 	on_transition( EndLayout, FromToFrontend );
 }
 
 void FePresent::pre_run()
 {
 	on_transition( ToGame, FromToNoValue );
-
-	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
-				itm != m_texturePool.end(); ++itm )
-		(*itm)->set_play_state( false );
+	set_video_play_state( false );
 }
 
 void FePresent::post_run()
 {
-	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
-				itm != m_texturePool.end(); ++itm )
-		(*itm)->set_play_state( m_playMovies );
-
+	set_video_play_state( m_playMovies );
 	on_transition( FromGame, FromToNoValue );
 
 	reset_screen_saver();
@@ -819,10 +810,14 @@ void FePresent::post_run()
 void FePresent::toggle_movie()
 {
 	m_playMovies = !m_playMovies;
+	set_video_play_state( m_playMovies );
+}
 
+void FePresent::set_video_play_state( bool state )
+{
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
-		(*itm)->set_play_state( m_playMovies );
+		(*itm)->set_play_state( state );
 }
 
 void FePresent::toggle_mute()

@@ -60,7 +60,7 @@ public:
 	static const char *windowModeTokens[];
 	static const char *windowModeDispTokens[];
 
-	enum FilterWrapModeType { WrapWithinList=0, JumpToNextList, NoWrap };
+	enum FilterWrapModeType { WrapWithinDisplay=0, JumpToNextDisplay, NoWrap };
 	static const char *filterWrapTokens[];
 	static const char *filterWrapDispTokens[];
 
@@ -71,7 +71,7 @@ public:
 		DefaultFont,
 		FontPath,
 		ScreenSaverTimeout,
-		ListsMenuExit,
+		DisplaysMenuExit,
 		HideBrackets,
 		AutoLaunchLastGame,
 		ConfirmFavourites,
@@ -95,7 +95,7 @@ private:
 	std::string m_language;
 
 	std::vector<std::string> m_font_paths;
-	std::vector<FeListInfo> m_lists;
+	std::vector<FeDisplayInfo> m_displays;
 	std::vector<FePlugInfo> m_plugins;
 	std::vector<FeLayoutInfo> m_layout_params;
 	FeRomList m_rl;
@@ -106,15 +106,15 @@ private:
 	FeLayoutInfo m_saver_params;
 	sf::IntRect m_mousecap_rect;
 
-	int m_current_list;
+	int m_current_display;
 	FeBaseConfigurable *m_current_config_object;
 	int m_ssaver_time;
-	int m_last_launch_list;
+	int m_last_launch_display;
 	int m_last_launch_filter;
 	int m_last_launch_rom;
 	int m_joy_thresh;		// [1..100], 100=least sensitive
 	int m_mouse_thresh;	// [1..100], 100=least sensitive
-	bool m_lists_menu_exit;
+	bool m_displays_menu_exit;
 	bool m_hide_brackets;
 	bool m_autolaunch_last_game;
 	bool m_confirm_favs;
@@ -131,7 +131,7 @@ private:
 						const std::string &,
 						const std::string & );
 
-	void init_list();
+	void init_display();
 	void load_state();
 	void clear();
 
@@ -147,7 +147,7 @@ public:
 				const std::string &cmdln_font );
 
 	void load();
-	void save_state( void ) const;
+	void save_state();
 
 	FeInputMap::Command map_input( const sf::Event &e );
 	bool config_map_input( const sf::Event &e, std::string &s, FeInputMap::Command &conflict );
@@ -168,19 +168,19 @@ public:
 	void step_current_selection( int step );
 	void set_current_selection( int filter_index, int rom_index ); // use rom_index<0 to only change the filter
 
-	// Switches the display list
-	// returns true if the list change results in a new layout, false otherwise
+	// Switches the display
+	// returns true if the display change results in a new layout, false otherwise
 	//
-	bool set_list( int index );
-	int get_current_list_index() const;
-	int lists_count() const;
+	bool set_display( int index );
+	int get_current_display_index() const;
+	int displays_count() const;
 
-	bool navigate_list( int step, bool wrap_mode=false );
+	bool navigate_display( int step, bool wrap_mode=false );
 	bool navigate_filter( int step );
 
 	int get_current_filter_index() const;
 	const std::string &get_filter_name( int filter_index );
-	void get_current_list_filter_names( std::vector<std::string> &list ) const;
+	void get_current_display_filter_names( std::vector<std::string> &list ) const;
 	int get_filter_index_from_offset( int offset ) const;
 	int get_filter_size( int filter_index ) const;
 	int get_filter_count() const;
@@ -202,7 +202,7 @@ public:
 
 	void get_current_sort( FeRomInfo::Index &idx, bool &rev, int &limit );
 
-	const std::string &get_current_list_title() const;
+	const std::string &get_current_display_title() const;
 	const std::string &get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index );
 	const std::string &get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index );
 	bool hide_brackets() const { return m_hide_brackets; }
@@ -236,7 +236,7 @@ public:
 	WindowType get_window_mode() const;
 	FilterWrapModeType get_filter_wrap_mode() const;
 	int get_screen_saver_timeout() const;
-	bool get_lists_menu_exit() const;
+	bool get_displays_menu_exit() const;
 
 	bool get_current_fav() const;
 
@@ -253,7 +253,7 @@ public:
 	void get_current_tags_list(
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
 
-	// returns true if the current list chnaged as a result of setting the tag
+	// returns true if the current list changed as a result of setting the tag
 	bool set_current_tag(
 			const std::string &tag, bool flag );
 	//
@@ -281,12 +281,12 @@ public:
    const std::string get_info( int index ) const; // see "ConfigSettingIndex"
    bool set_info( int index, const std::string & );
 
-	void get_list_names( std::vector<std::string> &list ) const;
-	FeListInfo *get_list( int index );
-	FeListInfo *create_list( const std::string &n );
-	void delete_list( int index );
+	void get_display_names( std::vector<std::string> &d ) const;
+	FeDisplayInfo *get_display( int index );
+	FeDisplayInfo *create_display( const std::string &n );
+	void delete_display( int index );
 
-	void create_filter( FeListInfo &l, const std::string &name ) const;
+	void create_filter( FeDisplayInfo &l, const std::string &name ) const;
 
 	// return true if specified romlist name is configured for use as a display
 	// list

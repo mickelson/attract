@@ -72,7 +72,7 @@ for ( local i=0; i<ftr_count; i++ )
 			PAD );
 
 
-		new_label = fe.add_text( "[ListFilterName]", i * x_dim, 0, x_dim, TOP_SPACE );
+		new_label = fe.add_text( "[FilterName]", i * x_dim, 0, x_dim, TOP_SPACE );
 	}
 	else
 	{
@@ -85,7 +85,7 @@ for ( local i=0; i<ftr_count; i++ )
 			y_dim,
 			PAD );
 
-		new_label = fe.add_text( "[ListFilterName]", 0, TOP_SPACE + i * y_dim, fe.layout.width, y_dim );
+		new_label = fe.add_text( "[FilterName]", 0, TOP_SPACE + i * y_dim, fe.layout.width, y_dim );
 		new_label.alpha = 125;
 		new_label.set_rgb( 0, 0, 0 );
 	}

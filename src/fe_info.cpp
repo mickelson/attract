@@ -299,8 +299,6 @@ const char FeRomListSorter::get_first_letter( const FeRomInfo &one_info )
 	return name.at( b );
 }
 
-const char *FeRule::indexString = "rule";
-
 const char *FeRule::filterCompStrings[] =
 {
 	"equals",
@@ -430,7 +428,7 @@ void FeRule::save( std::ofstream &f ) const
 	if (( m_filter_target != FeRomInfo::LAST_INDEX )
 		&& ( m_filter_comp != LAST_COMPARISON ))
 	{
-		f << "\t\t" << std::setw(20) << std::left << indexString << ' '
+		f << "\t\t" << std::setw(20) << std::left << FeFilter::indexStrings[0] << ' '
 			<< FeRomInfo::indexStrings[ m_filter_target ] << ' '
 			<< filterCompStrings[ m_filter_comp ] << ' '
 			<< m_filter_what << std::endl;
@@ -454,7 +452,7 @@ void FeRule::set_values(
 
 const char *FeFilter::indexStrings[] =
 {
-	"filter",
+	"rule",
 	"sort_by",
 	"reverse_order",
 	"list_limit",
@@ -493,69 +491,97 @@ bool FeFilter::apply_filter( const FeRomInfo &rom ) const
 int FeFilter::process_setting( const std::string &setting,
          const std::string &value, const std::string &fn )
 {
-	if ( value.empty() )
+	if ( setting.compare( indexStrings[0] ) == 0 ) // rule
 	{
-		m_rules.push_back(
-			FeRule( FeRomInfo::LAST_INDEX, FeRule::LAST_COMPARISON, "" )
-			);
-		return 0;
+		if ( value.empty() )
+		{
+			m_rules.push_back(
+				FeRule( FeRomInfo::LAST_INDEX, FeRule::LAST_COMPARISON, "" )
+				);
+			return 0;
+		}
+
+		FeRomInfo::Index target;
+		FeRule::FilterComp comp;
+		std::string what;
+
+		std::string token;
+		size_t pos=0;
+
+		token_helper( value, pos, token, FE_WHITESPACE );
+
+		int i=0;
+		while( FeRomInfo::indexStrings[i] != NULL )
+		{
+			if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
+				break;
+			i++;
+		}
+
+		if ( i >= FeRomInfo::LAST_INDEX )
+		{
+			invalid_setting( fn, "filter", token,
+					FeRomInfo::indexStrings, NULL, "target" );
+			return 1;
+		}
+
+		target = (FeRomInfo::Index)i;
+		token_helper( value, pos, token, FE_WHITESPACE );
+
+		i=0;
+		while( FeRule::filterCompStrings[i] != NULL )
+		{
+			if ( token.compare( FeRule::filterCompStrings[i] ) == 0 )
+				break;
+			i++;
+		}
+
+		if ( i >= FeRule::LAST_COMPARISON )
+		{
+			invalid_setting( fn, "filter", token, FeRule::filterCompStrings,
+					NULL, "comparison" );
+			return 1;
+		}
+
+		comp = (FeRule::FilterComp)i;
+
+		// Remainder of the line is filter regular expression (which may contain
+		// spaces...)
+		//
+		if ( pos < value.size() )
+			what = value.substr( pos );
+
+		m_rules.push_back( FeRule( target, comp, what ) );
 	}
-
-	FeRomInfo::Index target;
-	FeRule::FilterComp comp;
-	std::string what;
-
-	std::string token;
-	size_t pos=0;
-
-	token_helper( value, pos, token, FE_WHITESPACE );
-
-	int i=0;
-	while( FeRomInfo::indexStrings[i] != NULL )
+	else if ( setting.compare( indexStrings[1] ) == 0 ) // sort_by
 	{
-		if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
-			break;
-		i++;
+		for ( int i=0; i < FeRomInfo::LAST_INDEX; i++ )
+		{
+			if ( value.compare( FeRomInfo::indexStrings[i] ) == 0 )
+			{
+				set_sort_by( (FeRomInfo::Index)i );
+				break;
+			}
+		}
 	}
-
-	if ( i >= FeRomInfo::LAST_INDEX )
+	else if ( setting.compare( indexStrings[2] ) == 0 ) // reverse_order
 	{
-		invalid_setting( fn, "filter", token,
-				FeRomInfo::indexStrings, NULL, "target" );
+		set_reverse_order( true );
+	}
+	else if ( setting.compare( indexStrings[3] ) == 0 ) // list_limit
+	{
+		set_list_limit( as_int( value ) );
+	}
+	else
+	{
+		invalid_setting( fn, "filter", setting, indexStrings );
 		return 1;
 	}
 
-	target = (FeRomInfo::Index)i;
-	token_helper( value, pos, token, FE_WHITESPACE );
-
-	i=0;
-	while( FeRule::filterCompStrings[i] != NULL )
-	{
-		if ( token.compare( FeRule::filterCompStrings[i] ) == 0 )
-			break;
-		i++;
-	}
-
-	if ( i >= FeRule::LAST_COMPARISON )
-	{
-		invalid_setting( fn, "filter", token, FeRule::filterCompStrings,
-				NULL, "comparison" );
-		return 1;
-	}
-
-	comp = (FeRule::FilterComp)i;
-
-	// Remainder of the line is filter regular expression (which may contain
-	// spaces...)
-	//
-	if ( pos < value.size() )
-		what = value.substr( pos );
-
-	m_rules.push_back( FeRule( target, comp, what ) );
 	return 0;
 }
 
-void FeFilter::save( std::ofstream &f ) const
+void FeFilter::save( std::ofstream &f, const char *filter_tag ) const
 {
 	std::string n;
 	if ( m_name.find_first_of( ' ' ) != std::string::npos )
@@ -564,7 +590,7 @@ void FeFilter::save( std::ofstream &f ) const
 		n = m_name;
 
 	f << '\t' << std::setw(20) << std::left
-		<< indexStrings[0] << ' ' << n << std::endl;
+		<< filter_tag << ' ' << n << std::endl;
 
 	if ( m_sort_by != FeRomInfo::LAST_INDEX )
 	{
@@ -600,7 +626,18 @@ bool FeFilter::test_for_target( FeRomInfo::Index target ) const
 	return false;
 }
 
-const char *FeListInfo::indexStrings[] =
+void FeFilter::clear()
+{
+	m_name.clear();
+	m_rules.clear();
+	m_rom_index=0;
+	m_list_limit=0;
+	m_size=0;
+	m_sort_by=FeRomInfo::LAST_INDEX;
+	m_reverse_order=false;
+}
+
+const char *FeDisplayInfo::indexStrings[] =
 {
 	"name",
 	"layout",
@@ -608,19 +645,28 @@ const char *FeListInfo::indexStrings[] =
 	NULL
 };
 
-FeListInfo::FeListInfo( const std::string &n )
+const char *FeDisplayInfo::otherStrings[] =
+{
+	"filter",
+	"global_filter",
+	NULL
+};
+
+FeDisplayInfo::FeDisplayInfo( const std::string &n )
 	: m_rom_index( 0 ),
-	m_filter_index( 0 )
+	m_filter_index( 0 ),
+	m_current_config_filter( NULL ),
+	m_global_filter( "" )
 {
 	m_info[ Name ] = n;
 }
 
-const std::string &FeListInfo::get_info( int i ) const
+const std::string &FeDisplayInfo::get_info( int i ) const
 {
 	return m_info[i];
 }
 
-int FeListInfo::get_rom_index( int filter_index ) const
+int FeDisplayInfo::get_rom_index( int filter_index ) const
 {
 	if (( filter_index >= 0 ) && ( filter_index < (int)m_filters.size() ))
 		return m_filters[ filter_index ].get_rom_index();
@@ -628,7 +674,7 @@ int FeListInfo::get_rom_index( int filter_index ) const
 	return m_rom_index;
 }
 
-void FeListInfo::set_rom_index( int filter_index, int rom_index )
+void FeDisplayInfo::set_rom_index( int filter_index, int rom_index )
 {
 	if (( filter_index >= 0 ) && ( filter_index < (int)m_filters.size() ))
 		m_filters[ filter_index ].set_rom_index( rom_index );
@@ -636,23 +682,23 @@ void FeListInfo::set_rom_index( int filter_index, int rom_index )
 		m_rom_index = rom_index;
 }
 
-std::string FeListInfo::get_current_layout_file() const
+std::string FeDisplayInfo::get_current_layout_file() const
 {
 	return m_current_layout_file;
 }
 
-void FeListInfo::set_current_layout_file( const std::string &n )
+void FeDisplayInfo::set_current_layout_file( const std::string &n )
 {
 	m_current_layout_file = n;
 }
 
-void FeListInfo::set_info( int setting,
+void FeDisplayInfo::set_info( int setting,
          const std::string &value )
 {
 	m_info[ setting ] = value;
 }
 
-int FeListInfo::process_setting( const std::string &setting,
+int FeDisplayInfo::process_setting( const std::string &setting,
          const std::string &value, const std::string &fn )
 {
 	// name is igored here, it gets set directly
@@ -661,7 +707,7 @@ int FeListInfo::process_setting( const std::string &setting,
 		m_info[ Layout ] = value;
 	else if ( setting.compare( indexStrings[Romlist] ) == 0 ) // romlist
 		m_info[ Romlist ] = value;
-	else if ( setting.compare( FeFilter::indexStrings[0] ) == 0 ) // filter
+	else if ( setting.compare( otherStrings[0] ) == 0 ) // filter
 	{
 		size_t pos=0;
 		std::string name;
@@ -670,41 +716,28 @@ int FeListInfo::process_setting( const std::string &setting,
 		// Create a new filter with the given name
 		//
 		m_filters.push_back( FeFilter( name ) );
+		m_current_config_filter = &(m_filters.back());
 	}
-	else if ( setting.compare( FeFilter::indexStrings[1] ) == 0 ) // (filter) sort_by
+	else if ( setting.compare( otherStrings[1] ) == 0 ) // global_filter
 	{
-		for ( int i=0; i < FeRomInfo::LAST_INDEX; i++ )
-		{
-			if ( value.compare( FeRomInfo::indexStrings[i] ) == 0 )
-			{
-				m_filters.back().set_sort_by( (FeRomInfo::Index)i );
-				break;
-			}
-		}
-	}
-	else if ( setting.compare( FeFilter::indexStrings[2] ) == 0 ) // (filter) reverse_order
-	{
-		m_filters.back().set_reverse_order( true );
-	}
-	else if ( setting.compare( FeFilter::indexStrings[3] ) == 0 ) // (filter) list_limit
-	{
-		m_filters.back().set_list_limit( as_int( value ) );
-	}
-	else if ( setting.compare( FeRule::indexString ) == 0 ) // (filter) rule
-	{
-		if ( !m_filters.empty() )
-			m_filters.back().process_setting( setting, value, fn );
+		m_global_filter.clear();
+		m_current_config_filter = &(m_global_filter);
 	}
 	else
 	{
-		invalid_setting( fn, "list", setting, indexStrings + 1 );
-		return 1;
+		if ( m_current_config_filter )
+			m_current_config_filter->process_setting( setting, value, fn );
+		else
+		{
+			invalid_setting( fn, "list", setting, indexStrings + 1, otherStrings );
+			return 1;
+		}
 	}
 
 	return 0;
 }
 
-int FeListInfo::process_state( const std::string &state_string )
+int FeDisplayInfo::process_state( const std::string &state_string )
 {
 	// state string is in format:
 	//
@@ -754,7 +787,7 @@ int FeListInfo::process_state( const std::string &state_string )
 	return 0;
 }
 
-std::string FeListInfo::state_as_output() const
+std::string FeDisplayInfo::state_as_output() const
 {
 	std::ostringstream state;
 
@@ -764,7 +797,7 @@ std::string FeListInfo::state_as_output() const
 	}
 	else
 	{
-		for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
+		for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 		{
 			state << (*itr).get_rom_index() << ",";
@@ -777,20 +810,23 @@ std::string FeListInfo::state_as_output() const
 	return state.str();
 }
 
-FeFilter *FeListInfo::get_filter( int i )
+FeFilter *FeDisplayInfo::get_filter( int i )
 {
-	if (( i >= 0 ) && ( i < (int)m_filters.size() ))
-		return &(m_filters[i]);
+	if ( i < 0 )
+		return &m_global_filter;
 
-	return NULL;
+	if ( i >= (int)m_filters.size() )
+		return NULL;
+
+	return &(m_filters[i]);
 }
 
-void FeListInfo::append_filter( const FeFilter &f )
+void FeDisplayInfo::append_filter( const FeFilter &f )
 {
 	m_filters.push_back( f );
 }
 
-void FeListInfo::delete_filter( int i )
+void FeDisplayInfo::delete_filter( int i )
 {
 	if (( m_filter_index > 0 ) && ( m_filter_index >= i ))
 		m_filter_index--;
@@ -798,18 +834,18 @@ void FeListInfo::delete_filter( int i )
 	m_filters.erase( m_filters.begin() + i );
 }
 
-void FeListInfo::get_filters_list( std::vector<std::string> &l ) const
+void FeDisplayInfo::get_filters_list( std::vector<std::string> &l ) const
 {
 	l.clear();
 
-	for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
+	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 	{
 		l.push_back( (*itr).get_name() );
 	}
 }
 
-void FeListInfo::save( std::ofstream &f ) const
+void FeDisplayInfo::save( std::ofstream &f ) const
 {
 	using std::setw;
 	using std::left;
@@ -825,13 +861,17 @@ void FeListInfo::save( std::ofstream &f ) const
 		f << '\t' << setw(20) << left
 			<< indexStrings[Romlist] << ' ' << get_info( Romlist ) << endl;
 
-	for ( std::deque<FeFilter>::const_iterator itr=m_filters.begin();
+	if ( m_global_filter.get_rule_count() > 0 )
+		m_global_filter.save( f, otherStrings[1] );
+
+	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
-		(*itr).save( f );
+		(*itr).save( f, otherStrings[0] );
 }
 
 FeRomList::FeRomList( const std::string &config_path )
-	: m_config_path( config_path ),
+	: m_global_filter_ptr( NULL ),
+	m_config_path( config_path ),
 	m_fav_changed( false ),
 	m_tags_changed( false ),
 	m_availability_checked( false )
@@ -853,13 +893,17 @@ void FeRomList::init_as_empty_list()
 	m_availability_checked = false;
 	m_fav_changed=false;
 	m_tags_changed=false;
+
+	m_global_filter_ptr=NULL;
+	m_extra_favs.clear();
+	m_extra_tags.clear();
 }
 
 bool FeRomList::load_romlist( const std::string &path,
 			const std::string &romlist_name,
 			const std::string &user_path,
 			const std::string &stat_path,
-			FeListInfo &list_info )
+			FeDisplayInfo &display )
 {
 	m_user_path = user_path;
 	m_romlist_name = romlist_name;
@@ -868,24 +912,45 @@ bool FeRomList::load_romlist( const std::string &path,
 	m_filtered_list.clear();
 	m_availability_checked = false;
 
+	m_global_filter_ptr = NULL;
+	m_global_filtered_out_count = 0;
+
+	FeFilter *first_filter = display.get_global_filter();
+	if ( first_filter )
+	{
+		first_filter->init();
+
+		if ( !first_filter->test_for_target( FeRomInfo::FileIsAvailable )
+			&& !first_filter->test_for_target( FeRomInfo::Favourite )
+			&& !first_filter->test_for_target( FeRomInfo::Tags ) )
+		{
+			// If the global filter doesn't care about file availability,
+			// favourites or tags then we can apply it right up front when we
+			// load the romlist.  We signal this by setting m_global_filter_ptr
+			m_global_filter_ptr = first_filter;
+			first_filter = NULL;
+		}
+	}
+
+	sf::Clock load_timer;
+
 	bool retval = FeBaseConfigurable::load_from_file(
 			path + m_romlist_name + FE_ROMLIST_FILE_EXTENSION, ";" );
-
-	std::cout << " - Loaded master romlist: " << m_romlist_name
-			<< " (" << m_list.size() << " entries)" << std::endl;
 
 	//
 	// Create rom name to romlist entry lookup map
 	//
 	std::map < std::string, FeRomInfo * > rom_map;
 	std::map < std::string, FeRomInfo * >::iterator rm_itr;
-	for ( std::deque< FeRomInfo >::iterator itr = m_list.begin(); itr != m_list.end(); ++itr )
+	for ( FeRomInfoListType::iterator itr = m_list.begin(); itr != m_list.end(); ++itr )
 		rom_map[ (*itr).get_info( FeRomInfo::Romname ) ] = &(*itr);
 
 	//
 	// Load favourites
 	//
+	m_extra_favs.clear();
 	m_fav_changed=false;
+
 	std::string load_name( m_user_path + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION );
 	std::ifstream myfile( load_name.c_str() );
 
@@ -904,6 +969,8 @@ bool FeRomList::load_romlist( const std::string &path,
 				rm_itr = rom_map.find( name );
 				if ( rm_itr != rom_map.end() )
 					(*rm_itr).second->set_info( FeRomInfo::Favourite, "1" );
+				else
+					m_extra_favs.insert( name );
 			}
 		}
 
@@ -914,6 +981,7 @@ bool FeRomList::load_romlist( const std::string &path,
 	// Load tags
 	//
 	m_tags.clear();
+	m_extra_tags.clear();
 	m_tags_changed=false;
 	load_name = m_user_path + m_romlist_name + "/";
 
@@ -948,6 +1016,8 @@ bool FeRomList::load_romlist( const std::string &path,
 					rm_itr = rom_map.find( rname );
 					if ( rm_itr != rom_map.end() )
 						(*rm_itr).second->append_tag( (*itt).first.c_str() );
+					else
+						m_extra_tags.insert( std::pair<std::string,const char*>(rname, (*itt).first.c_str() ) );
 				}
 			}
 
@@ -955,26 +1025,89 @@ bool FeRomList::load_romlist( const std::string &path,
 		}
 	}
 
+	// Apply global filter if it hasn't been applied already
+	if ( first_filter )
+	{
+		if ( first_filter->test_for_target( FeRomInfo::FileIsAvailable ) )
+			get_file_availability();
+
+		FeRomInfoListType::iterator last_it=m_list.begin();
+		for ( FeRomInfoListType::iterator it=m_list.begin(); it!=m_list.end(); )
+		{
+			if ( first_filter->apply_filter( *it ) )
+			{
+				if ( last_it != it )
+					it = m_list.erase( last_it, it );
+				else
+					++it;
+
+				last_it = it;
+			}
+			else
+			{
+				//
+				// This rom is being filtered out and we may need to keep track of a few things
+				//
+				// 1. Track if this is a favourite...
+				//
+				if ( !(*it).get_info( FeRomInfo::Favourite ).empty() )
+					m_extra_favs.insert( (*it).get_info( FeRomInfo::Romname ) );
+
+				//
+				// 2. Track if this rom has tags we'll need to keep
+				//
+				if ( !(*it).get_info( FeRomInfo::Tags ).empty() )
+				{
+					const std::string &name = (*it).get_info( FeRomInfo::Romname );
+					const std::string &tags = (*it).get_info( FeRomInfo::Tags );
+					const char sep[] = { FE_TAGS_SEP, 0 };
+
+					size_t pos=0;
+					while ( pos < tags.size() )
+					{
+						std::string one_tag;
+						token_helper( tags, pos, one_tag, sep );
+
+						std::map<std::string, bool>::iterator itt = m_tags.find( one_tag );
+						if ( itt != m_tags.end() )
+							m_extra_tags.insert( std::pair<std::string,const char *>( name, (*itt).first.c_str() ) );
+					}
+				}
+
+				m_global_filtered_out_count++;
+				++it;
+			}
+		}
+
+		if ( last_it != m_list.end() )
+			m_list.erase( last_it, m_list.end() );
+	}
+
+	std::cout << " - Loaded master romlist '" << m_romlist_name
+			<< "' in " << load_timer.getElapsedTime().asMilliseconds()
+			<< " ms (" << m_list.size() << " entries kept, " << m_global_filtered_out_count
+			<< " discarded)" << std::endl;
+
+	load_timer.restart();
+
 	//
 	// Apply filters
 	//
-	int filters_count = list_info.get_filter_count();
+	int filters_count = display.get_filter_count();
 
 	//
-	// If the list_info doesn't have any filters configured, we create a single "filter" in the romlist object
+	// If the display doesn't have any filters configured, we create a single "filter" in the romlist object
 	// with every romlist entry in it
 	//
 	if ( filters_count == 0 )
 		filters_count = 1;
-
-	sf::Clock filter_timer;
 
 	m_filtered_list.reserve( filters_count );
 	for ( int i=0; i<filters_count; i++ )
 	{
 		m_filtered_list.push_back( std::vector< FeRomInfo *>()  );
 
-		FeFilter *f = list_info.get_filter( i );
+		FeFilter *f = display.get_filter( i );
 		if ( f )
 		{
 			if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
@@ -984,14 +1117,14 @@ bool FeRomList::load_romlist( const std::string &path,
 				get_file_availability();
 
 			f->init();
-			for ( std::deque< FeRomInfo >::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
 				if ( f->apply_filter( *itr ) )
 					m_filtered_list[i].push_back( &( *itr ) );
 		}
 		else // no filter situation, so we just add the entire list...
 		{
 			m_filtered_list[i].reserve( m_list.size() );
-			for ( std::deque< FeRomInfo >::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
 				m_filtered_list[i].push_back( &( *itr ) );
 		}
 
@@ -1037,8 +1170,8 @@ bool FeRomList::load_romlist( const std::string &path,
 		}
 	}
 
-	std::cout << " - Constructed " << filters_count << " filtered lists in "
-			<< filter_timer.getElapsedTime().asMilliseconds()
+	std::cout << " - Constructed " << filters_count << " filters in "
+			<< load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << filters_count * m_list.size() << " comparisons)" << std::endl;
 
 	return retval;
@@ -1050,31 +1183,33 @@ int FeRomList::process_setting( const std::string &setting,
 {
 	FeRomInfo next_rom( setting );
 	next_rom.process_setting( setting, value, fn );
-	m_list.push_back( next_rom );
+
+	if (( !m_global_filter_ptr ) || ( m_global_filter_ptr->apply_filter( next_rom ) ))
+		m_list.push_back( next_rom );
+	else
+		m_global_filtered_out_count++;
 
    return 0;
 }
 
-void FeRomList::save_state() const
+void FeRomList::save_state()
 {
 	save_favs();
 	save_tags();
 }
 
-void FeRomList::save_favs() const
+void FeRomList::save_favs()
 {
 	if (( !m_fav_changed ) || ( m_user_path.empty() ) || ( m_romlist_name.empty() ))
 		return;
 
-	std::set<std::string> favs_list;
-
 	//
-	// First gather all the favourites from the current list
+	// First gather all the favourites from the current list into our extra favs list
 	//
-	for ( std::deque<FeRomInfo>::const_iterator itr = m_list.begin(); itr != m_list.end(); ++itr )
+	for ( FeRomInfoListType::const_iterator itr = m_list.begin(); itr != m_list.end(); ++itr )
 	{
 		if ( !((*itr).get_info( FeRomInfo::Favourite ).empty()) )
-			favs_list.insert( (*itr).get_info( FeRomInfo::Romname ) );
+			m_extra_favs.insert( (*itr).get_info( FeRomInfo::Romname ) );
 	}
 
 	//
@@ -1082,7 +1217,7 @@ void FeRomList::save_favs() const
 	//
 	std::string fname = m_user_path + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION;
 
-	if ( favs_list.empty() )
+	if ( m_extra_favs.empty() )
 	{
 		delete_file( fname );
 	}
@@ -1092,14 +1227,14 @@ void FeRomList::save_favs() const
 		if ( !outfile.is_open() )
 			return;
 
-		for ( std::set<std::string>::const_iterator itf = favs_list.begin(); itf != favs_list.end(); ++itf )
+		for ( std::set<std::string>::const_iterator itf = m_extra_favs.begin(); itf != m_extra_favs.end(); ++itf )
 			outfile << (*itf) << std::endl;
 
 		outfile.close();
 	}
 }
 
-void FeRomList::save_tags() const
+void FeRomList::save_tags()
 {
 	if (( !m_tags_changed ) || ( m_user_path.empty() ) || ( m_romlist_name.empty() ))
 		return;
@@ -1108,7 +1243,15 @@ void FeRomList::save_tags() const
 	//
 	std::multimap< std::string, const char * > tag_to_rom_map;
 
-	for ( std::deque<FeRomInfo>::const_iterator itr = m_list.begin(); itr != m_list.end(); ++itr )
+	for ( std::multimap< std::string, const char * >::const_iterator ite = m_extra_tags.begin(); ite != m_extra_tags.end(); ++ite )
+	{
+		tag_to_rom_map.insert(
+				std::pair<std::string,const char *>(
+						(*ite).second,
+						(*ite).first.c_str() ) );
+	}
+
+	for ( FeRomInfoListType::const_iterator itr = m_list.begin(); itr != m_list.end(); ++itr )
 	{
 		const std::string &my_tags = (*itr).get_info( FeRomInfo::Tags );
 
@@ -1163,7 +1306,7 @@ void FeRomList::save_tags() const
 	}
 }
 
-bool FeRomList::set_fav( int filter_index, int rom_index, FeListInfo &list_info, bool fav )
+bool FeRomList::set_fav( int filter_index, int rom_index, FeDisplayInfo &display, bool fav )
 {
 	if (( rom_index < 0 ) || ( rom_index >= filter_size( filter_index ) ))
 		return false;
@@ -1171,7 +1314,7 @@ bool FeRomList::set_fav( int filter_index, int rom_index, FeListInfo &list_info,
 	(m_filtered_list[filter_index][rom_index])->set_info( FeRomInfo::Favourite, fav ? "1" : "" );
 	m_fav_changed=true;
 
-	return fix_filters( list_info, FeRomInfo::Favourite );
+	return fix_filters( display, FeRomInfo::Favourite );
 }
 
 void FeRomList::get_tags_list( int filter_index, int rom_index,
@@ -1203,7 +1346,7 @@ void FeRomList::get_tags_list( int filter_index, int rom_index,
 	}
 }
 
-bool FeRomList::set_tag( int filter_index, int rom_index, FeListInfo &list_info, const std::string &tag, bool flag )
+bool FeRomList::set_tag( int filter_index, int rom_index, FeDisplayInfo &display, const std::string &tag, bool flag )
 {
 	if (( rom_index < 0 ) || ( rom_index >= filter_size( filter_index ) ))
 		return false;
@@ -1254,15 +1397,15 @@ bool FeRomList::set_tag( int filter_index, int rom_index, FeListInfo &list_info,
 			itt = m_tags.insert( itt, std::pair<std::string,bool>( tag, true ) );
 	}
 
-	return fix_filters( list_info, FeRomInfo::Tags );
+	return fix_filters( display, FeRomInfo::Tags );
 }
 
-bool FeRomList::fix_filters( FeListInfo &list_info, FeRomInfo::Index target )
+bool FeRomList::fix_filters( FeDisplayInfo &display, FeRomInfo::Index target )
 {
 	bool retval = false;
-	for ( int i=0; i<list_info.get_filter_count(); i++ )
+	for ( int i=0; i<display.get_filter_count(); i++ )
 	{
-		FeFilter *f = list_info.get_filter( i );
+		FeFilter *f = display.get_filter( i );
 		ASSERT( f );
 
 		if ( f->test_for_target( target ) )
@@ -1270,7 +1413,7 @@ bool FeRomList::fix_filters( FeListInfo &list_info, FeRomInfo::Index target )
 			m_filtered_list[i].clear();
 			retval = true;
 
-			for ( std::deque< FeRomInfo >::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
 			{
 				if ( f->apply_filter( *itr ) )
 					m_filtered_list[i].push_back( &( *itr ) );
@@ -1290,7 +1433,7 @@ void FeRomList::get_file_availability()
 
 	std::map<std::string,std::vector<FeRomInfo *> > emu_map;
 
-	for ( std::deque<FeRomInfo>::iterator itr=m_list.begin(); itr != m_list.end(); ++itr )
+	for ( FeRomInfoListType::iterator itr=m_list.begin(); itr != m_list.end(); ++itr )
 		emu_map[ ((*itr).get_info( FeRomInfo::Emulator )) ].push_back( &(*itr) );
 
 	// figure out what roms we have for each emulator

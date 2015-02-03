@@ -27,7 +27,7 @@
 #include <map>
 #include <set>
 #include <vector>
-#include <deque>
+#include <list>
 
 struct SQRex;
 extern const char *FE_ROMLIST_FILE_EXTENSION;
@@ -141,7 +141,6 @@ public:
 		LAST_COMPARISON
 	};
 
-	static const char *indexString;
 	static const char *filterCompStrings[];
 	static const char *filterCompDisplayStrings[];
 
@@ -187,7 +186,7 @@ public:
 				const std::string &value,
 				const std::string &fn );
 
-	void save( std::ofstream & ) const;
+	void save( std::ofstream &, const char *filter_tag ) const;
 	const std::string &get_name() const { return m_name; };
 	void set_name( const std::string &n ) { m_name = n; };
 
@@ -198,6 +197,7 @@ public:
 	void set_size( int s ) { m_size=s; };
 
 	std::vector<FeRule> &get_rules() { return m_rules; };
+	int get_rule_count() const { return m_rules.size(); };
 
 	FeRomInfo::Index get_sort_by() const { return m_sort_by; }
 	bool get_reverse_order() const { return m_reverse_order; }
@@ -208,6 +208,8 @@ public:
 	void set_list_limit( int p ) { m_list_limit=p; }
 
 	bool test_for_target( FeRomInfo::Index target ) const; // do changes to the specified target affect this filter?
+
+	void clear();
 
 private:
 	std::string m_name;
@@ -221,9 +223,9 @@ private:
 };
 
 //
-// Class for storing information regarding a specific Attract-Mode list
+// Class for storing information regarding a specific Attract-Mode display
 //
-class FeListInfo : public FeBaseConfigurable
+class FeDisplayInfo : public FeBaseConfigurable
 {
 public:
 
@@ -234,8 +236,9 @@ public:
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
+	static const char *otherStrings[];
 
-	FeListInfo( const std::string &name );
+	FeDisplayInfo( const std::string &name );
 
 	const std::string &get_info( int ) const;
 	void set_info( int setting, const std::string &value );
@@ -250,10 +253,12 @@ public:
 	void set_current_filter_index( int i ) { m_filter_index=i; };
 	int get_current_filter_index() const { return m_filter_index; };
 	int get_filter_count() const { return m_filters.size(); };
-	FeFilter *get_filter( int );
+	FeFilter *get_filter( int ); // use get_filter( -1 ) to get global filter
 	void append_filter( const FeFilter &f );
 	void delete_filter( int i );
 	void get_filters_list( std::vector<std::string> &l ) const;
+
+	FeFilter *get_global_filter() { return &m_global_filter; };
 
 	std::string get_current_layout_file() const;
 	void set_current_layout_file( const std::string & );
@@ -266,38 +271,49 @@ public:
 private:
 	std::string m_info[LAST_INDEX];
 	std::string m_current_layout_file;
-	int m_rom_index; // only used if there are no filters on this list
+	int m_rom_index; // only used if there are no filters on this display
 	int m_filter_index;
+	FeFilter *m_current_config_filter;
 
-	std::deque< FeFilter > m_filters;
+	std::vector< FeFilter > m_filters;
+	FeFilter m_global_filter;
 };
 
 class FeEmulatorInfo;
+typedef std::list<FeRomInfo> FeRomInfoListType;
 
 class FeRomList : public FeBaseConfigurable
 {
 private:
-	std::deque<FeRomInfo> m_list;
-	std::vector<std::vector<FeRomInfo * > > m_filtered_list;
-	std::vector<FeEmulatorInfo> m_emulators;
+	FeRomInfoListType m_list; // this is where we keep the info on all the games available for the current display
+	std::vector<std::vector<FeRomInfo * > > m_filtered_list; // for each filter, store a pointer to the m_list entries in that filter
+	std::vector<FeEmulatorInfo> m_emulators; // we keep the emulator info here because we need it for checking file availability
 
 	std::map<std::string, bool> m_tags; // bool is flag of whether the tag has been changed
+	std::set<std::string> m_extra_favs; // store for favourites that are filtered out by global filter
+	std::multimap< std::string, const char * > m_extra_tags; // store for tags that are filtered out by global filter
+	FeFilter *m_global_filter_ptr; // this will only get set if we are globally filtering out games during the initial load
+
 	std::string m_user_path;
 	std::string m_romlist_name;
 	const std::string &m_config_path;
 	bool m_fav_changed;
 	bool m_tags_changed;
 	bool m_availability_checked;
+	int m_global_filtered_out_count; // for keeping stats during load
 
 	FeRomList( const FeRomList & );
 	FeRomList &operator=( const FeRomList & );
 
-	// Fix the filters list as needed given the filters in list_info and a change to "target"
-	// returns true if potential changes were made
-	bool fix_filters( FeListInfo &list_info, FeRomInfo::Index target );
+	// Fixes m_filtered_list as needed using the filters in the given "display", with the
+	// assumption that the specified "target" attribute for all games might have been changed
+	//
+	// returns true if list changes might have been made
+	//
+	bool fix_filters( FeDisplayInfo &display, FeRomInfo::Index target );
 
-	void save_favs() const;
-	void save_tags() const;
+	void save_favs();
+	void save_tags();
 
 public:
 	FeRomList( const std::string &config_path );
@@ -309,25 +325,25 @@ public:
 					const std::string &romlist_name,
 					const std::string &user_path,
 					const std::string &stat_path,
-					FeListInfo &list_info );
+					FeDisplayInfo &display );
 
 	int process_setting( const std::string &setting,
 		const std::string &value,
 		const std::string &fn );
 
-	void save_state() const;
-	bool set_fav( int filter_index, int rom_index, FeListInfo &list_info, bool fav );
+	void save_state();
+	bool set_fav( int filter_index, int rom_index, FeDisplayInfo &display, bool fav );
 
 	void get_tags_list( int filter_index, int idx,
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
-	bool set_tag( int filter_index, int rom_index, FeListInfo &list_info, const std::string &tag, bool flag );
+	bool set_tag( int filter_index, int rom_index, FeDisplayInfo &display, const std::string &tag, bool flag );
 
 	bool is_filter_empty( int filter_idx ) const { return m_filtered_list[filter_idx].empty(); };
 	int filter_size( int filter_idx ) const { return (int)m_filtered_list[filter_idx].size(); };
 	const FeRomInfo &lookup( int filter_idx, int idx) const { return *(m_filtered_list[filter_idx][idx]); };
 	FeRomInfo &lookup( int filter_idx, int idx) { return *(m_filtered_list[filter_idx][idx]); };
 
-	std::deque<FeRomInfo> &get_list() { return m_list; };
+	FeRomInfoListType &get_list() { return m_list; };
 
 	void get_file_availability();
 

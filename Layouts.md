@@ -242,11 +242,10 @@ Parameters:
 
    * msg - the text to display.  The tokens below that appear in the 'msg'
      string will be substituted appropriately:
-      - `[ListTitle]` - the name of the current display list
-      - `[ListSize]` - the number of items in the current display list
-      - `[ListEntry]` - the number of the current selection in the current
-        display list
-      - `[ListFilterName]` - the name of the current display list filter
+      - `[DisplayName]` - the name of the current display
+      - `[ListSize]` - the number of items in the game list
+      - `[ListEntry]` - the number of the current selection in the game list
+      - `[FilterName]` - the name of the filter
       - `[SortName]` - the attribute that the list was sorted by
       - `[Name]` - the short name of the selected game
       - `[Title]` - the full name of the selected game
@@ -858,7 +857,7 @@ global layout settings are stored.
 #### `fe.list` ####
 
 `fe.list` is an instance of the `fe.CurrentList` class and is where current
-list settings are stored.
+display settings are stored.
 
 
 <a name="overlay" />
@@ -940,45 +939,17 @@ Notes:
 <a name="CurrentList" />
 #### `fe.CurrentList` ####
 
-This class is a container for current list settings.  The instance of this
-class is the `fe.list` object.  This class cannot be otherwise instantiated
-in a script.
+This class is a container for status information regarding the current display.
+The instance of this class is the `fe.list` object.  This class cannot be
+otherwise instantiated in a script.
 
 Attributes:
 
-   * `name` - Get the name of the current list.
-   * `filter` - Get the name of the current list filter.
-   * `size` - Get the size of the current list.
-   * `index` - Get/set the current list selection index.
-   * `sort_by` - Get the attribute that the list has been sorted by.  Will be
-     equal to one of the following values:
-      - `Info.NoSort`
-      - `Info.Name`
-      - `Info.Title`
-      - `Info.Emulator`
-      - `Info.CloneOf`
-      - `Info.Year`
-      - `Info.Manufacturer`
-      - `Info.Category`
-      - `Info.Players`
-      - `Info.Rotation`
-      - `Info.Control`
-      - `Info.Status`
-      - `Info.DisplayCount`
-      - `Info.DisplayType`
-      - `Info.AltRomname`
-      - `Info.AltTitle`
-      - `Info.Extra`
-      - `Info.Favourite`
-      - `Info.Tags`
-      - `Info.PlayedCount`
-      - `Info.PlayedTime`
-      - `Info.FileIsAvailable`
-   * `reverse_order` - [bool] Will be equal to true if the list order has been
-     reversed.
-   * `list_limit` - Get the value of the list limit applied to the current
-     list.
-   * `filter_index` - Get/set the current filter index.
+   * `name` - Get the name of the current display.
+   * `filter_index` - Get/set the index of the currently selected filter.
+     (see `fe.filters` for the list of available filters).
+   * `index` - Get/set the index of the currently selected game.
+
 
 <a name="Overlay" />
 #### `fe.Overlay` ####
@@ -1023,6 +994,34 @@ Attributes:
    * `name` - Get the filter name.
    * `index` - Get the index of the currently selected game in this filter.
    * `size` - Get the size of the game list in this filter.
+   * `sort_by` - Get the attribute that the game list has been sorted by.
+     Will be equal to one of the following values:
+      - `Info.NoSort`
+      - `Info.Name`
+      - `Info.Title`
+      - `Info.Emulator`
+      - `Info.CloneOf`
+      - `Info.Year`
+      - `Info.Manufacturer`
+      - `Info.Category`
+      - `Info.Players`
+      - `Info.Rotation`
+      - `Info.Control`
+      - `Info.Status`
+      - `Info.DisplayCount`
+      - `Info.DisplayType`
+      - `Info.AltRomname`
+      - `Info.AltTitle`
+      - `Info.Extra`
+      - `Info.Favourite`
+      - `Info.Tags`
+      - `Info.PlayedCount`
+      - `Info.PlayedTime`
+      - `Info.FileIsAvailable`
+   * `reverse_order` - [bool] Will be equal to true if the list order has been
+     reversed.
+   * `list_limit` - Get the value of the list limit applied to the filter game
+     list.
 
 
 <a name="Image" />
@@ -1075,7 +1074,9 @@ Attributes:
      coordinates).  Default value is 0.  Use a negative value to expand
      towards the right instead.
    * `texture_width` - Get the width of the image texture (in pixels).
+     *** see [Notes](#ImageNotes).
    * `texture_height` - Get the height of the image texture (in pixels).
+     *** see [Notes](#ImageNotes).
    * `subimg_x` - Get/set the x position of top left corner of the image
      texture sub-rectangle to display.  Default value is 0.
    * `subimg_y` - Get/set the y position of top left corner of the image
@@ -1137,19 +1138,51 @@ Member Functions:
      surface's draw list (see [`fe.add_surface()`](#add_surface) for parameters
      and return value).
 
+<a name="ImageNotes" />
 Notes:
+
+   * [artworks] Note that Attract-Mode defers the loading of artwork images until
+     after all layout and plug-in scripts have completed running.  This means that
+     the `texture_width`, `texture_height` and `file_name` attributes are not
+     available when a layout or plug-in script first adds the artwork resource.
+     These attributes are available during transition callbacks, and in particular
+     during the `Transition.FromOldSelection` and `Transition.ToNewList` transitions.
+     Example:
+
+```` squirrel
+   local my_art = fe.add_artwork( "snap", 0, 0, 100, 100 );
+
+   fe.add_transition_callback("artwork_transition");
+   function artwork_transition( ttype, var, ttime )
+   {
+      if (( ttype == Transition.FromOldSelection )
+         || ( ttype == Transition.ToNewList ))
+      {
+         //
+         // do stuff with my_art's texture_width or texture_height here...
+         //
+
+      }
+
+      return false;
+   }
+
+````
 
    * To flip an image vertically, set the `subimg_height` property to
      `-1 * texture_height` and `subimg_y` to `texture_height`.
    * To flip an image horizontally, set the `subimg_width` property to
      `-1 * texture_width` and `subimg_x` to `texture_width`.
 
-      // flip "img" vertically
-      function flip_y( img )
-      {
-         img.subimg_height = -1 * img.texture_height;
-         img.subimg_y = img.texture_height;
-      }
+```` squirrel
+
+   // flip "img" vertically
+   function flip_y( img )
+   {
+      img.subimg_height = -1 * img.texture_height;
+      img.subimg_y = img.texture_height;
+   }
+````
 
 <a name="Text" />
 #### `fe.Text` ####
@@ -1163,11 +1196,10 @@ Attributes:
 
    * `msg` - Get/set the text label's message.  The tokens below that appear
      in the 'msg' string will be substituted appropriately:
-      - `[ListTitle]` - the name of the current display list
-      - `[ListSize]` - the number of items in the current display list
-      - `[ListEntry]` - the number of the current selection in the current
-        display list
-      - `[ListFilterName]` - the name of the current display list filter
+      - `[DisplayName]` - the name of the current display
+      - `[ListSize]` - the number of items in the game list
+      - `[ListEntry]` - the number of the current selection in the game list
+      - `[FilterName]` - the name of the currently displayed filter
       - `[SortName]` - the attribute that the list was sorted by
       - `[Name]` - the short name of the selected game
       - `[Title]` - the full name of the selected game

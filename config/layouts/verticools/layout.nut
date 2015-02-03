@@ -115,10 +115,10 @@ for (local i=(itn/2)*-1;i<=(itn/2);i+=1){
 }
 
 // Texts
-local fltsh=fe.add_text("<  [ListFilterName]  >",1,(flh*0.06)+1,flw,flh*0.05);
+local fltsh=fe.add_text("<  [FilterName]  >",1,(flh*0.06)+1,flw,flh*0.05);
 fltsh.set_rgb(0,0,0);
 local filtername=fe.add_text(fltsh.msg,fltsh.x-1,fltsh.y-1,fltsh.width,fltsh.height);
-local listtitle=fe.add_text("[ListSize] [ListTitle]",0,flh*0.11,flw,flh*0.05);
+local listtitle=fe.add_text("[ListSize] [DisplayName]",0,flh*0.11,flw,flh*0.05);
 local slgsh=fe.add_text("[Title]",lbx+1,lby+1,lbw,ith);
 slgsh.set_rgb(0,0,0);
 local selgame=fe.add_text(slgsh.msg,slgsh.x-1,slgsh.y-1,slgsh.width,slgsh.height);
@@ -169,8 +169,8 @@ function textTickles(ttime){
 function fades(ttype,var,ttime){
  switch (ttype){
   case Transition.FromGame:
-   fltsh.msg="<  [ListFilterName]  >";
-   filtername.msg="<  [ListFilterName]  >";
+   fltsh.msg="<  [FilterName]  >";
+   filtername.msg="<  [FilterName]  >";
    return false;
    break;
 	case Transition.ToGame:

@@ -18,7 +18,7 @@ l.sel_style = Style.Bold;
 
 fe.add_image( "bg.png", 0, 0 );
 
-l = fe.add_text( "[ListTitle]", 0, 15, 640, 30 );
+l = fe.add_text( "[DisplayName]", 0, 15, 640, 30 );
 l.set_rgb( 200, 200, 70 );
 l.style = Style.Bold;
 
@@ -42,7 +42,7 @@ l = fe.add_text( "[ListEntry]/[ListSize]", 320, 424, 290, 16 );
 l.set_rgb( 200, 200, 70 );
 l.align = Align.Right;
 
-l = fe.add_text( "[ListFilterName]", 320, 441, 290, 16 );
+l = fe.add_text( "[FilterName]", 320, 441, 290, 16 );
 l.set_rgb( 200, 200, 70 );
 l.align = Align.Right;
 

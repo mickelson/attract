@@ -73,14 +73,14 @@ public:
 class FeMameXMLParser : private FeXMLParser
 {
 public:
-	FeMameXMLParser( std::list<FeRomInfo> &, UiUpdate u=NULL, void *d=NULL );
+	FeMameXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL );
 	bool parse( const std::string &base_command );
 
 private:
-	std::list<FeRomInfo> &m_romlist;
-	std::list<FeRomInfo>::iterator m_itr;
-	std::map<const char *, std::list<FeRomInfo>::iterator, FeMapComp> m_map;
-	std::vector<std::list<FeRomInfo>::iterator> m_discarded;
+	FeRomInfoListType &m_romlist;
+	FeRomInfoListType::iterator m_itr;
+	std::map<const char *, FeRomInfoListType::iterator, FeMapComp> m_map;
+	std::vector<FeRomInfoListType::iterator> m_discarded;
 	int m_count;
 	int m_percent;
 	int m_displays;
@@ -95,12 +95,12 @@ private:
 class FeMessXMLParser : private FeXMLParser
 {
 public:
-	FeMessXMLParser( std::list<FeRomInfo> &, UiUpdate u=NULL, void *d=NULL );
+	FeMessXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL );
 	bool parse( const std::string &command, const std::string &args );
 
 private:
-	std::list<FeRomInfo> &m_romlist;
-	std::list<FeRomInfo>::iterator m_itr;
+	FeRomInfoListType &m_romlist;
+	FeRomInfoListType::iterator m_itr;
 	std::string m_name;
 	std::string m_description;
 	std::string m_year;
@@ -120,14 +120,14 @@ private:
 class FeHyperSpinXMLParser : private FeXMLParser
 {
 public:
-	FeHyperSpinXMLParser( std::list<FeRomInfo> & );
+	FeHyperSpinXMLParser( FeRomInfoListType & );
 	bool parse( const std::string &filename );
 
 private:
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
 
-	std::list<FeRomInfo> &m_romlist;
+	FeRomInfoListType &m_romlist;
 	FeRomInfo m_current_rom;
 	bool m_collect_data;
 };

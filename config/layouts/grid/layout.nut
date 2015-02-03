@@ -447,7 +447,7 @@ gridc.name_t =  fe.add_text( "[Title]", 0,
 		fe.layout.height - fe.layout.height / 24 - PAD,
 		fe.layout.width, fe.layout.height / 24 );
 
-local title = fe.add_text( "[ListTitle]/[ListFilterName]",
+local title = fe.add_text( "[DisplayName]/[FilterName]",
 			0, 0, fe.layout.width/2, fe.layout.height / 32 );
 title.align = Align.Left;
 

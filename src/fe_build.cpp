@@ -42,7 +42,7 @@ extern const char *FE_ROMLIST_SUBDIR;
 namespace {
 
 void build_basic_romlist( const FeEmulatorInfo &emulator,
-				std::list<FeRomInfo> &romlist )
+				FeRomInfoListType &romlist )
 {
 	std::vector<std::string> names_list;
 	emulator.gather_rom_names( names_list );
@@ -86,7 +86,7 @@ std::string url_escape( const std::string &raw )
 }
 
 void apply_xml_import( const FeEmulatorInfo &emulator,
-				std::list<FeRomInfo> &romlist,
+				FeRomInfoListType &romlist,
 				FeXMLParser::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL )
 {
 	std::string source = emulator.get_info(
@@ -133,7 +133,7 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 		const std::string &extension = exts.front();
 
 		// A bit mislabelled: the steam import isn't really xml.
-		for ( std::list<FeRomInfo>::iterator itr = romlist.begin(); itr != romlist.end(); ++itr )
+		for ( FeRomInfoListType::iterator itr = romlist.begin(); itr != romlist.end(); ++itr )
 		{
 			// We expect appmanifest_* entries in the romname field.  Open each of these files and
 			// extract the data we can use in our list
@@ -243,7 +243,7 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 		}
 
 		int i=0;
-		for ( std::list<FeRomInfo>::iterator itr=romlist.begin(); itr!=romlist.end(); ++itr )
+		for ( FeRomInfoListType::iterator itr=romlist.begin(); itr!=romlist.end(); ++itr )
 		{
 			bool exact_match( false );
 			for ( std::vector<std::string>::iterator its=system_list.begin();
@@ -294,7 +294,7 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 }
 
 void write_romlist( const std::string &filename,
-				const std::list<FeRomInfo> &romlist )
+				const FeRomInfoListType &romlist )
 {
 
 	std::cout << "Writing " << romlist.size() << " entries to: "
@@ -313,7 +313,7 @@ void write_romlist( const std::string &filename,
 
 		// Now output the list
 		//
-		for ( std::list<FeRomInfo>::const_iterator itl=romlist.begin();
+		for ( FeRomInfoListType::const_iterator itl=romlist.begin();
 				itl != romlist.end(); ++itl )
 			outfile << (*itl).as_output() << std::endl;
 
@@ -330,14 +330,14 @@ struct myclasscmp
 };
 
 void ini_import( const std::string &filename,
-				std::list<FeRomInfo> &romlist,
+				FeRomInfoListType &romlist,
 				FeRomInfo::Index index,
 				const std::string &init_tag )
 {
 	std::map <std::string, std::string, myclasscmp> my_map;
 
 	// create entries in the map for each name we want to find
-	for ( std::list<FeRomInfo>::iterator itr=romlist.begin();
+	for ( FeRomInfoListType::iterator itr=romlist.begin();
 			itr!=romlist.end(); ++itr )
 	{
 		my_map[ (*itr).get_info( FeRomInfo::Romname ) ] = "";
@@ -395,7 +395,7 @@ void ini_import( const std::string &filename,
 	myfile.close();
 
 	int count=0;
-	for ( std::list<FeRomInfo>::iterator itr=romlist.begin();
+	for ( FeRomInfoListType::iterator itr=romlist.begin();
 			itr!=romlist.end(); ++itr )
 	{
 		std::string val = my_map[ (*itr).get_info( FeRomInfo::Romname ) ];
@@ -418,7 +418,7 @@ void ini_import( const std::string &filename,
 }
 
 void apply_import_extras( const FeEmulatorInfo &emulator,
-				std::list<FeRomInfo> &romlist )
+				FeRomInfoListType &romlist )
 {
 	const std::vector< std::string > &extras = emulator.get_import_extras();
 
@@ -438,7 +438,7 @@ void apply_import_extras( const FeEmulatorInfo &emulator,
 
 bool import_mamewah( const std::string &input_filename,
 				const std::string &emulator_name,
-				std::list<FeRomInfo> &romlist )
+				FeRomInfoListType &romlist )
 {
 	// Map the lines of the Mamewah / Wahcade! romlist file to our RomInfo structure
 	//
@@ -516,7 +516,7 @@ bool import_mamewah( const std::string &input_filename,
 bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 						const std::string &output_name )
 {
-	std::list<FeRomInfo> total_romlist;
+	FeRomInfoListType total_romlist;
 	std::string best_name, list_name, path;
 
 	for ( std::vector<FeImportTask>::const_iterator itr=task_list.begin();
@@ -533,7 +533,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			}
 			else
 			{
-				std::list<FeRomInfo> romlist;
+				FeRomInfoListType romlist;
 
 				best_name = emu->get_info( FeEmulatorInfo::Name );
 
@@ -548,7 +548,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 		else
 		{
 			// import romlist from file task
-			std::list<FeRomInfo> romlist;
+			FeRomInfoListType romlist;
 			std::string emu_name;
 
 			if ( (*itr).emulator_name.empty() )
@@ -576,9 +576,9 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 				FeRomList temp_list( m_config_path );
 				temp_list.load_from_file( (*itr).file_name, ";" );
 
-				std::deque<FeRomInfo> &entries = temp_list.get_list();
+				FeRomInfoListType &entries = temp_list.get_list();
 
-				for ( std::deque<FeRomInfo>::iterator itr = entries.begin(); itr != entries.end(); ++itr )
+				for ( FeRomInfoListType::iterator itr = entries.begin(); itr != entries.end(); ++itr )
 					romlist.push_back( *itr );
 			}
 			else if ( tail_compare( (*itr).file_name, ".lst" ) )
@@ -595,7 +595,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 				if ( my_parser.parse( (*itr).file_name ) )
 				{
 					// Update the emulator entries
-					for ( std::list<FeRomInfo>::iterator itr=romlist.begin(); itr != romlist.end(); ++itr )
+					for ( FeRomInfoListType::iterator itr=romlist.begin(); itr != romlist.end(); ++itr )
 						(*itr).set_info( FeRomInfo::Emulator, emu_name );
 				}
 			}
@@ -660,7 +660,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	if ( uiu )
 		uiu( uid, 0 );
 
-	std::list<FeRomInfo> romlist;
+	FeRomInfoListType romlist;
 	build_basic_romlist( *emu, romlist );
 
 	apply_xml_import( *emu, romlist, uiu, uid );

@@ -16,10 +16,11 @@ No;No
 # Help text
 #
 _help_back;Exit menu
-_help_emulators;Configure available emulators
+_help_emulators;Configure available game systems and emulators
 _help_art_label;The label that identifies this artwork resource (used by layouts)
 _help_art_path;The path to the files for this artwork.  Multiple paths can be entered if separated by a semicolon.
 _help_art_add;Add a new artwork resource (marquee images, screen shots, etc.)
+_help_art;An artwork resource available for use by layouts
 _help_emu_executable;The full path and name of the emulator executable. $HOME gets replaced with the user's home dir
 _help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename]
 _help_emu_rompath;The path to the roms for this emulator.  Multiple paths can be entered if separated by a semicolon.
@@ -36,26 +37,58 @@ _help_emu_add;Add a new emulator
 _help_filter_name;The name for this filter
 _help_filter_rule;Configure filter rule
 _help_filter_add_rule;Add a rule to this filter
-_help_filter_sort_by;The game information attribute that you wish to sort this list by.  Set to "No Sort" to keep the ordering from the source romlist
+_help_filter_sort_by;The game information attribute that you wish to sort the collection/rom list by.  Set to "No Sort" to keep the ordering from the source collection/rom list
 _help_filter_list_limit;Set this to a non-zero value if you wish to limit the size of a sorted list.  Use a positive value for the first X entries (i.e. "10" gives the first 10 entries), a negative value for the last X entries (i.e. "-25" gives the last 25 entries), or "0" for no limit
 _help_filter_delete;Delete this filter
 _help_rule_target;The game information attribute that you wish to filter based on
 _help_rule_comp;Comparison type for the filter
 _help_rule_value;The regular expression value to filter to.  For example, if the filter target is "Year" and comparison is "equals", a value of "1984" will match the year of 1984, "198." will match any year in the 80s, and "(198.)|(199.)" will match any year in the 80s or 90s
 _help_rule_delete;Delete this filter rule
-_help_list_name;The title of this display list
-_help_list_layout;The layout to use for this display list
-_help_list_romlist;The romlist to use for this display list
-_help_list_filter;Configure filter
-_help_list_add_filter;Add a filter to this display list
-_help_list_layout_options;Configure any layout-specific options
-_help_list_delete;Delete this display list
-_help_list_sel;Configure display list
-_help_list_add;Add a new display list
+_help_display_name;The title for this display
+_help_display_layout;The layout to use for this display
+_help_display_romlist;The collection/rom list to use for this display
+_help_display_filter;Configure this filter from the display's filter set
+_help_display_global_filter;Configure global filter rules that are applied to every entry in this display's collection/rom list
+_help_display_add_filter;Add a filter to this display's filter set
+_help_display_layout_options;Configure any layout-specific options
+_help_display_delete;Delete this display
+_help_display_sel;Configure display
+_help_display_add;Add a new display
 _help_input_action;
 _help_input_delete;Remove this control mapping
 _help_input_add;Add a new control mapping for this action
-_help_control_sel;Configure control mappings
+_help_control_select;Set the control(s) that launch the current selection
+_help_control_up;Set the control(s) that move the selection up
+_help_control_down;Set the control(s) that move the selection down
+_help_control_page_up;Set the control(s) that move the selection up one page
+_help_control_page_down;Set the control(s) that move the selection down one page
+_help_control_prev_display;Set the control(s) that move to the previous display
+_help_control_next_display;Set the control(s) that move to the next display
+_help_control_displays_menu;Set the control(s) that show the "Displays Menu"
+_help_control_prev_filter;Set the control(s) that move to the previous filter
+_help_control_next_filter;Set the control(s) that move to the next filter
+_help_control_filters_menu;Set the control(s) that show the "Filters Menu"
+_help_control_toggle_layout;Set the control(s) that toggle the layout script to use (It depends on the layout you are using whether this does anything)
+_help_control_toggle_movie;Set the control(s) that toggle whether or not videos should be played
+_help_control_toggle_mute;Set the control(s) that mute/unmute frontend sound
+_help_control_toggle_rotate_right;Set the control(s) that toggle whether the display should be rotated 90 degrees to the right
+_help_control_toggle_flip;Set the control(s) that toggle whether the display should be rotated 100 degrees
+_help_control_toggle_rotate_left;Set the control(s) that toggle whether the display should be rotated 90 degrees to the left
+_help_control_exit;Set the control(s) that exit the frontend
+_help_control_exit_no_menu;Set the control(s) that exit the frontend immediately to the desktop
+_help_control_screenshot;Set the control(s) that take a screenshot of the frontend
+_help_control_configure;Set the control(s) that show the "Configuration Menu"
+_help_control_random_game;Set the control(s) that select a random game from the current list
+_help_control_replay_last_game;Set the control(s) that relaunch the last game played
+_help_control_add_favourite;Set the control(s) that mark/unmark the currently selected game as a favourite
+_help_control_prev_favourite;Set the control(s) that move to the previous favourite
+_help_control_next_favourite;Set the control(s) that move to the next favourite
+_help_control_add_tags;Set the control(s) to add/remove tags from the currently selected game
+_help_control_screen_saver;Set the control(s) that launch screen saver mode
+_help_control_prev_letter;Set the control(s) that move to the previous letter
+_help_control_next_letter;Set the control(s) that move to the next letter
+_help_control_custom1;Set the "Custom1" control(s)
+_help_control_custom2;Set the "Custom2" control(s)
 _help_joystick_threshold;The threshold for registering joystick moves, from 1 to 100 (100=least sensitive)
 _help_mouse_threshold;The threshold for registering mouse moves, from 1 to 100 (100=least sensitive)
 _help_plugin_command;The executable associated with this plug-in
@@ -67,18 +100,18 @@ _help_exit_command;Command to execute when Exit (Confirm) is selected [i.e. "sud
 _help_default_font;The name of the default font to use
 _help_font_path;The directories containing fonts.  Multiple directories can be entered if separated by a semicolon.  Attract-Mode will recursively search these directories to find a specified font
 _help_screen_saver_timeout;The amount of time in seconds to wait before switching to the screen saver.  0 to disable
-_help_lists_menu_exit;Configure whether an Exit option should be provided in the"Lists Menu"
+_help_displays_menu_exit;Configure whether an Exit option should be provided in the"Displays Menu"
 _help_hide_brackets;Hide text in brackets when showing game titles
 _help_autolaunch_last_game;Automatically launch the last game played on startup
 _help_confirm_favs;Confirm the addition/removal of Favourites
 _help_track_usage;Configure whether Attract-Mode should track usage (played time and play count for each game)
 _help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
-_help_filter_wrap_mode;Set what happens when the "Next Filter" or "Previous Filter" actions reach the end of the filter list
+_help_filter_wrap_mode;Set what happens when the "Next Filter" or "Previous Filter" actions reach the end of the filter set
 _help_emulators;Configure emulator settings
-_help_lists;Configure display lists
-_help_controls;Configure controls
-_help_sound;Configure sound volumes and sound mappings
+_help_displays;Configure the romlist/layout groupings (a.k.a. "Displays") that are available to be cycled through in Attract-Mode
+_help_controls;Configure the joystick, keyboard and mouse inputs that control Attract-Mode
+_help_sound;Configure sound volumes, sound event mappings and the ambient soundtrack
 _help_screen_saver;Configure screen saver
-_help_plugins;Configure plug-ins
-_help_misc;Configure Miscellaneous settings
+_help_plugins;Configure available plug-ins
+_help_misc;Configure miscellaneous settings
 _sort_regexp;^(Vs\. The |The |Vs\. )

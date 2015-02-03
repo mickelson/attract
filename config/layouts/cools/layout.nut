@@ -145,13 +145,13 @@ logo.alpha=255;
 //local message = fe.add_text("Loading...",0,100,lw,40);
 //message.alpha = 0;
 // Optional game texts
-local romlist = fe.add_text( "[ListTitle]", 2, 202, 315, 10 );
+local romlist = fe.add_text( "[DisplayName]", 2, 202, 315, 10 );
 romlist.align = Align.Right;
 local cat = fe.add_text( fe.game_info (Info.Category), 2, 212, 315, 10 );
 cat.align = Align.Right;
 local entries = fe.add_text( "[ListEntry]/[ListSize]", 2, 222, 315, 10 );
 entries.align = Align.Right;
-local filter = fe.add_text( "[ListFilterName]", -20, 190, lw+40, lh-191 );
+local filter = fe.add_text( "[FilterName]", -20, 190, lw+40, lh-191 );
 filter.align = Align.Right;
 filter.alpha = 32;
 // Switch texts on and off
