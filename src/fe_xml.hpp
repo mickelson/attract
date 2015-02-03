@@ -24,10 +24,10 @@
 #define FE_XML_HPP
 
 #include <string>
-#include <list>
+#include <set>
 #include <map>
 #include <vector>
-#include "fe_info.hpp"
+#include "fe_romlist.hpp"
 
 class FeXMLParser
 {

@@ -70,6 +70,7 @@ _DEP =\
 	fe_util_sq.hpp \
 	fe_info.hpp \
 	fe_input.hpp \
+	fe_romlist.hpp \
 	fe_xml.hpp \
 	fe_settings.hpp \
 	fe_config.hpp \
@@ -93,6 +94,7 @@ _OBJ =\
 	fe_util_sq.o \
 	fe_info.o \
 	fe_input.o \
+	fe_romlist.o \
 	fe_xml.o \
 	fe_settings.o \
 	fe_build.o \

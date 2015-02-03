@@ -248,6 +248,8 @@
 		<Unit filename="fe_present.hpp" />
 		<Unit filename="fe_presentable.cpp" />
 		<Unit filename="fe_presentable.hpp" />
+		<Unit filename="fe_romlist.cpp" />
+		<Unit filename="fe_romlist.hpp" />
 		<Unit filename="fe_settings.cpp" />
 		<Unit filename="fe_settings.hpp" />
 		<Unit filename="fe_shader.cpp" />

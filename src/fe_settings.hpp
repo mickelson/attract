@@ -25,6 +25,7 @@
 
 #include "fe_base.hpp"
 #include "fe_info.hpp"
+#include "fe_romlist.hpp"
 #include "fe_input.hpp"
 
 extern const char *FE_ART_EXTENSIONS[];
