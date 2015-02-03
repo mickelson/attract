@@ -44,6 +44,28 @@ function get_next_ln( f )
 }
 
 //
+// Scan through f and return the next line starting with a "$"
+//
+function scan_for_ctrl_ln( f )
+{
+	local char;
+	while ( !f.eos() )
+	{
+		char = f.readn( 'b' );
+		if (( char == '\n' ) && ( !f.eos() ))
+		{
+			char = f.readn( 'b' );
+			if ( char == '$' )
+			{
+				next_ln_overflow="$";
+				return get_next_ln( f );
+			}
+		}
+	}
+	return "";
+}
+
+//
 // Generate our history.dat index files
 //
 function generate_index( config )
@@ -85,17 +107,16 @@ function generate_index( config )
 		
 		while ( !blb.eos() )
 		{
-			local line = get_next_ln( blb );
+			local line = scan_for_ctrl_ln( blb );
 
-			if (( line.len() < 1 )
-					|| (  line[ 0 ] != '$' ))
+			if ( line.len() < 5 ) // skips $bio, $end
 				continue;
 
-			local bits = split( line, "$=" );
-			if ( bits.len() > 1 )
+			local eq = line.find( "=", 1 );
+			if ( eq != null )
 			{
-				local systems = split( bits[0], "," );
-				local roms = split( bits[1], "," );
+				local systems = split( line.slice(1,eq), "," );
+				local roms = split( line.slice(eq+1), "," );
 
 				foreach ( s in systems )
 				{
