@@ -330,18 +330,52 @@ int main(int argc, char *argv[])
 		}
 		else if ( launch_game )
 		{
-			soundsys.stop();
+			if ( feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator ).compare( "@" ) == 0 )
+			{
+				// If the rom_info's emulator is set to "@" then this is a shortcut to another
+				// display, so instead of running a game we switch to the display specified in the
+				// rom_info's Romname field
+				//
+				std::string name = feSettings.get_rom_info( 0, 0, FeRomInfo::Romname );
+				int index = feSettings.get_display_index_from_name( name );
 
-			feVM.pre_run();
+				// if index not found or if we are already in the specified display, then
+				// jump to the altromname display instead
+				//
+				if (( index < 0 ) || ( index == feSettings.get_current_display_index() ))
+				{
+					name = feSettings.get_rom_info( 0, 0, FeRomInfo::AltRomname );
+					if ( !name.empty() )
+						index =  feSettings.get_display_index_from_name( name );
+				}
 
-			// window.run() returns true if our window has been closed while the other program was running
-			if ( !window.run() )
-				exit_selected = true;
+				if ( index < 0 )
+				{
+					std::cerr << "Error resolving shortcut, Display `" << name << "' not found.";
+				}
+				else
+				{
+					if ( feSettings.set_display( index ) )
+						feVM.load_layout();
+					else
+						feVM.update_to_new_list();
+				}
+			}
+			else
+			{
+				soundsys.stop();
 
-			feVM.post_run();
+				feVM.pre_run();
 
-			soundsys.sound_event( FeInputMap::EventGameReturn );
-			soundsys.play_ambient();
+				// window.run() returns true if our window has been closed while the other program was running
+				if ( !window.run() )
+					exit_selected = true;
+
+				feVM.post_run();
+
+				soundsys.sound_event( FeInputMap::EventGameReturn );
+				soundsys.play_ambient();
+			}
 
 			launch_game=false;
 			redraw=true;
@@ -514,7 +548,7 @@ int main(int argc, char *argv[])
 						std::string title;
 						feSettings.get_resource( "Lists", title );
 
-						int last_list = names_list.size() - 1;
+						int last_display = names_list.size() - 1;
 						if ( feSettings.get_displays_menu_exit() )
 						{
 							//
@@ -525,30 +559,30 @@ int main(int argc, char *argv[])
 							names_list.push_back( exit_str );
 						}
 
-						int list_index = feOverlay.common_list_dialog(
+						int display_index = feOverlay.common_list_dialog(
 										title,
 										names_list,
 										feSettings.get_current_display_index(),
 										names_list.size() - 1 );
 
 						// test if the exit option selected, return -2 if it has been
-						if ( list_index > last_list )
-							list_index = -2;
+						if ( display_index > last_display )
+							display_index = -2;
 
-						if (( list_index < 0 ) || ( list_index > last_list ))
+						if (( display_index < 0 ) || ( display_index > last_display ))
 						{
-							// list index is -1 if user pressed the "exit no dialog"
-							// button, and is > last_list if they selected the "exit"
+							// display index is -1 if user pressed the "exit no dialog"
+							// button, and is > last_display if they selected the "exit"
 							// menu option.  We only want to run the exit command if
 							// the menu option was selected
 							//
 							exit_selected = true;
-							if ( list_index > last_list )
+							if ( display_index > last_display )
 								feSettings.exit_command();
 						}
 						else
 						{
-							if ( feSettings.set_display( list_index ) )
+							if ( feSettings.set_display( display_index ) )
 								feVM.load_layout();
 							else
 								feVM.update_to_new_list();

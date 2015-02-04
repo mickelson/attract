@@ -174,6 +174,7 @@ public:
 	//
 	bool set_display( int index );
 	int get_current_display_index() const;
+	int get_display_index_from_name( const std::string &name ) const;
 	int displays_count() const;
 
 	bool navigate_display( int step, bool wrap_mode=false );

@@ -882,6 +882,16 @@ int FeSettings::get_current_display_index() const
 	return m_current_display;
 }
 
+int FeSettings::get_display_index_from_name( const std::string &n ) const
+{
+	for ( unsigned int i=0; i<m_displays.size(); i++ )
+	{
+		if ( n.compare( m_displays[i].get_info( FeDisplayInfo::Name ) ) == 0 )
+			return i;
+	}
+	return -1;
+}
+
 // if rom_index < 0, then the rom index is left unchanged and only the filter index is changed
 void FeSettings::set_current_selection( int filter_index, int rom_index )
 {

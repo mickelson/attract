@@ -23,9 +23,7 @@
 #include "fe_romlist.hpp"
 #include "fe_util.hpp"
 #include <iostream>
-//#include <sstream>
 #include <fstream>
-#include <iomanip>
 #include <algorithm>
 
 #include <squirrel.h>

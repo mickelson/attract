@@ -848,6 +848,10 @@ void FeDisplayEditMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl( Opt::LIST, "Collection/Rom List",
 				m_display->get_info( FeDisplayInfo::Romlist ), "_help_display_romlist" );
 
+		std::vector<std::string> romlists;
+		ctx.fe_settings.get_romlists_list( romlists );
+		ctx.back_opt().append_vlist( romlists );
+
 		FeFilter *f = m_display->get_filter( -1 );
 
 		std::string filter_desc;
@@ -859,10 +863,6 @@ void FeDisplayEditMenu::get_options( FeConfigContext &ctx )
 
 		ctx.add_optl( Opt::SUBMENU, "Global Filter", filter_desc, "_help_display_global_filter" );
 		ctx.back_opt().opaque = 9;
-
-		std::vector<std::string> romlists;
-		ctx.fe_settings.get_romlists_list( romlists );
-		ctx.back_opt().append_vlist( romlists );
 
 		std::vector<std::string> filters;
 		m_display->get_filters_list( filters );
