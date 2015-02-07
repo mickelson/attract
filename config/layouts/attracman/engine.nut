@@ -512,21 +512,21 @@ class Player extends Sprite
 
 	function update_direction( ttime )
 	{
-		if ( fe.get_input_state( AM_CONFIG["a_up"] ) )
+		if ( fe.get_input_state( AM_CONFIG["p1_up"] ) )
 		{
 			if ( ::field[ p2g( pos_y() ) - 1 ][ p2g( pos_x() ) ] )
 				direction = Direction.Up;
 
 			cruise_control = false;
 		}
-		else if ( fe.get_input_state( AM_CONFIG["b_down"] ) )
+		else if ( fe.get_input_state( AM_CONFIG["p1_down"] ) )
 		{
 			if ( ::field[ p2g( pos_y() ) + 1 ][ p2g( pos_x() ) ] )
 				direction = Direction.Down;
 
 			cruise_control = false;
 		}
-		else if ( fe.get_input_state( AM_CONFIG["c_left"] ) )
+		else if ( fe.get_input_state( AM_CONFIG["p1_left"] ) )
 		{
 			local temp = p2g( pos_x() ) - 1;
 			if (( temp < 0 ) // special case for tunnel movement
@@ -535,7 +535,7 @@ class Player extends Sprite
 
 			cruise_control = false;
 		}
-		else if ( fe.get_input_state( AM_CONFIG["d_right"] ) )
+		else if ( fe.get_input_state( AM_CONFIG["p1_right"] ) )
 		{
 			local temp = p2g( pos_x() ) + 1;
 			if (( temp > GridWidth ) // special case for tunnel movement
@@ -834,87 +834,120 @@ class Ghost extends Sprite
 			{
 				// We've hit a ghost decision point
 				//
+				local up=fe.get_input_state( AM_CONFIG["p2_up"] );
+				local down=fe.get_input_state( AM_CONFIG["p2_down"] );
+				local left=fe.get_input_state( AM_CONFIG["p2_left"] );
+				local right=fe.get_input_state( AM_CONFIG["p2_right"] );
+				local control_move=false;
 
-				// Pick next direction for ghost movement
-				// Start by getting grid target...
-				//
-				local target_gx = -1, target_gy = -1;
-				switch ( gstate )
+				if ( ( gnum == 0 ) && ( up || down || left || right ))
 				{
-				case GhostState.Chase:
-					// g0 targets pman directly
-					target_gx = p2g( ::pman.pos_x() );
-					target_gy = p2g( ::pman.pos_y() );
-
-					if ( gnum == 3 )
+					// respond to the ghost controls if pressed
+					if ( left && ::field[y][x-1] )
 					{
-						// g3 chases pman until 8 tiles away, then goes home
-						if (( abs( target_gx - p2g( pos_x() ) ) 
-							+ abs( target_gy - p2g( pos_y() ) ) ) < 8 )
-						{
-							target_gx = G3HomeX;
-							target_gy = G3HomeY;
-						}
+						direction = Direction.Left;
+						control_move = true;
 					}
-					else
+					else if ( right && ::field[y][x+1] )
 					{
-						// g1 targets the spot 3 ahead of pman, g2 uses the spot 2
-						// ahead 
-						local look_ahead=0;
-						switch (gnum)
-						{
-						case 1: 
-							look_ahead = 3; break;
-						case 2: 
-							look_ahead = 2; break;
-						default: // look_ahead = 0
-						}
-
-						switch ( ::pman.direction )
-						{
-						case Direction.Up:
-							target_gy -= look_ahead; break;
-						case Direction.Down:
-							target_gy += look_ahead; break;
-						case Direction.Left:
-							target_gx -= look_ahead; break;
-						case Direction.Right:
-							target_gx += look_ahead; break;
-						}
-
-						if ( gnum == 2 )
-						{
-							// g2 tries to circle around pman opposite g0
-							local diff_x = target_gx - p2g( ::ghosts[0].pos_x() );
-							local diff_y = target_gy - p2g( ::ghosts[0].pos_y() );
-							target_gx += diff_x;
-							target_gy += diff_y;
-						}
+						direction = Direction.Right;
+						control_move = true;
 					}
-					break;
-
-				case GhostState.Scatter:
-					switch ( gnum )
+					else if ( up && ::field[y-1][x] )
 					{
-					case 0:
-						target_gx = G0HomeX; target_gy = G0HomeY; break;
-
-					case 1:
-						target_gx = G1HomeX; target_gy = G1HomeY; break;
-
-					case 2:
-						target_gx = G2HomeX; target_gy = G2HomeY; break;
-
-					case 3:
-						target_gx = G3HomeX; target_gy = G3HomeY; break;
+						direction = Direction.Up;
+						control_move = true;
 					}
-					break;
-
-				case GhostState.Dead:
-					target_gx = GhostHouseX; target_gy = GhostHouseY; break;
+					else if ( down && ::field[y+1][x] )
+					{
+						direction = Direction.Down;
+						control_move = true;
+					}
 				}
 
-				direction = get_best_direction( target_gx, target_gy, direction );
+				if ( !control_move )
+				{
+					// Pick next direction for ghost movement
+					// Start by getting grid target...
+					//
+					local target_gx = -1, target_gy = -1;
+					switch ( gstate )
+					{
+					case GhostState.Chase:
+						// g0 targets pman directly
+						target_gx = p2g( ::pman.pos_x() );
+						target_gy = p2g( ::pman.pos_y() );
+
+						if ( gnum == 3 )
+						{
+							// g3 chases pman until 8 tiles away, then goes home
+							if (( abs( target_gx - p2g( pos_x() ) )
+								+ abs( target_gy - p2g( pos_y() ) ) ) < 8 )
+							{
+								target_gx = G3HomeX;
+								target_gy = G3HomeY;
+							}
+						}
+						else
+						{
+							// g1 targets the spot 3 ahead of pman, g2 uses the spot 2
+							// ahead
+							local look_ahead=0;
+							switch (gnum)
+							{
+							case 1:
+								look_ahead = 3; break;
+							case 2:
+								look_ahead = 2; break;
+							default: // look_ahead = 0
+							}
+
+							switch ( ::pman.direction )
+							{
+							case Direction.Up:
+								target_gy -= look_ahead; break;
+							case Direction.Down:
+								target_gy += look_ahead; break;
+							case Direction.Left:
+								target_gx -= look_ahead; break;
+							case Direction.Right:
+								target_gx += look_ahead; break;
+							}
+
+							if ( gnum == 2 )
+							{
+								// g2 tries to circle around pman opposite g0
+								local diff_x = target_gx - p2g( ::ghosts[0].pos_x() );
+								local diff_y = target_gy - p2g( ::ghosts[0].pos_y() );
+								target_gx += diff_x;
+								target_gy += diff_y;
+							}
+						}
+						break;
+
+					case GhostState.Scatter:
+						switch ( gnum )
+						{
+						case 0:
+							target_gx = G0HomeX; target_gy = G0HomeY; break;
+
+						case 1:
+							target_gx = G1HomeX; target_gy = G1HomeY; break;
+
+						case 2:
+							target_gx = G2HomeX; target_gy = G2HomeY; break;
+
+						case 3:
+							target_gx = G3HomeX; target_gy = G3HomeY; break;
+						}
+						break;
+
+					case GhostState.Dead:
+						target_gx = GhostHouseX; target_gy = GhostHouseY; break;
+					}
+
+					direction = get_best_direction( target_gx, target_gy, direction );
+				}
 			}
 		}
 
@@ -1112,8 +1145,8 @@ function maze_init()
 //
 function speed_adjust()
 {
-	local speed_up = fe.get_input_state( AM_CONFIG["e_speed_up"] );
-	local speed_down = fe.get_input_state( AM_CONFIG["f_speed_down"] );
+	local speed_up = fe.get_input_state( AM_CONFIG["speed_up"] );
+	local speed_down = fe.get_input_state( AM_CONFIG["speed_down"] );
 
 	if ( ::query_speed == false )
 	{

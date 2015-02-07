@@ -12,23 +12,36 @@ const DEFAULT_SPEED = 0.8;
 const SPEED_INCREMENT = 0.1;
 
 class UserConfig {
-	</ label="Player Up", help="Set player controls", is_input="yes" />
-	a_up="R";
+	</ label="Player Up", help="Set player controls", is_input="yes", order=1 />
+	p1_up="R";
 
-	</ label="Player Down", help="Set player controls", is_input="yes" />
-	b_down="F";
+	</ label="Player Down", help="Set player controls", is_input="yes", order=2 />
+	p1_down="F";
 
-	</ label="Player Left", help="Set player controls", is_input="yes" />
-	c_left="D";
+	</ label="Player Left", help="Set player controls", is_input="yes", order=3 />
+	p1_left="D";
 
-	</ label="Player Right", help="Set player controls", is_input="yes" />
-	d_right="G";
+	</ label="Player Right", help="Set player controls", is_input="yes" order=4 />
+	p1_right="G";
 
-	</ label="Increase Speed", help="Set game speed controls", is_input="yes" />
-	e_speed_up="";
+	</ label="Increase Speed", help="Set game speed controls", is_input="yes", order=5 />
+	speed_up="";
 
-	</ label="Decrease Speed", help="Set game speed controls", is_input="yes" />
-	f_speed_down="";
+	</ label="Decrease Speed", help="Set game speed controls", is_input="yes", order=6 />
+	speed_down="";
+
+	</ label="Ghost Up", help="Set controls to influence Blinky", is_input="yes", order=7 />
+	p2_up="";
+
+	</ label="Ghost Down", help="Set controls to influence Blinky", is_input="yes", order=8 />
+	p2_down="";
+
+	</ label="Ghost Left", help="Set controls to influence Blinky", is_input="yes", order=9 />
+	p2_left="";
+
+	</ label="Ghost Right", help="Set controls to influence Blinky", is_input="yes" order=10 />
+	p2_right="";
+
 
 }
 
