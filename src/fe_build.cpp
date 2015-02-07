@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -52,8 +52,6 @@ void build_basic_romlist( const FeEmulatorInfo &emulator,
 		FeRomInfo new_rom;
 		new_rom.set_info( FeRomInfo::Romname, (*its) );
 		new_rom.set_info( FeRomInfo::Title, (*its) );
-		new_rom.set_info( FeRomInfo::Emulator, emulator.get_info(
-														FeEmulatorInfo::Name ));
 
 		romlist.push_back( new_rom );
 	}
@@ -87,7 +85,7 @@ std::string url_escape( const std::string &raw )
 
 void apply_xml_import( const FeEmulatorInfo &emulator,
 				FeRomInfoListType &romlist,
-				FeXMLParser::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL )
+				FeXMLParser::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL, bool full=false )
 {
 	std::string source = emulator.get_info(
 				FeEmulatorInfo::Info_source );
@@ -101,7 +99,7 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 	if ( source.compare( "mame" ) == 0 )
 	{
 		std::cout << "Obtaining -listxml info...";
-		FeMameXMLParser mamep( romlist, uiupdate, uiupdatedata );
+		FeMameXMLParser mamep( romlist, uiupdate, uiupdatedata, full );
 		mamep.parse( base_command );
 		std::cout << std::endl;
 	}
@@ -118,7 +116,7 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 		}
 
 		std::cout << "Obtaining -listsoftware info...";
-		FeMessXMLParser messp( romlist, uiupdate, uiupdatedata );
+		FeMessXMLParser messp( romlist, uiupdate, uiupdatedata, full );
 		messp.parse( base_command, system_name );
 		std::cout << std::endl;
 	}
@@ -511,10 +509,19 @@ bool import_mamewah( const std::string &input_filename,
 	return true;
 }
 
+void apply_emulator_name( const std::string &name,
+				FeRomInfoListType &romlist )
+{
+	for ( FeRomInfoListType::iterator itr=romlist.begin(); itr!=romlist.end(); ++itr )
+		(*itr).set_info( FeRomInfo::Emulator, name );
+}
+
 }; // end namespace
 
 bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
-						const std::string &output_name )
+						const std::string &output_name,
+						FeFilter &filter,
+						bool full )
 {
 	FeRomInfoListType total_romlist;
 	std::string best_name, list_name, path;
@@ -539,9 +546,10 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 
 				build_basic_romlist( *emu, romlist );
 
-				apply_xml_import( *emu, romlist );
+				apply_xml_import( *emu, romlist, NULL, NULL, full );
 				apply_import_extras( *emu, romlist );
 
+				apply_emulator_name( best_name, romlist );
 				total_romlist.splice( total_romlist.end(), romlist );
 			}
 		}
@@ -593,11 +601,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 				//
 				FeHyperSpinXMLParser my_parser( romlist );
 				if ( my_parser.parse( (*itr).file_name ) )
-				{
-					// Update the emulator entries
-					for ( FeRomInfoListType::iterator itr=romlist.begin(); itr != romlist.end(); ++itr )
-						(*itr).set_info( FeRomInfo::Emulator, emu_name );
-				}
+					apply_emulator_name( emu_name, romlist );
 			}
 			else
 			{
@@ -626,6 +630,32 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 	// strip duplicate entries
 	std::cout << "Removing any duplicate entries..." << std::endl;
 	total_romlist.unique();
+
+	// Apply the specified filter
+	if ( filter.get_rule_count() > 0 )
+	{
+		std::cout << "Applying filter..." << std::endl;
+		filter.init();
+
+		FeRomInfoListType::iterator last_it=total_romlist.begin();
+		for ( FeRomInfoListType::iterator it=total_romlist.begin(); it!=total_romlist.end(); )
+		{
+			if ( filter.apply_filter( *it ) )
+			{
+				if ( last_it != it )
+					it = total_romlist.erase( last_it, it );
+				else
+					++it;
+
+				last_it = it;
+			}
+			else
+				++it;
+		}
+
+		if ( last_it != total_romlist.end() )
+			total_romlist.erase( last_it, total_romlist.end() );
+	}
 
 	if ( task_list.size() > 1 )
 		best_name = "multi";
@@ -665,6 +695,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 
 	apply_xml_import( *emu, romlist, uiu, uid );
 	apply_import_extras( *emu, romlist );
+	apply_emulator_name( emu_name, romlist );
 
 	romlist.sort( FeRomListSorter() );
 

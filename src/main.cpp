@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -46,6 +46,8 @@ void process_args( int argc, char *argv[],
 	//
 	std::vector <FeImportTask> task_list;
 	std::string output_name;
+	FeFilter filter( "" );
+	bool full=false;
 
 	int next_arg=1;
 
@@ -143,6 +145,34 @@ void process_args( int argc, char *argv[],
 				exit(1);
 			}
 		}
+		else if ( strcmp( argv[next_arg], "--full" ) == 0 )
+		{
+			full = true;
+			next_arg++;
+		}
+		else if (( strcmp( argv[next_arg], "-F" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--filter" ) == 0 ))
+		{
+			FeRule rule;
+
+			next_arg++;
+			if ( next_arg < argc )
+			{
+				if ( rule.process_setting( "", argv[next_arg], "" ) != 0 )
+				{
+					// Error message already displayed
+					exit(1);
+				}
+				next_arg++;
+			}
+			else
+			{
+				std::cerr << "Error, no rule specified with --filter option." << std::endl;
+				exit(1);
+			}
+
+			filter.get_rules().push_back( rule );
+		}
 		else if (( strcmp( argv[next_arg], "-v" ) == 0 )
 				|| ( strcmp( argv[next_arg], "--version" ) == 0 ))
 		{
@@ -190,6 +220,10 @@ void process_args( int argc, char *argv[],
 				<< "        *.txt (Attract-Mode)" << std::endl
 				<< "        *.xml (HyperSpin)" << std::endl
 				<< "     The emulator to use for list entries can be specified as well" << std::endl
+				<< "  -F, --filter <rule>" << std::endl
+				<< "     Apply the specified filter rule to created romlist" << std::endl
+				<< "  --full" << std::endl
+				<< "     Used with the --build-romlist option to include all possible roms [mame/mess only]" << std::endl
 				<< "  -o, --output <romlist>" << std::endl
 				<< "     Specify the name of the romlist to create, overwriting any existing"
 				<< std::endl << std::endl
@@ -209,7 +243,7 @@ void process_args( int argc, char *argv[],
 		FeSettings feSettings( config_path, cmdln_font );
 		feSettings.load_from_file( feSettings.get_config_dir() + FE_CFG_FILE );
 
-		int retval = feSettings.build_romlist( task_list, output_name );
+		int retval = feSettings.build_romlist( task_list, output_name, filter, full );
 		exit( retval );
 	}
 }

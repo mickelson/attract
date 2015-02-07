@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -118,13 +118,15 @@ bool FeMapComp::operator()(const char *lhs, const char *rhs) const
 FeMameXMLParser::FeMameXMLParser(
 		FeRomInfoListType &romlist,
 		UiUpdate u,
-		void *d )
+		void *d,
+		bool full )
 	: FeXMLParser( u, d ),
 	m_romlist( romlist ),
 	m_count( 0 ),
 	m_displays( 0 ),
 	m_chd( false ),
-	m_mechanical( false )
+	m_mechanical( false ),
+	m_full( full )
 {
 }
 
@@ -153,7 +155,19 @@ void FeMameXMLParser::start_element(
 				}
 				else
 				{
-					m_collect_data=false;
+					if ( m_full )
+					{
+						m_romlist.push_back( FeRomInfo( attribute[i+1] ) );
+						m_itr = m_romlist.end();
+						m_itr--;
+						m_collect_data=true;
+						m_displays=0;
+						m_chd=false;
+						m_mechanical=false;
+						m_keep_rom=true;
+					}
+					else
+						m_collect_data=false;
 				}
 
 				break;
@@ -389,8 +403,9 @@ bool FeMameXMLParser::parse( const std::string &prog )
 FeMessXMLParser::FeMessXMLParser(
 	FeRomInfoListType &romlist,
 	UiUpdate u,
-	void *d )
-	: FeXMLParser( u, d ), m_romlist( romlist )
+	void *d,
+	bool full )
+	: FeXMLParser( u, d ), m_romlist( romlist ), m_full( full )
 {
 }
 
@@ -428,6 +443,14 @@ void FeMessXMLParser::start_element(
 						m_keep_rom=true;
 						break;
 					}
+				}
+
+				if ( !m_keep_rom && m_full )
+				{
+					m_romlist.push_back( FeRomInfo( attribute[i+1] ) );
+					m_itr = m_romlist.end();
+					m_itr--;
+					m_keep_rom=true;
 				}
 			}
 			else if ( strcmp( attribute[i], "cloneof" ) == 0 )

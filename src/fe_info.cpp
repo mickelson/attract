@@ -347,6 +347,58 @@ void FeRule::set_values(
 	m_filter_what = w;
 }
 
+int FeRule::process_setting( const std::string &,
+         const std::string &value, const std::string &fn )
+{
+	std::string token;
+	size_t pos=0;
+
+	token_helper( value, pos, token, FE_WHITESPACE );
+
+	int i=0;
+	while( FeRomInfo::indexStrings[i] != NULL )
+	{
+		if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
+			break;
+		i++;
+	}
+
+	if ( i >= FeRomInfo::LAST_INDEX )
+	{
+		invalid_setting( fn, "rule", token,
+				FeRomInfo::indexStrings, NULL, "target" );
+		return 1;
+	}
+
+	m_filter_target = (FeRomInfo::Index)i;
+	token_helper( value, pos, token, FE_WHITESPACE );
+
+	i=0;
+	while( filterCompStrings[i] != NULL )
+	{
+		if ( token.compare( filterCompStrings[i] ) == 0 )
+			break;
+		i++;
+	}
+
+	if ( i >= LAST_COMPARISON )
+	{
+		invalid_setting( fn, "rule", token, filterCompStrings,
+				NULL, "comparison" );
+		return 1;
+	}
+
+	m_filter_comp = (FilterComp)i;
+
+	// Remainder of the line is filter regular expression (which may contain
+	// spaces...)
+	//
+	if ( pos < value.size() )
+		m_filter_what = value.substr( pos );
+
+	return 0;
+}
+
 const char *FeFilter::indexStrings[] =
 {
 	"rule",
@@ -390,65 +442,12 @@ int FeFilter::process_setting( const std::string &setting,
 {
 	if ( setting.compare( indexStrings[0] ) == 0 ) // rule
 	{
-		if ( value.empty() )
-		{
-			m_rules.push_back(
-				FeRule( FeRomInfo::LAST_INDEX, FeRule::LAST_COMPARISON, "" )
-				);
-			return 0;
-		}
+		FeRule new_rule;
 
-		FeRomInfo::Index target;
-		FeRule::FilterComp comp;
-		std::string what;
+		if ( !value.empty() )
+			new_rule.process_setting( setting, value, fn );
 
-		std::string token;
-		size_t pos=0;
-
-		token_helper( value, pos, token, FE_WHITESPACE );
-
-		int i=0;
-		while( FeRomInfo::indexStrings[i] != NULL )
-		{
-			if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
-				break;
-			i++;
-		}
-
-		if ( i >= FeRomInfo::LAST_INDEX )
-		{
-			invalid_setting( fn, "filter", token,
-					FeRomInfo::indexStrings, NULL, "target" );
-			return 1;
-		}
-
-		target = (FeRomInfo::Index)i;
-		token_helper( value, pos, token, FE_WHITESPACE );
-
-		i=0;
-		while( FeRule::filterCompStrings[i] != NULL )
-		{
-			if ( token.compare( FeRule::filterCompStrings[i] ) == 0 )
-				break;
-			i++;
-		}
-
-		if ( i >= FeRule::LAST_COMPARISON )
-		{
-			invalid_setting( fn, "filter", token, FeRule::filterCompStrings,
-					NULL, "comparison" );
-			return 1;
-		}
-
-		comp = (FeRule::FilterComp)i;
-
-		// Remainder of the line is filter regular expression (which may contain
-		// spaces...)
-		//
-		if ( pos < value.size() )
-			what = value.substr( pos );
-
-		m_rules.push_back( FeRule( target, comp, what ) );
+		m_rules.push_back( new_rule );
 	}
 	else if ( setting.compare( indexStrings[1] ) == 0 ) // sort_by
 	{

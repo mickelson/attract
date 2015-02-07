@@ -45,27 +45,42 @@ popular emulators, however some settings will likely have to be customized
 for your system (file locations etc).
 
 4. Once you have an emulator configured correctly for your system, select
-the "Generate Romlist" option from the emulator's configuration menu.
-Attract-Mode will use the configured emulator settings to generate a list of
-available games for the emulator.
+the "Generate Collection/Rom List" option from the emulator's configuration
+menu.  Attract-Mode will use the configured emulator settings to generate a
+list of available games for the emulator.
 
 5.  Exit config mode by selecting the "Back" option a few times.  You should
 now have a usable front-end!
 
+Basic Organization
+---------------
+
+At its most basic level, Attract-Mode is organized into "Displays", of which
+you can configure one or more.  Each Display is the a grouping of the following:
+
+- a Collection/Rom List (the listing of available games/roms to show)
+- a Layout (the visual theme/skin to use for the Display)
+- a Global Filter (the filter rules that always get applied to the Collection/
+  Rom List, which can be used to remove list entries you will never want to see)
+- zero or more "normal" Filters.  The Filters for a Display can be cycled
+  through using the Previous and Next Filter controls, and can also be selected
+  from the Filters Menu.  Different Filters can be set up to categorize the
+  games in the Collection/Rom List however you would like them displayed, for
+  example by orientation, category, manufacturer, year, times played, favourite
+  status, rom file availability, etc.
+
 Further Customization
 ---------------------
 
-**INPUT:** The inputs used to control Attract-Mode can be configured from
-from the "Input" menu in config mode.  Attract-Mode actions can be mapped to
-most keyboard, mouse and joystick inputs.
+**CONTROLS:** The inputs used to control Attract-Mode can be configured from
+from the "Controls" menu in config mode.  Attract-Mode actions can be mapped
+to most keyboard, mouse and joystick inputs.
 
-**LIST FILTERS:** List filters can be added from the "Lists" menu in config
+**FILTERS:** Filters can be added from the "Displays" menu in config
 mode.  Each filter can have multiple rules associated with it (i.e. a "1980's
 Multiplayer Sports" filter would have 3 rules: (1) that the year be in the
 1980's, (2) that the number of players is not 1, and (3) that the category
-contain "Sports").  You can create multiple filters per List and cycle/switch
-between them using the "Previous Filter", "Next Filter" and "Filters List"
-actions.
+contain "Sports").
 
 **SOUND:** To play sounds in your setup, place the sound file in the "sounds"
 subdirectory of your Attract-Mode config directory.  The sound file can then
@@ -78,10 +93,10 @@ FFmpeg.  When deciding what file to use for a particular artwork type,
 Attract-Mode will use the artwork selection order set out below.
 
 The location of artwork resources is configured on a per-emulator basis in the
-emulator configuration menu.  Attract-Mode's default artworks are: "marquee"
+"Emulators" configuration menu.  Attract-Mode's default artworks are: "marquee"
 (for cabinet marquee images), "snap" (for attract-mode videos and game screen
 shots), "flyer" (for game flyer/box art) and "wheel" (for Hyperspin wheel art).
-You can add others as needed in the emulator configuration menu.  Multiple
+You can add others as needed in the "Emulators" configuration menu.  Multiple
 paths can be specified for each artwork, in which case Attract-Mode will check
 each path in the order they are specified before moving to the next check in
 the selection order.
@@ -120,20 +135,20 @@ subdirectory of your Attract-Mode config directory.  Available plugins
 can be enabled/disabled and configured from the "Plug-Ins" menu when in
 config mode.
 
-**ROMLISTS:** Romlists are saved in the "romlist" subdirectory of your
-Attract-Mode config directory.  Each list is a semi-colon delimited text
+**ROMLISTS:** Collection/Rom lists are saved in the "romlist" subdirectory of
+your Attract-Mode config directory.  Each list is a semi-colon delimited text
 file that can be edited by most common spreadsheet programs (be sure to
 load it as "Text CSV").  The file has one game entry per line, with the very
 first line of the file specifying what each column represents.
 
 In addition to the romlist generation function available in config mode,
-Attract-Mode can generate a romlist for multiple emulators from the command
-line using the following command:
+Attract-Mode can generate a single romlist containing roms for multiple
+emulators from the command line using the following command:
 
 		attract --build-romlist <emulator names...>
 
 You can also import romlists from MameWah/Wahcade! (.lst), Attract-Mode
-(.txt) and HyperSpin (.xml) using the following command:
+(.txt) and HyperSpin (.xml) list files using the following command:
 
 		attract --import-romlist <file> [emulator name]
 
@@ -148,9 +163,21 @@ in the current directory) into a single Attract-Mode romlist.  The "mame"
 emulator will be used for the mame.lst games, while the "nestopia" emulator
 will be used for the nintendo.lst games.
 
+One or more filter rules can also be applied when importing or building a
+romlist from the command line using the "--filter <FILTER RULE>" option.  So
+for example the following command line:
+
+`attract --build-romlist mame --filter "Rotation equals 90|270"`
+
+will build a romlist that contains only the vertical games in your collection.
+
 If you wish to specify the name of the created romlist at the command
 line, you can do so with the `--output <name>` option.  Beware that this will
 overwrite any existing Attract-Mode romlist with the specified name.
+
+For a full description of the command lines options available, run:
+
+`attract --help`
 
 [Compile.md]: Compile.md
 [Layouts.md]: Layouts.md

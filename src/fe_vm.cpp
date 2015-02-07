@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014 Andrew Mickelson
+ *  Copyright (C) 2014-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -1418,16 +1418,14 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 	{
 		std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
 		FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );
+
+		static std::string sys_name;
 		if ( emu )
-		{
-			static std::string sys_name;
 			sys_name = emu->get_info( FeEmulatorInfo::System );
-			return sys_name.c_str();
-		}
 		else
-		{
-			return NULL;
-		}
+			sys_name = "";
+
+		return sys_name.c_str();
 	}
 
 	return (fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();

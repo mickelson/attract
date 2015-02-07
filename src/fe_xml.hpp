@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -73,7 +73,7 @@ public:
 class FeMameXMLParser : private FeXMLParser
 {
 public:
-	FeMameXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL );
+	FeMameXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL, bool full=false );
 	bool parse( const std::string &base_command );
 
 private:
@@ -87,6 +87,7 @@ private:
 	bool m_collect_data;
 	bool m_chd;
 	bool m_mechanical;
+	bool m_full;
 
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
@@ -95,7 +96,7 @@ private:
 class FeMessXMLParser : private FeXMLParser
 {
 public:
-	FeMessXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL );
+	FeMessXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL, bool full=false );
 	bool parse( const std::string &command, const std::string &args );
 
 private:
@@ -109,6 +110,7 @@ private:
 	std::string m_cloneof;
 	std::string m_altname;
 	std::string m_alttitle;
+	bool m_full;
 
 	void set_info_values( FeRomInfo &r );
 

@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -264,7 +264,9 @@ public:
 	// the resulting romlist file
 	//
 	bool build_romlist( const std::vector< FeImportTask > &task_list,
-							const std::string &output_name );
+							const std::string &output_name,
+							FeFilter &filter,
+							bool full );
 
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,

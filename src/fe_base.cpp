@@ -51,23 +51,29 @@ void FeBaseConfigurable::invalid_setting(
 					const char **valid2,
 					const char *label )
 {
-	std::cout << "Unrecognized \"" << base << "\" " << label
-					<< " of \"" << setting << "\" in file: " << fn << ".";
+	std::cerr << "Unrecognized \"" << base << "\" " << label
+					<< " of \"" << setting << "\"";
+
+	if ( !fn.empty() )
+		std::cerr << " in file: " << fn;
+
+	std::cerr << ".";
+
 	int i=0;
 	if (valid1[i])
-		std::cout << "  Valid " << label <<"s are: " << valid1[i++];
+		std::cerr << "  Valid " << label <<"s are: " << valid1[i++];
 
 	while (valid1[i])
-		std::cout << ", " << valid1[i++];
+		std::cerr << ", " << valid1[i++];
 
 	if ( valid2 != NULL )
 	{
 		i=0;
 		while (valid2[i])
-			std::cout << ", " << valid2[i++];
+			std::cerr << ", " << valid2[i++];
 	}
 
-	std::cout << std::endl;
+	std::cerr << std::endl;
 }
 
 bool FeBaseConfigurable::load_from_file( const std::string &filename,

@@ -97,7 +97,7 @@ private:
 //
 // Class for a single rule in a list filter
 //
-class FeRule
+class FeRule : public FeBaseConfigurable
 {
 public:
 	enum FilterComp {
@@ -129,6 +129,9 @@ public:
 	const std::string &get_what() const { return m_filter_what; };
 
 	void set_values( FeRomInfo::Index i, FilterComp c, const std::string &w );
+
+	int process_setting( const std::string &,
+         const std::string &value, const std::string &fn );
 
 private:
 	FeRomInfo::Index m_filter_target;
