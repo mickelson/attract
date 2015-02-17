@@ -196,6 +196,7 @@ public:
 	int exit_command() const; // run configured exit command (if any)
 
 	void toggle_layout();
+	void set_current_layout_file( const std::string &layout_file );
 
 	int get_rom_index( int filter_index, int offset ) const;
 
@@ -220,6 +221,7 @@ public:
 			std::string &path,
 			std::string &filename ) const;
 
+	void get_script_loader_file( std::string &path, std::string &filename ) const;
 	void get_screensaver_file( std::string &path, std::string &filename ) const;
 	FeLayoutInfo &get_screensaver_config() { return m_saver_params; }
 	std::string get_current_layout_file() const;
@@ -306,6 +308,11 @@ public:
 	void set_language( const std::string &s );
 	const std::string &get_language() const { return m_language; }
 	void get_languages_list( std::vector < std::string > &ll ) const;
+
+	// Utility function to get a list of layout*.nut files from the specified path...
+	static void get_layout_file_basenames_from_path(
+								const std::string &path,
+								std::vector<std::string> &names_list );
 };
 
 #endif

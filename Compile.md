@@ -68,12 +68,6 @@ These instructions assume that you have X Code installed.
            brew update
            brew install pkg-config ffmpeg sfml
 
-   NOTE (XCODE 5 or LATER): The homebrew version of SFML seems to produce
-   linker errors with Xcode 5 and clang.  If you have Xcode 5 or later then
-   it is recommended that you install the SFML SDK using the package from
-   the SFML website instead of using the homebrew recipe:
-   <http://www.sfml-dev.org/download/sfml/2.1/SFML-2.1-osx-clang-universal.tar.gz>
-
 3. Extract the Attract-Mode source to your system.
 
 4. From the directory you extracted the Attract-Mode source into, run:
@@ -103,8 +97,13 @@ The recommended way to build Windows binaries for Attract-Mode is to cross
 compile on an OS that supports MXE (<http://mxe.cc>) such as Linux, FreeBSD or
 OS X.
 
-1. Follow the steps in the mxe tutorial to set up mxe on your system: 
-<http://mxe.cc/#tutorial>
+1. With one exception (see below), follow the steps in the mxe tutorial to set
+   up mxe on your system: <http://mxe.cc/#tutorial>
+
+   The one exception is to build from the "master" branch of mxe, instead of
+   "stable".  So you should clone the master branch instead of stable:
+
+           git clone -b master https://github.com/mxe/mxe.git
 
 2. Make mxe's sfml and ffmpeg packages:
 

@@ -130,6 +130,11 @@ void FeBaseTextureContainer::transition_swap( FeBaseTextureContainer *o )
 		(*itr)->texture_changed( o );
 }
 
+bool FeBaseTextureContainer::fix_masked_image()
+{
+	return false;
+}
+
 FeTextureContainer *FeBaseTextureContainer::get_derived_texture_container()
 {
 	return NULL;
@@ -243,6 +248,26 @@ bool FeTextureContainer::load_static(
 		non_image_names.push_back( file_name );
 
 	bool retval = common_load( non_image_names, image_names );
+
+	notify_texture_change();
+	return retval;
+}
+
+
+bool FeTextureContainer::fix_masked_image()
+{
+	bool retval=false;
+
+	sf::Image tmp_img = m_texture.copyToImage();
+
+	sf::Color p = tmp_img.getPixel( 0, 0 );
+	tmp_img.createMaskFromColor( p );
+
+	if ( m_texture.loadFromImage( tmp_img ) )
+	{
+		m_texture.setSmooth( true );
+		retval=true;
+	}
 
 	notify_texture_change();
 	return retval;
@@ -975,6 +1000,11 @@ void FeImage::rawset_index_offset( int io )
 void FeImage::rawset_filter_offset( int fo )
 {
 	m_tex->set_filter_offset( fo, false );
+}
+
+bool FeImage::fix_masked_image()
+{
+	return m_tex->fix_masked_image();
 }
 
 

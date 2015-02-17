@@ -8,15 +8,25 @@
 //
 class UserConfig </ help="A plugin to play background audio" /> {
 
-	</ label="Next Track", help="Button to press to jump to the next audio track", is_input=true, order=1 />
+	</ label="Next Track",
+		help="Button to press to jump to the next audio track",
+		is_input=true,
+		order=1 />
 	skip_button="";
 
-	</ label="Track Info", help="Button to press to display current audio track info", is_input=true, order=2 />
+	</ label="Track Info",
+		help="Button to press to display current audio track info",
+		is_input=true,
+		order=2 />
 	info_button="";
 
-	</ label="Source Directory", help="The full path to the directory containing the audio files to play", order=3 />
+	</ label="Source Directory",
+		help="The full path to the directory containing the audio files to play",
+		order=3 />
 	dir="";
 }
+
+fe.load_module( "file" );
 
 class AudioMode
 {
@@ -67,49 +77,28 @@ class AudioMode
 		m_work += msg;
 	}
 
-	function load_playlist( dir )
+	function load_playlist( path )
 	{
-		// Read the play directory
-		//
-		local command = "/bin/sh";
-		local param = "-c \"ls ";
-		if ( OS == "Windows" )
-		{
-			command = "cmd";
-			param = " /c dir /b \"";
-		}
-		param += dir;
-		param += "\"";
-
-		m_work = "";
-
-		// This will load the directory listing into m_work
-		//
-		fe.plugin_command( command, param, this, "_callback" );
-
-		// Create a playlist from the directory contents
-		//
-		local temp_list = split( m_work, "\n" );
-		m_work = "";
-
-		if (( dir[ dir.len() - 1 ] != '/' )
-				&& ( dir[ dir.len() -1 ] != '\\' ))
-			dir += "/";
+		local dir = DirectoryListing( path );
 
 		// Shuffle the playlist
 		m_list = [];
-		while ( temp_list.len() > 0 )
+		while ( dir.results.len() > 0 )
 		{
-			local idx = rand() % temp_list.len();
-			m_list.append( dir + strip( temp_list[ idx ] ) );
-			temp_list.remove( idx );
+			local idx = rand() % dir.results.len();
+			m_list.append( strip( dir.results[ idx ] ) );
+			dir.results.remove( idx );
 		}
-		print( "AudioMode plugin: found " + m_list.len() + " file(s) in: " + dir + "\n" );
+
+		print( " - AudioMode plugin: found "
+			+ m_list.len() + " file(s) in: " + path + "\n" );
 	}
 
 	function index_to_current()
 	{
-		// check if current track is in our playlist, and if so use that as start
+		// Check if current track is in our playlist,
+		// and if so use that as start
+		//
 		m_index = 0;
 
 		if ( !fe.ambient_sound.playing )
@@ -140,6 +129,12 @@ class AudioMode
 		// play the next track
 		fe.ambient_sound.file_name
 			= fe.path_expand( m_list[ m_index ] );
+
+		if ( fe.ambient_sound.file_name.len() < 1 )
+		{
+			m_list.remove( m_index );
+			return change_track( offset );
+		}
 
 		fe.ambient_sound.playing = true;
 		m_display_text.msg = get_track_msg();

@@ -343,6 +343,7 @@ void FeVM::on_new_layout( const std::string &path,
 		.Func( _SC("swap"), &FeImage::transition_swap )
 		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
 		.Func( _SC("rawset_filter_offset"), &FeImage::rawset_filter_offset )
+		.Func(_SC("fix_masked_image"), &FeImage::fix_masked_image)
 
 		//
 		// Surface-specific functionality:
@@ -470,7 +471,6 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	// Define functions that get exposed to Squirrel
 	//
-
 	fe.Overload<FeImage* (*)(const char *, int, int, int, int)>(_SC("add_image"), &FeVM::cb_add_image);
 	fe.Overload<FeImage* (*)(const char *, int, int)>(_SC("add_image"), &FeVM::cb_add_image);
 	fe.Overload<FeImage* (*)(const char *)>(_SC("add_image"), &FeVM::cb_add_image);
@@ -539,27 +539,38 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	// Run the layout script
 	//
-	if ( file_exists( path + filename ) )
+	std::string path_to_run = path + filename;
+	if ( file_exists( path_to_run ) )
 	{
 		fe.SetValue( _SC("script_dir"), path );
 		fe.SetValue( _SC("script_file"), filename );
 		m_script_cfg = &layout_params;
 
+		if ( filename.empty() )
+		{
+			// if there is no script file at this point, we try loader script instead
+			std::string temp_path, temp_filename;
+			m_feSettings->get_script_loader_file( temp_path, temp_filename );
+			path_to_run = temp_path + temp_filename;
+
+			fe.SetValue( _SC("loader_dir"), temp_path );
+		}
+
 		try
 		{
 			Script sc;
-			sc.CompileFile( path + filename );
+			sc.CompileFile( path_to_run );
 			sc.Run();
 		}
 		catch( Exception e )
 		{
-			std::cerr << "Script Error in " << path + filename
+			std::cerr << "Script Error in " << path_to_run
 				<< " - " << e.Message() << std::endl;
 		}
 	}
 	else
 	{
-		std::cerr << "Script file not found: " << path + filename << std::endl;
+		std::cerr << "Script file not found: " << path_to_run << std::endl;
 	}
 
 	//
@@ -897,6 +908,11 @@ public:
 		);
 
 		fe.SetInstance( _SC("overlay"), fe_vm );
+
+		fe.Overload<bool (*)(const char *, const char *, Sqrat::Object, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
+		fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
+		fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
+		fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
 		fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 
 		Sqrat::RootTable().Bind( _SC("fe"),  fe );
@@ -905,10 +921,21 @@ public:
 		fe.SetValue( _SC("script_file"), script_file );
 		fe_vm->m_script_cfg = &configurable;
 
+		std::string path_to_run = script_path + script_file;
+		if ( script_file.empty() )
+		{
+			// if there is no script file at this point, we try loader script instead
+			std::string temp_path, temp_filename;
+			fe_vm->m_feSettings->get_script_loader_file( temp_path, temp_filename );
+			path_to_run = temp_path + temp_filename;
+
+			fe.SetValue( _SC("loader_dir"), temp_path );
+		}
+
 		try
 		{
 			Sqrat::Script sc;
-			sc.CompileFile( script_path + script_file );
+			sc.CompileFile( path_to_run );
 			sc.Run();
 		}
 		catch( Sqrat::Exception e )
@@ -965,7 +992,7 @@ void FeVM::script_get_config_options(
 		const std::string &script_path,
 		const std::string &script_file )
 {
-	if ( !script_file.empty() )
+	if ( !script_path.empty() )
 	{
 		FeConfigVM config_vm( configurable, script_path, script_file );
 
@@ -1076,9 +1103,6 @@ void FeVM::script_get_config_options(
 	}
 }
 
-//
-// Callback functions
-//
 FeImage* FeVM::cb_add_image(const char *n, int x, int y, int w, int h )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
@@ -1529,6 +1553,14 @@ void FeVM::init_with_default_layout()
 	FeImage *img = cb_add_artwork( "", 0, 0,
 		m_layoutSize.x, m_layoutSize.y );
 
+	img->setTrigger( EndNavigation );
 	img->setColor( sf::Color( 100, 100, 100, 180 ) );
-	cb_add_listbox( 0, 0, m_layoutSize.x, m_layoutSize.y );
+
+	FeListBox *lbs = cb_add_listbox( 2, 2, m_layoutSize.x, m_layoutSize.y );
+	lbs->setColor( sf::Color::Black );
+	lbs->setSelColor( sf::Color::Black );
+	lbs->setSelBgColor( sf::Color::Transparent );
+
+	FeListBox *lb = cb_add_listbox( 0, 0, m_layoutSize.x, m_layoutSize.y );
+	lb->setSelBgColor( sf::Color( 0, 0, 255, 100 ) );
 }

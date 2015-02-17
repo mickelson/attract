@@ -21,8 +21,8 @@ Quick Start
 -----------
 
 1. Run Attract-Mode.  By default, Attract-Mode will look for its configuration
-files in "$HOME/.attract" on Linux and Mac OS X, and in the current working
-directory on Windows-based systems.  If you want to use a different location
+files in the "$HOME/.attract" directory on Linux and Mac OS X, and in the
+current working directory on Windows.  If you want to use a different location
 for the Attract-Mode configuration then you need to specify it at the command
 line as follows:
 
@@ -56,18 +56,23 @@ Basic Organization
 ---------------
 
 At its most basic level, Attract-Mode is organized into "Displays", of which
-you can configure one or more.  Each Display is the a grouping of the following:
+you can configure one or more.  Each "Display" is a grouping of the following:
 
-- a Collection/Rom List (the listing of available games/roms to show)
-- a Layout (the visual theme/skin to use for the Display)
-- a Global Filter (the filter rules that always get applied to the Collection/
-  Rom List, which can be used to remove list entries you will never want to see)
-- zero or more "normal" Filters.  The Filters for a Display can be cycled
-  through using the Previous and Next Filter controls, and can also be selected
-  from the Filters Menu.  Different Filters can be set up to categorize the
-  games in the Collection/Rom List however you would like them displayed, for
-  example by orientation, category, manufacturer, year, times played, favourite
-  status, rom file availability, etc.
+- a Collection/Rom List (the listing of available games/roms to show).  Romlists
+  are text files located in the "romlists" directory.  They are created by
+  Attract-Mode using the "Generate Collection/Rom List" option or from the
+  command line.
+- a Layout (the visual theme/skin to use for the Display).  Layouts are located
+  in the "layouts" directory, each in their own subdirectory.
+- a Global Filter.  The global filter is a set of filter rules that always get
+  applied to a Collection/Rom List.  This filter can be used to remove entries
+  you will never want to see
+- zero or more "normal" Filters.  Filters are a set of rules for which games to
+  display and how to sort them.  Filters can be created to categorize games based
+  attributes such as their orientation, category, manufacturer, year, times
+  played, favourite status, file availability, etc.  Filters can be cycled
+  through using the "Previous Filter" and "Next Filter" controls, and can also be
+  selected from the "Filters Menu".
 
 Further Customization
 ---------------------
@@ -113,7 +118,7 @@ the selection order.
       - [Emulator].*  (image, i.e. "mame.gif")
 
    * From the layout path for the current layout (layouts are located in
-   the "layouts" subdirectory of your Attract-Mode config directory):
+   the "layouts" subdirectory):
 
       - [Emulator]-[ArtLabel].*   (video, i.e. "mame-marquee.mp4")
       - [Emulator]-[ArtLabel].*   (image, i.e. "mame-marquee.png")
@@ -128,12 +133,21 @@ the selection order.
    a "pacman" directory in the configured artwork path) then Attract-Mode
    will then pick a random video or image from that directory.
 
-**LAYOUTS:** See: [Layouts.md][]
-
-**PLUG-INS:** Plug-ins are scripts that need to be placed in the "plugins"
-subdirectory of your Attract-Mode config directory.  Available plugins
-can be enabled/disabled and configured from the "Plug-Ins" menu when in
+**LAYOUTS:** Attract-Mode's layouts are located in the "layouts" directory.
+Each layout gets its own subdirectory.  Attract-Mode's native layouts are
+made up of a squirrel script and related resources.  See [Layouts.md][] for
+more information on Attract-Mode layouts.  Attract-Mode can also use
+layouts made for the [MALA frontend][malafe.net].  To use a MALA layout
+in Attract-Mode, copy the MALA .mll file and related resources into a
+new subdirectory of the Attract-Mode "layouts" directory.  After doing this
+you should be able to select the MALA layout when configuring a Display in
 config mode.
+
+**PLUG-INS:** Plug-ins are squirrel scripts that need to be placed in the
+"plugins" subdirectory of your Attract-Mode config directory.  Available
+plugins can be enabled/disabled and configured from the "Plug-Ins" menu when
+in config mode.  See [Layouts.md][] for a description of Attract-Mode's
+Plug-in API.
 
 **ROMLISTS:** Collection/Rom lists are saved in the "romlist" subdirectory of
 your Attract-Mode config directory.  Each list is a semi-colon delimited text
@@ -170,6 +184,8 @@ for example the following command line:
 `attract --build-romlist mame --filter "Rotation equals 90|270"`
 
 will build a romlist that contains only the vertical games in your collection.
+The <FILTER RULE> can be specified in exactly the same format as how filter
+rules are specified in Attract-Mode's attract.cfg file.
 
 If you wish to specify the name of the created romlist at the command
 line, you can do so with the `--output <name>` option.  Beware that this will

@@ -707,8 +707,21 @@ void FePresent::load_layout( bool initial_load )
 
 	// make things usable if the layout is empty
 	//
-	if ( m_elements.empty() )
+	bool empty_layout=true;
+	for ( std::vector<FeBasePresentable *>::iterator itr=m_elements.begin(); itr!=m_elements.end(); ++itr )
+	{
+		if ( (*itr)->get_visible() )
+		{
+			empty_layout=false;
+			break;
+		}
+	}
+
+	if ( empty_layout )
+	{
+		std::cout << " - Layout is empty, initializing with the default layout settings" << std::endl;
 		init_with_default_layout();
+	}
 
 	std::cout << " - Loaded layout: " << layout_dir << " (" << layout_file << ")" << std::endl;
 

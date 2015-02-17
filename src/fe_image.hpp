@@ -75,6 +75,7 @@ public:
 	virtual int get_trigger() const;
 
 	virtual void transition_swap( FeBaseTextureContainer *o );
+	virtual bool fix_masked_image();
 
 	//
 	// Callback functions for use with surface objects
@@ -142,6 +143,7 @@ public:
 	void transition_swap( FeBaseTextureContainer *o );
 
 	bool load_static( const std::string &file_name );
+	bool fix_masked_image();
 
 protected:
 	FeTextureContainer *get_derived_texture_container();
@@ -287,6 +289,7 @@ public:
 
 	void rawset_index_offset( int io );
 	void rawset_filter_offset( int fo );
+	bool fix_masked_image();
 
 	//
 	// Callback functions for use with surface objects

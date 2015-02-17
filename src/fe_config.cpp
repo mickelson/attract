@@ -1608,8 +1608,23 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 
 		std::string gen_help;
 		m_file_path = ctx.fe_settings.get_layout_dir( name );
-		m_file_name = FE_LAYOUT_FILE_BASE;
-		m_file_name += FE_LAYOUT_FILE_EXTENSION;
+
+		std::vector< std::string > temp_list;
+		FeSettings::get_layout_file_basenames_from_path(
+					m_file_path, temp_list );
+
+		if ( temp_list.empty() )
+		{
+			// set an empty m_file_name if this is a layout that gets loaded
+			// by the loader script...
+			m_file_name.clear();
+		}
+		else
+		{
+			m_file_name = FE_LAYOUT_FILE_BASE;
+			m_file_name += FE_LAYOUT_FILE_EXTENSION;
+		}
+
 		m_configurable = m_layout;
 
 		FeVM::script_get_config_options( ctx, gen_help, *m_layout,

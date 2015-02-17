@@ -100,6 +100,7 @@ const char *FE_CFG_FILE					= "attract.cfg";
 const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
 const char *FE_PLUGIN_FILE				= "plugin.nut";
+const char *FE_LOADER_FILE				= "loader.nut";
 const char *FE_LAYOUT_FILE_BASE		= "layout";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
@@ -111,6 +112,7 @@ const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_MODULES_SUBDIR			= "modules/";
 const char *FE_STATS_SUBDIR			= "stats/";
+const char *FE_LOADER_SUBDIR			= "loader/";
 const char *FE_LIST_DEFAULT			= "default-display.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
 const char *FE_CFG_YES_STR				= "yes";
@@ -712,6 +714,19 @@ const std::string &FeSettings::get_rom_info_absolute( int filter_index, int rom_
 	return m_rl.lookup( filter_index, rom_index ).get_info( index );
 }
 
+void FeSettings::get_script_loader_file( std::string &path, std::string &file ) const
+{
+	std::string temp;
+	if ( internal_resolve_config_file( m_config_path, temp, FE_LOADER_SUBDIR, FE_LOADER_FILE ) )
+	{
+		size_t len = temp.find_last_of( "/\\" );
+		ASSERT( len != std::string::npos );
+
+		path = temp.substr( 0, len + 1 );
+		file = FE_LOADER_FILE;
+	}
+}
+
 void FeSettings::get_screensaver_file( std::string &path, std::string &file ) const
 {
 	std::string temp;
@@ -729,6 +744,23 @@ void FeSettings::get_screensaver_file( std::string &path, std::string &file ) co
 	}
 }
 
+void FeSettings::get_layout_file_basenames_from_path(
+								const std::string &path,
+								std::vector<std::string> &names_list )
+{
+	std::vector<std::string> temp_list;
+	get_basename_from_extension( temp_list, path, FE_LAYOUT_FILE_EXTENSION );
+
+	names_list.clear();
+
+	int test_len = strlen( FE_LAYOUT_FILE_BASE );
+	for ( std::vector< std::string >::iterator itr=temp_list.begin(); itr != temp_list.end(); ++itr )
+	{
+		if ( (*itr).compare( 0, test_len, FE_LAYOUT_FILE_BASE ) == 0 )
+			names_list.push_back( *itr );
+	}
+}
+
 std::string FeSettings::get_current_layout_file() const
 {
 	if ( m_current_display < 0 )
@@ -738,7 +770,7 @@ std::string FeSettings::get_current_layout_file() const
 	if ( file.empty() )
 	{
 		std::vector<std::string> my_list;
-		get_basename_from_extension( my_list, get_current_layout_dir(), FE_LAYOUT_FILE_EXTENSION );
+		get_layout_file_basenames_from_path( get_current_layout_dir(), my_list );
 
 		if ( my_list.empty() )
 			return FE_EMPTY_STRING;
@@ -1088,19 +1120,9 @@ void FeSettings::toggle_layout()
 	std::vector<std::string> list;
 	std::string layout_file = m_displays[m_current_display].get_current_layout_file();
 
-	get_basename_from_extension(
-			list,
+	get_layout_file_basenames_from_path(
 			get_current_layout_dir(),
-			FE_LAYOUT_FILE_EXTENSION );
-
-	int test_len = strlen( FE_LAYOUT_FILE_BASE );
-	for ( std::vector< std::string >::iterator itr=list.begin(); itr != list.end(); )
-	{
-		if ( (*itr).compare( 0, test_len, FE_LAYOUT_FILE_BASE ) != 0 )
-			itr = list.erase( itr );
-		else
-			++itr;
-	}
+			list );
 
 	unsigned int index=0;
 	for ( unsigned int i=0; i< list.size(); i++ )
