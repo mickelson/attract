@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -172,6 +172,8 @@ public:
 
 	bool reset_screen_saver();
 	bool handle_event( FeInputMap::Command );
+
+	void change_selection( int step, bool end_navigation=true );
 
 	FeSettings *get_fes() const { return m_feSettings; };
 

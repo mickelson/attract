@@ -233,13 +233,18 @@ function on_signal( sig )
 			transition_state = TState.Next;
 		}
 		break;
+	case "exit":
+	case "exit_no_menu":
+		break;
 	case "select":
 	default:
 		// Correct the list index if it doesn't align with
 		// the game our frame is on
+		filters[ftr_index].enabled=false;
 		fe.list.index += sel_index - filters[ftr_index].selection_index;
 		filters[ftr_index].set_selection( sel_index );
 		update_frame();
+		filters[ftr_index].enabled=true;
 		break;
 	}
 

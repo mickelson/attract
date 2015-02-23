@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <cstdlib>
-#include <cstring>
 #include <cctype>
 
 #include <unistd.h>
@@ -114,6 +113,24 @@ bool tail_compare(
 	return true;
 }
 
+int icompare(
+			const std::string &one,
+			const std::string &two )
+{
+	unsigned int one_len = one.size();
+
+	if ( one_len != two.size() )
+		return ( one_len - two.size() );
+
+	for ( unsigned int i=0; i < one_len; i++ )
+	{
+		if ( std::tolower( one[i] ) != std::tolower( two[i] ) )
+			return ( one[i] - two[i] );
+	}
+
+	return 0;
+}
+
 bool file_exists( const std::string &file )
 {
 	return (( access( file.c_str(), 0 ) == -1 ) ? false : true);
@@ -189,11 +206,12 @@ std::string clean_path( const std::string &path, bool require_trailing_slash )
 std::string absolute_path( const std::string &path )
 {
 #ifdef SFML_SYSTEM_WINDOWS
+
 	const int BUFF_SIZE = 512;
 	char buff[ BUFF_SIZE + 1 ];
 	buff[BUFF_SIZE] = 0;
 
-	if ( _fullpath( buff, path.c_str(), 512 ) )
+	if ( GetFullPathNameA( path.c_str(), BUFF_SIZE, buff, NULL ))
 		return std::string( buff );
 #else
 	char buff[PATH_MAX+1];
@@ -723,38 +741,23 @@ bool run_program( const std::string &prog,
 
 	if (( NULL != callback ) && ( block ))
 	{
-		int fd = _open_osfhandle( (intptr_t)child_output_read, _O_RDONLY );
-		if ( fd == -1 )
+		char buffer[ 1024 ];
+		buffer[1023]=0;
+		DWORD bytes_read;
+		while ( ReadFile( child_output_read, buffer, 1023, &bytes_read, NULL ) != 0 )
 		{
-			std::cerr << "Error opening osf handle: " << comstr << std::endl;
-		}
-		else
-		{
-			FILE *fs = _fdopen( fd, "r" );
-			if ( fs == NULL )
+			buffer[bytes_read]=0;
+			if ( callback( buffer, opaque ) == false )
 			{
-				std::cerr << "Error opening output from: "
-					<< comstr << std::endl;
+				TerminateProcess( pi.hProcess, 0 );
+				block=false;
+				break;
 			}
-			else
-			{
-				char buffer[ 1024 ];
-				while ( fgets( buffer, 1024, fs ) != NULL )
-				{
-					if ( callback( buffer, opaque ) == false )
-					{
-						TerminateProcess( pi.hProcess, 0 );
-						block=false;
-						break;
-					}
-				}
-
-				fclose( fs );
-			}
-			_close( fd ); // _close will close the underlying handle as well,
-							// no need to call CloseHandle()
 		}
 	}
+
+	if ( child_output_read )
+		CloseHandle( child_output_read );
 
 	DWORD timeout = exit_hotkey.empty() ? INFINITE : POLL_FOR_EXIT_MS;
 	FeInputSource exit_is( exit_hotkey );

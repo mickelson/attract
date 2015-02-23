@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -58,6 +58,13 @@ bool tail_compare(
          const std::string &filename,
          const std::string &extension );
 
+//
+// Case insensitive compare of one and two
+// returns 0 if equal
+//
+int icompare(
+			const std::string &one,
+			const std::string &two );
 
 typedef bool (*output_callback_fn)( const char *, void * );
 //

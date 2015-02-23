@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -434,10 +434,20 @@ void FePresent::set_selection_index( int index )
 {
 	int new_offset = index - get_selection_index();
 	if ( new_offset != 0 )
-	{
-		m_feSettings->step_current_selection( new_offset );
+		change_selection( new_offset );
+}
+
+void FePresent::change_selection( int step, bool end_navigation )
+{
+		on_transition( ToNewSelection, step );
+
+		m_feSettings->step_current_selection( step );
 		update( false );
-	}
+
+		on_transition( FromOldSelection, -step );
+
+		if ( end_navigation )
+			on_end_navigation();
 }
 
 bool FePresent::reset_screen_saver()
@@ -462,45 +472,19 @@ bool FePresent::handle_event( FeInputMap::Command c )
 	switch( c )
 	{
 	case FeInputMap::Down:
-		on_transition( ToNewSelection, 1 );
-
-		m_feSettings->step_current_selection( 1 );
-		update( false );
-
-		on_transition( FromOldSelection, -1 );
+		change_selection( 1, false );
 		break;
 
 	case FeInputMap::Up:
-		on_transition( ToNewSelection, -1 );
-
-		m_feSettings->step_current_selection( -1 );
-		update( false );
-
-		on_transition( FromOldSelection, 1 );
+		change_selection( -1, false );
 		break;
 
 	case FeInputMap::PageDown:
-		{
-			int step = get_page_size();
-			on_transition( ToNewSelection, step );
-
-			m_feSettings->step_current_selection( step );
-			update( false );
-
-			on_transition( FromOldSelection, -step );
-		}
+		change_selection( get_page_size(), false );
 		break;
 
 	case FeInputMap::PageUp:
-		{
-			int step = -get_page_size();
-			on_transition( ToNewSelection, step );
-
-			m_feSettings->step_current_selection( step );
-			update( false );
-
-			on_transition( FromOldSelection, -step );
-		}
+		change_selection( -get_page_size(), false );
 		break;
 
 	case FeInputMap::RandomGame:
@@ -510,14 +494,7 @@ bool FePresent::handle_event( FeInputMap::Command c )
 			{
 				int step = rand() % ls;
 				if ( step != 0 )
-				{
-					on_transition( ToNewSelection, step );
-
-					m_feSettings->step_current_selection( step );
-					update( false );
-
-					on_transition( FromOldSelection, -step );
-				}
+					change_selection( step );
 			}
 		}
 		break;
@@ -592,14 +569,7 @@ bool FePresent::handle_event( FeInputMap::Command c )
 			}
 
 			if ( step != 0 )
-			{
-				on_transition( ToNewSelection, step );
-
-				m_feSettings->step_current_selection( step );
-				update( false );
-
-				on_transition( FromOldSelection, -step );
-			}
+				change_selection( step );
 		}
 		break;
 

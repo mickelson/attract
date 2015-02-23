@@ -31,7 +31,6 @@
 #include <fstream>
 #include <list>
 #include <map>
-#include <strings.h> // strcasecmp()
 
 #ifndef NO_NET
 #include <SFML/Network.hpp>
@@ -161,21 +160,21 @@ void apply_xml_import( const FeEmulatorInfo &emulator,
 
 					token_helper( line, pos, val, FE_WHITESPACE );
 
-					if ( strcasecmp( val.c_str(), "appid" ) == 0 )
+					if ( icompare( val, "appid" ) == 0 )
 					{
 						std::string id;
 						token_helper( line, pos, id, FE_WHITESPACE );
 						(*itr).set_info( FeRomInfo::Romname, id );
 						fields_left--;
 					}
-					else if ( strcasecmp( val.c_str(), "name" ) == 0 )
+					else if ( icompare( val, "name" ) == 0 )
 					{
 						std::string name;
 						token_helper( line, pos, name, FE_WHITESPACE );
 						(*itr).set_info( FeRomInfo::Title, name );
 						fields_left--;
 					}
-					else if ( strcasecmp( val.c_str(), "installdir" ) == 0 )
+					else if ( icompare( val, "installdir" ) == 0 )
 					{
 						std::string altname;
 						token_helper( line, pos, altname, FE_WHITESPACE );
@@ -323,7 +322,7 @@ struct myclasscmp
 {
 	bool operator() ( const std::string &lhs, const std::string &rhs ) const
 	{
-		return ( strcasecmp( lhs.c_str(), rhs.c_str() ) < 0 );
+		return ( icompare( lhs, rhs ) < 0 );
 	}
 };
 

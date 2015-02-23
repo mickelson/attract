@@ -582,7 +582,7 @@ int main(int argc, char *argv[])
 						std::string title;
 						feSettings.get_resource( "Lists", title );
 
-						int last_display = names_list.size() - 1;
+						int exit_opt=-999;
 						if ( feSettings.get_displays_menu_exit() )
 						{
 							//
@@ -591,30 +591,21 @@ int main(int argc, char *argv[])
 							std::string exit_str;
 							feSettings.get_resource( "Exit Attract-Mode", exit_str );
 							names_list.push_back( exit_str );
+							exit_opt = names_list.size() - 1;
 						}
 
 						int display_index = feOverlay.common_list_dialog(
 										title,
 										names_list,
 										feSettings.get_current_display_index(),
-										names_list.size() - 1 );
+										-1 );
 
-						// test if the exit option selected, return -2 if it has been
-						if ( display_index > last_display )
-							display_index = -2;
-
-						if (( display_index < 0 ) || ( display_index > last_display ))
+						if ( display_index == exit_opt )
 						{
-							// display index is -1 if user pressed the "exit no dialog"
-							// button, and is > last_display if they selected the "exit"
-							// menu option.  We only want to run the exit command if
-							// the menu option was selected
-							//
 							exit_selected = true;
-							if ( display_index > last_display )
-								feSettings.exit_command();
+							feSettings.exit_command();
 						}
-						else
+						else if ( display_index >= 0 )
 						{
 							if ( feSettings.set_display( display_index ) )
 								feVM.load_layout();
@@ -637,11 +628,9 @@ int main(int argc, char *argv[])
 										title,
 										names_list,
 										feSettings.get_current_filter_index(),
-										names_list.size() - 1 );
+										-1 );
 
-						if ( filter_index < 0 )
-							exit_selected = true;
-						else
+						if ( filter_index >= 0 )
 						{
 							feSettings.set_current_selection( filter_index, -1 );
 							feVM.update_to_new_list();
@@ -780,13 +769,8 @@ int main(int argc, char *argv[])
 
 					if (( step != 0 ) && ( feVM.script_handle_event( move_state, redraw ) == false ))
 					{
-						feVM.on_transition( ToNewSelection, step );
-
-						feSettings.step_current_selection( step );
+						feVM.change_selection( step, false );
 						redraw=true;
-						feVM.update( false );
-
-						feVM.on_transition( FromOldSelection, -step );
 					}
 				}
 			}

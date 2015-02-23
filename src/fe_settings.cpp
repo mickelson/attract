@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -1124,6 +1124,9 @@ void FeSettings::toggle_layout()
 			get_current_layout_dir(),
 			list );
 
+	if ( list.size() <= 1 ) // nothing to do if there isn't more than one file
+		return;
+
 	unsigned int index=0;
 	for ( unsigned int i=0; i< list.size(); i++ )
 	{
@@ -1197,6 +1200,7 @@ void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 
 void FeSettings::run( int &minimum_run_seconds )
 {
+	minimum_run_seconds=0;
 	int filter_index = get_current_filter_index();
 
 	if ( m_rl.is_filter_empty( filter_index ) )

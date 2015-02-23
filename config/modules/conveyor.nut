@@ -34,13 +34,37 @@ class ConveyorSlot
 	// These functions can be overridden for anything
 	// more complicated (than a single Image object)
 	//
-	function swap( other ) { m_obj.swap( other.m_obj ); }
+	function swap( other )
+	{
+		try
+		{
+			m_obj.swap( other.m_obj );
+		}
+		catch ( e )
+		{
+			// fallback if swap doesn't exist
+			local tmp = other.m_obj;
+			other.m_obj = m_obj;
+			m_obj = tmp;
+		}
+	}
 
 	// Set the index offset and trigger a redraw:
 	function set_index_offset( io ) { m_obj.index_offset = io; }
 
 	// Reset the index offset, preferably without triggering a redraw:
-	function reset_index_offset() { m_obj.rawset_index_offset( m_base_io ); }
+	function reset_index_offset()
+	{
+		try
+		{
+			m_obj.rawset_index_offset( m_base_io );
+		}
+		catch ( e )
+		{
+			// fallback if rawset doesn't exist
+			set_index_offset( m_base_io );
+		}
+	}
 
 	//
 	// This function must be overridden in a class that extends this class

@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -535,6 +535,10 @@ const char *FeInputMap::commandStrings[] =
 	"next_letter",
 	"custom1",
 	"custom2",
+	"custom3",
+	"custom4",
+	"custom5",
+	"custom6",
 	NULL, // LAST_COMMAND... NULL required here
 	"ambient",
 	"startup",
@@ -574,8 +578,12 @@ const char *FeInputMap::commandDispStrings[] =
 	"Screen Saver",
 	"Previous Letter",
 	"Next Letter",
-	"Custom 1",
-	"Custom 2",
+	"Custom1",
+	"Custom2",
+	"Custom3",
+	"Custom4",
+	"Custom5",
+	"Custom6",
 	NULL, // LAST_COMMAND... NULL required here
 	"Ambient Soundtrack",
 	"Startup Sound",

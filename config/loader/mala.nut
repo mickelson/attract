@@ -63,21 +63,19 @@ function hex2int( key, tag, pos )
 	if ( !mll[key].rawin( tag ) )
 		return 255;
 
-	const str="0123456789ABCDEF";
-
 	local s=mll[key][tag];
 	local val=0;
-	for ( local j=0; j<2; j++ )
-	{
-		for ( local i=0; i<str.len(); i++ )
-		{
-			if ( s[pos+1-j] == str[i] )
-			{
-				val += i << (j*4);
-				break;
-			}
-		}
-	}
+
+	if ( s[pos+1] < 58 ) // 0-9
+		val = s[pos+1] - 48;
+	else // A-F
+		val = s[pos+1] - 55;
+
+	if ( s[pos] < 58 )
+		val += (s[pos] - 48) << 4;
+	else
+		val += (s[pos] - 55) << 4;
+
 	return val;
 }
 function mll_red( key, tag ) { return hex2int( key, tag, 0 ); }
@@ -925,3 +923,5 @@ function mala_transition_callback( ttype, var, ttime )
 
 	return false;
 }
+
+mll=null;

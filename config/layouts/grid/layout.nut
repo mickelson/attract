@@ -170,16 +170,21 @@ class Grid extends Conveyor
 			break;
 
 
+		case "exit":
+		case "exit_no_menu":
+			break;
 		case "select":
 		default:
 			// Correct the list index if it doesn't align with
 			// the game our frame is on
 			//
+			enabled=false; // turn conveyor off for this switch
 			local frame_index = get_sel();
 			fe.list.index += frame_index - selection_index;
 
 			set_selection( frame_index );
 			update_frame();
+			enabled=true; // re-enable conveyor
 			break;
 
 		}
@@ -259,7 +264,6 @@ class Grid extends Conveyor
 
 			foreach ( o in m_objs )
 				o.dim_if_needed();
-
 			break;
 		}
 

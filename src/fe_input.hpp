@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -137,6 +137,10 @@ public:
 		NextLetter,
 		Custom1,
 		Custom2,
+		Custom3,
+		Custom4,
+		Custom5,
+		Custom6,
 		LAST_COMMAND,
 
 		//
