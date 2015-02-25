@@ -23,7 +23,7 @@ ExtendedObjects <- {
 }
 
 const OFFSCREEN = 20;
-TRANSITIONS <- ["StartLayout", "EndLayout", "ToNewSelection", "FromOldSelection", "ToGame", "FromGame", "ToNewList"];
+TRANSITIONS <- ["StartLayout", "EndLayout", "ToNewSelection", "FromOldSelection", "ToGame", "FromGame", "ToNewList", "EndNavigation" ];
 
 POSITIONS <- {
     centerX = function() { return fe.layout.width / 2; },
@@ -268,6 +268,7 @@ class ExtendedImage extends ShadowedObject {
     function getVideoDuration() { return object.video_duration; }
     function getVideoTime() { return object.video_time; }
     function getFilename() { return object.file_name; }
+    function getTrigger() { return object.trigger; }
     
     function setMovieEnabled(e) { object.movie_enabled = shadow.movie_enabled = e; }
     function setPinch(x, y) { setPinchX(x); setPinchY(y); }
@@ -283,6 +284,7 @@ class ExtendedImage extends ShadowedObject {
     function setVideoFlags(f) { object.video_flags = shadow.video_flags = f; }
     function setVideoPlaying(p) { object.video_playing = shadow.video_playing = p; }
     function setFilename(f) { object.file_name = shadow.file_name = f; }
+    function setTrigger(t) { object.trigger = shadow.trigger = t; }
     function swap(i) { print("swapped\n"); object.swap(i.object); }
 }
 

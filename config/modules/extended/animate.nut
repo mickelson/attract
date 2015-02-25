@@ -17,6 +17,7 @@ When <- {
     ToGame = 4,
     FromGame = 5,
     ToNewList = 6,
+    EndNavigation = 7,
     OnDemand = 100,
     Always = 101
 }
@@ -118,6 +119,8 @@ class Animate {
                 return "FromGame";
             case 6:
                 return "ToNewList";
+            case 7:
+                return "EndNavigation";
             case 100:
                 return "OnDemand";
             case 101:

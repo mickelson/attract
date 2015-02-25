@@ -27,6 +27,7 @@ class ParticlesAnimation extends ExtendedAnimation {
     resources = null;
     emitter = null;
     particles = null;
+    dead_parts = null;
     elapsed = 0;
     current = 0;
     timePerParticle = 0;
@@ -111,6 +112,7 @@ class ParticlesAnimation extends ExtendedAnimation {
 
         //setup particles
         particles = [];
+        dead_parts = [];
 
         //used for debugging
         if (debug) setupDebug(config);
@@ -148,9 +150,20 @@ class ParticlesAnimation extends ExtendedAnimation {
     }
     
     function create(ttime) {
-        local resource = randomResource();
-        local p = Particle(ttime, resource, emitter, config);
-        particles.append(p);
+        if ( dead_parts.len() > 0 )
+        {
+            // recycle our dead parts
+            particles.append( dead_parts[0] );
+            particles[ particles.len()-1 ].visible( true );
+            particles[ particles.len()-1 ].setup( ttime, emitter, config );
+            dead_parts.remove( 0 );
+        }
+        else
+        {
+            local resource = randomResource();
+            local p = Particle(ttime, resource, emitter, config);
+            particles.append(p);
+        }
     }
     
     function frame(obj, ttime) {
@@ -166,18 +179,16 @@ class ParticlesAnimation extends ExtendedAnimation {
         }
         
         local msg = "";
-        for (local i = 0; i < particles.len(); i++) {
+        for (local i = particles.len()-1; i >= 0; i--) {
             //update
             particles[i].update(ttime);
+
             //kill dead ones
             if (particles[i].isDead()) {
                 particles[i].visible(false);
-                //particles.remove(i);
+                dead_parts.push( particles[i] );
+                particles.remove(i);
                 //fe.obj[#].remove
-            }
-            //give us some debug info
-            if (i > particles.len() - 4) {
-                msg += "p" + i + " " + particles[i].toString();
             }
         }
         //if (particles.len() >= 1) ExtendedDebugger.notice(particles[0].toString());
@@ -213,6 +224,7 @@ class ParticlesAnimation extends ExtendedAnimation {
 class Particle {
     createdAt = 0;
     resource = null;
+    parent_resource=null;
     x = 0;
     y = 0;
     w = 0;
@@ -243,10 +255,19 @@ class Particle {
     currentAccel = 0;       //store the current acceleration
     currentGravity = 0;     //store the gravity
     currentSpeed = 0;       //store the current speed
-    constructor(createdAt, resource, emitter, config) {
-        this.createdAt = createdAt;
-        this.resource = config.layer.add_clone(resource);
 
+    constructor(createdAt, resource_param, emitter, config) {
+        this.resource = config.layer.add_clone(resource_param);
+        this.parent_resource = resource_param;
+        setup( createdAt, emitter, config );
+    }
+
+    function setup( createdAt, emitter, config ) {
+
+        this.resource.width = this.parent_resource.width;
+        this.resource.height = this.parent_resource.height;
+
+        this.createdAt = createdAt;
         this.x = this.startx = ParticlesAnimation.random(emitter.x, emitter.x + emitter.width);
         this.y = this.starty = ParticlesAnimation.random(emitter.y, emitter.y + emitter.height);
         this.w = resource.width;
@@ -271,7 +292,8 @@ class Particle {
     
     function update(ttime) {
         ttime  = ttime - createdAt;
-        lifespan = lifetime - (ttime - createdAt);
+//        lifespan = lifetime - (ttime - createdAt);
+        lifespan = lifetime - ttime;
                 
         //the ttime/ numbers below are adjustments to attempt to match the speed of HyperTheme
         if (movement) {
