@@ -21,12 +21,12 @@ Rom Extension(s);Extension(s) des ROM
 Additional Import File(s);Fichiers additionnels
 XML Mode;Mode XML
 Add Artwork;Ajouter Artwork
-Generate Romlist;Générer la liste de ROM
+Generate Collection/Rom List;Générer la liste de ROM
 Delete this Emulator;Supprimer cet émulateur
 Generating Rom List: $1%;Génération de la liste de ROM: $1%
 Rom path '$1' not found, proceed anyways?;Chemin des ROM '$1' introuvable, continuer?
-Overwrite existing '$1' romlist?;Ecraser la liste de ROM '$1' existante?
-Wrote $1 entries to romlist;Création de $1 entrées dans la liste de ROM
+Overwrite existing '$1' list?;Ecraser la liste de ROM '$1' existante?
+Wrote $1 entries to Collection/Rom List;Création de $1 entrées dans la liste de ROM
 Delete emulator '$1'?;Supprimer l'émulateur '$1'?
 Config / Emulators;Configuration / Emulateurs
 Add Emulator;Ajouter un émulateur
@@ -91,28 +91,27 @@ _help_rule_value;Valeur à filtrer.  Par exemple, si la cible de filtrage est "A
 _help_rule_delete;Supprimer cette règle de filtrage
 
 #
-# List Settings Configuration
+# Display Settings Configuration
 #
-List Edit;Edition de la liste
-List Name;Nom de la liste
+Display Edit;Edition de la liste
 Layout;Thème
-Rom List;Liste de ROM
+Collection/Rom List;Liste de ROM
 Filter;Filtre
 Add Filter;Ajouter un filtre
-Delete this List;Supprimer cette liste
-Delete list '$1'?;Supprimer la liste '$1'?
-Configure / Lists;Configuration / Listes
-Add New List;Ajouter une nouvelle liste
-Enter List Name;Entrer le nom de la liste
+Delete this Display;Supprimer cette liste
+Delete display '$1'?;Supprimer la liste '$1'?
+Configure / Displays;Configuration / Listes
+Add New Display;Ajouter une nouvelle liste
+Enter Display Name;Entrer le nom de la liste
 
-_help_list_name;Titre de cette liste d'affichage
-_help_list_layout;Thème à utiliser pour cette liste d'affichage
-_help_list_romlist;Liste de ROM à utiliser pour cette liste d'affichage
-_help_list_filter;Configurer le filtre
-_help_list_add_filter;Ajouter un filtre à cette liste d'affichage
-_help_list_delete;Suppression de la liste d'affichage
-_help_list_sel;Configurer la liste d'affichage
-_help_list_add;Ajouter une nouvelle liste d'affichage
+_help_display_name;Titre de cette liste d'affichage
+_help_display_layout;Thème à utiliser pour cette liste d'affichage
+_help_display_romlist;Liste de ROM à utiliser pour cette liste d'affichage
+_help_display_filter;Configurer le filtre
+_help_display_add_filter;Ajouter un filtre à cette liste d'affichage
+_help_display_delete;Suppression de la liste d'affichage
+_help_display_sel;Configurer la liste d'affichage
+_help_display_add;Ajouter une nouvelle liste d'affichage
 
 #
 # Input Settings Configuration
@@ -130,9 +129,9 @@ Up;Haut
 Down;Bas
 Page Up;Page Suivante
 Page Down;Page Précédente
-Previous List;Liste précédent
-Next List;Liste suivante
-Lists Menu;Menu des listes
+Previous Display;Liste précédent
+Next Display;Liste suivante
+Displays Menu;Menu des listes
 Previous Filter;Filtre précédent
 Next Filter;Filtre suivant
 Filters Menu;Menu des filtres
@@ -159,7 +158,6 @@ Joystick Threshold;Seuil du joystick
 
 _help_input_delete;Enlever ce contrôle
 _help_input_add;Ajouter un nouveau contrôle
-_help_control_sel;Configurer les contrôles
 _help_joystick_threshold;Seuil d'amplitude des mouvements du joystick, de 1 à 100 (100=moins sensible)
 _help_mouse_threshold;Seuil d'amplitude des mouvements de la souris, de 1 à 100 (100=moins sensible)
 
@@ -189,7 +187,7 @@ Left;Gauche
 Exit Command;Commande de sortie
 Default Font;Police par défaut
 Font Path;Chemin de la police
-Allow Exit from 'Lists Menu';Permettre la sortie des listes de menu 
+Allow Exit from 'Displays Menu';Permettre la sortie des listes de menu 
 Language;Langage
 en;Anglais
 fr;Français
@@ -197,9 +195,9 @@ fr;Français
 _help_exit_command;Commande à exécuter en quittant (Confirmer) [exemple "sudo shutdown"]
 _help_default_font;Le nom de la police par défaut à utiliser
 _help_font_path;Répertoires contenant les polices (séparés par des points virgules)
-_help_lists_menu_exit;Indiquer si une option de sortie doit être prévue dans le menu des listes
+_help_displays_menu_exit;Indiquer si une option de sortie doit être prévue dans le menu des listes
 _help_language;Sélectionner le langage
-_help_list_layout_options;Configurer une option spécifique du Layout
+_help_display_layout_options;Configurer une option spécifique du Layout
 _help_hide_brackets;Cacher le texte entre crochets lors de l'affichage du titre du jeu
 _help_autolaunch_last_game;Lancer automatiquement au démarrage le dernier jeu joué
 _help_confirm_favs;Confirmer l'addition/suppression des favoris
@@ -226,7 +224,7 @@ _help_plugin_sel;Configurer le plug-in
 #
 Configure;Configuration
 Emulators;Emulateurs
-Lists;Listes
+Displays;Listes
 Controls;Contrôles
 Sound;Son
 Screen Saver;Economiseur d'écran
@@ -235,7 +233,7 @@ General;Général
 Back;Retour
 
 _help_emulators;Configurer les émulateurs
-_help_lists;Configurer les listes d'affichage
+_help_displays;Configurer les listes d'affichage
 _help_controls;Configurer les contrôles
 _help_screen_saver;Configurer l'économiseur d'écran
 _help_sound;Configurer le volume et les affectations sonores
@@ -266,13 +264,17 @@ Custom 1;Custom 1
 Custom 2;Custom 2
 Track Usage;Track Usage
 Filter Wrap Mode;Filter Wrap Mode
-Wrap within List (Default);Wrap within List (Default)
-Jump to Next List;Jump to Next List
+Wrap within Display (Default);Wrap within Display (Default)
+Jump to Next Display;Jump to Next Display 
 No Wrap;No Wrap
 Window Mode;Window Mode
 Fill Screen (Default);Fill Screen (Default)
 Fullscreen Mode;Fullscreen Mode
 Window;Window
+Global Filter;Global Filter
+Empty;Empty
+$1 Rule(s);$1 Rule(s)
+Global Filter;Global Filter
 
 _help_emu_system;The system identifier(s) for this emulator.  Multiple values can be entered if separated by a semicolon
 _help_emu_info_source;Use "mame" if the emulator provides mame -listxml output, "mess" for mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, or "steam" to read from a steam installation.  "mess" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
