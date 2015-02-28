@@ -187,7 +187,7 @@ const char *FeSettings::filterWrapDispTokens[] =
 
 FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
-	:  m_rl( config_path ),
+	:  m_rl( m_config_path ),
 	m_inputmap(),
 	m_current_display( -1 ),
 	m_current_config_object( NULL ),
