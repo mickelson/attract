@@ -423,10 +423,10 @@ bool FeRomList::load_romlist( const std::string &path,
 			else if ( rev != false )
 				std::reverse( m_filtered_list[i].begin(), m_filtered_list[i].end() );
 
-			if ( list_limit != 0 )
+			if (( list_limit != 0 ) && ( (int)m_filtered_list[i].size() > abs( list_limit ) ))
 			{
 				if ( list_limit > 0 )
-					m_filtered_list[i].erase( m_filtered_list[i].begin() + list_limit, m_filtered_list[i].end()  );
+					m_filtered_list[i].erase( m_filtered_list[i].begin() + list_limit, m_filtered_list[i].end() );
 				else
 					m_filtered_list[i].erase( m_filtered_list[i].begin(), m_filtered_list[i].end() + list_limit );
 			}
