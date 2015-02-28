@@ -1393,7 +1393,7 @@ bool FeVM::load_module( const char *module_file )
 	size_t len = temp.find_last_of( "/\\" );
 	ASSERT( len != std::string::npos );
 
-	std::string path = temp.substr( 0, len + 1 );
+	std::string path = absolute_path( temp.substr( 0, len + 1 ) );
 
 	len = fixed_file.find_last_of( "/\\" );
 	if ( len != std::string::npos )
