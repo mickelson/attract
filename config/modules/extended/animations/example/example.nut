@@ -12,15 +12,17 @@ class ExampleAnimation extends ExtendedAnimation {
         base.constructor(config);
         particles = array(PCOUNT);
         local resources = [];
-		local d = FeConfigDirectory + "modules/extended/animations/example/";
-        resources.append(fe.add_image( d + "invader.png", -32, -32, 32, 32));
-        resources.append(fe.add_image( d + "invader2.png", -32, -32, 32, 32));
-        resources.append(fe.add_image( d + "invader3.png", -32, -32, 32, 32));
+        local d = EXTOBJ_DIR + "animations/example/";
+
+        local names=["invader.png","invader2.png","invader3.png"];
+        foreach ( n in names )
+            resources.append(fe.add_image( d+n,-32,-32,32,32 ) );
+
         for (local i = 0; i < PCOUNT; i++) {
             particles[i] = ExampleParticle(i, resources[random(0,2)], 0, 0, fe.layout.width, fe.layout.height);
         }
     }
-    
+
     function getType() { return "ExampleAnimation"; }
     
     function random(minNum, maxNum) {

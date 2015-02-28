@@ -76,6 +76,8 @@ POSITIONS <- {
     offbottomright = function(o) { return [ fe.layout.width + OFFSCREEN, fe.layout.height + OFFSCREEN ]; }
 }
 
+::EXTOBJ_DIR <- fe.module_dir;
+
 //extended callback stores which callback you want, and the object from where the function will run
 class ExtendedCallback { i = null; f = null ; constructor(i, f) { this.i = i; this.f = f; } }
 

@@ -89,13 +89,14 @@ class ParticlesAnimation extends ExtendedAnimation {
                 
         //setup resources
         resources = [];
-        local d = FeConfigDirectory + "modules/extended/animations/particles/";
+        local d = EXTOBJ_DIR + "animations/particles/";
         foreach (r in config.resources) {
             local img = config.layer.add_image(d + r, -1, -1, 1, 1);
                 img.x = -img.texture_width;
                 img.y = -img.texture_height;
                 img.width = img.texture_width;
                 img.height = img.texture_height;
+
             resources.append(img);
         }
         

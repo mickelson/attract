@@ -226,6 +226,11 @@ void FeVM::on_new_layout( const std::string &path,
 		.Const( _SC("OS"), get_OS_string() )
 		.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
 		.Const( _SC("FeConfigDirectory"), m_feSettings->get_config_dir().c_str() )
+#ifdef DATA_PATH
+		.Const( _SC("FeDataDirectory"), DATA_PATH )
+#else
+		.Const( _SC("FeDataDirectory"), "" )
+#endif
 
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
@@ -1393,6 +1398,10 @@ bool FeVM::load_module( const char *module_file )
 	len = fixed_file.find_last_of( "/\\" );
 	if ( len != std::string::npos )
 		fixed_file = fixed_file.substr( len + 1 );
+
+	Sqrat::Table fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+	fe.SetValue( _SC("module_dir"), path );
+	fe.SetValue( _SC("module_file"), fixed_file );
 
 	return internal_do_nut( path, fixed_file );
 }
