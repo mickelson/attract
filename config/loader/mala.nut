@@ -10,7 +10,6 @@
 // Known Issues:
 //
 // - Animation1-4 not implemented
-// - Definable1-4 only show default image
 // - No image lists
 // - missing some sounds
 // - Missing some text substitutions ~etc
@@ -720,33 +719,34 @@ while ( !f.eos() )
 	}
 }
 
+function add_config_attribute( mll_tag, porder )
+{
+	if ( mll_int( "Vertical", mll_tag + "Visible" )
+		|| mll_int( "Horizontal", mll_tag + "Visible" ) )
+	{
+		local layout_tag = mll_tag.tolower();
+		UserConfig[layout_tag] <- "";
+		UserConfig.setattributes( layout_tag,
+			{
+				label=mll_tag + " Artwork",
+				help="Name the artwork to put in the "
+					+ mll_tag + " slot",
+				order=porder
+			} );
+	}
+}
+
 //
 // Load mll-dependent options into the UserConfig table
 //
-if ( mll_int( "Vertical", "CPanelVisible" )
-	|| mll_int( "Horizontal", "CPanelVisible" ) )
 {
-	UserConfig.cpanel <- "";
-	UserConfig.setattributes( "cpanel",
-		{
-			label="CPanel Artwork",
-			help="Name the artwork to put in the CPanel slot",
-			order=10
-		} );
-}
+	local config_attrs = [ "CPanel", "Video", "Definable1",
+		"Definable2", "Definable3", "Definable4", "Definable5" ];
 
-if ( mll_int( "Vertical", "VideoVisible" )
-	|| mll_int( "Horizontal", "VideoVisible" ) )
-{
-	UserConfig.video <- "";
-	UserConfig.setattributes( "video",
-		{
-			label="Video Artwork",
-			help="Name the artwork to put in the Video slot",
-			order=11
-		} );
+	local o=10;
+	foreach ( a in config_attrs )
+		add_config_attribute( a, o++ );
 }
-
 
 //
 // Execution will end here when the script is run to get config settings
@@ -797,10 +797,26 @@ for ( local i=0; i<29; i++ )
 			am_options.rawin("video")?am_options["video"]:"",
 			"" );
 		break;
-	case  6: add_art( "Definable4" ); break;
-	case  7: add_art( "Definable3" ); break;
-	case  8: add_art( "Definable2" ); break;
-	case  9: add_art( "Definable1" ); break;
+	case  6:
+		local t="Definable4";
+		local t2=t.tolower();
+		add_art( t, am_options.rawin(t2)?am_options[t2]:"" );
+		break;
+	case  7:
+		local t="Definable3";
+		local t2=t.tolower();
+		add_art( t, am_options.rawin(t2)?am_options[t2]:"" );
+		break;
+	case  8:
+		local t="Definable2";
+		local t2=t.tolower();
+		add_art( t, am_options.rawin(t2)?am_options[t2]:"" );
+		break;
+	case  9:
+		local t="Definable1";
+		local t2=t.tolower();
+		add_art( t, am_options.rawin(t2)?am_options[t2]:"" );
+		break;
 	case 10:
 		add_art( "CPanel",
 			am_options.rawin("cpanel")?am_options["cpanel"]:"" );
@@ -823,7 +839,11 @@ for ( local i=0; i<29; i++ )
 	case 25: add_logo(); break;
 	case 26: add_list(); break;
 	case 27: add_video2(); break;
-	case 28: add_art( "Definable5" ); break;
+	case 28:
+		local t="Definable5";
+		local t2=t.tolower();
+		add_art( t, am_options.rawin(t2)?am_options[t2]:"" );
+		break;
 	}
 }
 
