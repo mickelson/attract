@@ -217,6 +217,7 @@ public:
 	void get_available_plugins( std::vector < std::string > &list ) const;
 	std::vector<FePlugInfo> &get_plugins() { return m_plugins; }
 	FePlugInfo *get_plugin( const std::string &label );
+	bool get_plugin_enabled( const std::string &label ) const;
 	void get_plugin_full_path( const std::string &label,
 			std::string &path,
 			std::string &filename ) const;

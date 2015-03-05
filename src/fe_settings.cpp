@@ -2044,6 +2044,19 @@ FePlugInfo *FeSettings::get_plugin( const std::string &label )
 	return &(m_plugins.back());
 }
 
+bool FeSettings::get_plugin_enabled( const std::string &label ) const
+{
+	std::vector< FePlugInfo >::const_iterator itr;
+	for ( itr = m_plugins.begin(); itr != m_plugins.end(); ++itr )
+	{
+		if ( label.compare( (*itr).get_name() ) == 0 )
+			return (*itr).get_enabled();
+	}
+
+	// if there is no config then it isn't enabled
+	return false;
+}
+
 void FeSettings::get_plugin_full_path(
 				const std::string &label,
 				std::string &path,

@@ -1561,14 +1561,22 @@ void FePluginEditMenu::set_plugin( FePlugInfo *plugin )
 
 void FePluginSelMenu::get_options( FeConfigContext &ctx )
 {
-	ctx.set_style( FeConfigContext::SelectionList, "Configure / Plug-ins" );
+	ctx.set_style( FeConfigContext::EditList, "Configure / Plug-ins" );
 
 	std::vector<std::string> plugins;
 	ctx.fe_settings.get_available_plugins( plugins );
 
+	std::string enabled_str;
+	std::string disabled_str;
+	ctx.fe_settings.get_resource( "Enabled", enabled_str );
+	ctx.fe_settings.get_resource( "Disabled", disabled_str );
+
 	for ( std::vector<std::string>::iterator itr=plugins.begin();
-			itr != plugins.end(); ++itr )
-		ctx.add_opt( Opt::MENU, (*itr), "", "_help_plugin_sel" );
+					itr != plugins.end(); ++itr )
+		ctx.add_opt( Opt::MENU,
+						(*itr),
+						ctx.fe_settings.get_plugin_enabled( *itr ) ? enabled_str : disabled_str,
+						"_help_plugin_sel" );
 
 	FeBaseConfigMenu::get_options( ctx );
 }
