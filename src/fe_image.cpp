@@ -422,9 +422,11 @@ void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_s
 		internal_update_selection( feSettings, screen_saver_active );
 }
 
-void FeTextureContainer::on_new_list( FeSettings *feSettings, float, float, bool screen_saver_active )
+void FeTextureContainer::on_new_list( FeSettings *feSettings, bool screen_saver_active, bool new_display )
 {
-	m_current_rom_index = -1;
+	if ( new_display )
+		m_current_filter_index=-1;
+
 	if (( m_is_artwork ) && ( m_art_update_trigger == EndNavigation ))
 		internal_update_selection( feSettings, screen_saver_active );
 }
@@ -840,10 +842,8 @@ void FeSurfaceTextureContainer::on_end_navigation( FeSettings *feSettings, bool 
 {
 }
 
-void FeSurfaceTextureContainer::on_new_list( FeSettings *s, float scale_x, float scale_y, bool )
+void FeSurfaceTextureContainer::on_new_list( FeSettings *s, bool, bool )
 {
-	//
-	// The scale factors passed to this function are ignored on purpose.
 	//
 	// We don't do any scaling of the objects when they are being drawn
 	// to the surface.

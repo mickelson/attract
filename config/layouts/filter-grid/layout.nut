@@ -242,7 +242,10 @@ function on_signal( sig )
 		// the game our frame is on
 		filters[ftr_index].enabled=false;
 		fe.list.index += sel_index - filters[ftr_index].selection_index;
-		filters[ftr_index].set_selection( sel_index );
+
+		foreach ( f in filters )
+			f.set_selection( sel_index );
+
 		update_frame();
 		filters[ftr_index].enabled=true;
 		break;

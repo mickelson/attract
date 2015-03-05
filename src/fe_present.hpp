@@ -115,6 +115,7 @@ protected:
 
 	void toggle_rotate( FeSettings::RotationState ); // toggle between none and provided state
 	void set_transforms();
+	int update( bool reload_list=false, bool new_layout=false );
 
 	// Overrides from base classes:
 	//
@@ -157,8 +158,7 @@ public:
 	void load_screensaver();
 	void load_layout( bool initial_load=false );
 
-	int update( bool reload_list=false );
-	void update_to_new_list( int var=0 );
+	void update_to_new_list( int var=0, bool new_layout=false );
 	void on_end_navigation();
 
 	bool tick(); // run vm on_tick and update videos.  return true if redraw required

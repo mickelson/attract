@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
 					if ( feSettings.set_display( index ) )
 						feVM.load_layout();
 					else
-						feVM.update_to_new_list();
+						feVM.update_to_new_list( 0, true );
 				}
 			}
 			else
@@ -610,7 +610,7 @@ int main(int argc, char *argv[])
 							if ( feSettings.set_display( display_index ) )
 								feVM.load_layout();
 							else
-								feVM.update_to_new_list();
+								feVM.update_to_new_list( 0, true );
 						}
 						redraw=true;
 					}

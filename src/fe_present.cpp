@@ -520,7 +520,7 @@ bool FePresent::handle_event( FeInputMap::Command c )
 		if ( m_feSettings->navigate_display( ( c == FeInputMap::NextDisplay ) ? 1 : -1 ) )
 			load_layout();
 		else
-			update_to_new_list();
+			update_to_new_list( 0, true );
 
 		break;
 
@@ -587,17 +587,15 @@ bool FePresent::handle_event( FeInputMap::Command c )
 	return true;
 }
 
-int FePresent::update( bool new_list )
+int FePresent::update( bool new_list, bool new_display )
 {
 	std::vector<FeBaseTextureContainer *>::iterator itc;
 	std::vector<FeBasePresentable *>::iterator itl;
+
 	if ( new_list )
 	{
 		for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
-			(*itc)->on_new_list( m_feSettings,
-				m_layoutScale.x,
-				m_layoutScale.y,
-				m_screenSaverActive );
+			(*itc)->on_new_list( m_feSettings, m_screenSaverActive, new_display );
 
 		for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
 			(*itl)->on_new_list( m_feSettings,
@@ -643,7 +641,7 @@ void FePresent::load_screensaver()
 	//
 	// if there is no screen saver script then do a blank screen
 	//
-	update( true );
+	update( true, true );
 	on_transition( StartLayout, FromToNoValue );
 }
 
@@ -695,13 +693,13 @@ void FePresent::load_layout( bool initial_load )
 
 	std::cout << " - Loaded layout: " << layout_dir << " (" << layout_file << ")" << std::endl;
 
-	update_to_new_list( FromToNoValue );
+	update_to_new_list( FromToNoValue, true );
 	on_transition( StartLayout, var );
 }
 
-void FePresent::update_to_new_list( int var )
+void FePresent::update_to_new_list( int var, bool new_layout )
 {
-	update( true );
+	update( true, new_layout );
 	on_transition( ToNewList, var );
 }
 

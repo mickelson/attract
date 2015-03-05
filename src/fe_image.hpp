@@ -52,7 +52,8 @@ public:
 
 	virtual void on_new_selection( FeSettings *feSettings, bool screen_saver_active )=0;
 	virtual void on_end_navigation( FeSettings *feSettings, bool screen_saver_active )=0;
-	virtual void on_new_list( FeSettings *, float, float, bool )=0;
+
+	virtual void on_new_list( FeSettings *, bool screen_saver_active, bool new_display )=0;
 
 	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )=0; // returns true if redraw required
 	virtual void set_play_state( bool play );
@@ -118,7 +119,7 @@ public:
 
 	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
 	void on_end_navigation( FeSettings *feSettings, bool screen_saver_active );
-	void on_new_list( FeSettings *, float, float, bool );
+	void on_new_list( FeSettings *, bool, bool );
 
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 	void set_play_state( bool play );
@@ -186,7 +187,7 @@ public:
 
 	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
 	void on_end_navigation( FeSettings *feSettings, bool screen_saver_active );
-	void on_new_list( FeSettings *, float, float, bool );
+	void on_new_list( FeSettings *, bool, bool );
 
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 
