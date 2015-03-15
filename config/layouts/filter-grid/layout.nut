@@ -18,6 +18,9 @@ class UserConfig {
 
 	</ label="Preserve Aspect Ratio", help="Preserve artwork aspect ratio", options="Yes,No", order=5 />
 	aspect_ratio="Yes";
+
+	</ label="Transition Time", help="The amount of time (in milliseconds) that it takes to scroll to another grid entry", order=6 />
+	ttime="100";
 }
 
 fe.layout.width = 800;
@@ -30,7 +33,6 @@ local my_config = fe.get_config();
 const TOP_SPACE = 30;
 const BOTTOM_SPACE = 30;
 const PAD = 12;
-const TTIME = 220;
 enum TState { None, Next, Prev };
 
 local transition_state = TState.None;
@@ -43,6 +45,9 @@ local sel_count = my_config["entries"].tointeger();
 local sel_index = 0;
 local x_dim;
 local y_dim;
+
+local transition_ms = 100;
+try { transition_ms = my_config["ttime"].tointeger(); } catch( e ) {}
 
 if ( my_config["flow"] == "Vertical" )
 {
@@ -71,6 +76,7 @@ for ( local i=0; i<ftr_count; i++ )
 			fe.layout.height - TOP_SPACE - BOTTOM_SPACE,
 			PAD );
 
+		new_strip.transition_ms = transition_ms;
 
 		new_label = fe.add_text( "[FilterName]", i * x_dim, 0, x_dim, TOP_SPACE );
 	}
@@ -84,6 +90,8 @@ for ( local i=0; i<ftr_count; i++ )
 			fe.layout.width,
 			y_dim,
 			PAD );
+
+		new_strip.transition_ms = transition_ms;
 
 		new_label = fe.add_text( "[FilterName]", 0, TOP_SPACE + i * y_dim, fe.layout.width, y_dim );
 		new_label.alpha = 125;
@@ -160,8 +168,15 @@ function update_frame()
 	frame_texts.x = frame_text.x + 1;
 	frame_texts.y = frame_text.y + 1;
 
-	frame_texts.filter_offset = frame_text.filter_offset = name_label.filter_offset = filters[ftr_index].m_objs[0].m_obj.filter_offset;
-	frame_texts.index_offset = frame_text.index_offset = name_label.index_offset = sel_index - filters[ftr_index].selection_index;
+	frame_texts.filter_offset
+			= frame_text.filter_offset
+			= name_label.filter_offset
+			= filters[ftr_index].m_objs[0].m_obj.filter_offset;
+
+	frame_texts.index_offset
+			= frame_text.index_offset
+			= name_label.index_offset
+			= sel_index - filters[ftr_index].selection_index;
 
 	update_audio();
 }
@@ -265,13 +280,15 @@ function on_transition( ttype, var, ttime )
 
 	update_audio();
 
-	if (( transition_state == TState.Next ) && ( ttime < TTIME ))
+	if (( transition_state == TState.Next ) && ( ttime < transition_ms ))
 	{
 		if ( my_config["flow"] == "Vertical" )
 		{
 			for ( local i=0; i<ftr_count; i++ )
 			{
-				local val = PAD/2 + x_dim * ( i + 1 ) - ( ttime / TTIME.tofloat() ) * x_dim;
+				local val = PAD/2 + x_dim * ( i + 1 )
+						- ( ttime / transition_ms.tofloat() ) * x_dim;
+
 				filters[i].x = f_labels[i].x = val;
 			}
 		}
@@ -279,20 +296,22 @@ function on_transition( ttype, var, ttime )
 		{
 			for ( local i=0; i<ftr_count; i++ )
 			{
-				local val = TOP_SPACE + PAD/2 + y_dim * ( i + 1 ) - ( ttime / TTIME.tofloat() ) * y_dim;
+				local val = TOP_SPACE + PAD/2 + y_dim * ( i + 1 )
+						- ( ttime / transition_ms.tofloat() ) * y_dim;
 				filters[i].y = f_labels[i].y = val;
 			}
 		}
 
 		return true;
 	}
-	else if (( transition_state == TState.Prev ) && ( ttime < TTIME ))
+	else if (( transition_state == TState.Prev ) && ( ttime < transition_ms ))
 	{
 		if ( my_config["flow"] == "Vertical" )
 		{
 			for ( local i=0; i<ftr_count; i++ )
 			{
-				local val = PAD/2 + x_dim * ( i - 1 ) + ( ttime / TTIME.tofloat() ) * x_dim;
+				local val = PAD/2 + x_dim * ( i - 1 )
+						+ ( ttime / transition_ms.tofloat() ) * x_dim;
 				filters[i].x = f_labels[i].x = val;
 			}
 		}
@@ -300,7 +319,8 @@ function on_transition( ttype, var, ttime )
 		{
 			for ( local i=0; i<ftr_count; i++ )
 			{
-				local val = TOP_SPACE + PAD/2 + y_dim * ( i - 1 ) + ( ttime / TTIME.tofloat() ) * y_dim;
+				local val = TOP_SPACE + PAD/2 + y_dim * ( i - 1 )
+						+ ( ttime / transition_ms.tofloat() ) * y_dim;
 				filters[i].y = f_labels[i].y = val;
 			}
 		}
@@ -311,12 +331,12 @@ function on_transition( ttype, var, ttime )
 	if ( my_config["flow"] == "Vertical" )
 	{
 		for ( local i=0; i<ftr_count; i++ )
-			filters[i].x = PAD/2 + x_dim * i;
+			filters[i].x = f_labels[i].x = PAD/2 + x_dim * i;
 	}
 	else
 	{
 		for ( local i=0; i<ftr_count; i++ )
-			filters[i].y = TOP_SPACE + PAD/2 + y_dim * i;
+			filters[i].y = f_labels[i].y = TOP_SPACE + PAD/2 + y_dim * i;
 	}
 
 	return false;
