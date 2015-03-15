@@ -378,10 +378,8 @@ void FeVideoImp::preload()
 									&got_frame, packet );
 			if ( len < 0 )
 			{
-				std::cout << "error decoding video" << std::endl;
-				free_frame( raw_frame );
-				free_packet( packet );
-				return;
+				std::cerr << "Error decoding video" << std::endl;
+				keep_going=false;
 			}
 
 			if ( got_frame )
@@ -459,7 +457,7 @@ void FeVideoImp::video_thread()
 
 	if ((!sws_ctx) || (!my_pict) )
 	{
-		std::cout << "error initializing video thread" << std::endl;
+		std::cerr << "Error initializing video thread" << std::endl;
 		goto the_end;
 	}
 
@@ -570,7 +568,7 @@ void FeVideoImp::video_thread()
 					int len = avcodec_decode_video2( codec_ctx, raw_frame,
 											&got_frame, packet );
 					if ( len < 0 )
-						std::cout << "error decoding video" << std::endl;
+						std::cerr << "Error decoding video" << std::endl;
 
 					if ( got_frame )
 					{
@@ -804,13 +802,13 @@ bool FeMedia::openFromFile( const std::string &name )
 
 	if ( avformat_open_input( &m_format_ctx, name.c_str(), NULL, NULL ) < 0 )
 	{
-		std::cout << "Error opening input file: " << name << std::endl;
+		std::cerr << "Error opening input file: " << name << std::endl;
 		return false;
 	}
 
 	if ( avformat_find_stream_info( m_format_ctx, NULL ) < 0 )
 	{
-		std::cout << "Error finding stream information in input file: "
+		std::cerr << "Error finding stream information in input file: "
 					<< name << std::endl;
 		return false;
 	}
@@ -829,7 +827,7 @@ bool FeMedia::openFromFile( const std::string &name )
 			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec,
 										dec, NULL ) < 0 )
 			{
-				std::cout << "Could not open audio decoder for file: "
+				std::cerr << "Could not open audio decoder for file: "
 						<< name << std::endl;
 			}
 			else
@@ -883,7 +881,7 @@ bool FeMedia::openFromFile( const std::string &name )
 			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec,
 										dec, NULL ) < 0 )
 			{
-				std::cout << "Could not open video decoder for file: "
+				std::cerr << "Could not open video decoder for file: "
 						<< name << std::endl;
 			}
 			else
@@ -1008,7 +1006,7 @@ bool FeMedia::onGetData( Chunk &data )
 						(m_audio->buffer + offset),
 						&bsize, packet) < 0 )
 			{
-				std::cout << "Error decoding audio." << std::endl;
+				std::cerr << "Error decoding audio." << std::endl;
 				FeBaseStream::free_packet( packet );
 				return false;
 			}
@@ -1034,10 +1032,11 @@ bool FeMedia::onGetData( Chunk &data )
 		int len = avcodec_decode_audio4( m_audio->codec_ctx, frame, &got_frame, packet );
 		if ( len < 0 )
 		{
-			std::cerr << "Error decoding audio." << std::endl;
-			FeBaseStream::free_packet( packet );
-			FeBaseStream::free_frame( frame );
-			return false;
+#ifdef FE_DEBUG
+			char buff[256];
+			av_strerror( len, buff, 256 );
+			std::cerr << "Error decoding audio: " << buff << std::endl;
+#endif
 		}
 
 		if ( got_frame )
