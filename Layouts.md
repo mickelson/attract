@@ -59,30 +59,30 @@ Overview
 --------
 
 The Attract-mode layout sets out what gets displayed to the user. Layouts
-consist of a "layout.nut" script file and a collection of related resources
+consist of a `layout.nut` script file and a collection of related resources
 (images, other scripts, etc.) used by the script.
 
 Layouts are stored under the "layouts" subdirectory of the Attract-Mode
 config directory.  Each layout gets its own separate subdirectory.  Each
-layout can have one or more "layout*.nut" script files in it.  The "Toggle
+layout can have one or more `layout*.nut` script files in it.  The "Toggle
 Layout" command in Attract-Mode allows users to cycle between each of the
-"layout*.nut" script files located in the layout's directory.  Attract-Mode
+`layout*.nut` script files located in the layout's directory.  Attract-Mode
 remembers the last layout file toggled to for each layout and will go back
 to that same file the next time the layout is loaded.  This allows for
 variations of a particular layout to be implemented and easily selected by
-the user (for example, a layout could provide a "layout.nut" for horizontal
-monitor orientations and a "layout-vert.nut" for vertical).
+the user (for example, a layout could provide a `layout.nut` for horizontal
+monitor orientations and a `layout-vert.nut` for vertical).
 
 The Attract-Mode screen saver is really just a special case layout that is
 loaded after a user-configured period of inactivity.  The screen saver script
-is located in the "screensaver.nut" file stored in the "layouts" subdirectory.
+is located in the `screensaver.nut` file stored in the "layouts" subdirectory.
 
 Plug-ins are similar to layouts in that they consist of at least one squirrel
 script file and a collection of related resources.  Plug-ins are stored in the
 "plugins" subdirectory of the Attract-Mode config directory.  Plug-ins can be a
 single ".nut" file stored in this subdirectory or they can also have their own
 separate subdirectory (in which case the script itself needs to be in a file
-called "plugin.nut").
+called `plugin.nut`).
 
 
 <a name="squirrel" />
@@ -635,6 +635,12 @@ Parameters:
       - "screen_saver"
       - "prev_letter"
       - "next_letter"
+      - "custom1"
+      - "custom2"
+      - "custom3"
+      - "custom4"
+      - "custom5"
+      - "custom6"
       - "reset_window"
 
 
