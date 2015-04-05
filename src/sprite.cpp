@@ -63,7 +63,7 @@
 
 ////////////////////////////////////////////////////////////
 FeSprite::FeSprite() :
-m_vertices( sf::Quads, 4 ),
+m_vertices( sf::TrianglesStrip, 4 ),
 m_texture    (NULL),
 m_textureRect(),
 m_pinch( 0.f, 0.f ),
@@ -74,7 +74,7 @@ m_skew( 0.f, 0.f )
 
 ////////////////////////////////////////////////////////////
 FeSprite::FeSprite(const sf::Texture& texture) :
-m_vertices( sf::Quads, 4 ),
+m_vertices( sf::TrianglesStrip, 4 ),
 m_texture    (NULL),
 m_textureRect(),
 m_pinch( 0.f, 0.f ),
@@ -86,7 +86,7 @@ m_skew( 0.f, 0.f )
 
 ////////////////////////////////////////////////////////////
 FeSprite::FeSprite(const sf::Texture& texture, const sf::IntRect& rectangle) :
-m_vertices( sf::Quads, 4 ),
+m_vertices( sf::TrianglesStrip, 4 ),
 m_texture    (NULL),
 m_textureRect(),
 m_pinch( 0.f, 0.f ),

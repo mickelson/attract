@@ -345,6 +345,7 @@ void FeVM::on_new_layout( const std::string &path,
 				&FeImage::set_preserve_aspect_ratio )
 		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
 		.Prop(_SC("trigger"), &FeImage::getTrigger, &FeImage::setTrigger )
+		.Prop(_SC("smooth"), &FeImage::get_smooth, &FeImage::set_smooth )
 		.Func( _SC("swap"), &FeImage::transition_swap )
 		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
 		.Func( _SC("rawset_filter_offset"), &FeImage::rawset_filter_offset )

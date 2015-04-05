@@ -81,6 +81,7 @@ public:
 		WindowMode,
 		FilterWrapMode,
 		TrackUsage,
+		SmoothImages,
 		AccelerateSelection,
 		SelectionSpeed,
 		LAST_INDEX
@@ -121,6 +122,7 @@ private:
 	bool m_confirm_favs;
 	bool m_track_usage;
 	WindowType m_window_mode;
+	bool m_smooth_images;
 	FilterWrapModeType m_filter_wrap_mode;
 	bool m_accel_selection;
 	int m_selection_speed;
@@ -210,6 +212,7 @@ public:
 	const std::string &get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index );
 	bool hide_brackets() const { return m_hide_brackets; }
 	bool autolaunch_last_game() const { return m_autolaunch_last_game; }
+	bool smooth_images() const { return m_smooth_images; }
 	bool accelerate_selection() const { return m_accel_selection; }
 	int selection_speed() const { return m_selection_speed; }
 

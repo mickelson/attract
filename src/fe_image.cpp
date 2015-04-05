@@ -264,10 +264,7 @@ bool FeTextureContainer::fix_masked_image()
 	tmp_img.createMaskFromColor( p );
 
 	if ( m_texture.loadFromImage( tmp_img ) )
-	{
-		m_texture.setSmooth( true );
 		retval=true;
-	}
 
 	notify_texture_change();
 	return retval;
@@ -348,9 +345,6 @@ bool FeTextureContainer::common_load(
 
 		if ( !movie_file.empty() )
  		{
-			// We should have deleted this above...
-			ASSERT( m_movie == NULL );
-
 			m_movie = new FeMedia( FeMedia::AudioVideo );
 
 			if (!m_movie->openFromFile( movie_file ))
@@ -360,6 +354,10 @@ bool FeTextureContainer::common_load(
 			}
 			else
 			{
+				sf::Texture *t = m_movie->get_texture();
+				ASSERT( t ); // openFromFile should create this!
+				if ( t ) t->setSmooth( m_texture.isSmooth() );
+
 				loaded = true;
 				m_file_name = movie_file;
 
@@ -389,7 +387,6 @@ bool FeTextureContainer::common_load(
 		{
 			if ( m_texture.loadFromFile( *itr ) )
 			{
-				m_texture.setSmooth( true );
 				m_file_name = *itr;
 				loaded = true;
 				break;
@@ -796,7 +793,10 @@ FeTextureContainer *FeTextureContainer::get_derived_texture_container()
 
 void FeTextureContainer::clear()
 {
+	bool s = m_texture.isSmooth();
 	m_texture = sf::Texture();
+	m_texture.setSmooth( s );
+
 	m_movie_status = -1;
 	m_file_name.clear();
 
@@ -810,10 +810,27 @@ void FeTextureContainer::clear()
 #endif
 }
 
+void FeTextureContainer::set_smooth( bool s )
+{
+#ifndef NO_MOVIE
+	if ( m_movie )
+	{
+		sf::Texture *t = m_movie->get_texture();
+		if ( t )
+			t->setSmooth( s );
+	}
+#endif
+	m_texture.setSmooth( s );
+}
+
+bool FeTextureContainer::get_smooth() const
+{
+	return m_texture.isSmooth();
+}
+
 FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )
 {
 	m_texture.create( width, height );
-	m_texture.setSmooth( true );
 }
 
 FeSurfaceTextureContainer::~FeSurfaceTextureContainer()
@@ -925,6 +942,16 @@ FeImage *FeSurfaceTextureContainer::add_surface(int w, int h)
 		return fep->add_surface( w, h, m_draw_list );
 
 	return NULL;
+}
+
+void FeSurfaceTextureContainer::set_smooth( bool s )
+{
+	m_texture.setSmooth( s );
+}
+
+bool FeSurfaceTextureContainer::get_smooth() const
+{
+	return m_texture.isSmooth();
 }
 
 FeImage::FeImage( FeBaseTextureContainer *tc, float x, float y, float w, float h )
@@ -1333,6 +1360,16 @@ void FeImage::transition_swap( FeImage *o )
 	// otherwise swap the textures
 	//
 	m_tex->transition_swap( o->m_tex );
+}
+
+void FeImage::set_smooth( bool s )
+{
+	m_tex->set_smooth( s );
+}
+
+bool FeImage::get_smooth() const
+{
+	return m_tex->get_smooth();
 }
 
 FeImage *FeImage::add_image(const char *n, int x, int y, int w, int h)

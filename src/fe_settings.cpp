@@ -202,7 +202,13 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_autolaunch_last_game( false ),
 	m_confirm_favs( false ),
 	m_track_usage( true ),
+#ifdef FE_RPI
+	m_window_mode( Fullscreen ),
+	m_smooth_images( false ),
+#else
 	m_window_mode( Default ),
+	m_smooth_images( true ),
+#endif
 	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_accel_selection( true ),
 	m_selection_speed( 40 )
@@ -340,6 +346,7 @@ const char *FeSettings::configSettingStrings[] =
 	"window_mode",
 	"filter_wrap_mode",
 	"track_usage",
+	"smooth_images",
 	"accelerate_selection",
 	"selection_speed_ms",
 	NULL
@@ -1649,6 +1656,8 @@ const std::string FeSettings::get_info( int index ) const
 		return filterWrapTokens[ m_filter_wrap_mode ];
 	case TrackUsage:
 		return ( m_track_usage ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+	case SmoothImages:
+		return ( m_smooth_images ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case AccelerateSelection:
 		return ( m_accel_selection ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case SelectionSpeed:
@@ -1725,6 +1734,7 @@ bool FeSettings::set_info( int index, const std::string &value )
 		break;
 
 	case WindowMode:
+#ifndef FE_RPI
 		{
 			int i=0;
 			while ( windowModeTokens[i] != NULL )
@@ -1740,6 +1750,7 @@ bool FeSettings::set_info( int index, const std::string &value )
 			if ( windowModeTokens[i] == NULL )
 				return false;
 		}
+#endif
 		break;
 
 	case FilterWrapMode:
@@ -1762,6 +1773,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case TrackUsage:
 		m_track_usage = config_str_to_bool( value );
+		break;
+
+	case SmoothImages:
+		m_smooth_images = config_str_to_bool( value );
 		break;
 
 	case AccelerateSelection:

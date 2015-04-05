@@ -133,6 +133,13 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
    LIBS += -framework Cocoa
 
    FE_MACOSX_COMPILE=1
+  else
+   #
+   # Test for Raspberry Pi
+   #
+   ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
+    FE_RPI=1
+   endif
   endif
  endif
 endif
@@ -191,6 +198,10 @@ ifeq ($(FE_DEBUG),1)
  FE_FLAGS += -DFE_DEBUG
 else
  CFLAGS += -O2
+endif
+
+ifeq ($(FE_RPI),1)
+ FE_FLAGS += -DFE_RPI
 endif
 
 ifeq ($(USE_FONTCONFIG),1)

@@ -78,6 +78,9 @@ public:
 	virtual void transition_swap( FeBaseTextureContainer *o );
 	virtual bool fix_masked_image();
 
+	virtual void set_smooth( bool )=0;
+	virtual bool get_smooth() const=0;
+
 	//
 	// Callback functions for use with surface objects
 	//
@@ -146,6 +149,9 @@ public:
 	bool load_static( const std::string &file_name );
 	bool fix_masked_image();
 
+	void set_smooth( bool );
+	bool get_smooth() const;
+
 protected:
 	FeTextureContainer *get_derived_texture_container();
 
@@ -190,6 +196,9 @@ public:
 	void on_new_list( FeSettings *, bool, bool );
 
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
+
+	void set_smooth( bool );
+	bool get_smooth() const;
 
 	//
 	// Callback functions for use with surface objects
@@ -291,6 +300,9 @@ public:
 	void rawset_index_offset( int io );
 	void rawset_filter_offset( int fo );
 	bool fix_masked_image();
+
+	void set_smooth( bool );
+	bool get_smooth() const;
 
 	//
 	// Callback functions for use with surface objects
