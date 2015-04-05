@@ -117,6 +117,7 @@ void FeWindow::onCreate()
 
 		ShowWindow(hw, SW_SHOW);
 	}
+	SetFocus( hw );
 #endif
 
 #ifndef SFML_SYSTEM_MACOS
@@ -183,8 +184,8 @@ bool FeWindow::run()
 	sf::Vector2i reset_pos = sf::Mouse::getPosition();
 
 	sf::Vector2i hide_pos = getPosition();
-	hide_pos.x += getSize().x;
-	hide_pos.y += getSize().y;
+	hide_pos.x += getSize().x - 1;
+	hide_pos.y += getSize().y - 1;
 
 	sf::Mouse::setPosition( hide_pos );
 
