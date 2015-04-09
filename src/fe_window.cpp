@@ -100,23 +100,30 @@ FeWindow::FeWindow( FeSettings &fes )
 void FeWindow::onCreate()
 {
 #ifdef SFML_SYSTEM_WINDOWS
+	int left = GetSystemMetrics( SM_XVIRTUALSCREEN );
+	int top = GetSystemMetrics( SM_YVIRTUALSCREEN );
+	int width = GetSystemMetrics( SM_CXVIRTUALSCREEN );
+	int height = GetSystemMetrics( SM_CYVIRTUALSCREEN );
+
 	// In Windows, the "WS_POPUP" style creates grief switching to MAME.
 	// Use the "WS_BORDER" style to fix this...
 	//
 	sf::WindowHandle hw = getSystemHandle();
 	if ( ( GetWindowLong( hw, GWL_STYLE ) & WS_POPUP ) != 0 )
 	{
-		sf::VideoMode mode = sf::VideoMode::getDesktopMode();
-
 		SetWindowLong( hw, GWL_STYLE,
 			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
 
 		// resize the window off screen 1 pixel in each direction so we don't see the window border
-		SetWindowPos(hw, HWND_TOP, -1, -1,
-			mode.width + 2, mode.height + 2, SWP_FRAMECHANGED);
-
-		ShowWindow(hw, SW_SHOW);
+		left -= 1;
+		top -= 1;
+		width += 2;
+		height += 2;
 	}
+	SetWindowPos(hw, HWND_TOP, left, top,
+		width, height, SWP_FRAMECHANGED);
+
+	ShowWindow(hw, SW_SHOW);
 	SetFocus( hw );
 #endif
 

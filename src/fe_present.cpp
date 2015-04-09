@@ -29,10 +29,129 @@
 
 #include <iostream>
 
+#ifdef SFML_SYSTEM_WINDOWS
+
+#include <windows.h>
+
+BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
+{
+	std::vector < FeMonitor > *monitors = (std::vector < FeMonitor > *)data;
+
+	FeMonitor mon;
+	mon.transform = sf::Transform().translate( mon_rect->left, mon_rect->top );
+	mon.size.x = mon_rect->right - mon_rect->left;
+	mon.size.y = mon_rect->bottom - mon_rect->top;
+	mon.num = monitors->size();
+
+	// make sure primary monitor is first in m_mon vector
+	if (( mon_rect->left == 0 ) && ( mon_rect->top == 0 ))
+		monitors->insert( monitors->begin(), mon );
+	else
+		monitors->push_back( mon );
+
+	return TRUE;
+}
+#endif
+
 void FeFontContainer::set_font( const std::string &n )
 {
 	m_name = n;
 	m_font.loadFromFile( m_name );
+}
+
+FeImage *FeMonitor::add_image(const char *n, int x, int y, int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_image( false, n, x, y, w, h, elements );
+
+	return NULL;
+}
+
+FeImage *FeMonitor::add_image(const char *n, int x, int y )
+{
+	return add_image( n, x, y, 0, 0 );
+}
+
+FeImage *FeMonitor::add_image(const char *n )
+{
+	return add_image( n, 0, 0, 0, 0 );
+}
+
+FeImage *FeMonitor::add_artwork(const char *l, int x, int y, int w, int h )
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_image( true, l, x, y, w, h, elements );
+
+	return NULL;
+}
+
+FeImage *FeMonitor::add_artwork(const char *l, int x, int y)
+{
+	return add_artwork( l, x, y, 0, 0 );
+}
+
+FeImage *FeMonitor::add_artwork(const char *l )
+{
+	return add_artwork( l, 0, 0, 0, 0 );
+}
+
+FeImage *FeMonitor::add_clone(FeImage *i )
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_clone( i, elements );
+
+	return NULL;
+}
+
+FeText *FeMonitor::add_text(const char *t, int x, int y, int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_text( t, x, y, w, h, elements );
+
+	return NULL;
+}
+
+FeListBox *FeMonitor::add_listbox(int x, int y, int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_listbox( x, y, w, h, elements );
+
+	return NULL;
+}
+
+FeImage *FeMonitor::add_surface(int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_surface( w, h, elements );
+
+	return NULL;
+}
+
+int FeMonitor::get_width()
+{
+	return size.x;
+}
+
+int FeMonitor::get_height()
+{
+	return size.y;
+}
+
+int FeMonitor::get_num()
+{
+	return num;
 }
 
 FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
@@ -47,9 +166,42 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_listBox( NULL ),
 	m_emptyShader( NULL )
 {
-	sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-	m_outputSize.x = vm.width;
-	m_outputSize.y = vm.height;
+
+	//
+	// Handle multi-monitors now
+	//
+#ifdef SFML_SYSTEM_WINDOWS
+	//
+	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
+	//
+	if ( m_feSettings->get_window_mode() != FeSettings::Window )
+	{
+		EnumDisplayMonitors( NULL, NULL, my_mon_enum_proc, (LPARAM)&m_mon );
+
+		//
+		// The Windows virtual screen can have a negative valued top left corner, whereas in SFML we
+		// always have a 0,0 top left.  So we correct the transforms in m_mon to SFML's coordinates now.
+		//
+		sf::Transform correction = sf::Transform().translate( -GetSystemMetrics( SM_XVIRTUALSCREEN ),
+																				-GetSystemMetrics( SM_YVIRTUALSCREEN ) );
+
+		for ( std::vector<FeMonitor>::iterator itr=m_mon.begin(); itr!=m_mon.end(); ++itr )
+			(*itr).transform *= correction;
+	}
+	else
+#endif
+	{
+		//
+		// Where there is no multi-monitor support, we just use the desktop dimensions returned by SFML
+		//
+		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+		FeMonitor mc;
+		mc.size.x = vm.width;
+		mc.size.y = vm.height;
+		m_mon.push_back( mc );
+	}
+
+	ASSERT( m_mon.size() > 0 );
 
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 }
@@ -67,17 +219,20 @@ void FePresent::clear()
 	// Activating the screen saver keeps the previous base rotation, while
 	// mute and toggle rotation are kept whenever the layout is changed
 	//
-	m_listBox=NULL; // listbox gets deleted with the m_elements below
+	m_listBox=NULL; // listbox gets deleted with the m_mon.elements below
 	m_transform = sf::Transform();
 	m_currentFont = &m_defaultFont;
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	m_user_page_size = -1;
 
-	while ( !m_elements.empty() )
+	for ( std::vector<FeMonitor>::iterator itr=m_mon.begin(); itr!=m_mon.end(); ++itr )
 	{
-		FeBasePresentable *p = m_elements.back();
-		m_elements.pop_back();
-		delete p;
+		while ( !(*itr).elements.empty() )
+		{
+			FeBasePresentable *p = (*itr).elements.back();
+			(*itr).elements.pop_back();
+			delete p;
+		}
 	}
 
 	while ( !m_texturePool.empty() )
@@ -114,17 +269,34 @@ void FePresent::clear()
 		delete f;
 	}
 
-	m_layoutSize = m_outputSize;
+	m_layoutSize = m_mon[0].size;
 	m_layoutScale.x = 1.0;
 	m_layoutScale.y = 1.0;
 }
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 {
+	std::vector<FeBasePresentable *>::const_iterator itl;
+
+	//
+	// First do any drawing that is required on secondary monitors
+	//
+	for ( unsigned int i=1; i<m_mon.size(); i++ )
+	{
+		states.transform = m_mon[i].transform;
+		for ( itl=m_mon[i].elements.begin(); itl != m_mon[i].elements.end(); ++itl )
+		{
+			if ( (*itl)->get_visible() )
+				target.draw( (*itl)->drawable(), states );
+		}
+	}
+
+	//
+	// Now draw the layout on the primary monitor using m_transform
+	//
 	states.transform = m_transform;
 
-	std::vector<FeBasePresentable *>::const_iterator itl;
-	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
+	for ( itl=m_mon[0].elements.begin(); itl != m_mon[0].elements.end(); ++itl )
 	{
 		if ( (*itl)->get_visible() )
 			target.draw( (*itl)->drawable(), states );
@@ -284,7 +456,7 @@ float FePresent::get_layout_scale_y() const
 void FePresent::set_layout_width( int w )
 {
 	m_layoutSize.x = w;
-	m_layoutScale.x = (float) m_outputSize.x / w;
+	m_layoutScale.x = (float) m_mon[0].size.x / w;
 	set_transforms();
 	flag_redraw();
 }
@@ -292,7 +464,7 @@ void FePresent::set_layout_width( int w )
 void FePresent::set_layout_height( int h )
 {
 	m_layoutSize.y = h;
-	m_layoutScale.y = (float) m_outputSize.y / h;
+	m_layoutScale.y = (float) m_mon[0].size.y / h;
 	set_transforms();
 	flag_redraw();
 }
@@ -594,23 +766,34 @@ int FePresent::update( bool new_list, bool new_display )
 {
 	std::vector<FeBaseTextureContainer *>::iterator itc;
 	std::vector<FeBasePresentable *>::iterator itl;
+	std::vector<FeMonitor>::iterator itm;
 
 	if ( new_list )
 	{
 		for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
 			(*itc)->on_new_list( m_feSettings, m_screenSaverActive, new_display );
 
-		for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
+		for ( itl=m_mon[0].elements.begin(); itl != m_mon[0].elements.end(); ++itl )
 			(*itl)->on_new_list( m_feSettings,
 				m_layoutScale.x,
 				m_layoutScale.y );
+
+		// secondary monitor(s), if any
+		for ( unsigned int i=1; i<m_mon.size(); i++ )
+		{
+			for ( itl=m_mon[i].elements.begin(); itl != m_mon[i].elements.end(); ++itl )
+				(*itl)->on_new_list( m_feSettings, 1.0, 1.0 );
+		}
 	}
 
 	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
 		(*itc)->on_new_selection( m_feSettings, m_screenSaverActive );
 
-	for ( itl=m_elements.begin(); itl != m_elements.end(); ++itl )
-		(*itl)->on_new_selection( m_feSettings );
+	for ( itm=m_mon.begin(); itm != m_mon.end(); ++itm )
+	{
+		for ( itl=(*itm).elements.begin(); itl != (*itm).elements.end(); ++itl )
+			(*itl)->on_new_selection( m_feSettings );
+	}
 
 	return 0;
 }
@@ -679,7 +862,7 @@ void FePresent::load_layout( bool initial_load )
 	// make things usable if the layout is empty
 	//
 	bool empty_layout=true;
-	for ( std::vector<FeBasePresentable *>::iterator itr=m_elements.begin(); itr!=m_elements.end(); ++itr )
+	for ( std::vector<FeBasePresentable *>::iterator itr=m_mon[0].elements.begin(); itr!=m_mon[0].elements.end(); ++itr )
 	{
 		if ( (*itr)->get_visible() )
 		{
@@ -841,7 +1024,7 @@ void FePresent::toggle_rotate( FeSettings::RotationState r )
 
 void FePresent::set_transforms()
 {
-	m_transform = sf::Transform();
+	m_transform = m_mon[0].transform;
 
 	FeSettings::RotationState actualRotation
 		= (FeSettings::RotationState)(( m_baseRotation + m_toggleRotation ) % 4);
@@ -852,19 +1035,19 @@ void FePresent::set_transforms()
 		// do nothing
 		break;
 	case FeSettings::RotateRight:
-		m_transform.translate( m_outputSize.x, 0 );
-		m_transform.scale( (float) m_outputSize.x / m_outputSize.y,
-												(float) m_outputSize.y / m_outputSize.x );
+		m_transform.translate( m_mon[0].size.x, 0 );
+		m_transform.scale( (float) m_mon[0].size.x / m_mon[0].size.y,
+												(float) m_mon[0].size.y / m_mon[0].size.x );
 		m_transform.rotate(90);
 		break;
 	case FeSettings::RotateFlip:
-		m_transform.translate( m_outputSize.x, m_outputSize.y );
+		m_transform.translate( m_mon[0].size.x, m_mon[0].size.y );
 		m_transform.rotate(180);
 		break;
 	case FeSettings::RotateLeft:
-		m_transform.translate( 0, m_outputSize.y );
-		m_transform.scale( (float) m_outputSize.x / m_outputSize.y,
-											(float) m_outputSize.y / m_outputSize.x );
+		m_transform.translate( 0, m_mon[0].size.y );
+		m_transform.scale( (float) m_mon[0].size.x / m_mon[0].size.y,
+											(float) m_mon[0].size.y / m_mon[0].size.x );
 		m_transform.rotate(270);
 		break;
 	}
@@ -900,6 +1083,7 @@ void FePresent::script_do_update( FeBaseTextureContainer *tc )
 	FePresent *fep = script_get_fep();
 	if ( fep )
 	{
+		tc->on_new_list( fep->m_feSettings, fep->m_screenSaverActive, false );
 		tc->on_new_selection( fep->m_feSettings, fep->m_screenSaverActive );
 		fep->flag_redraw();
 	}

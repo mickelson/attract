@@ -39,6 +39,7 @@ Contents
       * [`fe.overlay`](#overlay)
       * [`fe.obj`](#obj)
       * [`fe.filters`](#filters)
+      * [`fe.monitors`](#monitors)
       * [`fe.script_dir`](#script_dir)
       * [`fe.script_file`](#script_file)
    * [Classes](#classes)
@@ -46,6 +47,7 @@ Contents
       * [`fe.CurrentList`](#CurrentList)
       * [`fe.Overlay`](#Overlay)
       * [`fe.Filter`](#Filter)
+      * [`fe.Monitor`](#Monitor)
       * [`fe.Image`](#Image)
       * [`fe.Text`](#Text)
       * [`fe.ListBox`](#ListBox)
@@ -887,6 +889,15 @@ functionality may be accessed.
 of `fe.Filter` instances.
 
 
+<a name="monitors" />
+#### `fe.monitors` ####
+
+`fe.monitors` is an array of `fe.Monitor` instances, and provides the
+mechanism for interacting with the various monitors in a multi-monitor setup.
+There will always be at least one entry in this list, and the first entry
+will always be the "primary" monitor.
+
+
 <a name="script_dir" />
 #### `fe.script_dir` ####
 
@@ -991,9 +1002,9 @@ Member Functions:
 <a name="Filter" />
 #### `fe.Filter` ####
 
-This class is a container for information about the avaiable filters.  Instances
-of this class are contained in the `fe.filters` array.  This class cannot
-otherwise be instantiated in a script.
+This class is a container for information about the available filters.
+Instances of this class are contained in the `fe.filters` array.  This class
+cannot otherwise be instantiated in a script.
 
 Attributes:
 
@@ -1028,6 +1039,43 @@ Attributes:
      reversed.
    * `list_limit` - Get the value of the list limit applied to the filter game
      list.
+
+
+<a name="Monitor" />
+#### `fe.Monitor` ####
+
+This class represents a monitor in Attract-Mode, and provides the interface
+to the extra monitors in a multi-monitor setup.  Instances of this class are
+contained in the `fe.monitors` array.  This class cannot otherwise be
+instantiated in a script.
+
+Attributes:
+
+   * `num` - Get the monitor number.
+   * `width` - Get the monitor width in pixels.
+   * `height` - Get the monitor height in pixels.
+
+Member Functions:
+
+   * `add_image()` - add an image to the end of this monitor's draw list (see
+     [`fe.add_image()`](#add_image) for parameters and return value).
+   * `add_artwork()` - add an artwork to the end of this monitor's draw list
+     (see [`fe.add_artwork()`](#add_artwork) for parameters and return value).
+   * `add_clone()` - add a clone to the end of this monitor's draw list (see
+     [`fe.add_clone()`](#add_clone) for parameters and return value).
+   * `add_text()` - add a text to the end of this monitor's draw list (see
+     [`fe.add_text()`](#add_text) for parameters and return value).
+   * `add_listbox()` - add a listbox to the end of this monitor's draw list
+     (see [`fe.add_listbox()`](#add_listbox) for parameters and return value).
+   * `add_surface()` - add a surface to the end of this monitor's draw list
+     (see [`fe.add_surface()`](#add_surface) for parameters and return value).
+
+Notes:
+
+   * As of this writing, multiple monitor support has only been implemented
+     in the Windows version of Attract-Mode.
+   * The first entry in the `fe.monitors` array is always the "primary" display
+     for the system.
 
 
 <a name="Image" />
@@ -1114,6 +1162,8 @@ Attributes:
    * trigger - Get/set the transition that triggers updates of this artwork.
      Can be set to `Transition.ToNewSelection` or `Transition.EndNavigation`.
      Default value is `Transition.ToNewSelection`.
+   * smooth - Get/set whether the image is to be smoothed.  Default value can be
+     configured in attract.cfg
 
 Member Functions:
 

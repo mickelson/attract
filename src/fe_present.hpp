@@ -64,10 +64,39 @@ private:
 	std::string m_name;
 };
 
+//
+// Container class for our per-monitor settings
+//
+class FeMonitor
+{
+public:
+	FeImage *add_image(const char *,int, int, int, int);
+	FeImage *add_image(const char *, int, int);
+	FeImage *add_image(const char *);
+	FeImage *add_artwork(const char *,int, int, int, int);
+	FeImage *add_artwork(const char *, int, int);
+	FeImage *add_artwork(const char *);
+	FeImage *add_clone(FeImage *);
+	FeText *add_text(const char *,int, int, int, int);
+	FeListBox *add_listbox(int, int, int, int);
+	FeImage *add_surface(int, int);
+
+	int get_width();
+	int get_height();
+	int get_num();
+
+	std::vector<FeBasePresentable *> elements;
+	sf::Transform transform;
+	sf::Vector2i size;
+	int num;
+};
+
+
 class FePresent
 	: public sf::Drawable
 {
 	friend class FeSurfaceTextureContainer;
+	friend class FeMonitor;
 	friend class FeVM;
 
 protected:
@@ -91,11 +120,11 @@ protected:
 	FeSettings::RotationState m_toggleRotation;
 	sf::Transform m_transform;
 
-	std::vector<FeBasePresentable *> m_elements;
 	std::vector<FeBaseTextureContainer *> m_texturePool;
 	std::vector<FeSound *> m_sounds;
 	std::vector<FeShader *> m_scriptShaders;
 	std::vector<FeFontContainer *> m_fontPool;
+	std::vector<FeMonitor> m_mon;
 	bool m_playMovies;
 	bool m_screenSaverActive;
 	int m_user_page_size;
@@ -103,7 +132,6 @@ protected:
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
 	sf::Vector2f m_layoutScale;
-	sf::Vector2i m_outputSize;
 
 	FeShader *m_emptyShader;
 

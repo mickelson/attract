@@ -220,8 +220,8 @@ void FeVM::on_new_layout( const std::string &path,
 	ConstTable()
 		.Const( _SC("FeVersion"), FE_VERSION)
 		.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
-		.Const( _SC("ScreenWidth"), (int)m_outputSize.x )
-		.Const( _SC("ScreenHeight"), (int)m_outputSize.y )
+		.Const( _SC("ScreenWidth"), (int)m_mon[0].size.x )
+		.Const( _SC("ScreenHeight"), (int)m_mon[0].size.y )
 		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
 		.Const( _SC("OS"), get_OS_string() )
 		.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
@@ -474,6 +474,23 @@ void FeVM::on_new_layout( const std::string &path,
 		.Prop( _SC("list_limit"), &FeFilter::get_list_limit )
 	);
 
+	fe.Bind( _SC("Monitor"), Class <FeMonitor, NoConstructor>()
+		.Prop( _SC("num"), &FeMonitor::get_num )
+		.Prop( _SC("width"), &FeMonitor::get_width )
+		.Prop( _SC("height"), &FeMonitor::get_height )
+
+		.Overload<FeImage * (FeMonitor::*)(const char *, int, int, int, int)>(_SC("add_image"), &FeMonitor::add_image)
+		.Overload<FeImage * (FeMonitor::*)(const char *, int, int)>(_SC("add_image"), &FeMonitor::add_image)
+		.Overload<FeImage * (FeMonitor::*)(const char *)>(_SC("add_image"), &FeMonitor::add_image)
+		.Overload<FeImage * (FeMonitor::*)(const char *, int, int, int, int)>(_SC("add_artwork"), &FeMonitor::add_artwork)
+		.Overload<FeImage * (FeMonitor::*)(const char *, int, int)>(_SC("add_artwork"), &FeMonitor::add_artwork)
+		.Overload<FeImage * (FeMonitor::*)(const char *)>(_SC("add_artwork"), &FeMonitor::add_artwork)
+		.Func( _SC("add_clone"), &FeMonitor::add_clone )
+		.Func( _SC("add_text"), &FeMonitor::add_text )
+		.Func( _SC("add_listbox"), &FeMonitor::add_listbox )
+		.Func( _SC("add_surface"), &FeMonitor::add_surface )
+	);
+
 	//
 	// Define functions that get exposed to Squirrel
 	//
@@ -528,6 +545,13 @@ void FeVM::on_new_layout( const std::string &path,
 
 	for ( int i=0; i < di->get_filter_count(); i++ )
 		farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+
+	Table mtab;  // hack Table to Array because creating the Array straight up doesn't work
+	fe.Bind( _SC("monitors"), mtab );
+	Array marray( mtab.GetObject() );
+
+	for ( i=0; i < (int)m_mon.size(); i++ )
+		marray.SetInstance( marray.GetSize(), &m_mon[i] );
 
 	fe.SetInstance( _SC("layout"), (FePresent *)this );
 	fe.SetInstance( _SC("list"), (FePresent *)this );
@@ -915,6 +939,19 @@ public:
 
 		fe.SetInstance( _SC("overlay"), fe_vm );
 
+		fe.Bind( _SC("Monitor"), Sqrat::Class <FeMonitor, Sqrat::NoConstructor>()
+			.Prop( _SC("num"), &FeMonitor::get_num )
+			.Prop( _SC("width"), &FeMonitor::get_width )
+			.Prop( _SC("height"), &FeMonitor::get_height )
+		);
+
+		Sqrat::Table mtab;  // hack Table to Array because creating the Array straight up doesn't work
+		fe.Bind( _SC("monitors"), mtab );
+		Sqrat::Array marray( mtab.GetObject() );
+
+		for ( int i=0; i < (int)fe_vm->m_mon.size(); i++ )
+			marray.SetInstance( marray.GetSize(), &(fe_vm->m_mon[i]) );
+
 		fe.Overload<bool (*)(const char *, const char *, Sqrat::Object, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 		fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 		fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
@@ -1114,7 +1151,7 @@ FeImage* FeVM::cb_add_image(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_image( false, n, x, y, w, h, fev->m_elements );
+	FeImage *ret = fev->add_image( false, n, x, y, w, h, fev->m_mon[0].elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1140,7 +1177,7 @@ FeImage* FeVM::cb_add_artwork(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_image( true, n, x, y, w, h, fev->m_elements );
+	FeImage *ret = fev->add_image( true, n, x, y, w, h, fev->m_mon[0].elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1166,7 +1203,7 @@ FeImage* FeVM::cb_add_clone( FeImage *o )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_clone( o, fev->m_elements );
+	FeImage *ret = fev->add_clone( o, fev->m_mon[0].elements );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1182,7 +1219,7 @@ FeText* FeVM::cb_add_text(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeText *ret = fev->add_text( n, x, y, w, h, fev->m_elements );
+	FeText *ret = fev->add_text( n, x, y, w, h, fev->m_mon[0].elements );
 
 	// Add the text to the "fe.obj" array in Squirrel
 	//
@@ -1198,7 +1235,7 @@ FeListBox* FeVM::cb_add_listbox(int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeListBox *ret = fev->add_listbox( x, y, w, h, fev->m_elements );
+	FeListBox *ret = fev->add_listbox( x, y, w, h, fev->m_mon[0].elements );
 
 	// Add the listbox to the "fe.obj" array in Squirrel
 	//
@@ -1214,7 +1251,7 @@ FeImage* FeVM::cb_add_surface( int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_surface( w, h, fev->m_elements );
+	FeImage *ret = fev->add_surface( w, h, fev->m_mon[0].elements );
 
 	// Add the surface to the "fe.obj" array in Squirrel
 	//
