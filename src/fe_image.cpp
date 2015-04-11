@@ -867,7 +867,7 @@ void FeSurfaceTextureContainer::on_new_list( FeSettings *s, bool, bool )
 	//
 	for ( std::vector<FeBasePresentable *>::iterator itr = m_draw_list.begin();
 				itr != m_draw_list.end(); ++itr )
-		(*itr)->on_new_list( s, 1.f, 1.f );
+		(*itr)->on_new_list( s );
 }
 
 bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )

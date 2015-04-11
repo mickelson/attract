@@ -51,8 +51,10 @@ public:
 
 	// Overrides from base class:
 	//
-	void on_new_list( FeSettings *, float, float );
+	void on_new_list( FeSettings * );
 	void on_new_selection( FeSettings * );
+	void set_scale_factor( float, float );
+
 	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
 
 	int getIndexOffset() const;
@@ -102,6 +104,7 @@ private:
 	int m_user_charsize;	 	// -1 if no charsize specified
 	sf::Vector2f m_size;		// unscaled size
 	sf::Vector2f m_position;	// unscaled position
+	float m_scale_factor;
 };
 
 #endif

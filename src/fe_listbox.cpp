@@ -36,6 +36,7 @@ FeListBox::FeListBox( int x, int y, int w, int h )
 	m_userCharSize( 0 ),
 	m_filter_offset( 0 ),
 	m_rotation( 0.0 ),
+	m_scale_factor( 1.0 ),
 	m_scripted( true )
 {
 	m_base_text.setPosition( sf::Vector2f( x, y ) );
@@ -61,6 +62,7 @@ FeListBox::FeListBox(
 	m_userCharSize( charactersize ),
 	m_filter_offset( 0 ),
 	m_rotation( 0.0 ),
+	m_scale_factor( 1.0 ),
 	m_scripted( false )
 {
 }
@@ -106,26 +108,22 @@ const sf::Color &FeListBox::getColor() const
 	return m_base_text.getColor();
 }
 
-void FeListBox::init( float scale_x, float scale_y )
+void FeListBox::init()
 {
 	sf::Vector2f size = getSize();
 	sf::Vector2f pos = getPosition();
 
-	float scale_factor( ( scale_x > scale_y ) ? scale_x : scale_y );
-	if ( scale_factor <= 0.f )
-		scale_factor = 1.f;
-
 	int actual_spacing = (int)size.y / m_rows;
-	int char_size = 8 * scale_factor;
+	int char_size = 8 * m_scale_factor;
 
 	// Set the character size now
 	//
 	if ( m_userCharSize > 0 )
-		char_size = m_userCharSize * scale_factor;
+		char_size = m_userCharSize * m_scale_factor;
 	else if ( actual_spacing > 12 )
-		char_size = ( actual_spacing - 4 ) * scale_factor;
+		char_size = ( actual_spacing - 4 ) * m_scale_factor;
 
-	m_base_text.setTextScale( sf::Vector2f( 1.f / scale_factor, 1.f / scale_factor ) );
+	m_base_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
 	m_base_text.setCharacterSize( char_size );
 
 	m_texts.clear();
@@ -270,9 +268,9 @@ void FeListBox::setRotation( float r )
 		FePresent::script_flag_redraw();
 }
 
-void FeListBox::on_new_list( FeSettings *s, float scale_x, float scale_y )
+void FeListBox::on_new_list( FeSettings *s )
 {
-	init( scale_x, scale_y );
+	init();
 
 	int filter_index = s->get_filter_index_from_offset( m_filter_offset );
 	int filter_size = s->get_filter_size( filter_index );
@@ -315,6 +313,13 @@ void FeListBox::on_new_selection( FeSettings *s )
 	setText(
 			s->get_rom_index( s->get_filter_index_from_offset( m_filter_offset ), 0 ),
 			m_displayList );
+}
+
+void FeListBox::set_scale_factor( float scale_x, float scale_y )
+{
+	m_scale_factor = ( scale_x > scale_y ) ? scale_x : scale_y;
+	if ( m_scale_factor <= 0.f )
+		m_scale_factor = 1.f;
 }
 
 void FeListBox::draw( sf::RenderTarget &target, sf::RenderStates states ) const

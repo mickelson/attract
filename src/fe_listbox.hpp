@@ -78,12 +78,13 @@ public:
 	int getRowCount() const;
 
 	void clear();
-	void init( float scale_x = 1.0, float scale_y = 1.0 );
+	void init();
 
 	// Overrides from base class:
 	//
-	void on_new_list( FeSettings *, float, float );
+	void on_new_list( FeSettings * );
 	void on_new_selection( FeSettings * );
+	void set_scale_factor( float, float );
 
 	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
 
@@ -144,6 +145,7 @@ private:
 	int m_userCharSize;
 	int m_filter_offset;
 	float m_rotation;
+	float m_scale_factor;
 	bool m_scripted;
 
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;

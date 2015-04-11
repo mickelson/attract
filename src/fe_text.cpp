@@ -34,7 +34,8 @@ FeText::FeText( const std::string &str, int x, int y, int w, int h )
 	m_filter_offset( 0 ),
 	m_user_charsize( -1 ),
 	m_size( w, h ),
-	m_position( x, y )
+	m_position( x, y ),
+	m_scale_factor( 1.0 )
 {
 }
 
@@ -115,19 +116,15 @@ int FeText::getFilterOffset() const
 	return m_filter_offset;
 }
 
-void FeText::on_new_list( FeSettings *s, float scale_x, float scale_y )
+void FeText::on_new_list( FeSettings *s )
 {
-	float scale_factor( ( scale_x > scale_y ) ? scale_x : scale_y );
-	if ( scale_factor <= 0.f )
-		scale_factor = 1.f;
-
-	int char_size = 8 * scale_factor;
+	int char_size = 8 * m_scale_factor;
 	if ( m_user_charsize > 0 )
-		char_size = m_user_charsize * scale_factor;
+		char_size = m_user_charsize * m_scale_factor;
 	else if ( m_size.y > 12 )
-		char_size = ( m_size.y - 4 ) * scale_factor;
+		char_size = ( m_size.y - 4 ) * m_scale_factor;
 
-	m_draw_text.setTextScale( sf::Vector2f( 1.f / scale_factor, 1.f / scale_factor ) );
+	m_draw_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
 	m_draw_text.setCharacterSize( char_size );
 	m_draw_text.setPosition( m_position );
 	m_draw_text.setSize( m_size );
@@ -139,6 +136,13 @@ void FeText::on_new_selection( FeSettings *feSettings )
 	feSettings->do_text_substitutions( str, m_filter_offset, m_index_offset );
 
 	m_draw_text.setString( str );
+}
+
+void FeText::set_scale_factor( float scale_x, float scale_y )
+{
+	m_scale_factor = ( scale_x > scale_y ) ? scale_x : scale_y;
+	if ( m_scale_factor <= 0.f )
+		m_scale_factor = 1.f;
 }
 
 void FeText::draw( sf::RenderTarget &target, sf::RenderStates states ) const

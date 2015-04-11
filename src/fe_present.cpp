@@ -323,6 +323,7 @@ FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int
 	new_tex->set_smooth( m_feSettings->smooth_images() );
 
 	FeImage *new_image = new FeImage( new_tex, x, y, w, h );
+	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
 	// if this is a non-artwork (i.e. static image/video) then load it now
 	//
@@ -352,6 +353,7 @@ FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h,
 
 	ASSERT( m_currentFont );
 	new_text->setFont( m_currentFont->get_font() );
+	new_text->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
 	flag_redraw();
 	l.push_back( new_text );
@@ -365,6 +367,7 @@ FeListBox *FePresent::add_listbox( int x, int y, int w, int h,
 
 	ASSERT( m_currentFont );
 	new_lb->setFont( m_currentFont->get_font() );
+	new_lb->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
 	flag_redraw();
 	m_listBox = new_lb;
@@ -381,6 +384,7 @@ FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> 
 	// Set the default sprite size to the same as the texture itself
 	//
 	FeImage *new_image = new FeImage( new_surface, 0, 0, w, h );
+	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
 	new_image->texture_changed();
 
@@ -457,6 +461,11 @@ void FePresent::set_layout_width( int w )
 {
 	m_layoutSize.x = w;
 	m_layoutScale.x = (float) m_mon[0].size.x / w;
+
+	for ( std::vector<FeBasePresentable *>::iterator itr=m_mon[0].elements.begin();
+			itr!=m_mon[0].elements.end(); ++itr )
+		(*itr)->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
+
 	set_transforms();
 	flag_redraw();
 }
@@ -465,6 +474,11 @@ void FePresent::set_layout_height( int h )
 {
 	m_layoutSize.y = h;
 	m_layoutScale.y = (float) m_mon[0].size.y / h;
+
+	for ( std::vector<FeBasePresentable *>::iterator itr=m_mon[0].elements.begin();
+			itr!=m_mon[0].elements.end(); ++itr )
+		(*itr)->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
+
 	set_transforms();
 	flag_redraw();
 }
@@ -773,16 +787,10 @@ int FePresent::update( bool new_list, bool new_display )
 		for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
 			(*itc)->on_new_list( m_feSettings, m_screenSaverActive, new_display );
 
-		for ( itl=m_mon[0].elements.begin(); itl != m_mon[0].elements.end(); ++itl )
-			(*itl)->on_new_list( m_feSettings,
-				m_layoutScale.x,
-				m_layoutScale.y );
-
-		// secondary monitor(s), if any
-		for ( unsigned int i=1; i<m_mon.size(); i++ )
+		for ( itm=m_mon.begin(); itm != m_mon.end(); ++itm )
 		{
-			for ( itl=m_mon[i].elements.begin(); itl != m_mon[i].elements.end(); ++itl )
-				(*itl)->on_new_list( m_feSettings, 1.0, 1.0 );
+			for ( itl=(*itm).elements.begin(); itl != (*itm).elements.end(); ++itl )
+				(*itl)->on_new_list( m_feSettings );
 		}
 	}
 
@@ -1068,12 +1076,8 @@ void FePresent::script_do_update( FeBasePresentable *bp )
 	FePresent *fep = script_get_fep();
 	if ( fep )
 	{
-		bp->on_new_list( fep->m_feSettings,
-			fep->get_layout_scale_x(),
-			fep->get_layout_scale_y() );
-
+		bp->on_new_list( fep->m_feSettings );
 		bp->on_new_selection( fep->m_feSettings );
-
 		fep->flag_redraw();
 	}
 }

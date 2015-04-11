@@ -37,8 +37,13 @@ void FeBasePresentable::on_new_selection( FeSettings * )
 {
 }
 
-void FeBasePresentable::on_new_list( FeSettings *, float, float )
+void FeBasePresentable::on_new_list( FeSettings * )
 {
+}
+
+void FeBasePresentable::set_scale_factor( float, float )
+{
+
 }
 
 float FeBasePresentable::get_x() const

@@ -48,7 +48,8 @@ public:
 	virtual ~FeBasePresentable();
 
 	virtual void on_new_selection( FeSettings * );
-	virtual void on_new_list( FeSettings *, float, float );
+	virtual void on_new_list( FeSettings * );
+	virtual void set_scale_factor( float, float );
 
 	virtual const sf::Drawable &drawable() const=0;
 	virtual const sf::Vector2f &getPosition() const=0;

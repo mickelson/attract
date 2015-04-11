@@ -67,8 +67,11 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 	}
 }
 
-fe.add_ticks_callback( "MultiMon_tick" );
-fe.add_transition_callback( "MultiMon_trans" );
+if ( mm_arts.len() > 0 )
+{
+	fe.add_ticks_callback( "MultiMon_tick" );
+	fe.add_transition_callback( "MultiMon_trans" );
+}
 
 local last_tick=0;
 local last_trigger=-1;
