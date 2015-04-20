@@ -94,7 +94,7 @@ void process_args( int argc, char *argv[],
 				if ( argv[next_arg][0] == '-' )
 					break;
 
-				task_list.push_back( FeImportTask( "", argv[next_arg] ));
+				task_list.push_back( FeImportTask( FeImportTask::BuildRomlist, argv[next_arg] ));
 			}
 
 			if ( next_arg == first_cmd_arg )
@@ -128,7 +128,7 @@ void process_args( int argc, char *argv[],
 				next_arg++;
 			}
 
-			task_list.push_back( FeImportTask( my_filename, my_emulator ));
+			task_list.push_back( FeImportTask( FeImportTask::ImportRomlist, my_emulator, my_filename ));
 		}
 		else if (( strcmp( argv[next_arg], "-o" ) == 0 )
 				|| ( strcmp( argv[next_arg], "--output" ) == 0 ))
@@ -172,6 +172,27 @@ void process_args( int argc, char *argv[],
 			}
 
 			filter.get_rules().push_back( rule );
+		}
+		else if (( strcmp( argv[next_arg], "-s" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--scrape-art" ) == 0 ))
+		{
+			next_arg++;
+			int first_cmd_arg = next_arg;
+
+			for ( ; next_arg < argc; next_arg++ )
+			{
+				if ( argv[next_arg][0] == '-' )
+					break;
+
+				task_list.push_back( FeImportTask( FeImportTask::ScrapeArtwork, argv[next_arg] ));
+			}
+
+			if ( next_arg == first_cmd_arg )
+			{
+				std::cerr << "Error, no target emulators specified with --scrape-art option."
+							<<  std::endl;
+				exit(1);
+			}
 		}
 		else if (( strcmp( argv[next_arg], "-v" ) == 0 )
 				|| ( strcmp( argv[next_arg], "--version" ) == 0 ))
@@ -223,9 +244,13 @@ void process_args( int argc, char *argv[],
 				<< "  -F, --filter <rule>" << std::endl
 				<< "     Apply the specified filter rule to created romlist" << std::endl
 				<< "  --full" << std::endl
-				<< "     Used with the --build-romlist option to include all possible roms [mame/mess only]" << std::endl
+				<< "     Use with --build-romlist to include all possible roms [mame/mess only]" << std::endl
 				<< "  -o, --output <romlist>" << std::endl
 				<< "     Specify the name of the romlist to create, overwriting any existing"
+				<< std::endl << std::endl
+				<< "ARTWORK SCRAPER OPTIONS:" << std::endl
+				<< "  -s, --scrape-art <emu> [emu(s)...]" << std::endl
+				<< "     Scrape missing artwork for the specified emulator(s)"
 				<< std::endl << std::endl
 				<< "OTHER OPTIONS:" << std::endl
 				<< "  -c, --config <config_directory>" << std::endl
@@ -264,7 +289,7 @@ int main(int argc, char *argv[])
 	FeSettings feSettings( config_path, cmdln_font );
 	feSettings.load();
 
-	if ( feSettings.autolaunch_last_game() )
+	if ( feSettings.get_info_bool( FeSettings::AutoLaunchLastGame ) )
 	{
 		feSettings.select_last_launch();
 		launch_game=true;
@@ -583,7 +608,7 @@ int main(int argc, char *argv[])
 						feSettings.get_resource( "Lists", title );
 
 						int exit_opt=-999;
-						if ( feSettings.get_displays_menu_exit() )
+						if ( feSettings.get_info_bool( FeSettings::DisplaysMenuExit ) )
 						{
 							//
 							// Add an exit option at the end of the lists menu
@@ -644,7 +669,7 @@ int main(int argc, char *argv[])
 					{
 						bool new_state = !feSettings.get_current_fav();
 
-						if ( feSettings.confirm_favs() )
+						if ( feSettings.get_info_bool( FeSettings::ConfirmFavourites ) )
 						{
 							std::string msg = ( new_state )
 								? "Add '$1' to Favourites?"
@@ -733,7 +758,7 @@ int main(int argc, char *argv[])
 					move_last_triggered = t;
 					int step = 1;
 
-					if ( feSettings.accelerate_selection() )
+					if ( feSettings.get_info_bool( FeSettings::AccelerateSelection ) )
 					{
 						// As the button is held down, the advancement accelerates
 						int shift = ( t / TRIG_CHANGE_MS ) - 3;

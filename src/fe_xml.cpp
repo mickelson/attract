@@ -30,6 +30,26 @@
 #include <expat.h>
 
 //
+// Utility function to get strings to use to see if game names match filenames
+// (strips punctuation, spaces, trailing bracketted text, leading "the")
+//
+std::string get_fuzzy( const std::string &s )
+{
+	std::string retval;
+	for ( std::string::const_iterator itr=s.begin(); (( itr!=s.end() ) && ( *itr != '(' )); ++itr )
+	{
+		if ( std::isalnum( *itr ) )
+			retval += std::tolower( *itr );
+	}
+
+	// strip 'the' from the beginning
+	if ( (retval.size() > 3) && (retval[0]=='t') && ( retval[1]=='h' ) && ( retval[2]=='e') )
+		return retval.substr( 3 );
+
+	return retval;
+}
+
+//
 // Base XML Parser
 //
 // Expat callback functions
@@ -112,21 +132,28 @@ bool FeMapComp::operator()(const char *lhs, const char *rhs) const
 	return ( strcmp( lhs, rhs ) < 0 );
 }
 
+FeImporterContext::FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType &rl )
+	: emulator( e ),
+	romlist( rl ),
+	scrape_art( false ),
+	uiupdate( NULL ),
+	uiupdatedata( NULL ),
+	full( false ),
+	progress_past( 0 ),
+	progress_range( 100 )
+{
+}
+
 //
 // Mame XML Parser
 //
-FeMameXMLParser::FeMameXMLParser(
-		FeRomInfoListType &romlist,
-		UiUpdate u,
-		void *d,
-		bool full )
-	: FeXMLParser( u, d ),
-	m_romlist( romlist ),
+FeMameXMLParser::FeMameXMLParser( FeImporterContext &ctx )
+	: FeXMLParser( ctx.uiupdate, ctx.uiupdatedata ),
+	m_ctx( ctx ),
 	m_count( 0 ),
 	m_displays( 0 ),
 	m_chd( false ),
-	m_mechanical( false ),
-	m_full( full )
+	m_mechanical( false )
 {
 }
 
@@ -155,10 +182,10 @@ void FeMameXMLParser::start_element(
 				}
 				else
 				{
-					if ( m_full )
+					if ( m_ctx.full )
 					{
-						m_romlist.push_back( FeRomInfo( attribute[i+1] ) );
-						m_itr = m_romlist.end();
+						m_ctx.romlist.push_back( FeRomInfo( attribute[i+1] ) );
+						m_itr = m_ctx.romlist.end();
 						m_itr--;
 						m_collect_data=true;
 						m_displays=0;
@@ -327,7 +354,7 @@ void FeMameXMLParser::end_element( const char *element )
 
 			m_count++;
 
-			int percent = m_count * 100 / m_romlist.size();
+			int percent = m_ctx.progress_past + m_count * m_ctx.progress_range / m_ctx.romlist.size();
 			if ( percent > m_percent )
 			{
 				m_percent = percent;
@@ -367,8 +394,8 @@ bool FeMameXMLParser::parse( const std::string &prog )
 	// run "mame -listxml" and find each rom.
 	//
 	m_map.clear();
-	for ( FeRomInfoListType::iterator itr=m_romlist.begin();
-			itr != m_romlist.end(); ++itr )
+	for ( FeRomInfoListType::iterator itr=m_ctx.romlist.begin();
+			itr != m_ctx.romlist.end(); ++itr )
 		m_map[ (*itr).get_info( FeRomInfo::Romname ).c_str() ] = itr;
 
 	std::cout << "    ";
@@ -389,7 +416,7 @@ bool FeMameXMLParser::parse( const std::string &prog )
 		for ( itr = m_discarded.begin(); itr != m_discarded.end(); ++itr )
 		{
 			std::cout << (*(*itr)).get_info( FeRomInfo::Romname ) << " ";
-			m_romlist.erase( (*itr) );
+			m_ctx.romlist.erase( (*itr) );
 		}
 		std::cout << std::endl;
 	}
@@ -400,12 +427,9 @@ bool FeMameXMLParser::parse( const std::string &prog )
 //
 // Mess XML Parser
 //
-FeMessXMLParser::FeMessXMLParser(
-	FeRomInfoListType &romlist,
-	UiUpdate u,
-	void *d,
-	bool full )
-	: FeXMLParser( u, d ), m_romlist( romlist ), m_full( full )
+FeMessXMLParser::FeMessXMLParser( FeImporterContext &ctx )
+	: FeXMLParser( ctx.uiupdate, ctx.uiupdatedata ),
+	m_ctx( ctx )
 {
 }
 
@@ -435,7 +459,7 @@ void FeMessXMLParser::start_element(
 			{
 				m_altname = m_name = attribute[i+1];
 
-				for ( m_itr=m_romlist.begin(); m_itr!=m_romlist.end(); ++m_itr )
+				for ( m_itr=m_ctx.romlist.begin(); m_itr!=m_ctx.romlist.end(); ++m_itr )
 				{
 					std::string romname = (*m_itr).get_info( FeRomInfo::Romname );
 					if ( romname.compare( attribute[i+1] ) == 0 )
@@ -445,10 +469,10 @@ void FeMessXMLParser::start_element(
 					}
 				}
 
-				if ( !m_keep_rom && m_full )
+				if ( !m_keep_rom && m_ctx.full )
 				{
-					m_romlist.push_back( FeRomInfo( attribute[i+1] ) );
-					m_itr = m_romlist.end();
+					m_ctx.romlist.push_back( FeRomInfo( attribute[i+1] ) );
+					m_itr = m_ctx.romlist.end();
 					m_itr--;
 					m_keep_rom=true;
 				}
@@ -495,7 +519,7 @@ void FeMessXMLParser::end_element( const char *element )
 		else
 		{
 			// otherwise try matching based on description
-			for ( m_itr=m_romlist.begin(); m_itr!=m_romlist.end(); ++m_itr )
+			for ( m_itr=m_ctx.romlist.begin(); m_itr!=m_ctx.romlist.end(); ++m_itr )
 			{
 				if ( m_description.compare(
 							(*m_itr).get_info( FeRomInfo::Romname ) ) == 0 )
@@ -504,12 +528,10 @@ void FeMessXMLParser::end_element( const char *element )
 				}
 				else if ( (*m_itr).get_info( FeRomInfo::AltRomname ).empty() )
 				{
-					// Try using a "fuzzy" match that ignores brackets.
+					// Try using a "fuzzy" match (ignores brackets).
 					//
 					const std::string &temp = (*m_itr).get_info( FeRomInfo::BuildScratchPad );
-
-					if (( temp.find( m_fuzzydesc ) != std::string::npos )
-						|| ( m_fuzzydesc.find( temp ) != std::string::npos ))
+					if ( temp.compare( m_fuzzydesc ) == 0 )
 					{
 						set_info_values( *m_itr );
 					}
@@ -523,8 +545,7 @@ void FeMessXMLParser::end_element( const char *element )
 		if ( strcmp( element, "description" ) == 0 )
 		{
 			m_description = m_current_data;
-			size_t pos=0;
-			token_helper( m_current_data, pos, m_fuzzydesc, "(" );
+			m_fuzzydesc = get_fuzzy( m_current_data );
 		}
 		else if ( strcmp( element, "year" ) == 0 )
 			m_year = m_current_data;
@@ -554,14 +575,16 @@ bool FeMessXMLParser::parse( const std::string &prog,
 	FeRomInfoListType temp_list;
 	temp_list.push_back( FeRomInfo( system_name ) );
 
-	FeMameXMLParser listxml( temp_list );
+	FeEmulatorInfo ignored;
+	FeImporterContext temp( ignored, temp_list );
+	FeMameXMLParser listxml( temp );
 	listxml.parse( prog );
 
 	FeRomInfoListType::iterator itr;
 	if ( !temp_list.empty() )
 	{
 		const FeRomInfo &ri = temp_list.front();
-		for ( itr=m_romlist.begin(); itr!=m_romlist.end(); ++itr )
+		for ( itr=m_ctx.romlist.begin(); itr!=m_ctx.romlist.end(); ++itr )
 		{
 			(*itr).set_info( FeRomInfo::Players, ri.get_info( FeRomInfo::Players ));
 			(*itr).set_info( FeRomInfo::Rotation, ri.get_info( FeRomInfo::Rotation ));
@@ -571,13 +594,10 @@ bool FeMessXMLParser::parse( const std::string &prog,
 			(*itr).set_info( FeRomInfo::DisplayType, ri.get_info( FeRomInfo::DisplayType ));
 
 			// A bit of a hack here: the Category field gets repurposed for this stage of a MESS
-			// import...We temporarily store a "fuzzy" match romname (i.e. the name stripped of
-			// bracketted text) for each rom
+			// import...We temporarily store a "fuzzy" match romname
 			//
-			size_t pos=0;
-			std::string temp;
-			token_helper( (*itr).get_info( FeRomInfo::Romname ), pos, temp, "(" );
-			(*itr).set_info( FeRomInfo::BuildScratchPad, temp );
+			(*itr).set_info( FeRomInfo::BuildScratchPad,
+						get_fuzzy( (*itr).get_info( FeRomInfo::Romname ) ) );
 		}
 	}
 
@@ -587,7 +607,7 @@ bool FeMessXMLParser::parse( const std::string &prog,
 
 	// We're done with our "fuzzy" matching, so clear where we were storing them
 	//
-	for ( itr=m_romlist.begin(); itr!=m_romlist.end(); ++itr )
+	for ( itr=m_ctx.romlist.begin(); itr!=m_ctx.romlist.end(); ++itr )
 		(*itr).set_info( FeRomInfo::BuildScratchPad, "" );
 
 	return retval;
@@ -742,10 +762,22 @@ bool FeGameDBPlatformParser::parse( const std::string &data )
 	return ret_val;
 }
 
-FeGameDBParser::FeGameDBParser( FeRomInfo &rom )
-	: m_rom( rom ),
-	m_collect_data( false ),
-	m_exact_match( false )
+void FeGameDBArt::clear()
+{
+	base.clear();
+
+	flyer.clear();
+	wheel.clear();
+	snap.clear();
+	marquee.clear();
+}
+
+FeGameDBParser::FeGameDBParser( std::vector<std::string> &system_list, FeRomInfo &rom, FeGameDBArt *art )
+	: m_system_list( system_list ),
+	m_rom( rom ),
+	m_art( art ),
+	m_screenshot( false ),
+	m_ignore( false )
 {
 }
 
@@ -753,70 +785,122 @@ void FeGameDBParser::start_element(
 			const char *element,
 			const char **attribute )
 {
-	if ( m_collect_data )
+	if ( m_ignore )
+		return;
+	else if ( strcmp( element, "Similar") == 0 )
+		m_ignore=true;
+	else if ( strcmp( element, "Game" ) == 0 )
 	{
-		if (( strcmp( element, "ReleaseDate" ) == 0 )
-				|| ( strcmp( element, "genre" ) == 0 )
-				|| ( strcmp( element, "Players" ) == 0 )
-				|| ( strcmp( element, "Publisher" ) == 0 ))
-		{
-			m_element_open=true;
-		}
-
-		if ( strcmp( element, "Genres" ) == 0 )
-			m_rom.set_info( FeRomInfo::Category, "" );
+		m_work.clear();
+		m_work_art.clear();
+		m_work_platform.clear();
 	}
-
-	if ( strcmp( element, "GameTitle" ) == 0 )
+	else if (( strcmp( element, "ReleaseDate" ) == 0 )
+			|| ( strcmp( element, "genre" ) == 0 )
+			|| ( strcmp( element, "Players" ) == 0 )
+			|| ( strcmp( element, "Publisher" ) == 0 )
+			|| ( strcmp( element, "Platform" ) == 0 )
+			|| ( strcmp( element, "GameTitle" ) == 0 )
+			|| ( strcmp( element, "title" ) == 0 )
+		)
+	{
 		m_element_open=true;
+	}
+	else if ( strcmp( element, "Genres" ) == 0 )
+	{
+		m_work.set_info( FeRomInfo::Category, "" );
+	}
+	else if ( m_art )
+	{
+		if (( strcmp( element, "baseImgUrl" ) == 0 )
+				|| ( strcmp( element, "banner" ) == 0 )
+				|| ( strcmp( element, "clearlogo" ) == 0 ))
+			m_element_open=true;
+
+		else if ( strcmp( element, "screenshot" ) == 0 )
+			m_screenshot=true;
+
+		else if ( m_screenshot && ( strcmp( element, "original" ) == 0 ))
+			m_element_open=true;
+
+		else if ( strcmp( element, "boxart" ) == 0 )
+		{
+			for ( int i=0; attribute[i]; i+=2 )
+			{
+				if ( strcmp( attribute[i], "side" ) == 0 )
+				{
+					if ( strcmp( attribute[i+1], "front" ) == 0 )
+						m_element_open = true;
+
+					break;
+				}
+			}
+		}
+	}
 }
 
 void FeGameDBParser::end_element( const char *element )
 {
+	if ( strcmp( element, "Similar" ) == 0 )
+	{
+		m_ignore=false;
+		return;
+	}
+	if ( m_ignore )
+		return;
+
 	if ( m_element_open )
 	{
 		if ( strcmp( element, "GameTitle" ) == 0 )
+			m_work.set_info( FeRomInfo::Title, m_current_data );
+		else if ( strcmp( element, "title" ) == 0 )
 		{
-			bool m = ( m_current_data.compare(
-								name_with_brackets_stripped(
-								m_rom.get_info( FeRomInfo::Romname ) ) ) == 0 );
-
-			if ( m )
-				m_exact_match = true;
-
-			if ( m || m_collect_data )
-			{
-				m_rom.set_info( FeRomInfo::Title, m_current_data );
-				m_collect_data = true;
-			}
+			if ( m_work.get_info( FeRomInfo::AltTitle ).empty() )
+				m_work.set_info( FeRomInfo::AltTitle, m_current_data );
 		}
-		else if ( m_collect_data )
+		else if ( strcmp( element, "ReleaseDate" ) == 0 )
 		{
-			if ( strcmp( element, "ReleaseDate" ) == 0 )
-			{
-				size_t cut = m_current_data.find_last_of( "/" );
+			size_t cut = m_current_data.find_last_of( "/" );
 
-				if ( cut != std::string::npos )
-					m_rom.set_info( FeRomInfo::Year, m_current_data.substr( cut+1 ) );
-				else
-					m_rom.set_info( FeRomInfo::Year, m_current_data );
-			}
-			else if ( strcmp( element, "genre" ) == 0 )
+			if ( cut != std::string::npos )
+				m_work.set_info( FeRomInfo::Year, m_current_data.substr( cut+1 ) );
+			else
+				m_work.set_info( FeRomInfo::Year, m_current_data );
+		}
+		else if ( strcmp( element, "genre" ) == 0 )
+		{
+			std::string cat = m_work.get_info( FeRomInfo::Category );
+			if ( cat.size() == 0 )
+				cat = m_current_data;
+			else
 			{
-				std::string cat = m_rom.get_info( FeRomInfo::Category );
-				if ( cat.size() == 0 )
-					cat = m_current_data;
-				else
-				{
-					cat += " / ";
-					cat += m_current_data;
-				}
-				m_rom.set_info( FeRomInfo::Category, cat );
+				cat += " / ";
+				cat += m_current_data;
 			}
-			else if ( strcmp( element, "Players" ) == 0 )
-				m_rom.set_info( FeRomInfo::Players, m_current_data );
-			else if ( strcmp( element, "Publisher" ) == 0 )
-				m_rom.set_info( FeRomInfo::Manufacturer, m_current_data );
+			m_work.set_info( FeRomInfo::Category, cat );
+		}
+		else if ( strcmp( element, "Players" ) == 0 )
+			m_work.set_info( FeRomInfo::Players, m_current_data );
+		else if ( strcmp( element, "Publisher" ) == 0 )
+			m_work.set_info( FeRomInfo::Manufacturer, m_current_data );
+		else if ( strcmp( element, "Platform" ) == 0 )
+			m_work_platform = m_current_data;
+
+		else if ( m_art )
+		{
+			if ( strcmp( element, "baseImgUrl" ) == 0 )
+				m_art->base = m_current_data;
+			else if ( strcmp( element, "banner" ) == 0 )
+				m_work_art.marquee = m_current_data;
+			else if ( strcmp( element, "clearlogo" ) == 0 )
+				m_work_art.wheel = m_current_data;
+			else if ( strcmp( element, "original" ) == 0 )
+			{
+				m_work_art.snap = m_current_data;
+				m_screenshot=false;
+			}
+			else if ( strcmp( element, "boxart" ) == 0 )
+				m_work_art.flyer = m_current_data;
 		}
 
 		m_element_open=false;
@@ -824,13 +908,68 @@ void FeGameDBParser::end_element( const char *element )
 	}
 
 	if ( strcmp( element, "Game" ) == 0 )
-		m_collect_data=false;
+	{
+		std::string title_str = get_fuzzy( m_rom.get_info( FeRomInfo::Title ) );
+		std::string work_title = get_fuzzy( m_work.get_info(FeRomInfo::Title ) );
+
+		bool match_plat=false;
+		for ( std::vector<std::string>::iterator itr=m_system_list.begin(); itr!=m_system_list.end(); ++itr )
+		{
+			if ( m_work_platform.compare( *itr ) == 0 )
+			{
+				match_plat=true;
+				break;
+			}
+		}
+
+		if ( work_title.compare( title_str ) == 0 )
+		{
+			if ( match_plat )
+			{
+				m_work.set_info( FeRomInfo::Emulator, m_rom.get_info( FeRomInfo::Emulator ) );
+				m_work.set_info( FeRomInfo::Romname, m_rom.get_info( FeRomInfo::Romname ) );
+				m_rom = m_work;
+
+				if ( m_art )
+				{
+					m_art->snap = m_work_art.snap;
+					m_art->marquee = m_work_art.marquee;
+					m_art->flyer = m_work_art.flyer;
+
+					if ( !m_work_art.wheel.empty() )
+						m_art->wheel = m_work_art.wheel;
+				}
+			}
+			else if ( m_art && !m_work_art.wheel.empty() && m_art->wheel.empty() )
+				m_art->wheel = m_work_art.wheel;
+		}
+		else
+		{
+			std::string work_alt = get_fuzzy( m_work.get_info(FeRomInfo::AltTitle ) );
+			bool match_alt = ( work_alt.compare( title_str ) == 0 );
+
+			if ( match_alt && !m_work_art.wheel.empty() && m_art->wheel.empty() )
+				m_art->wheel = m_work_art.wheel;
+
+			if ( match_plat && match_alt )
+			{
+				if ( !m_work_art.flyer.empty() && m_art->flyer.empty() )
+					m_art->flyer = m_work_art.flyer;
+
+				if ( !m_work_art.marquee.empty() && m_art->marquee.empty() )
+					m_art->marquee = m_work_art.marquee;
+
+				if ( !m_work_art.snap.empty() && m_art->snap.empty() )
+					m_art->snap = m_work_art.snap;
+			}
+		}
+	}
 }
 
-bool FeGameDBParser::parse( const std::string &data, bool &exact_match )
+bool FeGameDBParser::parse( const std::string &data )
 {
-	m_exact_match=m_element_open=m_keep_rom=false;
-	m_collect_data= !exact_match;
+	m_element_open=m_keep_rom=m_ignore=false;
+	m_screenshot=false;
 	m_continue_parse=true;
 	bool ret_val=true;
 
@@ -850,6 +989,5 @@ bool FeGameDBParser::parse( const std::string &data, bool &exact_match )
 	XML_Parse( parser, 0, 0, XML_TRUE );
 	XML_ParserFree( parser );
 
-	exact_match = m_exact_match;
 	return ret_val;
 }

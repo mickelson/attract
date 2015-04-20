@@ -116,3 +116,10 @@ _help_screen_saver;Configure screen saver
 _help_plugins;Configure available plug-ins
 _help_misc;Configure miscellaneous settings
 _sort_regexp;^(Vs\. The |The |Vs\. )
+
+_help_emu_scrape_artwork;Scrape missing artwork images for this emulator from TheGamesDB.net and mamedb.com
+_help_scraper;Configure artwork scraper settings
+_help_scrape_snaps;Set whether game snapshots should be downloaded when scraping
+_help_scrape_marquees;Set whether game marquees and banners should be downloaded when scraping
+_help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
+_help_scrape_wheels;Set whether game logos should be downloaded when scraping

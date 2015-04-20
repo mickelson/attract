@@ -157,10 +157,6 @@ protected:
 
 private:
 
-	bool load_artwork( const std::vector <std::string> &art_paths,
-		const std::string &target_name,
-		bool ignore_images = false );
-
 	bool common_load(
 		std::vector<std::string> &non_image_names,
 		std::vector<std::string> &image_names );

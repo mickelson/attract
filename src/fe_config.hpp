@@ -373,6 +373,12 @@ public:
 	bool save( FeConfigContext &ctx );
 };
 
+class FeScraperMenu : public FeBaseConfigMenu
+{
+public:
+	void get_options( FeConfigContext &ctx );
+	bool save( FeConfigContext &ctx );
+};
 
 class FePluginEditMenu : public FeScriptConfigMenu
 {
@@ -407,6 +413,7 @@ private:
 	FeSoundMenu m_sound_menu;
 	FeSaverEditMenu m_saver_menu;
 	FePluginSelMenu m_plugin_menu;
+	FeScraperMenu m_scraper_menu;
 	FeMiscMenu m_misc_menu;
 
 public:

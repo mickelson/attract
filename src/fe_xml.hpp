@@ -70,14 +70,28 @@ public:
 	bool operator()(const char *lhs, const char *rhs) const;
 };
 
+class FeImporterContext
+{
+public:
+	FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType &rl );
+	const FeEmulatorInfo &emulator;
+	FeRomInfoListType &romlist;
+	bool scrape_art;
+	FeXMLParser::UiUpdate uiupdate;
+	void *uiupdatedata;
+	bool full;
+	int progress_past;
+	int progress_range;
+};
+
 class FeMameXMLParser : private FeXMLParser
 {
 public:
-	FeMameXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL, bool full=false );
+	FeMameXMLParser( FeImporterContext &ctx );
 	bool parse( const std::string &base_command );
 
 private:
-	FeRomInfoListType &m_romlist;
+	FeImporterContext &m_ctx;
 	FeRomInfoListType::iterator m_itr;
 	std::map<const char *, FeRomInfoListType::iterator, FeMapComp> m_map;
 	std::vector<FeRomInfoListType::iterator> m_discarded;
@@ -87,7 +101,6 @@ private:
 	bool m_collect_data;
 	bool m_chd;
 	bool m_mechanical;
-	bool m_full;
 
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
@@ -96,11 +109,11 @@ private:
 class FeMessXMLParser : private FeXMLParser
 {
 public:
-	FeMessXMLParser( FeRomInfoListType &, UiUpdate u=NULL, void *d=NULL, bool full=false );
+	FeMessXMLParser( FeImporterContext &ctx );
 	bool parse( const std::string &command, const std::string &args );
 
 private:
-	FeRomInfoListType &m_romlist;
+	FeImporterContext &m_ctx;
 	FeRomInfoListType::iterator m_itr;
 	std::string m_name;
 	std::string m_description;
@@ -110,7 +123,6 @@ private:
 	std::string m_cloneof;
 	std::string m_altname;
 	std::string m_alttitle;
-	bool m_full;
 
 	void set_info_values( FeRomInfo &r );
 
@@ -146,18 +158,43 @@ private:
 	void end_element( const char * );
 };
 
+class FeGameDBArt
+{
+public:
+	std::string base;
+
+	std::string flyer;
+	std::string wheel;
+	std::string snap;
+	std::string marquee;
+
+	void clear();
+};
+
 class FeGameDBParser : private FeXMLParser
 {
 public:
-	FeGameDBParser( FeRomInfo & );
-	bool parse( const std::string &data, bool &exact_match );
+	FeGameDBParser(
+			std::vector<std::string> &system_list,
+			FeRomInfo &,
+			FeGameDBArt *art=NULL );
+
+	bool parse( const std::string &data );
 
 private:
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
 
+	std::vector<std::string> &m_system_list;
+
+	FeRomInfo m_work;
+	FeGameDBArt m_work_art;
+	std::string m_work_platform;
+
 	FeRomInfo &m_rom;
-	bool m_collect_data;
-	bool m_exact_match;
+	FeGameDBArt *m_art;
+	bool m_screenshot;
+	bool m_ignore;
 };
+
 #endif

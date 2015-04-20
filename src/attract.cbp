@@ -89,6 +89,7 @@
 					<Add library="sfml-audio-s" />
 					<Add library="sfml-graphics-s" />
 					<Add library="sfml-window-s" />
+					<Add library="sfml-network-s" />
 					<Add library="sfml-system-s" />
 				</Linker>
 			</Target>
@@ -242,6 +243,8 @@
 		<Unit filename="fe_input.hpp" />
 		<Unit filename="fe_listbox.cpp" />
 		<Unit filename="fe_listbox.hpp" />
+		<Unit filename="fe_net.cpp" />
+		<Unit filename="fe_net.hpp" />
 		<Unit filename="fe_overlay.cpp" />
 		<Unit filename="fe_overlay.hpp" />
 		<Unit filename="fe_present.cpp" />

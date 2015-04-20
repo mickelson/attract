@@ -270,57 +270,6 @@ bool FeTextureContainer::fix_masked_image()
 	return retval;
 }
 
-bool FeTextureContainer::load_artwork(
-	const std::vector < std::string > &art_paths,
-	const std::string &target_name,
-	bool ignore_images )
-{
-	for ( std::vector< std::string >::const_iterator itr = art_paths.begin();
-			itr != art_paths.end(); ++itr )
-	{
-		std::vector<std::string> non_image_names;
-		std::vector<std::string> image_names;
-		std::vector<std::string> dummy;
-
-		get_filename_from_base(
-			image_names,
-			non_image_names,
-			(*itr),
-			target_name + '.',
-			FE_ART_EXTENSIONS );
-
-		if ( common_load( non_image_names,
-				ignore_images ? dummy : image_names ) )
-			return true;
-
-		//
-		// If there is a subdirectory in art_path with the
-		// given target name, then we load a random video or
-		// image from it at this point (if available)
-		//
-		std::string sd_path = (*itr) + target_name;
-		if ( directory_exists( sd_path ) )
-		{
-			sd_path += "/";
-
-			get_filename_from_base(
-				image_names,
-				non_image_names,
-				sd_path,
-				"",
-				FE_ART_EXTENSIONS );
-
-			std::random_shuffle( non_image_names.begin(), non_image_names.end() );
-			std::random_shuffle( image_names.begin(), image_names.end() );
-
-			if ( common_load( non_image_names,
-					ignore_images ? dummy : image_names ) )
-				return true;
-		}
-	}
-	return false;
-}
-
 bool FeTextureContainer::common_load(
 	std::vector<std::string> &non_image_names,
 	std::vector<std::string> &image_names )
@@ -457,95 +406,23 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings, bool
 
 	clear();
 
-	const std::string &emu_name
-		= feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Emulator );
+	FeRomInfo *rom	= feSettings->get_rom_absolute( filter_index, rom_index );
 
-	std::vector<std::string> movie_list;
+	if ( !rom )
+		return;
+
+	std::vector<std::string> vid_list;
 	std::vector<std::string> image_list;
-
-	std::string layout_path;
-	if ( screen_saver_active )
+	if ( feSettings->get_best_artwork_file( *rom,
+							m_art_name,
+							vid_list,
+							image_list,
+							screen_saver_active,
+							false ) )
 	{
-		std::string dummy;
-		feSettings->get_screensaver_file( layout_path, dummy );
-	}
-	else
-	{
-		layout_path = feSettings->get_current_layout_dir();
+		common_load( vid_list, image_list );
 	}
 
-	FeEmulatorInfo *emu_info = feSettings->get_emulator( emu_name );
-
-	std::vector < std::string > art_paths;
-	if ( emu_info )
-	{
-		std::vector < std::string > temp_list;
-		emu_info->get_artwork( m_art_name, temp_list );
-		for ( std::vector< std::string >::iterator itr = temp_list.begin();
-				itr != temp_list.end(); ++itr )
-		{
-			art_paths.push_back( clean_path( (*itr), true ) );
-			perform_substitution( art_paths.back(), "$LAYOUT", layout_path );
-		}
-	}
-
-	if ( !art_paths.empty() )
-	{
-		const std::string &romname = feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Romname );
-		const std::string &altname = feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::AltRomname );
-		const std::string &cloneof = feSettings->get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Cloneof );
-
-		// test for "romname" specific videos
-		if ( load_artwork( art_paths, romname, true ) )
-			goto the_end;
-
-		bool check_altname = ( !altname.empty() && ( romname.compare( altname ) != 0 ));
-
-		// test for "altname" specific videos
-		if ( check_altname && load_artwork( art_paths, altname, true ) )
-			goto the_end;
-
-		bool check_cloneof = ( !cloneof.empty() && (altname.compare( cloneof ) != 0 ));
-
-		// then "cloneof" specific videos
-		if ( check_cloneof && load_artwork( art_paths, cloneof, true ) )
-			goto the_end;
-
-		// test for "romname" specific images
-		if ( load_artwork( art_paths, romname ) )
-			goto the_end;
-
-		// test for "altname" specific images
-		if ( check_altname && load_artwork( art_paths, altname ) )
-			goto the_end;
-
-		// then "cloneof" specific images
-		if ( check_cloneof && load_artwork( art_paths, cloneof ) )
-			goto the_end;
-
-		// then "emulator"
-		if ( !emu_name.empty() && load_artwork( art_paths, emu_name ) )
-			goto the_end;
-	}
-
-	if ( !layout_path.empty() )
-	{
-		std::vector< std::string > layout_paths;
-		layout_paths.push_back( layout_path );
-
-		if ( !emu_name.empty() )
-		{
-			// check for "[emulator]-[artlabel]" in layout directory
-			if ( load_artwork( layout_paths, emu_name + "-" + m_art_name ) )
-				goto the_end;
-		}
-
-		// check for file named with the artwork label in layout directory
-		if ( load_artwork( layout_paths, m_art_name ) )
-			goto the_end;
-	}
-
-the_end:
 	//
 	// Texture was replaced, so notify the attached images
 	//

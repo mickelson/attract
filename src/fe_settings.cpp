@@ -37,6 +37,10 @@
 #include <fontconfig/fontconfig.h>
 #endif
 
+#ifndef NO_MOVIE
+#include "media.hpp" // for FeMedia::is_supported_media()
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 
 const char *FE_DEFAULT_CFG_PATH		= "./";
@@ -113,6 +117,7 @@ const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_MODULES_SUBDIR			= "modules/";
 const char *FE_STATS_SUBDIR			= "stats/";
 const char *FE_LOADER_SUBDIR			= "loader/";
+const char *FE_SCRAPER_SUBDIR			= "scraper/";
 const char *FE_LIST_DEFAULT			= "default-display.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
 const char *FE_CFG_YES_STR				= "yes";
@@ -211,7 +216,11 @@ FeSettings::FeSettings( const std::string &config_path,
 #endif
 	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_accel_selection( true ),
-	m_selection_speed( 40 )
+	m_selection_speed( 40 ),
+	m_scrape_snaps( true ),
+	m_scrape_marquees( true ),
+	m_scrape_flyers( true ),
+	m_scrape_wheels( true )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -349,6 +358,10 @@ const char *FeSettings::configSettingStrings[] =
 	"smooth_images",
 	"accelerate_selection",
 	"selection_speed_ms",
+	"scrape_snaps",
+	"scrape_marquees",
+	"scrape_flyers",
+	"scrape_wheels",
 	NULL
 };
 
@@ -719,6 +732,14 @@ const std::string &FeSettings::get_rom_info_absolute( int filter_index, int rom_
 		m_rl.get_file_availability();
 
 	return m_rl.lookup( filter_index, rom_index ).get_info( index );
+}
+
+FeRomInfo *FeSettings::get_rom_absolute( int filter_index, int rom_index )
+{
+	if ( m_rl.is_filter_empty( filter_index ) )
+		return NULL;
+
+	return &(m_rl.lookup( filter_index, rom_index ));
 }
 
 void FeSettings::get_script_loader_file( std::string &path, std::string &file ) const
@@ -1414,7 +1435,7 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 
 		n -= perform_substitution( str, "[TitleFull]", title_full );
 
-		if ( hide_brackets() )
+		if ( m_hide_brackets )
 			n -= perform_substitution( str, "[Title]", name_with_brackets_stripped( title_full ) );
 		else
 			n -= perform_substitution( str, "[Title]", title_full );
@@ -1599,11 +1620,6 @@ int FeSettings::get_screen_saver_timeout() const
 	return m_ssaver_time;
 }
 
-bool FeSettings::get_displays_menu_exit() const
-{
-	return m_displays_menu_exit;
-}
-
 void FeSettings::get_display_names( std::vector<std::string> &list ) const
 {
 	list.clear();
@@ -1638,14 +1654,6 @@ const std::string FeSettings::get_info( int index ) const
 		break;
 	case ScreenSaverTimeout:
 		return as_str( m_ssaver_time);
-	case DisplaysMenuExit:
-		return ( m_displays_menu_exit ? FE_CFG_YES_STR : FE_CFG_NO_STR );
-	case HideBrackets:
-		return ( m_hide_brackets ? FE_CFG_YES_STR : FE_CFG_NO_STR );
-	case AutoLaunchLastGame:
-		return ( m_autolaunch_last_game ? FE_CFG_YES_STR : FE_CFG_NO_STR );
-	case ConfirmFavourites:
-		return ( m_confirm_favs ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case MouseThreshold:
 		return as_str( m_mouse_thresh );
 	case JoystickThreshold:
@@ -1654,18 +1662,58 @@ const std::string FeSettings::get_info( int index ) const
 		return windowModeTokens[ m_window_mode ];
 	case FilterWrapMode:
 		return filterWrapTokens[ m_filter_wrap_mode ];
-	case TrackUsage:
-		return ( m_track_usage ? FE_CFG_YES_STR : FE_CFG_NO_STR );
-	case SmoothImages:
-		return ( m_smooth_images ? FE_CFG_YES_STR : FE_CFG_NO_STR );
-	case AccelerateSelection:
-		return ( m_accel_selection ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 	case SelectionSpeed:
 		return as_str( m_selection_speed );
+
+	case DisplaysMenuExit:
+	case HideBrackets:
+	case AutoLaunchLastGame:
+	case ConfirmFavourites:
+	case TrackUsage:
+	case SmoothImages:
+	case AccelerateSelection:
+	case ScrapeSnaps:
+	case ScrapeMarquees:
+	case ScrapeFlyers:
+	case ScrapeWheels:
+		return ( get_info_bool( index ) ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
 	default:
 		break;
 	}
 	return FE_EMPTY_STRING;
+}
+
+bool FeSettings::get_info_bool( int index ) const
+{
+	switch ( index )
+	{
+	case DisplaysMenuExit:
+		return m_displays_menu_exit;
+	case HideBrackets:
+		return m_hide_brackets;
+	case AutoLaunchLastGame:
+		return m_autolaunch_last_game;
+	case ConfirmFavourites:
+		return m_confirm_favs;
+	case TrackUsage:
+		return m_track_usage;
+	case SmoothImages:
+		return m_smooth_images;
+	case AccelerateSelection:
+		return m_accel_selection;
+	case ScrapeSnaps:
+		return m_scrape_snaps;
+	case ScrapeMarquees:
+		return m_scrape_marquees;
+	case ScrapeFlyers:
+		return m_scrape_flyers;
+	case ScrapeWheels:
+		return m_scrape_wheels;
+	default:
+		break;
+	}
+	return false;
 }
 
 bool FeSettings::set_info( int index, const std::string &value )
@@ -1787,6 +1835,22 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_selection_speed = as_int( value );
 		if ( m_selection_speed < 0 )
 			m_selection_speed = 0;
+		break;
+
+	case ScrapeSnaps:
+		m_scrape_snaps = config_str_to_bool( value );
+		break;
+
+	case ScrapeMarquees:
+		m_scrape_marquees = config_str_to_bool( value );
+		break;
+
+	case ScrapeFlyers:
+		m_scrape_flyers = config_str_to_bool( value );
+		break;
+
+	case ScrapeWheels:
+		m_scrape_wheels = config_str_to_bool( value );
 		break;
 
 	default:
@@ -2177,4 +2241,217 @@ std::string FeSettings::get_module_dir( const std::string &module_file ) const
 	std::string temp;
 	internal_resolve_config_file( m_config_path, temp, FE_MODULES_SUBDIR, module_file );
 	return temp;
+}
+
+namespace
+{
+
+bool gather_artwork_filenames(
+	const std::vector < std::string > &art_paths,
+	const std::string &target_name,
+	std::vector<std::string> &vids,
+	std::vector<std::string> &images )
+{
+	for ( std::vector< std::string >::const_iterator itr = art_paths.begin();
+			itr != art_paths.end(); ++itr )
+	{
+		get_filename_from_base(
+			images,
+			vids,
+			(*itr),
+			target_name + '.',
+			FE_ART_EXTENSIONS );
+
+#ifdef NO_MOVIE
+		vids.clear();
+#else
+		for ( std::vector<std::string>::iterator itn = vids.begin();
+				itn != vids.end(); )
+		{
+			if ( FeMedia::is_supported_media_file( *itn ) )
+				++itn;
+			else
+				itn = vids.erase( itn );
+		}
+#endif
+
+		if ( !images.empty() || !vids.empty() )
+			return true;
+
+		//
+		// If there is a subdirectory in art_path with the
+		// given target name, then we load a random video or
+		// image from it at this point (if available)
+		//
+		std::string sd_path = (*itr) + target_name;
+		if ( directory_exists( sd_path ) )
+		{
+			sd_path += "/";
+
+			get_filename_from_base(
+				images,
+				vids,
+				sd_path,
+				"",
+				FE_ART_EXTENSIONS );
+
+#ifdef NO_MOVIE
+			vids.clear();
+#else
+			for ( std::vector<std::string>::iterator itn = vids.begin();
+					itn != vids.end(); )
+			{
+				if ( FeMedia::is_supported_media_file( *itn ) )
+					++itn;
+				else
+					itn = vids.erase( itn );
+			}
+#endif
+
+			std::random_shuffle( vids.begin(), vids.end() );
+			std::random_shuffle( images.begin(), images.end() );
+
+			if ( !images.empty() || !vids.empty() )
+				return true;
+		}
+	}
+	return false;
+}
+
+}; // namespace
+
+bool FeSettings::get_best_artwork_file(
+	const FeRomInfo &rom,
+	const std::string &art_name,
+	std::vector<std::string> &vid_list,
+	std::vector<std::string> &image_list,
+	bool is_screen_saver,
+	bool ignore_layout )
+{
+	const std::string &emu_name = rom.get_info( FeRomInfo::Emulator );
+
+	std::string layout_path;
+	if ( is_screen_saver )
+	{
+		std::string dummy;
+		get_screensaver_file( layout_path, dummy );
+	}
+	else if ( !ignore_layout )
+	{
+		layout_path = get_current_layout_dir();
+	}
+
+	FeEmulatorInfo *emu_info = get_emulator( emu_name );
+
+	std::vector < std::string > art_paths;
+	if ( emu_info )
+	{
+		std::vector < std::string > temp_list;
+		emu_info->get_artwork( art_name, temp_list );
+		for ( std::vector< std::string >::iterator itr = temp_list.begin();
+				itr != temp_list.end(); ++itr )
+		{
+			art_paths.push_back( clean_path( (*itr), true ) );
+			perform_substitution( art_paths.back(), "$LAYOUT", layout_path );
+		}
+	}
+
+	// map boxart->flyer and banner->marquee so that artworks with those labels get
+	// scraped artworks
+	std::string scrape_art;
+	if ( art_name.find( "box") != std::string::npos )
+		scrape_art = "flyer";
+	else if ( art_name.compare( "banner" ) == 0 )
+		scrape_art = "marquee";
+	else
+		scrape_art = art_name;
+
+	std::string scraper_path = get_config_dir() + FE_SCRAPER_SUBDIR + emu_name + "/" + scrape_art + "/";
+	if ( directory_exists( scraper_path ) )
+		art_paths.push_back( scraper_path );
+
+	if ( !art_paths.empty() )
+	{
+		const std::string &romname = rom.get_info( FeRomInfo::Romname );
+		const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
+		const std::string &cloneof = rom.get_info( FeRomInfo::Cloneof );
+
+		std::vector<std::string> romname_image_list;
+		if ( gather_artwork_filenames( art_paths, romname, vid_list, romname_image_list ) )
+		{
+			// test for "romname" specific videos first
+			if ( !vid_list.empty() )
+				return true;
+		}
+
+		bool check_altname = ( !altname.empty() && ( romname.compare( altname ) != 0 ));
+
+		std::vector<std::string> altname_image_list;
+		if ( check_altname && gather_artwork_filenames( art_paths, altname, vid_list, altname_image_list ) )
+		{
+			// test for "altname" specific videos second
+			if ( !vid_list.empty() )
+				return true;
+		}
+
+		bool check_cloneof = ( !cloneof.empty() && (altname.compare( cloneof ) != 0 ));
+
+		std::vector<std::string> cloneof_image_list;
+		if ( check_cloneof && gather_artwork_filenames( art_paths, cloneof, vid_list, cloneof_image_list ) )
+		{
+			// then "cloneof" specific videos
+			if ( !vid_list.empty() )
+				return true;
+		}
+
+		// now return "romname" specific images if we have them
+		if ( !romname_image_list.empty() )
+		{
+			image_list.swap( romname_image_list );
+			return true;
+		}
+
+		// next is "altname" specific images
+		if ( !altname_image_list.empty() )
+		{
+			image_list.swap( altname_image_list );
+			return true;
+		}
+
+		// then "cloneof" specific images
+		if ( !cloneof_image_list.empty() )
+		{
+			image_list.swap( cloneof_image_list );
+			return true;
+		}
+
+		// then "emulator"
+		if ( !emu_name.empty() && gather_artwork_filenames( art_paths, emu_name, vid_list, image_list ) )
+			return true;
+	}
+
+	if ( !layout_path.empty() )
+	{
+		std::vector< std::string > layout_paths;
+		layout_paths.push_back( layout_path );
+
+		if ( !emu_name.empty() )
+		{
+			// check for "[emulator]-[artlabel]" in layout directory
+			if ( gather_artwork_filenames( layout_paths, emu_name + "-" + art_name, vid_list, image_list ) )
+				return true;
+		}
+
+		// check for file named with the artwork label in layout directory
+		if ( gather_artwork_filenames( layout_paths, art_name, vid_list, image_list ) )
+			return true;
+	}
+
+	return false;
+}
+
+bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name )
+{
+	std::vector<std::string> temp1, temp2;
+	return ( get_best_artwork_file( rom, art_name, temp1, temp2, false, true ) );
 }

@@ -281,9 +281,7 @@ _help_screen_saver;Configura ell protector de pantalla
 _help_plugins;Configura los plugins disponibles
 _help_misc;Configuraciones varias
 _sort_regexp;^(Vs\. The |The |Vs\. )
-#
-# missing translations from fr.msg
-#
+
 System Identifier;Identificador de sistema
 Info Source/Scraper;Fuente de información/Scraper
 Minimum Run Time;Tiempo mínimo de ejecución
@@ -325,5 +323,20 @@ Overlay Artwork;superposición de artworks
 Play Sound;Reproducir sonido
 Preserve Aspect Ratio;Preservar relación de aspecto
  
+# Needs translation
+Disabled;Disabled
+Scraper;Scraper
+Scrape Artwork;Scrape Artwork
+Configure / Scraper;Configure / Scraper
+Scrape Snapshots;Scrape Snapshots
+Scrape Marquees and Banners;Scrape Marquees and Banners
+Scrape Flyers and Box Covers;Scrape Flyers and Box Covers
+Scrape Game Logos (Wheel Art);Scrape Game Logos (Wheel Art)
+Scraping Artwork: $1%;Scraping Artwork: $1%
 
-
+_help_emu_scrape_artwork;Scrape missing artwork images for this emulator from TheGamesDB.net and mamedb.com
+_help_scraper;Configure artwork scraper settings
+_help_scrape_snaps;Set whether game snapshots should be downloaded when scraping
+_help_scrape_marquees;Set whether game marquees and banners should be downloaded when scraping
+_help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
+_help_scrape_wheels;Set whether game logos should be downloaded when scraping

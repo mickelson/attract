@@ -290,8 +290,12 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 								"_help_emu_gen_romlist" );
 		ctx.back_opt().opaque = 3;
 
-		ctx.add_optl( Opt::EXIT, "Delete this Emulator", "", "_help_emu_delete" );
+		ctx.add_optl( Opt::SUBMENU, "Scrape Artwork", "",
+								"_help_emu_scrape_artwork" );
 		ctx.back_opt().opaque = 4;
+
+		ctx.add_optl( Opt::EXIT, "Delete this Emulator", "", "_help_emu_delete" );
+		ctx.back_opt().opaque = 5;
 	}
 
 	// We need to call save if this is a new emulator
@@ -304,11 +308,19 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 namespace
 {
-	bool my_ui_update( void *d, int i )
+	bool gen_ui_update( void *d, int i )
 	{
 		FeConfigContext *od = (FeConfigContext *)d;
 
 		od->splash_message( "Generating Rom List: $1%", as_str( i ) );
+		return !od->check_for_cancel();
+	}
+
+	bool scrape_ui_update( void *d, int i )
+	{
+		FeConfigContext *od = (FeConfigContext *)d;
+
+		od->splash_message( "Scraping Artwork: $1%", as_str( i ) );
 		return !od->check_for_cancel();
 	}
 };
@@ -369,7 +381,7 @@ bool FeEmulatorEditMenu::on_option_select(
 			}
 
 			int list_size( 0 );
-			ctx.fe_settings.build_romlist( emu_name, my_ui_update, &ctx,
+			ctx.fe_settings.build_romlist( emu_name, gen_ui_update, &ctx,
 								list_size );
 
 			ctx.fe_settings.get_resource( "Wrote $1 entries to Collection/Rom List",
@@ -389,8 +401,13 @@ bool FeEmulatorEditMenu::on_option_select(
 			m_parent_save = true;
 		}
 		break;
-
-	case 4: // Delete this Emulator
+	case 4: // Generate Romlist
+		{
+			std::string emu_name = m_emulator->get_info( FeEmulatorInfo::Name );
+			ctx.fe_settings.scrape_artwork( emu_name, scrape_ui_update, &ctx );
+		}
+		break;
+	case 5: // Delete this Emulator
 		{
 			std::string name = m_emulator->get_info(FeEmulatorInfo::Name);
 
@@ -1310,6 +1327,58 @@ bool FeSoundMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
+void FeScraperMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Configure / Scraper" );
+
+	std::vector<std::string> bool_opts( 2 );
+	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
+	ctx.fe_settings.get_resource( "No", bool_opts[1] );
+
+	ctx.add_optl( Opt::LIST,
+			"Scrape Snapshots",
+			ctx.fe_settings.get_info_bool( FeSettings::ScrapeSnaps ) ? bool_opts[0] : bool_opts[1],
+			"_help_scrape_snaps" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST,
+			"Scrape Marquees and Banners",
+			ctx.fe_settings.get_info_bool( FeSettings::ScrapeMarquees ) ? bool_opts[0] : bool_opts[1],
+			"_help_scrape_marquees" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST,
+			"Scrape Flyers and Box Covers",
+			ctx.fe_settings.get_info_bool( FeSettings::ScrapeFlyers ) ? bool_opts[0] : bool_opts[1],
+			"_help_scrape_flyers" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST,
+			"Scrape Game Logos (Wheel Art)",
+			ctx.fe_settings.get_info_bool( FeSettings::ScrapeWheels ) ? bool_opts[0] : bool_opts[1],
+			"_help_scrape_wheels" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeScraperMenu::save( FeConfigContext &ctx )
+{
+	ctx.fe_settings.set_info( FeSettings::ScrapeSnaps,
+			ctx.opt_list[0].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	ctx.fe_settings.set_info( FeSettings::ScrapeMarquees,
+			ctx.opt_list[1].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	ctx.fe_settings.set_info( FeSettings::ScrapeFlyers,
+			ctx.opt_list[2].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	ctx.fe_settings.set_info( FeSettings::ScrapeWheels,
+			ctx.opt_list[3].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	return true;
+}
+
 void FeMiscMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Configure / Miscellaneous" );
@@ -1345,31 +1414,31 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 
 	ctx.add_optl( Opt::LIST,
 			"Allow Exit from 'Displays Menu'",
-			ctx.fe_settings.get_displays_menu_exit() ? bool_opts[0] : bool_opts[1],
+			ctx.fe_settings.get_info_bool( FeSettings::DisplaysMenuExit ) ? bool_opts[0] : bool_opts[1],
 			"_help_displays_menu_exit" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	ctx.add_optl( Opt::LIST,
 			"Hide Brackets in Game Title",
-			ctx.fe_settings.hide_brackets() ? bool_opts[0] : bool_opts[1],
+			ctx.fe_settings.get_info_bool( FeSettings::HideBrackets ) ? bool_opts[0] : bool_opts[1],
 			"_help_hide_brackets" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	ctx.add_optl( Opt::LIST,
 			"Launch Last Game on Startup",
-			ctx.fe_settings.autolaunch_last_game() ? bool_opts[0] : bool_opts[1],
+			ctx.fe_settings.get_info_bool( FeSettings::AutoLaunchLastGame ) ? bool_opts[0] : bool_opts[1],
 			"_help_autolaunch_last_game" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	ctx.add_optl( Opt::LIST,
 			"Confirm Favourites",
-			ctx.fe_settings.confirm_favs() ? bool_opts[0] : bool_opts[1],
+			ctx.fe_settings.get_info_bool( FeSettings::ConfirmFavourites ) ? bool_opts[0] : bool_opts[1],
 			"_help_confirm_favs" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	ctx.add_optl( Opt::LIST,
 			"Track Usage",
-			ctx.fe_settings.track_usage() ? bool_opts[0] : bool_opts[1],
+			ctx.fe_settings.get_info_bool( FeSettings::TrackUsage ) ? bool_opts[0] : bool_opts[1],
 			"_help_track_usage" );
 	ctx.back_opt().append_vlist( bool_opts );
 
@@ -1703,6 +1772,7 @@ void FeConfigMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::SUBMENU, "Sound", "", "_help_sound" );
 	ctx.add_optl( Opt::SUBMENU, "Screen Saver", "", "_help_screen_saver" );
 	ctx.add_optl( Opt::SUBMENU, "Plug-ins", "", "_help_plugins" );
+	ctx.add_optl( Opt::SUBMENU, "Scraper", "", "_help_scraper" );
 	ctx.add_optl( Opt::SUBMENU, "General", "", "_help_misc" );
 
 	//
@@ -1738,6 +1808,9 @@ bool FeConfigMenu::on_option_select(
 		submenu = &m_plugin_menu;
 		break;
 	case 6:
+		submenu = &m_scraper_menu;
+		break;
+	case 7:
 		submenu = &m_misc_menu;
 		break;
 	default:

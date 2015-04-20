@@ -320,7 +320,7 @@ FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int
 	}
 
 	FeTextureContainer *new_tex = new FeTextureContainer( is_artwork, name );
-	new_tex->set_smooth( m_feSettings->smooth_images() );
+	new_tex->set_smooth( m_feSettings->get_info_bool( FeSettings::SmoothImages ) );
 
 	FeImage *new_image = new FeImage( new_tex, x, y, w, h );
 	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
@@ -378,7 +378,7 @@ FeListBox *FePresent::add_listbox( int x, int y, int w, int h,
 FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> &l )
 {
 	FeSurfaceTextureContainer *new_surface = new FeSurfaceTextureContainer( w, h );
-	new_surface->set_smooth( m_feSettings->smooth_images() );
+	new_surface->set_smooth( m_feSettings->get_info_bool( FeSettings::SmoothImages ) );
 
 	//
 	// Set the default sprite size to the same as the texture itself

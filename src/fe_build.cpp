@@ -33,18 +33,17 @@
 #include <map>
 
 #ifndef NO_NET
-#include <SFML/Network.hpp>
+#include "fe_net.hpp"
 #endif // NO_NET
 
 extern const char *FE_ROMLIST_SUBDIR;
 
 namespace {
 
-void build_basic_romlist( const FeEmulatorInfo &emulator,
-				FeRomInfoListType &romlist )
+void build_basic_romlist( FeImporterContext &c )
 {
 	std::vector<std::string> names_list;
-	emulator.gather_rom_names( names_list );
+	c.emulator.gather_rom_names( names_list );
 
 	for ( std::vector<std::string>::const_iterator its=names_list.begin(); its != names_list.end(); ++its )
 	{
@@ -52,10 +51,10 @@ void build_basic_romlist( const FeEmulatorInfo &emulator,
 		new_rom.set_info( FeRomInfo::Romname, (*its) );
 		new_rom.set_info( FeRomInfo::Title, (*its) );
 
-		romlist.push_back( new_rom );
+		c.romlist.push_back( new_rom );
 	}
 
-	std::cout << "Found " << names_list.size() << " files." << std::endl;
+	std::cout << " - Found " << names_list.size() << " files." << std::endl;
 }
 
 std::string url_escape( const std::string &raw )
@@ -82,219 +81,11 @@ std::string url_escape( const std::string &raw )
 	return escaped.str();
 }
 
-void apply_xml_import( const FeEmulatorInfo &emulator,
-				FeRomInfoListType &romlist,
-				FeXMLParser::UiUpdate uiupdate=NULL, void *uiupdatedata=NULL, bool full=false )
-{
-	std::string source = emulator.get_info(
-				FeEmulatorInfo::Info_source );
-
-	if ( source.empty() )
-		return;
-
-	std::string base_command = clean_path( emulator.get_info(
-				FeEmulatorInfo::Executable ) );
-
-	if ( source.compare( "mame" ) == 0 )
-	{
-		std::cout << "Obtaining -listxml info...";
-		FeMameXMLParser mamep( romlist, uiupdate, uiupdatedata, full );
-		mamep.parse( base_command );
-		std::cout << std::endl;
-	}
-	else if ( source.compare( "mess" ) == 0 )
-	{
-		std::string system_name = emulator.get_info( FeEmulatorInfo::System );
-		if ( system_name.empty() )
-		{
-			std::cout << "Note: No system configured for emulator: "
-				<< emulator.get_info( FeEmulatorInfo::Name )
-				<< ", unable to obtain -listsoftware info."
-				<< std::endl;
-			return;
-		}
-
-		std::cout << "Obtaining -listsoftware info...";
-		FeMessXMLParser messp( romlist, uiupdate, uiupdatedata, full );
-		messp.parse( base_command, system_name );
-		std::cout << std::endl;
-	}
-	else if ( source.compare( "steam" ) == 0 )
-	{
-		const std::vector<std::string> &paths = emulator.get_paths();
-		const std::vector<std::string> &exts = emulator.get_extensions();
-		if ( paths.empty() || exts.empty() )
-			return;
-
-		std::string path = clean_path( paths.front(), true );
-		const std::string &extension = exts.front();
-
-		// A bit mislabelled: the steam import isn't really xml.
-		for ( FeRomInfoListType::iterator itr = romlist.begin(); itr != romlist.end(); ++itr )
-		{
-			// We expect appmanifest_* entries in the romname field.  Open each of these files and
-			// extract the data we can use in our list
-			const std::string &n = (*itr).get_info( FeRomInfo::Romname );
-			std::string fname = path + n + extension;
-
-			//
-			// First, Fix the Romname entry in case we don't find it in the manifest
-			//
-			size_t start_pos = n.find_last_of( "_" );
-			if ( start_pos != std::string::npos )
-				(*itr).set_info( FeRomInfo::Romname,
-						n.substr( start_pos + 1 ) );
-
-			std::ifstream myfile( fname.c_str() );
-
-			int fields_left( 3 );
-
-			if ( myfile.is_open() )
-			{
-				while ( myfile.good() && ( fields_left > 0 ) )
-				{
-					std::string line, val;
-					size_t pos( 0 );
-
-					getline( myfile, line );
-
-					token_helper( line, pos, val, FE_WHITESPACE );
-
-					if ( icompare( val, "appid" ) == 0 )
-					{
-						std::string id;
-						token_helper( line, pos, id, FE_WHITESPACE );
-						(*itr).set_info( FeRomInfo::Romname, id );
-						fields_left--;
-					}
-					else if ( icompare( val, "name" ) == 0 )
-					{
-						std::string name;
-						token_helper( line, pos, name, FE_WHITESPACE );
-						(*itr).set_info( FeRomInfo::Title, name );
-						fields_left--;
-					}
-					else if ( icompare( val, "installdir" ) == 0 )
-					{
-						std::string altname;
-						token_helper( line, pos, altname, FE_WHITESPACE );
-						(*itr).set_info( FeRomInfo::AltRomname, altname );
-						fields_left--;
-					}
-				}
-
-				ASSERT( !fields_left );
-			}
-			else
-				std::cerr << "Error opening file: " << fname << std::endl;
-		}
-	}
-#ifndef NO_NET
-	else if ( source.compare( "thegamesdb.net" ) == 0 )
-	{
-		const char *HOSTNAME = "http://thegamesdb.net";
-		const char *PLATFORM_REQ = "api/GetPlatformsList.php";
-		const char *GAME_REQ = "api/GetGame.php?name=$1&platform=$2";
-		const char *FROM_FIELD = "From";
-		const char *FROM_VALUE = "user@attractmode.org";
-		const char *UA_FIELD = "User-Agent";
-		const char *UA_VALUE = "Attract-Mode/1.x";
-
-		sf::Http http;
-		http.setHost( HOSTNAME );
-
-		//
-		// Get a list of valid platforms
-		//
-		sf::Http::Request req( PLATFORM_REQ );
-		req.setField( FROM_FIELD, FROM_VALUE );
-		req.setField( UA_FIELD, UA_VALUE );
-
-		sf::Http::Response resp = http.sendRequest( req );
-		sf::Http::Response::Status status = resp.getStatus();
-
-		if ( status != sf::Http::Response::Ok )
-		{
-			std::cout << "[thegamesdb.net scraper] Error getting platform list.  Code: " << status << std::endl;
-			return;
-		}
-
-		FeGameDBPlatformParser gdbpp;
-		gdbpp.parse( resp.getBody() );
-
-		const std::vector<std::string> &sl_temp = emulator.get_systems();
-		std::vector<std::string> system_list;
-		for ( std::vector<std::string>::const_iterator itr = sl_temp.begin(); itr!=sl_temp.end(); ++itr )
-		{
-			if ( gdbpp.m_set.find( *itr ) != gdbpp.m_set.end() )
-				system_list.push_back( *itr );
-			else
-				std::cout << "[thegamesdb.net scraper] System identifier '" << (*itr) << "' not recognized by "
-					<< HOSTNAME << std::endl;
-		}
-
-		if ( system_list.size() < 1 )
-		{
-			std::cout << "[thegamesdb.net scraper] Error, no valid system identifier available." << std::endl;
-			return;
-		}
-
-		int i=0;
-		for ( FeRomInfoListType::iterator itr=romlist.begin(); itr!=romlist.end(); ++itr )
-		{
-			bool exact_match( false );
-			for ( std::vector<std::string>::iterator its=system_list.begin();
-					its!=system_list.end(); ++its )
-			{
-				std::string req_string = GAME_REQ;
-				std::string game = url_escape(
-						name_with_brackets_stripped( (*itr).get_info( FeRomInfo::Romname ) ) );
-
-				std::string system = url_escape( *its );
-
-				perform_substitution( req_string, "$1", game );
-				perform_substitution( req_string, "$2", system );
-
-				req.setUri( req_string );
-				resp = http.sendRequest( req );
-				status = resp.getStatus();
-
-				if ( uiupdate )
-				{
-					int p = i * 100 / romlist.size();
-					if ( uiupdate( uiupdatedata, p ) == false )
-						break;
-				}
-
-				if ( status != sf::Http::Response::Ok )
-				{
-					std::cout << "[thegamesdb.net scraper] Error getting game information.  Game: "
-						<< (*itr).get_info( FeRomInfo::Romname ) << ", Code: " << status << std::endl;
-					break;
-				}
-
-				FeGameDBParser gdbp( *itr );
-				gdbp.parse( resp.getBody(), exact_match );
-
-				if ( exact_match )
-					break;
-			}
-			i++;
-		}
-	}
-#endif
-	else
-	{
-		std::cout << "Unrecognized import_source setting: " << source
-					<< std::endl;
-	}
-}
-
 void write_romlist( const std::string &filename,
 				const FeRomInfoListType &romlist )
 {
 
-	std::cout << "Writing " << romlist.size() << " entries to: "
+	std::cout << " + Writing " << romlist.size() << " entries to: "
 				<< filename << std::endl;
 
 	int i=0;
@@ -414,10 +205,9 @@ void ini_import( const std::string &filename,
 		<< " entries." << std::endl;
 }
 
-void apply_import_extras( const FeEmulatorInfo &emulator,
-				FeRomInfoListType &romlist )
+void apply_import_extras( FeImporterContext &c )
 {
-	const std::vector< std::string > &extras = emulator.get_import_extras();
+	const std::vector< std::string > &extras = c.emulator.get_import_extras();
 
 	for ( std::vector< std::string >::const_iterator itr = extras.begin();
 			itr != extras.end(); ++itr )
@@ -425,9 +215,9 @@ void apply_import_extras( const FeEmulatorInfo &emulator,
 		std::string path = clean_path( *itr );
 
 		if ( tail_compare( path, "catver.ini" ) )
-			ini_import( path, romlist, FeRomInfo::Category, "[Category]" );
+			ini_import( path, c.romlist, FeRomInfo::Category, "[Category]" );
 		else if ( tail_compare( path, "nplayers.ini" ) )
-			ini_import( path, romlist, FeRomInfo::Players, "[NPlayers]" );
+			ini_import( path, c.romlist, FeRomInfo::Players, "[NPlayers]" );
 		else
 			std::cout << "Unsupported import_extras file: " << path << std::endl;
 	}
@@ -517,6 +307,404 @@ void apply_emulator_name( const std::string &name,
 
 }; // end namespace
 
+bool FeSettings::mamedb_scraper( FeImporterContext &c )
+{
+#ifndef NO_NET
+	if (( c.emulator.get_info( FeEmulatorInfo::Info_source ).compare( "mame" ) != 0 )
+				|| ( !m_scrape_snaps && !m_scrape_marquees ))
+		return true;
+
+	const char *MAMEDB = "http://mamedb.com";
+
+	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
+	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
+	base_path += emu_name + "/";
+
+	FeNetQueue q;
+	int taskc( 0 );
+	int done( 0 );
+
+	for ( FeRomInfoListType::iterator itr=c.romlist.begin(); itr!=c.romlist.end(); ++itr )
+	{
+		// ugh, this must be set for has_artwork() to correctly function
+		(*itr).set_info( FeRomInfo::Emulator, emu_name );
+
+		if ( m_scrape_marquees && !has_artwork( *itr, "marquee" ) )
+		{
+			const char *MARQUEE = "marquee/";
+			std::string fname = base_path + MARQUEE + (*itr).get_info( FeRomInfo::Romname );
+			confirm_directory( base_path, MARQUEE );
+			q.add_file_task( MAMEDB, "marquees/" + (*itr).get_info( FeRomInfo::Romname ) +".png", fname );
+			taskc++;
+		}
+
+		if ( m_scrape_snaps && !has_artwork( *itr, "snap" ) )
+		{
+			const char *SNAP = "snap/";
+			std::string fname = base_path + SNAP + (*itr).get_info( FeRomInfo::Romname );
+			confirm_directory( base_path, SNAP );
+			q.add_file_task( MAMEDB, SNAP + (*itr).get_info( FeRomInfo::Romname ) +".png", fname );
+			taskc++;
+		}
+	}
+
+	//
+	// Create worker threads to process the queue.
+	//
+	FeNetWorker worker1( q ), worker2( q ), worker3( q ), worker4( q );
+
+	//
+	// Process the output queue from our worker threads
+	//
+	while ( !( q.input_done() && q.output_done() ) )
+	{
+		int id;
+		std::string result;
+		if ( q.pop_completed_task( id, result ) )
+		{
+			if ( id < 0 )
+			{
+				if ( id == -1 )
+					std::cout << " + Downloaded: " << result << std::endl;
+
+				done++;
+			}
+		}
+
+		if ( c.uiupdate )
+		{
+			int p = c.progress_past + done * c.progress_range / taskc;
+			if ( c.uiupdate( c.uiupdatedata, p ) == false )
+				return false;
+		}
+	}
+#endif
+	return true;
+}
+
+bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
+{
+#ifndef NO_NET
+	const char *HOSTNAME = "http://thegamesdb.net";
+	const char *PLATFORM_REQ = "api/GetPlatformsList.php";
+	const char *GAME_REQ = "api/GetGame.php?name=$1";
+
+	//
+	// Get a list of valid platforms
+	//
+	FeNetQueue q;
+	q.add_buffer_task( HOSTNAME, PLATFORM_REQ, 0 );
+	sf::Http::Response::Status status;
+	q.do_next_task( status );
+
+	if ( status != sf::Http::Response::Ok )
+	{
+		std::cout << "[thegamesdb.net scraper] Error getting platform list.  Code: " << status << std::endl;
+		return true;
+	}
+
+	int temp;
+	std::string body;
+	q.pop_completed_task( temp, body );
+
+	FeGameDBPlatformParser gdbpp;
+	gdbpp.parse( body );
+
+	const std::vector<std::string> &sl_temp = c.emulator.get_systems();
+	std::vector<std::string> system_list;
+	for ( std::vector<std::string>::const_iterator itr = sl_temp.begin(); itr!=sl_temp.end(); ++itr )
+	{
+		if ( gdbpp.m_set.find( *itr ) != gdbpp.m_set.end() )
+			system_list.push_back( *itr );
+		else
+			std::cout << "[thegamesdb.net scraper] System identifier '" << (*itr) << "' not recognized by "
+				<< HOSTNAME << std::endl;
+	}
+
+	if ( system_list.size() < 1 )
+	{
+		std::cout << "[thegamesdb.net scraper] Error, no valid system identifier available." << std::endl;
+		return true;
+	}
+
+	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
+
+	//
+	// Build a worklist of the roms where we need to lookup
+	//
+	std::vector<FeRomInfo *> worklist;
+	worklist.reserve( c.romlist.size() );
+	for ( FeRomInfoListType::iterator itr=c.romlist.begin(); itr!=c.romlist.end(); ++itr )
+	{
+		(*itr).set_info( FeRomInfo::Emulator, emu_name );
+
+		if ( !c.scrape_art
+				|| ( m_scrape_flyers && (!has_artwork( *itr, "flyer" ) ) )
+				|| ( m_scrape_wheels && (!has_artwork( *itr, "wheel" ) ) )
+				|| ( m_scrape_snaps && (!has_artwork( *itr, "snap" ) ) )
+				|| ( m_scrape_marquees && (!has_artwork( *itr, "marquee" ) ) ) )
+		worklist.push_back( &(*itr) );
+	}
+
+	const int NUM_ARTS=4; // the number of scrape-able artwork types
+	int done_count( 0 );
+
+	std::string base_req_string = GAME_REQ;
+
+	//
+	// If we aren't scraping wheel artwork, then add the specific platform to our request
+	// If we are scraping wheels, we want to be able to grab them where the game name (but
+	// not the system) matches
+	//
+	if (( system_list.size() == 1 )
+		&& ( !c.scrape_art || !m_scrape_wheels ))
+	{
+		base_req_string += "&platform=";
+		base_req_string += url_escape( system_list.front() );
+	}
+
+	//
+	// Set up our initial queue of network tasks
+	//
+	for ( unsigned int i=0; i<worklist.size(); i++ )
+	{
+		std::string req_string = base_req_string;
+
+		std::string game = url_escape(
+				name_with_brackets_stripped( worklist[i]->get_info( FeRomInfo::Title ) ) );
+
+		perform_substitution( req_string, "$1", game );
+		q.add_buffer_task( HOSTNAME, req_string, i );
+	}
+
+	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
+	base_path += emu_name + "/";
+
+	if ( c.scrape_art )
+		confirm_directory( get_config_dir(), FE_SCRAPER_SUBDIR );
+
+	//
+	// Create worker threads to process the queue, adding new tasks to download
+	// artwork files where appropriate
+	//
+	FeNetWorker worker1( q ), worker2( q ), worker3( q ), worker4( q );
+
+	//
+	// Process the output queue from our worker threads
+	//
+	while ( !q.input_done() || !q.output_done() )
+	{
+		int id;
+		std::string result;
+		if ( q.pop_completed_task( id, result ) )
+		{
+			if ( id < 0 )
+			{
+				if ( id == -1 )
+					std::cout << " * Downloaded: " << result << std::endl;
+
+				done_count++;
+			}
+			else
+			{
+				FeGameDBArt my_art;
+				FeGameDBParser gdbp( system_list, *(worklist[id]), ( c.scrape_art ? &my_art : NULL ) );
+				gdbp.parse( result );
+
+				if ( c.scrape_art && !my_art.base.empty() )
+				{
+					std::string hostn = HOSTNAME;
+					std::string base_req = "banners/";
+					size_t pos=0;
+					for ( int i=0; i<3 && ( pos != std::string::npos ); i++ )
+						pos = my_art.base.find_first_of( '/', pos+1 );
+
+					if (( pos != std::string::npos ) && ( pos < my_art.base.size()-1 ) )
+					{
+						hostn = my_art.base.substr( 0, pos+1 );
+						base_req = my_art.base.substr( pos+1 );
+					}
+
+					FeRomInfo &rom = *(worklist[id]);
+
+					if ( m_scrape_flyers && ( !my_art.flyer.empty() ) && (!has_artwork( rom, "flyer" )) )
+					{
+						const char *FLYER = "flyer/";
+						std::string fname = base_path + FLYER + rom.get_info( FeRomInfo::Romname );
+						confirm_directory( base_path, FLYER );
+						q.add_file_task( hostn, base_req + my_art.flyer, fname );
+					}
+					else
+						done_count++;
+
+					if ( m_scrape_wheels && ( !my_art.wheel.empty() ) && (!has_artwork( rom, "wheel" )) )
+					{
+						const char *WHEEL = "wheel/";
+						std::string fname = base_path + WHEEL + rom.get_info( FeRomInfo::Romname );
+						confirm_directory( base_path, WHEEL );
+						q.add_file_task( hostn, base_req + my_art.wheel, fname );
+					}
+					else
+						done_count++;
+
+					if ( m_scrape_marquees && (!my_art.marquee.empty() ) && (!has_artwork( rom, "marquee" )) )
+					{
+						const char *MARQUEE = "marquee/";
+						std::string fname = base_path + MARQUEE + rom.get_info( FeRomInfo::Romname );
+						confirm_directory( base_path, MARQUEE );
+						q.add_file_task( hostn, base_req + my_art.marquee, fname );
+					}
+					else
+						done_count++;
+
+					if ( m_scrape_snaps && (!my_art.snap.empty() ) && (!has_artwork( rom, "snap" )) )
+					{
+						const char *SNAP = "snap/";
+						std::string fname = base_path + SNAP + rom.get_info( FeRomInfo::Romname );
+						confirm_directory( base_path, SNAP );
+						q.add_file_task( hostn, base_req + my_art.snap, fname );
+					}
+					else
+						done_count++;
+				}
+				else
+					done_count+=NUM_ARTS;
+			}
+
+			if ( c.uiupdate )
+			{
+				int p = c.progress_past + done_count * c.progress_range / ( NUM_ARTS * worklist.size() );
+				if ( c.uiupdate( c.uiupdatedata, p ) == false )
+					return false;
+			}
+		}
+		else if ( q.output_done() )
+		{
+			sf::Http::Response::Status status;
+			q.do_next_task( status );
+		}
+		else
+			sf::sleep( sf::milliseconds( 10 ) );
+	}
+#endif
+	return true;
+}
+
+
+void FeSettings::apply_xml_import( FeImporterContext &c )
+{
+	std::string source = c.emulator.get_info(
+				FeEmulatorInfo::Info_source );
+
+	if ( source.empty() )
+		return;
+
+	std::string base_command = clean_path( c.emulator.get_info(
+				FeEmulatorInfo::Executable ) );
+
+	if ( source.compare( "mame" ) == 0 )
+	{
+		std::cout << " - Obtaining -listxml info...";
+		FeMameXMLParser mamep( c );
+		mamep.parse( base_command );
+		std::cout << std::endl;
+	}
+	else if ( source.compare( "mess" ) == 0 )
+	{
+		std::string system_name = c.emulator.get_info( FeEmulatorInfo::System );
+		if ( system_name.empty() )
+		{
+			std::cout << "Note: No system configured for emulator: "
+				<< c.emulator.get_info( FeEmulatorInfo::Name )
+				<< ", unable to obtain -listsoftware info."
+				<< std::endl;
+			return;
+		}
+
+		std::cout << " - Obtaining -listsoftware info...";
+		FeMessXMLParser messp( c );
+		messp.parse( base_command, system_name );
+		std::cout << std::endl;
+	}
+	else if ( source.compare( "steam" ) == 0 )
+	{
+		const std::vector<std::string> &paths = c.emulator.get_paths();
+		const std::vector<std::string> &exts = c.emulator.get_extensions();
+		if ( paths.empty() || exts.empty() )
+			return;
+
+		std::string path = clean_path( paths.front(), true );
+		const std::string &extension = exts.front();
+
+		// A bit mislabelled: the steam import isn't really xml.
+		for ( FeRomInfoListType::iterator itr = c.romlist.begin(); itr != c.romlist.end(); ++itr )
+		{
+			// We expect appmanifest_* entries in the romname field.  Open each of these files and
+			// extract the data we can use in our list
+			const std::string &n = (*itr).get_info( FeRomInfo::Romname );
+			std::string fname = path + n + extension;
+
+			//
+			// First, Fix the Romname entry in case we don't find it in the manifest
+			//
+			size_t start_pos = n.find_last_of( "_" );
+			if ( start_pos != std::string::npos )
+				(*itr).set_info( FeRomInfo::Romname,
+						n.substr( start_pos + 1 ) );
+
+			std::ifstream myfile( fname.c_str() );
+
+			int fields_left( 3 );
+
+			if ( myfile.is_open() )
+			{
+				while ( myfile.good() && ( fields_left > 0 ) )
+				{
+					std::string line, val;
+					size_t pos( 0 );
+
+					getline( myfile, line );
+
+					token_helper( line, pos, val, FE_WHITESPACE );
+
+					if ( icompare( val, "appid" ) == 0 )
+					{
+						std::string id;
+						token_helper( line, pos, id, FE_WHITESPACE );
+						(*itr).set_info( FeRomInfo::Romname, id );
+						fields_left--;
+					}
+					else if ( icompare( val, "name" ) == 0 )
+					{
+						std::string name;
+						token_helper( line, pos, name, FE_WHITESPACE );
+						(*itr).set_info( FeRomInfo::Title, name );
+						fields_left--;
+					}
+					else if ( icompare( val, "installdir" ) == 0 )
+					{
+						std::string altname;
+						token_helper( line, pos, altname, FE_WHITESPACE );
+						(*itr).set_info( FeRomInfo::AltRomname, altname );
+						fields_left--;
+					}
+				}
+
+				ASSERT( !fields_left );
+			}
+			else
+				std::cerr << "Error opening file: " << fname << std::endl;
+		}
+	}
+	else if ( source.compare( "thegamesdb.net" ) == 0 )
+		thegamesdb_scraper( c );
+	else
+	{
+		std::cout << "Unrecognized import_source setting: " << source
+					<< std::endl;
+	}
+}
+
 bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 						const std::string &output_name,
 						FeFilter &filter,
@@ -528,9 +716,11 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 	for ( std::vector<FeImportTask>::const_iterator itr=task_list.begin();
 			itr < task_list.end(); ++itr )
 	{
-		if ( (*itr).file_name.empty() )
+		if ( (*itr).task_type == FeImportTask::BuildRomlist )
 		{
 			// Build romlist task
+			std::cout << "*** Generating Collection/Rom List" << std::endl;
+
 			FeEmulatorInfo *emu = m_rl.get_emulator( (*itr).emulator_name );
 			if ( emu == NULL )
 			{
@@ -543,18 +733,21 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 
 				best_name = emu->get_info( FeEmulatorInfo::Name );
 
-				build_basic_romlist( *emu, romlist );
+				FeImporterContext ctx( *emu, romlist );
+				build_basic_romlist( ctx );
 
-				apply_xml_import( *emu, romlist, NULL, NULL, full );
-				apply_import_extras( *emu, romlist );
+				apply_xml_import( ctx );
+				apply_import_extras( ctx );
 
 				apply_emulator_name( best_name, romlist );
 				total_romlist.splice( total_romlist.end(), romlist );
 			}
 		}
-		else
+		else if ( (*itr).task_type == FeImportTask::ImportRomlist )
 		{
 			// import romlist from file task
+			std::cout << "*** Importing Collection/Rom List" << std::endl;
+
 			FeRomInfoListType romlist;
 			std::string emu_name;
 
@@ -618,22 +811,62 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 					<<  emu_name << std::endl;
 			}
 			else
-				apply_import_extras( *emu, romlist );
+			{
+				FeImporterContext ctx( *emu, romlist );
+				apply_import_extras( ctx );
+			}
 
 			total_romlist.splice( total_romlist.end(), romlist );
 		}
+		else // scrape artwork
+		{
+			FeEmulatorInfo *emu = m_rl.get_emulator( (*itr).emulator_name );
+			if ( emu == NULL )
+				return false;
+
+			std::cout << "*** Scraping artwork for: " << (*itr).emulator_name << std::endl;
+
+			FeRomInfoListType romlist;
+			std::string fn = get_config_dir() + FE_ROMLIST_SUBDIR + (*itr).emulator_name + FE_ROMLIST_FILE_EXTENSION;
+
+			FeImporterContext ctx( *emu, romlist );
+			if ( file_exists( fn ) )
+			{
+				FeRomList loader( get_config_dir() );
+				loader.load_from_file( fn, ";" );
+				ctx.romlist.swap( loader.get_list() );
+			}
+			else
+			{
+				build_basic_romlist( ctx );
+				apply_xml_import( ctx );
+			}
+
+			ctx.scrape_art = true;
+
+			// do the mamedb scraper first (which only does anything for mame) followed
+			// by the more general thegamesdb scraper.
+			mamedb_scraper( ctx );
+			thegamesdb_scraper( ctx );
+
+			std::cout << "*** Scraping done." << std::endl;
+		}
 	}
+
+	// return now if all we did was scrape artwork
+	if ( total_romlist.empty() )
+		return true;
 
 	total_romlist.sort( FeRomListSorter() );
 
 	// strip duplicate entries
-	std::cout << "Removing any duplicate entries..." << std::endl;
+	std::cout << " - Removing any duplicate entries..." << std::endl;
 	total_romlist.unique();
 
 	// Apply the specified filter
 	if ( filter.get_rule_count() > 0 )
 	{
-		std::cout << "Applying filter..." << std::endl;
+		std::cout << " - Applying filter..." << std::endl;
 		filter.init();
 
 		FeRomInfoListType::iterator last_it=total_romlist.begin();
@@ -689,17 +922,23 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	if ( uiu )
 		uiu( uid, 0 );
 
-	FeRomInfoListType romlist;
-	build_basic_romlist( *emu, romlist );
+	std::cout << "*** Generating Collection/Rom List" << std::endl;
 
-	apply_xml_import( *emu, romlist, uiu, uid );
-	apply_import_extras( *emu, romlist );
+	FeRomInfoListType romlist;
+
+	FeImporterContext ctx( *emu, romlist );
+	ctx.uiupdate = uiu;
+	ctx.uiupdatedata = uid;
+
+	build_basic_romlist( ctx );
+	apply_xml_import( ctx );
+	apply_import_extras( ctx );
 	apply_emulator_name( emu_name, romlist );
 
 	romlist.sort( FeRomListSorter() );
 
 	// strip duplicate entries
-	std::cout << "Removing any duplicate entries..." << std::endl;
+	std::cout << " - Removing any duplicate entries..." << std::endl;
 	romlist.unique();
 
 	size = romlist.size();
@@ -715,5 +954,60 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	filename += FE_ROMLIST_FILE_EXTENSION;
 	write_romlist( filename, romlist );
 
+	return true;
+}
+
+bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid )
+{
+	FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
+	if ( emu == NULL )
+		return false;
+
+	//
+	// Put up the "scraping artwork" message at 0 percent while we get going...
+	//
+	if ( uiu )
+		uiu( uid, 0 );
+
+	std::cout << "*** Scraping artwork for: " << emu_name << std::endl;
+
+	FeRomInfoListType romlist;
+
+	std::string fn = get_config_dir() + FE_ROMLIST_SUBDIR + emu_name + FE_ROMLIST_FILE_EXTENSION;
+
+	FeImporterContext ctx( *emu, romlist );
+	ctx.uiupdate = uiu;
+	ctx.uiupdatedata = uid;
+
+	if ( file_exists( fn ) )
+	{
+		FeRomList loader( get_config_dir() );
+		loader.load_from_file( fn, ";" );
+		ctx.romlist.swap( loader.get_list() );
+	}
+	else
+	{
+		ctx.progress_range=33;
+		build_basic_romlist( ctx );
+		apply_xml_import( ctx );
+		ctx.progress_past=33;
+	}
+
+	ctx.progress_range = ( 100-ctx.progress_past ) / 2;
+	ctx.scrape_art = true;
+
+	// do the mamedb scraper first (which only does anything for mame) followed
+	// by the more general thegamesdb scraper.  these return false if the user
+	// cancels...
+	if ( mamedb_scraper( ctx ) )
+	{
+		ctx.progress_past = ctx.progress_past + ctx.progress_range;
+		thegamesdb_scraper( ctx );
+	}
+
+	if ( uiu )
+		uiu( uid, 100 );
+
+	std::cout << "*** Scraping done." << std::endl;
 	return true;
 }

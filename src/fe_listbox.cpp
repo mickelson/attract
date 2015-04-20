@@ -288,7 +288,7 @@ void FeListBox::on_new_list( FeSettings *s )
 	}
 	else
 	{
-		if ( s->hide_brackets() )
+		if ( s->get_info_bool( FeSettings::HideBrackets ) )
 		{
 			for ( int i=0; i < filter_size; i++ )
 			{

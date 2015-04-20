@@ -6,9 +6,9 @@ MAME, MESS, and Nestopia.  It hides the underlying operating system and is
 intended to be controlled with a joystick, gamepad or spin dial, making it
 ideal for use in arcade cabinet setups.
 
-Attract-Mode was originally developed for use in Linux.  It is known to work
-on Ubuntu Linux (x86, x86-64), Mac OS X (10.6.8), and Windows (x86 and
-x86-64, XP, 7).
+Attract-Mode was originally developed for Linux.  It is known to work on
+Linux (x86, Raspberry Pi), Mac OS X (10.6.8+), and Windows (XP, 7, 32 and
+64 bit) based-systems.
 
 Attract-Mode is licensed under the terms of the GNU General Public License,
 version 3 or later.
@@ -47,7 +47,9 @@ for your system (file locations etc).
 4. Once you have an emulator configured correctly for your system, select
 the "Generate Collection/Rom List" option from the emulator's configuration
 menu.  Attract-Mode will use the configured emulator settings to generate a
-list of available games for the emulator.
+list of available games for the emulator.  Next select the "Scrape Artwork"
+option if you want to have Attract-Mode go and automatically download artwork
+images for this emulator from thegamesdb.net and mamedb.com.
 
 5.  Exit config mode by selecting the "Back" option a few times.  You should
 now have a usable front-end!
@@ -108,7 +110,8 @@ the selection order.
 
 **ARTWORK SELECTION ORDER:**
 
-   * From the artwork path configured for the emulator (if any):
+   * From the artwork paths configured for the emulator (if any) and the
+     previously scraped artworks (if any):
 
       - [Name].*      (video, i.e. "pacman.mp4")
       - [CloneOf].*   (video, i.e. "puckman.mp4")
@@ -135,13 +138,14 @@ the selection order.
 
 **LAYOUTS:** Attract-Mode's layouts are located in the "layouts" directory.
 Each layout gets its own subdirectory.  Attract-Mode's native layouts are
-made up of a squirrel script and related resources.  See [Layouts.md][] for
-more information on Attract-Mode layouts.  Attract-Mode can also use
-layouts made for the [MALA frontend][malafe.net].  To use a MALA layout
-in Attract-Mode, copy the MALA .mll file and related resources into a
-new subdirectory of the Attract-Mode "layouts" directory.  After doing this
-you should be able to select the MALA layout when configuring a Display in
-config mode.
+made up of a squirrel script (a .nut file) and related resources.  See
+[Layouts.md][] for more information on Attract-Mode layouts.
+
+Attract-Mode can also use layouts made for the [MALA frontend][malafe.net].
+To use a MALA layout in Attract-Mode, copy the MALA .mll file and related
+resources into a new subdirectory of the Attract-Mode "layouts" directory.
+After doing this you should be able to select the MALA layout when
+configuring a Display in config mode.
 
 **PLUG-INS:** Plug-ins are squirrel scripts that need to be placed in the
 "plugins" subdirectory of your Attract-Mode config directory.  Available

@@ -33,23 +33,35 @@ extern const char *FE_ART_EXTENSIONS[];
 extern const char *FE_CFG_FILE;
 
 extern const char *FE_ROMLIST_SUBDIR;
+extern const char *FE_SCRAPER_SUBDIR;
 extern const char *FE_LAYOUT_FILE_BASE;
 extern const char *FE_LAYOUT_FILE_EXTENSION;
 
 extern const char *FE_CFG_YES_STR;
 extern const char *FE_CFG_NO_STR;
 
+class FeImporterContext;
+
 // A container for each task when importing/building romlists from the command line
 class FeImportTask
 {
 public:
-	FeImportTask( const std::string &fn, const std::string &en )
-		: file_name( fn ), emulator_name( en )
+
+	enum TaskType
+	{
+		BuildRomlist,
+		ImportRomlist,
+		ScrapeArtwork
+	};
+
+	FeImportTask( TaskType t, const std::string &en, const std::string &fn="" )
+		: task_type( t ), emulator_name( en ), file_name( fn )
 	{
 	};
 
-	std::string file_name;		// if empty, then we build romlist for specified emulator
+	TaskType task_type;
 	std::string emulator_name;
+	std::string file_name;
 };
 
 class FeSettings : public FeBaseConfigurable
@@ -84,6 +96,10 @@ public:
 		SmoothImages,
 		AccelerateSelection,
 		SelectionSpeed,
+		ScrapeSnaps,
+		ScrapeMarquees,
+		ScrapeFlyers,
+		ScrapeWheels,
 		LAST_INDEX
 	};
 
@@ -126,6 +142,10 @@ private:
 	FilterWrapModeType m_filter_wrap_mode;
 	bool m_accel_selection;
 	int m_selection_speed;
+	bool m_scrape_snaps;
+	bool m_scrape_marquees;
+	bool m_scrape_flyers;
+	bool m_scrape_wheels;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
@@ -144,6 +164,11 @@ private:
 			const char *subdir ) const;
 
 	void internal_load_language( const std::string &lang );
+
+	bool mamedb_scraper( FeImporterContext & );
+	bool thegamesdb_scraper( FeImporterContext & );
+	void apply_xml_import( FeImporterContext & );
+
 
 public:
 	FeSettings( const std::string &config_dir,
@@ -210,10 +235,8 @@ public:
 	const std::string &get_current_display_title() const;
 	const std::string &get_rom_info( int filter_offset, int rom_offset, FeRomInfo::Index index );
 	const std::string &get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index );
-	bool hide_brackets() const { return m_hide_brackets; }
-	bool autolaunch_last_game() const { return m_autolaunch_last_game; }
-	bool smooth_images() const { return m_smooth_images; }
-	bool accelerate_selection() const { return m_accel_selection; }
+	FeRomInfo *get_rom_absolute( int filter_index, int rom_index );
+
 	int selection_speed() const { return m_selection_speed; }
 
 	// get a list of available plugins
@@ -235,6 +258,16 @@ public:
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
 	FeLayoutInfo &get_current_layout_config();
 
+	bool get_best_artwork_file(
+		const FeRomInfo &rom,
+		const std::string &art_name,
+		std::vector<std::string> &vid_list,
+		std::vector<std::string> &image_list,
+		bool is_screen_saver,
+		bool ignore_layout );
+
+	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
+
 	std::string get_module_dir( const std::string &module_file ) const;
 
 	const std::string &get_config_dir() const;
@@ -244,7 +277,6 @@ public:
 	WindowType get_window_mode() const;
 	FilterWrapModeType get_filter_wrap_mode() const;
 	int get_screen_saver_timeout() const;
-	bool get_displays_menu_exit() const;
 
 	bool get_current_fav() const;
 
@@ -252,9 +284,6 @@ public:
 	bool set_current_fav( bool );
 	int get_prev_fav_offset() const;
 	int get_next_fav_offset() const;
-	bool confirm_favs() const { return m_confirm_favs; }
-
-	bool track_usage() const { return m_track_usage; }
 
 	int get_next_letter_offset( int step ) const;
 
@@ -280,6 +309,7 @@ public:
 	//
 	typedef bool (*UiUpdate) ( void *, int );
 	bool build_romlist( const std::string &emu_name, UiUpdate, void *, int & );
+	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid );
 
 	FeEmulatorInfo *get_emulator( const std::string & );
 	FeEmulatorInfo *create_emulator( const std::string & );
@@ -288,8 +318,9 @@ public:
 	//
 	// Functions used for configuration
 	//
-   const std::string get_info( int index ) const; // see "ConfigSettingIndex"
-   bool set_info( int index, const std::string & );
+	const std::string get_info( int index ) const; // see "ConfigSettingIndex"
+	bool get_info_bool( int index ) const;
+	bool set_info( int index, const std::string & );
 
 	void get_display_names( std::vector<std::string> &d ) const;
 	FeDisplayInfo *get_display( int index );

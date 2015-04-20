@@ -163,6 +163,9 @@ else
 	-lsfml-window \
 	-lsfml-network \
 	-lsfml-system
+
+  _DEP += fe_net.hpp
+  _OBJ += fe_net.o
  endif
 endif
 
