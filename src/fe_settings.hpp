@@ -100,6 +100,7 @@ public:
 		ScrapeMarquees,
 		ScrapeFlyers,
 		ScrapeWheels,
+		ScrapeFanArt,
 		LAST_INDEX
 	};
 
@@ -146,6 +147,7 @@ private:
 	bool m_scrape_marquees;
 	bool m_scrape_flyers;
 	bool m_scrape_wheels;
+	bool m_scrape_fanart;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );

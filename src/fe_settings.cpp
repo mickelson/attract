@@ -220,7 +220,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_scrape_snaps( true ),
 	m_scrape_marquees( true ),
 	m_scrape_flyers( true ),
-	m_scrape_wheels( true )
+	m_scrape_wheels( true ),
+	m_scrape_fanart( false )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -362,6 +363,7 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_marquees",
 	"scrape_flyers",
 	"scrape_wheels",
+	"scrape_fanart",
 	NULL
 };
 
@@ -1676,6 +1678,7 @@ const std::string FeSettings::get_info( int index ) const
 	case ScrapeMarquees:
 	case ScrapeFlyers:
 	case ScrapeWheels:
+	case ScrapeFanArt:
 		return ( get_info_bool( index ) ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	default:
@@ -1710,6 +1713,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_scrape_flyers;
 	case ScrapeWheels:
 		return m_scrape_wheels;
+	case ScrapeFanArt:
+		return m_scrape_fanart;
 	default:
 		break;
 	}
@@ -1851,6 +1856,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ScrapeWheels:
 		m_scrape_wheels = config_str_to_bool( value );
+		break;
+
+	case ScrapeFanArt:
+		m_scrape_fanart = config_str_to_bool( value );
 		break;
 
 	default:

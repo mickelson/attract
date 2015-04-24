@@ -1336,19 +1336,19 @@ void FeScraperMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_resource( "No", bool_opts[1] );
 
 	ctx.add_optl( Opt::LIST,
-			"Scrape Snapshots",
+			"Scrape Snaps",
 			ctx.fe_settings.get_info_bool( FeSettings::ScrapeSnaps ) ? bool_opts[0] : bool_opts[1],
 			"_help_scrape_snaps" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	ctx.add_optl( Opt::LIST,
-			"Scrape Marquees and Banners",
+			"Scrape Marquees",
 			ctx.fe_settings.get_info_bool( FeSettings::ScrapeMarquees ) ? bool_opts[0] : bool_opts[1],
 			"_help_scrape_marquees" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	ctx.add_optl( Opt::LIST,
-			"Scrape Flyers and Box Covers",
+			"Scrape Flyers/Boxart",
 			ctx.fe_settings.get_info_bool( FeSettings::ScrapeFlyers ) ? bool_opts[0] : bool_opts[1],
 			"_help_scrape_flyers" );
 	ctx.back_opt().append_vlist( bool_opts );
@@ -1357,6 +1357,12 @@ void FeScraperMenu::get_options( FeConfigContext &ctx )
 			"Scrape Game Logos (Wheel Art)",
 			ctx.fe_settings.get_info_bool( FeSettings::ScrapeWheels ) ? bool_opts[0] : bool_opts[1],
 			"_help_scrape_wheels" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST,
+			"Scrape Fanart",
+			ctx.fe_settings.get_info_bool( FeSettings::ScrapeFanArt ) ? bool_opts[0] : bool_opts[1],
+			"_help_scrape_fanart" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -1375,6 +1381,9 @@ bool FeScraperMenu::save( FeConfigContext &ctx )
 
 	ctx.fe_settings.set_info( FeSettings::ScrapeWheels,
 			ctx.opt_list[3].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	ctx.fe_settings.set_info( FeSettings::ScrapeFanArt,
+			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	return true;
 }

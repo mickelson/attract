@@ -123,3 +123,4 @@ _help_scrape_snaps;Set whether game snapshots should be downloaded when scraping
 _help_scrape_marquees;Set whether game marquees and banners should be downloaded when scraping
 _help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
 _help_scrape_wheels;Set whether game logos should be downloaded when scraping
+_help_scrape_fanart;Set whether game fanart should be downloaded when scraping

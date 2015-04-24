@@ -333,9 +333,9 @@ _help_control_custom2;Set the "Custom2" control(s)
 Scraper;Scraper
 Scrape Artwork;Scrape Artwork
 Configure / Scraper;Configure / Scraper
-Scrape Snapshots;Scrape Snapshots
-Scrape Marquees and Banners;Scrape Marquees and Banners
-Scrape Flyers and Box Covers;Scrape Flyers and Box Covers
+Scrape Snaps;Scrape Snaps
+Scrape Marquees;Scrape Marquees
+Scrape Flyers/Boxart;Scrape Flyers/Boxart
 Scrape Game Logos (Wheel Art);Scrape Game Logos (Wheel Art)
 Scraping Artwork: $1%;Scraping Artwork: $1%
 
@@ -345,3 +345,5 @@ _help_scrape_snaps;Set whether game snapshots should be downloaded when scraping
 _help_scrape_marquees;Set whether game marquees and banners should be downloaded when scraping
 _help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
 _help_scrape_wheels;Set whether game logos should be downloaded when scraping
+_help_scrape_fanart;Set whether game fan art should be downloaded when scraping
+

@@ -438,7 +438,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	{
 		(*itr).set_info( FeRomInfo::Emulator, emu_name );
 
-		if ( !c.scrape_art
+		if ( !c.scrape_art || m_scrape_fanart
 				|| ( m_scrape_flyers && (!has_artwork( *itr, "flyer" ) ) )
 				|| ( m_scrape_wheels && (!has_artwork( *itr, "wheel" ) ) )
 				|| ( m_scrape_snaps && (!has_artwork( *itr, "snap" ) ) )
@@ -446,7 +446,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		worklist.push_back( &(*itr) );
 	}
 
-	const int NUM_ARTS=4; // the number of scrape-able artwork types
+	const int NUM_ARTS=5; // the number of scrape-able artwork types
 	int done_count( 0 );
 
 	std::string base_req_string = GAME_REQ;
@@ -500,10 +500,11 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		{
 			if ( id < 0 )
 			{
-				if ( id == -1 )
+				if (( id == FeNetTask::FileTask ) || ( id == FeNetTask::SpecialFileTask ))
 					std::cout << " * Downloaded: " << result << std::endl;
 
-				done_count++;
+				if ( id == FeNetTask::FileTask ) // we don't increment if id = FeNetTask::SpecialFileTask
+					done_count++;
 			}
 			else
 			{
@@ -563,6 +564,37 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 						std::string fname = base_path + SNAP + rom.get_info( FeRomInfo::Romname );
 						confirm_directory( base_path, SNAP );
 						q.add_file_task( hostn, base_req + my_art.snap, fname );
+					}
+					else
+						done_count++;
+
+					if ( m_scrape_fanart && !my_art.fanart.empty() )
+					{
+						const char *FANART = "fanart/";
+						std::string fname_base = base_path + FANART + rom.get_info( FeRomInfo::Romname ) + "/";
+						confirm_directory( base_path, "" );
+						confirm_directory( base_path + FANART, rom.get_info( FeRomInfo::Romname ) );
+						bool done_first=false; // we only count the first fanart against our percentage completed...
+
+						for ( std::vector<std::string>::iterator itr = my_art.fanart.begin();
+								itr != my_art.fanart.end(); ++itr )
+						{
+							size_t start_pos = (*itr).find_last_of( "/\\" );
+							size_t end_pos = (*itr).find_last_of( '.' );
+
+							if (( start_pos != std::string::npos )
+								&& ( !file_exists( fname_base + (*itr).substr( start_pos+1 ) ) ))
+							{
+								if (( end_pos != std::string::npos ) && ( end_pos > start_pos ))
+								{
+									q.add_file_task( hostn,
+												base_req + (*itr),
+												fname_base + (*itr).substr( start_pos+1, end_pos-start_pos-1 ),
+												done_first );
+									done_first=true;
+								}
+							}
+						}
 					}
 					else
 						done_count++;

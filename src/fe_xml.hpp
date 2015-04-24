@@ -167,6 +167,7 @@ public:
 	std::string wheel;
 	std::string snap;
 	std::string marquee;
+	std::vector<std::string> fanart;
 
 	void clear();
 };
@@ -194,6 +195,7 @@ private:
 	FeRomInfo &m_rom;
 	FeGameDBArt *m_art;
 	bool m_screenshot;
+	bool m_fanart;
 	bool m_ignore;
 };
 

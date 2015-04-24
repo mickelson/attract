@@ -31,15 +31,18 @@ class FeNetTask
 public:
 	enum TaskType
 	{
-		FeNetNoTask,
-		FeNetFileTask,
-		FeNetBufferTask
+		NoTask=0,
+		FileTask=-1,
+		SpecialFileTask=-2,
+		FileTaskError=-3,
+		BufferTask=-4
 	};
 
 	FeNetTask(
 		const std::string &host,
 		const std::string &req,
-		const std::string &filename );
+		const std::string &filename,
+		TaskType t=FileTask );
 
 	FeNetTask(
 		const std::string &host,
@@ -51,7 +54,6 @@ public:
 	bool do_task( sf::Http::Response::Status &status );
 	void get_result( int &id, std::string &result );
 
-	std::string &get_req() { return m_req; };
 private:
 	TaskType m_type;
 	std::string m_host;
@@ -77,7 +79,8 @@ public:
 
 	void add_file_task( const std::string &host,
 			const std::string &req,
-			const std::string &file_name );
+			const std::string &file_name,
+			bool flag_special=false );
 
 	void add_buffer_task( const std::string &host,
 			const std::string &req,

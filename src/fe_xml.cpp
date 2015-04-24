@@ -29,24 +29,60 @@
 #include <fstream>
 #include <expat.h>
 
+namespace {
+
+void fix_last_word( std::string &str, int pos )
+{
+	struct rep_struct { const char *tok; const char *rep; } rep_list[] =
+	{
+		{ "the", NULL },
+		{ "versus", "vs" },
+		{ "iv", "4" },
+		{ "iii", "3" },
+		{ "ii", "2" },
+		{ NULL, NULL }
+	};
+
+	std::string word = str.substr( pos );
+
+	int j=0;
+	while ( rep_list[j].tok != NULL )
+	{
+		if ( word.compare( rep_list[j].tok ) == 0 )
+		{
+			str.erase( pos );
+			if ( rep_list[j].rep != NULL )
+				str += rep_list[j].rep;
+			break;
+		}
+		j++;
+	}
+}
+
 //
 // Utility function to get strings to use to see if game names match filenames
-// (strips punctuation, spaces, trailing bracketted text, leading "the")
 //
-std::string get_fuzzy( const std::string &s )
+std::string get_fuzzy( const std::string &orig )
 {
 	std::string retval;
-	for ( std::string::const_iterator itr=s.begin(); (( itr!=s.end() ) && ( *itr != '(' )); ++itr )
+	int word_start( 0 ), i( 0 );
+	for ( std::string::const_iterator itr=orig.begin(); (( itr!=orig.end() ) && ( *itr != '(' )); ++itr )
 	{
 		if ( std::isalnum( *itr ) )
+		{
 			retval += std::tolower( *itr );
+			i++;
+		}
+		else
+		{
+			fix_last_word( retval, word_start );
+			i=word_start=retval.length();
+		}
 	}
-
-	// strip 'the' from the beginning
-	if ( (retval.size() > 3) && (retval[0]=='t') && ( retval[1]=='h' ) && ( retval[2]=='e') )
-		return retval.substr( 3 );
-
+	fix_last_word( retval, word_start );
 	return retval;
+}
+
 }
 
 //
@@ -770,6 +806,7 @@ void FeGameDBArt::clear()
 	wheel.clear();
 	snap.clear();
 	marquee.clear();
+	fanart.clear();
 }
 
 FeGameDBParser::FeGameDBParser( std::vector<std::string> &system_list, FeRomInfo &rom, FeGameDBArt *art )
@@ -777,6 +814,7 @@ FeGameDBParser::FeGameDBParser( std::vector<std::string> &system_list, FeRomInfo
 	m_rom( rom ),
 	m_art( art ),
 	m_screenshot( false ),
+	m_fanart( false ),
 	m_ignore( false )
 {
 }
@@ -817,23 +855,40 @@ void FeGameDBParser::start_element(
 				|| ( strcmp( element, "clearlogo" ) == 0 ))
 			m_element_open=true;
 
+
+		else if ( strcmp( element, "fanart" ) == 0 )
+			m_fanart=true;
+
 		else if ( strcmp( element, "screenshot" ) == 0 )
 			m_screenshot=true;
 
-		else if ( m_screenshot && ( strcmp( element, "original" ) == 0 ))
+		else if ( ( m_screenshot || m_fanart ) && ( strcmp( element, "original" ) == 0 ))
 			m_element_open=true;
 
 		else if ( strcmp( element, "boxart" ) == 0 )
 		{
+			std::string side, thumb;
+			int width( 0 ), height( 0 );
+
 			for ( int i=0; attribute[i]; i+=2 )
 			{
 				if ( strcmp( attribute[i], "side" ) == 0 )
-				{
-					if ( strcmp( attribute[i+1], "front" ) == 0 )
-						m_element_open = true;
+					side = attribute[i+1];
+				else if ( strcmp( attribute[i], "thumb" ) == 0 )
+					thumb = attribute[i+1];
+				else if ( strcmp( attribute[i], "width" ) == 0 )
+					width = atoi( attribute[i+1] );
+				else if ( strcmp( attribute[i], "height" ) == 0 )
+					height = atoi( attribute[i+1] );
+			}
 
-					break;
-				}
+			if ( side.compare( "front" ) == 0 )
+			{
+				// If the flyer is goint to be really big, use the thumb instead.
+				if (( width * height ) < 4194304 )
+					m_element_open = true;
+				else
+					m_work_art.flyer = thumb;
 			}
 		}
 	}
@@ -896,8 +951,18 @@ void FeGameDBParser::end_element( const char *element )
 				m_work_art.wheel = m_current_data;
 			else if ( strcmp( element, "original" ) == 0 )
 			{
-				m_work_art.snap = m_current_data;
-				m_screenshot=false;
+				if ( m_fanart )
+				{
+					m_work_art.fanart.push_back( m_current_data );
+					m_fanart = false;
+				}
+				else
+				{
+					if ( m_work_art.snap.empty() )
+						m_work_art.snap = m_current_data;
+
+					m_screenshot=false;
+				}
 			}
 			else if ( strcmp( element, "boxart" ) == 0 )
 				m_work_art.flyer = m_current_data;
@@ -935,6 +1000,7 @@ void FeGameDBParser::end_element( const char *element )
 					m_art->snap = m_work_art.snap;
 					m_art->marquee = m_work_art.marquee;
 					m_art->flyer = m_work_art.flyer;
+					m_art->fanart = m_work_art.fanart;
 
 					if ( !m_work_art.wheel.empty() )
 						m_art->wheel = m_work_art.wheel;
@@ -969,7 +1035,7 @@ void FeGameDBParser::end_element( const char *element )
 bool FeGameDBParser::parse( const std::string &data )
 {
 	m_element_open=m_keep_rom=m_ignore=false;
-	m_screenshot=false;
+	m_screenshot=m_fanart=false;
 	m_continue_parse=true;
 	bool ret_val=true;
 

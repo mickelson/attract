@@ -25,18 +25,20 @@
 #include <iostream>
 
 FeNetTask::FeNetTask( const std::string &host,
-							const std::string &req, const std::string &filename )
-	: m_type( FeNetFileTask ),
+							const std::string &req,
+							const std::string &filename,
+							TaskType t )
+	: m_type( t ),
 	m_host( host ),
 	m_req( req ),
 	m_filename( filename ),
-	m_id( -1 )
+	m_id( FileTaskError )
 {
 }
 
 FeNetTask::FeNetTask( const std::string &host,
 							const std::string &req, int id )
-	: m_type( FeNetBufferTask ),
+	: m_type( BufferTask ),
 	m_host( host ),
 	m_req( req ),
 	m_id( id )
@@ -45,7 +47,8 @@ FeNetTask::FeNetTask( const std::string &host,
 
 
 FeNetTask::FeNetTask()
-: m_type( FeNetNoTask )
+: m_type( NoTask ),
+m_id( 0 )
 {
 }
 
@@ -55,9 +58,6 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 	const char *FROM_VALUE = "user@attractmode.org";
 	const char *UA_FIELD = "User-Agent";
 	const char *UA_VALUE = "Attract-Mode/1.x";
-
-	if ( m_type == FeNetFileTask )
-		m_id=-2;
 
 	sf::Http http;
 	http.setHost( m_host );
@@ -72,7 +72,7 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 	if ( status != sf::Http::Response::Ok )
 		return false;
 
-	if ( m_type == FeNetFileTask )
+	if (( m_type == FileTask ) || ( m_type == SpecialFileTask ))
 	{
 		unsigned int pos = m_req.find_last_of( '.' );
 		if ( pos != std::string::npos )
@@ -87,7 +87,7 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 		outfile << resp.getBody();
 		outfile.close();
 
-		m_id=-1;
+		m_id=m_type;
 		m_result = m_filename;
 	}
 	else
@@ -109,10 +109,12 @@ FeNetQueue::FeNetQueue()
 
 void FeNetQueue::add_file_task( const std::string &host,
 		const std::string &req,
-		const std::string &file_name )
+		const std::string &file_name,
+		bool flag_special )
 {
 	sf::Lock l( m_mutex );
-	m_in_queue.push( FeNetTask( host, req, file_name ) );
+	m_in_queue.push( FeNetTask( host, req, file_name,
+						flag_special ? FeNetTask::SpecialFileTask : FeNetTask::FileTask ) );
 }
 
 void FeNetQueue::add_buffer_task( const std::string &host,
