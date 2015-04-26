@@ -512,7 +512,8 @@ int main(int argc, char *argv[])
 					break;
 			}
 
-			if ( c == FeInputMap::LAST_COMMAND )
+			if (( c == FeInputMap::LAST_COMMAND )
+					|| ( move_state != FeInputMap::LAST_COMMAND ))
 				continue;
 
 			move_state=FeInputMap::LAST_COMMAND;
