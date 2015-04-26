@@ -16,7 +16,7 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 		{
 			label="Monitor " + fe.monitors[i].num + ": Artwork",
 			help="The artwork to display on this monitor",
-			options="marquee,wheel,snap,none",
+			options="marquee,wheel,snap,flyer,fanart,none",
 			order=i*2
 		} );
 	
@@ -33,112 +33,62 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 
 local my_config = fe.get_config();
 
-//
-mm_arts <- [];
-mm_arts_back <- [];
-for ( local i=1; i<fe.monitors.len(); i++ )
+fe.load_module( "fade" );
+
+class MultiMon
 {
-	print( " + MultiMon Plug-in: Using Monitor #"
-		+ ( fe.monitors[i].num + 1 )
-		+ " (" + fe.monitors[i].width
-		+ "x" + fe.monitors[i].height + ")\n" );
+	ss_interval = 3000; // time (in ms) between switches (screensaver)
 
-	local tag = "mon"+(fe.monitors[i].num+1);
-
-	mm_arts_back.append( fe.monitors[i].add_image( "",
-		0,
-		0,
-		fe.monitors[i].width,
-		fe.monitors[i].height ) );
-
-	mm_arts.append( fe.monitors[i].add_artwork(
-		my_config[tag+"_art"],
-		0,
-		0,
-		fe.monitors[i].width,
-		fe.monitors[i].height ) );
-
-	mm_arts.top().trigger = Transition.EndNavigation;
-
-	if ( my_config[tag+"_preserve_aspect_ratio"] == "Yes" )
+	constructor()
 	{
-		mm_arts_back.top().preserve_aspect_ratio = true;
-		mm_arts.top().preserve_aspect_ratio = true;
-	}
-}
-
-if ( mm_arts.len() > 0 )
-{
-	fe.add_ticks_callback( "MultiMon_tick" );
-	fe.add_transition_callback( "MultiMon_trans" );
-}
-
-local last_tick=0;
-local last_trigger=-1;
-local first_tick = true;
-
-function MultiMon_tick( ttime )
-{
-	if ( first_tick )
-	{
-		// copy artworks to mm_arts_back so we have the old image to
-		// fade into when the next artwork comes up...
-		for ( local i=0; i<mm_arts.len(); i++ )
-			mm_arts_back[i].file_name = mm_arts[i].file_name;
-
-		first_tick=false;
-	}
-
-	last_tick=ttime;
-	if ( mm_arts[0].alpha < 255 )
-	{
-		local val = last_tick - last_trigger;
-		if ( val < 256 )
-			return;
-		else if ( val < 512 )
+		for ( local i=1; i<fe.monitors.len(); i++ )
 		{
-			foreach ( a in mm_arts )
-				a.alpha = val - 256;
+			print( " + MultiMon Plug-in: Using Monitor #"
+				+ ( fe.monitors[i].num + 1 )
+				+ " (" + fe.monitors[i].width
+				+ "x" + fe.monitors[i].height + ")\n" );
 
-			foreach ( a in mm_arts_back )
-				a.alpha = 512 - val;
-		}
-		else
-		{
-			for ( local i=0; i<mm_arts.len(); i++ )
-			{
-				mm_arts[i].alpha = 255;
-				mm_arts_back[i].alpha = 255;
-				mm_arts_back[i].file_name = mm_arts[i].file_name;
-			}
-		}
-	}
-	if ( ScreenSaverActive && ( last_tick > last_trigger + 3000 ))
-	{
-		foreach ( a in mm_arts )
-		{
-			a.alpha=0;
-			a.index_offset = rand();
+			local tag = "mon"+(fe.monitors[i].num+1);
+
+			if ( my_config[tag+"_art"] == "none" )
+				continue;
+
+			local n = FadeArt(
+				my_config[tag+"_art"],
+				0,
+				0,
+				fe.monitors[i].width,
+				fe.monitors[i].height,
+				fe.monitors[i] );
+
+			n.video_flags = Vid.NoAudio;
+
+			if ( my_config[tag+"_preserve_aspect_ratio"] == "Yes" )
+				n.preserve_aspect_ratio = true;
+
+			if ( ScreenSaverActive )
+				n.interval = ss_interval;
+
+			_list.append( n );
 		}
 
-		last_trigger = last_tick;
+		if (( _list.len() > 0 ) && ScreenSaverActive )
+			fe.add_ticks_callback( this, "on_tick" );
 	}
-}
 
-function MultiMon_trans( ttype, var, ttime )
-{
-	if ( ttype == Transition.EndNavigation )
+	function on_tick( ttime )
 	{
-		if ( last_trigger != last_tick )
+		if ( ttime > _last_trigger + ss_interval )
 		{
-			last_trigger = last_tick;
+			foreach ( o in _list )
+				o.index_offset = rand();
 
-			foreach ( a in mm_arts )
-				a.alpha=0;
-
-			return true;
+			_last_trigger = ttime;
 		}
 	}
 
-	return false;
+	_list=[];
+	_last_trigger=0;
 }
+
+fe.plugin["MultiMon"] <- MultiMon();

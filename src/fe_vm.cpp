@@ -267,6 +267,11 @@ void FeVM::on_new_layout( const std::string &path,
 			.Const( _SC("NoAutoStart"), VF_NoAutoStart )
 			.Const( _SC("NoLoop"), VF_NoLoop )
 			)
+		.Enum( _SC("Art"), Enumeration()
+			.Const( _SC("Default"), AF_Default )
+			.Const( _SC("ImagesOnly"), AF_ImagesOnly )
+			.Const( _SC("IncludeLayout"), AF_IncludeLayout )
+			)
 		;
 
 	Enumeration info;
@@ -526,6 +531,10 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Overload<const char* (*)(int)>(_SC("game_info"), &FeVM::cb_game_info);
 	fe.Overload<const char* (*)(int, int)>(_SC("game_info"), &FeVM::cb_game_info);
 	fe.Overload<const char* (*)(int, int, int)>(_SC("game_info"), &FeVM::cb_game_info);
+	fe.Overload<const char* (*)(const char *, int, int, int)>(_SC("get_art"), &FeVM::cb_get_art);
+	fe.Overload<const char* (*)(const char *, int, int)>(_SC("get_art"), &FeVM::cb_get_art);
+	fe.Overload<const char* (*)(const char *, int)>(_SC("get_art"), &FeVM::cb_get_art);
+	fe.Overload<const char* (*)(const char *)>(_SC("get_art"), &FeVM::cb_get_art);
 	fe.Overload<bool (*)(const char *, const char *, Object, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
@@ -1510,6 +1519,54 @@ const char *FeVM::cb_game_info( int index, int offset )
 const char *FeVM::cb_game_info( int index )
 {
 	return cb_game_info( index, 0, 0 );
+}
+
+const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offset, int art_flags )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+	FeSettings *fes = fev->m_feSettings;
+	int filter_index = fes->get_filter_index_from_offset( filter_offset );
+
+	FeRomInfo *rom = fes->get_rom_absolute( filter_index,
+									fes->get_rom_index( filter_index, index_offset ) );
+
+	static std::string retval;
+
+	std::vector<std::string> vid_list, image_list;
+	if (( rom ) &&
+		( fes->get_best_artwork_file(
+							*rom,
+							art,
+							vid_list,
+							image_list,
+							false,
+							!(art_flags&AF_IncludeLayout) ) ))
+	{
+		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			retval = vid_list.front();
+		else
+			retval = image_list.front();
+	}
+	else
+		retval.clear();
+
+	return retval.c_str();
+}
+
+const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_index )
+{
+	return cb_get_art( art, index_offset, filter_index, AF_Default );
+}
+
+const char *FeVM::cb_get_art( const char *art, int index_offset )
+{
+	return cb_get_art( art, index_offset, 0, AF_Default );
+}
+
+const char *FeVM::cb_get_art( const char *art )
+{
+	return cb_get_art( art, 0, 0, AF_Default );
 }
 
 Sqrat::Table FeVM::cb_get_config()

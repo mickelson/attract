@@ -21,6 +21,7 @@ Contents
       * [`fe.add_ticks_callback()`](#add_ticks_callback)
       * [`fe.add_transition_callback()`](#add_transition_callback)
       * [`fe.game_info()`](#game_info)
+      * [`fe.get_art()`](#get_art)
       * [`fe.get_input_state()`](#get_input_state)
       * [`fe.get_input_pos()`](#get_input_pos)
       * [`fe.signal()`](#signal)
@@ -170,10 +171,11 @@ the game selection.
 
 Parameters:
 
-   * label - the label of the artwork to display.  This needs to correspond
-     to an artwork configured in Attract-Mode (such as "snap", "marquee",
-     "flyer", "wheel", etc.)  Artworks are configured per emulator in Attract-
-     Mode's configuration menu.
+   * label - the label of the artwork to display.  This should correspond
+     to an artwork configured in Attract-Mode (artworks are configured per
+     emulator in the config menu) or scraped using the scraper.  Attract-
+     Mode's standard artwork labels are: "snap", "marquee", "flyer", "wheel",
+     and "fanart".
    * x - the x coordinate of the top left corner of the artwork (in layout
      coordinates).
    * y - the y coordinate of the top left corner of the artwork (in layout
@@ -550,6 +552,43 @@ Parameters:
 Return Value:
 
    * A string containing the requested information.
+
+
+<a name="get_art" />
+#### `fe.get_art()` ####
+
+    fe.get_art( label )
+    fe.get_art( label, index_offset )
+    fe.get_art( label, index_offset, filter_offset )
+    fe.get_art( label, index_offset, filter_offset, flags )
+
+Get the filename of an artwork for the selected game.  If multiple files are
+matched, one is chosen randomly and returned.
+
+Parameters:
+
+   * label - the label of the artwork to retrieve.  This should correspond
+     to an artwork configured in Attract-Mode (artworks are configured per
+     emulator in the config menu) or scraped using the scraper.  Attract-
+     Mode's standard artwork labels are: "snap", "marquee", "flyer", "wheel",
+     and "fanart".
+   * index_offset - the offset (from the current selection) of the game to
+     retrieve the filename for.  i.e. -1=previous game, 0=current game,
+     1=next game...  and so on.  Default value is 0.
+   * filter_offset - the offset (from the current filter) of the filter
+     containing the selection to retrieve the filename for.  i.e.
+     -1=previous filter, 0=current filter.  Default value is 0.
+   * flags - flags to control the filename that gets returned.  Can be set
+     to any combination of the following (use a bitwise or for multiples...
+     i.e. `Art.ImageOnly | Art.IncludeLayout`):
+      - `Art.Default`
+      - `Art.ImageOnly` (only return an image match, no videos)
+      - `Art.IncludeLayout` (include matches from the layout directory)
+
+Return Value:
+
+   * A string containing the filename of the requested artwork.  If no file
+     is found, an empty string is returned.
 
 
 <a name="get_input_state" />

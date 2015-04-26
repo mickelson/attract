@@ -9,6 +9,7 @@ class UserConfig {
 local config = fe.get_config();
 
 fe.load_module( "conveyor" );
+fe.load_module( "fade" );
 
 class Colour
 {
@@ -57,9 +58,8 @@ fe.layout.page_size=15;
 // fill an entire surface with our snap at a resolution of 480x360
 //
 local surface = fe.add_surface( 480, 360 );
-local snap = surface.add_artwork( "snap", 0, 0, 480, 360 );
+local snap = FadeArt( "snap", 0, 0, 480, 360, surface );
 snap.preserve_aspect_ratio = true;
-snap.trigger = Transition.EndNavigation;
 
 // position and pinch the surface
 //

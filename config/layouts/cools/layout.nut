@@ -6,7 +6,7 @@
 ///////////////////////////////////////////////////////// 
 // Layout User Options
 class UserConfig {
- </ label="Background Image", help="Choose snap/video snap, title, user image (bg.jpg in layout folder) or no background", options="snap,video,title,user,none" /> bg_image = "video";
+ </ label="Background Image", help="Choose snap/video snap, title, fanart, user image (bg.jpg in layout folder) or no background", options="snap,video,title,fanart,user,none" /> bg_image = "video";
  </ label="Preview Image", help="Choose snap/video snap, title or none.", options="snap,video,title,none" /> preview_image = "none";
  </ label="Title Flicker", help="Flicker the game title", options="Yes,No" /> enable_flicker="Yes";
  </ label="Display List Name", help="Show ROM list name", options="Yes,No" /> enable_list="Yes";
@@ -60,6 +60,10 @@ if ( my_config["bg_image"] == "snap") {
 }
 if ( my_config["bg_image"] == "title") {
  local bg = fe.add_artwork( "title", bgx, bgy, bgw, bgh );
+}
+if ( my_config["bg_image"] == "fanart") {
+ fe.load_module( "fade" );
+ local bg = FadeArt( "fanart", bgx, bgy, bgw, bgh );
 }
 if ( my_config["bg_image"] == "user") {
  local bg = fe.add_image( "bg.jpg", 0, 0, lw, lh);
