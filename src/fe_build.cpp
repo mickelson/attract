@@ -423,8 +423,18 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 	if ( system_list.size() < 1 )
 	{
-		std::cout << "[thegamesdb.net scraper] Error, no valid system identifier available." << std::endl;
-		return true;
+		// Correct if we can based on the configured info source,
+		// otherwise we error out
+		const std::string source = c.emulator.get_info( FeEmulatorInfo::Info_source );
+		if ( source.compare( "mame" ) == 0 )
+			system_list.push_back( "Arcade" );
+		else if ( source.compare( "steam" ) == 0 )
+			system_list.push_back( "PC" );
+		else
+		{
+			std::cout << "[thegamesdb.net scraper] Error, no valid system identifier found." << std::endl;
+			return true;
+		}
 	}
 
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
@@ -479,9 +489,6 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
 	base_path += emu_name + "/";
-
-	if ( c.scrape_art )
-		confirm_directory( get_config_dir(), FE_SCRAPER_SUBDIR );
 
 	//
 	// Create worker threads to process the queue, adding new tasks to download
@@ -875,6 +882,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			}
 
 			ctx.scrape_art = true;
+			confirm_directory( get_config_dir(), FE_SCRAPER_SUBDIR );
 
 			// do the mamedb scraper first (which only does anything for mame) followed
 			// by the more general thegamesdb scraper.
@@ -1027,6 +1035,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 
 	ctx.progress_range = ( 100-ctx.progress_past ) / 2;
 	ctx.scrape_art = true;
+	confirm_directory( get_config_dir(), FE_SCRAPER_SUBDIR );
 
 	// do the mamedb scraper first (which only does anything for mame) followed
 	// by the more general thegamesdb scraper.  these return false if the user
