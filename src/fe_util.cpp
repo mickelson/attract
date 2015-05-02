@@ -983,12 +983,12 @@ void get_xinerama_geometry( int &x, int &y, int &width, int &height )
 	{
 		x=-si[0].x_org;
 		y=-si[0].y_org;
+	}
 
-		for ( int i=0; i<num; i++ )
-		{
-			width = std::max( width, si[i].x_org + si[i].width );
-			height = std::max( height, si[i].y_org + si[i].height );
-		}
+	for ( int i=0; i<num; i++ )
+	{
+		width = std::max( width, si[i].x_org + si[i].width );
+		height = std::max( height, si[i].y_org + si[i].height );
 	}
 
 	XFree( si );

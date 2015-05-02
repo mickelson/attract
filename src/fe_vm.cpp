@@ -775,11 +775,7 @@ bool FeVM::on_transition(
 			sf::Event ev;
 			while (m_window.pollEvent(ev))
 			{
-				FeInputMap::Command c = m_feSettings->map_input( ev );
-
-				if (( c == FeInputMap::ExitMenu )
-						|| ( c == FeInputMap::ExitNoMenu ))
-					break;
+				//sf::sleep( sf::milliseconds( 10 ) );
 			}
 #endif
 
