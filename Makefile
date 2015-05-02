@@ -139,6 +139,13 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
    #
    ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
     FE_RPI=1
+   else
+    #
+    # Test for Xinerama...
+    #
+    ifeq ($(shell $(PKG_CONFIG) --exists xinerama && echo "1" || echo "0"), 1)
+     USE_XINERAMA=1
+    endif
    endif
   endif
  endif
@@ -205,6 +212,11 @@ endif
 
 ifeq ($(FE_RPI),1)
  FE_FLAGS += -DFE_RPI
+endif
+
+ifeq ($(USE_XINERAMA),1)
+ FE_FLAGS += -DUSE_XINERAMA
+ LIBS += -lX11 -lXinerama
 endif
 
 ifeq ($(USE_FONTCONFIG),1)

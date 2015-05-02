@@ -201,7 +201,13 @@ void process_args( int argc, char *argv[],
 				<< get_OS_string()
 				<< ", SFML " << SFML_VERSION_MAJOR << '.' << SFML_VERSION_MINOR
 #ifdef USE_FONTCONFIG
-				<< " +FC"
+				<< " +FontConfig"
+#endif
+#ifdef USE_XINERAMA
+				<< " +Xinerama"
+#endif
+#ifdef FE_RPI
+				<< " +RPi"
 #endif
 				<< ") " << std::endl << std::endl;
 

@@ -210,6 +210,14 @@ const char *get_OS_string();
 //
 std::basic_string<sf::Uint32> clipboard_get_content();
 
+//
+// We use this in fe_window but implement it here because the XWindows
+// namespace (Window, etc) clashes with the SFML namespace used in fe_window
+// (sf::Window)
+//
+#ifdef USE_XINERAMA
+void get_xinerama_geometry( int &, int &, int &, int & );
+#endif
 
 #ifndef NO_MOVIE
 //

@@ -762,6 +762,27 @@ bool FeVM::on_transition(
 			m_window.draw( *this );
 			m_window.display();
 
+#ifdef SFML_SYSTEM_LINUX
+			//
+			// On SFML 2.2-2.3 Linux, I am getting flicker on a
+			// multi monitor setup during animated transitions.
+			// Processing window events between each draw fixes
+			// it.
+			//
+			// TODO: It is probably a good idea to do this for
+			// every platform... needs investigation.
+			//
+			sf::Event ev;
+			while (m_window.pollEvent(ev))
+			{
+				FeInputMap::Command c = m_feSettings->map_input( ev );
+
+				if (( c == FeInputMap::ExitMenu )
+						|| ( c == FeInputMap::ExitNoMenu ))
+					break;
+			}
+#endif
+
 			m_redraw_triggered = false; // clear redraw flag
 		}
 	}

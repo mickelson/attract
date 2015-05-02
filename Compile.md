@@ -17,8 +17,9 @@ distributions.  Other distributions should have similar packages available.
       - OpenAL (this is used by SFML as well)
    * Optional:
       - The following FFmpeg libraries (required for movies): avformat,
-      avcodec, swscale and either swresample or avresample.
+      avcodec, swscale, avutil and either swresample or avresample.
       - Fontconfig (to assist with finding fonts).
+      - Xinerama (for multiple monitor support).
 
 2. Extract the Attract-Mode source to your system.
 

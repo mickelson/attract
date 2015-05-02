@@ -55,6 +55,10 @@
 #include "fe_util_osx.hpp"
 #endif
 
+#ifdef USE_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
+
 namespace {
 
 	void str_from_c( std::string &s, const char *c )
@@ -956,3 +960,38 @@ std::basic_string<sf::Uint32> clipboard_get_content()
 
 	return retval;
 }
+
+#ifdef USE_XINERAMA
+//
+// We use this in fe_window but implement it here because the XWindows
+// namespace (Window, etc) clashes with the SFML namespace used in fe_window
+// (sf::Window)
+//
+void get_xinerama_geometry( int &x, int &y, int &width, int &height )
+{
+	x=0;
+	y=0;
+	width=0;
+	height=0;
+
+	::Display *xdisp = XOpenDisplay( NULL );
+	int num=0;
+
+	XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
+
+	if ( num > 1 )
+	{
+		x=-si[0].x_org;
+		y=-si[0].y_org;
+
+		for ( int i=0; i<num; i++ )
+		{
+			width = std::max( width, si[i].x_org + si[i].width );
+			height = std::max( height, si[i].y_org + si[i].height );
+		}
+	}
+
+	XFree( si );
+	XCloseDisplay( xdisp );
+}
+#endif

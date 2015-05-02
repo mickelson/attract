@@ -20,6 +20,7 @@
  *
  */
 
+
 #include "fe_window.hpp"
 #include "fe_settings.hpp"
 #include "fe_icon.hpp"
@@ -125,6 +126,14 @@ void FeWindow::onCreate()
 
 	ShowWindow(hw, SW_SHOW);
 	SetFocus( hw );
+#endif
+
+#ifdef USE_XINERAMA
+	int x, y, width, height;
+	get_xinerama_geometry( x, y, width, height );
+
+	setPosition( sf::Vector2i( x, y ) );
+	setSize( sf::Vector2u( width, height ) );
 #endif
 
 #ifndef SFML_SYSTEM_MACOS

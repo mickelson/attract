@@ -53,6 +53,10 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 }
 #endif
 
+#ifdef USE_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
+
 void FeFontContainer::set_font( const std::string &n )
 {
 	m_name = n;
@@ -170,10 +174,9 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	//
 	// Handle multi-monitors now
 	//
-#ifdef SFML_SYSTEM_WINDOWS
-	//
 	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
 	//
+#ifdef SFML_SYSTEM_WINDOWS
 	if ( m_feSettings->get_window_mode() != FeSettings::Window )
 	{
 		EnumDisplayMonitors( NULL, NULL, my_mon_enum_proc, (LPARAM)&m_mon );
@@ -189,6 +192,36 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 			(*itr).transform *= correction;
 	}
 	else
+#else
+#ifdef USE_XINERAMA
+	if ( m_feSettings->get_window_mode() != FeSettings::Window )
+	{
+		Display *xdisp = XOpenDisplay( NULL );
+		int num=0;
+
+		XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
+		if ( si )
+		{
+			for ( int i=0; i<num; i++ )
+			{
+				FeMonitor mon;
+				mon.transform = sf::Transform().translate(
+					si[i].x_org,
+					si[i].y_org );
+
+				mon.size.x = si[i].width;
+				mon.size.y = si[i].height;
+				mon.num = si[i].screen_number;
+
+				m_mon.push_back( mon );
+			}
+		}
+
+		XFree( si );
+		XCloseDisplay( xdisp );
+	}
+	else
+#endif // USE_XINERAMA
 #endif
 	{
 		//
