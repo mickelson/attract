@@ -365,7 +365,10 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 			if ( id < 0 )
 			{
 				if ( id == -1 )
+				{
 					std::cout << " + Downloaded: " << result << std::endl;
+					c.download_count++;
+				}
 
 				done++;
 			}
@@ -399,7 +402,10 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 	if ( status != sf::Http::Response::Ok )
 	{
-		std::cout << "[thegamesdb.net scraper] Error getting platform list.  Code: " << status << std::endl;
+		get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
+							as_str( status ), c.user_message );
+
+		std::cout << " * " << c.user_message << std::endl;
 		return true;
 	}
 
@@ -417,7 +423,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		if ( gdbpp.m_set.find( *itr ) != gdbpp.m_set.end() )
 			system_list.push_back( *itr );
 		else
-			std::cout << "[thegamesdb.net scraper] System identifier '" << (*itr) << "' not recognized by "
+			std::cout << " * System identifier '" << (*itr) << "' not recognized by "
 				<< HOSTNAME << std::endl;
 	}
 
@@ -432,7 +438,10 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			system_list.push_back( "PC" );
 		else
 		{
-			std::cout << "[thegamesdb.net scraper] Error, no valid system identifier found." << std::endl;
+			get_resource( "Error: None of the configured system identifier(s) are recognized by thegamesdb.net.",
+								c.user_message );
+
+			std::cout << " * " << c.user_message << std::endl;
 			return true;
 		}
 	}
@@ -459,31 +468,30 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	const int NUM_ARTS=5; // the number of scrape-able artwork types
 	int done_count( 0 );
 
-	std::string base_req_string = GAME_REQ;
-
-	//
-	// If we aren't scraping wheel artwork, then add the specific platform to our request
-	// If we are scraping wheels, we want to be able to grab them where the game name (but
-	// not the system) matches
-	//
-	if (( system_list.size() == 1 )
-		&& ( !c.scrape_art || !m_scrape_wheels ))
-	{
-		base_req_string += "&platform=";
-		base_req_string += url_escape( system_list.front() );
-	}
-
 	//
 	// Set up our initial queue of network tasks
 	//
 	for ( unsigned int i=0; i<worklist.size(); i++ )
 	{
-		std::string req_string = base_req_string;
+		std::string req_string = GAME_REQ;
 
 		std::string game = url_escape(
 				name_with_brackets_stripped( worklist[i]->get_info( FeRomInfo::Title ) ) );
 
 		perform_substitution( req_string, "$1", game );
+
+		//
+		// If we don't need to scrape a wheel artwork, then add the specific platform to our request
+		// If we are scraping a wheel, we want to be able to grab them where the game name (but
+		// not the system) matches, so we don't limit ourselves by system...
+		//
+		if (( system_list.size() == 1 )
+			&& ( !c.scrape_art || !m_scrape_wheels || has_artwork( *(worklist[i]), "wheel" ) ))
+		{
+			req_string += "&platform=";
+			req_string += url_escape( system_list.front() );
+		}
+
 		q.add_buffer_task( HOSTNAME, req_string, i );
 	}
 
@@ -508,7 +516,10 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			if ( id < 0 )
 			{
 				if (( id == FeNetTask::FileTask ) || ( id == FeNetTask::SpecialFileTask ))
-					std::cout << " * Downloaded: " << result << std::endl;
+				{
+					std::cout << " + Downloaded: " << result << std::endl;
+					c.download_count++;
+				}
 
 				if ( id == FeNetTask::FileTask ) // we don't increment if id = FeNetTask::SpecialFileTask
 					done_count++;
@@ -645,13 +656,13 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 	{
 		std::cout << " - Obtaining -listxml info...";
 		FeMameXMLParser mamep( c );
-		mamep.parse( base_command );
-		std::cout << std::endl;
+		if ( !mamep.parse( base_command ) )
+			std::cout << "No XML output found, command: " << base_command << " -listxml" << std::endl;
 	}
 	else if ( source.compare( "mess" ) == 0 )
 	{
-		std::string system_name = c.emulator.get_info( FeEmulatorInfo::System );
-		if ( system_name.empty() )
+		const std::vector < std::string > &system_names = c.emulator.get_systems();
+		if ( system_names.empty() )
 		{
 			std::cout << "Note: No system configured for emulator: "
 				<< c.emulator.get_info( FeEmulatorInfo::Name )
@@ -660,10 +671,8 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 			return;
 		}
 
-		std::cout << " - Obtaining -listsoftware info...";
 		FeMessXMLParser messp( c );
-		messp.parse( base_command, system_name );
-		std::cout << std::endl;
+		messp.parse( base_command, system_names );
 	}
 	else if ( source.compare( "steam" ) == 0 )
 	{
@@ -997,7 +1006,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	return true;
 }
 
-bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid )
+bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg )
 {
 	FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
 	if ( emu == NULL )
@@ -1050,5 +1059,11 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 		uiu( uid, 100 );
 
 	std::cout << "*** Scraping done." << std::endl;
+
+	if ( ctx.user_message.empty() )
+		get_resource( "Scraped $1 artwork file(s)", as_str( ctx.download_count ), msg );
+	else
+		msg = ctx.user_message;
+
 	return true;
 }

@@ -82,6 +82,8 @@ public:
 	bool full;
 	int progress_past;
 	int progress_range;
+	int download_count;
+	std::string user_message;
 };
 
 class FeMameXMLParser : private FeXMLParser
@@ -110,7 +112,7 @@ class FeMessXMLParser : private FeXMLParser
 {
 public:
 	FeMessXMLParser( FeImporterContext &ctx );
-	bool parse( const std::string &command, const std::string &args );
+	bool parse( const std::string &command, const std::vector < std::string > &system_names );
 
 private:
 	FeImporterContext &m_ctx;

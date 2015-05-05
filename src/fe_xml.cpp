@@ -176,7 +176,8 @@ FeImporterContext::FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType
 	uiupdatedata( NULL ),
 	full( false ),
 	progress_past( 0 ),
-	progress_range( 100 )
+	progress_range( 100 ),
+	download_count( 0 )
 {
 }
 
@@ -426,6 +427,10 @@ bool FeMameXMLParser::parse( const std::string &prog )
 	FeRomInfoListType::iterator itr;
 	m_percent=m_count=0;
 
+	// special case for mess parsing
+	if ( m_ctx.romlist.size() == 1 )
+		return ( parse_internal( prog, base_args + " " + m_ctx.romlist.front().get_info( FeRomInfo::Romname ) ) );
+
 	//
 	// run "mame -listxml" and find each rom.
 	//
@@ -438,15 +443,15 @@ bool FeMameXMLParser::parse( const std::string &prog )
 
 	if ( parse_internal( prog, base_args ) == false )
 	{
-		std::cout << "No XML output found, command: " << prog << " "
-					<< base_args << std::endl;
+		std::cout << std::endl;
+		return false;
 	}
 
 	std::cout << std::endl;
 
 	if ( !m_discarded.empty() )
 	{
-		std::cout << "Discarded " << m_discarded.size()
+		std::cout << " - Discarded " << m_discarded.size()
 				<< " entries based on xml info: ";
 		std::vector<FeRomInfoListType::iterator>::iterator itr;
 		for ( itr = m_discarded.begin(); itr != m_discarded.end(); ++itr )
@@ -604,42 +609,63 @@ void FeMessXMLParser::set_info_values( FeRomInfo &r )
 }
 
 bool FeMessXMLParser::parse( const std::string &prog,
-		const std::string &system_name )
+		const std::vector < std::string > &system_names )
 {
 	// First get our machine -listxml settings
 	//
-	FeRomInfoListType temp_list;
-	temp_list.push_back( FeRomInfo( system_name ) );
-
-	FeEmulatorInfo ignored;
-	FeImporterContext temp( ignored, temp_list );
-	FeMameXMLParser listxml( temp );
-	listxml.parse( prog );
-
+	std::string system_name;
 	FeRomInfoListType::iterator itr;
-	if ( !temp_list.empty() )
-	{
-		const FeRomInfo &ri = temp_list.front();
-		for ( itr=m_ctx.romlist.begin(); itr!=m_ctx.romlist.end(); ++itr )
-		{
-			(*itr).set_info( FeRomInfo::Players, ri.get_info( FeRomInfo::Players ));
-			(*itr).set_info( FeRomInfo::Rotation, ri.get_info( FeRomInfo::Rotation ));
-			(*itr).set_info( FeRomInfo::Control, ri.get_info( FeRomInfo::Control ));
-			(*itr).set_info( FeRomInfo::Status, ri.get_info( FeRomInfo::Status ));
-			(*itr).set_info( FeRomInfo::DisplayCount, ri.get_info( FeRomInfo::DisplayCount ));
-			(*itr).set_info( FeRomInfo::DisplayType, ri.get_info( FeRomInfo::DisplayType ));
 
-			// A bit of a hack here: the Category field gets repurposed for this stage of a MESS
-			// import...We temporarily store a "fuzzy" match romname
-			//
-			(*itr).set_info( FeRomInfo::BuildScratchPad,
-						get_fuzzy( (*itr).get_info( FeRomInfo::Romname ) ) );
+	for ( std::vector<std::string>::const_iterator its=system_names.begin(); its!=system_names.end(); ++its )
+	{
+		FeRomInfoListType temp_list;
+		temp_list.push_back( FeRomInfo( *its ) );
+
+		FeEmulatorInfo ignored;
+		FeImporterContext temp( ignored, temp_list );
+		FeMameXMLParser listxml( temp );
+
+		if (( listxml.parse( prog ) )
+				&& ( !temp_list.empty() ))
+		{
+			const FeRomInfo &ri = temp_list.front();
+			for ( itr=m_ctx.romlist.begin(); itr!=m_ctx.romlist.end(); ++itr )
+			{
+				(*itr).set_info( FeRomInfo::Players, ri.get_info( FeRomInfo::Players ));
+				(*itr).set_info( FeRomInfo::Rotation, ri.get_info( FeRomInfo::Rotation ));
+				(*itr).set_info( FeRomInfo::Control, ri.get_info( FeRomInfo::Control ));
+				(*itr).set_info( FeRomInfo::Status, ri.get_info( FeRomInfo::Status ));
+				(*itr).set_info( FeRomInfo::DisplayCount, ri.get_info( FeRomInfo::DisplayCount ));
+				(*itr).set_info( FeRomInfo::DisplayType, ri.get_info( FeRomInfo::DisplayType ));
+
+				// A bit of a hack here: the Category field gets repurposed for this stage of a MESS
+				// import...We temporarily store a "fuzzy" match romname
+				//
+				(*itr).set_info( FeRomInfo::BuildScratchPad,
+							get_fuzzy( (*itr).get_info( FeRomInfo::Romname ) ) );
+			}
+			system_name=(*its);
+			break;
 		}
 	}
+
+	if ( system_name.empty() )
+	{
+		std::cerr << " * Error: No system identifier found that is recognized by MESS -listxml" << std::endl;
+		return false;
+	}
+
+	std::cout << " - Obtaining -listsoftware info [" << system_name << "]" << std::endl;
 
 	// Now get the individual game -listsoftware settings
 	//
 	int retval=parse_internal( prog, system_name + " -listsoftware" );
+
+	if ( !retval )
+	{
+		std::cout << " * Error: No XML output found, command: " << prog << " "
+					<< system_name + " -listsoftware" << std::endl;
+	}
 
 	// We're done with our "fuzzy" matching, so clear where we were storing them
 	//

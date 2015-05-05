@@ -246,6 +246,7 @@ void FeSprite::updateGeometry()
 	float right  = left + m_textureRect.width;
 	float top    = static_cast<float>(m_textureRect.top);
 	float bottom = top + m_textureRect.height;
+	sf::Color vert_colour = m_vertices[0].color;
 
 	if (( m_pinch.x != 0.f ) || ( m_pinch.y != 0.f ))
 	{
@@ -267,7 +268,6 @@ void FeSprite::updateGeometry()
 		float sys = (float)m_skew.y / SLICES;
 		float bpxs = bws - (float)m_pinch.x * 2 / SLICES;
 
-		sf::Color vert_colour = m_vertices[0].color;
 		m_vertices.resize( SLICES + 3 );
 		m_vertices.setPrimitiveType( sf::TrianglesStrip );
 
@@ -309,12 +309,6 @@ void FeSprite::updateGeometry()
 
 		m_vertices[SLICES + 1].texCoords = sf::Vector2f(right, top );
 		m_vertices[SLICES + 2].texCoords = sf::Vector2f(right, bottom );
-
-		//
-		// And finally the vertex colour
-		//
-		for ( unsigned int i=0; i< m_vertices.getVertexCount(); i++ )
-			m_vertices[i].color = vert_colour;
 	}
 	else
 	{
@@ -334,4 +328,11 @@ void FeSprite::updateGeometry()
 		m_vertices[2].texCoords = sf::Vector2f(right, top);
 		m_vertices[3].texCoords = sf::Vector2f(right, bottom);
 	}
+
+	//
+	// Finally, update the vertex colour
+	//
+	for ( unsigned int i=0; i< m_vertices.getVertexCount(); i++ )
+		m_vertices[i].color = vert_colour;
+
 }

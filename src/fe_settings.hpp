@@ -311,7 +311,7 @@ public:
 	//
 	typedef bool (*UiUpdate) ( void *, int );
 	bool build_romlist( const std::string &emu_name, UiUpdate, void *, int & );
-	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid );
+	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 
 	FeEmulatorInfo *get_emulator( const std::string & );
 	FeEmulatorInfo *create_emulator( const std::string & );

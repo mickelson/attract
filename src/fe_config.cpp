@@ -401,10 +401,10 @@ bool FeEmulatorEditMenu::on_option_select(
 			m_parent_save = true;
 		}
 		break;
-	case 4: // Generate Romlist
+	case 4: // Scrape Artwork
 		{
 			std::string emu_name = m_emulator->get_info( FeEmulatorInfo::Name );
-			ctx.fe_settings.scrape_artwork( emu_name, scrape_ui_update, &ctx );
+			ctx.fe_settings.scrape_artwork( emu_name, scrape_ui_update, &ctx, ctx.help_msg );
 		}
 		break;
 	case 5: // Delete this Emulator

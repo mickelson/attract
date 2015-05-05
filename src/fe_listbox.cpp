@@ -226,7 +226,7 @@ FeTextPrimative *FeListBox::setEditMode( bool e, sf::Color c )
 		{
 			m_texts[ sel ].setColor( c );
 			m_texts[ sel ].setOutlineColor( c );
-			m_texts[ sel ].setOutlineThickness( -2 );
+			m_texts[ sel ].setOutlineThickness( -1 );
 
 			return &(m_texts[ sel ]);
 		}
