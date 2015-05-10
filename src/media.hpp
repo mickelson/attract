@@ -47,8 +47,8 @@ public:
 	FeMedia( Type t );
 	~FeMedia();
 
-	bool openFromFile( const std::string &name );
-	sf::Texture *get_texture();
+	bool openFromFile( const std::string &name,
+			sf::Texture *out_texture=NULL );
 
 	using sf::SoundStream::setPosition;
 	using sf::SoundStream::getPosition;
@@ -71,7 +71,7 @@ public:
 	void setVolume(float volume);
 
 	bool is_playing();
-	int number_of_frames() const;
+	bool is_multiframe() const;
 
 	sf::Time get_video_time();
 	sf::Time get_duration() const;

@@ -275,56 +275,60 @@ bool FeTextureContainer::common_load(
 	std::vector<std::string> &image_names )
 {
 	bool loaded=false;
+
 #ifndef NO_MOVIE
+	if ( m_video_flags & VF_DisableVideo )
+		non_image_names.clear();
+
+#ifndef SFML_IMAGES
+	while ( !image_names.empty() )
+	{
+		non_image_names.push_back( image_names.back() );
+		image_names.pop_back();
+	}
+#endif
 
 	ASSERT( !m_movie ); // m_movie should always be empty at this point...
 
-	if ( !(m_video_flags & VF_DisableVideo) )
+	std::string movie_file;
+	for ( std::vector<std::string>::iterator itr = non_image_names.begin();
+			itr != non_image_names.end(); ++itr  )
 	{
-		std::string movie_file;
-		for ( std::vector<std::string>::iterator itr = non_image_names.begin();
-				itr != non_image_names.end(); ++itr  )
+		if ( FeMedia::is_supported_media_file( *itr ) )
 		{
-			if ( FeMedia::is_supported_media_file( *itr ) )
-			{
-				movie_file = (*itr);
-				break;
-			}
+			movie_file = (*itr);
+			break;
 		}
+	}
 
-		if ( !movie_file.empty() )
- 		{
-			m_movie = new FeMedia( FeMedia::AudioVideo );
+	if ( !movie_file.empty() )
+	{
+		m_movie = new FeMedia( FeMedia::AudioVideo );
 
-			if (!m_movie->openFromFile( movie_file ))
+		if (!m_movie->openFromFile( movie_file, &m_texture ))
+		{
+			std::cout << "ERROR loading video: "
+				<< movie_file << std::endl;
+		}
+		else
+		{
+			loaded = true;
+			m_file_name = movie_file;
+
+			if ( !m_movie->is_multiframe() )
 			{
-				std::cout << "ERROR loading video: "
-					<< movie_file << std::endl;
+				m_movie_status = -1; // don't play if there is only one frame
+
+				// if there is only one frame, then we can update the texture immediately
+				// (the frame will have been preloaded) and delete our movie object now
+				notify_texture_change();
+				delete m_movie;
+				m_movie = NULL;
 			}
+			else if (m_video_flags & VF_NoAutoStart)
+				m_movie_status = 0; // 0=loaded but not on track to play
 			else
-			{
-				sf::Texture *t = m_movie->get_texture();
-				ASSERT( t ); // openFromFile should create this!
-				if ( t ) t->setSmooth( m_texture.isSmooth() );
-
-				loaded = true;
-				m_file_name = movie_file;
-
-				if ( m_movie->number_of_frames() == 1 )
-				{
-					m_movie_status = -1; // don't play if there is only one frame
-
-					// if there is only one frame, then we can update the texture immediately
-					// (the frame will have been preloaded) and delete our movie object now
-					notify_texture_change();
-					delete m_movie;
-					m_movie = NULL;
-				}
-				else if (m_video_flags & VF_NoAutoStart)
-					m_movie_status = 0; // 0=loaded but not on track to play
-				else
-					m_movie_status = 1; // 1=on track to be played
-			}
+				m_movie_status = 1; // 1=on track to be played
 		}
 	}
 #endif
@@ -351,14 +355,6 @@ bool FeTextureContainer::common_load(
 
 const sf::Texture &FeTextureContainer::get_texture()
 {
-#ifndef NO_MOVIE
-	if ( m_movie )
-	{
-		const sf::Texture *t = m_movie->get_texture();
-		if ( t ) return *t;
-	}
-#endif
-
 	return m_texture;
 }
 
@@ -689,14 +685,6 @@ void FeTextureContainer::clear()
 
 void FeTextureContainer::set_smooth( bool s )
 {
-#ifndef NO_MOVIE
-	if ( m_movie )
-	{
-		sf::Texture *t = m_movie->get_texture();
-		if ( t )
-			t->setSmooth( s );
-	}
-#endif
 	m_texture.setSmooth( s );
 }
 

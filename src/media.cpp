@@ -157,8 +157,8 @@ private:
 public:
 	bool run_video_thread;
 	sf::Time time_base;
-	sf::Texture display_texture;
 	sf::Clock video_timer;
+	sf::Texture *display_texture;
 	SwsContext *sws_ctx;
 	int sws_flags;
 
@@ -292,6 +292,7 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		m_video_thread( &FeVideoImp::video_thread, this ),
 		m_parent( p ),
 		run_video_thread( false ),
+		display_texture( NULL ),
 		sws_ctx( NULL ),
 		sws_flags( SWS_FAST_BILINEAR ),
 		display_frame( NULL )
@@ -420,7 +421,7 @@ void FeVideoImp::preload()
 							my_pict->linesize );
 
 				sf::Lock l( image_swap_mutex );
-				display_texture.update( my_pict->data[0] );
+				display_texture->update( my_pict->data[0] );
 
 				keep_going = false;
 
@@ -679,13 +680,6 @@ void FeMedia::init_av()
 	}
 }
 
-sf::Texture *FeMedia::get_texture()
-{
-	if ( m_video )
-		return &(m_video->display_texture);
-	return NULL;
-}
-
 sf::Time FeMedia::get_video_time()
 {
 	//
@@ -795,7 +789,7 @@ void FeMedia::setVolume(float volume)
 	sf::SoundStream::setVolume( volume );
 }
 
-bool FeMedia::openFromFile( const std::string &name )
+bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
 {
 	close();
 	init_av();
@@ -878,6 +872,9 @@ bool FeMedia::openFromFile( const std::string &name )
 		{
 			m_format_ctx->streams[stream_id]->codec->workaround_bugs = FF_BUG_AUTODETECT;
 
+			// Note also: http://trac.ffmpeg.org/ticket/4404
+			m_format_ctx->streams[stream_id]->codec->thread_count=1;
+
 			if ( avcodec_open2( m_format_ctx->streams[stream_id]->codec,
 										dec, NULL ) < 0 )
 			{
@@ -893,10 +890,9 @@ bool FeMedia::openFromFile( const std::string &name )
 				m_video->time_base = sf::seconds(
 						av_q2d(m_format_ctx->streams[stream_id]->time_base) );
 
-				m_video->display_texture = sf::Texture();
-				m_video->display_texture.create( m_video->codec_ctx->width,
+				m_video->display_texture = outt;
+				m_video->display_texture->create( m_video->codec_ctx->width,
 											m_video->codec_ctx->height );
-				m_video->display_texture.setSmooth( true );
 				m_video->preload();
 			}
 		}
@@ -951,7 +947,7 @@ bool FeMedia::tick()
 		sf::Lock l( m_video->image_swap_mutex );
 		if ( m_video->display_frame )
 		{
-			m_video->display_texture.update( m_video->display_frame );
+			m_video->display_texture->update( m_video->display_frame );
 			m_video->display_frame = NULL;
 			return true;
 		}
@@ -1174,12 +1170,20 @@ bool FeMedia::is_supported_media_file( const std::string &filename )
 }
 
 
-int FeMedia::number_of_frames() const
+bool FeMedia::is_multiframe() const
 {
 	if ( m_video && m_format_ctx )
-		return m_format_ctx->streams[ m_video->stream_id ]->nb_frames;
+	{
+		if (( m_format_ctx->streams[ m_video->stream_id ]->nb_frames > 1 )
+#ifdef AV_CODEC_ID_APNG
+				|| ( m_format_ctx->streams[ m_video->stream_id ]->id == AV_CODEC_ID_APNG )
+#endif
+				|| ( m_format_ctx->streams[ m_video->stream_id ]->id == AV_CODEC_ID_GIF ))
+			return true;
 
-	return 0;
+	}
+
+	return false;
 }
 
 sf::Time FeMedia::get_duration() const

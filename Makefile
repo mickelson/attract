@@ -37,6 +37,10 @@
 #
 # Uncomment next line for Windows static cross-compile build (mxe)
 #WINDOWS_STATIC=1
+#
+# Uncomment the next line if you wish to use SFML to load images instead
+# of FFmpeg (has no effect if NO_MOVIE=1)
+#SFML_IMAGES=1
 ###############################
 
 #FE_DEBUG=1
@@ -158,6 +162,7 @@ ifeq ($(WINDOWS_STATIC),1)
  LIBS += $(shell $(PKG_CONFIG) --static --libs sfml)
  CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags sfml)
  FE_WINDOWS_COMPILE=1
+
 else
 
  ifeq ($(NO_NET),1)
@@ -170,10 +175,12 @@ else
 	-lsfml-window \
 	-lsfml-network \
 	-lsfml-system
-
-  _DEP += fe_net.hpp
-  _OBJ += fe_net.o
  endif
+endif
+
+ifneq ($(NO_NET),1)
+ _DEP += fe_net.hpp
+ _OBJ += fe_net.o
 endif
 
 ifeq ($(FE_WINDOWS_COMPILE),1)
@@ -251,6 +258,10 @@ else
 
  _DEP += media.hpp
  _OBJ += media.o
+
+ ifeq ($(SFML_IMAGES),1)
+  FE_FLAGS += -DSFML_IMAGES
+ endif
 
  CFLAGS += -I$(EXTLIBS_DIR)/audio/include
  AUDIO = $(OBJ_DIR)/libaudio.a
