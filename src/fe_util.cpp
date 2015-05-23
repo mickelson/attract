@@ -158,9 +158,15 @@ bool is_relative_path( const std::string &name )
 			&& ( name[1] == ':' )
 			&& (( name[2] == '\\' ) || ( name[2] == '/' )))
 		return false;
-#endif
 
+	// Windows UNC i.e. \\computer\share
+	if (( name.size() > 1 )
+			&& ( name[0] == '\\' )
+			&& ( name[1] == '\\' ))
+		return false;
+#else
 	return (( !name.empty() ) && ( name[0] != '/' ));
+#endif
 }
 
 std::string clean_path( const std::string &path, bool require_trailing_slash )
