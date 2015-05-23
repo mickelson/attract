@@ -124,6 +124,9 @@ void FeWindow::onCreate()
 	SetWindowPos(hw, HWND_TOP, left, top,
 		width, height, SWP_FRAMECHANGED);
 
+	// As of 2.1, SFML caches the window size. We call setSize below to update SFML appropriately
+	setSize( sf::Vector2u( width, height ) );
+
 	ShowWindow(hw, SW_SHOW);
 	SetFocus( hw );
 #endif
