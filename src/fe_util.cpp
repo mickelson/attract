@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cctype>
+#include <cstring>
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -98,23 +99,33 @@ namespace {
 //
 // Case insensitive check if filename has the specified extension/ending.
 //
-bool tail_compare(
-			const std::string &filename,
-			const std::string &extension )
+bool c_tail_compare(
+			const char *filename,
+			size_t filelen,
+			const char *extension,
+			size_t extlen )
 {
-	unsigned int extlen = extension.size();
-
-	if ( extlen > filename.size() )
+	if ( extlen > filelen )
 		return false;
 
 	for ( unsigned int i=0; i < extlen; i++ )
 	{
-		if ( std::tolower( filename[ filename.size() - extlen + i ] )
+		if ( std::tolower( filename[ filelen - extlen + i ] )
 					!= std::tolower( extension[i] ) )
 			return false;
 	}
 
 	return true;
+}
+
+bool tail_compare(
+			const std::string &filename,
+			const std::string &extension )
+{
+	return c_tail_compare( filename.c_str(),
+		filename.size(),
+		extension.c_str(),
+		extension.size() );
 }
 
 int icompare(
@@ -416,11 +427,11 @@ bool get_filename_from_base(
 
 	do
 	{
-		std::string what;
-		str_from_c( what, t.name );
+		const char *what = t.name;
+		size_t what_len = strlen( what );
 
-		if (( what.compare( "." ) != 0 )
-				&& ( what.compare( ".." ) != 0 ))
+		if (( strcmp( what, "." ) != 0 )
+				&& ( strcmp( what, ".." ) != 0 ))
 		{
 #else
 
@@ -432,13 +443,14 @@ bool get_filename_from_base(
 
 	while ((ent = readdir( dir )) != NULL )
 	{
-		std::string what;
-		str_from_c( what, ent->d_name );
+		const char *what = ent->d_name;
+		size_t what_len = strlen( what );
+		size_t base_len = base_name.size();
 
-		if (( what.compare( "." ) != 0 )
-				&& ( what.compare( ".." ) != 0 )
-				&& ( what.size() >= base_name.size() )
-				&& ( what.compare( 0, base_name.size(), base_name ) == 0 ))
+		if (( strcmp( what, "." ) != 0 )
+				&& ( strcmp( what, ".." ) != 0 )
+				&& ( what_len >= base_len )
+				&& ( strncasecmp( what, base_name.c_str(), base_len ) == 0 ))
 		{
 #endif // SFML_SYSTEM_WINDOWS
 			if ( filter )
@@ -447,7 +459,10 @@ bool get_filename_from_base(
 				int i=0;
 				while ( filter[i] != NULL )
 				{
-					if ( tail_compare( what, filter[i] ) )
+					if ( c_tail_compare( what,
+						what_len,
+						filter[i],
+						strlen( filter[i] ) ) )
 					{
 						add=true;
 						break;
