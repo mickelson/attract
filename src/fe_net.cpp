@@ -113,7 +113,7 @@ void FeNetQueue::add_file_task( const std::string &host,
 		bool flag_special )
 {
 	sf::Lock l( m_mutex );
-	m_in_queue.push( FeNetTask( host, req, file_name,
+	m_in_queue.push_front( FeNetTask( host, req, file_name,
 						flag_special ? FeNetTask::SpecialFileTask : FeNetTask::FileTask ) );
 }
 
@@ -122,7 +122,7 @@ void FeNetQueue::add_buffer_task( const std::string &host,
 		int id )
 {
 	sf::Lock l( m_mutex );
-	m_in_queue.push( FeNetTask( host, req, id ) );
+	m_in_queue.push_back( FeNetTask( host, req, id ) );
 }
 
 bool FeNetQueue::do_next_task( sf::Http::Response::Status &status )
@@ -137,7 +137,7 @@ bool FeNetQueue::do_next_task( sf::Http::Response::Status &status )
 			return false;
 
 		t = m_in_queue.front();
-		m_in_queue.pop();
+		m_in_queue.pop_front();
 
 		m_in_flight++;
 	}

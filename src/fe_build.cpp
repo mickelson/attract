@@ -305,6 +305,36 @@ void apply_emulator_name( const std::string &name,
 		(*itr).set_info( FeRomInfo::Emulator, name );
 }
 
+void build_parent_map(
+	std::map < std::string, FeRomInfo * > &parent_map,
+	FeRomInfoListType &romlist )
+{
+	for ( FeRomInfoListType::iterator itr=romlist.begin(); itr!=romlist.end(); ++itr )
+	{
+		if ( (*itr).get_info( FeRomInfo::Cloneof ).empty() )
+			parent_map[ (*itr).get_info( FeRomInfo::Romname ) ] = &(*itr);
+	}
+}
+
+bool has_same_name_as_parent( FeRomInfo &rom,
+	std::map < std::string, FeRomInfo * > &parent_map )
+{
+	const std::string &cloneof = rom.get_info( FeRomInfo::Cloneof );
+	if ( !cloneof.empty() )
+	{
+		std::map<std::string, FeRomInfo * >::iterator itm = parent_map.find( cloneof );
+		if ( itm != parent_map.end() )
+		{
+			std::string clone_fuzz = get_fuzzy( rom.get_info( FeRomInfo::Title ) );
+			std::string parent_fuzz = get_fuzzy( (*itm).second->get_info( FeRomInfo::Title ) );
+
+			if ( clone_fuzz.compare( parent_fuzz ) == 0 )
+				return true;
+		}
+	}
+	return false;
+}
+
 }; // end namespace
 
 bool FeSettings::mamedb_scraper( FeImporterContext &c )
@@ -313,6 +343,12 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 	if (( c.emulator.get_info( FeEmulatorInfo::Info_source ).compare( "mame" ) != 0 )
 				|| ( !m_scrape_snaps && !m_scrape_marquees ))
 		return true;
+
+	//
+	// Build a map for looking up parents
+	//
+	std::map < std::string, FeRomInfo * > parent_map;
+	build_parent_map( parent_map, c.romlist );
 
 	const char *MAMEDB = "http://mamedb.com";
 
@@ -328,6 +364,11 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 	{
 		// ugh, this must be set for has_artwork() to correctly function
 		(*itr).set_info( FeRomInfo::Emulator, emu_name );
+
+		// Don't scrape for a clone if its parent has the same name
+		//
+		if ( has_same_name_as_parent( *itr, parent_map ) )
+			continue;
 
 		if ( m_scrape_marquees && !has_artwork( *itr, "marquee" ) )
 		{
@@ -449,6 +490,12 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
 
 	//
+	// Build a map for looking up parents
+	//
+	std::map < std::string, FeRomInfo * > parent_map;
+	build_parent_map( parent_map, c.romlist );
+
+	//
 	// Build a worklist of the roms where we need to lookup
 	//
 	std::vector<FeRomInfo *> worklist;
@@ -457,12 +504,17 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	{
 		(*itr).set_info( FeRomInfo::Emulator, emu_name );
 
+		// Don't scrape for a clone if its parent has the same name
+		//
+		if ( has_same_name_as_parent( *itr, parent_map ) )
+			continue;
+
 		if ( !c.scrape_art || m_scrape_fanart
 				|| ( m_scrape_flyers && (!has_artwork( *itr, "flyer" ) ) )
 				|| ( m_scrape_wheels && (!has_artwork( *itr, "wheel" ) ) )
 				|| ( m_scrape_snaps && (!has_artwork( *itr, "snap" ) ) )
 				|| ( m_scrape_marquees && (!has_artwork( *itr, "marquee" ) ) ) )
-		worklist.push_back( &(*itr) );
+			worklist.push_back( &(*itr) );
 	}
 
 	const int NUM_ARTS=5; // the number of scrape-able artwork types

@@ -201,4 +201,9 @@ private:
 	bool m_ignore;
 };
 
+//
+// Utility function to get strings to use to see if game names match filenames
+//
+std::string get_fuzzy( const std::string &orig );
+
 #endif

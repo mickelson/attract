@@ -24,6 +24,7 @@
 #define FE_NET_HPP
 
 #include <SFML/Network.hpp>
+#include <deque>
 #include <queue>
 
 class FeNetTask
@@ -67,7 +68,7 @@ class FeNetQueue
 {
 private:
 	sf::Mutex m_mutex;
-	std::queue < FeNetTask > m_in_queue;
+	std::deque < FeNetTask > m_in_queue;
 	std::queue < FeNetTask > m_out_queue;
 	int m_in_flight;
 

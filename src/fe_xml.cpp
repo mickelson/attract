@@ -59,6 +59,8 @@ void fix_last_word( std::string &str, int pos )
 	}
 }
 
+}
+
 //
 // Utility function to get strings to use to see if game names match filenames
 //
@@ -81,8 +83,6 @@ std::string get_fuzzy( const std::string &orig )
 	}
 	fix_last_word( retval, word_start );
 	return retval;
-}
-
 }
 
 //
