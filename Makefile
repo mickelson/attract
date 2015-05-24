@@ -214,7 +214,7 @@ ifeq ($(FE_DEBUG),1)
  CFLAGS += -g -Wall
  FE_FLAGS += -DFE_DEBUG
 else
- CFLAGS += -O2
+ CFLAGS += -O2 -s
 endif
 
 ifeq ($(FE_RPI),1)
