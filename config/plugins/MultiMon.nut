@@ -50,6 +50,16 @@ class MultiMon
 
 			local tag = "mon"+(fe.monitors[i].num+1);
 
+			// Force the whole screen to black in case there
+			// is spillover from the main screen's layout
+			local blank = fe.monitors[i].add_text( "",
+				0,
+				0,
+				fe.monitors[i].width,
+				fe.monitors[i].height );
+			blank.set_bg_rgb( 0, 0, 0 );
+			blank.bg_alpha = 255;
+
 			if ( my_config[tag+"_art"] == "none" )
 				continue;
 

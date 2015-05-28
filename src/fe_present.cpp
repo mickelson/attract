@@ -312,27 +312,15 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 	std::vector<FeBasePresentable *>::const_iterator itl;
 
 	//
-	// First do any drawing that is required on secondary monitors
-	//
-	for ( unsigned int i=1; i<m_mon.size(); i++ )
+	for ( unsigned int i=0; i<m_mon.size(); i++ )
 	{
-		states.transform = m_mon[i].transform;
+		// use m_transform on monitor 0
+		states.transform = i ? m_mon[i].transform : m_transform;
 		for ( itl=m_mon[i].elements.begin(); itl != m_mon[i].elements.end(); ++itl )
 		{
 			if ( (*itl)->get_visible() )
 				target.draw( (*itl)->drawable(), states );
 		}
-	}
-
-	//
-	// Now draw the layout on the primary monitor using m_transform
-	//
-	states.transform = m_transform;
-
-	for ( itl=m_mon[0].elements.begin(); itl != m_mon[0].elements.end(); ++itl )
-	{
-		if ( (*itl)->get_visible() )
-			target.draw( (*itl)->drawable(), states );
 	}
 }
 
