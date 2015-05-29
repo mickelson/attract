@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -199,18 +199,24 @@ FeTextureContainer::FeTextureContainer(
 	m_filter_offset( 0 ),
 	m_current_rom_index( -1 ),
 	m_current_filter_index( -1 ),
-	m_is_artwork( is_artwork ),
 	m_art_update_trigger( ToNewSelection ),
 	m_movie( NULL ),
 	m_movie_status( -1 ),
 	m_video_flags( VF_Normal )
 {
-	if ( m_is_artwork )
+	if ( is_artwork )
+		m_type = IsArtwork;
+	else if ( art_name.find_first_of( "[" ) != std::string::npos )
+		m_type = IsDynamic;
+	else
+		m_type = IsStatic;
+
+	if ( m_type != IsStatic )
 	{
-		if ( art_name.empty() )
+		m_art_name = art_name;
+
+		if (( m_type == IsArtwork ) && m_art_name.empty() )
 			m_art_name = FE_DEFAULT_ARTWORK;
-		else
-			m_art_name = art_name;
 	}
 }
 
@@ -360,7 +366,7 @@ const sf::Texture &FeTextureContainer::get_texture()
 
 void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_saver_active )
 {
-	if (( m_is_artwork ) && ( m_art_update_trigger == ToNewSelection ))
+	if (( m_type != IsStatic ) && ( m_art_update_trigger == ToNewSelection ))
 		internal_update_selection( feSettings, screen_saver_active );
 }
 
@@ -369,13 +375,13 @@ void FeTextureContainer::on_new_list( FeSettings *feSettings, bool screen_saver_
 	if ( new_display )
 		m_current_filter_index=-1;
 
-	if (( m_is_artwork ) && ( m_art_update_trigger == EndNavigation ))
+	if (( m_type != IsStatic ) && ( m_art_update_trigger == EndNavigation ))
 		internal_update_selection( feSettings, screen_saver_active );
 }
 
 void FeTextureContainer::on_end_navigation( FeSettings *feSettings, bool screen_saver_active )
 {
-	if (( m_is_artwork ) && ( m_art_update_trigger == EndNavigation ))
+	if (( m_type != IsStatic ) && ( m_art_update_trigger == EndNavigation ))
 		internal_update_selection( feSettings, screen_saver_active );
 }
 
@@ -402,21 +408,40 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings, bool
 
 	clear();
 
-	FeRomInfo *rom	= feSettings->get_rom_absolute( filter_index, rom_index );
-
-	if ( !rom )
-		return;
-
 	std::vector<std::string> vid_list;
 	std::vector<std::string> image_list;
-	if ( feSettings->get_best_artwork_file( *rom,
-							m_art_name,
-							vid_list,
-							image_list,
-							screen_saver_active,
-							false ) )
+	if ( m_type == IsArtwork )
 	{
-		common_load( vid_list, image_list );
+		FeRomInfo *rom	= feSettings->get_rom_absolute( filter_index, rom_index );
+		if ( !rom )
+			return;
+
+		if ( feSettings->get_best_artwork_file( *rom,
+				m_art_name,
+				vid_list,
+				image_list,
+				screen_saver_active,
+				false ) )
+		{
+			common_load( vid_list, image_list );
+		}
+	}
+	else if ( m_type == IsDynamic )
+	{
+		std::string work = m_art_name;
+		FePresent::script_process_magic_strings( work,
+				m_filter_offset,
+				m_index_offset );
+
+		if ( feSettings->get_best_dynamic_image_file( filter_index,
+				rom_index,
+				work,
+				vid_list,
+				image_list,
+				screen_saver_active ) )
+		{
+			common_load( vid_list, image_list );
+		}
 	}
 
 	//
@@ -652,7 +677,7 @@ void FeTextureContainer::transition_swap( FeBaseTextureContainer *o )
 		m_art_name.swap( o_up->m_art_name );
 		std::swap( m_index_offset, o_up->m_index_offset );
 		std::swap( m_filter_offset, o_up->m_filter_offset );
-		std::swap( m_is_artwork, o_up->m_is_artwork );
+		std::swap( m_type, o_up->m_type );
 		std::swap( m_art_update_trigger, o_up->m_art_update_trigger );
 	}
 

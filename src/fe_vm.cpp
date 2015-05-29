@@ -912,6 +912,55 @@ FePresent *FePresent::script_get_fep()
 	return NULL;
 }
 
+void FePresent::script_process_magic_strings( std::string &str,
+		int filter_offset,
+		int index_offset )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	if ( !vm )
+		return;
+
+	size_t pos = str.find( "[!" );
+	while ( pos != std::string::npos )
+	{
+		size_t end = str.find_first_of( ']', pos+1 );
+		if ( end == std::string::npos )
+			break;
+
+		std::string magic = str.substr( pos+2, end-pos-2 );
+		std::string result;
+
+		try
+		{
+			Sqrat::Function func( Sqrat::RootTable(), magic.c_str() );
+			if ( !func.IsNull() )
+			{
+				switch ( fe_get_num_params( vm, func.GetFunc(), func.GetEnv() ) )
+				{
+				case 2:
+					result = func.Evaluate<const char *>( index_offset, filter_offset );
+					break;
+				case 1:
+					result = func.Evaluate<const char *>( index_offset );
+					break;
+				default:
+					result = func.Evaluate<const char *>();
+					break;
+				}
+			}
+		}
+		catch( Sqrat::Exception e )
+		{
+			std::cout << "Script Error in magic string function: "
+				<< magic << " - "
+				<< e.Message() << std::endl;
+		}
+
+		str.replace( pos, end+1, result );
+		pos = str.find( "[!" );
+	}
+}
+
 //
 //
 //

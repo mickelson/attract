@@ -9,6 +9,7 @@ Contents
    * [Overview](#overview)
    * [Squirrel Language](#squirrel)
    * [Frontend Binding](#binding)
+   * [Magic Tokens](#magic)
    * [Functions](#functions)
       * [`fe.add_image()`](#add_image)
       * [`fe.add_artwork()`](#add_artwork)
@@ -122,6 +123,89 @@ Example:
 The remainder of this document describes the functions, objects, classes
 and constants that are exposed to layout and plug-in scripts.
 
+<a name="magic" />
+Magic Tokens
+----------------
+
+Image names, as well as the messages displayed by Text and Listbox objects, can
+all contain one or more "Magic Tokens".  Magic tokens are enclosed in square
+brackets, and the frontend automatically updates them accordingly as the user
+navigates the frontend.  So for example, a Text message set to
+"[Manufacturer]" will be automatically updated with the appropriate
+Manufacturer's name.  There are more examples below.
+
+   * The following magic tokens are currently supported:
+      - `[DisplayName]` - the name of the current display
+      - `[ListSize]` - the number of items in the game list
+      - `[ListEntry]` - the number of the current selection in the game list
+      - `[FilterName]` - the name of the filter
+      - `[SortName]` - the attribute that the list was sorted by
+      - `[Name]` - the short name of the selected game
+      - `[Title]` - the full name of the selected game
+      - `[Emulator]` - the emulator to use for the selected game
+      - `[CloneOf]` - the short name of the game that the selection is a
+        clone of
+      - `[Year]` - the year for the selected game
+      - `[Manufacturer]` - the manufacturer for the selected game
+      - `[Category]` - the category for the selected game
+      - `[Players]` - the number of players for the selected game
+      - `[Rotation]` - the rotation for the selected game
+      - `[Control]` - the primary control for the selected game
+      - `[Status]` - the emulation status for the selected game
+      - `[DisplayCount]` - the number of displays for the selected game
+      - `[DisplayType]` - the display type for the selected game
+      - `[AltRomname]` - the alternative Romname for the selected game
+      - `[AltTitle]` - the alternative title for the selected game
+      - `[PlayedTime]` - the amount of time the selected game has been
+        played
+      - `[PlayedCount]` - the number of times the selected game has been
+        played
+      - `[SortValue]` - the value used to order the selected game in the
+        list
+   * Magic tokens can also be used to run a function defined in your layout
+     or plugin's squirrel script to obtain the desired text.  These tokens are
+     in the form `[!<function_name>]`.  When used, Attract-Mode will run the
+     corresponding function (defined in the squirrel "root table").  This
+     function should then return the string value that you wish to have
+     replace the magic token.  The function defined in squirrel can optionally
+     have up to two parameters passed to it.  If it is defined with a first
+     parameter, Attract-Mode will supply the appropriate index_offset in that
+     parameter  when it calls the function.  If a second parameter is present
+     as well, the appropriate filter_offset is supplied.
+
+Examples:
+		// Add a text that displays the filter name and list location
+		//
+		fe.add_text( "[FilterName] [[ListEntry]/[ListSize]]",
+				0, 0, 400, 20 );
+
+		// Add an image that will match to the first word in the
+		// Manufacturer name (i.e. "Atari.png", "Nintendo.jpg")
+		//
+		function strip_man( ioffset )
+		{
+			local m = fe.game_info(Info.Manufacturer,ioffset);
+			return split( m, " " )[0];
+		}
+		fe.add_image( "[!strip_man]", 0, 0 );
+
+		// Add a text that will display a copyright message if both
+		// the manufacturer name and a year are present.  Otherwise,
+		// just show the Manufactuer name.
+		//
+		function well_formatted()
+		{
+			local m = fe.game_info( Info.Manufacturer );
+			local y = fe.game_info( Info.Year );
+
+			if (( m.len() > 0 ) && ( y.len() > 0 ))
+				return "Copyright " + y + ", " + m;
+
+			return m;
+		}
+		fe.add_text( "[!well_formatted]", 0, 0 );
+
+
 <a name="functions" />
 Functions
 ---------
@@ -133,14 +217,25 @@ Functions
     fe.add_image( name, x, y )
     fe.add_image( name, x, y, w, h )
 
-Add a static image or video to the end of Attract-Mode's draw list.
+Adds an image or video to the end of Attract-Mode's draw list.
+
+[Magic Tokens](#magic) can be used in the supplied "name", in which case
+Attract-Mode will dynamically update the image in response to navigation.
 
 Parameters:
 
    * name - the name of an image/video file to show.  If a relative path is
      provided (i.e. "bg.png") it is assumed to be relative to the current
      layout directory.  Supported image formats are: PNG, JPEG, GIF, BMP and
-     TGA.  Videos can be in any format supported by FFmpeg.
+     TGA.  Videos can be in any format supported by FFmpeg.  One or more
+     "Magic Tokens" can be used in the name, in which case Attract-Mode will
+     automatically update the image/video file appropriately in response to
+     user navigation.  For example "man/[Manufacturer]" will load
+     the file corresponding to the manufacturer's name from the man
+     subdirectory of the layout (example: "man/Konami.png"). When
+     Magic Tokens are used, the file extension specified in `name` is ignored
+     (if present) and Attract-Mode will load any supported media file that
+     matches the Magic Token.  See [Magic Tokens](#magic) for more info.
    * x - the x coordinate of the top left corner of the image (in layout
      coordinates).
    * y - the y coordinate of the top left corner of the image (in layout
@@ -242,37 +337,13 @@ Return Value:
 
 Add a text label to the end of Attract-Mode's draw list.
 
+[Magic Tokens](#magic) can be used in the supplied "msg", in which case
+Attract-Mode will dynamically update the msg in response to navigation.
+
 Parameters:
 
-   * msg - the text to display.  The tokens below that appear in the 'msg'
-     string will be substituted appropriately:
-      - `[DisplayName]` - the name of the current display
-      - `[ListSize]` - the number of items in the game list
-      - `[ListEntry]` - the number of the current selection in the game list
-      - `[FilterName]` - the name of the filter
-      - `[SortName]` - the attribute that the list was sorted by
-      - `[Name]` - the short name of the selected game
-      - `[Title]` - the full name of the selected game
-      - `[Emulator]` - the emulator to use for the selected game
-      - `[CloneOf]` - the short name of the game that the selection is a
-        clone of
-      - `[Year]` - the year for the current selected game
-      - `[Manufacturer]` - the manufacturer for the selected game
-      - `[Category]` - the category for the selected game
-      - `[Players]` - the number of players for the selected game
-      - `[Rotation]` - the rotation for the selected game
-      - `[Control]` - the primary control for the selected game
-      - `[Status]` - the status for the selected game
-      - `[DisplayCount]` - the number of displays for the selected game
-      - `[DisplayType]` - the display type for the selected game
-      - `[AltRomname]` - the alternative romname for the selected game
-      - `[AltTitle]` - the alternative title for the selected game
-      - `[PlayedTime]` - the amount of time the selected game has been
-        played
-      - `[PlayedCount]` - the number of times the selected game has been
-        played
-      - `[SortValue]` - the value used to order the selected game in the
-        list
+   * msg - the text to display.  Magic tokens can be used here, see
+     [Magic Tokens](#magic) for more information.
    * x - the x coordinate of the top left corner of the text (in layout
      coordinates).
    * y - the y coordinate of the top left corner of the text (in layout
@@ -376,7 +447,7 @@ The minimal fragment shader expected is as follows:
 
     fe.add_sound( name )
 
-Add an audio file to play.
+Add an audio file that can then be played by Attract-Mode.
 
 Parameters:
 
@@ -1146,12 +1217,12 @@ Attributes:
      Default value is 255.
    * `alpha` - Get/set alpha level for image. Range is [0 ... 255].  Default
      value is 255.
-   * `index_offset` - [artwork only] Get/set offset from current selection
-     for the artwork to display.  For example, set to -1 for the image
+   * `index_offset` - Get/set offset from current selection for the artwork/
+     dynamic image to display.  For example, set to -1 for the image
      corresponding to the previous list entry, or 1 for the next list entry,
      etc.  Default value is 0.
-   * `filter_offset` - [artwork only] Get/set filter offset from current
-     filter for the artwork to display.  For example, set to -1 for an image
+   * `filter_offset` - Get/set filter offset from current filter for the
+     artwork/dynamic image to display.  For example, set to -1 for an image
      indexed in the previous filter, or 1 for the next filter, etc.  Default
      value is 0.
    * `skew_x` - Get/set the amount of x-direction image skew (in layout
@@ -1194,13 +1265,14 @@ Attributes:
    * `preserve_aspect_ratio` - Get/set whether the aspect ratio from the source
      image is to be preserved.  Default value is `false`.
    * `file_name` - [image & artwork only] Get/set the name of the image/video
-     file being shown.  Note that if you set this on an "artwork" object it will
-     get reset the next time the user changes the game selection.
+     file being shown.  Note that if you set this on an artwork or a dynamic
+     image object it will get reset the next time the user changes the game
+     selection.
    * `shader` - Get/set the GLSL shader for this image. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
-   * trigger - Get/set the transition that triggers updates of this artwork.
-     Can be set to `Transition.ToNewSelection` or `Transition.EndNavigation`.
-     Default value is `Transition.ToNewSelection`.
+   * trigger - Get/set the transition that triggers updates of this artwork/
+     dynamic image.  Can be set to `Transition.ToNewSelection` or
+     `Transition.EndNavigation`.  Default value is `Transition.ToNewSelection`.
    * smooth - Get/set whether the image is to be smoothed.  Default value can be
      configured in attract.cfg
 
@@ -1238,12 +1310,13 @@ Member Functions:
 <a name="ImageNotes" />
 Notes:
 
-   * [artworks] Note that Attract-Mode defers the loading of artwork images until
-     after all layout and plug-in scripts have completed running.  This means that
-     the `texture_width`, `texture_height` and `file_name` attributes are not
-     available when a layout or plug-in script first adds the artwork resource.
-     These attributes are available during transition callbacks, and in particular
-     during the `Transition.FromOldSelection` and `Transition.ToNewList` transitions.
+   * Note that Attract-Mode defers the loading of artwork and dynamic images
+     (images with Magic Tokens) until after all layout and plug-in scripts have
+     completed running.  This means that the `texture_width`, `texture_height`
+     and `file_name` attributes are not available when a layout or plug-in
+     script first adds the artwork/dynamic image resource.  These attributes
+     are available during transition callbacks, and in particular during the
+     `Transition.FromOldSelection` and `Transition.ToNewList` transitions.
      Example:
 
 ```` squirrel
@@ -1258,7 +1331,9 @@ Notes:
          //
          // do stuff with my_art's texture_width or texture_height here...
          //
-
+         // for example, flip the image vertically:
+         my_art.subimg_height = -1 * texture_height;
+         my_art.subimg_y = texture_height;
       }
 
       return false;
@@ -1290,36 +1365,8 @@ class are returned by the `add_text()` functions and also appear in the
 otherwise instantiated in a script.
 
 Attributes:
-
-   * `msg` - Get/set the text label's message.  The tokens below that appear
-     in the 'msg' string will be substituted appropriately:
-      - `[DisplayName]` - the name of the current display
-      - `[ListSize]` - the number of items in the game list
-      - `[ListEntry]` - the number of the current selection in the game list
-      - `[FilterName]` - the name of the currently displayed filter
-      - `[SortName]` - the attribute that the list was sorted by
-      - `[Name]` - the short name of the selected game
-      - `[Title]` - the full name of the selected game
-      - `[Emulator]` - the emulator to use for the selected game
-      - `[CloneOf]` - the short name of the game that the selection is a
-        clone of
-      - `[Year]` - the year for the current selected game
-      - `[Manufacturer]` - the manufacturer for the selected game
-      - `[Category]` - the category for the selected game
-      - `[Players]` - the number of players for the selected game
-      - `[Rotation]` - the rotation for the selected game
-      - `[Control]` - the primary control for the selected game
-      - `[Status]` - the status for the selected game
-      - `[DisplayCount]` - the number of displays for the selected game
-      - `[DisplayType]` - the display type for the selected game
-      - `[AltRomname]` - the alternative romname for the selected game
-      - `[AltTitle]` - the alternative title for the selected game
-      - `[PlayedTime]` - the amount of time the selected game has been
-        played
-      - `[PlayedCount]` - the number of times the selected game has been
-        played
-      - `[SortValue]` - the value used to order the selected game in the
-        list
+   * `msg` - Get/set the text label's message.  Magic tokens can be used here,
+     see [Magic Tokens](#magic) for more information.
    * `x` - Get/set x position of top left corner (in layout coordinates).
    * `y` - Get/set y position of top left corner (in layout coordinates).
    * `width` - Get/set width of text (in layout coordinates).
@@ -1460,9 +1507,9 @@ Attributes:
    * `font` - Get/set the name of the font used for this listbox.  Default is
      the layout font name.
    * `format_string` - Get/set the format for the text to display in each list
-    entry.  Supported format tokens are the same as for the [`fe.Text`](#Text)
-    class `msg` attribute.  If empty, game titles will be displayed (i.e. the
-    same behaviour as if set to "[Title]").  Default is an empty value.
+     entry. Magic tokens can be used here, see [Magic Tokens](#magic) for more
+     information.  If empty, game titles will be displayed (i.e. the same
+     behaviour as if set to "[Title]").  Default is an empty value.
    * `shader` - Get/set the GLSL shader for this listbox. This can only be set
      to an instance of the class `fe.Shader` (see: `fe.add_shader()`).
 

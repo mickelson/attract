@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014 Andrew Mickelson
+ *  Copyright (C) 2014-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -45,5 +45,10 @@ int fe_obj_compare(
 	HSQUIRRELVM vm,
 	HSQOBJECT obj1,
 	HSQOBJECT obj2 );
+
+int fe_get_num_params(
+	HSQUIRRELVM vm,
+	HSQOBJECT func,
+	HSQOBJECT env );
 
 #endif

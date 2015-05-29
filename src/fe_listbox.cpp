@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -274,6 +274,7 @@ void FeListBox::on_new_list( FeSettings *s )
 
 	int filter_index = s->get_filter_index_from_offset( m_filter_offset );
 	int filter_size = s->get_filter_size( filter_index );
+	int current_sel = s->get_rom_index( filter_index, 0 );
 
 	m_displayList.clear();
 	m_displayList.reserve( filter_size );
@@ -283,7 +284,13 @@ void FeListBox::on_new_list( FeSettings *s )
 		for ( int i=0; i < filter_size; i++ )
 		{
 			m_displayList.push_back( m_format_string );
-			s->do_text_substitutions_absolute( m_displayList.back(), filter_index, i );
+
+			FePresent::script_process_magic_strings(
+				m_displayList.back(),
+				m_filter_offset, i - current_sel );
+
+			s->do_text_substitutions_absolute(
+				m_displayList.back(), filter_index, i );
 		}
 	}
 	else
@@ -303,9 +310,7 @@ void FeListBox::on_new_list( FeSettings *s )
 		}
 	}
 
-	setText(
-			s->get_rom_index( filter_index, 0 ),
-			m_displayList );
+	setText( current_sel, m_displayList );
 }
 
 void FeListBox::on_new_selection( FeSettings *s )

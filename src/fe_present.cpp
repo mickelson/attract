@@ -324,32 +324,32 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 	}
 }
 
-FeImage *FePresent::add_image( bool is_artwork, const std::string &n, int x, int y, int w, int h,
-										std::vector<FeBasePresentable *> &l )
+FeImage *FePresent::add_image( bool is_artwork,
+		const std::string &n,
+		int x,
+		int y,
+		int w,
+		int h,
+		std::vector<FeBasePresentable *> &l )
 {
-	std::string name;
-	if ( is_artwork )
-		name = n;
-	else
-	{
-		// If it is a relative path we assume it is in the layout directory
-		//
-		if ( is_relative_path( n ) )
-			name = m_feSettings->get_current_layout_dir() + n;
-		else
-			name = n;
-	}
-
-	FeTextureContainer *new_tex = new FeTextureContainer( is_artwork, name );
+	FeTextureContainer *new_tex = new FeTextureContainer( is_artwork, n );
 	new_tex->set_smooth( m_feSettings->get_info_bool( FeSettings::SmoothImages ) );
 
 	FeImage *new_image = new FeImage( new_tex, x, y, w, h );
 	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
-	// if this is a non-artwork (i.e. static image/video) then load it now
+	// if this is a static image/video then load it now
 	//
-	if ( !is_artwork )
+	if (( !is_artwork ) && ( n.find_first_of( "[" ) == std::string::npos ))
+	{
+		std::string name;
+		if ( is_relative_path( n ) )
+			name = m_feSettings->get_current_layout_dir() + n;
+		else
+			name = n;
+
 		new_tex->load_static( name );
+	}
 
 	flag_redraw();
 	m_texturePool.push_back( new_tex );

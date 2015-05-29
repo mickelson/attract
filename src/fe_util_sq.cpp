@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014 Andrew Mickelson
+ *  Copyright (C) 2014-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -87,4 +87,21 @@ int fe_obj_compare(
 	int retval = sq_cmp( vm );
 	sq_pop( vm, 2 );
 	return retval;
+}
+
+int fe_get_num_params(
+	HSQUIRRELVM vm,
+	HSQOBJECT func,
+	HSQOBJECT env )
+{
+	sq_pushobject( vm, func );
+	sq_pushobject( vm, env );
+
+	SQUnsignedInteger nparams( 0 );
+	SQUnsignedInteger nfreevars( 0 );
+	sq_getclosureinfo( vm, -2, &nparams, &nfreevars );
+
+	sq_pop(vm, 2);
+
+	return nparams-1;
 }

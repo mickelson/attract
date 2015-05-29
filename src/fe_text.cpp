@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -133,6 +133,11 @@ void FeText::on_new_list( FeSettings *s )
 void FeText::on_new_selection( FeSettings *feSettings )
 {
 	std::string str = m_string;
+
+	FePresent::script_process_magic_strings( str,
+			m_filter_offset,
+			m_index_offset );
+
 	feSettings->do_text_substitutions( str, m_filter_offset, m_index_offset );
 
 	m_draw_text.setString( str );

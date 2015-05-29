@@ -227,6 +227,10 @@ public:
 	static void script_do_update( FeBaseTextureContainer * );
 	static void script_do_update( FeBasePresentable * );
 	static void script_flag_redraw();
+	static void script_process_magic_strings( std::string &str,
+			int filter_offset,
+			int index_offset );
+
 
 	//
 	//

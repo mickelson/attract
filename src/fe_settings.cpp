@@ -2464,3 +2464,46 @@ bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name 
 	std::vector<std::string> temp1, temp2;
 	return ( get_best_artwork_file( rom, art_name, temp1, temp2, false, true ) );
 }
+
+bool FeSettings::get_best_dynamic_image_file(
+	int filter_index,
+	int rom_index,
+	const std::string &art_name,
+	std::vector<std::string> &vid_list,
+	std::vector<std::string> &image_list,
+	bool is_screen_saver )
+{
+	std::string base = art_name;
+	do_text_substitutions_absolute( base, filter_index, rom_index );
+
+	std::string path;
+	if ( is_screen_saver )
+	{
+		std::string not_used;
+		get_screensaver_file( path, not_used );
+	}
+	else
+		path = get_current_layout_dir();
+
+	// split filename from directory paths correctly
+	size_t pos( 0 );
+	if ( is_relative_path( base ) )
+	{
+		pos = base.find_last_of( "/\\" );
+		if ( pos != std::string::npos )
+		{
+			path += base.substr( 0, pos+1 );
+			base.erase( 0, pos+1 );
+		}
+	}
+
+	// strip extension from filename, if present
+	pos = base.find_last_of( "." );
+	if ( pos != std::string::npos )
+		base.erase( pos );
+
+	std::vector< std::string > paths;
+	paths.push_back( path );
+
+	return gather_artwork_filenames( paths, base, vid_list, image_list );
+}

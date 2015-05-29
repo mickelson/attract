@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -115,7 +115,8 @@ private:
 class FeTextureContainer : public FeBaseTextureContainer
 {
 public:
-	FeTextureContainer( bool is_artwork, const std::string &art_name="" );
+	FeTextureContainer( bool is_artwork, const std::string &name="" );
+
 	~FeTextureContainer();
 
 	const sf::Texture &get_texture();
@@ -165,13 +166,15 @@ private:
 	void clear();
 
 	sf::Texture m_texture;
-	std::string m_art_name; // artwork label for artworks
+	std::string m_art_name; // artwork label/template name (dynamic images)
 	std::string m_file_name; // the name of the loaded file
 	int m_index_offset;
 	int m_filter_offset;
 	int m_current_rom_index;
 	int m_current_filter_index;
-	bool m_is_artwork;
+
+	enum Type { IsArtwork, IsDynamic, IsStatic };
+	Type m_type;
 	int m_art_update_trigger;
 	FeMedia *m_movie;
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing

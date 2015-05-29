@@ -270,6 +270,14 @@ public:
 
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
 
+	bool get_best_dynamic_image_file(
+		int filter_index,
+		int rom_index,
+		const std::string &logo_str,
+		std::vector<std::string> &vid_list,
+		std::vector<std::string> &image_list,
+		bool is_screen_saver );
+
 	std::string get_module_dir( const std::string &module_file ) const;
 
 	const std::string &get_config_dir() const;
