@@ -174,6 +174,7 @@ Manufacturer's name.  There are more examples below.
      as well, the appropriate filter_offset is supplied.
 
 Examples:
+
 		// Add a text that displays the filter name and list location
 		//
 		fe.add_text( "[FilterName] [[ListEntry]/[ListSize]]",
@@ -445,6 +446,7 @@ The minimal fragment shader expected is as follows:
 <a name="add_sound" />
 #### `fe.add_sound()` ####
 
+    fe.add_sound( name, reuse )
     fe.add_sound( name )
 
 Add an audio file that can then be played by Attract-Mode.
@@ -452,11 +454,13 @@ Add an audio file that can then be played by Attract-Mode.
 Parameters:
 
    * name - the name of the audio file.
+   * reuse - [bool] if set to true, reuse any previously added sound that
+     has the same name.  Default value is true.
 
 Return Value:
 
    * An instance of the class [`fe.Sound`](#Sound) which can be used to
-     interact with the added sound.
+     interact with the sound.
 
 
 <a name="add_ticks_callback" />

@@ -315,6 +315,9 @@ bool FeTextureContainer::common_load(
 		{
 			std::cout << "ERROR loading video: "
 				<< movie_file << std::endl;
+
+			delete m_movie;
+			m_movie = NULL;
 		}
 		else
 		{

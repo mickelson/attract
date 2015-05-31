@@ -140,6 +140,7 @@ public:
 	static FeText *cb_add_text(const char *,int, int, int, int);
 	static FeListBox *cb_add_listbox(int, int, int, int);
 	static FeImage *cb_add_surface(int, int);
+	static FeSound *cb_add_sound(const char *, bool);
 	static FeSound *cb_add_sound(const char *);
 	static FeShader *cb_add_shader(int, const char *, const char *);
 	static FeShader *cb_add_shader(int, const char *);

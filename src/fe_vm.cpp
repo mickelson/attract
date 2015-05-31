@@ -512,7 +512,8 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Overload<FeText* (*)(const char *, int, int, int, int)>(_SC("add_text"), &FeVM::cb_add_text);
 	fe.Func<FeListBox* (*)(int, int, int, int)>(_SC("add_listbox"), &FeVM::cb_add_listbox);
 	fe.Func<FeImage* (*)(int, int)>(_SC("add_surface"), &FeVM::cb_add_surface);
-	fe.Func<FeSound* (*)(const char *)>(_SC("add_sound"), &FeVM::cb_add_sound);
+	fe.Overload<FeSound* (*)(const char *, bool)>(_SC("add_sound"), &FeVM::cb_add_sound);
+	fe.Overload<FeSound* (*)(const char *)>(_SC("add_sound"), &FeVM::cb_add_sound);
 	fe.Overload<FeShader* (*)(int, const char *, const char *)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Overload<FeShader* (*)(int, const char *)>(_SC("add_shader"), &FeVM::cb_add_shader);
 	fe.Overload<FeShader* (*)(int)>(_SC("add_shader"), &FeVM::cb_add_shader);
@@ -1337,15 +1338,20 @@ FeImage* FeVM::cb_add_surface( int w, int h )
 	return ret;
 }
 
-FeSound* FeVM::cb_add_sound( const char *s )
+FeSound* FeVM::cb_add_sound( const char *s, bool reuse )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	return fev->add_sound( s );
+	return fev->add_sound( s, reuse );
 	//
 	// We assume the script will keep a reference to the sound
 	//
+}
+
+FeSound* FeVM::cb_add_sound( const char *s )
+{
+	return cb_add_sound( s, true );
 }
 
 FeShader* FeVM::cb_add_shader( int type, const char *shader1, const char *shader2 )

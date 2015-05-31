@@ -344,7 +344,16 @@ FeImage *FePresent::add_image( bool is_artwork,
 	{
 		std::string name;
 		if ( is_relative_path( n ) )
-			name = m_feSettings->get_current_layout_dir() + n;
+		{
+			if ( m_screenSaverActive )
+			{
+				std::string not_used;
+				m_feSettings->get_screensaver_file( name, not_used );
+				name += n;
+			}
+			else
+				name = m_feSettings->get_current_layout_dir() + n;
+		}
 		else
 			name = n;
 
@@ -415,10 +424,53 @@ FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> 
 	return new_image;
 }
 
-FeSound *FePresent::add_sound( const char *n )
+FeSound *FePresent::add_sound( const char *n, bool reuse )
 {
+	//
+	// Behaviour:
+	//
+	// - if n is empty, return a new (empty) sound object
+	// - if n is supplied:
+	//      - if n matches an existing sound and reuse is true,
+	//        return that matching sound object
+	//      - otherwise return a new sound object loaded with n
+	//
+
+	std::string name=n;
+	if ( !name.empty() )
+	{
+		if ( is_relative_path( name ) )
+		{
+			if ( m_screenSaverActive )
+			{
+				name.clear();
+
+				std::string not_used;
+				m_feSettings->get_screensaver_file( name, not_used );
+				name += n;
+			}
+			else
+				name = m_feSettings->get_current_layout_dir() + n;
+		}
+
+		if ( reuse )
+		{
+			for ( std::vector<FeSound *>::iterator itr=m_sounds.begin();
+						itr!=m_sounds.end(); ++itr )
+			{
+				if ( name.compare( (*itr)->get_file_name() ) == 0 )
+					return (*itr);
+			}
+		}
+	}
+
+	// Sound not found, try loading now
+	//
 	FeSound *new_sound = new FeSound();
-	new_sound->load( n );
+
+	if ( !name.empty() )
+		new_sound->load( name.c_str() );
+
 	new_sound->set_volume(
 		m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
 

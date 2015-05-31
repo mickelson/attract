@@ -154,7 +154,7 @@ protected:
 	FeText *add_text(const std::string &n, int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
 	FeListBox *add_listbox(int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
 	FeImage *add_surface(int w, int h, std::vector<FeBasePresentable *> &l);
-	FeSound *add_sound(const char *n);
+	FeSound *add_sound(const char *n, bool reuse);
 	FeShader *add_shader(FeShader::Type type, const char *shader1, const char *shader2);
 	int get_layout_width() const;
 	int get_layout_height() const;
