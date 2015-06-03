@@ -451,6 +451,9 @@ ifeq ($(FE_WINDOWS_COMPILE),1)
  SQUIRREL += $(OBJ_DIR)/libnowide.a
 endif
 
+CFLAGS += -I$(EXTLIBS_DIR)/manymouse
+MANYMOUSE = $(OBJ_DIR)/libmanymouse.a
+
 ifeq ($(NO_SWF),1)
  FE_FLAGS += -DNO_SWF
 else
@@ -489,7 +492,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 	$(CC_MSG)
 	$(SILENT)$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
-$(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
+$(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO) $(MANYMOUSE)
 	$(EXE_MSG)
 	$(SILENT)$(CXX) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
 ifneq ($(FE_DEBUG),1)
@@ -522,6 +525,31 @@ $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
 	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) $(EXPAT_FLAGS)
 
 $(EXPAT_OBJ_DIR):
+	$(MD) $@
+
+#
+# ManyMouse Library
+#
+MANYMOUSE_FLAGS = -fno-exceptions -fno-strict-aliasing
+MANYMOUSE_OBJ_DIR = $(OBJ_DIR)/manymouse
+
+MANYMOUSE_OBJS= \
+	$(MANYMOUSE_OBJ_DIR)/linux_evdev.o \
+	$(MANYMOUSE_OBJ_DIR)/macosx_hidmanager.o \
+	$(MANYMOUSE_OBJ_DIR)/macosx_hidutilities.o \
+	$(MANYMOUSE_OBJ_DIR)/manymouse.o \
+	$(MANYMOUSE_OBJ_DIR)/windows_wminput.o \
+	$(MANYMOUSE_OBJ_DIR)/x11_xinput2.o
+
+$(OBJ_DIR)/libmanymouse.a: $(MANYMOUSE_OBJS) | $(MANYMOUSE_OBJ_DIR)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(MANYMOUSE_OBJS)
+
+$(MANYMOUSE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/manymouse/manymouse/%.c | $(MANYMOUSE_OBJ_DIR)
+	$(CC_MSG)
+	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) $(MANYMOUSE_FLAGS)
+
+$(MANYMOUSE_OBJ_DIR):
 	$(MD) $@
 
 #
@@ -766,4 +794,4 @@ smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
 
 clean:
-	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(NOWIDE_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(NOWIDE_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(MANYMOUSE_OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core

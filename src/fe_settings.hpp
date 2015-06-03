@@ -292,6 +292,7 @@ public:
 	void save_state();
 
 	FeInputMap::Command map_input( const sf::Event &e );
+	FeInputMap::Command map_input( const ManyMouseEvent &e );
 
 	void get_input_config_metrics( sf::IntRect &mousecap_rect, int &joy_thresh );
 	FeInputMap::Command input_conflict_check( const FeInputMapEntry &e );
@@ -366,6 +367,7 @@ public:
 	bool select_last_launch();
 	bool is_last_launch( int filter_offset, int index_offset );
 	int get_joy_thresh() const { return m_joy_thresh; }
+	int get_mouse_thresh() const { return m_mouse_thresh; }
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
