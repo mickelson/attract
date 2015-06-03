@@ -1174,12 +1174,17 @@ bool FeMedia::is_multiframe() const
 {
 	if ( m_video && m_format_ctx )
 	{
-		if (( m_format_ctx->streams[ m_video->stream_id ]->nb_frames > 1 )
-#ifdef AV_CODEC_ID_APNG
-				|| ( m_format_ctx->streams[ m_video->stream_id ]->id == AV_CODEC_ID_APNG )
-#endif
-				|| ( m_format_ctx->streams[ m_video->stream_id ]->id == AV_CODEC_ID_GIF ))
+		AVStream *s = m_format_ctx->streams[ m_video->stream_id ];
+
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 56, 13, 0 ))
+		if (( s->nb_frames > 1 )
+				|| ( s->id == AV_CODEC_ID_APNG )
+				|| ( s->id == AV_CODEC_ID_GIF ))
 			return true;
+#else
+		if ( s->nb_frames > 1 )
+			return true;
+#endif
 
 	}
 

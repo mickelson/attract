@@ -286,14 +286,6 @@ bool FeTextureContainer::common_load(
 	if ( m_video_flags & VF_DisableVideo )
 		non_image_names.clear();
 
-#ifndef SFML_IMAGES
-	while ( !image_names.empty() )
-	{
-		non_image_names.push_back( image_names.back() );
-		image_names.pop_back();
-	}
-#endif
-
 	ASSERT( !m_movie ); // m_movie should always be empty at this point...
 
 	std::string movie_file;
@@ -306,6 +298,16 @@ bool FeTextureContainer::common_load(
 			break;
 		}
 	}
+
+	bool is_image = false;
+#ifndef SFML_IMAGES
+	if ( movie_file.empty() )
+	{
+		movie_file = image_names.front();
+		is_image = true;
+	}
+#endif
+
 
 	if ( !movie_file.empty() )
 	{
@@ -324,7 +326,7 @@ bool FeTextureContainer::common_load(
 			loaded = true;
 			m_file_name = movie_file;
 
-			if ( !m_movie->is_multiframe() )
+			if ( is_image && (!m_movie->is_multiframe()) )
 			{
 				m_movie_status = -1; // don't play if there is only one frame
 
@@ -342,6 +344,7 @@ bool FeTextureContainer::common_load(
 	}
 #endif
 
+#ifdef SFML_IMAGES
 	if ( !loaded )
 	{
 		for ( std::vector<std::string>::iterator itr=image_names.begin();
@@ -355,6 +358,7 @@ bool FeTextureContainer::common_load(
 			}
 		}
 	}
+#endif
 
 	non_image_names.clear();
 	image_names.clear();
