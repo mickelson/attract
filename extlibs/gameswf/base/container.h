@@ -83,23 +83,23 @@ public:
 	void	append(const array<T>& other)
 	// Append the given data to our array.
 	{
-		std::vector<T>::insert(end(), other.begin(), other.end());
+		std::vector<T>::insert(std::vector<T>::end(), other.begin(), other.end());
 	}
 
 	void	append(const T other[], int count)
 	{
 		// This will probably work.  Depends on std::vector<T>::iterator being typedef'd as T*
-		std::vector<T>::insert(end(), &other[0], &other[count]);
+		std::vector<T>::insert(std::vector<T>::end(), &other[0], &other[count]);
 	}
 
 	void	remove(int index)
 	{
-		std::vector<T>::erase(begin() + index);
+		std::vector<T>::erase(std::vector<T>::begin() + index);
 	}
 
 	void	insert(int index, const T& val = T())
 	{
-		std::vector<T>::insert(begin() + index, val);
+		std::vector<T>::insert(std::vector<T>::begin() + index, val);
 	}
 
 	void	release()
@@ -115,7 +115,7 @@ public:
 //
 // @@ move this towards a strict subset of std::hash_map<> ?
 template<class T, class U, class hash_functor = fixed_size_hash<T> >
-class hash : public stdext::hash_map<T, U, hash_functor>
+class hash : public __gnu_cxx::hash_map<T, U, hash_functor>
 {
 public:
 	// extra convenience interfaces
@@ -131,7 +131,7 @@ public:
 		(*this)[key] = value;
 	}
 
-	bool	is_empty() const { return empty(); }
+	bool	is_empty() const { return __gnu_cxx::hash_map<T,U,hash_functor>::empty(); }
 
 	bool	get(const T& key, U* value) const
 	// Retrieve the value under the given key.
@@ -145,8 +145,8 @@ public:
 	// If value == NULL, return true or false according to the
 	// presence of the key, but don't touch *value.
 	{
-		const_iterator	it = find(key);
-		if (it != end())
+		typename __gnu_cxx::hash_map<T,U,hash_functor>::const_iterator	it = __gnu_cxx::hash_map<T,U,hash_functor>::find(key);
+		if (it != __gnu_cxx::hash_map<T,U,hash_functor>::end())
 		{
 			if (value) *value = it->second;
 			return true;
@@ -156,6 +156,8 @@ public:
 			return false;
 		}
 	}
+
+	void set_capacity( int c ) { __gnu_cxx::hash_map<T,U,hash_functor>::resize(c); }
 };
 
 

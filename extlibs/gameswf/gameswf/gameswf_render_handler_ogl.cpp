@@ -7,12 +7,12 @@
 
 #include "base/tu_config.h"
 
-#ifdef TU_USE_SDL
+#if TU_USE_SDL == 1
 #include <SDL.h>  // for cursor handling & the scanning for extensions.
 #include <SDL_opengl.h>	// for opengl const
 #else
 #include "base/tu_opengl_includes.h"
-#include <gl/glext.h>
+#include <GL/glext.h>
 #endif //TU_USE_SDL
 
 #include "gameswf/gameswf.h"
