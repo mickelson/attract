@@ -265,14 +265,19 @@ bool FeTextureContainer::fix_masked_image()
 	bool retval=false;
 
 	sf::Image tmp_img = m_texture.copyToImage();
+	sf::Vector2u tmp_s = tmp_img.getSize();
 
-	sf::Color p = tmp_img.getPixel( 0, 0 );
-	tmp_img.createMaskFromColor( p );
+	if (( tmp_s.x > 0 ) && ( tmp_s.y > 0 ))
+	{
+		sf::Color p = tmp_img.getPixel( 0, 0 );
+		tmp_img.createMaskFromColor( p );
 
-	if ( m_texture.loadFromImage( tmp_img ) )
-		retval=true;
+		if ( m_texture.loadFromImage( tmp_img ) )
+			retval=true;
 
-	notify_texture_change();
+		notify_texture_change();
+	}
+
 	return retval;
 }
 
@@ -301,7 +306,7 @@ bool FeTextureContainer::common_load(
 
 	bool is_image = false;
 #ifndef SFML_IMAGES
-	if ( movie_file.empty() )
+	if ( movie_file.empty() && !image_names.empty() )
 	{
 		movie_file = image_names.front();
 		is_image = true;
@@ -775,7 +780,10 @@ bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, 
 	m_texture.clear( sf::Color::Transparent );
 	for ( std::vector<FeBasePresentable *>::const_iterator itr = m_draw_list.begin();
 				itr != m_draw_list.end(); ++itr )
-		m_texture.draw( (*itr)->drawable() );
+	{
+		if ( (*itr)->get_visible() )
+			m_texture.draw( (*itr)->drawable() );
+	}
 
 	m_texture.display();
 	return true;
