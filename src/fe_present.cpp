@@ -831,7 +831,7 @@ bool FePresent::handle_event( FeInputMap::Command c )
 			}
 
 			if ( step != 0 )
-				change_selection( step );
+				change_selection( step, false );
 		}
 		break;
 

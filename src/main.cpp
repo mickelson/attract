@@ -527,7 +527,11 @@ int main(int argc, char *argv[])
 			if (( c == FeInputMap::Down )
 				|| ( c == FeInputMap::Up )
 				|| ( c == FeInputMap::PageDown )
-				|| ( c == FeInputMap::PageUp ))
+				|| ( c == FeInputMap::PageUp )
+				|| ( c == FeInputMap::NextLetter )
+				|| ( c == FeInputMap::PrevLetter )
+				|| ( c == FeInputMap::NextFavourite )
+				|| ( c == FeInputMap::PrevFavourite ))
 			{
 				// setup variables to test for when the navigation keys are held down
 				move_state = c;
@@ -783,6 +787,30 @@ int main(int argc, char *argv[])
 						case FeInputMap::Down: break; // do nothing
 						case FeInputMap::PageUp: step *= -feVM.get_page_size(); break;
 						case FeInputMap::PageDown: step *= feVM.get_page_size(); break;
+						case FeInputMap::PrevFavourite:
+							{
+								int temp = feSettings.get_prev_fav_offset();
+								step = ( temp < 0 ) ? temp : 0;
+							}
+							break;
+						case FeInputMap::NextFavourite:
+							{
+								int temp = feSettings.get_next_fav_offset();
+								step = ( temp > 0 ) ? temp : 0;
+							}
+							break;
+						case FeInputMap::PrevLetter:
+							{
+								int temp = feSettings.get_next_letter_offset( -1 );
+								step = ( temp < 0 ) ? temp : 0;
+							}
+							break;
+						case FeInputMap::NextLetter:
+							{
+								int temp = feSettings.get_next_letter_offset( 1 );
+								step = ( temp > 0 ) ? temp : 0;
+							}
+							break;
 						default: break;
 					}
 
