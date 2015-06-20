@@ -23,7 +23,6 @@
 #define __PRETTY_FUNCTION__ __FUNCDNAME__
 #define snprintf _snprintf
 #define strncasecmp _strnicmp
-#define isnan _isnan
 
 #ifdef SVN_RELEASE
 

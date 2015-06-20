@@ -30,6 +30,10 @@
 #include "media.hpp"
 #endif
 
+#ifndef NO_SWF
+#include "swf.hpp"
+#endif
+
 #include <iostream>
 #include <cstdlib>
 
@@ -201,6 +205,7 @@ FeTextureContainer::FeTextureContainer(
 	m_current_filter_index( -1 ),
 	m_art_update_trigger( ToNewSelection ),
 	m_movie( NULL ),
+	m_swf( NULL ),
 	m_movie_status( -1 ),
 	m_video_flags( VF_Normal )
 {
@@ -227,6 +232,14 @@ FeTextureContainer::~FeTextureContainer()
 	{
 		delete m_movie;
 		m_movie=NULL;
+	}
+#endif
+
+#ifndef NO_SWF
+	if ( m_swf )
+	{
+		delete m_swf;
+		m_swf=NULL;
 	}
 #endif
 }
@@ -286,15 +299,55 @@ bool FeTextureContainer::common_load(
 	std::vector<std::string> &image_names )
 {
 	bool loaded=false;
+	std::string movie_file;
+	std::vector<std::string>::iterator itr;
+
+#ifndef NO_SWF
+	for ( itr = non_image_names.begin();
+			itr != non_image_names.end(); ++itr  )
+	{
+		if ( tail_compare( *itr, ".swf" ) )
+		{
+			movie_file = (*itr);
+			break;
+		}
+	}
+
+	if ( !movie_file.empty() )
+	{
+		sf::Clock timer;
+
+		m_swf = new FeSwf();
+
+		if (!m_swf->open_from_file( movie_file ))
+		{
+			std::cout << " ! ERROR loading SWF: "
+				<< movie_file << std::endl;
+
+			delete m_swf;
+			m_swf = NULL;
+		}
+		else
+		{
+			std::cout << " - Loaded SWF: " << movie_file << " ("
+				<< timer.getElapsedTime().asMilliseconds()
+				<< " ms)" << std::endl;
+
+			non_image_names.clear();
+			image_names.clear();
+			return true;
+		}
+	}
+#endif
 
 #ifndef NO_MOVIE
 	if ( m_video_flags & VF_DisableVideo )
 		non_image_names.clear();
 
 	ASSERT( !m_movie ); // m_movie should always be empty at this point...
+	movie_file.clear();
 
-	std::string movie_file;
-	for ( std::vector<std::string>::iterator itr = non_image_names.begin();
+	for ( itr = non_image_names.begin();
 			itr != non_image_names.end(); ++itr  )
 	{
 		if ( FeMedia::is_supported_media_file( *itr ) )
@@ -314,7 +367,7 @@ bool FeTextureContainer::common_load(
 #endif
 
 
-	if ( !movie_file.empty() )
+	if ( !movie_file.empty() && !loaded )
 	{
 		m_movie = new FeMedia( FeMedia::AudioVideo );
 
@@ -352,7 +405,7 @@ bool FeTextureContainer::common_load(
 #ifdef SFML_IMAGES
 	if ( !loaded )
 	{
-		for ( std::vector<std::string>::iterator itr=image_names.begin();
+		for ( itr=image_names.begin();
 			itr != image_names.end(); ++itr )
 		{
 			if ( m_texture.loadFromFile( *itr ) )
@@ -373,6 +426,10 @@ bool FeTextureContainer::common_load(
 
 const sf::Texture &FeTextureContainer::get_texture()
 {
+#ifndef NO_SWF
+	if ( m_swf )
+		return m_swf->get_texture();
+#endif
 	return m_texture;
 }
 
@@ -462,6 +519,13 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 
 bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
 {
+#ifndef NO_SWF
+	if (( play_movies ) && ( m_swf ))
+	{
+		return m_swf->tick();
+	}
+#endif
+
 #ifndef NO_MOVIE
 	if (( play_movies )
 		&& ( !(m_video_flags & VF_DisableVideo) )
@@ -530,6 +594,11 @@ void FeTextureContainer::set_play_state( bool play )
 
 bool FeTextureContainer::get_play_state() const
 {
+#ifndef NO_SWF
+	if ( m_swf )
+		return true;
+#endif
+
 #ifndef NO_MOVIE
 	if ( m_movie )
 	{
@@ -710,6 +779,14 @@ void FeTextureContainer::clear()
 	m_movie_status = -1;
 	m_file_name.clear();
 
+#ifndef NO_SWF
+	if ( m_swf )
+	{
+		delete m_swf;
+		m_swf=NULL;
+	}
+#endif
+
 #ifndef NO_MOVIE
 	// If a movie is running, close it...
 	if ( m_movie )
@@ -722,6 +799,10 @@ void FeTextureContainer::clear()
 
 void FeTextureContainer::set_smooth( bool s )
 {
+#ifndef NO_SWF
+	if ( m_swf )
+		m_swf->set_smooth( s );
+#endif
 	m_texture.setSmooth( s );
 }
 

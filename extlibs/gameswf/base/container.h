@@ -78,6 +78,9 @@ public:
 template<class T> class array : public std::vector<T>
 {
 public:
+	array() : std::vector<T>() {}
+	array( int s ) : std::vector<T>( s, 0 ) {}
+
 	int	size() const { return (int) std::vector<T>::size(); }
 
 	void	append(const array<T>& other)

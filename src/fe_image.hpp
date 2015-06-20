@@ -29,6 +29,7 @@
 
 class FeSettings;
 class FeMedia;
+class FeSwf;
 class FeImage;
 class FeText;
 class FeListBox;
@@ -177,6 +178,7 @@ private:
 	Type m_type;
 	int m_art_update_trigger;
 	FeMedia *m_movie;
+	FeSwf *m_swf;
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
 	FeVideoFlags m_video_flags;
 };

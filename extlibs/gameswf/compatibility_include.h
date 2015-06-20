@@ -42,10 +42,11 @@
 // libxml2
 // #define HAVE_LIBXML 1
 
-// #define TU_CONFIG_LINK_TO_LIBPNG 0
+#define TU_CONFIG_LINK_TO_LIBPNG 0
 
 #define _TU_USE_STL 1
 #define TU_CONFIG_LINK_TO_THREAD 0
+#define TU_CONFIG_LINK_STATIC 1
 #define TU_USE_SDL 0
 #define TU_USE_OPENAL 1
 #define TU_CONFIG_LINK_TO_FREETYPE 1

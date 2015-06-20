@@ -636,7 +636,15 @@ namespace gameswf
 	//
 	// button_action
 	//
+	button_action::button_action()
+		: m_conditions( 0 )
+	{
+	}
 
+	button_action::button_action( const button_action &c )
+	{
+		*this = c;
+	}
 
 	button_action::~button_action()
 	{
@@ -645,6 +653,17 @@ namespace gameswf
 			delete m_actions[i];
 		}
 		m_actions.resize(0);
+	}
+
+	button_action &button_action::operator=( const button_action &c )
+	{
+		m_conditions = c.m_conditions;
+
+		m_actions.resize( c.m_actions.size() );
+		for (int i = 0, n = m_actions.size(); i < n; i++)
+		{
+			m_actions[i] = new action_buffer( *(c.m_actions[i]) );
+		}
 	}
 
 	void	button_action::read(stream* in, int tag_type)
