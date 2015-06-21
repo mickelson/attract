@@ -193,7 +193,11 @@ ifneq ($(NO_SWF),1)
 
  ifneq ($(FE_WINDOWS_COMPILE),1)
   CFLAGS += -rdynamic
-  LIBS += -ldl -lGL
+  ifeq ($(FE_MACOSX_COMPILE),1)
+   LIBS += -ldl -framework OpenGL
+  else
+   LIBS += -ldl -lGL
+  endif
  else
   LIBS += -lopengl32
  endif

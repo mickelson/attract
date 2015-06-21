@@ -12,7 +12,13 @@
 #include <SDL_opengl.h>	// for opengl const
 #else
 #include "base/tu_opengl_includes.h"
+
+#ifdef __APPLE__
+#include <OpenGL/glext.h>
+#else
 #include <GL/glext.h>
+#endif
+
 #endif //TU_USE_SDL
 
 #include "gameswf/gameswf.h"
