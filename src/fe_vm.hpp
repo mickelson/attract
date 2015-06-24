@@ -95,7 +95,7 @@ public:
 	//
 	void vm_close();
 	void vm_init();
-	void on_new_layout( const std::string &path, const std::string &filename, const FeLayoutInfo &layout_params );
+	bool on_new_layout();
 	bool on_tick();
 	bool on_transition( FeTransitionType, int var );
 	void init_with_default_layout();

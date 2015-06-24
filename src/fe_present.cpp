@@ -165,7 +165,6 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_baseRotation( FeSettings::RotateNone ),
 	m_toggleRotation( FeSettings::RotateNone ),
 	m_playMovies( true ),
-	m_screenSaverActive( false ),
 	m_user_page_size( -1 ),
 	m_listBox( NULL ),
 	m_emptyShader( NULL )
@@ -345,14 +344,8 @@ FeImage *FePresent::add_image( bool is_artwork,
 		std::string name;
 		if ( is_relative_path( n ) )
 		{
-			if ( m_screenSaverActive )
-			{
-				std::string not_used;
-				m_feSettings->get_screensaver_file( name, not_used );
-				name += n;
-			}
-			else
-				name = m_feSettings->get_current_layout_dir() + n;
+			m_feSettings->get_path( FeSettings::Current, name );
+			name += n;
 		}
 		else
 			name = n;
@@ -441,16 +434,9 @@ FeSound *FePresent::add_sound( const char *n, bool reuse )
 	{
 		if ( is_relative_path( name ) )
 		{
-			if ( m_screenSaverActive )
-			{
-				name.clear();
-
-				std::string not_used;
-				m_feSettings->get_screensaver_file( name, not_used );
-				name += n;
-			}
-			else
-				name = m_feSettings->get_current_layout_dir() + n;
+			name.clear();
+			m_feSettings->get_path( FeSettings::Current, name );
+			name += n;
 		}
 
 		if ( reuse )
@@ -480,30 +466,34 @@ FeSound *FePresent::add_sound( const char *n, bool reuse )
 
 FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const char *shader2 )
 {
-	std::string path = m_feSettings->get_current_layout_dir();
+	std::string path;
+	m_feSettings->get_path( FeSettings::Current, path );
 
 	switch ( type )
 	{
 		case FeShader::VertexAndFragment:
 			m_scriptShaders.push_back(
-						new FeShader( type, (shader1 ? path + shader1 : ""),
-										(shader2 ? path + shader2 : "") ) );
+				new FeShader( type,
+					(shader1 ? path + shader1 : ""),
+					(shader2 ? path + shader2 : "") ) );
 			break;
 
 		case FeShader::Vertex:
 			m_scriptShaders.push_back(
-						new FeShader( type, (shader1 ? path + shader1 : ""), "" ) );
+				new FeShader( type,
+					(shader1 ? path + shader1 : ""), "" ) );
 			break;
 
 		case FeShader::Fragment:
 			m_scriptShaders.push_back(
-						new FeShader( type, "", (shader1 ? path + shader1 : "") ) );
+				new FeShader( type,
+					"", (shader1 ? path + shader1 : "") ) );
 			break;
 
 		case FeShader::Empty:
 		default:
 			m_scriptShaders.push_back(
-						new FeShader( type, "", "" ) );
+				new FeShader( type, "", "" ) );
 			break;
 	}
 
@@ -714,7 +704,7 @@ void FePresent::change_selection( int step, bool end_navigation )
 
 bool FePresent::reset_screen_saver()
 {
-	if ( m_screenSaverActive )
+	if ( m_feSettings->get_present_state() == FeSettings::ScreenSaver_Showing )
 	{
 		// Reset from screen saver
 		//
@@ -839,6 +829,11 @@ bool FePresent::handle_event( FeInputMap::Command c )
 		load_screensaver();
 		break;
 
+	case FeInputMap::Intro:
+		if ( !load_intro() )
+			load_layout();
+		break;
+
 	case FeInputMap::LAST_COMMAND:
 	default:
 		// Not handled by us, return false so calling function knows
@@ -858,7 +853,7 @@ int FePresent::update( bool new_list, bool new_display )
 	if ( new_list )
 	{
 		for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
-			(*itc)->on_new_list( m_feSettings, m_screenSaverActive, new_display );
+			(*itc)->on_new_list( m_feSettings, new_display );
 
 		for ( itm=m_mon.begin(); itm != m_mon.end(); ++itm )
 		{
@@ -868,7 +863,7 @@ int FePresent::update( bool new_list, bool new_display )
 	}
 
 	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
-		(*itc)->on_new_selection( m_feSettings, m_screenSaverActive );
+		(*itc)->on_new_selection( m_feSettings );
 
 	for ( itm=m_mon.begin(); itm != m_mon.end(); ++itm )
 	{
@@ -884,9 +879,35 @@ void FePresent::on_end_navigation()
 	std::vector<FeBaseTextureContainer *>::iterator itc;
 
 	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
-		(*itc)->on_end_navigation( m_feSettings, m_screenSaverActive );
+		(*itc)->on_end_navigation( m_feSettings );
 
 	on_transition( EndNavigation, 0 );
+}
+
+// return false if the into should be cancelled
+bool FePresent::load_intro()
+{
+	clear();
+	m_baseRotation = FeSettings::RotateNone;
+	set_transforms();
+	m_feSettings->set_present_state( FeSettings::Intro_Showing );
+
+	m_layoutTimer.restart();
+	if ( !on_new_layout() )
+		return false;
+
+	bool retval = false;
+	for ( std::vector<FeBasePresentable *>::iterator itr=m_mon[0].elements.begin();
+			itr!=m_mon[0].elements.end(); ++itr )
+	{
+		if ( (*itr)->get_visible() )
+			retval = true;
+	}
+
+
+	update( true, true );
+	on_transition( StartLayout, FromToNoValue );
+	return retval;
 }
 
 void FePresent::load_screensaver()
@@ -894,16 +915,13 @@ void FePresent::load_screensaver()
 	on_transition( EndLayout, FromToScreenSaver );
 	clear();
 	set_transforms();
-	m_screenSaverActive=true;
+	m_feSettings->set_present_state( FeSettings::ScreenSaver_Showing );
 
 	//
 	// Run the script which actually sets up the screensaver
 	//
 	m_layoutTimer.restart();
-	std::string path, filename;
-	m_feSettings->get_screensaver_file( path, filename );
-
-	on_new_layout( path, filename, m_feSettings->get_screensaver_config() );
+	on_new_layout();
 
 	//
 	// if there is no screen saver script then do a blank screen
@@ -914,7 +932,8 @@ void FePresent::load_screensaver()
 
 void FePresent::load_layout( bool initial_load )
 {
-	int var = ( m_screenSaverActive ) ? FromToScreenSaver : FromToNoValue;
+	int var = ( m_feSettings->get_present_state() == FeSettings::ScreenSaver_Showing )
+			? FromToScreenSaver : FromToNoValue;
 
 	if ( !initial_load )
 		on_transition( EndLayout, FromToNoValue );
@@ -925,7 +944,7 @@ void FePresent::load_layout( bool initial_load )
 	m_baseRotation = FeSettings::RotateNone;
 
 	set_transforms();
-	m_screenSaverActive=false;
+	m_feSettings->set_present_state( FeSettings::Layout_Showing );
 
 	if ( m_feSettings->displays_count() < 1 )
 		return;
@@ -933,12 +952,8 @@ void FePresent::load_layout( bool initial_load )
 	//
 	// Run the script which actually sets up the layout
 	//
-	std::string layout_dir = m_feSettings->get_current_layout_dir();
-	std::string layout_file = m_feSettings->get_current_layout_file();
-
 	m_layoutTimer.restart();
-	on_new_layout( layout_dir, layout_file,
-		m_feSettings->get_current_layout_config() );
+	on_new_layout();
 
 	// make things usable if the layout is empty
 	//
@@ -957,8 +972,6 @@ void FePresent::load_layout( bool initial_load )
 		std::cout << " - Layout is empty, initializing with the default layout settings" << std::endl;
 		init_with_default_layout();
 	}
-
-	std::cout << " - Loaded layout: " << layout_dir << " (" << layout_file << ")" << std::endl;
 
 	update_to_new_list( FromToNoValue, true );
 	on_transition( StartLayout, var );
@@ -1004,7 +1017,9 @@ bool FePresent::video_tick()
 bool FePresent::saver_activation_check()
 {
 	int saver_timeout = m_feSettings->get_screen_saver_timeout();
-	if (( !m_screenSaverActive ) && ( saver_timeout > 0 ))
+	bool saver_active = ( m_feSettings->get_present_state() == FeSettings::ScreenSaver_Showing );
+
+	if ( !saver_active && ( saver_timeout > 0 ))
 	{
 		if ( ( m_layoutTimer.getElapsedTime() - m_lastInput )
 				> sf::seconds( saver_timeout ) )
@@ -1160,8 +1175,8 @@ void FePresent::script_do_update( FeBaseTextureContainer *tc )
 	FePresent *fep = script_get_fep();
 	if ( fep )
 	{
-		tc->on_new_list( fep->m_feSettings, fep->m_screenSaverActive, false );
-		tc->on_new_selection( fep->m_feSettings, fep->m_screenSaverActive );
+		tc->on_new_list( fep->m_feSettings, false );
+		tc->on_new_selection( fep->m_feSettings );
 		fep->flag_redraw();
 	}
 }

@@ -77,9 +77,13 @@ variations of a particular layout to be implemented and easily selected by
 the user (for example, a layout could provide a `layout.nut` for horizontal
 monitor orientations and a `layout-vert.nut` for vertical).
 
-The Attract-Mode screen saver is really just a special case layout that is
-loaded after a user-configured period of inactivity.  The screen saver script
-is located in the `screensaver.nut` file stored in the "layouts" subdirectory.
+The Attract-Mode screen saver and intro modes are really just special case
+layouts.  The screensaver gets loaded after a user-configured period of
+inactivity, while the intro mode gets run when the frontend first starts and
+exits as soon as any action is triggered (for example if the user hits the
+select button).  The screen saver script is located in the `screensaver.nut`
+file stored in the "screensaver" subdirectory.  The intro script is located
+in the `intro.nut` file stored in the "intro" subdirectory.
 
 Plug-ins are similar to layouts in that they consist of at least one squirrel
 script file and a collection of related resources.  Plug-ins are stored in the
@@ -751,6 +755,7 @@ Parameters:
       - "screen_saver"
       - "prev_letter"
       - "next_letter"
+      - "intro"
       - "custom1"
       - "custom2"
       - "custom3"
@@ -1614,6 +1619,10 @@ The screen width and height in pixels.
 #### `ScreenSaverActive` [bool] ####
 
 true if the screen saver is active, false otherwise.
+
+#### `IntroActive` [bool] ####
+
+true if the intro is active, false otherwise.
 
 #### `OS` [string] ####
 

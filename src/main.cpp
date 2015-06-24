@@ -329,8 +329,6 @@ int main(int argc, char *argv[])
 	FeOverlay feOverlay( window, feSettings, feVM );
 	feVM.set_overlay( &feOverlay );
 
-	feVM.load_layout( true );
-
 	bool exit_selected=false;
 
 	if ( feSettings.get_language().empty() )
@@ -338,6 +336,10 @@ int main(int argc, char *argv[])
 		// If our language isn't set at this point, we want to prompt the user for the language
 		// they wish to use
 		//
+
+		// TODO: FIXME: languages_dialog segfaults unless there is a layout loaded first
+		feVM.load_layout( true );
+
 		if ( feOverlay.languages_dialog() < 0 )
 			exit_selected = true;
 	}
@@ -357,6 +359,13 @@ int main(int argc, char *argv[])
 	// display
 	//
 	bool config_mode = ( feSettings.displays_count() < 1 );
+
+	if ( !config_mode )
+	{
+		// start the intro now
+		if ( !feVM.load_intro() )
+			feVM.load_layout( true );
+	}
 
 	while (window.isOpen() && (!exit_selected))
 	{
@@ -540,11 +549,23 @@ int main(int argc, char *argv[])
 			}
 
 			//
-			// Now handle the command appropriately.
+			// Give the script the option to handle the command.
 			//
 			if ( feVM.script_handle_event( c, redraw ) )
 				continue;
 
+			//
+			// Check if we need to get out of intro mode
+			//
+			if ( feSettings.get_present_state() == FeSettings::Intro_Showing )
+			{
+				feVM.load_layout( true );
+				continue;
+			}
+
+			//
+			// Default command handling
+			//
 			soundsys.sound_event( c );
 			if ( feVM.handle_event( c ) )
 				redraw = true;

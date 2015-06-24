@@ -67,7 +67,13 @@ public:
 class FeSettings : public FeBaseConfigurable
 {
 public:
-   enum RotationState { RotateNone=0, RotateRight, RotateFlip, RotateLeft };
+	enum RotationState { RotateNone=0, RotateRight, RotateFlip, RotateLeft };
+	enum FePresentState
+	{
+		Intro_Showing,
+		Layout_Showing,
+		ScreenSaver_Showing
+	};
 
 	enum WindowType { Default=0, Fullscreen, Window };
 	static const char *windowModeTokens[];
@@ -123,6 +129,7 @@ private:
 	FeSoundInfo m_sounds;
 	FeResourceMap m_resourcemap;
 	FeLayoutInfo m_saver_params;
+	FeLayoutInfo m_intro_params;
 	sf::IntRect m_mousecap_rect;
 
 	int m_current_display;
@@ -148,22 +155,23 @@ private:
 	bool m_scrape_flyers;
 	bool m_scrape_wheels;
 	bool m_scrape_fanart;
+	enum FePresentState m_present_state;
 
 	FeSettings( const FeSettings & );
 	FeSettings &operator=( const FeSettings & );
 
 	int process_setting( const std::string &,
-						const std::string &,
-						const std::string & );
+		const std::string &,
+		const std::string & );
 
 	void init_display();
 	void load_state();
 	void clear();
 
 	void internal_gather_config_files(
-			std::vector<std::string> &ll,
-			const std::string &extension,
-			const char *subdir ) const;
+		std::vector<std::string> &ll,
+		const std::string &extension,
+		const char *subdir ) const;
 
 	void internal_load_language( const std::string &lang );
 
@@ -250,22 +258,37 @@ public:
 			std::string &path,
 			std::string &filename ) const;
 
-	void get_script_loader_file( std::string &path, std::string &filename ) const;
-	void get_screensaver_file( std::string &path, std::string &filename ) const;
-	FeLayoutInfo &get_screensaver_config() { return m_saver_params; }
-	std::string get_current_layout_file() const;
-	std::string get_current_layout_dir() const;
+	FePresentState get_present_state() const { return m_present_state; };
+	void set_present_state( FePresentState s ) { m_present_state=s; };
+
+	enum FePathType
+	{
+		Current, // could be Layout, ScreenSaver or Intro depending on
+			// m_present_state
+		Layout,
+		ScreenSaver,
+		Intro,
+		Loader
+	};
+
+	void get_path( FePathType t,
+		std::string &path,
+		std::string &filename ) const;
+
+	void get_path( FePathType t,
+		std::string &path ) const;
+
+	FeLayoutInfo &get_current_config( FePathType t );
+
 	std::string get_layout_dir( const std::string &layout_name ) const;
 	void get_layouts_list( std::vector<std::string> &layouts ) const;
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
-	FeLayoutInfo &get_current_layout_config();
 
 	bool get_best_artwork_file(
 		const FeRomInfo &rom,
 		const std::string &art_name,
 		std::vector<std::string> &vid_list,
 		std::vector<std::string> &image_list,
-		bool is_screen_saver,
 		bool ignore_layout );
 
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
@@ -275,8 +298,7 @@ public:
 		int rom_index,
 		const std::string &logo_str,
 		std::vector<std::string> &vid_list,
-		std::vector<std::string> &image_list,
-		bool is_screen_saver );
+		std::vector<std::string> &image_list );
 
 	std::string get_module_dir( const std::string &module_file ) const;
 
@@ -309,9 +331,9 @@ public:
 	// the resulting romlist file
 	//
 	bool build_romlist( const std::vector< FeImportTask > &task_list,
-							const std::string &output_name,
-							FeFilter &filter,
-							bool full );
+		const std::string &output_name,
+		FeFilter &filter,
+		bool full );
 
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,
@@ -348,7 +370,7 @@ public:
 
 	void get_resource( const std::string &token, std::string &str ) const;
 	void get_resource( const std::string &token, const std::string &rep,
-									std::string &str ) const;
+		std::string &str ) const;
 
 	void set_language( const std::string &s );
 	const std::string &get_language() const { return m_language; }
@@ -356,8 +378,8 @@ public:
 
 	// Utility function to get a list of layout*.nut files from the specified path...
 	static void get_layout_file_basenames_from_path(
-								const std::string &path,
-								std::vector<std::string> &names_list );
+		const std::string &path,
+		std::vector<std::string> &names_list );
 };
 
 #endif

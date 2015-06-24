@@ -1230,15 +1230,18 @@ void FePlugInfo::save( std::ofstream &f ) const
 const char *FeLayoutInfo::indexStrings[] = {
 	"saver_config",
 	"layout_config",
+	"intro_config",
 	NULL
 };
 
-FeLayoutInfo::FeLayoutInfo()
+FeLayoutInfo::FeLayoutInfo( Type t )
+	: m_type( t )
 {
 }
 
 FeLayoutInfo::FeLayoutInfo( const std::string &name )
-	: m_name( name )
+	: m_name( name ),
+	m_type( Layout )
 {
 }
 
@@ -1246,11 +1249,7 @@ void FeLayoutInfo::save( std::ofstream &f ) const
 {
 	if ( !m_params.empty() )
 	{
-		if ( m_name.empty() )
-			f << std::endl << indexStrings[0] << std::endl;
-		else
-			f << std::endl << indexStrings[1] << '\t' << m_name << std::endl;
-
+		f << std::endl << indexStrings[ m_type ] << std::endl;
 		FeScriptConfigurable::save( f );
 	}
 }

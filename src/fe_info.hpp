@@ -383,15 +383,17 @@ class FeLayoutInfo : public FeScriptConfigurable
 {
 public:
 	static const char *indexStrings[];
+	enum Type { ScreenSaver=0, Layout, Intro };
 
-	FeLayoutInfo();
-	FeLayoutInfo( const std::string &name );
+	FeLayoutInfo( Type t );
+	FeLayoutInfo( const std::string &name ); // type=Layout
 	const std::string &get_name() const { return m_name; };
 
 	void save( std::ofstream & ) const;
 
 private:
 	std::string m_name;
+	Type m_type;
 };
 
 //

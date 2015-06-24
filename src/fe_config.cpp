@@ -1739,6 +1739,32 @@ void FeLayoutEditMenu::set_layout( FeLayoutInfo *layout )
 	m_layout = layout;
 }
 
+void FeIntroEditMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Configure Intro" );
+
+	std::string gen_help;
+	ctx.fe_settings.get_path( FeSettings::Intro,
+		m_file_path, m_file_name );
+
+	m_configurable = &(ctx.fe_settings.get_current_config(
+				FeSettings::Intro ) );
+
+	FeVM::script_get_config_options( ctx, gen_help,
+					*m_configurable,
+					m_file_path, m_file_name );
+
+	if ( !gen_help.empty() )
+		ctx.opt_list[0].help_msg = gen_help;
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeIntroEditMenu::save( FeConfigContext &ctx )
+{
+	return FeScriptConfigMenu::save_helper( ctx );
+}
+
 void FeSaverEditMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Configure Screen Saver" );
@@ -1749,11 +1775,14 @@ void FeSaverEditMenu::get_options( FeConfigContext &ctx )
 			"_help_screen_saver_timeout" );
 
 	std::string gen_help;
-	ctx.fe_settings.get_screensaver_file( m_file_path, m_file_name );
-	m_configurable = &(ctx.fe_settings.get_screensaver_config());
+	ctx.fe_settings.get_path( FeSettings::ScreenSaver,
+		m_file_path, m_file_name );
+
+	m_configurable = &(ctx.fe_settings.get_current_config(
+				FeSettings::ScreenSaver ) );
 
 	FeVM::script_get_config_options( ctx, gen_help,
-					ctx.fe_settings.get_screensaver_config(),
+					*m_configurable,
 					m_file_path, m_file_name );
 
 	if ( !gen_help.empty() )
@@ -1779,6 +1808,7 @@ void FeConfigMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::SUBMENU, "Displays", "", "_help_displays" );
 	ctx.add_optl( Opt::SUBMENU, "Controls", "", "_help_controls" );
 	ctx.add_optl( Opt::SUBMENU, "Sound", "", "_help_sound" );
+	ctx.add_optl( Opt::SUBMENU, "Intro", "", "_help_intro" );
 	ctx.add_optl( Opt::SUBMENU, "Screen Saver", "", "_help_screen_saver" );
 	ctx.add_optl( Opt::SUBMENU, "Plug-ins", "", "_help_plugins" );
 	ctx.add_optl( Opt::SUBMENU, "Scraper", "", "_help_scraper" );
@@ -1811,15 +1841,18 @@ bool FeConfigMenu::on_option_select(
 		submenu = &m_sound_menu;
 		break;
 	case 4:
-		submenu = &m_saver_menu;
+		submenu = &m_intro_menu;
 		break;
 	case 5:
-		submenu = &m_plugin_menu;
+		submenu = &m_saver_menu;
 		break;
 	case 6:
-		submenu = &m_scraper_menu;
+		submenu = &m_plugin_menu;
 		break;
 	case 7:
+		submenu = &m_scraper_menu;
+		break;
+	case 8:
 		submenu = &m_misc_menu;
 		break;
 	default:

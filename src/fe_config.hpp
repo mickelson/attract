@@ -211,6 +211,14 @@ public:
 	void set_layout( FeLayoutInfo *layout );
 };
 
+class FeIntroEditMenu : public FeScriptConfigMenu
+{
+public:
+	void get_options( FeConfigContext &ctx );
+
+	bool save( FeConfigContext &ctx );
+};
+
 class FeSaverEditMenu : public FeScriptConfigMenu
 {
 public:
@@ -411,6 +419,7 @@ private:
 	FeDisplaySelMenu m_list_menu;
 	FeInputSelMenu m_input_menu;
 	FeSoundMenu m_sound_menu;
+	FeIntroEditMenu m_intro_menu;
 	FeSaverEditMenu m_saver_menu;
 	FePluginSelMenu m_plugin_menu;
 	FeScraperMenu m_scraper_menu;

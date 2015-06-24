@@ -126,7 +126,6 @@ protected:
 	std::vector<FeFontContainer *> m_fontPool;
 	std::vector<FeMonitor> m_mon;
 	bool m_playMovies;
-	bool m_screenSaverActive;
 	int m_user_page_size;
 
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
@@ -183,6 +182,7 @@ public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
 	virtual ~FePresent( void );
 
+	bool load_intro(); // returns false if no intro is available
 	void load_screensaver();
 	void load_layout( bool initial_load=false );
 
@@ -234,7 +234,7 @@ public:
 
 	//
 	//
-	virtual void on_new_layout( const std::string &path, const std::string &filename, const FeLayoutInfo &layout_params )=0;
+	virtual bool on_new_layout()=0;
 	virtual bool on_tick()=0;
 	virtual bool on_transition( FeTransitionType, int var )=0;
 	virtual void flag_redraw()=0;

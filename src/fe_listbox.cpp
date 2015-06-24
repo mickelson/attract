@@ -127,7 +127,9 @@ void FeListBox::init()
 	m_base_text.setCharacterSize( char_size );
 
 	m_texts.clear();
-	m_texts.reserve( m_rows );
+
+	if ( m_rows > 0 )
+		m_texts.reserve( m_rows );
 
 	sf::Transform rotater;
 	rotater.rotate( m_rotation, pos.x, pos.y );

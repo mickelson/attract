@@ -376,28 +376,28 @@ const sf::Texture &FeTextureContainer::get_texture()
 	return m_texture;
 }
 
-void FeTextureContainer::on_new_selection( FeSettings *feSettings, bool screen_saver_active )
+void FeTextureContainer::on_new_selection( FeSettings *feSettings )
 {
 	if (( m_type != IsStatic ) && ( m_art_update_trigger == ToNewSelection ))
-		internal_update_selection( feSettings, screen_saver_active );
+		internal_update_selection( feSettings );
 }
 
-void FeTextureContainer::on_new_list( FeSettings *feSettings, bool screen_saver_active, bool new_display )
+void FeTextureContainer::on_new_list( FeSettings *feSettings, bool new_display )
 {
 	if ( new_display )
 		m_current_filter_index=-1;
 
 	if (( m_type != IsStatic ) && ( m_art_update_trigger == EndNavigation ))
-		internal_update_selection( feSettings, screen_saver_active );
+		internal_update_selection( feSettings );
 }
 
-void FeTextureContainer::on_end_navigation( FeSettings *feSettings, bool screen_saver_active )
+void FeTextureContainer::on_end_navigation( FeSettings *feSettings )
 {
 	if (( m_type != IsStatic ) && ( m_art_update_trigger == EndNavigation ))
-		internal_update_selection( feSettings, screen_saver_active );
+		internal_update_selection( feSettings );
 }
 
-void FeTextureContainer::internal_update_selection( FeSettings *feSettings, bool screen_saver_active )
+void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 {
 	int filter_index = feSettings->get_filter_index_from_offset( m_filter_offset );
 	int rom_index = feSettings->get_rom_index( filter_index, m_index_offset );
@@ -432,7 +432,6 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings, bool
 				m_art_name,
 				vid_list,
 				image_list,
-				screen_saver_active,
 				false ) )
 		{
 			common_load( vid_list, image_list );
@@ -449,8 +448,7 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings, bool
 				rom_index,
 				work,
 				vid_list,
-				image_list,
-				screen_saver_active ) )
+				image_list ) )
 		{
 			common_load( vid_list, image_list );
 		}
@@ -646,7 +644,8 @@ void FeTextureContainer::set_file_name( const char *n )
 		return;
 	}
 
-	// If it is a relative path we assume it is in the layout directory
+	// If it is a relative path we assume it is in the
+	// layout/screensaver/intro directory
 	//
 	if ( is_relative_path( name ) )
 	{
@@ -656,7 +655,8 @@ void FeTextureContainer::set_file_name( const char *n )
 			FeSettings *fes = fep->get_fes();
 			if ( fes )
 			{
-				name = fes->get_current_layout_dir() + std::string( n );
+				fes->get_path( FeSettings::Current, name );
+				name += n;
 			}
 		}
 	}
@@ -750,18 +750,18 @@ const sf::Texture &FeSurfaceTextureContainer::get_texture()
 	return m_texture.getTexture();
 }
 
-void FeSurfaceTextureContainer::on_new_selection( FeSettings *s, bool screen_saver_active )
+void FeSurfaceTextureContainer::on_new_selection( FeSettings *s )
 {
 	for ( std::vector<FeBasePresentable *>::iterator itr = m_draw_list.begin();
 				itr != m_draw_list.end(); ++itr )
 		(*itr)->on_new_selection( s );
 }
 
-void FeSurfaceTextureContainer::on_end_navigation( FeSettings *feSettings, bool screen_saver_active )
+void FeSurfaceTextureContainer::on_end_navigation( FeSettings *feSettings )
 {
 }
 
-void FeSurfaceTextureContainer::on_new_list( FeSettings *s, bool, bool )
+void FeSurfaceTextureContainer::on_new_list( FeSettings *s, bool )
 {
 	//
 	// We don't do any scaling of the objects when they are being drawn

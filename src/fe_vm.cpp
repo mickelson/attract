@@ -204,10 +204,15 @@ void FeVM::vm_init()
 	Sqrat::DefaultVM::Set( vm );
 }
 
-void FeVM::on_new_layout( const std::string &path,
-	const std::string &filename, const FeLayoutInfo &layout_params )
+bool FeVM::on_new_layout()
 {
 	using namespace Sqrat;
+
+	std::string path, filename;
+	m_feSettings->get_path( FeSettings::Current, path, filename );
+
+	const FeLayoutInfo &layout_params
+		= m_feSettings->get_current_config( FeSettings::Current );
 
 	vm_close();
 
@@ -215,14 +220,18 @@ void FeVM::on_new_layout( const std::string &path,
 	//
 	vm_init();
 
+	FeSettings::FePresentState ps = m_feSettings->get_present_state();
+
 	// Set fe-related constants
 	//
+
 	ConstTable()
 		.Const( _SC("FeVersion"), FE_VERSION)
 		.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
 		.Const( _SC("ScreenWidth"), (int)m_mon[0].size.x )
 		.Const( _SC("ScreenHeight"), (int)m_mon[0].size.y )
-		.Const( _SC("ScreenSaverActive"), m_screenSaverActive )
+		.Const( _SC("ScreenSaverActive"), ( ps == FeSettings::ScreenSaver_Showing ) )
+		.Const( _SC("IntroActive"), ( ps == FeSettings::Intro_Showing ) )
 		.Const( _SC("OS"), get_OS_string() )
 		.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
 		.Const( _SC("FeConfigDirectory"), m_feSettings->get_config_dir().c_str() )
@@ -553,8 +562,11 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.Bind( _SC("filters"), ftab );
 	Array farray( ftab.GetObject() );
 
-	for ( int i=0; i < di->get_filter_count(); i++ )
-		farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+	if ( di )
+	{
+		for ( int i=0; i < di->get_filter_count(); i++ )
+			farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+	}
 
 	Table mtab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("monitors"), mtab );
@@ -588,12 +600,21 @@ void FeVM::on_new_layout( const std::string &path,
 
 		if ( filename.empty() )
 		{
-			// if there is no script file at this point, we try loader script instead
-			std::string temp_path, temp_filename;
-			m_feSettings->get_script_loader_file( temp_path, temp_filename );
-			path_to_run = temp_path + temp_filename;
+			if ( ps == FeSettings::Intro_Showing )
+				return false; // silent fail if intro is not found
+			else
+			{
+				// if there is no script file at this point,
+				// we try loader script instead
+				//
+				std::string temp_path, temp_filename;
+				m_feSettings->get_path( FeSettings::Loader,
+					temp_path, temp_filename );
 
-			fe.SetValue( _SC("loader_dir"), temp_path );
+				path_to_run = temp_path + temp_filename;
+
+				fe.SetValue( _SC("loader_dir"), temp_path );
+			}
 		}
 
 		try
@@ -610,7 +631,10 @@ void FeVM::on_new_layout( const std::string &path,
 	}
 	else
 	{
-		std::cerr << "Script file not found: " << path_to_run << std::endl;
+		if ( ps == FeSettings::Intro_Showing )
+			return false; // silent fail if intro is not found
+		else
+			std::cerr << "Script file not found: " << path_to_run << std::endl;
 	}
 
 	//
@@ -654,6 +678,13 @@ void FeVM::on_new_layout( const std::string &path,
 	fe.SetValue( _SC("script_dir"), "" );
 	fe.SetValue( _SC("script_file"), "" );
 	m_script_cfg = NULL;
+
+	if ( ps == FeSettings::Layout_Showing )
+	{
+		std::cout << " - Loaded layout: " << path << " (" << filename << ")" << std::endl;
+	}
+
+	return true;
 }
 
 bool FeVM::on_tick()
@@ -1045,7 +1076,9 @@ public:
 		{
 			// if there is no script file at this point, we try loader script instead
 			std::string temp_path, temp_filename;
-			fe_vm->m_feSettings->get_script_loader_file( temp_path, temp_filename );
+			fe_vm->m_feSettings->get_path( FeSettings::Loader,
+				temp_path, temp_filename );
+
 			path_to_run = temp_path + temp_filename;
 
 			fe.SetValue( _SC("loader_dir"), temp_path );
@@ -1496,7 +1529,9 @@ void FeVM::do_nut( const char *script_file )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	internal_do_nut( fev->m_feSettings->get_current_layout_dir(), script_file );
+	std::string path;
+	fev->m_feSettings->get_path( FeSettings::Current, path );
+	internal_do_nut( path, script_file );
 }
 
 bool FeVM::load_module( const char *module_file )
@@ -1608,12 +1643,11 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 	std::vector<std::string> vid_list, image_list;
 	if (( rom ) &&
 		( fes->get_best_artwork_file(
-							*rom,
-							art,
-							vid_list,
-							image_list,
-							false,
-							!(art_flags&AF_IncludeLayout) ) ))
+			*rom,
+			art,
+			vid_list,
+			image_list,
+			!(art_flags&AF_IncludeLayout) ) ))
 	{
 		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
 			retval = vid_list.front();

@@ -135,6 +135,7 @@ public:
 		ScreenSaver,
 		PrevLetter,
 		NextLetter,
+		Intro,
 		Custom1,
 		Custom2,
 		Custom3,

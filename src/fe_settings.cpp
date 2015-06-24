@@ -105,6 +105,7 @@ const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
 const char *FE_PLUGIN_FILE				= "plugin.nut";
 const char *FE_LOADER_FILE				= "loader.nut";
+const char *FE_INTRO_FILE				= "intro.nut";
 const char *FE_LAYOUT_FILE_BASE		= "layout";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
@@ -112,11 +113,13 @@ const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
+const char *FE_SCREENSAVER_SUBDIR		= "screensaver/";
 const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_MODULES_SUBDIR			= "modules/";
 const char *FE_STATS_SUBDIR			= "stats/";
 const char *FE_LOADER_SUBDIR			= "loader/";
+const char *FE_INTRO_SUBDIR			= "intro/";
 const char *FE_SCRAPER_SUBDIR			= "scraper/";
 const char *FE_LIST_DEFAULT			= "default-display.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
@@ -194,6 +197,8 @@ FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
 	:  m_rl( m_config_path ),
 	m_inputmap(),
+	m_saver_params( FeLayoutInfo::ScreenSaver ),
+	m_intro_params( FeLayoutInfo::Intro ),
 	m_current_display( -1 ),
 	m_current_config_object( NULL ),
 	m_ssaver_time( 600 ),
@@ -221,7 +226,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_scrape_marquees( true ),
 	m_scrape_flyers( true ),
 	m_scrape_wheels( true ),
-	m_scrape_fanart( false )
+	m_scrape_fanart( false ),
+	m_present_state( Layout_Showing )
 {
 	int i=0;
 	while ( FE_DEFAULT_FONT_PATHS[i] != NULL )
@@ -376,6 +382,7 @@ const char *FeSettings::otherSettingStrings[] =
 	"plugin",
 	FeLayoutInfo::indexStrings[0], // "saver_config"
 	FeLayoutInfo::indexStrings[1], // "layout_config"
+	FeLayoutInfo::indexStrings[2], // "intro_config"
 	NULL
 };
 
@@ -410,6 +417,8 @@ int FeSettings::process_setting( const std::string &setting,
 		m_layout_params.push_back( new_entry );
 		m_current_config_object = &m_layout_params.back();
 	}
+	else if ( setting.compare( otherSettingStrings[7] ) == 0 ) // intro_config
+		m_current_config_object = &m_intro_params;
 	else if ( setting.compare( configSettingStrings[DefaultFont] ) == 0 ) // default_font
 	{
 		// Special case for the default font, we don't want to set it here
@@ -744,39 +753,117 @@ FeRomInfo *FeSettings::get_rom_absolute( int filter_index, int rom_index )
 	return &(m_rl.lookup( filter_index, rom_index ));
 }
 
-void FeSettings::get_script_loader_file( std::string &path, std::string &file ) const
+void FeSettings::get_path(
+	FePathType t,
+	std::string &path,
+	std::string &file ) const
 {
 	std::string temp;
-	if ( internal_resolve_config_file( m_config_path, temp, FE_LOADER_SUBDIR, FE_LOADER_FILE ) )
+	FePathType tt;
+	if ( t == Current )
 	{
-		size_t len = temp.find_last_of( "/\\" );
-		ASSERT( len != std::string::npos );
+		switch ( m_present_state )
+		{
+		case ScreenSaver_Showing: tt = ScreenSaver; break;
+		case Intro_Showing: tt = Intro; break;
+		case Layout_Showing:
+		default:
+			tt = Layout;
+			break;
+		}
+	}
+	else
+		tt = t;
 
-		path = temp.substr( 0, len + 1 );
-		file = FE_LOADER_FILE;
+	switch ( tt )
+	{
+	case Intro:
+		if ( internal_resolve_config_file( m_config_path,
+				temp, FE_INTRO_SUBDIR, FE_INTRO_FILE ) )
+		{
+			size_t len = temp.find_last_of( "/\\" );
+			ASSERT( len != std::string::npos );
+
+			path = temp.substr( 0, len + 1 );
+			file = FE_INTRO_FILE;
+		}
+		break;
+
+	case Loader:
+		if ( internal_resolve_config_file( m_config_path,
+				temp, FE_LOADER_SUBDIR, FE_LOADER_FILE ) )
+		{
+			size_t len = temp.find_last_of( "/\\" );
+			ASSERT( len != std::string::npos );
+
+			path = temp.substr( 0, len + 1 );
+			file = FE_LOADER_FILE;
+		}
+		break;
+
+	case ScreenSaver:
+		if ( internal_resolve_config_file( m_config_path,
+				temp, FE_SCREENSAVER_SUBDIR, FE_SCREENSAVER_FILE ) )
+		{
+			size_t len = temp.find_last_of( "/\\" );
+			ASSERT( len != std::string::npos );
+
+			path = temp.substr( 0, len + 1 );
+			file = FE_SCREENSAVER_FILE;
+		}
+		else
+		{
+			std::cerr << "Error loading screensaver: " << FE_SCREENSAVER_FILE
+					<< std::endl;
+		}
+		break;
+
+	case Layout:
+	default:
+		if ( m_current_display < 0 )
+			return;
+
+		path = get_layout_dir(
+			m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ));
+
+		file = m_displays[m_current_display].get_current_layout_file();
+		if ( file.empty() )
+		{
+			std::vector<std::string> my_list;
+			get_layout_file_basenames_from_path(
+					path,
+					my_list );
+
+			for ( std::vector<std::string>::iterator itr=my_list.begin();
+					itr!=my_list.end(); ++itr )
+			{
+				if ( (*itr).compare( FE_LAYOUT_FILE_BASE ) == 0 )
+				{
+					file = (*itr);
+					break;
+				}
+			}
+
+			if (( file.empty() ) && ( !my_list.empty() ))
+				file = my_list.front();
+		}
+
+		file += FE_LAYOUT_FILE_EXTENSION;
+		break;
 	}
 }
 
-void FeSettings::get_screensaver_file( std::string &path, std::string &file ) const
+void FeSettings::get_path(
+	FePathType t,
+	std::string &path ) const
 {
 	std::string temp;
-	if ( internal_resolve_config_file( m_config_path, temp, FE_LAYOUT_SUBDIR, FE_SCREENSAVER_FILE ) )
-	{
-		size_t len = temp.find_last_of( "/\\" );
-		ASSERT( len != std::string::npos );
-
-		path = temp.substr( 0, len + 1 );
-		file = FE_SCREENSAVER_FILE;
-	}
-	else
-	{
-		std::cerr << "Error loading screensaver: " << FE_SCREENSAVER_FILE << std::endl;
-	}
+	get_path( t, path, temp );
 }
 
 void FeSettings::get_layout_file_basenames_from_path(
-								const std::string &path,
-								std::vector<std::string> &names_list )
+	const std::string &path,
+	std::vector<std::string> &names_list )
 {
 	std::vector<std::string> temp_list;
 	get_basename_from_extension( temp_list, path, FE_LAYOUT_FILE_EXTENSION );
@@ -791,50 +878,11 @@ void FeSettings::get_layout_file_basenames_from_path(
 	}
 }
 
-std::string FeSettings::get_current_layout_file() const
-{
-	if ( m_current_display < 0 )
-		return FE_EMPTY_STRING;
-
-	std::string file = m_displays[m_current_display].get_current_layout_file();
-	if ( file.empty() )
-	{
-		std::vector<std::string> my_list;
-		get_layout_file_basenames_from_path( get_current_layout_dir(), my_list );
-
-		if ( my_list.empty() )
-			return FE_EMPTY_STRING;
-
-		for ( std::vector<std::string>::iterator itr=my_list.begin(); itr!=my_list.end(); ++itr )
-		{
-			if ( (*itr).compare( FE_LAYOUT_FILE_BASE ) == 0 )
-			{
-				file = (*itr);
-				break;
-			}
-		}
-
-		if ( file.empty() )
-			file = my_list.front();
-	}
-
-	file += FE_LAYOUT_FILE_EXTENSION;
-	return file;
-}
-
-std::string FeSettings::get_current_layout_dir() const
-{
-	if (( m_current_display < 0 )
-		|| ( m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ).empty() ))
-	{
-		return FE_EMPTY_STRING;
-	}
-
-	return get_layout_dir( m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ));
-}
-
 std::string FeSettings::get_layout_dir( const std::string &layout_name ) const
 {
+	if ( layout_name.empty() )
+		return FE_EMPTY_STRING;
+
 	std::string temp;
 	internal_resolve_config_file( m_config_path, temp, FE_LAYOUT_SUBDIR, layout_name + "/" );
 	return temp;
@@ -853,15 +901,44 @@ FeLayoutInfo &FeSettings::get_layout_config( const std::string &layout_name )
 	return m_layout_params.back();
 }
 
-FeLayoutInfo &FeSettings::get_current_layout_config()
+FeLayoutInfo &FeSettings::get_current_config( FePathType t )
 {
-	if ( m_current_display < 0 )
+	FePathType tt;
+	if ( t == Current )
 	{
-		ASSERT( 0 ); // This should not happen
-		return get_layout_config( "" );
+		switch ( m_present_state )
+		{
+		case ScreenSaver_Showing: tt = ScreenSaver; break;
+		case Intro_Showing: tt = Intro; break;
+		case Layout_Showing:
+		default:
+			tt = Layout;
+			break;
+		}
 	}
+	else
+		tt = t;
 
-	return get_layout_config( m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ) );
+	switch ( tt )
+	{
+	case Intro:
+			return m_intro_params;
+	case ScreenSaver:
+			return m_saver_params;
+	case Loader:
+	case Layout:
+	default:
+		if ( m_current_display >= 0 )
+		{
+			return get_layout_config(
+				m_displays[ m_current_display ].get_info(
+					FeDisplayInfo::Layout ) );
+		}
+		else
+		{
+			return get_layout_config( "" );
+		}
+	}
 }
 
 const std::string &FeSettings::get_config_dir() const
@@ -880,7 +957,8 @@ bool FeSettings::config_file_exists() const
 // return true if layout needs to be reloaded as a result
 bool FeSettings::set_display( int index )
 {
-	std::string old = get_current_layout_dir() + get_current_layout_file();
+	std::string old_path, old_file;
+	get_path( Layout, old_path, old_file );
 
 	if ( index >= (int)m_displays.size() )
 		m_current_display = 0;
@@ -892,7 +970,11 @@ bool FeSettings::set_display( int index )
 	m_rl.save_state();
 	init_display();
 
-	return ( old.compare( get_current_layout_dir() + get_current_layout_file() ) != 0 );
+	std::string new_path, new_file;
+	get_path( Layout, new_path, new_file );
+
+	return (( old_path.compare( new_path ) != 0 )
+		|| ( old_file.compare( new_file ) != 0 ));
 }
 
 // return true if layout needs to be reloaded as a result
@@ -1148,10 +1230,12 @@ void FeSettings::toggle_layout()
 		return;
 
 	std::vector<std::string> list;
-	std::string layout_file = m_displays[m_current_display].get_current_layout_file();
+
+	std::string layout_path, layout_file;
+	get_path( Layout, layout_path, layout_file );
 
 	get_layout_file_basenames_from_path(
-			get_current_layout_dir(),
+			layout_path,
 			list );
 
 	if ( list.size() <= 1 ) // nothing to do if there isn't more than one file
@@ -1534,7 +1618,9 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	// layout directory
 	//
 	std::string test;
-	std::string layout_dir = get_current_layout_dir();
+	std::string layout_dir;
+	get_path( Layout, layout_dir );
+
 	if ( !layout_dir.empty() && search_for_file( layout_dir,
 				fontname, FE_FONT_EXTENSIONS, test ) )
 	{
@@ -2042,6 +2128,8 @@ void FeSettings::save() const
 			(*itr).save( outfile );
 		}
 
+		m_intro_params.save( outfile );
+
 		std::vector<std::string> plugin_files;
 		get_available_plugins( plugin_files );
 
@@ -2334,21 +2422,12 @@ bool FeSettings::get_best_artwork_file(
 	const std::string &art_name,
 	std::vector<std::string> &vid_list,
 	std::vector<std::string> &image_list,
-	bool is_screen_saver,
 	bool ignore_layout )
 {
 	const std::string &emu_name = rom.get_info( FeRomInfo::Emulator );
 
 	std::string layout_path;
-	if ( is_screen_saver )
-	{
-		std::string dummy;
-		get_screensaver_file( layout_path, dummy );
-	}
-	else if ( !ignore_layout )
-	{
-		layout_path = get_current_layout_dir();
-	}
+	get_path( Current, layout_path );
 
 	FeEmulatorInfo *emu_info = get_emulator( emu_name );
 
@@ -2462,7 +2541,7 @@ bool FeSettings::get_best_artwork_file(
 bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> temp1, temp2;
-	return ( get_best_artwork_file( rom, art_name, temp1, temp2, false, true ) );
+	return ( get_best_artwork_file( rom, art_name, temp1, temp2, true ) );
 }
 
 bool FeSettings::get_best_dynamic_image_file(
@@ -2470,20 +2549,13 @@ bool FeSettings::get_best_dynamic_image_file(
 	int rom_index,
 	const std::string &art_name,
 	std::vector<std::string> &vid_list,
-	std::vector<std::string> &image_list,
-	bool is_screen_saver )
+	std::vector<std::string> &image_list )
 {
 	std::string base = art_name;
 	do_text_substitutions_absolute( base, filter_index, rom_index );
 
 	std::string path;
-	if ( is_screen_saver )
-	{
-		std::string not_used;
-		get_screensaver_file( path, not_used );
-	}
-	else
-		path = get_current_layout_dir();
+	get_path( Current, path );
 
 	// split filename from directory paths correctly
 	size_t pos( 0 );

@@ -50,10 +50,10 @@ public:
 
 	virtual const sf::Texture &get_texture()=0;
 
-	virtual void on_new_selection( FeSettings *feSettings, bool screen_saver_active )=0;
-	virtual void on_end_navigation( FeSettings *feSettings, bool screen_saver_active )=0;
+	virtual void on_new_selection( FeSettings *feSettings )=0;
+	virtual void on_end_navigation( FeSettings *feSettings )=0;
 
-	virtual void on_new_list( FeSettings *, bool screen_saver_active, bool new_display )=0;
+	virtual void on_new_list( FeSettings *, bool new_display )=0;
 
 	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )=0; // returns true if redraw required
 	virtual void set_play_state( bool play );
@@ -121,9 +121,9 @@ public:
 
 	const sf::Texture &get_texture();
 
-	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
-	void on_end_navigation( FeSettings *feSettings, bool screen_saver_active );
-	void on_new_list( FeSettings *, bool, bool );
+	void on_new_selection( FeSettings *feSettings );
+	void on_end_navigation( FeSettings *feSettings );
+	void on_new_list( FeSettings *, bool );
 
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 	void set_play_state( bool play );
@@ -162,7 +162,7 @@ private:
 		std::vector<std::string> &non_image_names,
 		std::vector<std::string> &image_names );
 
-	void internal_update_selection( FeSettings *feSettings, bool screen_saver_active );
+	void internal_update_selection( FeSettings *feSettings );
 	void clear();
 
 	sf::Texture m_texture;
@@ -190,9 +190,9 @@ public:
 
 	const sf::Texture &get_texture();
 
-	void on_new_selection( FeSettings *feSettings, bool screen_saver_active );
-	void on_end_navigation( FeSettings *feSettings, bool screen_saver_active );
-	void on_new_list( FeSettings *, bool, bool );
+	void on_new_selection( FeSettings *feSettings );
+	void on_end_navigation( FeSettings *feSettings );
+	void on_new_list( FeSettings *, bool );
 
 	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
 

@@ -112,6 +112,7 @@ _help_emulators;Configure emulator settings
 _help_displays;Configure the romlist/layout groupings (a.k.a. "Displays") that are available to be cycled through in Attract-Mode
 _help_controls;Configure the joystick, keyboard and mouse inputs that control Attract-Mode
 _help_sound;Configure sound volumes, sound event mappings and the ambient soundtrack
+_help_intro;Configure intro
 _help_screen_saver;Configure screen saver
 _help_plugins;Configure available plug-ins
 _help_misc;Configure miscellaneous settings
