@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014 Andrew Mickelson
+ *  Copyright (C) 2014-15 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -77,4 +77,9 @@ std::basic_string<sf::Uint32> osx_clipboard_get_content()
 	NSPasteboard* pboard = [NSPasteboard generalPasteboard];
 	NSString* nstext = [pboard stringForType:NSPasteboardTypeString];
 	return string_from_cocoa( nstext );
+}
+
+void osx_take_focus()
+{
+	[NSApp activateIgnoringOtherApps:YES];
 }

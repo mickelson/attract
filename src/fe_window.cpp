@@ -235,6 +235,10 @@ bool FeWindow::run()
 	//
 	m_fes.run( min_run );
 
+#ifdef SFML_SYSTEM_MACOS
+	osx_take_focus();
+#endif
+
 	if ( min_run <= 0 )
 		return true;
 
