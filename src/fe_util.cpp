@@ -175,9 +175,8 @@ bool is_relative_path( const std::string &name )
 			&& ( name[0] == '\\' )
 			&& ( name[1] == '\\' ))
 		return false;
-#else
-	return (( !name.empty() ) && ( name[0] != '/' ));
 #endif
+	return (( !name.empty() ) && ( name[0] != '/' ));
 }
 
 std::string clean_path( const std::string &path, bool require_trailing_slash )

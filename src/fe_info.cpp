@@ -1249,7 +1249,12 @@ void FeLayoutInfo::save( std::ofstream &f ) const
 {
 	if ( !m_params.empty() )
 	{
-		f << std::endl << indexStrings[ m_type ] << std::endl;
+		if ( m_type == Layout )
+			f << std::endl << indexStrings[ m_type ]
+				<< '\t' << m_name << std::endl;
+		else
+			f << std::endl << indexStrings[ m_type ] << std::endl;
+
 		FeScriptConfigurable::save( f );
 	}
 }

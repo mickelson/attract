@@ -413,6 +413,19 @@ int FeSettings::process_setting( const std::string &setting,
 		m_current_config_object = &m_saver_params;
 	else if ( setting.compare( otherSettingStrings[6] ) == 0 ) // layout_config
 	{
+		for ( std::vector< FeLayoutInfo >::iterator itr=m_layout_params.begin();
+			itr != m_layout_params.end(); ++itr )
+		{
+			if ( value.compare( (*itr).get_name() ) == 0 )
+			{
+				// If a duplicate, replace existing
+				(*itr).clear_params();
+				m_current_config_object = &(*itr);
+				return 0;
+			}
+		}
+
+		// Add new layout info
 		FeLayoutInfo new_entry( value );
 		m_layout_params.push_back( new_entry );
 		m_current_config_object = &m_layout_params.back();

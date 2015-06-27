@@ -230,6 +230,7 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 		FeMonitor mc;
 		mc.size.x = vm.width;
 		mc.size.y = vm.height;
+		mc.num = 0;
 		m_mon.push_back( mc );
 	}
 
