@@ -492,7 +492,6 @@ GAMESWFOBJS= \
 	$(GAMESWF_OBJ_DIR)/gameswf_environment.o  \
 	$(GAMESWF_OBJ_DIR)/gameswf_filters.o              \
 	$(GAMESWF_OBJ_DIR)/gameswf_font.o         \
-	$(GAMESWF_OBJ_DIR)/gameswf_freetype.o     \
 	$(GAMESWF_OBJ_DIR)/gameswf_function.o     \
 	$(GAMESWF_OBJ_DIR)/gameswf_impl.o         \
 	$(GAMESWF_OBJ_DIR)/gameswf_listener.o     \
@@ -517,6 +516,11 @@ GAMESWFOBJS= \
 	$(GAMESWF_OBJ_DIR)/gameswf_video_impl.o   \
 	$(GAMESWF_OBJ_DIR)/gameswf_sound_handler_openal.o
 
+ifeq ($(FE_MACOSX_COMPILE),1)
+	GAMESWFOBJS += $(GAMESWF_OBJ_DIR)/gameswf_fontlib.o
+else
+	GAMESWFOBJS += $(GAMESWF_OBJ_DIR)/gameswf_freetype.o
+endif
 
 ifeq ($(FE_RPI),1)
 	GAMESWFOBJS += $(GAMESWF_OBJ_DIR)/gameswf_render_handler_ogles.o

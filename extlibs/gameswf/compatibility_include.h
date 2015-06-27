@@ -49,4 +49,7 @@
 #define TU_CONFIG_LINK_STATIC 1
 #define TU_USE_SDL 0
 #define TU_USE_OPENAL 1
+
+#ifndef __APPLE__
 #define TU_CONFIG_LINK_TO_FREETYPE 1
+#endif

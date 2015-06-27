@@ -26,8 +26,11 @@
 #include "gameswf/gameswf_types.h"
 #include "gameswf/gameswf_impl.h"
 #include "gameswf/gameswf_root.h"
-#include "gameswf/gameswf_freetype.h"
 #include <gameswf/gameswf_player.h>
+
+#if TU_CONFIG_LINK_TO_FREETYPE == 1
+#include "gameswf/gameswf_freetype.h"
+#endif
 
 #include <SFML/OpenGL.hpp>
 
@@ -63,6 +66,11 @@ namespace
 			gameswf::set_sound_handler( swf_sound );
 
 			gameswf::register_file_opener_callback( swf_file_opener );
+#if TU_CONFIG_LINK_TO_FREETYPE == 1
+			gameswf::set_glyph_provider( gameswf::create_glyph_provider_freetype() );
+#else
+			gameswf::set_glyph_provider( gameswf::create_glyph_provider_tu() );
+#endif
 		}
 		swf_count++;
 	}
@@ -72,9 +80,11 @@ namespace
 		swf_count--;
 		if ( swf_count == 0 )
 		{
+			gameswf::set_render_handler( NULL );
 			delete swf_render;
 			swf_render = NULL;
 
+			gameswf::set_sound_handler( NULL );
 			delete swf_sound;
 			swf_sound = NULL;
 		}
@@ -126,6 +136,7 @@ bool FeSwf::open_from_file( const std::string &file )
 
 	m_texture.setActive();
 
+	// alpha blending
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
@@ -191,8 +202,5 @@ bool FeSwf::do_frame( bool is_tick )
 
 void FeSwf::set_smooth( bool s )
 {
-	if ( swf_render )
-		swf_render->set_antialiased( s );
-
 	m_texture.setSmooth( s );
 }

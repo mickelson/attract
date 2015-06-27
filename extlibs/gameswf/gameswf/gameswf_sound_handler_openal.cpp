@@ -289,7 +289,7 @@ namespace gameswf
 					assert(0);
 
 				case sound_handler::FORMAT_MP3 :
-					log_error("MP3 requires FFMPEG library\n");
+					log_error("SWF MP3 not implemented\n");
 					return;
 
 				case sound_handler::FORMAT_NELLYMOSER:	// Mystery proprietary format; see nellymoser.com
