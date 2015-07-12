@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include "fe_settings.hpp"
 #include "fe_input.hpp"
 
 class FeSettings;
@@ -185,6 +186,7 @@ public:
 class FeScriptConfigMenu : public FeBaseConfigMenu
 {
 protected:
+	FeScriptConfigMenu();
 
 	virtual bool save( FeConfigContext &ctx )=0;
 
@@ -196,6 +198,8 @@ protected:
 	FeScriptConfigurable *m_configurable;
 	std::string m_file_path;
 	std::string m_file_name;
+	FeSettings::FePresentState m_state;
+	int m_script_id;
 };
 
 class FeLayoutEditMenu : public FeScriptConfigMenu
@@ -398,7 +402,7 @@ public:
 	void get_options( FeConfigContext &ctx );
 
 	bool save( FeConfigContext &ctx );
-	void set_plugin( FePlugInfo *plugin );
+	void set_plugin( FePlugInfo *plugin, int index );
 };
 
 class FePluginSelMenu : public FeBaseConfigMenu

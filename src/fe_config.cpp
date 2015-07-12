@@ -968,6 +968,8 @@ bool FeDisplayEditMenu::save( FeConfigContext &ctx )
 	{
 		for ( int i=0; i< FeDisplayInfo::LAST_INDEX; i++ )
 			m_display->set_info( i, ctx.opt_list[i].get_value() );
+
+		m_display->set_current_layout_file( "" );
 	}
 
 	return true;
@@ -1536,6 +1538,12 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
+FeScriptConfigMenu::FeScriptConfigMenu()
+	: m_state( FeSettings::Layout_Showing ),
+	m_script_id( -1 )
+{
+}
+
 bool FeScriptConfigMenu::on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
@@ -1560,6 +1568,12 @@ bool FeScriptConfigMenu::on_option_select(
 	else if (( o.opaque == 2 ) && ( m_configurable ))
 	{
 		save( ctx );
+
+		ctx.fe_settings.set_present_state( m_state );
+		FePresent *fep = FePresent::script_get_fep();
+		if ( fep )
+			fep->set_script_id( m_script_id );
+
 		FeVM::script_run_config_function(
 				*m_configurable,
 				m_file_path,
@@ -1636,9 +1650,10 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 	return FeScriptConfigMenu::save_helper( ctx );
 }
 
-void FePluginEditMenu::set_plugin( FePlugInfo *plugin )
+void FePluginEditMenu::set_plugin( FePlugInfo *plugin, int index )
 {
 	m_plugin = plugin;
+	m_script_id = index;
 }
 
 void FePluginSelMenu::get_options( FeConfigContext &ctx )
@@ -1670,8 +1685,10 @@ bool FePluginSelMenu::on_option_select(
 
 	if ( o.opaque == 0 )
 	{
-		m_edit_menu.set_plugin(
-			ctx.fe_settings.get_plugin( o.setting ) );
+		FePlugInfo *plug;
+		int plug_index;
+		ctx.fe_settings.get_plugin( o.setting, plug, plug_index );
+		m_edit_menu.set_plugin( plug, plug_index );
 		submenu = &m_edit_menu;
 	}
 
@@ -1692,11 +1709,6 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 
 		ctx.add_optl( Opt::INFO, "Name", name, "_help_layout_name" );
 
-		std::string script_file;
-		script_file = ctx.fe_settings.get_layout_dir( name )
-				+ FE_LAYOUT_FILE_BASE + FE_LAYOUT_FILE_EXTENSION;
-
-		std::string gen_help;
 		m_file_path = ctx.fe_settings.get_layout_dir( name );
 
 		std::vector< std::string > temp_list;
@@ -1717,6 +1729,7 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 
 		m_configurable = m_layout;
 
+		std::string gen_help;
 		FeVM::script_get_config_options( ctx, gen_help, *m_layout,
 				m_file_path, m_file_name );
 

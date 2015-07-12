@@ -26,6 +26,7 @@
 #include "fe_text.hpp"
 #include "fe_listbox.hpp"
 #include "fe_input.hpp"
+#include "zip.hpp"
 
 #include <iostream>
 
@@ -341,18 +342,7 @@ FeImage *FePresent::add_image( bool is_artwork,
 	// if this is a static image/video then load it now
 	//
 	if (( !is_artwork ) && ( n.find_first_of( "[" ) == std::string::npos ))
-	{
-		std::string name;
-		if ( is_relative_path( n ) )
-		{
-			m_feSettings->get_path( FeSettings::Current, name );
-			name += n;
-		}
-		else
-			name = n;
-
-		new_tex->load_static( name );
-	}
+		new_tex->set_file_name( n.c_str() );
 
 	flag_redraw();
 	m_texturePool.push_back( new_tex );
@@ -430,22 +420,31 @@ FeSound *FePresent::add_sound( const char *n, bool reuse )
 	//      - otherwise return a new sound object loaded with n
 	//
 
+	std::string path;
 	std::string name=n;
 	if ( !name.empty() )
 	{
 		if ( is_relative_path( name ) )
 		{
-			name.clear();
-			m_feSettings->get_path( FeSettings::Current, name );
-			name += n;
+			int script_id = get_script_id();
+			if ( script_id < 0 )
+				m_feSettings->get_path( FeSettings::Current, path );
+			else
+				m_feSettings->get_plugin_full_path( script_id, path );
 		}
 
 		if ( reuse )
 		{
+			std::string test;
+			if ( tail_compare( path, FE_ZIP_EXT ) )
+				test = name;
+			else
+				test = path + name;
+
 			for ( std::vector<FeSound *>::iterator itr=m_sounds.begin();
 						itr!=m_sounds.end(); ++itr )
 			{
-				if ( name.compare( (*itr)->get_file_name() ) == 0 )
+				if ( test.compare( (*itr)->get_file_name() ) == 0 )
 					return (*itr);
 			}
 		}
@@ -456,7 +455,7 @@ FeSound *FePresent::add_sound( const char *n, bool reuse )
 	FeSound *new_sound = new FeSound();
 
 	if ( !name.empty() )
-		new_sound->load( name.c_str() );
+		new_sound->load( path, name );
 
 	new_sound->set_volume(
 		m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
@@ -470,35 +469,58 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 	std::string path;
 	m_feSettings->get_path( FeSettings::Current, path );
 
+	m_scriptShaders.push_back( new FeShader() );
+	FeShader *sh = m_scriptShaders.back();
+
 	switch ( type )
 	{
 		case FeShader::VertexAndFragment:
-			m_scriptShaders.push_back(
-				new FeShader( type,
-					(shader1 ? path + shader1 : ""),
-					(shader2 ? path + shader2 : "") ) );
+			if ( tail_compare( path, FE_ZIP_EXT ) )
+			{
+				FeZipStream zs1( path );
+				zs1.open( shader1 );
+
+				FeZipStream zs2( path );
+				zs2.open( shader2 );
+
+				sh->load( zs1, zs2 );
+			}
+			else
+			{
+				sf::FileInputStream fs1;
+				fs1.open( path + shader1 );
+
+				sf::FileInputStream fs2;
+				fs2.open( path + shader2 );
+
+				sh->load( fs1, fs2 );
+			}
 			break;
 
 		case FeShader::Vertex:
-			m_scriptShaders.push_back(
-				new FeShader( type,
-					(shader1 ? path + shader1 : ""), "" ) );
-			break;
-
 		case FeShader::Fragment:
-			m_scriptShaders.push_back(
-				new FeShader( type,
-					"", (shader1 ? path + shader1 : "") ) );
+			if ( tail_compare( path, FE_ZIP_EXT ) )
+			{
+				FeZipStream zs( path );
+				zs.open( shader1 );
+
+				sh->load( zs, type );
+			}
+			else
+			{
+				sf::FileInputStream fs;
+				fs.open( path + shader1 );
+
+				sh->load( fs, type );
+			}
 			break;
 
 		case FeShader::Empty:
 		default:
-			m_scriptShaders.push_back(
-				new FeShader( type, "", "" ) );
 			break;
 	}
 
-	return m_scriptShaders.back();
+	return sh;
 }
 
 int FePresent::get_layout_width() const
@@ -1155,7 +1177,7 @@ void FePresent::set_transforms()
 FeShader *FePresent::get_empty_shader()
 {
 	if ( !m_emptyShader )
-		m_emptyShader = new FeShader( FeShader::Empty, "", "" );
+		m_emptyShader = new FeShader();
 
 	return m_emptyShader;
 }
@@ -1188,3 +1210,26 @@ void FePresent::script_flag_redraw()
 	if ( fep )
 		fep->flag_redraw();
 }
+
+std::string FePresent::script_get_base_path()
+{
+	std::string path;
+
+	FePresent *fep = script_get_fep();
+	if ( fep )
+	{
+		FeSettings *fes = fep->get_fes();
+		if ( fes )
+		{
+			int script_id = fep->get_script_id();
+			if ( script_id < 0 )
+				fes->get_path( FeSettings::Current, path );
+			else
+				fes->get_plugin_full_path(
+					script_id, path );
+		}
+	}
+
+	return path;
+}
+

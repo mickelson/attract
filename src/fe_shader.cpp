@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014 Andrew Mickelson
+ *  Copyright (C) 2014-2015 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -26,43 +26,32 @@
 #include "fe_present.hpp"
 #include <iostream>
 
-FeShader::FeShader( Type t, const std::string &vert_shader, const std::string &frag_shader )
+FeShader::FeShader()
 	: m_type( Empty )
 {
-	if ( !sf::Shader::isAvailable() || ( t == Empty ) ) // silent fail if shaders aren't available
-		return;
+}
 
-	if ( !vert_shader.empty() && !frag_shader.empty() )
-	{
-		if ( !m_shader.loadFromFile( vert_shader, frag_shader ) )
-		{
-			std::cerr << "Error loading vertex and fragment shaders: vertex=" << vert_shader << ", fragment="
-				<< frag_shader << std::endl;
-			return;
-		}
+bool FeShader::load( sf::InputStream &vert_shader,
+		sf::InputStream &frag_shader )
+{
+	// silently fail if shaders aren't available
+	if ( !sf::Shader::isAvailable() )
+		return true;
 
-		m_type = VertexAndFragment;
-	}
-	else if ( !vert_shader.empty() )
-	{
-		if ( !m_shader.loadFromFile( vert_shader, sf::Shader::Vertex ) )
-		{
-			std::cerr << "Error loading vertex shader: " << vert_shader << std::endl;
-			return;
-		}
+	m_type = VertexAndFragment;
+	return m_shader.loadFromStream( vert_shader, frag_shader );
+}
 
-		m_type = Vertex;
-	}
-	else if ( !frag_shader.empty() )
-	{
-		if ( !m_shader.loadFromFile( frag_shader, sf::Shader::Fragment ) )
-		{
-			std::cerr << "Error loading fragment shader: " << frag_shader << std::endl;
-			return;
-		}
+bool FeShader::load( sf::InputStream &sh,
+		Type t )
+{
+	// silently fail if shaders aren't available
+	if ( !sf::Shader::isAvailable() || ( t == Empty ) )
+		return true;
 
-		m_type = Fragment;
-	}
+	m_type = t;
+	return m_shader.loadFromStream( sh,
+		(t == Fragment) ? sf::Shader::Fragment : sf::Shader::Vertex );
 }
 
 void FeShader::set_param( const char *name, float x )

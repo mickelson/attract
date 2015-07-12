@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014 Andrew Mickelson
+ *  Copyright (C) 2014-2015 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -37,7 +37,9 @@ public:
 		Fragment
 	};
 
-	FeShader( Type t, const std::string &vert_shader, const std::string &frag_shader );
+	FeShader();
+	bool load( sf::InputStream &vert, sf::InputStream &frag );
+	bool load( sf::InputStream &sh, Type t );
 
 	void set_param( const char *name, float x );
 	void set_param( const char *name, float x, float y );

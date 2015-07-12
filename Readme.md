@@ -62,19 +62,21 @@ you can configure one or more.  Each "Display" is a grouping of the following:
 
 - a Collection/Rom List (the listing of available games/roms to show).  Romlists
   are text files located in the "romlists" directory.  They are created by
-  Attract-Mode using the "Generate Collection/Rom List" option or from the
-  command line.
+  Attract-Mode using the "Generate Collection/Rom List" option available when
+  configuring an emulator, or by using the "--build-romlist" or
+  "--import-romlist" command line options.
 - a Layout (the visual theme/skin to use for the Display).  Layouts are located
-  in the "layouts" directory, each in their own subdirectory.
+  in the "layouts" directory, with each layout either in its own subdirectory
+  or contained in a .zip file in the "layouts" directory.
 - a Global Filter.  The global filter is a set of filter rules that always get
   applied to a Collection/Rom List.  This filter can be used to remove entries
   you will never want to see
 - zero or more "normal" Filters.  Filters are a set of rules for which games to
-  display and how to sort them.  Filters can be created to categorize games based
-  attributes such as their orientation, category, manufacturer, year, times
-  played, favourite status, file availability, etc.  Filters can be cycled
-  through using the "Previous Filter" and "Next Filter" controls, and can also be
-  selected from the "Filters Menu".
+  display and how to sort them.  Filters can be created to categorize games
+  based attributes such as their orientation, category, manufacturer, year,
+  times played, favourite status, file availability, etc.  Filters can be
+  cycled through using the "Previous Filter" and "Next Filter" controls, and
+  can also be selected from the "Filters Menu".
 
 Further Customization
 ---------------------
@@ -92,12 +94,13 @@ contain "Sports").
 **SOUND:** To play sounds in your setup, place the sound file in the "sounds"
 subdirectory of your Attract-Mode config directory.  The sound file can then
 be selected from the "Sound" menu when in config mode and mapped to an action
-or event.
+or event.  Attract-Mode should support any sound format supported by FFmpeg
+(MP3, etc).
 
 **ARTWORK:** Attract-Mode supports PNG, JPEG, GIF, BMP and TGA image formats.
 For video formats, Attract-Mode should support any video format supported by
-FFmpeg.  When deciding what file to use for a particular artwork type,
-Attract-Mode will use the artwork selection order set out below.
+FFmpeg (MP4, FLV, AVI, etc).  When deciding what file to use for a particular
+artwork type, Attract-Mode will use the artwork selection order set out below.
 
 The location of artwork resources is configured on a per-emulator basis in the
 "Emulators" configuration menu.  Attract-Mode's default artworks are: "marquee"
@@ -137,15 +140,18 @@ the selection order.
    will then pick a random video or image from that directory.
 
 **LAYOUTS:** Attract-Mode's layouts are located in the "layouts" directory.
-Each layout gets its own subdirectory.  Attract-Mode's native layouts are
-made up of a squirrel script (a .nut file) and related resources.  See
-[Layouts.md][] for more information on Attract-Mode layouts.
+Each layout has to be in its own subdirectory or contained in a .zip file.
+Attract-Mode's native layouts are made up of a squirrel script (a .nut file)
+and related resources.  See [Layouts.md][] for more information on
+Attract-Mode layouts.
 
-Attract-Mode can also use layouts made for the [MALA frontend][malafe.net].
-To use a MALA layout in Attract-Mode, copy the MALA .mll file and related
-resources into a new subdirectory of the Attract-Mode "layouts" directory.
-After doing this you should be able to select the MALA layout when
-configuring a Display in config mode.
+Attract-Mode can also display layouts made for the [MaLa frontend][malafe.net].
+To use a MaLa layout in Attract-Mode, treat the MaLa layout just as you would
+an Attract-Mode native layout... i.e.  copy the MaLa .mll file and related
+resources into a subdirectory of the "layouts" directory, or place a .zip file
+containing these things in the "layouts" directory.  After doing this you
+should be able to select the MaLa layout when configuring a Display in config
+mode.
 
 **PLUG-INS:** Plug-ins are squirrel scripts that need to be placed in the
 "plugins" subdirectory of your Attract-Mode config directory.  Available

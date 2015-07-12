@@ -560,6 +560,7 @@ int main(int argc, char *argv[])
 			if ( feSettings.get_present_state() == FeSettings::Intro_Showing )
 			{
 				feVM.load_layout( true );
+				redraw=true;
 				continue;
 			}
 

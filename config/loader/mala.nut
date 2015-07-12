@@ -699,7 +699,7 @@ function add_sound( label )
 mll <- {};
 
 local entity=null;
-local f = ReadTextFile( ::file_to_load );
+local f = ReadTextFile( fe.script_dir, ::file_to_load );
 
 while ( !f.eos() )
 {

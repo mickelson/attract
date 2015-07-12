@@ -230,7 +230,7 @@ public:
 	static void script_process_magic_strings( std::string &str,
 			int filter_offset,
 			int index_offset );
-
+	static std::string script_get_base_path();
 
 	//
 	//
@@ -239,6 +239,8 @@ public:
 	virtual bool on_transition( FeTransitionType, int var )=0;
 	virtual void flag_redraw()=0;
 	virtual void init_with_default_layout()=0;
+	virtual int get_script_id()=0;
+	virtual void set_script_id( int )=0;
 };
 
 

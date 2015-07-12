@@ -30,13 +30,14 @@
 #include "fe_input.hpp"
 #include "fe_present.hpp"
 
+#include <sqrat/sqratObject.h>
+
 class FeWindow;
 class FeOverlay;
 class FeConfigContext;
 
 namespace Sqrat
 {
-	class Object;
 	class Table;
 	class Array;
 };
@@ -44,6 +45,17 @@ namespace Sqrat
 namespace sf
 {
 	class Event;
+};
+
+class FeCallback
+{
+public:
+	FeCallback( int pid, const Sqrat::Object &env, const std::string &fn );
+
+
+	int m_sid;		// -1 for layout, otherwise the plugin index
+	Sqrat::Object m_env;	// callback function environment
+	std::string m_fn;	// callback function name
 };
 
 class FeVM : public FePresent
@@ -66,10 +78,12 @@ private:
 
 	bool m_redraw_triggered;
 	const FeScriptConfigurable *m_script_cfg;
+	int m_script_id;
+
 	std::queue< FeInputMap::Command > m_posted_commands;
-	std::vector< std::pair< Sqrat::Object, std::string > > m_ticks;
-	std::vector< std::pair< Sqrat::Object, std::string > > m_trans;
-	std::vector< std::pair< Sqrat::Object, std::string > > m_sig_handlers;
+	std::vector< FeCallback > m_ticks;
+	std::vector< FeCallback > m_trans;
+	std::vector< FeCallback > m_sig_handlers;
 
 	FeVM( const FeVM & );
 	FeVM &operator=( const FeVM & );
@@ -78,6 +92,7 @@ private:
 	void add_transition_callback( Sqrat::Object, const char * );
 	void add_signal_handler( Sqrat::Object, const char * );
 	void remove_signal_handler( Sqrat::Object, const char * );
+	void set_for_callback( const FeCallback & );
 
 	static bool internal_do_nut(const std::string &, const std::string &);
 
@@ -99,6 +114,8 @@ public:
 	bool on_tick();
 	bool on_transition( FeTransitionType, int var );
 	void init_with_default_layout();
+	int get_script_id() { return m_script_id; };
+	void set_script_id( int id ) { m_script_id=id; };
 
 	bool script_handle_event( FeInputMap::Command c, bool &redraw );
 

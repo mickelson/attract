@@ -29,6 +29,7 @@ extern "C"
 {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavformat/avio.h>
 #include <libswscale/swscale.h>
 
 #if USE_SWRESAMPLE
@@ -64,6 +65,7 @@ extern "C"
 #include <queue>
 #include <iostream>
 #include "media.hpp"
+#include "zip.hpp"
 
 void print_ffmpeg_version_info()
 {
@@ -651,6 +653,7 @@ FeMedia::FeMedia( Type t )
 	: sf::SoundStream(),
 		m_type( t ),
 		m_format_ctx( NULL ),
+		m_io_ctx( NULL ),
 		m_loop( true ),
 		m_read_eof( false ),
 		m_audio( NULL ),
@@ -743,7 +746,6 @@ void FeMedia::close()
 		delete m_video;
 		m_video=NULL;
 	}
-
 	if (m_format_ctx)
 	{
 #if (LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( 53, 17, 0 ))
@@ -753,6 +755,17 @@ void FeMedia::close()
 #endif
 		m_format_ctx=NULL;
 	}
+
+	if (m_io_ctx)
+	{
+		if ( m_io_ctx->opaque )
+			delete (FeZipStream *)(m_io_ctx->opaque);
+
+		av_free( m_io_ctx->buffer );
+		av_free( m_io_ctx );
+		m_io_ctx=NULL;
+	}
+
 
 	m_read_eof=false;
 }
@@ -800,10 +813,87 @@ bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
 		return false;
 	}
 
+	return internal_open( outt );
+}
+
+int fe_zip_read( void *opaque, uint8_t *buff, int buff_size )
+{
+	FeZipStream *z = (FeZipStream *)opaque;
+
+	sf::Int64 bytes_read = z->read( buff, buff_size );
+
+	if ( bytes_read == 0 )
+		return AVERROR_EOF;
+
+	return bytes_read;
+}
+
+// whence: SEEK_SET, SEEK_CUR, SEEK_END, and AVSEEK_SIZE
+int64_t fe_zip_seek( void *opaque, int64_t offset, int whence )
+{
+	FeZipStream *z = (FeZipStream *)opaque;
+
+	switch ( whence )
+	{
+	case AVSEEK_SIZE:
+		return z->getSize();
+
+	case SEEK_CUR:
+		return z->seek( z->tell() + offset );
+
+	case SEEK_END:
+		return z->seek( z->getSize() + offset );
+
+	case SEEK_SET:
+	default:
+		return z->seek( offset );
+	}
+}
+
+bool FeMedia::openFromArchive( const std::string &archive,
+	const std::string &name, sf::Texture *outt )
+{
+	close();
+	init_av();
+
+	FeZipStream *z = new FeZipStream( archive );
+	if ( !z->open( name ) )
+	{
+		delete z;
+		return false;
+	}
+
+	m_format_ctx = avformat_alloc_context();
+
+	size_t avio_ctx_buffer_size = 4096;
+	uint8_t *avio_ctx_buffer = (uint8_t *)av_malloc( avio_ctx_buffer_size
+			+ FF_INPUT_BUFFER_PADDING_SIZE );
+
+	memset( avio_ctx_buffer + avio_ctx_buffer_size,
+		0,
+		FF_INPUT_BUFFER_PADDING_SIZE );
+
+	m_io_ctx = avio_alloc_context( avio_ctx_buffer,
+		avio_ctx_buffer_size, 0, z, &fe_zip_read,
+		NULL, &fe_zip_seek );
+
+	m_format_ctx->pb = m_io_ctx;
+
+	if ( avformat_open_input( &m_format_ctx, name.c_str(), NULL, NULL ) < 0 )
+	{
+		std::cerr << "Error opening input file: " << name << std::endl;
+		return false;
+	}
+
+	return internal_open( outt );
+}
+
+bool FeMedia::internal_open( sf::Texture *outt )
+{
 	if ( avformat_find_stream_info( m_format_ctx, NULL ) < 0 )
 	{
 		std::cerr << "Error finding stream information in input file: "
-					<< name << std::endl;
+					<< m_format_ctx->filename << std::endl;
 		return false;
 	}
 
@@ -822,7 +912,7 @@ bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
 										dec, NULL ) < 0 )
 			{
 				std::cerr << "Could not open audio decoder for file: "
-						<< name << std::endl;
+						<< m_format_ctx->filename << std::endl;
 			}
 			else
 			{
@@ -866,7 +956,8 @@ bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
 
 		if ( stream_id < 0 )
 		{
-			std::cout << "No video stream found, file: " << name << std::endl;
+			std::cout << "No video stream found, file: "
+				<< m_format_ctx->filename << std::endl;
 		}
 		else
 		{
@@ -879,7 +970,7 @@ bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
 										dec, NULL ) < 0 )
 			{
 				std::cerr << "Could not open video decoder for file: "
-						<< name << std::endl;
+					<< m_format_ctx->filename << std::endl;
 			}
 			else
 			{
@@ -892,7 +983,7 @@ bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
 
 				m_video->display_texture = outt;
 				m_video->display_texture->create( m_video->codec_ctx->width,
-											m_video->codec_ctx->height );
+						m_video->codec_ctx->height );
 				m_video->preload();
 			}
 		}

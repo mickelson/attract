@@ -31,6 +31,7 @@
 class FeAudioImp;
 class FeVideoImp;
 class AVFormatContext;
+class AVIOContext;
 
 class FeMedia : private sf::SoundStream
 {
@@ -48,6 +49,10 @@ public:
 	~FeMedia();
 
 	bool openFromFile( const std::string &name,
+			sf::Texture *out_texture=NULL );
+
+	bool openFromArchive( const std::string &archive,
+			const std::string &name,
 			sf::Texture *out_texture=NULL );
 
 	using sf::SoundStream::setPosition;
@@ -93,9 +98,12 @@ protected:
 	bool read_packet();
 	bool end_of_file();
 
+	bool internal_open( sf::Texture *outt );
+
 private:
 	Type m_type;
 	AVFormatContext *m_format_ctx;
+	AVIOContext *m_io_ctx;
 	sf::Mutex m_read_mutex;
 	bool m_loop;
 	bool m_read_eof;

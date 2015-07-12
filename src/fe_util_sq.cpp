@@ -105,3 +105,15 @@ int fe_get_num_params(
 
 	return nparams-1;
 }
+
+void fe_register_global_func(
+	HSQUIRRELVM vm,
+	SQFUNCTION f,
+	const char *name )
+{
+        sq_pushroottable( vm );
+        sq_pushstring( vm, name, -1 );
+        sq_newclosure( vm, f, 0 );
+        sq_newslot( vm, -3, SQFalse );
+        sq_pop( vm, 1 ); // pops the root table
+}

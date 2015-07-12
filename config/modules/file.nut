@@ -1,3 +1,10 @@
+
+///////////////////////////////////////////////////
+function IS_ZIP(p)
+{
+	return ((p.len()>3)&&(p.slice(p.len()-4).tolower()==".zip"));
+}
+
 ///////////////////////////////////////////////////
 //
 // "DirectoryListing" class
@@ -9,21 +16,30 @@ class DirectoryListing
 {
 	constructor( path, fullnames=true )
 	{
-		local command = "/bin/sh";
-		local param = "-c \"ls ";
-		if ( OS == "Windows" )
+		local temp_list;
+
+		if ( IS_ZIP( path ) )
 		{
-			command = "cmd";
-			param = " /c dir /b \"";
+			temp_list = zip_get_dir( path );
 		}
-		param += path;
-		param += "\"";
+		else
+		{
+			local command = "/bin/sh";
+			local param = "-c \"ls ";
+			if ( OS == "Windows" )
+			{
+				command = "cmd";
+				param = " /c dir /b \"";
+			}
+			param += path;
+			param += "\"";
 
-		// This will load the directory listing into m_work
-		//
-		fe.plugin_command( command, param, this, "_callback" );
+			// This will load the directory listing into m_work
+			//
+			fe.plugin_command( command, param, this, "_callback" );
 
-		local temp_list = split( _work, "\n" );
+			temp_list = split( _work, "\n" );
+		}
 
 		if ( fullnames )
 		{
@@ -53,29 +69,54 @@ class DirectoryListing
 //
 // This class reads lines from a text file
 //
+// If the first argument to the constructor is a zip file, it will
+// read the file with the second argument name from inside the zip
+//
 class ReadTextFile
 {
-	constructor( filename )
+	constructor( path, filename="" )
 	{
-		try
+		//
+		// Handle zip files
+		//
+		if ( IS_ZIP( path ) )
 		{
-			_f = file( filename, "r" );
-			_blb = _f.readblob( _readsize );
+			try
+			{
+				_blb = zip_extract_file( path, filename );
+			}
+			catch ( e )
+			{
+				print( "Error opening zip file for reading: "
+					+ path + ", " + filename + ": "
+					+ e + "\n" );
+			}
 		}
-		catch ( e )
+		else
 		{
-			print( "Error opening file for reading: "
-				+ filename + "\n" );
+			try
+			{
+				_f = file( path + filename, "r" );
+				_blb = _f.readblob( _readsize );
+			}
+			catch ( e )
+			{
+				print( "Error opening file for reading: "
+					+ path + filename + ": " + e + "\n" );
+			}
 		}
 	}
 
+	//
+	// Read a line from the text file, stripping whitespace
+	//
 	function read_line()
 	{
 		local line="";
 
 		while ( !eos() )
 		{
-			if ( _blb.eos() && !_f.eos() )
+			if ( _blb.eos() && _f && !_f.eos() )
 				_blb = _f.readblob( _readsize );
 
 			while ( !_blb.eos() )
@@ -91,7 +132,15 @@ class ReadTextFile
 		return line;
 	}
 
-	function eos() { return (_f.eos() && _blb.eos()); }
+	function eos()
+	{
+		if ( !_blb )
+			return true;
+		else if ( !_f )
+			return ( _blb.eos() );
+
+		return ( _blb.eos() && _f.eos() );
+	}
 
 	_f=null;
 	_blb=null;

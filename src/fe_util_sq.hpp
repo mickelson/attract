@@ -51,4 +51,9 @@ int fe_get_num_params(
 	HSQOBJECT func,
 	HSQOBJECT env );
 
+void fe_register_global_func(
+	HSQUIRRELVM vm,
+	SQFUNCTION f,
+	const char *name );
+
 #endif

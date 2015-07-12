@@ -33,6 +33,7 @@
 
 #include "fe_util.hpp"
 #include "fe_util_sq.hpp"
+#include "zip.hpp"
 
 #include <sqrat.h>
 
@@ -78,7 +79,138 @@ namespace
 
 		return false;
 	}
+
+	bool run_script( const std::string &path,
+		const std::string &filename,
+		bool silent=false )
+	{
+		std::string path_to_run=path;
+		try
+		{
+			Sqrat::Script sc;
+			if ( tail_compare( path, FE_ZIP_EXT ) )
+			{
+				FeZipStream zip( path );
+				if ( !zip.open( filename ) )
+					return false;
+
+				// in case error reporting is needed
+				path_to_run += " (";
+				path_to_run += filename;
+				path_to_run += ")";
+
+				std::vector<char> sv( zip.getSize()+1 );
+
+				zip.read( &(sv[0]), zip.getSize() );
+				sv[zip.getSize()]=0;
+
+				sc.CompileString( sv.data() );
+			}
+			else
+			{
+				path_to_run += filename;
+
+				if ( !file_exists( path_to_run ) )
+					return false;
+
+				sc.CompileFile( path_to_run );
+			}
+
+			sc.Run();
+		}
+		catch(Sqrat:: Exception e )
+		{
+			if ( !silent )
+				std::cerr << "Script Error in " << path_to_run
+					<< " - " << e.Message() << std::endl;
+		}
+		return true;
+	}
+
+	void *fe_script_zip_callback( size_t s )
+	{
+		HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+		SQUserPointer my_ptr = sqstd_createblob( vm, s );
+
+		return (void *)my_ptr;
+	}
+
+	SQInteger zip_extract_file(HSQUIRRELVM vm)
+	{
+		if ( sq_gettop( vm ) != 3 )
+			return sq_throwerror( vm, "two parameters expected" );
+
+		// param 2 is archive name, 3 is filename
+		const SQChar *archive;
+		const SQChar *filename;
+
+		if ( SQ_FAILED( sq_getstring( vm, 2, &archive ) ) )
+			return sq_throwerror( vm, "incorrect archive parameter" );
+
+		if ( SQ_FAILED( sq_getstring( vm, 3, &filename ) ) )
+			return sq_throwerror( vm, "incorrect filename parameter" );
+
+		std::string path;
+		if ( is_relative_path( archive ) )
+			path = FePresent::script_get_base_path() + archive;
+		else
+			path = archive;
+
+		void *my_ptr;
+		if ( !fe_zip_open_to_buff(
+				path.c_str(),
+				filename,
+				fe_script_zip_callback,
+				&my_ptr, NULL ) )
+			return sq_throwerror( vm, "error reading zip" );
+
+		// fe_zip_open_to_buff will have pushed the blob onto the
+		// squirrel stack with the call to sqstd_createblob() in
+		// fe_script_zip_callback
+		return 1;
+	}
+
+	SQInteger zip_get_dir(HSQUIRRELVM vm)
+	{
+		if ( sq_gettop( vm ) != 2 )
+			return sq_throwerror( vm, "one parameter expected" );
+
+		// param 2 is archive name
+		const SQChar *archive;
+
+		if ( SQ_FAILED( sq_getstring( vm, 2, &archive ) ) )
+			return sq_throwerror( vm, "incorrect archive parameter" );
+
+		std::string path;
+		if ( is_relative_path( archive ) )
+			path = FePresent::script_get_base_path() + archive;
+		else
+			path = archive;
+
+		std::vector < std::string > res;
+		fe_zip_get_dir( path.c_str(), res );
+
+		sq_newarray( vm, 0 );
+
+		for ( std::vector<std::string>::iterator itr=res.begin();
+			itr != res.end(); ++itr )
+		{
+			sq_pushstring( vm, (*itr).c_str(), -1 );
+			sq_arrayappend(vm, -2);
+		}
+
+		return 1;
+	}
 };
+
+FeCallback::FeCallback( int pid,
+		const Sqrat::Object &env,
+		const std::string &fn )
+	: m_sid( pid ),
+	m_env( env ),
+	m_fn( fn )
+{
+}
 
 const char *FeVM::transitionTypeStrings[] =
 {
@@ -99,7 +231,8 @@ FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSoun
 	m_overlay( NULL ),
 	m_ambient_sound( ambient_sound ),
 	m_redraw_triggered( false ),
-	m_script_cfg( NULL )
+	m_script_cfg( NULL ),
+	m_script_id( -1 )
 {
 	srand( time( NULL ) );
 	vm_init();
@@ -149,26 +282,29 @@ void FeVM::clear()
 
 void FeVM::add_ticks_callback( Sqrat::Object func, const char *slot )
 {
-	m_ticks.push_back( std::pair< Sqrat::Object, std::string >( func, slot ) );
+	m_ticks.push_back(
+		FeCallback( m_script_id, func, slot ) );
 }
 
 void FeVM::add_transition_callback( Sqrat::Object func, const char *slot )
 {
-	m_trans.push_back( std::pair< Sqrat::Object, std::string >( func, slot ) );
+	m_trans.push_back(
+		FeCallback( m_script_id, func, slot ) );
 }
 
 void FeVM::add_signal_handler( Sqrat::Object func, const char *slot )
 {
-	m_sig_handlers.push_back( std::pair< Sqrat::Object, std::string >( func, slot ) );
+	m_sig_handlers.push_back(
+		FeCallback( m_script_id, func, slot ) );
 }
 
 void FeVM::remove_signal_handler( Sqrat::Object func, const char *slot )
 {
-	for ( std::vector<std::pair< Sqrat::Object, std::string > >::iterator itr = m_sig_handlers.begin();
+	for ( std::vector<FeCallback>::iterator itr = m_sig_handlers.begin();
 			itr != m_sig_handlers.end(); ++itr )
 	{
-		if (( (*itr).second.compare( slot ) == 0 )
-				&& ( fe_obj_compare( func.GetVM(), func.GetObject(), (*itr).first.GetObject() ) == 0 ))
+		if (( (*itr).m_fn.compare( slot ) == 0 )
+				&& ( fe_obj_compare( func.GetVM(), func.GetObject(), (*itr).m_env.GetObject() ) == 0 ))
 		{
 			m_sig_handlers.erase( itr );
 			return;
@@ -201,15 +337,15 @@ void FeVM::vm_init()
 	sqstd_register_systemlib( vm );
 	sqstd_seterrorhandlers( vm );
 
+	fe_register_global_func( vm, zip_extract_file, "zip_extract_file" );
+	fe_register_global_func( vm, zip_get_dir, "zip_get_dir" );
+
 	Sqrat::DefaultVM::Set( vm );
 }
 
 bool FeVM::on_new_layout()
 {
 	using namespace Sqrat;
-
-	std::string path, filename;
-	m_feSettings->get_path( FeSettings::Current, path, filename );
 
 	const FeLayoutInfo &layout_params
 		= m_feSettings->get_current_config( FeSettings::Current );
@@ -457,7 +593,7 @@ bool FeVM::on_new_layout()
 	);
 
 	fe.Bind( _SC("Sound"), Class <FeSound, NoConstructor>()
-		.Prop( _SC("file_name"), &FeSound::get_file_name, &FeSound::load )
+		.Prop( _SC("file_name"), &FeSound::get_file_name, &FeSound::set_file_name )
 		.Prop( _SC("playing"), &FeSound::get_playing, &FeSound::set_playing )
 		.Prop( _SC("loop"), &FeSound::get_loop, &FeSound::set_loop )
 		.Prop( _SC("pitch"), &FeSound::get_pitch, &FeSound::set_pitch )
@@ -591,50 +727,38 @@ bool FeVM::on_new_layout()
 	//
 	// Run the layout script
 	//
-	std::string path_to_run = path + filename;
-	if ( file_exists( path_to_run ) )
-	{
-		fe.SetValue( _SC("script_dir"), path );
-		fe.SetValue( _SC("script_file"), filename );
-		m_script_cfg = &layout_params;
+	std::string path, filename;
+	m_feSettings->get_path( FeSettings::Current, path, filename );
+	std::string rep_path( path );
 
-		if ( filename.empty() )
-		{
-			if ( ps == FeSettings::Intro_Showing )
-				return false; // silent fail if intro is not found
-			else
-			{
-				// if there is no script file at this point,
-				// we try loader script instead
-				//
-				std::string temp_path, temp_filename;
-				m_feSettings->get_path( FeSettings::Loader,
-					temp_path, temp_filename );
+	fe.SetValue( _SC("script_dir"), path );
+	fe.SetValue( _SC("script_file"), filename );
+	m_script_cfg = &layout_params;
+	m_script_id = -1;
 
-				path_to_run = temp_path + temp_filename;
-
-				fe.SetValue( _SC("loader_dir"), temp_path );
-			}
-		}
-
-		try
-		{
-			Script sc;
-			sc.CompileFile( path_to_run );
-			sc.Run();
-		}
-		catch( Exception e )
-		{
-			std::cerr << "Script Error in " << path_to_run
-				<< " - " << e.Message() << std::endl;
-		}
-	}
-	else
+	if ( filename.empty() )
 	{
 		if ( ps == FeSettings::Intro_Showing )
 			return false; // silent fail if intro is not found
 		else
-			std::cerr << "Script file not found: " << path_to_run << std::endl;
+		{
+			// if there is no script file at this point,
+			// we try loader script instead
+			//
+			m_feSettings->get_path( FeSettings::Loader,
+				path, filename );
+
+			fe.SetValue( _SC("loader_dir"), path );
+		}
+	}
+
+	if ( !run_script( path, filename ) )
+	{
+		if ( ps == FeSettings::Intro_Showing )
+			return false; // silent fail if intro is not found
+		else
+			std::cerr << "Script file not found: " << path
+				<< " (" << filename << ")" << std::endl;
 	}
 
 	//
@@ -642,16 +766,15 @@ bool FeVM::on_new_layout()
 	//
 	const std::vector< FePlugInfo > &plugins = m_feSettings->get_plugins();
 
-	for ( std::vector< FePlugInfo >::const_iterator itr= plugins.begin();
-		itr != plugins.end(); ++itr )
+	for ( int i=0; i<(int)plugins.size(); i++ )
 	{
 		// Don't run disabled plugins...
-		if ( (*itr).get_enabled() == false )
+		if ( plugins[i].get_enabled() == false )
 			continue;
 
 		std::string plug_path, plug_name;
 		m_feSettings->get_plugin_full_path(
-				(*itr).get_name(),
+				plugins[i].get_name(),
 				plug_path,
 				plug_name );
 
@@ -659,19 +782,10 @@ bool FeVM::on_new_layout()
 		{
 			fe.SetValue( _SC("script_dir"), plug_path );
 			fe.SetValue( _SC("script_file"), plug_name );
-			m_script_cfg = &(*itr);
+			m_script_cfg = &(plugins[i]);
+			m_script_id = i;
 
-			try
-			{
-				Script sc;
-				sc.CompileFile( plug_path + plug_name );
-				sc.Run();
-			}
-			catch( Exception e )
-			{
-				std::cout << "Script Error in " << plug_path + plug_name
-					<< " - " << e.Message() << std::endl;
-			}
+			run_script( plug_path, plug_name );
 		}
 	}
 
@@ -681,10 +795,35 @@ bool FeVM::on_new_layout()
 
 	if ( ps == FeSettings::Layout_Showing )
 	{
-		std::cout << " - Loaded layout: " << path << " (" << filename << ")" << std::endl;
+		std::cout << " - Loaded layout: " << rep_path
+			<< " (" << filename << ")" << std::endl;
 	}
 
 	return true;
+}
+
+void FeVM::set_for_callback( const FeCallback &c )
+{
+	Sqrat::Table fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+
+	std::string path, name;
+	if ( c.m_sid < 0 )
+	{
+		// the layout/screensaver/intro will have a m_pid < 0
+		m_feSettings->get_path( FeSettings::Current, path, name );
+		m_script_cfg = &(m_feSettings->get_current_config( FeSettings::Current ));
+	}
+	else // otherwise this is a plugin
+	{
+		const std::vector< FePlugInfo > &pg = m_feSettings->get_plugins();
+		m_feSettings->get_plugin_full_path( pg[c.m_sid].get_name(),
+			path, name );
+		m_script_cfg = &(pg[c.m_sid]);
+	}
+
+	fe.SetValue( _SC("script_dir"), path );
+	fe.SetValue( _SC("script_file"), name );
+	m_script_id = c.m_sid;
 }
 
 bool FeVM::on_tick()
@@ -692,23 +831,24 @@ bool FeVM::on_tick()
 	using namespace Sqrat;
 	m_redraw_triggered = false;
 
-	for ( std::vector<std::pair<Sqrat::Object, std::string> >::iterator itr = m_ticks.begin();
+	for ( std::vector<FeCallback>::iterator itr = m_ticks.begin();
 		itr != m_ticks.end(); )
 	{
 		// Assumption: Ticks list is empty if no vm is active
 		//
 		ASSERT( DefaultVM::Get() );
 
+		set_for_callback( *itr );
 		bool remove=false;
 		try
 		{
-			Function func( (*itr).first, (*itr).second.c_str() );
+			Function func( (*itr).m_env, (*itr).m_fn.c_str() );
 			if ( !func.IsNull() )
 				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in tick function: " << (*itr).second << " - "
+			std::cout << "Script Error in tick function: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
 
 			// Knock out this entry.   If it causes a script error, we don't
@@ -739,7 +879,7 @@ bool FeVM::on_transition(
 	sf::Clock ttimer;
 	m_redraw_triggered = false;
 
-	std::vector<std::pair<Object, std::string>*> worklist( m_trans.size() );
+	std::vector<FeCallback *> worklist( m_trans.size() );
 	for ( unsigned int i=0; i < m_trans.size(); i++ )
 		worklist[i] = &(m_trans[i]);
 
@@ -757,13 +897,14 @@ bool FeVM::on_transition(
 		// Call each remaining transition callback on each pass through
 		// the worklist
 		//
-		for ( std::vector<std::pair<Object, std::string>*>::iterator itr=worklist.begin();
+		for ( std::vector<FeCallback *>::iterator itr=worklist.begin();
 			itr != worklist.end(); )
 		{
+			set_for_callback( *(*itr) );
 			bool keep=false;
 			try
 			{
-				Function func( (*itr)->first, (*itr)->second.c_str() );
+				Function func( (*itr)->m_env, (*itr)->m_fn.c_str() );
 				if ( !func.IsNull() )
 				{
 					keep = func.Evaluate<bool>(
@@ -774,8 +915,8 @@ bool FeVM::on_transition(
 			}
 			catch( Exception e )
 			{
-				std::cout << "Script Error in transition function: " << (*itr)->second << " - "
-						<< e.Message() << std::endl;
+				std::cout << "Script Error in transition function: " << (*itr)->m_fn
+						<< " - " << e.Message() << std::endl;
 			}
 
 			if ( !keep )
@@ -827,16 +968,17 @@ bool FeVM::script_handle_event( FeInputMap::Command c, bool &redraw )
 	// Go through the list in reverse so that the most recently registered signal handler
 	// gets the first shot at handling the signal.
 	//
-	for ( std::vector<std::pair<Object, std::string> >::reverse_iterator itr = m_sig_handlers.rbegin();
+	for ( std::vector<FeCallback>::reverse_iterator itr = m_sig_handlers.rbegin();
 		itr != m_sig_handlers.rend(); ++itr )
 	{
 		// Assumption: Handlers list is empty if no vm is active
 		//
 		ASSERT( DefaultVM::Get() );
+		set_for_callback( *itr );
 
 		try
 		{
-			Function func( (*itr).first, (*itr).second.c_str() );
+			Function func( (*itr).m_env, (*itr).m_fn.c_str() );
 			if (( !func.IsNull() )
 					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
 			{
@@ -848,7 +990,7 @@ bool FeVM::script_handle_event( FeInputMap::Command c, bool &redraw )
 		}
 		catch( Exception e )
 		{
-			std::cout << "Script Error in signal handler: " << (*itr).second << " - "
+			std::cout << "Script Error in signal handler: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
 		}
 	}
@@ -1063,37 +1205,27 @@ public:
 		fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 		fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 		fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
+		fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
 		fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 
 		Sqrat::RootTable().Bind( _SC("fe"),  fe );
 
-		fe.SetValue( _SC("script_dir"), script_path );
-		fe.SetValue( _SC("script_file"), script_file );
+		std::string path = script_path;
+		std::string file = script_file;
+		fe.SetValue( _SC("script_dir"), path );
+		fe.SetValue( _SC("script_file"), file );
 		fe_vm->m_script_cfg = &configurable;
 
-		std::string path_to_run = script_path + script_file;
-		if ( script_file.empty() )
+		if ( file.empty() )
 		{
-			// if there is no script file at this point, we try loader script instead
-			std::string temp_path, temp_filename;
+			// if there is no script file at this point,
+			// we try loader script instead
 			fe_vm->m_feSettings->get_path( FeSettings::Loader,
-				temp_path, temp_filename );
+				path, file );
 
-			path_to_run = temp_path + temp_filename;
-
-			fe.SetValue( _SC("loader_dir"), temp_path );
+			fe.SetValue( _SC("loader_dir"), path );
 		}
-
-		try
-		{
-			Sqrat::Script sc;
-			sc.CompileFile( path_to_run );
-			sc.Run();
-		}
-		catch( Sqrat::Exception e )
-		{
-			// ignore all errors, they are expected
-		}
+		run_script( path, file, true );
 	};
 
 	~FeConfigVM()
@@ -1135,6 +1267,13 @@ void FeVM::script_run_config_function(
 		if ( help_msg )
 			return_message = help_msg;
 	}
+	else
+	{
+		return_message = "Script error: Function not found";
+		std::cout << "Script Error in " << script_file
+			<< " - Function not found: " << func_name << std::endl;
+	}
+
 }
 
 void FeVM::script_get_config_options(
@@ -1495,33 +1634,10 @@ bool FeVM::internal_do_nut( const std::string &work_dir,
 {
 	std::string path;
 
-	if ( is_relative_path( script_file) )
-	{
+	if ( is_relative_path( script_file ) )
 		path = work_dir;
-		path += script_file;
-	}
-	else
-		path = script_file;
 
-	if ( !file_exists( path ) )
-	{
-		std::cout << "File not found: " << path << std::endl;
-		return false;
-	}
-
-	try
-	{
-		Sqrat::Script sc;
-		sc.CompileFile( path );
-		sc.Run();
-	}
-	catch( Sqrat::Exception e )
-	{
-		std::cout << "Script Error in " << path
-			<< " - " << e.Message() << std::endl;
-	}
-
-	return true;
+	return run_script( path, script_file );
 }
 
 void FeVM::do_nut( const char *script_file )
@@ -1530,8 +1646,18 @@ void FeVM::do_nut( const char *script_file )
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
 	std::string path;
-	fev->m_feSettings->get_path( FeSettings::Current, path );
-	internal_do_nut( path, script_file );
+	int script_id = fev->get_script_id();
+
+	if ( script_id < 0 )
+		fev->m_feSettings->get_path( FeSettings::Current, path );
+	else
+		fev->m_feSettings->get_plugin_full_path( script_id, path );
+
+	if ( !internal_do_nut( path, script_file ) )
+	{
+		std::cerr << "Error, file not found: " << path
+			<< " (" << script_file << ")" << std::endl;
+	}
 }
 
 bool FeVM::load_module( const char *module_file )
@@ -1695,7 +1821,7 @@ Sqrat::Table FeVM::cb_get_config()
 		// not already been configured
 		//
 		if (( !fev->m_script_cfg )
-				|| ( !fev->m_script_cfg->get_param( key, value ) ))
+			|| ( !fev->m_script_cfg->get_param( key, value ) ))
 		{
 			fe_get_object_string( vm, it.getValue(), value );
 		}

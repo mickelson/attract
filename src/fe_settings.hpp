@@ -36,6 +36,7 @@ extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_SCRAPER_SUBDIR;
 extern const char *FE_LAYOUT_FILE_BASE;
 extern const char *FE_LAYOUT_FILE_EXTENSION;
+extern const char *FE_ZIP_EXT;
 
 extern const char *FE_CFG_YES_STR;
 extern const char *FE_CFG_NO_STR;
@@ -252,12 +253,16 @@ public:
 	// get a list of available plugins
 	void get_available_plugins( std::vector < std::string > &list ) const;
 	std::vector<FePlugInfo> &get_plugins() { return m_plugins; }
-	FePlugInfo *get_plugin( const std::string &label );
+	void get_plugin( const std::string &label,
+			FePlugInfo *&plug, int &index );
 	bool get_plugin_enabled( const std::string &label ) const;
 	void get_plugin_full_path( const std::string &label,
 			std::string &path,
 			std::string &filename ) const;
+	void get_plugin_full_path( int id,
+			std::string &path ) const;
 
+	//
 	FePresentState get_present_state() const { return m_present_state; };
 	void set_present_state( FePresentState s ) { m_present_state=s; };
 
@@ -381,5 +386,15 @@ public:
 		const std::string &path,
 		std::vector<std::string> &names_list );
 };
+
+//
+// Utility function used to collect artwork files with 'target_name' from
+// the specified art_paths
+//
+bool gather_artwork_filenames(
+	const std::vector < std::string > &art_paths,
+	const std::string &target_name,
+	std::vector<std::string> &vids,
+	std::vector<std::string> &images );
 
 #endif

@@ -8,6 +8,7 @@ Contents
 --------
    * [Overview](#overview)
    * [Squirrel Language](#squirrel)
+   * [Language Extensions](#squirrel_ext)
    * [Frontend Binding](#binding)
    * [Magic Tokens](#magic)
    * [Functions](#functions)
@@ -67,8 +68,9 @@ consist of a `layout.nut` script file and a collection of related resources
 (images, other scripts, etc.) used by the script.
 
 Layouts are stored under the "layouts" subdirectory of the Attract-Mode
-config directory.  Each layout gets its own separate subdirectory.  Each
-layout can have one or more `layout*.nut` script files in it.  The "Toggle
+config directory.  Each layout gets its own separate subdirectory or .zip
+file (Attract-Mode can read layouts and plugins directly from .zip files).
+Each layout can have one or more `layout*.nut` script files.  The "Toggle
 Layout" command in Attract-Mode allows users to cycle between each of the
 `layout*.nut` script files located in the layout's directory.  Attract-Mode
 remembers the last layout file toggled to for each layout and will go back
@@ -88,9 +90,9 @@ in the `intro.nut` file stored in the "intro" subdirectory.
 Plug-ins are similar to layouts in that they consist of at least one squirrel
 script file and a collection of related resources.  Plug-ins are stored in the
 "plugins" subdirectory of the Attract-Mode config directory.  Plug-ins can be a
-single ".nut" file stored in this subdirectory or they can also have their own
-separate subdirectory (in which case the script itself needs to be in a file
-called `plugin.nut`).
+single ".nut" file stored in this subdirectory.  They can also have their own
+separate subdirectory or .zip file (in which case the script itself needs to
+be in a file called `plugin.nut`).
 
 
 <a name="squirrel" />
@@ -108,6 +110,19 @@ manuals:
 
 [SQREFMAN]: http://www.squirrel-lang.org/doc/squirrel3.html
 [SQLIBMAN]: http://www.squirrel-lang.org/doc/sqstdlib3.html
+
+<a name="squirrel_ext" />
+Language Extensions
+-------------------
+
+Attract-Mode includes the following home-brewed extensions to the squirrel
+language and standard libraries:
+
+   * A `zip_extract_archive( zipfile, filename )` function that will open a
+     specified `zipfile` .zip file and extract `filename` from it, returning
+     the contents as a squirrel blob.
+   * A `zip_get_dir( zipfile )` function that will return an array of the
+     filenames contained in the `zipfile` .zip file.
 
 <a name="binding" />
 Frontend Binding
@@ -231,13 +246,16 @@ Parameters:
 
    * name - the name of an image/video file to show.  If a relative path is
      provided (i.e. "bg.png") it is assumed to be relative to the current
-     layout directory.  Supported image formats are: PNG, JPEG, GIF, BMP and
-     TGA.  Videos can be in any format supported by FFmpeg.  One or more
-     "Magic Tokens" can be used in the name, in which case Attract-Mode will
-     automatically update the image/video file appropriately in response to
-     user navigation.  For example "man/[Manufacturer]" will load
+     layout directory (or the plugin directory, if called from  a plugin
+     script).  If a relative path is provided and the layout/plugin is
+     contained in a .zip file, Attract-Mode will open the corresponding file
+     stored inside of the .zip.  Supported image formats are: PNG, JPEG, GIF,
+     BMP and TGA.  Videos can be in any format supported by FFmpeg.  One or
+     more "Magic Tokens" can be used in the name, in which case Attract-Mode
+     will automatically update the image/video file appropriately in response
+     to user navigation.  For example "man/[Manufacturer]" will load
      the file corresponding to the manufacturer's name from the man
-     subdirectory of the layout (example: "man/Konami.png"). When
+     subdirectory of the layout/plugin (example: "man/Konami.png"). When
      Magic Tokens are used, the file extension specified in `name` is ignored
      (if present) and Attract-Mode will load any supported media file that
      matches the Magic Token.  See [Magic Tokens](#magic) for more info.
@@ -403,11 +421,11 @@ Parameters:
         be set to an empty shader to stop using a shader on that object where
         one was set previously.
 
-   * file1 - the name of the shader file located in the layout directory.
+   * file1 - the name of the shader file located in the layout/plugin directory.
      For the VertexAndFragment type, this should be the vertex shader.
    * file2 - This parameter is only used with the VertexAndFragment type, and
-     should be the name of the fragment shader file located in the layout
-     directory.
+     should be the name of the fragment shader file located in the layout/
+     plugin directory.
 
 Return Value:
 
@@ -457,7 +475,9 @@ Add an audio file that can then be played by Attract-Mode.
 
 Parameters:
 
-   * name - the name of the audio file.
+   * name - the name of the audio file.  If a relative path is provided,
+     it is treated as relative to the directory for the layout/plugin that
+     called this function.
    * reuse - [bool] if set to true, reuse any previously added sound that
      has the same name.  Default value is true.
 
@@ -847,7 +867,8 @@ Execute another Squirrel script.
 Parameters:
 
    * name - the name of the script file.  If a relative path is provided,
-     it is treated as relative to the directory for the current layout.
+     it is treated as relative to the directory for the layout/plugin that
+     called this function.
 
 Return Value:
 
@@ -940,11 +961,11 @@ Return Value:
 <a name="get_config" />
 #### `fe.get_config()` ####
 
-Get the user configured settings for this layout/plugin/screensaver.
+Get the user configured settings for this layout/plugin/screensaver/intro.
 
 NOTE this function will *not* return valid settings when called from a
-callback function registered with fe.add_ticks_callback() or
-fe.add_transition_callback()
+callback function registered with fe.add_ticks_callback(),
+fe.add_transition_callback() or fe.add_signal_handler()
 
 Parameters:
 
@@ -1021,15 +1042,13 @@ will always be the "primary" monitor.
 #### `fe.script_dir` ####
 
 When Attract-Mode runs a layout or plug-in script, `fe.script_dir` is set to
-the layout or plug-in's directory.  NOTE this variable will *not* be valid
-when callback functions are executed.
+the layout or plug-in's directory.
 
 <a name="script_file" />
 #### `fe.script_file` ####
 
 When Attract-Mode runs a layout or plug-in script, `fe.script_file` is set to
-the name of the layout or plug-in script file.  NOTE this variable will *not*
-be valid when callback functions are executed.
+the name of the layout or plug-in script file.
 
 
 <a name="classes" />

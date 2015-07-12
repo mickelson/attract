@@ -6,7 +6,7 @@ local loadmap = [
 ];
 
 fe.load_module( "file" );
-local dir = DirectoryListing( fe.script_dir );
+local dir = DirectoryListing( fe.script_dir, false );
 
 foreach ( f in dir.results )
 {

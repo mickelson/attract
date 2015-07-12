@@ -22,6 +22,8 @@
 
 #include "fe_sound.hpp"
 #include "fe_settings.hpp"
+#include "fe_present.hpp"
+#include "fe_util.hpp"
 #include <iostream>
 
 FeSoundSystem::FeSoundSystem( FeSettings *fes )
@@ -50,7 +52,7 @@ void FeSoundSystem::sound_event( FeInputMap::Command c )
 		return;
 
 	if ( sound.compare( m_sound.get_file_name() ) != 0 )
-		m_sound.load( sound.c_str() );
+		m_sound.load( "", sound );
 
 	m_sound.set_playing( true );
 }
@@ -65,7 +67,7 @@ void FeSoundSystem::play_ambient()
 		return;
 
 	if ( sound.compare( m_music.get_file_name() ) != 0 )
-		m_music.load( sound.c_str() );
+		m_music.load( "", sound );
 
 	m_music.set_playing( true );
 }
@@ -107,17 +109,68 @@ void FeSound::tick()
 #endif
 }
 
-void FeSound::load( const char *n )
+void FeSound::load( const std::string &path, const std::string &fn )
 {
-	if ( !m_sound.openFromFile( n ) )
+	if ( tail_compare( path, FE_ZIP_EXT ) )
 	{
-		std::cout << "Error loading sound file: " << n << std::endl;
-		m_file_name = "";
+#ifndef NO_MOVIE
+		if ( !m_sound.openFromArchive( path, fn ) )
+		{
+			std::cout << "Error loading sound file from zip: "
+				<< path << " (" << fn << ")" << std::endl;
+			m_file_name = "";
+			return;
+		}
+#else
+		m_zip.setArchive( path );
+
+		if ( !m_zip.open( fn ) )
+		{
+			std::cout << "Error loading sound file from zip: "
+				<< path << " (" << fn << ")" << std::endl;
+			m_file_name = "";
+			return;
+		}
+
+		if ( !m_sound.openFromStream( m_zip ) )
+		{
+			std::cout << "Error loading sound file: " << fn
+				<< std::endl;
+			m_file_name = "";
+			return;
+		}
+#endif
+
+		m_file_name = fn;
 	}
 	else
 	{
-		m_file_name = n;
+		std::string file_to_load = path + fn;
+		if ( !m_sound.openFromFile( file_to_load ) )
+		{
+			std::cout << "Error loading sound file: " << file_to_load << std::endl;
+			m_file_name = "";
+			return;
+		}
+
+		m_file_name = file_to_load;
 	}
+}
+
+void FeSound::set_file_name( const char *n )
+{
+	std::string fn = n;
+	if ( fn.empty() )
+	{
+		m_file_name = "";
+		return;
+	}
+
+	std::string path;
+	if ( is_relative_path( fn ) )
+		path = FePresent::script_get_base_path();
+
+	load( path, fn );
 }
 
 const char *FeSound::get_file_name()

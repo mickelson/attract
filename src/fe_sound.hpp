@@ -25,6 +25,7 @@
 
 #ifdef NO_MOVIE
 #include <SFML/Audio/Music.hpp>
+#include "zip.hpp"
 #else
 #include "media.hpp"
 #endif
@@ -41,6 +42,7 @@ private:
 	FeSound &operator=( const FeSound & );
 
 #ifdef NO_MOVIE
+	FeZipStream m_zip; // needs to be declared before sf::Music m_sound !
 	sf::Music m_sound;
 #else
 	FeMedia m_sound;
@@ -51,9 +53,10 @@ private:
 public:
 	FeSound( bool loop=false );
 
+	void load( const std::string &path, const std::string &fn );
 	void tick();
 
-	void load( const char * );
+	void set_file_name( const char * );
 	const char *get_file_name();
 
 	void set_volume( int );

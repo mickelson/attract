@@ -25,6 +25,7 @@
 #include "fe_settings.hpp"
 #include "fe_shader.hpp"
 #include "fe_present.hpp"
+#include "zip.hpp"
 
 #ifndef NO_MOVIE
 #include "media.hpp"
@@ -32,6 +33,46 @@
 
 #include <iostream>
 #include <cstdlib>
+
+namespace
+{
+	bool gather_artwork_filenames_from_archive(
+			const std::string &archive_name,
+			const std::string &target_name,
+			std::vector<std::string> vids,
+			std::vector<std::string> images )
+	{
+		std::vector<std::string> zdir;
+		fe_zip_get_dir( archive_name.c_str(), zdir );
+
+		for ( std::vector<std::string>::iterator itr=zdir.begin();
+				itr!=zdir.end(); ++itr )
+		{
+			if ( (*itr).compare( 0, target_name.size(), target_name ) == 0 )
+			{
+				int i=0;
+				bool is_image=false;
+				while ( FE_ART_EXTENSIONS[i] )
+				{
+					if ( tail_compare( *itr, FE_ART_EXTENSIONS[i] ) )
+					{
+						is_image=true;
+						images.push_back( *itr );
+						break;
+					}
+					i++;
+				}
+
+#ifndef NO_MOVIE
+				if ( !is_image && FeMedia::is_supported_media_file( *itr ) )
+					vids.push_back( *itr );
+#endif
+			}
+		}
+
+		return ( !images.empty() || !vids.empty() );
+	}
+};
 
 FeBaseTextureContainer::FeBaseTextureContainer()
 {
@@ -231,35 +272,6 @@ FeTextureContainer::~FeTextureContainer()
 #endif
 }
 
-bool FeTextureContainer::load_static(
-	const std::string &file_name )
-{
-	clear();
-
-	std::vector<std::string> image_names;
-	std::vector<std::string> non_image_names;
-
-	int i=0;
-	while ( FE_ART_EXTENSIONS[i] != NULL )
-	{
-		if ( tail_compare( file_name, FE_ART_EXTENSIONS[i] ) )
-		{
-			image_names.push_back( file_name );
-			break;
-		}
-		i++;
-	}
-
-	if ( image_names.empty() )
-		non_image_names.push_back( file_name );
-
-	bool retval = common_load( non_image_names, image_names );
-
-	notify_texture_change();
-	return retval;
-}
-
-
 bool FeTextureContainer::fix_masked_image()
 {
 	bool retval=false;
@@ -281,94 +293,116 @@ bool FeTextureContainer::fix_masked_image()
 	return retval;
 }
 
-bool FeTextureContainer::common_load(
-	std::vector<std::string> &non_image_names,
-	std::vector<std::string> &image_names )
+#ifndef NO_MOVIE
+bool FeTextureContainer::load_with_ffmpeg(
+	const std::string &path,
+	const std::string &filename,
+	bool is_image )
 {
-	bool loaded=false;
+	std::string loaded_name;
+	bool res=false;
+
+	if ( tail_compare( path, FE_ZIP_EXT ) )
+	{
+		loaded_name = filename;
+		if ( loaded_name.compare( m_file_name ) == 0 )
+			return true;
+
+		clear();
+		m_movie = new FeMedia( FeMedia::AudioVideo );
+		res = m_movie->openFromArchive( path, filename, &m_texture );
+	}
+	else
+	{
+		loaded_name = path + filename;
+		if ( loaded_name.compare( m_file_name ) == 0 )
+			return true;
+
+		clear();
+		m_movie = new FeMedia( FeMedia::AudioVideo );
+		res = m_movie->openFromFile( loaded_name, &m_texture );
+	}
+
+	if ( !res )
+	{
+		std::cout << "ERROR loading video: "
+			<< loaded_name << std::endl;
+
+		delete m_movie;
+		m_movie = NULL;
+		return false;
+	}
+
+	if ( is_image && (!m_movie->is_multiframe()) )
+	{
+		m_movie_status = -1; // don't play if there is only one frame
+
+		// if there is only one frame, then we can update the texture immediately
+		// (the frame will have been preloaded) and delete our movie object now
+		delete m_movie;
+		m_movie = NULL;
+	}
+	else if (m_video_flags & VF_NoAutoStart)
+		m_movie_status = 0; // 0=loaded but not on track to play
+	else
+		m_movie_status = 1; // 1=on track to be played
+
+	m_file_name = loaded_name;
+	return true;
+}
+#endif
+
+bool FeTextureContainer::try_to_load(
+	const std::string &path,
+	const std::string &filename,
+	bool is_image )
+{
+#ifndef NO_MOVIE
+	if ( !is_image && FeMedia::is_supported_media_file( filename ) )
+		return load_with_ffmpeg( path, filename, false );
+#endif
+
+	std::string loaded_name;
+	if ( tail_compare( path, FE_ZIP_EXT ) )
+	{
+		loaded_name = filename;
+		if ( loaded_name.compare( m_file_name ) == 0 )
+			return true;
+
+		clear();
+		FeZipStream zs( path );
+		zs.open( filename );
+
+		if ( m_texture.loadFromStream( zs ) )
+		{
+			m_file_name = filename;
+			return true;
+		}
+	}
+	else
+	{
+		loaded_name = path + filename;
+		if ( loaded_name.compare( m_file_name ) == 0 )
+			return true;
+
+		clear();
+		if ( m_texture.loadFromFile( loaded_name ) )
+		{
+			m_file_name = loaded_name;
+			return true;
+		}
+	}
 
 #ifndef NO_MOVIE
-	if ( m_video_flags & VF_DisableVideo )
-		non_image_names.clear();
-
-	ASSERT( !m_movie ); // m_movie should always be empty at this point...
-
-	std::string movie_file;
-	for ( std::vector<std::string>::iterator itr = non_image_names.begin();
-			itr != non_image_names.end(); ++itr  )
-	{
-		if ( FeMedia::is_supported_media_file( *itr ) )
-		{
-			movie_file = (*itr);
-			break;
-		}
-	}
-
-	bool is_image = false;
-#ifndef SFML_IMAGES
-	if ( movie_file.empty() && !image_names.empty() )
-	{
-		movie_file = image_names.front();
-		is_image = true;
-	}
+	//
+	// we should only get here if we failed to load an image with SFML
+	// try loading it with ffmpeg instead, which can handle more image
+	// formats...
+	//
+	return load_with_ffmpeg( path, filename, is_image );
+#else
+	return false;
 #endif
-
-
-	if ( !movie_file.empty() )
-	{
-		m_movie = new FeMedia( FeMedia::AudioVideo );
-
-		if (!m_movie->openFromFile( movie_file, &m_texture ))
-		{
-			std::cout << "ERROR loading video: "
-				<< movie_file << std::endl;
-
-			delete m_movie;
-			m_movie = NULL;
-		}
-		else
-		{
-			loaded = true;
-			m_file_name = movie_file;
-
-			if ( is_image && (!m_movie->is_multiframe()) )
-			{
-				m_movie_status = -1; // don't play if there is only one frame
-
-				// if there is only one frame, then we can update the texture immediately
-				// (the frame will have been preloaded) and delete our movie object now
-				notify_texture_change();
-				delete m_movie;
-				m_movie = NULL;
-			}
-			else if (m_video_flags & VF_NoAutoStart)
-				m_movie_status = 0; // 0=loaded but not on track to play
-			else
-				m_movie_status = 1; // 1=on track to be played
-		}
-	}
-#endif
-
-#ifdef SFML_IMAGES
-	if ( !loaded )
-	{
-		for ( std::vector<std::string>::iterator itr=image_names.begin();
-			itr != image_names.end(); ++itr )
-		{
-			if ( m_texture.loadFromFile( *itr ) )
-			{
-				m_file_name = *itr;
-				loaded = true;
-				break;
-			}
-		}
-	}
-#endif
-
-	non_image_names.clear();
-	image_names.clear();
-
-	return loaded;
 }
 
 const sf::Texture &FeTextureContainer::get_texture()
@@ -418,23 +452,64 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 	m_current_rom_index = rom_index;
 	m_current_filter_index = filter_index;
 
-	clear();
-
 	std::vector<std::string> vid_list;
 	std::vector<std::string> image_list;
+	std::string archive_name; // empty if no archive
+
 	if ( m_type == IsArtwork )
 	{
 		FeRomInfo *rom	= feSettings->get_rom_absolute( filter_index, rom_index );
 		if ( !rom )
 			return;
 
-		if ( feSettings->get_best_artwork_file( *rom,
-				m_art_name,
-				vid_list,
-				image_list,
-				false ) )
+		feSettings->get_best_artwork_file( *rom,
+			m_art_name,
+			vid_list,
+			image_list,
+			false );
+
+		if ( vid_list.empty() && image_list.empty() )
 		{
-			common_load( vid_list, image_list );
+			// check for layout fallback images/videos
+			std::string layout_path;
+			feSettings->get_path( FeSettings::Current,
+				layout_path );
+
+			if ( !layout_path.empty() )
+			{
+				const std::string &emu_name = rom->get_info(
+					FeRomInfo::Emulator );
+
+				if ( tail_compare( layout_path, FE_ZIP_EXT ) )
+				{
+					archive_name = layout_path;
+
+					// check for "[emulator-[artlabel]" artworks first
+					if ( !gather_artwork_filenames_from_archive(
+							layout_path, emu_name + "-" + m_art_name,
+							vid_list, image_list ) )
+					{
+						// then "[artlabel]"
+						gather_artwork_filenames_from_archive( layout_path,
+							m_art_name, vid_list, image_list );
+					}
+				}
+				else
+				{
+					std::vector<std::string> layout_paths;
+					layout_paths.push_back( layout_path );
+
+					// check for "[emulator-[artlabel]" artworks first
+					if ( !gather_artwork_filenames( layout_paths,
+							emu_name + "-" + m_art_name,
+							vid_list, image_list ) )
+					{
+						// then "[artlabel]"
+						gather_artwork_filenames( layout_paths,
+							m_art_name, vid_list, image_list );
+					}
+				}
+			}
 		}
 	}
 	else if ( m_type == IsDynamic )
@@ -444,13 +519,47 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 				m_filter_offset,
 				m_index_offset );
 
-		if ( feSettings->get_best_dynamic_image_file( filter_index,
-				rom_index,
-				work,
-				vid_list,
-				image_list ) )
+		feSettings->get_best_dynamic_image_file( filter_index,
+			rom_index,
+			work,
+			vid_list,
+			image_list );
+	}
+
+	// Load any found videos/images now
+	//
+	bool loaded=false;
+	std::vector<std::string>::iterator itr;
+
+#ifndef NO_MOVIE
+	if ( m_video_flags & VF_DisableVideo )
+		vid_list.clear();
+
+	for ( itr=vid_list.begin(); itr != vid_list.end(); ++itr )
+	{
+		if ( try_to_load( archive_name, *itr ) )
 		{
-			common_load( vid_list, image_list );
+			loaded = true;
+			break;
+		}
+	}
+#endif
+
+	if ( !loaded )
+	{
+		if ( image_list.empty() )
+			clear();
+		else
+		{
+			for ( itr=image_list.begin();
+				itr != image_list.end(); ++itr )
+			{
+				if ( try_to_load( archive_name, *itr, true ) )
+				{
+					loaded = true;
+					break;
+				}
+			}
 		}
 	}
 
@@ -635,9 +744,9 @@ int FeTextureContainer::get_video_time() const
 
 void FeTextureContainer::set_file_name( const char *n )
 {
-	std::string name = n;
+	std::string path, filename=n;
 
-	if ( name.empty() )
+	if ( filename.empty() )
 	{
 		clear();
 		notify_texture_change();
@@ -647,22 +756,24 @@ void FeTextureContainer::set_file_name( const char *n )
 	// If it is a relative path we assume it is in the
 	// layout/screensaver/intro directory
 	//
-	if ( is_relative_path( name ) )
+	if ( is_relative_path( filename ) )
+		path = FePresent::script_get_base_path();
+
+	bool is_image=false;
+
+	int i=0;
+	while ( FE_ART_EXTENSIONS[i] )
 	{
-		FePresent *fep = FePresent::script_get_fep();
-		if ( fep )
+		if ( tail_compare( filename, FE_ART_EXTENSIONS[i] ) )
 		{
-			FeSettings *fes = fep->get_fes();
-			if ( fes )
-			{
-				fes->get_path( FeSettings::Current, name );
-				name += n;
-			}
+			is_image=true;
+			break;
 		}
+		i++;
 	}
 
-	if ( m_file_name.compare( name ) != 0 )
-		load_static( name );
+	try_to_load( path, filename, is_image );
+	notify_texture_change();
 }
 
 const char *FeTextureContainer::get_file_name() const

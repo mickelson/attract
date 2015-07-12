@@ -147,7 +147,6 @@ public:
 
 	void transition_swap( FeBaseTextureContainer *o );
 
-	bool load_static( const std::string &file_name );
 	bool fix_masked_image();
 
 	void set_smooth( bool );
@@ -158,9 +157,17 @@ protected:
 
 private:
 
-	bool common_load(
-		std::vector<std::string> &non_image_names,
-		std::vector<std::string> &image_names );
+#ifndef NO_MOVIE
+	bool load_with_ffmpeg(
+		const std::string &path,
+		const std::string &filename,
+		bool is_image );
+#endif
+
+	bool try_to_load(
+		const std::string &path,
+		const std::string &filename,
+		bool is_image=false );
 
 	void internal_update_selection( FeSettings *feSettings );
 	void clear();

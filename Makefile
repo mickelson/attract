@@ -38,9 +38,6 @@
 # Uncomment next line for Windows static cross-compile build (mxe)
 #WINDOWS_STATIC=1
 #
-# Uncomment the next line if you wish to use SFML to load images instead
-# of FFmpeg (has no effect if NO_MOVIE=1)
-#SFML_IMAGES=1
 ###############################
 
 #FE_DEBUG=1
@@ -90,7 +87,8 @@ _DEP =\
 	fe_text.hpp \
 	fe_listbox.hpp \
 	fe_vm.hpp \
-	fe_icon.hpp
+	fe_icon.hpp \
+	zip.hpp
 
 _OBJ =\
 	fe_base.o \
@@ -115,6 +113,7 @@ _OBJ =\
 	fe_text.o \
 	fe_listbox.o \
 	fe_vm.o \
+	zip.o \
 	main.o
 
 ifneq ($(FE_WINDOWS_COMPILE),1)
@@ -280,7 +279,7 @@ else
  EXPAT =
 endif
 
-CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include
+CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/miniz
 SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
 
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
