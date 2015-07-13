@@ -111,6 +111,7 @@ const char *FE_LAYOUT_FILE_BASE		= "layout";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
 const char *FE_ZIP_EXT = ".zip";
+const char *FE_SWF_EXT = ".swf";
 const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
@@ -844,12 +845,33 @@ void FeSettings::get_path(
 		file = m_displays[m_current_display].get_current_layout_file();
 		if ( file.empty() )
 		{
-			std::string temp = path + FE_LAYOUT_FILE_BASE
-				+ FE_LAYOUT_FILE_EXTENSION;
-			if ( file_exists( temp ) )
+			if ( tail_compare( path, FE_ZIP_EXT ) )
 			{
-				file = FE_LAYOUT_FILE_BASE;
-				file += FE_LAYOUT_FILE_EXTENSION;
+				std::vector<std::string> zdir;
+				fe_zip_get_dir( path.c_str(), zdir );
+
+				std::string temp = FE_LAYOUT_FILE_BASE;
+				temp += FE_LAYOUT_FILE_EXTENSION;
+
+				for ( std::vector<std::string>::iterator itr=zdir.begin();
+						itr != zdir.end(); ++itr )
+				{
+					if ( temp.compare( (*itr) ) == 0 )
+					{
+						file = temp;
+						break;
+					}
+				}
+			}
+			else
+			{
+				std::string temp = path + FE_LAYOUT_FILE_BASE
+					+ FE_LAYOUT_FILE_EXTENSION;
+				if ( file_exists( temp ) )
+				{
+					file = FE_LAYOUT_FILE_BASE;
+					file += FE_LAYOUT_FILE_EXTENSION;
+				}
 			}
 		}
 		else

@@ -224,3 +224,8 @@ void FeZipStream::setArchive( const std::string &archive )
 	clear();
 	m_archive = archive;
 }
+
+char *FeZipStream::getData()
+{
+	return m_data;
+}

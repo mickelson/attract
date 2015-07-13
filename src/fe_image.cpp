@@ -31,6 +31,10 @@
 #include "media.hpp"
 #endif
 
+#ifndef NO_SWF
+#include "swf.hpp"
+#endif
+
 #include <iostream>
 #include <cstdlib>
 
@@ -242,6 +246,7 @@ FeTextureContainer::FeTextureContainer(
 	m_current_filter_index( -1 ),
 	m_art_update_trigger( ToNewSelection ),
 	m_movie( NULL ),
+	m_swf( NULL ),
 	m_movie_status( -1 ),
 	m_video_flags( VF_Normal )
 {
@@ -268,6 +273,14 @@ FeTextureContainer::~FeTextureContainer()
 	{
 		delete m_movie;
 		m_movie=NULL;
+	}
+#endif
+
+#ifndef NO_SWF
+	if ( m_swf )
+	{
+		delete m_swf;
+		m_swf=NULL;
 	}
 #endif
 }
@@ -357,12 +370,58 @@ bool FeTextureContainer::try_to_load(
 	const std::string &filename,
 	bool is_image )
 {
+	std::string loaded_name;
+
+#ifndef NO_SWF
+	if ( !is_image && tail_compare( filename, FE_SWF_EXT ) )
+	{
+
+		if ( tail_compare( path, FE_ZIP_EXT ) )
+		{
+			loaded_name = filename;
+			if ( loaded_name.compare( m_file_name ) == 0 )
+				return true;
+
+			m_swf = new FeSwf();
+
+			if (!m_swf->open_from_archive( path, filename ))
+			{
+				std::cout << " ! ERROR loading SWF from zip: "
+					<< path << " (" << loaded_name << ")" << std::endl;
+
+				delete m_swf;
+				m_swf = NULL;
+				return false;
+			}
+		}
+		else
+		{
+			loaded_name = path + filename;
+			if ( loaded_name.compare( m_file_name ) == 0 )
+				return true;
+
+			m_swf = new FeSwf();
+			if (!m_swf->open_from_file( loaded_name ))
+			{
+				std::cout << " ! ERROR loading SWF: "
+					<< loaded_name << std::endl;
+
+				delete m_swf;
+				m_swf = NULL;
+				return false;
+			}
+		}
+
+		m_file_name = loaded_name;
+		return true;
+	}
+#endif
+
 #ifndef NO_MOVIE
 	if ( !is_image && FeMedia::is_supported_media_file( filename ) )
 		return load_with_ffmpeg( path, filename, false );
 #endif
 
-	std::string loaded_name;
 	if ( tail_compare( path, FE_ZIP_EXT ) )
 	{
 		loaded_name = filename;
@@ -407,6 +466,10 @@ bool FeTextureContainer::try_to_load(
 
 const sf::Texture &FeTextureContainer::get_texture()
 {
+#ifndef NO_SWF
+	if ( m_swf )
+		return m_swf->get_texture();
+#endif
 	return m_texture;
 }
 
@@ -571,6 +634,13 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 
 bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
 {
+#ifndef NO_SWF
+	if (( play_movies ) && ( m_swf ))
+	{
+		return m_swf->tick();
+	}
+#endif
+
 #ifndef NO_MOVIE
 	if (( play_movies )
 		&& ( !(m_video_flags & VF_DisableVideo) )
@@ -639,6 +709,11 @@ void FeTextureContainer::set_play_state( bool play )
 
 bool FeTextureContainer::get_play_state() const
 {
+#ifndef NO_SWF
+	if ( m_swf )
+		return true;
+#endif
+
 #ifndef NO_MOVIE
 	if ( m_movie )
 	{
@@ -821,6 +896,14 @@ void FeTextureContainer::clear()
 	m_movie_status = -1;
 	m_file_name.clear();
 
+#ifndef NO_SWF
+	if ( m_swf )
+	{
+		delete m_swf;
+		m_swf=NULL;
+	}
+#endif
+
 #ifndef NO_MOVIE
 	// If a movie is running, close it...
 	if ( m_movie )
@@ -833,6 +916,10 @@ void FeTextureContainer::clear()
 
 void FeTextureContainer::set_smooth( bool s )
 {
+#ifndef NO_SWF
+	if ( m_swf )
+		m_swf->set_smooth( s );
+#endif
 	m_texture.setSmooth( s );
 }
 

@@ -55,6 +55,8 @@ public:
 	sf::Int64 tell();
 	sf::Int64 getSize();
 	void setArchive( const std::string &archive );
+	char *getData();
+
 private:
 	void clear();
 

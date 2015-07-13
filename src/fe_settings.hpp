@@ -37,6 +37,7 @@ extern const char *FE_SCRAPER_SUBDIR;
 extern const char *FE_LAYOUT_FILE_BASE;
 extern const char *FE_LAYOUT_FILE_EXTENSION;
 extern const char *FE_ZIP_EXT;
+extern const char *FE_SWF_EXT;
 
 extern const char *FE_CFG_YES_STR;
 extern const char *FE_CFG_NO_STR;
