@@ -296,7 +296,7 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		run_video_thread( false ),
 		display_texture( NULL ),
 		sws_ctx( NULL ),
-		sws_flags( SWS_FAST_BILINEAR ),
+		sws_flags( SWS_BILINEAR ),
 		display_frame( NULL )
 {
 }
