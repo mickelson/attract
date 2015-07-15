@@ -1367,6 +1367,12 @@ void FeScraperMenu::get_options( FeConfigContext &ctx )
 			"_help_scrape_fanart" );
 	ctx.back_opt().append_vlist( bool_opts );
 
+	ctx.add_optl( Opt::LIST,
+			"Scrape Videos (MAME only)",
+			ctx.fe_settings.get_info_bool( FeSettings::ScrapeVids ) ? bool_opts[0] : bool_opts[1],
+			"_help_scrape_vids" );
+	ctx.back_opt().append_vlist( bool_opts );
+
 	FeBaseConfigMenu::get_options( ctx );
 }
 
@@ -1386,6 +1392,9 @@ bool FeScraperMenu::save( FeConfigContext &ctx )
 
 	ctx.fe_settings.set_info( FeSettings::ScrapeFanArt,
 			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	ctx.fe_settings.set_info( FeSettings::ScrapeVids,
+			ctx.opt_list[5].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	return true;
 }

@@ -415,7 +415,6 @@ bool FeVM::on_new_layout()
 		.Enum( _SC("Art"), Enumeration()
 			.Const( _SC("Default"), AF_Default )
 			.Const( _SC("ImagesOnly"), AF_ImagesOnly )
-			.Const( _SC("IncludeLayout"), AF_IncludeLayout )
 			)
 		;
 
@@ -1772,8 +1771,7 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 			*rom,
 			art,
 			vid_list,
-			image_list,
-			!(art_flags&AF_IncludeLayout) ) ))
+			image_list ) ))
 	{
 		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
 			retval = vid_list.front();

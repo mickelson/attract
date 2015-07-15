@@ -678,11 +678,9 @@ Parameters:
      containing the selection to retrieve the filename for.  i.e.
      -1=previous filter, 0=current filter.  Default value is 0.
    * flags - flags to control the filename that gets returned.  Can be set
-     to any combination of the following (use a bitwise or for multiples...
-     i.e. `Art.ImageOnly | Art.IncludeLayout`):
+     to either of the following:
       - `Art.Default`
       - `Art.ImageOnly` (only return an image match, no videos)
-      - `Art.IncludeLayout` (include matches from the layout directory)
 
 Return Value:
 

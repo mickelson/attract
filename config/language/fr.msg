@@ -346,5 +346,6 @@ _help_scrape_marquees;Set whether game marquees and banners should be downloaded
 _help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
 _help_scrape_wheels;Set whether game logos should be downloaded when scraping
 _help_scrape_fanart;Set whether game fan art should be downloaded when scraping
+_help_scrape_vids;Set whether game videos should be downloaded when scraping
 _help_intro;Configure intro
 

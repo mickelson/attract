@@ -230,6 +230,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_scrape_flyers( true ),
 	m_scrape_wheels( true ),
 	m_scrape_fanart( false ),
+	m_scrape_vids( false ),
 	m_present_state( Layout_Showing )
 {
 	int i=0;
@@ -373,6 +374,7 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_flyers",
 	"scrape_wheels",
 	"scrape_fanart",
+	"scrape_videos",
 	NULL
 };
 
@@ -1822,6 +1824,7 @@ const std::string FeSettings::get_info( int index ) const
 	case ScrapeFlyers:
 	case ScrapeWheels:
 	case ScrapeFanArt:
+	case ScrapeVids:
 		return ( get_info_bool( index ) ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	default:
@@ -1858,6 +1861,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_scrape_wheels;
 	case ScrapeFanArt:
 		return m_scrape_fanart;
+	case ScrapeVids:
+		return m_scrape_vids;
 	default:
 		break;
 	}
@@ -2003,6 +2008,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ScrapeFanArt:
 		m_scrape_fanart = config_str_to_bool( value );
+		break;
+
+	case ScrapeVids:
+		m_scrape_vids = config_str_to_bool( value );
 		break;
 
 	default:
@@ -2512,8 +2521,7 @@ bool FeSettings::get_best_artwork_file(
 	const FeRomInfo &rom,
 	const std::string &art_name,
 	std::vector<std::string> &vid_list,
-	std::vector<std::string> &image_list,
-	bool ignore_layout )
+	std::vector<std::string> &image_list )
 {
 	const std::string &emu_name = rom.get_info( FeRomInfo::Emulator );
 
@@ -2615,7 +2623,14 @@ bool FeSettings::get_best_artwork_file(
 bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> temp1, temp2;
-	return ( get_best_artwork_file( rom, art_name, temp1, temp2, true ) );
+	return ( get_best_artwork_file( rom, art_name, temp1, temp2 ) );
+}
+
+bool FeSettings::has_video_artwork( const FeRomInfo &rom, const std::string &art_name )
+{
+	std::vector<std::string> vids, temp;
+	get_best_artwork_file( rom, art_name, vids, temp );
+	return (!vids.empty());
 }
 
 bool FeSettings::get_best_dynamic_image_file(

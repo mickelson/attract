@@ -109,6 +109,7 @@ public:
 		ScrapeFlyers,
 		ScrapeWheels,
 		ScrapeFanArt,
+		ScrapeVids,
 		LAST_INDEX
 	};
 
@@ -157,6 +158,7 @@ private:
 	bool m_scrape_flyers;
 	bool m_scrape_wheels;
 	bool m_scrape_fanart;
+	bool m_scrape_vids;
 	enum FePresentState m_present_state;
 
 	FeSettings( const FeSettings & );
@@ -177,6 +179,7 @@ private:
 
 	void internal_load_language( const std::string &lang );
 
+	bool mameps_scraper( FeImporterContext & );
 	bool mamedb_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
 	void apply_xml_import( FeImporterContext & );
@@ -294,10 +297,10 @@ public:
 		const FeRomInfo &rom,
 		const std::string &art_name,
 		std::vector<std::string> &vid_list,
-		std::vector<std::string> &image_list,
-		bool ignore_layout );
+		std::vector<std::string> &image_list );
 
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
+	bool has_video_artwork( const FeRomInfo &rom, const std::string &art_name );
 
 	bool get_best_dynamic_image_file(
 		int filter_index,

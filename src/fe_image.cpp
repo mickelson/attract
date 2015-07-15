@@ -528,8 +528,7 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 		feSettings->get_best_artwork_file( *rom,
 			m_art_name,
 			vid_list,
-			image_list,
-			false );
+			image_list );
 
 		if ( vid_list.empty() && image_list.empty() )
 		{

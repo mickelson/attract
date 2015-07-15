@@ -335,7 +335,97 @@ bool has_same_name_as_parent( FeRomInfo &rom,
 	return false;
 }
 
+bool process_q_simple( FeNetQueue &q,
+	FeImporterContext &c,
+	int taskc )
+{
+	int done( 0 );
+	//
+	// Create worker threads to process the queue.
+	//
+	FeNetWorker worker1( q ), worker2( q ), worker3( q ), worker4( q );
+
+	//
+	// Process the output queue from our worker threads
+	//
+	while ( !( q.input_done() && q.output_done() ) )
+	{
+		int id;
+		std::string result;
+		if ( q.pop_completed_task( id, result ) )
+		{
+			if ( id < 0 )
+			{
+				if ( id == -1 )
+				{
+					std::cout << " + Downloaded: " << result << std::endl;
+					c.download_count++;
+				}
+
+				done++;
+			}
+		}
+
+		if ( c.uiupdate )
+		{
+			int p = c.progress_past + done * c.progress_range / taskc;
+			if ( c.uiupdate( c.uiupdatedata, p ) == false )
+				return false;
+		}
+	}
+	return true;
+}
+
 }; // end namespace
+
+bool FeSettings::mameps_scraper( FeImporterContext &c )
+{
+#ifndef NO_NET
+	if (( c.emulator.get_info( FeEmulatorInfo::Info_source ).compare( "mame" ) != 0 )
+				|| ( !m_scrape_vids ))
+		return true;
+
+	//
+	// Build a map for looking up parents
+	//
+	std::map < std::string, FeRomInfo * > parent_map;
+	build_parent_map( parent_map, c.romlist );
+
+	const char *MAMEPS = "http://www.progettosnaps.net";
+	const char *REQ = "/videosnaps/mp4/";
+
+	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
+	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
+	base_path += emu_name + "/";
+
+	FeNetQueue q;
+	int taskc( 0 );
+
+	for ( FeRomInfoListType::iterator itr=c.romlist.begin(); itr!=c.romlist.end(); ++itr )
+	{
+		// ugh, this must be set for has_artwork() to correctly function
+		(*itr).set_info( FeRomInfo::Emulator, emu_name );
+
+		// Don't scrape for a clone if its parent has the same name
+		//
+		if ( has_same_name_as_parent( *itr, parent_map ) )
+			continue;
+
+		if ( m_scrape_vids && !has_video_artwork( *itr, "snap" ) )
+		{
+			const char *SNAP = "snap/";
+			std::string fname = base_path + SNAP + (*itr).get_info( FeRomInfo::Romname );
+			confirm_directory( base_path, SNAP );
+			q.add_file_task( MAMEPS, REQ + (*itr).get_info( FeRomInfo::Romname ) +".mp4", fname );
+			taskc++;
+		}
+	}
+
+	return process_q_simple( q, c, taskc );
+#else
+	return true;
+#endif
+}
 
 bool FeSettings::mamedb_scraper( FeImporterContext &c )
 {
@@ -389,41 +479,10 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 		}
 	}
 
-	//
-	// Create worker threads to process the queue.
-	//
-	FeNetWorker worker1( q ), worker2( q ), worker3( q ), worker4( q );
-
-	//
-	// Process the output queue from our worker threads
-	//
-	while ( !( q.input_done() && q.output_done() ) )
-	{
-		int id;
-		std::string result;
-		if ( q.pop_completed_task( id, result ) )
-		{
-			if ( id < 0 )
-			{
-				if ( id == -1 )
-				{
-					std::cout << " + Downloaded: " << result << std::endl;
-					c.download_count++;
-				}
-
-				done++;
-			}
-		}
-
-		if ( c.uiupdate )
-		{
-			int p = c.progress_past + done * c.progress_range / taskc;
-			if ( c.uiupdate( c.uiupdatedata, p ) == false )
-				return false;
-		}
-	}
-#endif
+	return process_q_simple( q, c, taskc );
+#else
 	return true;
+#endif
 }
 
 bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
@@ -945,8 +1004,9 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			ctx.scrape_art = true;
 			confirm_directory( get_config_dir(), FE_SCRAPER_SUBDIR );
 
-			// do the mamedb scraper first (which only does anything for mame) followed
+			// do the mame-specific scrapers first, followed
 			// by the more general thegamesdb scraper.
+			mameps_scraper( ctx );
 			mamedb_scraper( ctx );
 			thegamesdb_scraper( ctx );
 
@@ -1098,10 +1158,11 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	ctx.scrape_art = true;
 	confirm_directory( get_config_dir(), FE_SCRAPER_SUBDIR );
 
-	// do the mamedb scraper first (which only does anything for mame) followed
-	// by the more general thegamesdb scraper.  these return false if the user
-	// cancels...
-	if ( mamedb_scraper( ctx ) )
+	// do the mame-specific scrapers first followed
+	// by the more general thegamesdb scraper.
+	// These return false if the user cancels...
+	//
+	if ( mameps_scraper( ctx ) && mamedb_scraper( ctx ) )
 	{
 		ctx.progress_past = ctx.progress_past + ctx.progress_range;
 		thegamesdb_scraper( ctx );
