@@ -51,6 +51,13 @@ inline double	determinant_float(const vec2<float>& a, const vec2<float>& b, cons
 		- (double(b.y) - double(a.y)) * (double(c.x) - double(a.x));
 }
 
+template <class coord_t>
+inline double   determinant_coord(const vec2<coord_t>& a, const vec2<coord_t>& b, const vec2<coord_t>& c)
+{
+	return (double(b.x) - double(a.x)) * (double(c.y) - double(a.y))
+		- (double(b.y) - double(a.y)) * (double(c.x) - double(a.x));
+}
+
 
 // This is not really valid!  double has only 52 mantissa bits, but we
 // need about 65 for worst-case 32-bit determinant.
@@ -76,8 +83,10 @@ inline sint64	determinant_sint16(const vec2<sint16>& a, const vec2<sint16>& b, c
 template<class coord_t>
 inline int	vertex_left_test(const vec2<coord_t>& a, const vec2<coord_t>& b, const vec2<coord_t>& c)
 {
-	compiler_assert(0);	// must specialize
-	return -1;
+	double	det = determinant_coord(a, b, c);
+	if (det > 0) return 1;
+	else if (det < 0) return -1;
+	else return 0;
 }
 
 
