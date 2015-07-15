@@ -47,6 +47,7 @@
 CC=$(CROSS)gcc
 CPP=$(CROSS)g++
 CFLAGS=
+STRIP=$(CROSS)strip
 PKG_CONFIG=$(CROSS)pkg-config
 AR=$(CROSS)ar
 ARFLAGS=rc
@@ -190,10 +191,10 @@ ifneq ($(NO_SWF),1)
  LIBS += -ljpeg -lz
 
  ifneq ($(FE_WINDOWS_COMPILE),1)
-  CFLAGS += -rdynamic
   ifeq ($(FE_MACOSX_COMPILE),1)
    LIBS += -ldl -framework OpenGL
   else
+  CFLAGS += -Wl,--export-dynamic
    LIBS += -ldl -lGL
   endif
  else
@@ -232,7 +233,7 @@ ifeq ($(FE_DEBUG),1)
  CFLAGS += -g -Wall
  FE_FLAGS += -DFE_DEBUG
 else
- CFLAGS += -O2 -s -DNDEBUG
+ CFLAGS += -O2 -DNDEBUG
 endif
 
 ifeq ($(FE_RPI),1)
@@ -315,6 +316,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 
 $(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
 	$(CPP) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
+ifneq ($(FE_DEBUG),1)
+	$(STRIP) $@
+endif
 
 .PHONY: clean
 
@@ -528,7 +532,7 @@ $(OBJ_DIR)/libgameswf.a: $(GAMESWFOBJS) | $(GAMESWF_OBJ_DIR) $(GSBASE_OBJ_DIR)
 	$(AR) $(ARFLAGS) $@ $(GAMESWFOBJS)
 
 $(GAMESWF_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/gameswf/%.cpp | $(GAMESWF_OBJ_DIR)
-	$(CPP) -c $< -o $@ $(CFLAGS) -Wno-deprecated -fpermissive
+	$(CPP) -c $< -o $@ $(CFLAGS) -Wno-deprecated
 
 $(GAMESWF_OBJ_DIR):
 	$(MD) $@
