@@ -237,6 +237,7 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 
 	ASSERT( m_mon.size() > 0 );
 
+	m_layoutSize = m_mon[0].size;
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 }
 
