@@ -73,7 +73,7 @@ namespace sf
 ///        own transformations, color, etc.
 ///
 ////////////////////////////////////////////////////////////
-class FeSprite : public sf::Drawable, public sf::Transformable
+class FeSprite : public sf::Drawable, private sf::Transformable
 {
 public :
 
@@ -227,6 +227,11 @@ public :
 	void setSkewY( float y );
 	void setPinchX( float x );
 	void setPinchY( float y );
+	void setScale( const sf::Vector2f &s );
+
+	using sf::Transformable::getRotation;
+	using sf::Transformable::setRotation;
+	using sf::Transformable::setPosition;
 
 private :
 

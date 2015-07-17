@@ -76,8 +76,8 @@ reflect.set_rgb( 40, 40, 40 );
 // position the reflection
 //
 reflect.set_pos( 325, 340, 300, 60 );
-reflect.skew_y = 440;
-reflect.skew_x = -400;
+reflect.skew_y = 170;
+reflect.skew_x = -200;
 
 local hyp = pow( 240, 2 );
 function get_x( y )

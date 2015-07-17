@@ -1205,7 +1205,7 @@ void FeImage::scale()
 	}
 
 	if ( scale )
-		m_sprite.setScale( scale_x, scale_y );
+		m_sprite.setScale( sf::Vector2f( scale_x, scale_y ) );
 
 	m_sprite.setPosition( final_pos );
 }
