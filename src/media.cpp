@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"
 #include "media.hpp"
 #include "zip.hpp"
 #include "fe_base.hpp"

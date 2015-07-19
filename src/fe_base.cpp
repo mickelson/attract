@@ -40,6 +40,8 @@ extern "C"
 
 #define FE_NAME_D			"Attract-Mode"
 
+#include "config.h"
+
 const char *FE_NAME			= FE_NAME_D;
 const char *FE_COPYRIGHT		= FE_NAME_D " " FE_VERSION_D \
 	" Copyright (c) 2013-2018 Andrew Mickelson";

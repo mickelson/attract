@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"
 #include "zip.hpp"
 #include "fe_util.hpp"
 #include "fe_base.hpp"

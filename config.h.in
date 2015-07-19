@@ -1,0 +1,25 @@
+#define FE_VERSION_MAJOR  @VER_MAJOR@
+#define FE_VERSION_MINOR  @VER_MINOR@
+#define FE_VERSION_POINT  @VER_POINT@
+#define FE_VERSION_COUNT  @VER_COUNT@
+#define FE_VERSION_NUM    @VER_MAJOR@@VER_MINOR@@VER_POINT@
+#define FE_VERSION_D      "@VER_TAG@"
+
+#define @TARGET_SYSTEM@
+#define @TARGET_ARCH@
+
+#define SFML_NO_DEPRECATED_WARNINGS
+
+#cmakedefine NO_MOVIE
+#cmakedefine NO_NET
+#cmakedefine NO_SWF
+#cmakedefine USE_FONTCONFIG
+#cmakedefine USE_LIBARCHIVE
+#cmakedefine USE_XINERAMA
+#cmakedefine USE_GLES
+#cmakedefine FE_DEBUG
+#cmakedefine FE_RPI
+
+#define DATA_PATH         "@DATA_PATH@"
+
+#define FE_NAME_D         "Attract-Mode"
