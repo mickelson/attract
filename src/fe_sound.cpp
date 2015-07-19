@@ -90,7 +90,7 @@ void FeSoundSystem::update_volumes()
 }
 
 FeSound::FeSound( bool loop )
-#ifdef NO_MOVIE
+#ifndef WITH_MOVIE
 	: m_sound(),
 #else
 	: m_sound( FeMedia::Audio ),
@@ -103,7 +103,7 @@ FeSound::FeSound( bool loop )
 
 void FeSound::tick()
 {
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 	if ( m_play_state )
 		m_sound.tick();
 #endif
@@ -113,7 +113,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 {
 	if ( tail_compare( path, FE_ZIP_EXT ) )
 	{
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 		if ( !m_sound.openFromArchive( path, fn ) )
 		{
 			std::cout << "Error loading sound file from zip: "
@@ -252,7 +252,7 @@ void FeSound::set_z( float v )
 
 int FeSound::get_duration()
 {
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 	return m_sound.get_duration().asMilliseconds();
 #else
 	return 0;
@@ -261,7 +261,7 @@ int FeSound::get_duration()
 
 int FeSound::get_time()
 {
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 	return m_sound.get_video_time().asMilliseconds();
 #else
 	return 0;
@@ -270,7 +270,7 @@ int FeSound::get_time()
 
 const char *FeSound::get_metadata( const char *tag )
 {
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 	return m_sound.get_metadata( tag );
 #else
 	return "";

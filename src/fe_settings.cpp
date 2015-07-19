@@ -38,7 +38,7 @@
 #include <fontconfig/fontconfig.h>
 #endif
 
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 #include "media.hpp" // for FeMedia::is_supported_media()
 #endif
 
@@ -2461,7 +2461,7 @@ bool gather_artwork_filenames(
 			target_name + '.',
 			FE_ART_EXTENSIONS );
 
-#ifdef NO_MOVIE
+#ifndef WITH_MOVIE
 		vids.clear();
 #else
 		for ( std::vector<std::string>::iterator itn = vids.begin();
@@ -2494,7 +2494,7 @@ bool gather_artwork_filenames(
 				"",
 				FE_ART_EXTENSIONS );
 
-#ifdef NO_MOVIE
+#ifndef WITH_MOVIE
 			vids.clear();
 #else
 			for ( std::vector<std::string>::iterator itn = vids.begin();

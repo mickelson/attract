@@ -24,10 +24,11 @@
 #include "fe_util.hpp"
 #include <iostream>
 #include <fstream>
+#include "config.h"
 
 #define FE_NAME_D			"Attract-Mode"
-#define FE_VERSION_D 			"1.5.3"
-const int FE_VERSION_NUM		= 153;
+#define FE_VERSION_D 			"VERSION_MAJOR.VERSION_MINOR.VERSION_PATCH"
+const int FE_VERSION_NUM		= VERSION_NUM;
 
 const char *FE_NAME			= FE_NAME_D;
 const char *FE_COPYRIGHT		= FE_NAME_D " " FE_VERSION_D \

@@ -32,7 +32,7 @@
 #include <list>
 #include <map>
 
-#ifndef NO_NET
+#ifdef WITH_NET
 #include "fe_net.hpp"
 #endif // NO_NET
 
@@ -335,6 +335,7 @@ bool has_same_name_as_parent( FeRomInfo &rom,
 	return false;
 }
 
+#ifdef WITH_NET
 bool process_q_simple( FeNetQueue &q,
 	FeImporterContext &c,
 	int taskc )
@@ -375,12 +376,13 @@ bool process_q_simple( FeNetQueue &q,
 	}
 	return true;
 }
+#endif
 
 }; // end namespace
 
 bool FeSettings::mameps_scraper( FeImporterContext &c )
 {
-#ifndef NO_NET
+#ifdef WITH_NET
 	if (( c.emulator.get_info( FeEmulatorInfo::Info_source ).compare( "mame" ) != 0 )
 				|| ( !m_scrape_vids ))
 		return true;
@@ -429,7 +431,7 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 
 bool FeSettings::mamedb_scraper( FeImporterContext &c )
 {
-#ifndef NO_NET
+#ifdef WITH_NET
 	if (( c.emulator.get_info( FeEmulatorInfo::Info_source ).compare( "mame" ) != 0 )
 				|| ( !m_scrape_snaps && !m_scrape_marquees ))
 		return true;
@@ -487,7 +489,7 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 
 bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 {
-#ifndef NO_NET
+#ifdef WITH_NET
 	const char *HOSTNAME = "http://thegamesdb.net";
 	const char *PLATFORM_REQ = "api/GetPlatformsList.php";
 	const char *GAME_REQ = "api/GetGame.php?name=$1";

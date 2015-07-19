@@ -33,7 +33,7 @@
 #include <cstring>
 #include <cstdlib>
 
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 #include <Audio/AudioDevice.hpp>
 #endif
 
@@ -211,7 +211,7 @@ void process_args( int argc, char *argv[],
 #endif
 				<< ") " << std::endl << std::endl;
 
-#ifdef NO_MOVIE
+#ifndef WITH_MOVIE
 			std::cout << "No Video, using SFML for Audio." << std::endl;
 #else
 			print_ffmpeg_version_info();
@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 	//
 	// Set up music/sound playing objects
 	//
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 	sf::AudioDevice audio_device;
 #endif
 	FeSoundSystem soundsys( &feSettings );

@@ -1,0 +1,4 @@
+#define VERSION_MAJOR	@attract_VERSION_MAJOR@
+#define VERSION_MINOR	@attract_VERSION_MINOR@
+#define VERSION_PATCH	@attract_VERSION_PATCH@
+#define VERSION_NUM     @attract_VERSION_MAJOR@ ## @attract_VERSION_MINOR@ ## @attract_VERSION_PATCH@

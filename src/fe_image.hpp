@@ -158,7 +158,7 @@ protected:
 
 private:
 
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 	bool load_with_ffmpeg(
 		const std::string &path,
 		const std::string &filename,

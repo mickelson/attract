@@ -23,7 +23,7 @@
 #ifndef FE_SOUND_HPP
 #define FE_SOUND_HPP
 
-#ifdef NO_MOVIE
+#ifndef WITH_MOVIE
 #include <SFML/Audio/Music.hpp>
 #include "zip.hpp"
 #else
@@ -41,7 +41,7 @@ private:
 	FeSound( const FeSound & );
 	FeSound &operator=( const FeSound & );
 
-#ifdef NO_MOVIE
+#ifndef WITH_MOVIE
 	FeZipStream m_zip; // needs to be declared before sf::Music m_sound !
 	sf::Music m_sound;
 #else

@@ -27,7 +27,7 @@
 #include "fe_vm.hpp"
 
 #include <SFML/Graphics/Shader.hpp>
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 #include "media.hpp"
 #endif
 
@@ -1270,7 +1270,7 @@ void FeSoundMenu::get_options( FeConfigContext &ctx )
 	std::vector<std::string> sound_list;
 	ctx.fe_settings.get_sounds_list( sound_list );
 
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 	for ( std::vector<std::string>::iterator itr=sound_list.begin();
 			itr != sound_list.end(); )
 	{

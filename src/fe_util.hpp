@@ -219,7 +219,7 @@ std::basic_string<sf::Uint32> clipboard_get_content();
 void get_xinerama_geometry( int &, int &, int &, int & );
 #endif
 
-#ifndef NO_MOVIE
+#ifdef WITH_MOVIE
 //
 // Print FFmpeg version information to stdout.
 //
