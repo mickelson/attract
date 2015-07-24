@@ -28,6 +28,7 @@
 #include "fe_input.hpp"
 #include "zip.hpp"
 
+#include <SFML/System/FileInputStream.hpp>
 #include <iostream>
 
 #ifdef SFML_SYSTEM_WINDOWS
