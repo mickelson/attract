@@ -194,11 +194,17 @@ ifneq ($(NO_SWF),1)
   ifeq ($(FE_MACOSX_COMPILE),1)
    LIBS += -ldl -framework OpenGL
   else
-  CFLAGS += -Wl,--export-dynamic
-   LIBS += -ldl -lGL
+   CFLAGS += -Wl,--export-dynamic
+   ifeq ($(FE_RPI),1)
+    LIBS += -ldl -lGLESv1_CM
+   else
+    LIBS += -ldl -lGL
+   endif
+   TEMP_LIBS += freetype2
   endif
  else
   LIBS += -lopengl32
+  TEMP_LIBS += freetype2
  endif
 endif
 
@@ -238,6 +244,7 @@ endif
 
 ifeq ($(FE_RPI),1)
  FE_FLAGS += -DFE_RPI
+ CFLAGS += -I/opt/vc/include -L/opt/vc/lib
 endif
 
 ifeq ($(USE_XINERAMA),1)

@@ -33,7 +33,20 @@
 #include "gameswf/gameswf_freetype.h"
 #endif
 
+#ifdef FE_RPI
+#define USE_GLES 1
+#endif
+
+#ifdef SFML_SYSTEM_ANDROID
+#define USE_GLES 1
+#endif
+
+#ifdef USE_GLES
+#include <GLES/gl.h>
+#include <GLES/glext.h>
+#else
 #include <SFML/OpenGL.hpp>
+#endif
 
 #include <iostream>
 
@@ -57,7 +70,7 @@ namespace
 	{
 		if ( swf_render == NULL )
 		{
-#ifdef FE_RPI
+#ifdef USE_GLES
 			swf_render = gameswf::create_render_handler_ogles();
 #else
 			swf_render = gameswf::create_render_handler_ogl();
@@ -162,13 +175,19 @@ bool FeSwf::open_from_file( const std::string &file )
 	glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
 	glMatrixMode( GL_PROJECTION );
+
+#ifndef USE_GLES
 	glOrtho( -1.f, 1.f, 1.f, -1.f, -1, 1 );
+#endif
 
 	glMatrixMode( GL_MODELVIEW );	
 	glLoadIdentity();
 
 	glDisable( GL_LIGHTING );
+
+#ifndef USE_GLES
 	glPushAttrib( GL_ALL_ATTRIB_BITS );
+#endif
 
 	m_imp->root->set_display_viewport( 0, 0,
 		m_imp->root->get_movie_width() * 3,
