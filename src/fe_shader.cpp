@@ -54,6 +54,29 @@ bool FeShader::load( sf::InputStream &sh,
 		(t == Fragment) ? sf::Shader::Fragment : sf::Shader::Vertex );
 }
 
+bool FeShader::load( const std::string &vert_shader,
+		const std::string &frag_shader )
+{
+	// silently fail if shaders aren't available
+	if ( !sf::Shader::isAvailable() )
+		return true;
+
+	m_type = VertexAndFragment;
+	return m_shader.loadFromFile( vert_shader, frag_shader );
+}
+
+bool FeShader::load( const std::string &sh,
+		Type t )
+{
+	// silently fail if shaders aren't available
+	if ( !sf::Shader::isAvailable() || ( t == Empty ) )
+		return true;
+
+	m_type = t;
+	return m_shader.loadFromFile( sh,
+		(t == Fragment) ? sf::Shader::Fragment : sf::Shader::Vertex );
+}
+
 void FeShader::set_param( const char *name, float x )
 {
 	if ( m_type != Empty )

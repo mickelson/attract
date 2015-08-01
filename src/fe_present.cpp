@@ -28,7 +28,6 @@
 #include "fe_input.hpp"
 #include "zip.hpp"
 
-#include <SFML/System/FileInputStream.hpp>
 #include <iostream>
 
 #ifdef SFML_SYSTEM_WINDOWS
@@ -489,13 +488,7 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 			}
 			else
 			{
-				sf::FileInputStream fs1;
-				fs1.open( path + shader1 );
-
-				sf::FileInputStream fs2;
-				fs2.open( path + shader2 );
-
-				sh->load( fs1, fs2 );
+				sh->load( path + shader1, path + shader2 );
 			}
 			break;
 
@@ -510,10 +503,7 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 			}
 			else
 			{
-				sf::FileInputStream fs;
-				fs.open( path + shader1 );
-
-				sh->load( fs, type );
+				sh->load( path + shader1, type );
 			}
 			break;
 

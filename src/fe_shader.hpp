@@ -41,6 +41,9 @@ public:
 	bool load( sf::InputStream &vert, sf::InputStream &frag );
 	bool load( sf::InputStream &sh, Type t );
 
+	bool load( const std::string &vert, const std::string &frag );
+	bool load( const std::string &sh, Type t );
+
 	void set_param( const char *name, float x );
 	void set_param( const char *name, float x, float y );
 	void set_param( const char *name, float x, float y, float z );

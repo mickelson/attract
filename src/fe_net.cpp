@@ -74,7 +74,7 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 
 	if (( m_type == FileTask ) || ( m_type == SpecialFileTask ))
 	{
-		unsigned int pos = m_req.find_last_of( '.' );
+		size_t pos = m_req.find_last_of( '.' );
 		if ( pos != std::string::npos )
 			m_filename += m_req.substr( pos );
 		else
