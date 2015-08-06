@@ -549,6 +549,15 @@ int main(int argc, char *argv[])
 			}
 
 			//
+			// Special case: handle the reload signal now
+			//
+			if ( c == FeInputMap::Reload )
+			{
+				feVM.load_layout();
+				continue;
+			}
+
+			//
 			// Give the script the option to handle the command.
 			//
 			if ( feVM.script_handle_event( c, redraw ) )

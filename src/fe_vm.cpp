@@ -1852,6 +1852,7 @@ void FeVM::cb_signal( const char *sig )
 	const char *signals[] =
 	{
 		"reset_window",
+		"reload",
 		NULL
 	};
 
@@ -1869,6 +1870,10 @@ void FeVM::cb_signal( const char *sig )
 	case 0: // "reset_window"
 		fev->m_window.on_exit();
 		fev->m_window.initial_create();
+		break;
+
+	case 1: // "reload"
+		fev->m_posted_commands.push( FeInputMap::Reload );
 		break;
 
 	default:

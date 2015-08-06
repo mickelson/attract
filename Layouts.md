@@ -781,6 +781,7 @@ Parameters:
       - "custom5"
       - "custom6"
       - "reset_window"
+      - "reload"
 
 
 Return Value:

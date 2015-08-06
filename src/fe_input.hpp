@@ -151,7 +151,8 @@ public:
 		AmbientSound,
 		EventStartup,
 		EventGameReturn,
-		LAST_EVENT
+		LAST_EVENT,
+		Reload // special case value used to reload the layout
 	};
 
 	static const char *commandStrings[];
