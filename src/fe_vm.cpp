@@ -212,6 +212,14 @@ FeCallback::FeCallback( int pid,
 {
 }
 
+Sqrat::Function &FeCallback::get_fn()
+{
+	if ( m_cached_fn.IsNull() )
+		m_cached_fn = Sqrat::Function( m_env, m_fn.c_str() );
+
+	return m_cached_fn;
+}
+
 const char *FeVM::transitionTypeStrings[] =
 {
 		"StartLayout",
@@ -841,7 +849,7 @@ bool FeVM::on_tick()
 		bool remove=false;
 		try
 		{
-			Function func( (*itr).m_env, (*itr).m_fn.c_str() );
+			Function &func = (*itr).get_fn();
 			if ( !func.IsNull() )
 				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
@@ -903,7 +911,7 @@ bool FeVM::on_transition(
 			bool keep=false;
 			try
 			{
-				Function func( (*itr)->m_env, (*itr)->m_fn.c_str() );
+				Function &func = (*itr)->get_fn();
 				if ( !func.IsNull() )
 				{
 					keep = func.Evaluate<bool>(
@@ -977,7 +985,7 @@ bool FeVM::script_handle_event( FeInputMap::Command c, bool &redraw )
 
 		try
 		{
-			Function func( (*itr).m_env, (*itr).m_fn.c_str() );
+			Function &func = (*itr).get_fn();
 			if (( !func.IsNull() )
 					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
 			{

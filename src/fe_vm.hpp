@@ -31,6 +31,7 @@
 #include "fe_present.hpp"
 
 #include <sqrat/sqratObject.h>
+#include <sqrat/sqratFunction.h>
 
 class FeWindow;
 class FeOverlay;
@@ -51,11 +52,15 @@ class FeCallback
 {
 public:
 	FeCallback( int pid, const Sqrat::Object &env, const std::string &fn );
+	Sqrat::Function &get_fn();
 
 
 	int m_sid;		// -1 for layout, otherwise the plugin index
 	Sqrat::Object m_env;	// callback function environment
 	std::string m_fn;	// callback function name
+
+private:
+	Sqrat::Function m_cached_fn;
 };
 
 class FeVM : public FePresent
