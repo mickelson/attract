@@ -194,6 +194,8 @@ Language;Langage
 en;Anglais
 fr;Français
 es;Español
+jp;Japonais
+kr;Coréen
 
 _help_exit_command;Commande à exécuter en quittant (Confirmer) [exemple "sudo shutdown"]
 _help_default_font;Le nom de la police par défaut à utiliser

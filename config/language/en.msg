@@ -4,6 +4,8 @@
 en;English
 fr;Français
 es;Español
+jp;日本語 (Japanese)
+kr;한글 (Korean)
 
 #
 # General
