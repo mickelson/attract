@@ -125,7 +125,7 @@ Press Input;Appuyer sur le contrôle
 This will overwrite an existing mapping ($1).  Proceed?;Ecraser le contrôle existant ($1). Confirmer?
 Configure / Input;Configuration / Contrôles
 OR;OU
-Select;Select
+Select;Sélection
 Up;Haut
 Down;Bas
 Page Up;Page Suivante
@@ -246,106 +246,124 @@ Exit menu;Quitter le menu
 
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
-#
-# Strings needing translation:
-#
-System Identifier;System Identifier
-Info Source/Scraper;Info Source/Scraper
-Minimum Run Time;Minimum Run Time
-Exit Hotkey;Exit Hotkey
-Sort By;Sort By
-No Sort;No Sort
-AltRomname;AltRomname
-AltTitle;AltTitle
-Tags;Tags
-PlayedCount;PlayedCount
-PlayedTime;PlayedTime
-List Limit;List Limit
-Add/Remove Tags;Add/Remove Tags
-Previous Letter;Previous Letter
-Next Letter;Next Letter
+
+
+System Identifier;Identifiant du système
+Info Source/Scraper;Info Source/Aspiration
+Minimum Run Time;Temps minimum fonctionnement 
+Exit Hotkey;Raccourci clavier pour sortir
+Sort By;Classé par
+No Sort;Non classé
+AltRomname;Nom de rom alternatif
+AltTitle;Titre alternatif
+Tags;Mots clés
+PlayedCount;Compteur de jeu
+PlayedTime;Temps de jeu
+List Limit;taille maximum de la liste
+Add/Remove Tags;Ajouter/Supprimer des mots clés
+Previous Letter;Lettre précédente 
+Next Letter;Lettre suivante
 Custom1;Custom1
 Custom2;Custom2
 Custom3;Custom3
 Custom4;Custom4
 Custom5;Custom5
 Custom6;Custom6
-Track Usage;Track Usage
-Filter Wrap Mode;Filter Wrap Mode
-Wrap within List (Default);Wrap within List (Default)
-Jump to Next List;Jump to Next List
-No Wrap;No Wrap
-Window Mode;Window Mode
-Fill Screen (Default);Fill Screen (Default)
-Fullscreen Mode;Fullscreen Mode
-Window;Window
-Global Filter;Global Filter
-Disabled;Disabled
+Track Usage;Mode de comptage
+Filter Wrap Mode;Mode de fin de liste de filtres
+Wrap within List (Default);Revient au début de la liste de filtres (Défaut)
+Jump to Next List;Bascule sur la liste de roms suivante 
+No Wrap;Ne fait rien
+Window Mode;Mode d'affichage
+Fill Screen (Default);Rempli l'écran (Default)
+Fullscreen Mode;Mode plein écran 
+Window;Fenêtre
+Global Filter;Filtre global
+Disabled;Désactivé
 
-_help_emu_system;The system identifier(s) for this emulator.  Multiple values can be entered if separated by a semicolon
-_help_emu_info_source;Use "mame" if the emulator provides mame -listxml output, "mess" for mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, or "steam" to read from a steam installation.  "mess" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
-_help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
-_help_emu_exit_hotkey;Set a global hotkey to exit the emulator.  Attract-Mode will terminate the emulator process if this hotkey gets pressed
-_help_filter_sort_by;The game information attribute that you wish to sort this list by.  Set to "No Sort" to keep the ordering from the source romlist
-_help_filter_list_limit;Set this to a non-zero value if you wish to limit the size of a sorted list.  Use a positive value for the first X entries (i.e. "10" gives the first 10 entries), a negative value for the last X entries (i.e. "-25" gives the last 25 entries), or "0" for no limit
-_help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
-_help_filter_wrap_mode;Set what happens when the "Next Filter" or "Previous Filter" actions reach the end of the filter list
-_help_track_usage;Configure whether Attract-Mode should track usage (played time and play count for each game)
-_help_filter_name;The name for this filter
-_help_filter_rule;Configure filter rule
-_help_filter_add_rule;Add a rule to this filter
-_help_filter_delete;Delete this filter
-_help_display_global_filter;Configure global filter rules that are applied to every entry in this display's collection/rom list
-_help_control_select;Set the control(s) that launch the current selection
-_help_control_up;Set the control(s) that move the selection up
-_help_control_down;Set the control(s) that move the selection down
-_help_control_page_up;Set the control(s) that move the selection up one page
-_help_control_page_down;Set the control(s) that move the selection down one page
-_help_control_prev_display;Set the control(s) that move to the previous display
-_help_control_next_display;Set the control(s) that move to the next display
-_help_control_displays_menu;Set the control(s) that show the "Displays Menu"
-_help_control_prev_filter;Set the control(s) that move to the previous filter
-_help_control_next_filter;Set the control(s) that move to the next filter
-_help_control_filters_menu;Set the control(s) that show the "Filters Menu"
-_help_control_toggle_layout;Set the control(s) that toggle the layout script to use (It depends on the layout you are using whether this does anything)
-_help_control_toggle_movie;Set the control(s) that toggle whether or not videos should be played
-_help_control_toggle_mute;Set the control(s) that mute/unmute frontend sound
-_help_control_toggle_rotate_right;Set the control(s) that toggle whether the display should be rotated 90 degrees to the right
-_help_control_toggle_flip;Set the control(s) that toggle whether the display should be rotated 100 degrees
-_help_control_toggle_rotate_left;Set the control(s) that toggle whether the display should be rotated 90 degrees to the left
-_help_control_exit;Set the control(s) that exit the frontend
-_help_control_exit_no_menu;Set the control(s) that exit the frontend immediately to the desktop
-_help_control_screenshot;Set the control(s) that take a screenshot of the frontend
-_help_control_configure;Set the control(s) that show the "Configuration Menu"
-_help_control_random_game;Set the control(s) that select a random game from the current list
-_help_control_replay_last_game;Set the control(s) that relaunch the last game played
-_help_control_add_favourite;Set the control(s) that mark/unmark the currently selected game as a favourite
-_help_control_prev_favourite;Set the control(s) that move to the previous favourite
-_help_control_next_favourite;Set the control(s) that move to the next favourite
-_help_control_add_tags;Set the control(s) to add/remove tags from the currently selected game
-_help_control_screen_saver;Set the control(s) that launch screen saver mode
-_help_control_prev_letter;Set the control(s) that move to the previous letter
-_help_control_next_letter;Set the control(s) that move to the next letter
-_help_control_custom1;Set the "Custom1" control(s)
-_help_control_custom2;Set the "Custom2" control(s)
+_help_emu_system;Identifiant(s) système(s) pour cet émulateur. Plusieurs valeurs peuvent être saisies, séparées par un point virgule
+_help_emu_info_source;Saisir "mame" si cet émulateur propose un fichier de type mame -listxml, "mess" pour les fichiers du type mess -listsoftware, "thegamesdb.net" pour extraire les informations du site thegamesdb.net, ou "steam" pour les lires depuis une installation de steam. Les sources "mess" et "thegamesdb.net" nécessitent que des identifiants systèmes spécifiques soient configurés pour fonctionner correctement
+_help_emu_minimum_run_time;Définit un temps minimum de fonctionnement (en secondes). Attract-Mode va attendre, après avoir lancé l'émulateur, que ce temps minimum se soit écoulé avant de re-basculer au premier plan. Ceci est nécessaire pour que Steam fonctionne correctement sous Windows. Saisir 0 si vous n'en avez pas besoin
+_help_emu_exit_hotkey;Définit un raccourci clavier pour sortir de l'émulateur. Attract-Mode arrêtera le process de l'émulateur lorsque ce raccourci clavier sera pressé.
+_help_filter_sort_by;C'est l'information du jeu par lequel vous souhaitez classer votre liste. Sélectionner "Non classé" pour conserver l'ordre de la liste de rom source.
+_help_filter_list_limit;Saisir un nombre différent de zéro pour limiter la taille de la liste triée. Un nombre positif remonte les X premières valeurs (ex : "10" donne les 10 premières valeurs), un nombre négatif remonte les X dernières valeurs (ex : "-25" donne les 25 dernières valeurs). "0" affiche toute la liste.
+_help_window_mode;Définit si Attract Mode rempli l'écran, fonctionne en mode plein écran ou si il s'exécute dans une fenêtre.
+_help_filter_wrap_mode;Définit l'action a mener lorsque "Filtre suivant" ou "Filtre précédent" arrivent à une  extrémité de la liste de filtre.
+_help_track_usage;Active les compteurs d'Attract-Mode (Compteur de jeu et Temps de jeu)
+_help_filter_name;Nom du filtre
+_help_filter_rule;Configurer le filtre
+_help_filter_add_rule;Ajouter une règle à ce filtre
+_help_filter_delete;Supprimer ce filtre
+_help_display_global_filter;Définit les règles du filtre global. Elles s'appliqueront à l'ensemble des valeurs de la liste de roms affichée.
+_help_control_select;Définit le(s) contrôle(s) qui valide(nt) la valeur sélectionnée 
+_help_control_up;Définit le(s) contrôle(s) qui incrémente(nt) la séléction d'une valeur
+_help_control_down;Définit le(s) contrôle(s) qui décrémente(nt) la séléction d'une valeur
+_help_control_page_up;Définit le(s) contrôle(s) qui incrémente(nt) la séléction d'une page
+_help_control_page_down;Définit le(s) contrôle(s) qui décrémente(nt) la séléction d'une page
+_help_control_prev_display;Définit le(s) contrôle(s) qui bascule(nt) à la liste précédente
+_help_control_next_display;Définit le(s) contrôle(s) qui bascule(nt) à la liste suivante
+_help_control_displays_menu;Définit le(s) contrôle(s) qui affiche(nt) la liste des listes 
+_help_control_prev_filter;Définit le(s) contrôle(s) qui bascule(nt) au filtre précédente
+_help_control_next_filter;Définit le(s) contrôle(s) qui bascule(nt) au filtre suivant
+_help_control_filters_menu;Définit le(s) contrôle(s) qui affiche(nt) la liste des filtres 
+_help_control_toggle_layout;Définit le(s) contrôle(s) qui  active(nt)/désactive(nt) le script du theme utilisé (Ceci dépend du theme que vous utilisez)
+_help_control_toggle_movie;Définit le(s) contrôle(s) qui active(nt)/désactive(nt) la lecture des vidéos.  
+_help_control_toggle_mute;Définit le(s) contrôle(s) qui active(nt)/désactive(nt) le son. 
+_help_control_toggle_rotate_right;Définit le(s) contrôle(s) qui active(nt)/désactive(nt) la rotation de l'écran de 90 degrés sur la droite 
+_help_control_toggle_flip;Définit le(s) contrôle(s) qui active(nt)/désactive(nt) la rotation de l'écran de 180 degrés
+_help_control_toggle_rotate_left;Définit le(s) contrôle(s) qui active(nt)/désactive(nt) la rotation de l'écran de 90 degrés sur la gauche 
+_help_control_exit;Définit le(s) contrôle(s) qui quitte(nt) Attract Mode 
+_help_control_exit_no_menu;Définit le(s) contrôle(s) qui quitte(nt) immédiatement Attract Mode pour revenir au bureau
+_help_control_screenshot;Définit le(s) contrôle(s) qui enregistre(nt) une impression écran d'Attract Mode
+_help_control_configure;Définit le(s) contrôle(s) qui affiche(nt) le menu de configuration  
+_help_control_random_game;Définit le(s) contrôle(s) qui sélectionne(nt) un jeu aléatoirement dans la liste de rom active
+_help_control_replay_last_game;Définit le(s) contrôle(s) qui relance(nt) le dernier jeu joué
+_help_control_add_favourite;Définit le(s) contrôle(s) qui permet(ent) d'ajouter/supprimer le jeu selectionné à la liste des favoris
+_help_control_prev_favourite;Définit le(s) contrôle(s) qui selectionne(nt) le jeu favoris precedent
+_help_control_next_favourite;Définit le(s) contrôle(s) qui selectionne(nt) le jeu favoris suivant
+_help_control_add_tags;Définit le(s) contrôle(s) qui ajoute(nt)/supprime(nt) des mots clés au jeu sélectionné
+_help_control_screen_saver;Définit le(s) contrôle(s) qui lance(nt) le mode "économiseur d'écran"
+_help_control_prev_letter;Définit le(s) contrôle(s) qui bascule(nt) à la lettre précédente
+_help_control_next_letter;Définit le(s) contrôle(s) qui bascule(nt) à la lettre suivante
+_help_control_custom1;Définit le(s) contrôle(s) utilisateur(s) "Custom1"
+_help_control_custom2;Définit le(s) contrôle(s) utilisateur(s) "Custom2"
+_help_control_custom3;Définit le(s) contrôle(s) utilisateur(s) "Custom3"
+_help_control_custom4;Définit le(s) contrôle(s) utilisateur(s) "Custom4"
+_help_control_custom5;Définit le(s) contrôle(s) utilisateur(s) "Custom5"
+_help_control_custom6;Définit le(s) contrôle(s) utilisateur(s) "Custom6"
+
+Displays;Listes d'affichage
+Next Display;Liste suivante
+Previous Display;Liste précédente
+Displays Menu;Liste des Listes d'affichage
+Ambient Soundtrack;Musique d'ambiance
+Allow Exit from 'Displays Menu';Autoriser la sortie depuis la liste des listes
+Generate Collection/Rom List;Générer la liste de roms 
+
+#
+# Strings needing translation:
+#
+
 
 # Scraper stuff
-Scraper;Scraper
-Scrape Artwork;Scrape Artwork
-Configure / Scraper;Configure / Scraper
-Scrape Snaps;Scrape Snaps
-Scrape Marquees;Scrape Marquees
-Scrape Flyers/Boxart;Scrape Flyers/Boxart
-Scrape Game Logos (Wheel Art);Scrape Game Logos (Wheel Art)
-Scraping Artwork: $1%;Scraping Artwork: $1%
 
-_help_emu_scrape_artwork;Scrape missing artwork images for this emulator from TheGamesDB.net and mamedb.com
-_help_scraper;Configure artwork scraper settings
-_help_scrape_snaps;Set whether game snapshots should be downloaded when scraping
-_help_scrape_marquees;Set whether game marquees and banners should be downloaded when scraping
-_help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
-_help_scrape_wheels;Set whether game logos should be downloaded when scraping
-_help_scrape_fanart;Set whether game fan art should be downloaded when scraping
-_help_scrape_vids;Set whether game videos should be downloaded when scraping
-_help_intro;Configure intro
+Scraper;Aspiration
+Scrape Artwork;Aspirer les Artworks
+Configure / Scraper;Configurer l'aspiration
+Scrape Snaps;Aspire les images des jeux
+Scrape Marquees;Aspire les Marquees
+Scrape Fanart;Aspire les 'Fanart'
+Scrape Flyers/Boxart;Aspire les Flyers/Couvertures
+Scrape Game Logos (Wheel Art);Aspire les logos des jeux (Wheel Art)
+Scraping Artwork: $1%;Aspire l'Artwork: $1%
+
+_help_emu_scrape_artwork;Aspirer les artworks manquants pour cet émulateur sur TheGamesDB.net et mamedb.com
+_help_scraper;Configurer les parametres d'aspiration des artworks
+_help_scrape_snaps;Définir où les 'snapshots' des jeux doivent être téléchargés lorsqu'ils sont aspirés
+_help_scrape_marquees;Définir où les 'marquees' et les bannières des jeux doivent être téléchargés lorsqu'ils sont aspirés
+_help_scrape_flyers;Définir où les 'flyers' et les couvertures des boîtes des jeux doivent être téléchargés lorsqu'ils sont aspirés
+_help_scrape_wheels;Définir où les logos des jeux doivent être téléchargés lorsqu'ils sont aspirés
+_help_scrape_fanart;Définir où les 'fan art' des jeux doivent être téléchargés lorsqu'ils sont aspirés 
+_help_scrape_vids;Définir où les videos des jeux doivent être téléchargés lorsqu'ils sont aspirés 
+_help_intro;Configurer l'intro
 
