@@ -43,10 +43,13 @@
 #include <sqstdstring.h>
 #include <sqstdsystem.h>
 
+#include <fstream>
 #include <iostream>
 #include <stdio.h>
 #include <ctime>
 #include <stdarg.h>
+
+const char *FE_SCRIPT_NV_FILE = "script.nv";
 
 namespace
 {
@@ -201,6 +204,34 @@ namespace
 
 		return 1;
 	}
+
+	std::string read_non_volatile_to_string( const SQChar *name )
+	{
+		Sqrat::Table fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+		Sqrat::Table snv( fe.GetSlot( name ) );
+
+		if ( snv.IsNull() )
+			return "";
+
+		return fe_to_json_string( snv );
+	}
+
+	void write_non_volatile_from_string( const char *name,
+		std::string &nv )
+	{
+		if ( !nv.empty() )
+		{
+			std::string temp = "fe.";
+			temp += name;
+			temp += " <- ";
+			temp += nv;
+			temp += ";";
+
+			Sqrat::Script sc;
+			sc.CompileString( temp );
+			sc.Run();
+		}
+	}
 };
 
 FeCallback::FeCallback( int pid,
@@ -244,11 +275,47 @@ FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSoun
 {
 	srand( time( NULL ) );
 	vm_init();
+
+	//
+	// Read the "non-volatile" table (fe.nv) from the filesystem now
+	//
+	std::string filename = m_feSettings->get_config_dir();
+	filename += FE_SCRIPT_NV_FILE;
+
+	std::ifstream infile( filename.c_str() );
+	if ( !infile.is_open() )
+		return;
+
+	std::string nv;
+	while ( infile.good() )
+	{
+		std::string line;
+		getline( infile, line );
+		nv += line;
+	}
+
+	Sqrat::Table fe;
+	Sqrat::RootTable().Bind( _SC("fe"),  fe );
+	write_non_volatile_from_string( "nv", nv );
 }
 
 FeVM::~FeVM()
 {
 	clear();
+
+	//
+	// Save the "non-volatile" squirrel table (fe.nv) to a file now
+	//
+	std::string filename = m_feSettings->get_config_dir();
+	filename += FE_SCRIPT_NV_FILE;
+
+	std::ofstream outfile( filename.c_str() );
+	if ( outfile.is_open() )
+	{
+		outfile << read_non_volatile_to_string( _SC( "nv" ) ) << std::endl;
+		outfile.close();
+	}
+
 	vm_close();
 }
 
@@ -351,6 +418,7 @@ void FeVM::vm_init()
 	Sqrat::DefaultVM::Set( vm );
 }
 
+
 bool FeVM::on_new_layout()
 {
 	using namespace Sqrat;
@@ -358,7 +426,11 @@ bool FeVM::on_new_layout()
 	const FeLayoutInfo &layout_params
 		= m_feSettings->get_current_config( FeSettings::Current );
 
-	vm_close();
+
+	// Grab the contents of the existing "non-volatile" squirrel table
+	// before reinitializing
+	//
+	std::string nv = read_non_volatile_to_string( _SC( "nv" ) );
 
 	// Squirrel VM gets reinitialized on each layout
 	//
@@ -724,12 +796,19 @@ bool FeVM::on_new_layout()
 	fe.SetInstance( _SC("ambient_sound"), &m_ambient_sound );
 	fe.SetValue( _SC("plugin"), Table() ); // an empty table for plugins to use/abuse
 
+	// We keep a "non-volatile" table for use by layouts/plugins, the
+	// string content of which gets copied over from layout to layout
+	//
+	fe.SetValue( _SC("nv"), Table() );
+
 	// Each presentation object gets an instance in the
 	// "obj" array available in Squirrel
 	//
 	Table obj; // this must created as a Table (even though it is used as an Array) bug in sqrat?
 	fe.Bind( _SC("obj"), obj );
 	RootTable().Bind( _SC("fe"),  fe );
+
+	write_non_volatile_from_string( "nv", nv );
 
 	//
 	// Run the layout script
@@ -1172,6 +1251,9 @@ public:
 		sqstd_register_systemlib( m_vm );
 //		sqstd_seterrorhandlers( m_vm ); // don't set this on purpose
 
+		fe_register_global_func( m_vm, zip_extract_file, "zip_extract_file" );
+		fe_register_global_func( m_vm, zip_get_dir, "zip_get_dir" );
+
 		Sqrat::DefaultVM::Set( m_vm );
 
 		Sqrat::ConstTable()
@@ -1232,7 +1314,7 @@ public:
 
 			fe.SetValue( _SC("loader_dir"), path );
 		}
-		run_script( path, file, true );
+		run_script( path, file, false );
 	};
 
 	~FeConfigVM()

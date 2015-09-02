@@ -45,6 +45,7 @@ Contents
       * [`fe.monitors`](#monitors)
       * [`fe.script_dir`](#script_dir)
       * [`fe.script_file`](#script_file)
+      * [`fe.nv`](#nv)
    * [Classes](#classes)
       * [`fe.LayoutGlobals`](#LayoutGlobals)
       * [`fe.CurrentList`](#CurrentList)
@@ -1048,6 +1049,14 @@ the layout or plug-in's directory.
 
 When Attract-Mode runs a layout or plug-in script, `fe.script_file` is set to
 the name of the layout or plug-in script file.
+
+<a name="nv" />
+#### `fe.nv` ####
+
+The fe.nv table can be used by layouts and plugins to store persistent values.
+The values in this table get saved by Attract-Mode whenever the layout changes
+and are saved to disk when Attract-Mode is shut down.  Boolean, integer, float,
+string, array and table values can be stored in this table.
 
 
 <a name="classes" />

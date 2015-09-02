@@ -56,4 +56,6 @@ void fe_register_global_func(
 	SQFUNCTION f,
 	const char *name );
 
+std::string fe_to_json_string( HSQOBJECT obj, int indent=0 );
+
 #endif

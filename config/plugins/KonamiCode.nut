@@ -63,7 +63,10 @@ class KonamiCode
 		}
 
 		if ( m_commands.len() > 0 )
+		{
 			fe.add_ticks_callback( this, "on_tick" );
+			fe.add_transition_callback( this, "on_transition" );
+		}
 	}
 
 	function on_tick( ttime )
@@ -111,6 +114,24 @@ class KonamiCode
 		{
 			m_current=0;
 			fe.signal( m_config[ "action" ] );
+		}
+	}
+
+	function on_transition( ttype, var, ttime )
+	{
+		if ( ttype == Transition.StartLayout )
+		{
+			if ( fe.nv.rawin( "KonamiCode" ) )
+			{
+				m_current = fe.nv[ "KonamiCode" ];
+				m_last_time = RESET_TIME / 2;
+				delete fe.nv[ "KonamiCode" ];
+			}
+		}
+		else if (( ttype == Transition.EndLayout )
+			&& ( m_current > 0 ))
+		{
+			fe.nv[ "KonamiCode" ] <- m_current;
 		}
 	}
 }
