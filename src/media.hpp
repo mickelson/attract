@@ -23,15 +23,17 @@
 #ifndef MEDIA_HPP
 #define MEDIA_HPP
 
-#include <SFML/System.hpp>
-#include <SFML/Graphics.hpp>
-
 #include <Audio/SoundStream.hpp>
+#include <string>
 
+class FeMediaImp;
 class FeAudioImp;
 class FeVideoImp;
-class AVFormatContext;
-class AVIOContext;
+
+namespace sf
+{
+	class Texture;
+};
 
 class FeMedia : private sf::SoundStream
 {
@@ -101,13 +103,7 @@ protected:
 	bool internal_open( sf::Texture *outt );
 
 private:
-	Type m_type;
-	AVFormatContext *m_format_ctx;
-	AVIOContext *m_io_ctx;
-	sf::Mutex m_read_mutex;
-	bool m_loop;
-	bool m_read_eof;
-
+	FeMediaImp *m_imp;
 	FeAudioImp *m_audio;
 	FeVideoImp *m_video;
 
