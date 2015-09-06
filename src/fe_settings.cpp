@@ -1666,29 +1666,65 @@ void FeSettings::delete_emulator( const std::string &n )
 	m_rl.delete_emulator( n );
 }
 
-bool FeSettings::get_font_file( std::string &fontpath,
-				const std::string &fontname ) const
+bool FeSettings::get_font_file( std::string &fpath,
+	std::string &ffile,
+	const std::string &fontname ) const
 {
 	if ( fontname.empty() )
 	{
 		if ( m_default_font.empty() )
 			return false;
 		else
-			return get_font_file( fontpath, m_default_font );
+			return get_font_file( fpath, ffile, m_default_font );
 	}
 
 	//
 	// First check if there is a matching font file in the
-	// layout directory
+	// layout/plugin directory
 	//
 	std::string test;
 	std::string layout_dir;
-	get_path( Layout, layout_dir );
+	get_path( Current, layout_dir );
 
-	if ( !layout_dir.empty() && search_for_file( layout_dir,
-				fontname, FE_FONT_EXTENSIONS, test ) )
+	if ( tail_compare( layout_dir, FE_ZIP_EXT ) )
 	{
-		fontpath = test;
+		std::vector<std::string> cl;
+		fe_zip_get_dir( layout_dir.c_str(), cl );
+		for ( std::vector<std::string>::iterator itr=cl.begin();
+			itr!=cl.end(); ++itr )
+		{
+			// check for font extension
+			int i=0;
+			bool is_font=false;
+			while ( FE_FONT_EXTENSIONS[i] != 0 )
+			{
+				if ( tail_compare( *itr, FE_FONT_EXTENSIONS[i] ) )
+				{
+					is_font = true;
+					break;
+				}
+				i++;
+			}
+
+			if ( !is_font )
+				continue;
+
+			size_t pos = (*itr).find_last_of( "\\/" );
+			if (( pos != std::string::npos )
+				&& ( icompare(
+					(*itr).substr( pos+1, fontname.size() ),
+					fontname ) == 0 ) )
+			{
+				fpath = layout_dir;
+				ffile = *itr;
+				return true;
+			}
+		}
+	}
+	else if ( !layout_dir.empty() && search_for_file( layout_dir,
+		fontname, FE_FONT_EXTENSIONS, test ) )
+	{
+		ffile = test;
 		return true;
 	}
 
@@ -1710,7 +1746,7 @@ bool FeSettings::get_font_file( std::string &fontpath,
 				FcChar8 *file = NULL;
 				if ( FcPatternGetString( font, FC_FILE, 0, &file ) == FcResultMatch )
 				{
-					fontpath = (char *)file;
+					ffile = (char *)file;
 					fc_found = true;
 				}
 				FcPatternDestroy( font );
@@ -1738,7 +1774,7 @@ bool FeSettings::get_font_file( std::string &fontpath,
 	{
 		if ( search_for_file( (*its), fontname, FE_FONT_EXTENSIONS, test ) )
 		{
-			fontpath = test;
+			ffile = test;
 			return true;
 		}
 	}

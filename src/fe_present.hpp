@@ -35,6 +35,7 @@ class FeText;
 class FeListBox;
 class FeFontContainer;
 class FeSurfaceTextureContainer;
+class FeZipStream;
 
 enum FeTransitionType
 {
@@ -54,7 +55,10 @@ enum FeTransitionType
 class FeFontContainer
 {
 public:
-	void set_font( const std::string &n );
+	FeFontContainer();
+	~FeFontContainer();
+
+	void set_font( const std::string &p, const std::string &n );
 
 	const sf::Font &get_font() const { return m_font; };
 	const std::string &get_name() const { return m_name; };
@@ -62,6 +66,7 @@ public:
 private:
 	sf::Font m_font;
 	std::string m_name;
+	FeZipStream *m_zs;
 };
 
 //

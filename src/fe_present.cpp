@@ -58,10 +58,33 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 #include <X11/extensions/Xinerama.h>
 #endif
 
-void FeFontContainer::set_font( const std::string &n )
+FeFontContainer::FeFontContainer()
+	: m_zs( NULL )
+{
+}
+
+FeFontContainer::~FeFontContainer()
+{
+	if ( m_zs )
+		delete m_zs;
+}
+
+void FeFontContainer::set_font( const std::string &p, const std::string &n )
 {
 	m_name = n;
-	m_font.loadFromFile( m_name );
+
+	if ( tail_compare( p, FE_ZIP_EXT ) )
+	{
+		if ( m_zs )
+			delete m_zs;
+
+		m_zs = new FeZipStream( p );
+		m_zs->open( n );
+
+		m_font.loadFromStream( *m_zs );
+	}
+	else
+		m_font.loadFromFile( p + n );
 }
 
 FeImage *FeMonitor::add_image(const char *n, int x, int y, int w, int h)
@@ -572,20 +595,20 @@ const FeFontContainer *FePresent::get_pooled_font( const std::string &n )
 const FeFontContainer *FePresent::get_pooled_font(
 		const std::vector < std::string > &l )
 {
-	std::string fullpath;
+	std::string fpath, ffile;
 
 	// search list for a font
 	for ( std::vector<std::string>::const_iterator itr=l.begin();
 			itr != l.end(); ++itr )
 	{
-		if ( m_feSettings->get_font_file( fullpath, *itr ) )
+		if ( m_feSettings->get_font_file( fpath, ffile, *itr ) )
 			break;
 	}
 
 	// Check if this just matches the default font
 	//
-	if ( fullpath.empty()
-			|| ( fullpath.compare( m_defaultFont.get_name() ) == 0 ) )
+	if ( ffile.empty()
+			|| ( ffile.compare( m_defaultFont.get_name() ) == 0 ) )
 		return &m_defaultFont;
 
 	// Next check if this font is already loaded in our pool
@@ -593,14 +616,14 @@ const FeFontContainer *FePresent::get_pooled_font(
 	for ( std::vector<FeFontContainer *>::iterator itr=m_fontPool.begin();
 		itr != m_fontPool.end(); ++itr )
 	{
-		if ( fullpath.compare( (*itr)->get_name() ) == 0 )
+		if ( ffile.compare( (*itr)->get_name() ) == 0 )
 			return *itr;
 	}
 
 	// No match, so load this font and add it to the pool
 	//
 	m_fontPool.push_back( new FeFontContainer() );
-	m_fontPool.back()->set_font( fullpath );
+	m_fontPool.back()->set_font( fpath, ffile );
 
 	return m_fontPool.back();
 }

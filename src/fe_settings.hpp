@@ -324,7 +324,13 @@ public:
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;
 
-	bool get_font_file( std::string &fullpath, const std::string &filename="" ) const;
+	// [out] fpath = if font is in a zip file, this is the path to the zip
+	// [out] ffile = font file to open
+	// [in] fontname = name of font to find.  If empty return default font
+	bool get_font_file(
+		std::string &fpath,
+		std::string &ffile,
+		const std::string &fontname="" ) const;
 
 	WindowType get_window_mode() const;
 	FilterWrapModeType get_filter_wrap_mode() const;

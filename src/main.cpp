@@ -301,15 +301,15 @@ int main(int argc, char *argv[])
 		launch_game=true;
 	}
 
-	std::string defaultFontFile;
-	if ( feSettings.get_font_file( defaultFontFile ) == false )
+	std::string def_font_path, def_font_file;
+	if ( feSettings.get_font_file( def_font_path, def_font_file ) == false )
 	{
 		std::cerr << "Error, could not find default font."  << std::endl;
 		return 1;
 	}
 
-	FeFontContainer defaultFont;
-	defaultFont.set_font( defaultFontFile );
+	FeFontContainer def_font;
+	def_font.set_font( def_font_path, def_font_file );
 
 	//
 	// Set up music/sound playing objects
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
 	FeWindow window( feSettings );
 	window.initial_create();
 
-	FeVM feVM( feSettings, defaultFont, window, soundsys.get_ambient_sound() );
+	FeVM feVM( feSettings, def_font, window, soundsys.get_ambient_sound() );
 	FeOverlay feOverlay( window, feSettings, feVM );
 	feVM.set_overlay( &feOverlay );
 
@@ -340,8 +340,8 @@ int main(int argc, char *argv[])
 			exit_selected = true;
 
 		// Font may change depending on the language selected
-		feSettings.get_font_file( defaultFontFile );
-		defaultFont.set_font( defaultFontFile );
+		feSettings.get_font_file( def_font_path, def_font_file );
+		def_font.set_font( def_font_path, def_font_file );
 	}
 
 	soundsys.sound_event( FeInputMap::EventStartup );
@@ -379,8 +379,8 @@ int main(int argc, char *argv[])
 			{
 				// Settings changed, reload
 				//
-				if ( feSettings.get_font_file( defaultFontFile ) )
-					defaultFont.set_font( defaultFontFile );
+				if ( feSettings.get_font_file( def_font_path, def_font_file ) )
+					def_font.set_font( def_font_path, def_font_file );
 
 				feSettings.set_display(
 					feSettings.get_current_display_index() );
