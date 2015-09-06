@@ -158,7 +158,6 @@ std::string fe_to_json_string( HSQOBJECT obj, int indent )
 
 			Sqrat::Object::iterator it;
 
-			bool first=true;
 			bool got_obj = sobj.Next( it );
 			while ( got_obj )
 			{

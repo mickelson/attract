@@ -448,7 +448,6 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 
 	FeNetQueue q;
 	int taskc( 0 );
-	int done( 0 );
 
 	for ( FeRomInfoListType::iterator itr=c.romlist.begin(); itr!=c.romlist.end(); ++itr )
 	{

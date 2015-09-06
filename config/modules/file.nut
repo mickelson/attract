@@ -113,6 +113,7 @@ class ReadTextFile
 	function read_line()
 	{
 		local line="";
+		local char;
 
 		while ( !eos() )
 		{
@@ -121,7 +122,7 @@ class ReadTextFile
 
 			while ( !_blb.eos() )
 			{
-				local char = _blb.readn( 'b' );
+				char = _blb.readn( 'b' );
 				if ( char == '\n' )
 					return strip( line );
 

@@ -1314,7 +1314,7 @@ public:
 
 			fe.SetValue( _SC("loader_dir"), path );
 		}
-		run_script( path, file, false );
+		run_script( path, file, true );
 	};
 
 	~FeConfigVM()
