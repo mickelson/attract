@@ -1,5 +1,4 @@
-﻿#
-# General
+#@Français
 #
 Exit Attract-Mode;Quitter Attract-Mode
 Exit Attract-Mode?;Quitter Attract-Mode?

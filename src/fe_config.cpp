@@ -1406,15 +1406,14 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_languages_list( m_languages );
 	std::string cl = ctx.fe_settings.get_info( FeSettings::Language );
 
-	std::vector<std::string> disp_lang_list( m_languages.size() );
+	std::vector<std::string> disp_lang_list;
 	std::string disp_lang;
 
 	int i=0;
-	for ( std::vector<std::string>::iterator itr=m_languages.begin(); itr!=m_languages.end(); ++itr )
+	for ( std::vector<FeLanguage>::iterator itr=m_languages.begin(); itr!=m_languages.end(); ++itr )
 	{
-		ctx.fe_settings.get_resource( (*itr), (disp_lang_list[i]) );
-
-		if ( cl.compare(*itr) == 0 )
+		disp_lang_list.push_back( (*itr).label );
+		if ( cl.compare( (*itr).language ) == 0 )
 		{
 			disp_lang = disp_lang_list[i];
 		}
@@ -1510,7 +1509,7 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 
 bool FeMiscMenu::save( FeConfigContext &ctx )
 {
-	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ] );
+	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ].language );
 
 	ctx.fe_settings.set_info( FeSettings::DisplaysMenuExit,
 			ctx.opt_list[1].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );

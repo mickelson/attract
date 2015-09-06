@@ -259,6 +259,30 @@ void FeListBox::setText( const int index,
 	}
 }
 
+void FeListBox::setText( const int index,
+			const std::vector<FeLanguage> &list,
+			FePresent *fep )
+{
+	if ( !m_texts.empty() )
+	{
+		int offset = index - ( (int)m_texts.size() / 2 );
+
+		for ( int i=0; i < (int)m_texts.size(); i++ )
+		{
+			int listentry = offset + i;
+			if (( listentry < 0 ) || ( listentry >= (int)list.size() ))
+				m_texts[i].setString("");
+			else
+			{
+				m_texts[i].setString( list[listentry].label );
+				const FeFontContainer *f = fep->get_pooled_font( list[listentry].font );
+				if ( f )
+					m_texts[i].setFont( f->get_font() );
+			}
+		}
+	}
+}
+
 void FeListBox::setRotation( float r )
 {
 	m_rotation = r;

@@ -164,6 +164,11 @@ bool internal_resolve_config_file(
 	return false;
 }
 
+FeLanguage::FeLanguage( const std::string &l )
+	: language( l )
+{
+}
+
 const char *FeSettings::windowModeTokens[] =
 {
 	"default",
@@ -1738,17 +1743,6 @@ bool FeSettings::get_font_file( std::string &fontpath,
 		}
 	}
 
-	// fall back to default font
-	if ( m_default_font.compare( fontname ) != 0 )
-	{
-		std::cerr << "Could not find font: " << fontname
-					<< ", trying default_font" << std::endl;
-		return get_font_file( fontpath, m_default_font );
-	}
-
-	// should only get here if the default font is not found
-	std::cerr << "Could not find default font \""
-					<< fontname << "\"" << std::endl;
 	return false;
 }
 
@@ -2391,16 +2385,99 @@ void FeSettings::set_language( const std::string &s )
 	}
 }
 
-void FeSettings::get_languages_list( std::vector < std::string > &ll ) const
+void FeSettings::get_languages_list( std::vector < FeLanguage > &ll ) const
 {
-	ll.clear();
+	std::vector<std::string> temp;
 	internal_gather_config_files(
-		ll,
+		temp,
 		FE_LANGUAGE_FILE_EXTENSION,
 		FE_LANGUAGE_SUBDIR );
 
-	if ( ll.empty() )
-		ll.push_back( "en" );
+	if ( temp.empty() )
+	{
+		ll.push_back( FeLanguage( "en" ) );
+		get_resource( "en", ll.back().label );
+	}
+	else
+	{
+		for ( std::vector<std::string>::iterator itr=temp.begin();
+			itr!=temp.end(); ++itr )
+		{
+			ll.push_back( FeLanguage( *itr ) );
+			get_resource( *itr, ll.back().label );
+
+			std::string fname = m_config_path + FE_LANGUAGE_SUBDIR;
+			fname += (*itr);
+			fname += FE_LANGUAGE_FILE_EXTENSION;
+
+			if (( FE_DATA_PATH != NULL )
+				&& ( !file_exists( fname ) ))
+			{
+				fname = FE_DATA_PATH;
+				fname += (*itr);
+				fname += FE_LANGUAGE_FILE_EXTENSION;
+			}
+
+			// Read first line of file to get key info
+			//
+			std::ifstream myfile( fname.c_str() );
+			if ( !myfile.is_open() )
+				continue;
+
+			std::string line;
+			getline( myfile, line );
+
+			if (( line.size() < 2 )
+				|| ( line.compare( 0, 2, "#@" ) != 0 ))
+			{
+				myfile.close();
+				continue;
+			}
+
+			size_t pos(2);
+			std::string tok;
+			token_helper( line, pos, tok, ";" );
+
+			//
+			// Format should be:
+			//
+			// #@label;win_font=xxx,x2x2;mac_font=yyy;linux_font=zzz
+			//
+			if ( !tok.empty() )
+				ll.back().label = tok;
+
+			while ( pos < line.size() )
+			{
+				token_helper( line, pos, tok, ";" );
+				if ( !tok.empty() )
+				{
+					std::string t2;
+					size_t p2(0);
+					token_helper( tok, p2, t2, "=" );
+
+					if ( t2.compare(
+#ifdef SFML_SYSTEM_WINDOWS
+						"win_font"
+#else
+ #ifdef SFML_SYSTEM_MACOS
+						"mac_font"
+ #else
+						"linux_font"
+ #endif
+#endif
+							) == 0 )
+					{
+						while ( p2 < tok.size() )
+						{
+							token_helper( tok, p2, t2, "," );
+							ll.back().font.push_back( t2 );
+						}
+					}
+				}
+			}
+			myfile.close();
+		}
+	}
 }
 
 void FeSettings::get_romlists_list( std::vector < std::string > &ll ) const

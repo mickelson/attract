@@ -287,14 +287,14 @@ int FeOverlay::common_list_dialog(
 
 int FeOverlay::languages_dialog()
 {
-	std::vector<std::string> ll;
+	std::vector<FeLanguage> ll;
 	m_feSettings.get_languages_list( ll );
 
 	if ( ll.size() <= 1 )
 	{
 		// if there is nothing to select, then set what we can and get out of here
 		//
-		m_feSettings.set_language( ll.empty() ? "en" : ll.front() );
+		m_feSettings.set_language( ll.empty() ? "en" : ll.front().language );
 		return 0;
 	}
 
@@ -307,32 +307,94 @@ int FeOverlay::languages_dialog()
 	if ( loc.size() > 1 )
 		test = loc;
 
-	int status( -2 ), current_i( 0 ), i( 0 );
-	std::vector<std::string> pl;
-	for ( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
+	int status( -3 ), current_i( 0 ), i( 0 );
+	for ( std::vector<FeLanguage>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
 	{
-		if (( status < 0 ) && ( test.compare( 0, 5, (*itr) ) == 0 ))
+		if (( status < 0 ) && ( test.compare( 0, 5, (*itr).language ) == 0 ))
 		{
 			current_i = i;
 			status = 0;
 		}
-		else if (( status < -1 ) && ( test.compare( 0, 2, (*itr)) == 0 ))
+		else if (( status < -1 ) && ( test.compare( 0, 2, (*itr).language) == 0 ))
 		{
 			current_i = i;
 			status = -1;
 		}
+		else if (( status < -2 ) && ( (*itr).language.compare( 0, 2, "en" ) == 0 ))
+		{
+			current_i = i;
+			status = -2;
+		}
 
-		pl.push_back( std::string() );
-		m_feSettings.get_resource( (*itr), pl.back() );
 		i++;
 	}
 
-	int sel = common_list_dialog( std::string(),
-					pl, current_i,
-					pl.size() - 1 );
+	sf::Vector2i size;
+	sf::Vector2f text_scale;
+	int char_size;
+	get_common( size, text_scale, char_size );
+
+	if ( ll.size() > 8 )
+		char_size /= 2;
+
+	std::vector<sf::Drawable *> draw_list;
+
+	sf::RectangleShape bg( sf::Vector2f( size.x, size.y ) );
+	bg.setFillColor( m_bgColour );
+	bg.setOutlineColor( m_textColour );
+	bg.setOutlineThickness( -2 );
+	draw_list.push_back( &bg );
+
+	FeTextPrimative heading( m_fePresent.get_font(), m_selColour, sf::Color::Transparent, char_size );
+	heading.setSize( size.x, size.y / 8 );
+	heading.setOutlineColor( m_textColour );
+	heading.setOutlineThickness( -2 );
+	heading.setTextScale( text_scale );
+
+	heading.setString( "" );
+	draw_list.push_back( &heading );
+
+	FeListBox dialog(
+		m_fePresent.get_font(),
+		m_textColour,
+		sf::Color::Transparent,
+		m_selColour,
+		m_selBgColour,
+		char_size,
+		size.y / ( char_size * 1.5 * text_scale.y ) );
+
+	dialog.setPosition( 2, size.y / 8 );
+	dialog.setSize( size.x - 4, size.y * 7 / 8 );
+	dialog.init();
+	dialog.setTextScale( text_scale );
+	draw_list.push_back( &dialog );
+
+	int sel = current_i;
+	dialog.setText( sel, ll, &m_fePresent );
+
+	FeEventLoopCtx c( draw_list, sel, -1, ll.size() - 1 );
+
+	m_overlay_is_on = true;
+	while ( event_loop( c ) == false )
+		dialog.setText( sel, ll, &m_fePresent );
+	m_overlay_is_on = false;
 
 	if ( sel >= 0 )
-		m_feSettings.set_language( ll[sel] );
+	{
+		std::string temp;
+		m_feSettings.set_language( ll[sel].language );
+
+		for ( std::vector<std::string>::iterator itr=ll[sel].font.begin();
+				itr != ll[sel].font.end(); ++itr )
+		{
+			if ( m_feSettings.get_font_file( temp, *itr ) )
+			{
+				m_feSettings.set_info( FeSettings::DefaultFont,
+					*itr );
+				break;
+			}
+		}
+	}
 
 	return sel;
 }

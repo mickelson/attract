@@ -215,6 +215,7 @@ public:
 	float get_layout_scale_y() const;
 
 	// Get a font from the font pool, loading it if necessary
+	const FeFontContainer *get_pooled_font( const std::vector < std::string > &l );
 	const FeFontContainer *get_pooled_font( const std::string &n );
 
 	const sf::Vector2i &get_layout_size() const { return m_layoutSize; }

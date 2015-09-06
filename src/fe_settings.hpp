@@ -66,6 +66,16 @@ public:
 	std::string file_name;
 };
 
+class FeLanguage
+{
+public:
+	FeLanguage( const std::string &l );
+
+	std::string language;
+	std::string label;
+	std::vector< std::string > font;
+};
+
 class FeSettings : public FeBaseConfigurable
 {
 public:
@@ -313,6 +323,7 @@ public:
 
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;
+
 	bool get_font_file( std::string &fullpath, const std::string &filename="" ) const;
 
 	WindowType get_window_mode() const;
@@ -381,9 +392,9 @@ public:
 	void get_resource( const std::string &token, const std::string &rep,
 		std::string &str ) const;
 
-	void set_language( const std::string &s );
+	void set_language( const std::string &l );
 	const std::string &get_language() const { return m_language; }
-	void get_languages_list( std::vector < std::string > &ll ) const;
+	void get_languages_list( std::vector < FeLanguage > &ll ) const;
 
 	// Utility function to get a list of layout*.nut files from the specified path...
 	static void get_layout_file_basenames_from_path(

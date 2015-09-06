@@ -1,5 +1,4 @@
-#
-# Languages
+#@English
 #
 en;English
 fr;Français

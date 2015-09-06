@@ -1,4 +1,5 @@
-﻿#
+#@한글 (Korean);win_font=ARIALUNI,BATANG,MALGUN;mac_font=AppleMyungjo;linux_font=UnBatang
+#
 # General
 #
 Exit Attract-Mode;프로그램 종료

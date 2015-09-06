@@ -28,6 +28,8 @@
 #include "tp.hpp"
 
 class FeSettings;
+class FePresent;
+class FeLanguage;
 
 //
 // The text game list
@@ -75,6 +77,12 @@ public:
 
 	void setRotation( float );
 	void setText( const int index, const std::vector<std::string> &list );
+
+	// special case for the language selection listbox (different fonts)
+	void setText( const int index,
+			const std::vector<FeLanguage> &list,
+			FePresent *fep );
+
 	int getRowCount() const;
 
 	void clear();

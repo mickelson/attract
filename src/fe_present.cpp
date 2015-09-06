@@ -563,13 +563,29 @@ void FePresent::set_layout_height( int h )
 
 const FeFontContainer *FePresent::get_pooled_font( const std::string &n )
 {
-	std::string fullpath;
-	if ( !m_feSettings->get_font_file( fullpath, n ) )
-		return NULL;
+	std::vector<std::string> my_list;
+	my_list.push_back( n );
 
-	// First check if this matches the default font
+	return get_pooled_font( my_list );
+}
+
+const FeFontContainer *FePresent::get_pooled_font(
+		const std::vector < std::string > &l )
+{
+	std::string fullpath;
+
+	// search list for a font
+	for ( std::vector<std::string>::const_iterator itr=l.begin();
+			itr != l.end(); ++itr )
+	{
+		if ( m_feSettings->get_font_file( fullpath, *itr ) )
+			break;
+	}
+
+	// Check if this just matches the default font
 	//
-	if ( fullpath.compare( m_defaultFont.get_name() ) == 0 )
+	if ( fullpath.empty()
+			|| ( fullpath.compare( m_defaultFont.get_name() ) == 0 ) )
 		return &m_defaultFont;
 
 	// Next check if this font is already loaded in our pool

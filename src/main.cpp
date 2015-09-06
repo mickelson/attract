@@ -336,12 +336,12 @@ int main(int argc, char *argv[])
 		// If our language isn't set at this point, we want to prompt the user for the language
 		// they wish to use
 		//
-
-		// TODO: FIXME: languages_dialog segfaults unless there is a layout loaded first
-		feVM.load_layout( true );
-
 		if ( feOverlay.languages_dialog() < 0 )
 			exit_selected = true;
+
+		// Font may change depending on the language selected
+		feSettings.get_font_file( defaultFontFile );
+		defaultFont.set_font( defaultFontFile );
 	}
 
 	soundsys.sound_event( FeInputMap::EventStartup );

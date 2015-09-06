@@ -378,7 +378,7 @@ public:
 
 class FeMiscMenu : public FeBaseConfigMenu
 {
-	std::vector<std::string> m_languages;
+	std::vector<FeLanguage> m_languages;
 
 public:
 	void get_options( FeConfigContext &ctx );

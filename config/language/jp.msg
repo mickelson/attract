@@ -1,4 +1,5 @@
-﻿#
+#@日本語 (Japanese);win_font=ARIALUNI,MSMINCHO;mac_font=Osaka;linux_font=TakaoGothic,TakaoPGothic
+#
 # General
 #
 Exit Attract-Mode;プログラムを終了
