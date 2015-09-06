@@ -381,13 +381,13 @@ int FeOverlay::languages_dialog()
 
 	if ( sel >= 0 )
 	{
-		std::string temp;
+		std::string temp1,temp2;
 		m_feSettings.set_language( ll[sel].language );
 
 		for ( std::vector<std::string>::iterator itr=ll[sel].font.begin();
 				itr != ll[sel].font.end(); ++itr )
 		{
-			if ( m_feSettings.get_font_file( temp, *itr ) )
+			if ( m_feSettings.get_font_file( temp1, temp2, *itr ) )
 			{
 				m_feSettings.set_info( FeSettings::DefaultFont,
 					*itr );
