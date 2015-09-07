@@ -290,16 +290,16 @@ public:
 		Loader
 	};
 
-	void get_path( FePathType t,
+	bool get_path( FePathType t,
 		std::string &path,
 		std::string &filename ) const;
 
-	void get_path( FePathType t,
+	bool get_path( FePathType t,
 		std::string &path ) const;
 
 	FeLayoutInfo &get_current_config( FePathType t );
 
-	std::string get_layout_dir( const std::string &layout_name ) const;
+	bool get_layout_dir( const std::string &layout_name, std::string &layout_dir ) const;
 	void get_layouts_list( std::vector<std::string> &layouts ) const;
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
 

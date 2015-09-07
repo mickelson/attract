@@ -1717,7 +1717,7 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 
 		ctx.add_optl( Opt::INFO, "Name", name, "_help_layout_name" );
 
-		m_file_path = ctx.fe_settings.get_layout_dir( name );
+		ctx.fe_settings.get_layout_dir( name, m_file_path );
 
 		std::vector< std::string > temp_list;
 		FeSettings::get_layout_file_basenames_from_path(

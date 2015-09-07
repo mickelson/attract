@@ -776,7 +776,7 @@ FeRomInfo *FeSettings::get_rom_absolute( int filter_index, int rom_index )
 	return &(m_rl.lookup( filter_index, rom_index ));
 }
 
-void FeSettings::get_path(
+bool FeSettings::get_path(
 	FePathType t,
 	std::string &path,
 	std::string &file ) const
@@ -809,8 +809,9 @@ void FeSettings::get_path(
 
 			path = temp.substr( 0, len + 1 );
 			file = FE_INTRO_FILE;
+			return true;
 		}
-		break;
+		return false;
 
 	case Loader:
 		if ( internal_resolve_config_file( m_config_path,
@@ -821,8 +822,9 @@ void FeSettings::get_path(
 
 			path = temp.substr( 0, len + 1 );
 			file = FE_LOADER_FILE;
+			return true;
 		}
-		break;
+		return false;
 
 	case ScreenSaver:
 		if ( internal_resolve_config_file( m_config_path,
@@ -833,21 +835,26 @@ void FeSettings::get_path(
 
 			path = temp.substr( 0, len + 1 );
 			file = FE_SCREENSAVER_FILE;
+
+			return true;
 		}
 		else
 		{
 			std::cerr << "Error loading screensaver: " << FE_SCREENSAVER_FILE
 					<< std::endl;
+			return false;
 		}
 		break;
 
 	case Layout:
 	default:
 		if ( m_current_display < 0 )
-			return;
+			return false;
 
-		path = get_layout_dir(
-			m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ));
+		if ( !get_layout_dir(
+				m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ),
+				path ) )
+			return false;
 
 		file = m_displays[m_current_display].get_current_layout_file();
 		if ( file.empty() )
@@ -855,7 +862,8 @@ void FeSettings::get_path(
 			if ( tail_compare( path, FE_ZIP_EXT ) )
 			{
 				std::vector<std::string> zdir;
-				fe_zip_get_dir( path.c_str(), zdir );
+				if ( !fe_zip_get_dir( path.c_str(), zdir ) )
+					return false;
 
 				std::string temp = FE_LAYOUT_FILE_BASE;
 				temp += FE_LAYOUT_FILE_EXTENSION;
@@ -885,14 +893,15 @@ void FeSettings::get_path(
 			file += FE_LAYOUT_FILE_EXTENSION;
 		break;
 	}
+	return true;
 }
 
-void FeSettings::get_path(
+bool FeSettings::get_path(
 	FePathType t,
 	std::string &path ) const
 {
 	std::string temp;
-	get_path( t, path, temp );
+	return get_path( t, path, temp );
 }
 
 void FeSettings::get_layout_file_basenames_from_path(
@@ -932,20 +941,20 @@ void FeSettings::get_layout_file_basenames_from_path(
 	}
 }
 
-std::string FeSettings::get_layout_dir( const std::string &layout_name ) const
+bool FeSettings::get_layout_dir(
+	const std::string &layout_name,
+	std::string &layout_dir ) const
 {
 	if ( layout_name.empty() )
-		return FE_EMPTY_STRING;
+		return false;
 
 	std::string temp;
-	if ( internal_resolve_config_file( m_config_path, temp,
+	if ( internal_resolve_config_file( m_config_path, layout_dir,
 			FE_LAYOUT_SUBDIR, layout_name + "/" ) )
-		return temp;
+		return true;
 
-	internal_resolve_config_file( m_config_path, temp,
+	return internal_resolve_config_file( m_config_path, layout_dir,
 		FE_LAYOUT_SUBDIR, layout_name + FE_ZIP_EXT );
-
-	return temp;
 }
 
 FeLayoutInfo &FeSettings::get_layout_config( const std::string &layout_name )

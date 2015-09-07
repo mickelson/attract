@@ -814,7 +814,8 @@ bool FeVM::on_new_layout()
 	// Run the layout script
 	//
 	std::string path, filename;
-	m_feSettings->get_path( FeSettings::Current, path, filename );
+	bool skip_layout = !m_feSettings->get_path( FeSettings::Current, path, filename );
+
 	std::string rep_path( path );
 
 	fe.SetValue( _SC("script_dir"), path );
@@ -838,12 +839,21 @@ bool FeVM::on_new_layout()
 		}
 	}
 
-	if ( !run_script( path, filename ) )
+	if ( skip_layout )
+	{
+		FeDisplayInfo *di = m_feSettings->get_display(
+			m_feSettings->get_current_display_index() );
+
+		if ( di )
+			std::cerr << " ! Error opening layout: "
+				<< di->get_info( FeDisplayInfo::Layout ) << std::endl;
+	}
+	else if ( !run_script( path, filename ) )
 	{
 		if ( ps == FeSettings::Intro_Showing )
 			return false; // silent fail if intro is not found
 		else
-			std::cerr << "Script file not found: " << path
+			std::cerr << " ! Script file not found: " << path
 				<< " (" << filename << ")" << std::endl;
 	}
 
@@ -879,7 +889,7 @@ bool FeVM::on_new_layout()
 	fe.SetValue( _SC("script_file"), "" );
 	m_script_cfg = NULL;
 
-	if ( ps == FeSettings::Layout_Showing )
+	if ( !skip_layout && ( ps == FeSettings::Layout_Showing ))
 	{
 		std::cout << " - Loaded layout: " << rep_path
 			<< " (" << filename << ")" << std::endl;
