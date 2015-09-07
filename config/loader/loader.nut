@@ -2,7 +2,9 @@
 // Map of supported theme file types -> their loader script
 //
 local loadmap = [
-	[ ".mll", "mala.nut" ]
+	[ ".mll", "mala.nut" ],
+	[ ".lay", "mamewah.nut" ],
+	[ ".xml", "attract_xml.nut" ]
 ];
 
 fe.load_module( "file" );
