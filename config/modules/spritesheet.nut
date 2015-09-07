@@ -2,6 +2,11 @@
 //
 // Attract-Mode Frontend - "spritesheet" module
 //
+//  ******************************************************************************************
+//  NOTE: THIS MODULE IS OUTDATED. I RECOMMEND USING A SPRITEANIMATION WITH THE ANIMATE MODULE.
+//        THIS MAY HAVE SOME FEATURES THAT ARE NOT YET SUPPORTED, SO IT WILL STICK AROUND FOR NOW.
+//  ******************************************************************************************
+//
 // SpriteSheet allows you to create animations from an image with multiple "sprites"
 //
 // Usage:
