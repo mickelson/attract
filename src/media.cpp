@@ -974,7 +974,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 				if ( m_audio->codec_ctx->sample_fmt != AV_SAMPLE_FMT_S16 )
 				{
 					std::cerr << "Warning: Attract-Mode was compiled without an audio resampler (libswresample or libavresample)." << std::endl
-						<< "The audio format in " << name << " appears to need resampling.  It will likely sound like garbage." << std::endl;
+						<< "The audio format in " << m_imp->m_format_ctx->filename << " appears to need resampling.  It will likely sound like garbage." << std::endl;
 				}
 #endif
 			}
