@@ -383,15 +383,12 @@ bool scummvm_cb( const char *buff, void *opaque )
 	return true;
 }
 
-bool scummvm_lookup( FeImporterContext &c )
+void scummvm_target( const std::string &base_command,
+	const std::string &params,
+	std::map< std::string, std::string, myclasscmp > &my_map )
 {
-	std::string base_command = clean_path( c.emulator.get_info(
-				FeEmulatorInfo::Executable ) );
-
 	std::string output;
-	run_program( base_command, "-z", scummvm_cb, &output );
-
-	std::map< std::string, std::string > my_map;
+	run_program( base_command, params, scummvm_cb, &output );
 
 	size_t pos( 0 );
 	while ( pos < output.size() )
@@ -405,8 +402,22 @@ bool scummvm_lookup( FeImporterContext &c )
 		token_helper( line, pos2, shortn, " " );
 		token_helper( line, pos2, longn, "\n" );
 
-		my_map[ shortn ] = longn;
+		my_map[ shortn ] = name_with_brackets_stripped( longn );
 	}
+}
+
+//
+// Map scummvm gameids -> full name using -z and -t output.
+//
+bool scummvm_lookup( FeImporterContext &c )
+{
+	std::string base_command = clean_path( c.emulator.get_info(
+				FeEmulatorInfo::Executable ) );
+
+	std::map< std::string, std::string, myclasscmp > my_map;
+
+	scummvm_target( base_command, "-z", my_map );
+	scummvm_target( base_command, "-t", my_map );
 
 	for ( FeRomInfoListType::iterator itr = c.romlist.begin(); itr != c.romlist.end(); ++itr )
 	{
