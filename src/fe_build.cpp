@@ -376,6 +376,48 @@ bool process_q_simple( FeNetQueue &q,
 	return true;
 }
 
+bool scummvm_cb( const char *buff, void *opaque )
+{
+	std::string *outp = (std::string *)opaque;
+	*outp += buff;
+	return true;
+}
+
+bool scummvm_lookup( FeImporterContext &c )
+{
+	std::string base_command = clean_path( c.emulator.get_info(
+				FeEmulatorInfo::Executable ) );
+
+	std::string output;
+	run_program( base_command, "-z", scummvm_cb, &output );
+
+	std::map< std::string, std::string > my_map;
+
+	size_t pos( 0 );
+	while ( pos < output.size() )
+	{
+		std::string line;
+		token_helper( output, pos, line, "\n" );
+
+		std::string shortn;
+		std::string longn;
+		size_t pos2( 0 );
+		token_helper( line, pos2, shortn, " " );
+		token_helper( line, pos2, longn, "\n" );
+
+		my_map[ shortn ] = longn;
+	}
+
+	for ( FeRomInfoListType::iterator itr = c.romlist.begin(); itr != c.romlist.end(); ++itr )
+	{
+		std::map< std::string, std::string >::iterator itm;
+		itm = my_map.find( (*itr).get_info( FeRomInfo::Romname ) );
+		if ( itm != my_map.end() )
+			(*itr).set_info( FeRomInfo::Title, (*itm).second );
+	}
+	return true;
+}
+
 }; // end namespace
 
 bool FeSettings::mameps_scraper( FeImporterContext &c )
@@ -853,9 +895,15 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 			else
 				std::cerr << "Error opening file: " << fname << std::endl;
 		}
+		thegamesdb_scraper( c );
 	}
 	else if ( source.compare( "thegamesdb.net" ) == 0 )
 		thegamesdb_scraper( c );
+	else if ( source.compare( "scummvm" ) == 0 )
+	{
+		scummvm_lookup( c );
+		thegamesdb_scraper( c );
+	}
 	else
 	{
 		std::cout << "Unrecognized import_source setting: " << source

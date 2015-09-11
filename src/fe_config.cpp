@@ -245,6 +245,7 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 					"mess",
 					"thegamesdb.net",
 					"steam",
+					"scummvm",
 					NULL
 				};
 
