@@ -246,35 +246,48 @@ bool FeWindow::run()
 	osx_take_focus();
 #endif
 
-	if ( min_run <= 0 )
-		return true;
-
-	sf::Time elapsed = timer.getElapsedTime();
-	if ( elapsed < sf::seconds( min_run ) )
-		sf::sleep( sf::seconds( min_run ) - elapsed );
-
-	//
-	// Wait for focus to return
-	//
-	while ( isOpen() )
+	if ( min_run > 0 )
 	{
-		sf::Event ev;
-		while (pollEvent(ev))
-		{
-			if ( ev.type == sf::Event::GainedFocus )
-				return true;
-			else if ( ev.type == sf::Event::Closed )
-				return false;
-		}
+		sf::Time elapsed = timer.getElapsedTime();
+		if ( elapsed < sf::seconds( min_run ) )
+			sf::sleep( sf::seconds( min_run ) - elapsed );
 
-		sf::sleep( sf::milliseconds( 250 ) );
+		//
+		// Wait for focus to return
+		//
+		bool done_wait=false;
+		while ( !done_wait && isOpen() )
+		{
+			sf::Event ev;
+			while (pollEvent(ev))
+			{
+				if ( ev.type == sf::Event::GainedFocus )
+				{
+					done_wait=true;
+					break;
+				}
+				else if ( ev.type == sf::Event::Closed )
+					return false;
+			}
+
+			sf::sleep( sf::milliseconds( 250 ) );
+		}
 	}
 
 #ifndef SFML_SYSTEM_MACOS
 	sf::Mouse::setPosition( reset_pos );
 #endif
 
-	return false;
+	// Empty the window event queue, so we don't go triggering other
+	// right away after running an emulator
+	sf::Event ev;
+	while (isOpen() && pollEvent(ev))
+	{
+		if ( ev.type == sf::Event::Closed )
+			return false;
+	}
+
+	return true;
 }
 
 void FeWindow::on_exit()
