@@ -158,7 +158,7 @@ void process_args( int argc, char *argv[],
 			next_arg++;
 			if ( next_arg < argc )
 			{
-				if ( rule.process_setting( "", argv[next_arg], "" ) != 0 )
+				if ( rule.process_setting( "rule", argv[next_arg], "" ) != 0 )
 				{
 					// Error message already displayed
 					exit(1);
@@ -172,6 +172,29 @@ void process_args( int argc, char *argv[],
 			}
 
 			filter.get_rules().push_back( rule );
+		}
+		else if (( strcmp( argv[next_arg], "-E" ) == 0 )
+				|| ( strcmp( argv[next_arg], "--exception" ) == 0 ))
+		{
+			FeRule ex;
+
+			next_arg++;
+			if ( next_arg < argc )
+			{
+				if ( ex.process_setting( "exception", argv[next_arg], "" ) != 0 )
+				{
+					// Error message already displayed
+					exit(1);
+				}
+				next_arg++;
+			}
+			else
+			{
+				std::cerr << "Error, no exception specified with --exception option." << std::endl;
+				exit(1);
+			}
+
+			filter.get_rules().push_back( ex );
 		}
 		else if (( strcmp( argv[next_arg], "-s" ) == 0 )
 				|| ( strcmp( argv[next_arg], "--scrape-art" ) == 0 ))
@@ -208,6 +231,9 @@ void process_args( int argc, char *argv[],
 #endif
 #ifdef FE_RPI
 				<< " +RPi"
+#endif
+#ifndef NO_SWF
+				<< " +SWF"
 #endif
 				<< ") " << std::endl << std::endl;
 
@@ -248,7 +274,9 @@ void process_args( int argc, char *argv[],
 				<< "        *.xml (HyperSpin)" << std::endl
 				<< "     The emulator to use for list entries can be specified as well" << std::endl
 				<< "  -F, --filter <rule>" << std::endl
-				<< "     Apply the specified filter rule to created romlist" << std::endl
+				<< "     Apply the specified filter rule when creating romlist" << std::endl
+				<< "  -E, --exception <exception>" << std::endl
+				<< "     Apply the specified filter rules exception when creating romlist" << std::endl
 				<< "  --full" << std::endl
 				<< "     Use with --build-romlist to include all possible roms [mame/mess only]" << std::endl
 				<< "  -o, --output <romlist>" << std::endl

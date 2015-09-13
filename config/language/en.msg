@@ -37,8 +37,10 @@ _help_emu_delete;Delete the entry for this emulator
 _help_emu_sel;Configure emulator
 _help_emu_add;Add a new emulator
 _help_filter_name;The name for this filter
-_help_filter_rule;Configure filter rule
-_help_filter_add_rule;Add a rule to this filter
+_help_filter_rule;Configure this filter rule.  A game must match all filter rules (or a single exception) to be listed in a filter
+_help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
+_help_filter_add_rule;Add a rule to this filter.  A game must match all filter rules (or a single exception) to be listed in a filter
+_help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_sort_by;The game information attribute that you wish to sort the collection/rom list by.  Set to "No Sort" to keep the ordering from the source collection/rom list
 _help_filter_list_limit;Set this to a non-zero value if you wish to limit the size of a sorted list.  Use a positive value for the first X entries (i.e. "10" gives the first 10 entries), a negative value for the last X entries (i.e. "-25" gives the last 25 entries), or "0" for no limit
 _help_filter_delete;Delete this filter

@@ -557,11 +557,10 @@ FeRuleEditMenu::FeRuleEditMenu()
 
 void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 {
-	ctx.set_style( FeConfigContext::EditList, "Rule Edit" );
-
 	FeRomInfo::Index target( FeRomInfo::LAST_INDEX );
 	FeRule::FilterComp comp( FeRule::LAST_COMPARISON );
 	std::string what, target_str, comp_str;
+	bool is_exception=false;
 
 	if ( m_filter )
 	{
@@ -571,8 +570,12 @@ void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 			target = r[m_index].get_target();
 			comp = r[m_index].get_comp();
 			what = r[m_index].get_what();
+			is_exception = r[m_index].is_exception();
 		}
 	}
+
+	ctx.set_style( FeConfigContext::EditList,
+		is_exception ? "Exception Edit" : "Rule Edit" );
 
 	if ( target != FeRomInfo::LAST_INDEX )
 		ctx.fe_settings.get_resource( FeRomInfo::indexStrings[ target ], target_str );
@@ -605,7 +608,7 @@ void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 	ctx.back_opt().append_vlist( comparisons );
 
 	ctx.add_optl( Opt::EDIT, "Filter Value", what, "_help_rule_value" );
-	ctx.add_optl(Opt::EXIT,"Delete this Rule","","_help_rule_delete");
+	ctx.add_optl(Opt::EXIT,"Delete this Rule", "","_help_rule_delete");
 	ctx.back_opt().opaque = 1;
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -714,7 +717,12 @@ void FeFilterEditMenu::get_options( FeConfigContext &ctx )
 					rule_str += (*itr).get_what();
 				}
 			}
-			ctx.add_optl( Opt::SUBMENU, "Rule", rule_str, "_help_filter_rule" );
+
+			if ( (*itr).is_exception() )
+				ctx.add_optl( Opt::SUBMENU, "Exception", rule_str, "_help_filter_exception" );
+			else
+				ctx.add_optl( Opt::SUBMENU, "Rule", rule_str, "_help_filter_rule" );
+
 			ctx.back_opt().opaque = 100 + i;
 			i++;
 		}
@@ -722,7 +730,10 @@ void FeFilterEditMenu::get_options( FeConfigContext &ctx )
 		ctx.add_optl(Opt::SUBMENU,"Add Rule","","_help_filter_add_rule");
 		ctx.back_opt().opaque = 1;
 
-		if ( m_index >= 0 ) // don't add the folloiwng options for the global filter
+		ctx.add_optl(Opt::SUBMENU,"Add Exception","","_help_filter_add_exception");
+		ctx.back_opt().opaque = 2;
+
+		if ( m_index >= 0 ) // don't add the following options for the global filter
 		{
 			std::string no_sort_str, sort_val;
 			ctx.fe_settings.get_resource( "No Sort", no_sort_str );
@@ -749,7 +760,7 @@ void FeFilterEditMenu::get_options( FeConfigContext &ctx )
 				"_help_filter_list_limit" );
 
 			ctx.add_optl(Opt::EXIT,"Delete this Filter","","_help_filter_delete");
-			ctx.back_opt().opaque = 2;
+			ctx.back_opt().opaque = 3;
 		}
 	}
 
@@ -765,15 +776,19 @@ bool FeFilterEditMenu::on_option_select(
 	FeMenuOpt &o = ctx.curr_opt();
 	FeFilter *f = m_display->get_filter( m_index );
 
-	if (( o.opaque >= 100 ) || ( o.opaque == 1 ))
+	if (( o.opaque >= 100 ) || ( o.opaque == 1 ) || ( o.opaque == 2 ))
 	{
 		int r_index=0;
 
-		if ( o.opaque == 1 )
+		if (( o.opaque == 1 ) || ( o.opaque == 2 ))
 		{
+			bool is_exception = ( o.opaque == 2 );
+
 			std::vector<FeRule> &rules = f->get_rules();
 
 			rules.push_back( FeRule() );
+			rules.back().set_is_exception( is_exception );
+
 			r_index = rules.size() - 1;
 			ctx.save_req=true;
 		}
@@ -783,7 +798,7 @@ bool FeFilterEditMenu::on_option_select(
 		m_rule_menu.set_rule_index( f, r_index );
 		submenu=&m_rule_menu;
 	}
-	else if ( o.opaque == 2 )
+	else if ( o.opaque == 3 )
 	{
 		// "Delete this Filter"
 		if ( ctx.confirm_dialog( "Delete filter '$1'?",

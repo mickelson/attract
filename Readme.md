@@ -86,10 +86,24 @@ from the "Controls" menu in config mode.  Attract-Mode actions can be mapped
 to most keyboard, mouse and joystick inputs.
 
 **FILTERS:** Filters can be added from the "Displays" menu in config
-mode.  Each filter can have multiple rules associated with it (i.e. a "1980's
-Multiplayer Sports" filter would have 3 rules: (1) that the year be in the
-1980's, (2) that the number of players is not 1, and (3) that the category
-contain "Sports").
+mode.  At their core, filters are a list of "rules" and "exceptions" that the
+frontend steps through, in order, to determine whether or not to list a game.
+If a game does not match a "rule", then it is not shown.  If a game matches to
+an "exception", then it gets listed no matter what, ignoring the rest of the
+rules in the filter.  In other words, in order to be listed a game has to
+match *all* the rules or *just one* exception.
+
+For example, you might want to have a filter that only shows 1980's
+multiplayer sports games.  This would be achieved by creating a filter with
+three rules: (1) that the year be in the 1980s (Year equals "198."), (2) that
+the number of players in not 1 (Players not_equals "1"), and (3) that the
+category contains "Sports" (Category contains "Sports").  Filters use regular
+expressions, which allow for powerful text matching capabilties.  From the
+example above, the "198." will match any four letter word that starts with
+"198".
+
+Filters also allow you to do some other stuff as well, such as controlling
+how the gamelist gets sorted, and how many entries are listed.
 
 **SOUND:** To play sounds in your setup, place the sound file in the "sounds"
 subdirectory of your Attract-Mode config directory.  The sound file can then

@@ -218,7 +218,8 @@ FeRule::FeRule( FeRomInfo::Index t, FilterComp c, const std::string &w )
 	: m_filter_target( t ),
 	m_filter_comp( c ),
 	m_filter_what( w ),
-	m_rex( NULL )
+	m_rex( NULL ),
+	m_is_exception( false )
 {
 }
 
@@ -226,7 +227,8 @@ FeRule::FeRule( const FeRule &r )
 	: m_filter_target( r.m_filter_target ),
 	m_filter_comp( r.m_filter_comp ),
 	m_filter_what( r.m_filter_what ),
-	m_rex( NULL )
+	m_rex( NULL ),
+	m_is_exception( r.m_is_exception )
 {
 }
 
@@ -241,6 +243,7 @@ FeRule &FeRule::operator=( const FeRule &r )
 	m_filter_target = r.m_filter_target;
 	m_filter_comp = r.m_filter_comp;
 	m_filter_what = r.m_filter_what;
+	m_is_exception = r.m_is_exception;
 
 	if ( m_rex )
 		sqstd_rex_free( m_rex );
@@ -325,7 +328,11 @@ void FeRule::save( std::ofstream &f ) const
 	if (( m_filter_target != FeRomInfo::LAST_INDEX )
 		&& ( m_filter_comp != LAST_COMPARISON ))
 	{
-		f << "\t\t" << std::setw(20) << std::left << FeFilter::indexStrings[0] << ' '
+		const char *label=FeFilter::indexStrings[FeFilter::Rule];
+		if ( m_is_exception )
+			label=FeFilter::indexStrings[FeFilter::Exception];
+
+		f << "\t\t" << std::setw(20) << std::left << label << ' '
 			<< FeRomInfo::indexStrings[ m_filter_target ] << ' '
 			<< filterCompStrings[ m_filter_comp ] << ' '
 			<< m_filter_what << std::endl;
@@ -347,9 +354,13 @@ void FeRule::set_values(
 	m_filter_what = w;
 }
 
-int FeRule::process_setting( const std::string &,
+int FeRule::process_setting( const std::string &setting,
          const std::string &value, const std::string &fn )
 {
+	if ( setting.compare(
+			FeFilter::indexStrings[ FeFilter::Exception ] ) == 0 )
+		m_is_exception=true;
+
 	std::string token;
 	size_t pos=0;
 
@@ -402,6 +413,7 @@ int FeRule::process_setting( const std::string &,
 const char *FeFilter::indexStrings[] =
 {
 	"rule",
+	"exception",
 	"sort_by",
 	"reverse_order",
 	"list_limit",
@@ -430,8 +442,8 @@ bool FeFilter::apply_filter( const FeRomInfo &rom ) const
 	for ( std::vector<FeRule>::const_iterator itr=m_rules.begin();
 		itr != m_rules.end(); ++itr )
 	{
-		if ( (*itr).apply_rule( rom ) == false )
-			return false;
+		if ( (*itr).apply_rule( rom ) == (*itr).is_exception() )
+			return (*itr).is_exception();
 	}
 
 	return true;
@@ -440,7 +452,8 @@ bool FeFilter::apply_filter( const FeRomInfo &rom ) const
 int FeFilter::process_setting( const std::string &setting,
          const std::string &value, const std::string &fn )
 {
-	if ( setting.compare( indexStrings[0] ) == 0 ) // rule
+	if (( setting.compare( indexStrings[Rule] ) == 0 ) // rule
+		|| ( setting.compare( indexStrings[Exception] ) == 0 ))
 	{
 		FeRule new_rule;
 
@@ -449,7 +462,7 @@ int FeFilter::process_setting( const std::string &setting,
 
 		m_rules.push_back( new_rule );
 	}
-	else if ( setting.compare( indexStrings[1] ) == 0 ) // sort_by
+	else if ( setting.compare( indexStrings[SortBy] ) == 0 ) // sort_by
 	{
 		for ( int i=0; i < FeRomInfo::LAST_INDEX; i++ )
 		{
@@ -460,11 +473,11 @@ int FeFilter::process_setting( const std::string &setting,
 			}
 		}
 	}
-	else if ( setting.compare( indexStrings[2] ) == 0 ) // reverse_order
+	else if ( setting.compare( indexStrings[ReverseOrder] ) == 0 ) // reverse_order
 	{
 		set_reverse_order( true );
 	}
-	else if ( setting.compare( indexStrings[3] ) == 0 ) // list_limit
+	else if ( setting.compare( indexStrings[ListLimit] ) == 0 ) // list_limit
 	{
 		set_list_limit( as_int( value ) );
 	}

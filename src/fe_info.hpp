@@ -128,6 +128,9 @@ public:
 	FilterComp get_comp() const { return m_filter_comp; };
 	const std::string &get_what() const { return m_filter_what; };
 
+	bool is_exception() const { return m_is_exception; };
+	void set_is_exception( bool f ) { m_is_exception=f; };
+
 	void set_values( FeRomInfo::Index i, FilterComp c, const std::string &w );
 
 	int process_setting( const std::string &,
@@ -138,6 +141,7 @@ private:
 	FilterComp m_filter_comp;
 	std::string m_filter_what;
 	SQRex *m_rex;
+	bool m_is_exception;
 };
 
 //
@@ -146,6 +150,7 @@ private:
 class FeFilter : public FeBaseConfigurable
 {
 public:
+	enum Index { Rule=0, Exception, SortBy, ReverseOrder, ListLimit };
 	static const char *indexStrings[];
 
 	FeFilter( const std::string &name );
