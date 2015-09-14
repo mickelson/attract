@@ -1,10 +1,198 @@
-#@English
 #
 # Interface strings
 #
+$1 Rule(s);$1 Rule(s)
+Action;Action
+Add Artwork;Add Artwork
+Add Emulator;Add Emulator
+Add Filter;Add Filter
+Add Input;Add Input
+Add New Display;Add New Display
+Add Rule;Add Rule
+Add a rule to this filter;Add a rule to this filter
+Add/Remove Favourite;Add/Remove Favourite
+Add/Remove Tags;Add/Remove Tags
+Additional Import File(s);Additional Import File(s)
+All;All
+Allow Exit from 'Displays Menu';Allow Exit from 'Displays Menu'
+AltRomname;AltRomname
+AltTitle;AltTitle
+Ambient Soundtrack;Ambient Soundtrack
+Ambient Volume;Ambient Volume
+Artwork Label;Artwork Label
+Artwork Path;Artwork Path
+Back;Back
+Category;Category
+CloneOf;CloneOf
+Collection/Rom List;Collection/Rom List
+Command;Command
+Command Arguments;Command Arguments
+Comparison;Comparison
+Config / Emulators;Config / Emulators
+Configure;Configure
+Configure / Displays;Configure / Displays
+Configure / Input;Configure / Input
+Configure / Miscellaneous;Configure / Miscellaneous
+Configure / Plug-ins;Configure / Plug-ins
+Configure / Scraper;Configure / Scraper
+Configure / Sound;Configure / Sound
+Configure Plug-in;Configure Plug-in
+Configure Screen Saver;Configure Screen Saver
+Configure available emulators;Configure available emulators
+Configure filter rule;Configure filter rule
+Confirm Favourites;Confirm Favourites
+Control;Control
+Controls;Controls
+Custom1;Custom1
+Custom2;Custom2
+Custom3;Custom3
+Custom4;Custom4
+Custom5;Custom5
+Custom6;Custom6
+Default Font;Default Font
+Delete display '$1'?;Delete display '$1'?
+Delete emulator '$1'?;Delete emulator '$1'?
+Delete filter '$1'?;Delete filter '$1'?
+Delete this Display;Delete this Display
+Delete this Emulator;Delete this Emulator
+Delete this Filter;Delete this Filter
+Delete this Rule;Delete this Rule
+Delete this filter;Delete this filter
+Disabled;Disabled
+Display Edit;Display Edit
+Display Name;Display Name
+DisplayCount;DisplayCount
+DisplayType;DisplayType
+Displays;Displays
+Displays Menu;Displays Menu
+Down;Down
+Edit Artwork;Edit Artwork
+Edit Emulator;Edit Emulator
+Edit Input;Edit Input
+Empty;Empty
+Emulator;Emulator
+Emulator Name;Emulator Name
+Emulators;Emulators
+Enabled;Enabled
+Enter Display Name;Enter Display Name
+Enter Emulator Name;Enter Emulator Name
+Enter Filter Name;Enter Filter Name
+Executable;Executable
+Exit (Confirm);Exit (Confirm)
+Exit Attract-Mode;Exit Attract-Mode
+Exit Attract-Mode?;Exit Attract-Mode?
+Exit Command;Exit Command
+Exit Hotkey;Exit Hotkey
+Exit to Desktop;Exit to Desktop
+Favourite;Favourite
+FileIsAvailable;FileIsAvailable
+Fill Screen (Default);Fill Screen (Default)
+Filter;Filter
+Filter Edit;Filter Edit
+Filter Name;Filter Name
+Filter Value;Filter Value
+Filter Wrap Mode;Filter Wrap Mode
+Filters Menu;Filters Menu
+Flip;Flip
+Font Path;Font Path
+Fullscreen Mode;Fullscreen Mode
+Game Return Sound;Game Return Sound
+General;General
+Generate Collection/Rom List;Generate Collection/Rom List
+Generating Rom List: $1%;Generating Rom List: $1%
+Global Filter;Global Filter
+Hide Brackets in Game Title;Hide Brackets in Game Title
+Info Source/Scraper;Info Source/Scraper
+Joystick Threshold;Joystick Threshold
+Jump to Next Display;Jump to Next Display
+Language;Language
+Launch Last Game on Startup;Launch Last Game on Startup
+Layout;Layout
+Layout Options;Layout Options
+Left;Left
+List Limit;List Limit
+Manufacturer;Manufacturer
+Minimum Run Time;Minimum Run Time
+Mouse Threshold;Mouse Threshold
+Movie Volume;Movie Volume
+Name;Name
+Next Display;Next Display
+Next Favourite;Next Favourite
+Next Filter;Next Filter
+Next Letter;Next Letter
+No;No
+No Sort;No Sort
+No Wrap;No Wrap
+None;None
+OR;OR
+Overwrite existing '$1' list?;Overwrite existing '$1' list?
+Page Down;Page Down
+Page Up;Page Up
+Play Sound;Play Sound
+PlayedCount;PlayedCount
+PlayedTime;PlayedTime
+Players;Players
+Plug-ins;Plug-ins
+Press Input;Press Input
+Previous Display;Previous Display
+Previous Favourite;Previous Favourite
+Previous Filter;Previous Filter
+Previous Letter;Previous Letter
+Random Game;Random Game
+Remove Input;Remove Input
+Replay Last Game;Replay Last Game
+Right;Right
+Rom Extension(s);Rom Extension(s)
+Rom Path(s);Rom Path(s)
+Rom path '$1' not found, proceed anyways?;Rom path '$1' not found, proceed anyways?
+Rotation;Rotation
+Rule;Rule
+Rule Edit;Rule Edit
+Scrape Artwork;Scrape Artwork
+Scrape Fanart;Scrape Fanart
+Scrape Flyers/Boxart;Scrape Flyers/Boxart
+Scrape Game Logos (Wheel Art);Scrape Game Logos (Wheel Art)
+Scrape Marquees;Scrape Marquees
+Scrape Snaps;Scrape Snaps
+Scraper;Scraper
+Scraping Artwork: $1%;Scraping Artwork: $1%
+Screen Saver;Screen Saver
+Screen Saver Timeout;Screen Saver Timeout
+Screenshot;Screenshot
+Select;Select
+Sort By;Sort By
+Sound;Sound
+Sound Volume;Sound Volume
+Startup Sound;Startup Sound
+Status;Status
+System Identifier;System Identifier
+Tags;Tags
+Target;Target
+The name for this filter;The name for this filter
+This will overwrite an existing mapping ($1).  Proceed?;This will overwrite an existing mapping ($1).  Proceed?
+Title;Title
+Toggle Flip;Toggle Flip
+Toggle Layout;Toggle Layout
+Toggle Movie;Toggle Movie
+Toggle Mute;Toggle Mute
+Toggle Rotate Left;Toggle Rotate Left
+Toggle Rotate Right;Toggle Rotate Right
+Track Usage;Track Usage
+Up;Up
+Window;Window
+Window Mode;Window Mode
+Wrap within Display (Default);Wrap within Display (Default)
+Wrote $1 entries to Collection/Rom List;Wrote $1 entries to Collection/Rom List
+XML Mode;XML Mode
+Year;Year
+Yes;Yes
+contains;contains
+does not contain;does not contain
+does not equal;does not equal
+equals;equals
 
 #
-# Help messages
+# Help message strings
 #
 _help_art;An artwork resource available for use by layouts
 _help_art_add;Add a new artwork resource (marquee images, screen shots, etc.)
@@ -122,16 +310,5 @@ _help_volume;Valid volume settings are from 0 (mute) to 100
 _help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
-#
-# Extra strings provided by translation
-#
-en;English
-es;Español
-fr;Français
-jp;日本語 (Japanese)
-kr;한글 (Korean)
-
-#@DONE_TRANSLATED
-#
-# Strings still needing translation
-#
+# The next line is needed at the end of the template file
+#@DONE_TEMPLATE

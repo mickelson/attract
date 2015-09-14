@@ -675,7 +675,7 @@ int main(int argc, char *argv[])
 						feSettings.get_display_names( names_list );
 
 						std::string title;
-						feSettings.get_resource( "Lists", title );
+						feSettings.get_resource( "Displays", title );
 
 						int exit_opt=-999;
 						if ( feSettings.get_info_bool( FeSettings::DisplaysMenuExit ) )
