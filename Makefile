@@ -142,14 +142,15 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
  else
   UNAME = $(shell uname -a)
   ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+   FE_MACOSX_COMPILE=1
+  endif
+  ifeq ($(FE_MACOSX_COMPILE),1)
    #
    # Mac OS X
    #
    _DEP += fe_util_osx.hpp
    _OBJ += fe_util_osx.o
-   LIBS += -framework Cocoa
-
-   FE_MACOSX_COMPILE=1
+   LIBS += -framework Cocoa -framework Carbon -framework IOKit
   else
    #
    # Test for Raspberry Pi
@@ -196,15 +197,17 @@ ifneq ($(NO_NET),1)
  _OBJ += fe_net.o
 endif
 
+ifeq ($(FE_MACOSX_COMPILE),1)
+  LIBS += -framework OpenGL -ljpeg
+endif
+
 ifneq ($(NO_SWF),1)
  _DEP += swf.hpp
  _OBJ += swf.o
  LIBS += -ljpeg -lz
 
  ifneq ($(FE_WINDOWS_COMPILE),1)
-  ifeq ($(FE_MACOSX_COMPILE),1)
-   LIBS += -ldl -framework OpenGL
-  else
+  ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
    ifeq ($(FE_RPI),1)
     LIBS += -ldl -lGLESv1_CM
