@@ -496,11 +496,22 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 	m_scriptShaders.push_back( new FeShader() );
 	FeShader *sh = m_scriptShaders.back();
 
+	if ( !is_relative_path( shader1 ) )
+		path.clear();
+
 	switch ( type )
 	{
 		case FeShader::VertexAndFragment:
 			if ( tail_compare( path, FE_ZIP_EXT ) )
 			{
+				//
+				// Known Issue: We don't properly handle the
+				// situation where one shader is specified as a
+				// relative path and is in a zip, while the other
+				// is specified as an absolute path.  If the first
+				// is in a zip, the second is assumed to be in the
+				// same zip as well.
+				//
 				FeZipStream zs1( path );
 				zs1.open( shader1 );
 
@@ -511,7 +522,11 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 			}
 			else
 			{
-				sh->load( path + shader1, path + shader2 );
+				std::string path2 = path;
+				if ( shader2 && !is_relative_path( shader2 ) )
+					path2.clear();
+
+				sh->load( path + shader1, path2 + shader2 );
 			}
 			break;
 
