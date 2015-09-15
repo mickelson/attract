@@ -44,15 +44,26 @@
 
 #FE_DEBUG=1
 
-CC=$(CROSS)gcc
-CXX=$(CROSS)g++
-CFLAGS=
-STRIP=$(CROSS)strip
-PKG_CONFIG=$(CROSS)pkg-config
-AR=$(CROSS)ar
+CC=gcc
+CXX=g++
+CFLAGS=$(EXTRA_CFLAGS)
+STRIP=strip
+PKG_CONFIG=pkg-config
+AR=ar
 ARFLAGS=rc
 RM=rm -f
 MD=mkdir
+
+ifneq ($(origin TOOLCHAIN),undefined)
+override CC := $(TOOLCHAIN)-$(CC)
+override CXX := $(TOOLCHAIN)-$(CXX)
+override AR := $(TOOLCHAIN)-$(AR)
+endif
+ 
+ifneq ($(origin CROSS),undefined)
+override STRIP := $(TOOLCHAIN)-$(STRIP)
+override PKG_CONFIG := $(TOOLCHAIN)-$(PKG_CONFIG)
+endif
 
 prefix=/usr/local
 datarootdir=$(prefix)/share
