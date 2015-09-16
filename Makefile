@@ -44,15 +44,26 @@
 
 #FE_DEBUG=1
 
-CC=$(CROSS)gcc
-CPP=$(CROSS)g++
-CFLAGS=
-STRIP=$(CROSS)strip
-PKG_CONFIG=$(CROSS)pkg-config
-AR=$(CROSS)ar
+CC=gcc
+CXX=g++
+CFLAGS=$(EXTRA_CFLAGS)
+STRIP=strip
+PKG_CONFIG=pkg-config
+AR=ar
 ARFLAGS=rc
 RM=rm -f
 MD=mkdir
+
+ifneq ($(origin TOOLCHAIN),undefined)
+override CC := $(TOOLCHAIN)-$(CC)
+override CXX := $(TOOLCHAIN)-$(CXX)
+override AR := $(TOOLCHAIN)-$(AR)
+endif
+ 
+ifneq ($(origin CROSS),undefined)
+override STRIP := $(TOOLCHAIN)-$(STRIP)
+override PKG_CONFIG := $(TOOLCHAIN)-$(PKG_CONFIG)
+endif
 
 prefix=/usr/local
 datarootdir=$(prefix)/share
@@ -131,14 +142,15 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
  else
   UNAME = $(shell uname -a)
   ifeq ($(firstword $(filter Darwin,$(UNAME))),Darwin)
+   FE_MACOSX_COMPILE=1
+  endif
+  ifeq ($(FE_MACOSX_COMPILE),1)
    #
    # Mac OS X
    #
    _DEP += fe_util_osx.hpp
    _OBJ += fe_util_osx.o
-   LIBS += -framework Cocoa
-
-   FE_MACOSX_COMPILE=1
+   LIBS += -framework Cocoa -framework Carbon -framework IOKit
   else
    #
    # Test for Raspberry Pi
@@ -185,15 +197,17 @@ ifneq ($(NO_NET),1)
  _OBJ += fe_net.o
 endif
 
+ifeq ($(FE_MACOSX_COMPILE),1)
+  LIBS += -framework OpenGL -ljpeg
+endif
+
 ifneq ($(NO_SWF),1)
  _DEP += swf.hpp
  _OBJ += swf.o
  LIBS += -ljpeg -lz
 
  ifneq ($(FE_WINDOWS_COMPILE),1)
-  ifeq ($(FE_MACOSX_COMPILE),1)
-   LIBS += -ldl -framework OpenGL
-  else
+  ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
    ifeq ($(FE_RPI),1)
     LIBS += -ldl -lGLESv1_CM
@@ -316,13 +330,13 @@ OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
-	$(CPP) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
+	$(CXX) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 	$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
 $(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
-	$(CPP) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
+	$(CXX) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
 ifneq ($(FE_DEBUG),1)
 	$(STRIP) $@
 endif
@@ -377,7 +391,7 @@ $(OBJ_DIR)/libsquirrel.a: $(SQUIRRELOBJS) | $(SQUIRREL_OBJ_DIR)
 	$(AR) $(ARFLAGS) $@ $(SQUIRRELOBJS)
 
 $(SQUIRREL_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/squirrel/%.cpp | $(SQUIRREL_OBJ_DIR)
-	$(CPP) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS) 
+	$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS)
 
 $(SQUIRREL_OBJ_DIR):
 	$(MD) $@
@@ -401,7 +415,7 @@ $(OBJ_DIR)/libsqstdlib.a: $(SQSTDLIBOBJS) | $(SQSTDLIB_OBJ_DIR)
 	$(AR) $(ARFLAGS) $@ $(SQSTDLIBOBJS)
 
 $(SQSTDLIB_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/sqstdlib/%.cpp | $(SQSTDLIB_OBJ_DIR)
-	$(CPP) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS) 
+	$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS) 
 
 $(SQSTDLIB_OBJ_DIR):
 	$(MD) $@
@@ -422,7 +436,7 @@ $(OBJ_DIR)/libaudio.a: $(AUDIOOBJS) | $(AUDIO_OBJ_DIR)
 	$(AR) $(ARFLAGS) $@ $(AUDIOOBJS)
 
 $(AUDIO_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/audio/Audio/%.cpp | $(AUDIO_OBJ_DIR)
-	$(CPP) -c $< -o $@ $(CFLAGS)
+	$(CXX) -c $< -o $@ $(CFLAGS)
 
 $(AUDIO_OBJ_DIR):
 	$(MD) $@
@@ -539,14 +553,14 @@ $(OBJ_DIR)/libgameswf.a: $(GAMESWFOBJS) | $(GAMESWF_OBJ_DIR) $(GSBASE_OBJ_DIR)
 	$(AR) $(ARFLAGS) $@ $(GAMESWFOBJS)
 
 $(GAMESWF_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/gameswf/%.cpp | $(GAMESWF_OBJ_DIR)
-	$(CPP) -c $< -o $@ $(CFLAGS) -Wno-deprecated
+	$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
 
 $(GAMESWF_OBJ_DIR):
 	$(MD) $@
 	$(MD) $@/gameswf_as_classes
 
 $(GSBASE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/base/%.cpp | $(GSBASE_OBJ_DIR)
-	$(CPP) -c $< -o $@ $(CFLAGS) -Wno-deprecated
+	$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
 
 $(GSBASE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/base/%.c | $(GSBASE_OBJ_DIR)
 	$(CC) -c $< -o $@ $(CFLAGS)
