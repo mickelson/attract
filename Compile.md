@@ -114,7 +114,7 @@ OS X.
 
 4. From the directory you extracted the source into, run the following:
 
-           make -j 3 CROSS=1 TOOLCHAIN=i686-pc-mingw32.static WINDOWS_STATIC=1
+           make -j 3 CROSS=1 TOOLCHAIN=i686-w64-mingw32.static WINDOWS_STATIC=1
 
    to build the 32-bit version of Attract-Mode. To build 64-bit, run:
 
