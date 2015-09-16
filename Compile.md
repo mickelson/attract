@@ -25,11 +25,11 @@ distributions.  Other distributions should have similar packages available.
 
 3. From the directory you extracted the source into, run:
 
-           make
+           make -j 3
 
    or, to build without movie support:
 
-           make NO_MOVIE=1
+           make -j 3 NO_MOVIE=1
 
    This step will create the "attract" executable file.
 
@@ -73,7 +73,7 @@ These instructions assume that you have X Code installed.
 
 4. From the directory you extracted the Attract-Mode source into, run:
 
-           make
+           make -j 3
 
    This step will create the "attract" executable file.
 
@@ -98,13 +98,8 @@ The recommended way to build Windows binaries for Attract-Mode is to cross
 compile on an OS that supports MXE (<http://mxe.cc>) such as Linux, FreeBSD or
 OS X.
 
-1. With one exception (see below), follow the steps in the mxe tutorial to set
-   up mxe on your system: <http://mxe.cc/#tutorial>
-
-   The one exception is to build from the "master" branch of mxe, instead of
-   "stable".  So you should clone the master branch instead of stable:
-
-           git clone -b master https://github.com/mxe/mxe.git
+1. Follow the steps in the mxe tutorial to set up mxe on your system:
+   <http://mxe.cc/#tutorial>
 
 2. Make mxe's sfml and ffmpeg packages:
 
@@ -113,17 +108,17 @@ OS X.
    the above command will make 32-bit versions of ffmpeg and sfml (and anything
    else that they depend on). To make the 64-bit version use the following:
 
-           make MXE_TARGETS='x86_64-w64-mingw32' ffmpeg sfml
+           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml
 
 3. Extract the Attract-Mode source to your system.
 
 4. From the directory you extracted the source into, run the following:
 
-           make WINDOWS_STATIC=1 CROSS=i686-pc-mingw32-
+           make -j 3 CROSS=1 TOOLCHAIN=i686-pc-mingw32.static WINDOWS_STATIC=1
 
    to build the 32-bit version of Attract-Mode. To build 64-bit, run:
 
-           make WINDOWS_STATIC=1 CROSS=x86_64-w64-mingw32-
+           make -j 3 CROSS=1 TOOLCHAIN=x86_64-w64-mingw32.static WINDOWS_STATIC=1
 
    This step will create the "attract.exe" executable file.
 
