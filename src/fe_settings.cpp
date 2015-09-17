@@ -1719,10 +1719,13 @@ bool FeSettings::get_font_file( std::string &fpath,
 				continue;
 
 			size_t pos = (*itr).find_last_of( "\\/" );
-			if (( pos != std::string::npos )
-				&& ( icompare(
-					(*itr).substr( pos+1, fontname.size() ),
-					fontname ) == 0 ) )
+			if ( pos == std::string::npos )
+				pos = 0;
+			else
+				pos++;
+
+			if ( icompare( (*itr).substr( pos, fontname.size() ),
+					fontname ) == 0 )
 			{
 				fpath = layout_dir;
 				ffile = *itr;
