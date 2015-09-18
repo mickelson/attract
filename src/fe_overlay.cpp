@@ -28,6 +28,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 class FeConfigContextImp : public FeConfigContext
 {
@@ -1024,7 +1025,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 					float pos = sf::Joystick::getAxisPosition(
 							ctx.move_event.joystickMove.joystickId,
 							ctx.move_event.joystickMove.axis );
-					if ( abs( pos ) > m_feSettings.get_joy_thresh() )
+					if ( std::abs( pos ) > m_feSettings.get_joy_thresh() )
 						cont=true;
 				}
 				break;

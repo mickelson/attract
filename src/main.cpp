@@ -31,6 +31,7 @@
 #include "fe_vm.hpp"
 #include <iostream>
 #include <cstring>
+#include <cmath>
 #include <cstdlib>
 
 #ifndef NO_MOVIE
@@ -809,7 +810,7 @@ int main(int argc, char *argv[])
 					float pos = sf::Joystick::getAxisPosition(
 							move_event.joystickMove.joystickId,
 							move_event.joystickMove.axis );
-					if ( abs( pos ) > feSettings.get_joy_thresh() )
+					if ( std::abs( pos ) > feSettings.get_joy_thresh() )
 						cont=true;
 				}
 				break;
