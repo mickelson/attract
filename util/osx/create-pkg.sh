@@ -49,7 +49,7 @@ NPROC=$(getconf _NPROCESSORS_ONLN)
 LLIMIT=$(awk 'BEGIN{printf"%.1f",'${NPROC}'/2}')
 
 make -C .. clean
-eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} $@
+eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} DATA_PATH=../config/ $@
 ### end: make
 
 function finish {
