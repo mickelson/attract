@@ -173,8 +173,13 @@ endif
 # Deal with SFML
 #
 ifeq ($(WINDOWS_STATIC),1)
- LIBS += $(shell $(PKG_CONFIG) --static --libs sfml)
- CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags sfml)
+ ifeq ($(shell $(PKG_CONFIG) --exists sfml && echo "1" || echo "0"), 1)
+  SFML_PC="sfml"
+ else
+  SFML_PC="sfml-system sfml-window sfml-graphics sfml-network"
+ endif
+ LIBS += $(shell $(PKG_CONFIG) --static --libs $(SFML_PC))
+ CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags $(SFML_PC))
  FE_WINDOWS_COMPILE=1
 
 else

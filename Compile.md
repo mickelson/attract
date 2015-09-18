@@ -129,24 +129,29 @@ OS X.
 Windows (native compile):
 -------------------------
 
-It is possible (but not recommended or supported) to compile Attract-Mode
-natively on Windows-based systems.  If you can, you really should cross-compile
-following the instructions above.
+1. Install MSYS2
+   <https://msys2.github.io/>
 
-To build natively on Windows you might have luck following the instructions
-for compiling on Linux and FreeBSD with the following modifications:
+2. Launch the MSYS2 shell and update the system:
 
--  Before starting, install MinGW (<http://mingw.org>) and "pkg-config" on your
-   system.  (see <http://sourceforge.net/projects/pkgconfiglite/> for what looks
-   to be the least painful way of getting pkg-config on Windows).  This will
-   get you a gcc compiler and the required build tools.
+           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime`
 
--  Before running the make command, remember to set the required MinGW
-   environment variables first (see the MinGW documentation) and be sure to use
-   the MinGW make command.  Path variables may have to be set in order for
-   the make script to be able to find the pkg-config command.
+3. Close MSYS2 Shell,  run it again and run the following command:
 
--  Once you have built the executable, you should copy the contents of the
-   "config" directory from the Attract-Mode source directory and the
-   Attract-Mode executable into the same directory before running.
+           pacman -Syu
 
+4. Install required packaged. (optionally use the mingw-w64-i686-toolchain
+   instead for 32-bit windows architectures):
+
+           pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg
+
+5. Clone and make Attract-Mode
+
+           git clone https://github.com/mickelson/attract attract
+           cd attract
+           make -j 3
+
+This builds a version of Attract-Mode with various .dll dependencies.  To
+run the program, you will need to add `c:\msys64\mingw64\bin` to your path
+(for 64-bit systems) or copy the dependent .dlls from that directory into
+the same directory you will run Attract-Mode from.
