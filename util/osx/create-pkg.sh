@@ -72,15 +72,21 @@ cp -a "${SCRIPT_PATH}"/attract.icns "${APPCONTENT}"/Resources/
 cp -a "${SCRIPT_PATH}"/launch.sh "${APPCONTENT}"/MacOS/
 
 # Documentation
-cp -a ../License.txt ${SCRATCH}/disk/
+mkdir "${SCRATCH}/disk/Documentation"
+cp -a ../License.txt ${SCRATCH}/disk/Documentation/
 find .. -maxdepth 1 -name '*.md' | while read f
 do
 	fp=$(basename ${f} .md)
-	pandoc -f markdown_github -t html5 "${f}" -o ${SCRATCH}/disk/${fp}.html
+	pandoc -f markdown_github -t html5 "${f}" -o ${SCRATCH}/disk/Documentation/${fp}.html
 done
-./output-changelog-md.sh ${LASTTAG} | pandoc -f markdown -t html5 -o "${SCRATCH}"/disk/Changelog.html
+./output-changelog-md.sh ${LASTTAG} | pandoc -f markdown -t html5 -o "${SCRATCH}"/disk/Documentation/Changelog.html
 
 cat "${SCRIPT_PATH}"/Info.plist | sed 's/%%SHORTVERSION%%/'${SHORTVERSION}'/' | sed 's/%%BUNDLEVERSION%%/'${BUNDLEVERSION}'/' > "${APPCONTENT}"/Info.plist
+
+cp osx/DS_Store "${SCRATCH}/disk/.DS_Store"
+cp osx/VolumeIcon.icns "${SCRATCH}/disk/.VolumeIcon.icns"
+mkdir "${SCRATCH}/disk/.background"
+cp osx/background.png "${SCRATCH}/disk/.background/background.png"
 
 # Copy extra libs to bundle and fix link path
 pushd "${APPCONTENT}"/MacOS >/dev/null
@@ -88,8 +94,16 @@ ${SCRIPT_PATH}/bundlelibs.py attract
 popd >/dev/null
 
 if [[ "$PLATFORM" != "Darwin" ]]; then
-	genisoimage -D -V "AttractMode ${VERSION#v}" -no-pad -r -apple -o ${SCRATCH}/uncompressed.dmg ${SCRATCH}/disk/
-	dmg dmg ${SCRATCH}/uncompressed.dmg ../attract-${VERSION#v}.dmg
+	WORKDMG="${SCRATCH}/uncompressed.dmg"
+	dd if=/dev/zero of="${WORKDMG}" bs=1M count=128
+	mkfs.hfsplus -v "AttractMode" "${WORKDMG}"
+	hfsplus "${WORKDMG}" addall "${SCRATCH}/disk/"
+	hfsplus "${WORKDMG}" attr / C
+	hfsplus "${WORKDMG}" symlink " " /Applications
+	# TODO: genisoimage has drawbacks, but most people dont have libdmg-hfsplus built
+	#       make conditional package based on best available tools.
+	# genisoimage -D -V "AttractMode ${VERSION#v}" -no-pad -r -apple -o ${SCRATCH}/uncompressed.dmg ${SCRATCH}/disk/
+	dmg dmg "${WORKDMG}" ../attract-${VERSION#v}.dmg
 else
-	hdiutil create -volname "AttractMode ${VERSION#v}" -srcfolder ${SCRATCH}/disk/ -ov -format UDBZ ../attract-${VERSION#v}.dmg
+	hdiutil create -volname "AttractMode" -srcfolder ${SCRATCH}/disk/ -ov -format UDBZ ../attract-${VERSION#v}.dmg
 fi
