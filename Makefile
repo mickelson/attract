@@ -363,7 +363,7 @@ EXPATOBJS = \
 	$(EXPAT_OBJ_DIR)/xmlrole.o \
 	$(EXPAT_OBJ_DIR)/xmltok.o
 
-$(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(OBJ_DIR)
+$(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
 	$(AR) $(ARFLAGS) $@ $(EXPATOBJS)
 
 $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
