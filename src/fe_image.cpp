@@ -43,8 +43,8 @@ namespace
 	bool gather_artwork_filenames_from_archive(
 			const std::string &archive_name,
 			const std::string &target_name,
-			std::vector<std::string> vids,
-			std::vector<std::string> images )
+			std::vector<std::string> &vids,
+			std::vector<std::string> &images )
 	{
 		std::vector<std::string> zdir;
 		fe_zip_get_dir( archive_name.c_str(), zdir );
@@ -525,12 +525,10 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 		if ( !rom )
 			return;
 
-		feSettings->get_best_artwork_file( *rom,
+		if ( !feSettings->get_best_artwork_file( *rom,
 			m_art_name,
 			vid_list,
-			image_list );
-
-		if ( vid_list.empty() && image_list.empty() )
+			image_list ) )
 		{
 			// check for layout fallback images/videos
 			std::string layout_path;
