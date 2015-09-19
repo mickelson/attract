@@ -504,19 +504,19 @@ void FeFilter::save( std::ofstream &f, const char *filter_tag ) const
 	if ( m_sort_by != FeRomInfo::LAST_INDEX )
 	{
 		f << "\t\t" << std::setw(20) << std::left
-			<< indexStrings[1] << ' ' << FeRomInfo::indexStrings[ m_sort_by ] << std::endl;
+			<< indexStrings[SortBy] << ' ' << FeRomInfo::indexStrings[ m_sort_by ] << std::endl;
 	}
 
 	if ( m_reverse_order != false )
 	{
 		f << "\t\t" << std::setw(20) << std::left
-			<< indexStrings[2] << " true" << std::endl;
+			<< indexStrings[ReverseOrder] << " true" << std::endl;
 	}
 
 	if ( m_list_limit != 0 )
 	{
 		f << "\t\t" << std::setw(20) << std::left
-			<< indexStrings[3] << " " << as_str( m_list_limit ) << std::endl;
+			<< indexStrings[ListLimit] << " " << as_str( m_list_limit ) << std::endl;
 	}
 
 	for ( std::vector<FeRule>::const_iterator itr=m_rules.begin();
