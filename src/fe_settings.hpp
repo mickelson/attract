@@ -307,10 +307,12 @@ public:
 		const FeRomInfo &rom,
 		const std::string &art_name,
 		std::vector<std::string> &vid_list,
-		std::vector<std::string> &image_list );
+		std::vector<std::string> &image_list,
+		bool image_only );
 
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
 	bool has_video_artwork( const FeRomInfo &rom, const std::string &art_name );
+	bool has_image_artwork( const FeRomInfo &rom, const std::string &art_name );
 
 	bool get_best_dynamic_image_file(
 		int filter_index,

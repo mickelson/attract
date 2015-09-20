@@ -528,7 +528,8 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 		if ( !feSettings->get_best_artwork_file( *rom,
 			m_art_name,
 			vid_list,
-			image_list ) )
+			image_list,
+			(m_video_flags & VF_DisableVideo) ) )
 		{
 			// check for layout fallback images/videos
 			std::string layout_path;

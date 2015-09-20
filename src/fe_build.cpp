@@ -521,7 +521,7 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 			taskc++;
 		}
 
-		if ( m_scrape_snaps && !has_artwork( *itr, "snap" ) )
+		if ( m_scrape_snaps && !has_image_artwork( *itr, "snap" ) )
 		{
 			const char *SNAP = "snap/";
 			std::string fname = base_path + SNAP + (*itr).get_info( FeRomInfo::Romname );
@@ -623,7 +623,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		if ( !c.scrape_art || m_scrape_fanart
 				|| ( m_scrape_flyers && (!has_artwork( *itr, "flyer" ) ) )
 				|| ( m_scrape_wheels && (!has_artwork( *itr, "wheel" ) ) )
-				|| ( m_scrape_snaps && (!has_artwork( *itr, "snap" ) ) )
+				|| ( m_scrape_snaps && (!has_image_artwork( *itr, "snap" ) ) )
 				|| ( m_scrape_marquees && (!has_artwork( *itr, "marquee" ) ) ) )
 			worklist.push_back( &(*itr) );
 	}
@@ -739,7 +739,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 					else
 						done_count++;
 
-					if ( m_scrape_snaps && (!my_art.snap.empty() ) && (!has_artwork( rom, "snap" )) )
+					if ( m_scrape_snaps && (!my_art.snap.empty() ) && (!has_image_artwork( rom, "snap" )) )
 					{
 						const char *SNAP = "snap/";
 						std::string fname = base_path + SNAP + rom.get_info( FeRomInfo::Romname );

@@ -1871,7 +1871,8 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 			*rom,
 			art,
 			vid_list,
-			image_list ) ))
+			image_list,
+			(art_flags&AF_ImagesOnly) ) ))
 	{
 		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
 			retval = vid_list.front();

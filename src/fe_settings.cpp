@@ -2646,7 +2646,8 @@ bool FeSettings::get_best_artwork_file(
 	const FeRomInfo &rom,
 	const std::string &art_name,
 	std::vector<std::string> &vid_list,
-	std::vector<std::string> &image_list )
+	std::vector<std::string> &image_list,
+	bool image_only )
 {
 	const std::string &emu_name = rom.get_info( FeRomInfo::Emulator );
 
@@ -2692,7 +2693,7 @@ bool FeSettings::get_best_artwork_file(
 		if ( gather_artwork_filenames( art_paths, romname, vid_list, romname_image_list ) )
 		{
 			// test for "romname" specific videos first
-			if ( !vid_list.empty() )
+			if ( !image_only && !vid_list.empty() )
 				return true;
 		}
 
@@ -2702,7 +2703,7 @@ bool FeSettings::get_best_artwork_file(
 		if ( check_altname && gather_artwork_filenames( art_paths, altname, vid_list, altname_image_list ) )
 		{
 			// test for "altname" specific videos second
-			if ( !vid_list.empty() )
+			if ( !image_only && !vid_list.empty() )
 				return true;
 		}
 
@@ -2712,7 +2713,7 @@ bool FeSettings::get_best_artwork_file(
 		if ( check_cloneof && gather_artwork_filenames( art_paths, cloneof, vid_list, cloneof_image_list ) )
 		{
 			// then "cloneof" specific videos
-			if ( !vid_list.empty() )
+			if ( !image_only && !vid_list.empty() )
 				return true;
 		}
 
@@ -2748,14 +2749,21 @@ bool FeSettings::get_best_artwork_file(
 bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> temp1, temp2;
-	return ( get_best_artwork_file( rom, art_name, temp1, temp2 ) );
+	return ( get_best_artwork_file( rom, art_name, temp1, temp2, false ) );
 }
 
 bool FeSettings::has_video_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> vids, temp;
-	get_best_artwork_file( rom, art_name, vids, temp );
+	get_best_artwork_file( rom, art_name, vids, temp, false );
 	return (!vids.empty());
+}
+
+bool FeSettings::has_image_artwork( const FeRomInfo &rom, const std::string &art_name )
+{
+	std::vector<std::string> temp, images;
+	get_best_artwork_file( rom, art_name, temp, images, true );
+	return (!images.empty());
 }
 
 bool FeSettings::get_best_dynamic_image_file(
