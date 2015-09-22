@@ -31,10 +31,14 @@ SHORTVERSION=${LASTTAG//v/}
 
 ### begin: make
 PLATFORM=$(uname)
-MAKEOPTS='CC=clang CXX=clang++ AR=libtool ARFLAGS="-static -o"'
+MAKEOPTS=""
 
 # osxcross auto-detect
 if [[ "$PLATFORM" != "Darwin" ]]; then
+	! [ -x "$(command -v hfsplus)" ]      && echo "FATAL: 'hfsplus' not found" && exit 1
+	! [ -x "$(command -v mkfs.hfsplus)" ] && echo "FATAL: 'mkfs.hfs' not found" && exit 1
+	! [ -x "$(command -v dmg)" ]          && echo "FATAL: 'dmg' not found" && exit 1
+
 	if [[ -z ${OSXCROSS_TARGET_DIR} || -z ${OSXCROSS_TARGET} ]]; then
 		echo "osxcross not initialized. add osxcross-conf and osxcross-env to the current environment" && exit 1
 	fi
@@ -74,12 +78,19 @@ cp -a "${SCRIPT_PATH}"/launch.sh "${APPCONTENT}"/MacOS/
 # Documentation
 mkdir "${SCRATCH}/disk/Documentation"
 cp -a ../License.txt ${SCRATCH}/disk/Documentation/
-find .. -maxdepth 1 -name '*.md' | while read f
+cp ../*.md "${SCRATCH}"/disk/Documentation/
+./output-changelog-md.sh ${LASTTAG} > "${SCRATCH}"/disk/Documentation/Changelog.md
+
+# convert markdown to html if possible
+find "${SCRATCH}"/disk/Documentation/ -name '*.md' | while read f
 do
-	fp=$(basename ${f} .md)
-	pandoc -f markdown_github -t html5 "${f}" -o ${SCRATCH}/disk/Documentation/${fp}.html
+	fp="${X%.md}"
+	if ! [ -x "$(command -v pandoc)" ]; then
+		mv "${f}" "${fp}.txt"
+	else
+		pandoc -f markdown_github -t html5 "${f}" -o "${fp}.html" && rm "${f}"
+	fi
 done
-./output-changelog-md.sh ${LASTTAG} | pandoc -f markdown -t html5 -o "${SCRATCH}"/disk/Documentation/Changelog.html
 
 cat "${SCRIPT_PATH}"/Info.plist | sed 's/%%SHORTVERSION%%/'${SHORTVERSION}'/' | sed 's/%%BUNDLEVERSION%%/'${BUNDLEVERSION}'/' > "${APPCONTENT}"/Info.plist
 
@@ -105,5 +116,6 @@ if [[ "$PLATFORM" != "Darwin" ]]; then
 	# genisoimage -D -V "AttractMode ${VERSION#v}" -no-pad -r -apple -o ${SCRATCH}/uncompressed.dmg ${SCRATCH}/disk/
 	dmg dmg "${WORKDMG}" ../attract-${VERSION#v}.dmg
 else
+	# TODO: mount dmg and set file attributes (volume icon) and create Application symlink
 	hdiutil create -volname "AttractMode" -srcfolder ${SCRATCH}/disk/ -ov -format UDBZ ../attract-${VERSION#v}.dmg
 fi
