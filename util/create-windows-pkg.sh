@@ -32,12 +32,12 @@ fi
 cp -r *.md *.txt config/* stage/
 cp -r ../extras/* stage/
 
+# output changelog
+util/output-changelog-md.sh $1 > stage/Changelog.md
+
 # Unix to Windows line endings
 #
-sed -i 's/$/\r/' `find stage/ -name '*.*' | grep -e .md -e .txt -e .cfg -e .nut -e .nutr -e .msg -e .frag`
-
-# special case due to space in name
-sed -i 's/$/\r/' "stage/layouts/particle animation/layout.nut"
+find stage -type f -regextype posix-egrep -regex '.*\.(md|txt|cfg|nut|nutr|msg|frag)$' -print0 | xargs -0 sed -i 's/$/\r/'
 
 # Build and zip 32-bit windows version
 #

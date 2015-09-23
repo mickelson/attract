@@ -71,7 +71,7 @@ datadir=$(datarootdir)
 exec_prefix=$(prefix)
 bindir=$(exec_prefix)/bin
 
-DATA_PATH=$(datadir)/attract/
+DATA_PATH:=$(datadir)/attract/
 EXE_BASE=attract
 EXE_EXT=
 OBJ_DIR=obj
@@ -363,7 +363,7 @@ EXPATOBJS = \
 	$(EXPAT_OBJ_DIR)/xmlrole.o \
 	$(EXPAT_OBJ_DIR)/xmltok.o
 
-$(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(OBJ_DIR)
+$(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
 	$(AR) $(ARFLAGS) $@ $(EXPATOBJS)
 
 $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)

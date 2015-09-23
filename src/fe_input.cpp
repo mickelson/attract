@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <cstring>
+#include <cmath>
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/System/Vector2.hpp>
 
@@ -208,7 +209,7 @@ FeInputSource::FeInputSource( const sf::Event &e, const sf::IntRect &mc_rect, co
 			break;
 
 		case sf::Event::JoystickMoved:
-			if ( abs( e.joystickMove.position ) > joy_thresh )
+			if ( std::abs( e.joystickMove.position ) > joy_thresh )
 			{
 				m_type = (Type)(Joystick0 + e.joystickMove.joystickId);
 
