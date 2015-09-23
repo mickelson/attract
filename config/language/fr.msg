@@ -324,9 +324,14 @@ kr;Coréen
 # Strings still needing translation
 #
 $1 Rule(s);$1 Rule(s)
+Add Exception;Add Exception
 Empty;Empty
+Exception;Exception
+Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
+Intro;Intro
 Play Sound;Play Sound
+Scrape Videos (MAME only);Scrape Videos (MAME only)
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter

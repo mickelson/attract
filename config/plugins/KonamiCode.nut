@@ -86,12 +86,11 @@ class KonamiCode
 				m_last_time = ttime;
 				m_pressed = false;
 			}
-			else
+			else if ( m_current > 0 )
 			{
 				// Check for whether we need to cancel the sequence
 				//
-				if (( m_current > 0 )
-					&& ( ttime > m_last_time + RESET_TIME ))
+				if ( ttime > m_last_time + RESET_TIME )
 				{
 					// timeout
 					m_current = 0;

@@ -319,9 +319,14 @@ fr;Français
 #
 # Strings still needing translation
 #
+Add Exception;Add Exception
 Display Name;Display Name
+Exception;Exception
+Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
+Intro;Intro
 Scrape Fanart;Scrape Fanart
+Scrape Videos (MAME only);Scrape Videos (MAME only)
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)

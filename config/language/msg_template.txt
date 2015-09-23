@@ -1,10 +1,11 @@
-#
-# Interface strings
+# This file is the template for Attract-Mode translations.
+# Translate the string to the right of the semicolon on each line.  thanks!
 #
 $1 Rule(s);$1 Rule(s)
 Action;Action
 Add Artwork;Add Artwork
 Add Emulator;Add Emulator
+Add Exception;Add Exception
 Add Filter;Add Filter
 Add Input;Add Input
 Add New Display;Add New Display
@@ -77,6 +78,8 @@ Enabled;Enabled
 Enter Display Name;Enter Display Name
 Enter Emulator Name;Enter Emulator Name
 Enter Filter Name;Enter Filter Name
+Exception;Exception
+Exception Edit;Exception Edit
 Executable;Executable
 Exit (Confirm);Exit (Confirm)
 Exit Attract-Mode;Exit Attract-Mode
@@ -103,6 +106,7 @@ Generating Rom List: $1%;Generating Rom List: $1%
 Global Filter;Global Filter
 Hide Brackets in Game Title;Hide Brackets in Game Title
 Info Source/Scraper;Info Source/Scraper
+Intro;Intro
 Joystick Threshold;Joystick Threshold
 Jump to Next Display;Jump to Next Display
 Language;Language
@@ -154,6 +158,7 @@ Scrape Flyers/Boxart;Scrape Flyers/Boxart
 Scrape Game Logos (Wheel Art);Scrape Game Logos (Wheel Art)
 Scrape Marquees;Scrape Marquees
 Scrape Snaps;Scrape Snaps
+Scrape Videos (MAME only);Scrape Videos (MAME only)
 Scraper;Scraper
 Scraping Artwork: $1%;Scraping Artwork: $1%
 Screen Saver;Screen Saver

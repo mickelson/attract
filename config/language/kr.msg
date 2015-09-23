@@ -314,9 +314,14 @@ _help_emu_listxml;
 # Strings still needing translation
 #
 $1 Rule(s);$1 Rule(s)
+Add Exception;Add Exception
 Empty;Empty
+Exception;Exception
+Exception Edit;Exception Edit
+Intro;Intro
 Play Sound;Play Sound
 Scrape Fanart;Scrape Fanart
+Scrape Videos (MAME only);Scrape Videos (MAME only)
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
 _help_control_custom3;Set the "Custom3" control(s)
