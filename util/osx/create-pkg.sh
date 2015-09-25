@@ -46,7 +46,7 @@ if [[ "$PLATFORM" != "Darwin" ]]; then
 	[[ -z ${TOOLCHAIN} ]] && export TOOLCHAIN=x86_64-apple-${OSXCROSS_TARGET}
 	[[ -z ${LIB_BASE_PATH} ]] && export LIB_BASE_PATH="$(realpath ${OSXCROSS_TARGET_DIR}/macports/pkgs)"
 
-	MAKEOPTS="$MAKEOPTS CROSS=1 TOOLCHAIN=${TOOLCHAIN} FE_MACOSX_COMPILE=1 EXTRA_CFLAGS=\"-arch i386 -arch x86_64\""
+	MAKEOPTS="$MAKEOPTS CC=clang CXX=clang++ AR=libtool ARFLAGS=\"-static -o\" CROSS=1 TOOLCHAIN=${TOOLCHAIN} FE_MACOSX_COMPILE=1 EXTRA_CFLAGS=\"-arch i386 -arch x86_64\""
 fi
 
 NPROC=$(getconf _NPROCESSORS_ONLN)
@@ -84,7 +84,7 @@ cp ../*.md "${SCRATCH}"/disk/Documentation/
 # convert markdown to html if possible
 find "${SCRATCH}"/disk/Documentation/ -name '*.md' | while read f
 do
-	fp="${X%.md}"
+	fp="${f%.md}"
 	if ! [ -x "$(command -v pandoc)" ]; then
 		mv "${f}" "${fp}.txt"
 	else
@@ -114,8 +114,8 @@ if [[ "$PLATFORM" != "Darwin" ]]; then
 	# TODO: genisoimage has drawbacks, but most people dont have libdmg-hfsplus built
 	#       make conditional package based on best available tools.
 	# genisoimage -D -V "AttractMode ${VERSION#v}" -no-pad -r -apple -o ${SCRATCH}/uncompressed.dmg ${SCRATCH}/disk/
-	dmg dmg "${WORKDMG}" ../attract-${VERSION#v}.dmg
+	dmg dmg "${WORKDMG}" ../attract-${VERSION}.dmg
 else
 	# TODO: mount dmg and set file attributes (volume icon) and create Application symlink
-	hdiutil create -volname "AttractMode" -srcfolder ${SCRATCH}/disk/ -ov -format UDBZ ../attract-${VERSION#v}.dmg
+	hdiutil create -volname "AttractMode" -srcfolder ${SCRATCH}/disk/ -ov -format UDBZ ../attract-${VERSION}.dmg
 fi
