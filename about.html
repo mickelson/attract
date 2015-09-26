@@ -4,7 +4,7 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Attract-Mode is a graphical frontend for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinet setups.  Attract-Mode is open source and runs on Linux, OS X and Windows." />
+    <meta name="description" content="Attract-Mode is a frontend/launcher for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinets.  Attract-Mode is open source and runs on Linux, OS X and Windows." />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
@@ -19,15 +19,9 @@
     <div id="header_wrap" class="outer">
         <header class="inner">
 		  <center>
-		  <h1 id="project_title"><img src="images/logo.png" style="width:520px;height:80px" alt="Attract-Mode"></h1>
-	  </center>
+		  <h1 id="project_title"><img src="images/logo.png" style="width:500px;height:193px" alt="Attract-Mode"></h1>
 
-<h2 id="project_tagline">
-Attract-Mode is a graphical front-end for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinet setups.  Attract-Mode is open source and runs on Linux, OS X and Windows.
-</h2>
-
-		  <center>
-<h3 id="project_tagline"><a href="index.html">News</a> | About | <a href="download.html">Download</a> | <a href="http://forum.attractmode.org">Forum</a></h3>
+<h3 id="project_tagline"><a href="index.html">Home</a> | About | <a href="download.html">Download</a> | <a href="http://forum.attractmode.org">Forum</a></h3>
 </center>
 
         </header>
@@ -38,61 +32,71 @@ Attract-Mode is a graphical front-end for command line emulators such as MAME, M
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
+        <h2><a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>About</h2>
+<p>
+Attract-Mode is a graphical frontend for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinets.  Attract-Mode is open source and runs on Linux, OS X and Windows.
+</p>
+
+
 <p><img src="images/cools1.png" style="width:320px;height:240px"><img src="images/attracman.png" style="width:320px;height:240px">
 <img src="images/config.png" style="width:320px;height:240px"><img src="images/cools2.png" style="width:320px;height:240px">
-	(screenshots showing the included "cools" and "attracman" layouts, as well as config mode)
 	</p>
 
-        <h3><a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h3>
+        <h2><a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<h4>Open Source, Cross Platform</h4>
 <ul>
-<li>Configuration menu for easy configuration of most settings.</li> 
+<li>Runs on Windows, OS X and Linux-based systems... <a href="https://github.com/mickelson/attract/wiki/Compiling-on-the-Raspberry-Pi-%28Rasbian-Wheezy%29">Raspberry Pi</a> even.
+</ul>
+
+<h4>Easy Configuration</h4>
+<ul>
+<li>Built-in configuration menu, with on-screen help messages, for easy configuration of most settings.</li> 
+<li>Frontend settings are stored in simple text files, so it is also easy to configure from your favourite text editor.</li> 
+</ul>
+
+<h4>Looks Good</h4>
+<ul>
 <li>Fully scriptable display layouts written in the <a href="http://squirrel-lang.org">Squirrel</a> programming language.</li>
-<li>Includes the "Attrac-Man" layout, a playable Pacman-inspired game that unfolds around the edges of your game menu.</li>
-<li>Can display <a href="http://malafe.net">MaLa</a> layouts (both horizontal and vertical).</li>
-<li>Frontend controls can be mapped to any joystick, keyboard or mouse input.</li>
+<li>Supports many different image and video file formats, even SWF.</li>
+<li>Layouts can arbitrarily position, colour, scale, rotate, pinch and skew layout artworks, text, images and videos.</li>
+<li>Various built in animations available (Penner easing functions, fades, sprite animation, scrolling text, and many more).</li>
+<li>GLSL shader (vertex and fragment) support.</li>
+<li>Configurable screensaver.</li>
+<li>Display layouts/skins from other frontends (<a href="http://malafe.net">MaLa</a>, MameWah).</li>
+</ul>
+
+<h4>Arcade Customizable</h4>
+<ul>
+<li>Frontend actions can be mapped to any joystick, keyboard or mouse input (or unmapped completely).</li>
+<li>Built-in support for multiple monitors.</li>
 <li>User configurable sounds and ambient music.</li>
-<li>Display images, videos and information related to specific games.</li>
-<li>Supports setups with multiple monitors</li>
-<li>Supports screen rotation and flipping (including auto-rotation).</li>
+<li>Supports screen rotation and flipping (including auto-rotation to match games).</li>
+<li>Plug-ins to extend frontend functionality and integrate with external programs (such as LED control or joystick mapping software).</li>
+<li>Exit hotkeys can be configured for emulators to force them to exit, even when they don't want to.</li>
+</ul>
+
+<h4>Organize your Content</h4>
+<ul>
 <li>Filter and sort game lists based on multiple game attributes.</li>
 <li>Easily mark and cycle through your favourite games.</li>
-<li>Plug-ins to extend frontend functionality and integrate with external programs (such as LED control or joystick mapping software).
 <li>Automatically generate game lists from directory contents.</li>
 <li>Import game information from MAME/MESS -listxml and -listsoftware commands.</li>
 <li>Import game lists from Hyperspin and Mamewah/Wahcade!.</li>
-<li>Scrape missing game information and/or artworks from thegamesdb.net and mamedb.com.</li>
+<li>Scrape missing game information and artworks from thegamesdb.net, mamedb.com and progretto-snaps.net.</li>
 <li>Catver.ini, <a href="http://nplayers.arcadebelgium.be/">nplayers.ini</a> and history.dat file support.</li>
-<li>Unicode character (UTF-8) support.</li>
-<li>GLSL shader (vertex and fragment) support.</li>
-<li>Configurable screensaver.</li>
 <li>Track game usage statistics (times played, total time played).</li>
-<li>Exit hotkeys can be configured for emulators to force them to exit.</li>
 <li>Steam support.</li>
-<li><a href="https://github.com/mickelson/attract/wiki/Compiling-on-the-Raspberry-Pi-%28Rasbian-Wheezy%29">Raspberry Pi support.</a></li>
 </ul>
-Available localizations: English and French
-        <h3><a name="Images" class="anchor" href="#images"><span class="octicon octicon-link"></span></a>Images</h3>
 
-	<p>
-	<img src="images/cools.jpg">
-	(photo by cools)
-	</p>
+<ul>
+<li>Available localizations: English, French, German, Japanese, Korean, Spanish.</li>
+</ul>
 
 	<p>
 	<img src="images/brianag95.jpg">
 	(photo by BrianAg95 with a custom layout)
 	</p>
-
-	        <h2><a name="dev" class="anchor" href="#doc"><span class="octicon octicon-link"></span></a>Documentation</h2>
-
-		<ul>
-		<li><a href="https://github.com/mickelson/attract/blob/v1.5.0/Readme.md">Getting Started/General Information</a></li>
-		<li><a href="https://github.com/mickelson/attract/blob/v1.5.0/Compile.md">Compiling from Source</a></li>
-		<li><a href="https://github.com/mickelson/attract/blob/v1.5.0/Layouts.md">Layouts and Plug-ins Reference</a></li>
-	</ul>
-
-	<a href="https://github.com/mickelson/attract/wiki">Wiki.</a>
-
       </section>
     </div>
 

@@ -4,7 +4,7 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Attract-Mode is a graphical frontend for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinet setups.  Attract-Mode is open source and runs on Linux, OS X and Windows." />
+    <meta name="description" content="Attract-Mode is a frontend/launcher for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinets.  Attract-Mode is open source and runs on Linux, OS X and Windows." />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
@@ -21,14 +21,10 @@
         <header class="inner">
 
 	  <center>
-		  <h1 id="project_title"><img src="images/logo.png" style="width:520px;height:80px" alt="Attract-Mode"></h1>
+		  <h1 id="project_title"><img src="images/logo.png" style="width:500px;height:193px" alt="Attract-Mode"></h1>
 	  </center>
 
-<h2 id="project_tagline">
-Attract-Mode is a graphical front-end for command line emulators such as MAME, MESS and Nestopia.  It hides the underlying operating system and is intended to be controlled with a joystick, gamepad or spin dial, making it ideal for use in arcade cabinet setups.  Attract-Mode is open source and runs on Linux, OS X and Windows.
-</h2>
-
-<center><h3 id="project_tagline">News | <a href="about.html">About</a> | <a href="download.html">Download</a> | <a href="http://forum.attractmode.org">Forum</a></h3></center>
+<center><h3 id="project_tagline">Home | <a href="about.html">About</a> | <a href="download.html">Download</a> | <a href="http://forum.attractmode.org">Forum</a></h3></center>
 
         </header>
     </div>
@@ -37,131 +33,12 @@ Attract-Mode is a graphical front-end for command line emulators such as MAME, M
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
-        <h2><a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News</h2>
-
-
-	<h4><a href="http://forum.attractmode.org/index.php?topic=187.0">May 10, 2015 - Version 1.5.2 Released.</a></h4>
-<p>
-A new release, a new release!  There have been some exciting advances in the past few months...
-</p>
-<p>
-<b>New Features:</b>
-</p>
-<ul>
-	<li>Raspberry pi support.  Thanks to nitrogen_widget for digging into this and helping to get it up and running!</li>
-	<li>Multiple monitor support (Windows and Linux)</li>
-	<li>Artwork scraper added to automatically download missing snapshots, marquees, wheel logos, flyers, boxart and even fanart images.</li>
-	<li>Improved support for different image formats.</li>
-	<li>Spanish translation (thanks Seru!)</li>
-	<li>Added fade effect module for layouts (see reflect layout and the fanart background option in cools' layout)</li>
-</ul>
+<center>
+	<h4>What's New: <a href="http://forum.attractmode.org/index.php?topic=375.0">September 25, 2015 - Version 1.6.0 Released!</a></h4>
+</center>
 
 <p>
-<b>Bug Fixes:</b>
-</p>
-
-<ul>
-	<li>Keep focus if keys get mashed during startup and Attract-Mode is the windows shell</li>
-	<li>Fixed jarring video resets in the filter-grid layout</li>
-	<li>Various fixes for MaLa layout loading</li>
-	<li>Fix for audio decoding after an error occurs</li>
-</ul>
-
-<p>
-Download at: <a href="http://attractmode.org/download.html" class="bbc_link" target="_blank">http://attractmode.org/download.html</a>
-</p>
-
-<p>
-Here is a video of AM running on a 256MB Rasp Pi 1 with one of omegaman's layouts:
-</p>
-<iframe width="640" height="360" src="https://www.youtube.com/embed/YQh1Xs8HhI0?feature=player_embedded" frameborder="0" allowfullscreen></iframe>
-
-	<h4><a href="http://forum.attractmode.org/index.php?topic=124.0">March 1, 2015 - Version 1.5.1 Released.</a></h4>
-<p>
-This is a bug fix release (already!) to address the following bugs in 1.5.0:
-</p>
-
-<ul>
-	<li>emulator settings not loading in various situations (#110)</li>
-	<li>the filter option to limit list sizes would cause a crash if list size was already smaller than the limit (#109)</li>
-	<li>"particle animation" layout not loading [OS X App Bundle]</li>
-</ul>
-<p>
-<a href="http://attractmode.org/download.html" class="bbc_link" target="_blank">http://attractmode.org/download.html</a>
-</p>
-
-
-	<h4><a href="http://forum.attractmode.org/index.php?topic=120.0">February 25, 2015 - Version 1.5 Released.</a></h4>
-<p>
-It's time for a new release of Attract-Mode!  Here's what is new with version 1.5:
-</p>
-<ul>
-<li>Added ability to display MaLa layouts (vertical and horizontal). <i>beta</i></li>
-<li>Various filter improvements (global filters, filter based on file availability, filter mechanical and CHD games)</li>
-<li>Added ability to display artwork and game information from multiple filters at the same time. Added a filter-grid layout with filters organized into separate grid columns.</li>
-<li>Added Ctrl-V clipboard pasting to config mode (Windows and OS X only).</li>
-<li>Added ability to configure an exit hotkey that forces an emulator to exit.</li>
-<li>Added liquid8d's ExtendedObject, Animate and SpriteSheet modules.</li>
-<li>Improved importing of Steam information.</li>
-<li>Fixed artifacts when scaling videos at low resolution.</li>
-<li>Added ability to specify filter rules when generating/importing rom lists from the command line.</li>
-<li>Various improvements to the included screensaver and layouts, including configurable controls for Blinky in the Attrac-Man minigame.</li>
-<li>Scripting improvement: added "EndNavigation" transitions.</li>
-<li>Many, many other bug fixes and improvement.</li>
-</ul>
-<p>
-Downloads available here: <a href="http://attractmode.org/download.html" class="bbc_link" target="_blank">http://attractmode.org/download.html</a>
-</p>
-
-
-	<h4><a href="http://forum.attractmode.org/index.php?topic=56.0">October 16, 2014 - Version 1.4 Released.</a></h4>
-<p>
-Version 1.4 of Attract-Mode has now been released!  What's new:
-</p>
-<ul>
-<li>Added Steam support</li>
-<li>Added optional tracking of usage statistics (number of times played, total time played per game)</li>
-<li>Added thegamesdb.net metadata scraper</li>
-<li>Added history.dat viewer</li>
-<li>Added plugin to play basic audio playlists</li>
-<li>Filters can now optionally sort and limit the size of game lists</li>
-<li>Improvements to various layout animations</li>
-<li>Various new and improved plugins and layouts</li>
-<li>Many other bug fixes and improvements</li>
-</ul>
-<p>
-Downloads are available here: <a href="http://attractmode.org/download.html" class="bbc_link" target="_blank">http://attractmode.org/download.html</a>
-<br />
-Support Forum: <a href="http://forum.attractmode.org" class="bbc_link" target="_blank">http://forum.attractmode.org</a>
-</p>
-
-	<h4><a href="http://forum.attractmode.org/index.php?topic=25.0">July 11, 2014 - Version 1.3.2 Released.</a></h4>
-<p>
-A new version of Attract-Mode is now available!
-</p><p>
-This is primarily a bug fix release, here&#39;s what&#39;s new:
-</p>
-<ul>
-	<li>fixes favourites and tags so they are no longer lost when entries are filtered out by the current filter</li>
-	<li>slight change to the artwork selection order: matched clone videos are now preferred over matched name images</li>
-	<li>[Linux] fix for emulator launching when running in &quot;Fullscreen Mode&quot;</li>
-	<li>video playback now keeps going during transition effects</li>
-	<li>fixed video stutter when using more recent versions of FFmpeg</li>
-	<li>updated the Windows binaries to use FFmpeg 2.2.4</li>
-	<li>layouts can now get and set the user-toggled rotation status</li>
-	<li>various screensaver improvements: added a mute option, added an option to overlay wheel artwork on the video and 2x2 video modes</li>
-	<li>various other small fixes and improvements</li>
-</ul>
-<p>
-Downloads are available here: <a href="http://attractmode.org/download.html" class="bbc_link" target="_blank">http://attractmode.org/download.html</a>
-<br />
-Support Forum: <a href="http://forum.attractmode.org" class="bbc_link" target="_blank">http://forum.attractmode.org</a>
-<br />
-Enjoy!
-</p>
-	<h4><a href="http://forum.attractmode.org/index.php?topic=17.0">June 22, 2014 - Support Forum Added</a></h4>
-<p>
-A little sparse at the moment: <a href="http://forum.attractmode.org">http://forum.attractmode.org</a>
+<img src="images/cools.jpg">
 </p>
 
       </section>
