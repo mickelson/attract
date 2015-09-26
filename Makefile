@@ -530,7 +530,7 @@ $(EXPAT_OBJ_DIR):
 #
 # ManyMouse Library
 #
-MANYMOUSE_FLAGS = -fno-exceptions -fno-strict-aliasing
+MANYMOUSE_FLAGS = -fno-exceptions -fno-strict-aliasing -Wno-tautological-pointer-compare
 MANYMOUSE_OBJ_DIR = $(OBJ_DIR)/manymouse
 
 MANYMOUSE_OBJS= \

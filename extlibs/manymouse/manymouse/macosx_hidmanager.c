@@ -130,17 +130,16 @@ static int dequeue_event(ManyMouseEvent *event)
 } /* dequeue_event */
 
 
+#if 0  // !!! FIXME: doesn't work, timestamps aren't reliable.
 /* returns non-zero if (a <= b). */
 typedef unsigned long long ui64;
 static inline int oldEvent(const AbsoluteTime *a, const AbsoluteTime *b)
 {
-#if 0  // !!! FIXME: doesn't work, timestamps aren't reliable.
     const ui64 a64 = (((unsigned long long) a->hi) << 32) | a->lo;
     const ui64 b64 = (((unsigned long long) b->hi) << 32) | b->lo;
-#endif
     return 0;
 } /* oldEvent */
-
+#endif
 
 /* Callback fires whenever a device is unplugged/lost/whatever. */
 static void unplugged_callback(void *ctx, IOReturn res, void *sender)

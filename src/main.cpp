@@ -195,7 +195,6 @@ int main(int argc, char *argv[])
 	int move_last_triggered( 0 );
 
 	const int available_mice = ManyMouse_Init();
-	int i;
 	if (available_mice < 0) {
 		std::cerr << "Error initializing mouse api." << std::endl;
 		return 1;
