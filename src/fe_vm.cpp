@@ -1759,30 +1759,20 @@ void FeVM::do_nut( const char *script_file )
 	}
 }
 
-bool FeVM::load_module( const char *module_file )
+bool FeVM::load_module( const char *module )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	std::string fixed_file = module_file;
-	if ( !tail_compare( fixed_file, FE_LAYOUT_FILE_EXTENSION ) )
-		fixed_file += FE_LAYOUT_FILE_EXTENSION;
-
-	std::string temp = fev->m_feSettings->get_module_dir( fixed_file );
-	size_t len = temp.find_last_of( "/\\" );
-	ASSERT( len != std::string::npos );
-
-	std::string path = absolute_path( temp.substr( 0, len + 1 ) );
-
-	len = fixed_file.find_last_of( "/\\" );
-	if ( len != std::string::npos )
-		fixed_file = fixed_file.substr( len + 1 );
+	std::string module_dir;
+	std::string module_file;
+	fev->m_feSettings->get_module_path( module, module_dir, module_file );
 
 	Sqrat::Table fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
-	fe.SetValue( _SC("module_dir"), path );
-	fe.SetValue( _SC("module_file"), fixed_file );
+	fe.SetValue( _SC("module_dir"), module_dir );
+	fe.SetValue( _SC("module_file"), module_file );
 
-	return internal_do_nut( path, fixed_file );
+	return internal_do_nut( module_dir, module_file );
 }
 
 bool FeVM::cb_plugin_command( const char *command,

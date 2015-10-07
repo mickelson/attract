@@ -323,7 +323,9 @@ public:
 		std::vector<std::string> &vid_list,
 		std::vector<std::string> &image_list );
 
-	std::string get_module_dir( const std::string &module_file ) const;
+	bool get_module_path( const std::string &module,
+		std::string &module_dir,
+		std::string &module_file ) const;
 
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;

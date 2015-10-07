@@ -2571,11 +2571,56 @@ void FeSettings::internal_gather_config_files(
 	ll.erase( std::unique( ll.begin(), ll.end() ), ll.end() );
 }
 
-std::string FeSettings::get_module_dir( const std::string &module_file ) const
+bool FeSettings::get_module_path(
+	const std::string &module,
+	std::string &module_dir,
+	std::string &module_file ) const
 {
-	std::string temp;
-	internal_resolve_config_file( m_config_path, temp, FE_MODULES_SUBDIR, module_file );
-	return temp;
+	//
+	// Try for "[module].nut" first
+	//
+	std::string fname = module;
+	if ( !tail_compare( fname, FE_LAYOUT_FILE_EXTENSION ) )
+		fname += FE_LAYOUT_FILE_EXTENSION;
+
+	std::string res;
+	if ( internal_resolve_config_file( m_config_path, res,
+		FE_MODULES_SUBDIR, fname ) )
+	{
+		size_t len = res.find_last_of( "/\\" );
+		ASSERT( len != std::string::npos );
+
+		module_dir = absolute_path( res.substr( 0, len + 1 ) );
+
+		len = fname.find_last_of( "/\\" );
+		if ( len != std::string::npos )
+			module_file = fname.substr( len + 1 );
+		else
+			module_file = fname;
+
+		return true;
+	}
+
+	//
+	// Fall back to "[module]/module.nut" first
+	//
+	const char *MOD_FNAME = "module.nut";
+
+	fname = module + "/";
+	fname += MOD_FNAME;
+
+	if ( internal_resolve_config_file( m_config_path, res,
+		FE_MODULES_SUBDIR, fname ) )
+	{
+		size_t len = res.find_last_of( "/\\" );
+		ASSERT( len != std::string::npos );
+
+		module_dir = absolute_path( res.substr( 0, len + 1 ) );
+		module_file = MOD_FNAME;
+		return true;
+	}
+
+	return false;
 }
 
 bool gather_artwork_filenames(
