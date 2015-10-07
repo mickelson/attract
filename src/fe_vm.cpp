@@ -1971,6 +1971,7 @@ void FeVM::cb_signal( const char *sig )
 	case 0: // "reset_window"
 		fev->m_window.on_exit();
 		fev->m_window.initial_create();
+		fev->init_monitors();
 		break;
 
 	case 1: // "reload"

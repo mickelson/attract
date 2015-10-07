@@ -321,6 +321,7 @@ fr;Français
 #
 Add Exception;Add Exception
 Display Name;Display Name
+Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
 Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
@@ -334,3 +335,4 @@ _help_control_custom6;Set the "Custom6" control(s)
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_language;Select the language to use in Attract-Mode's user interface
+_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode

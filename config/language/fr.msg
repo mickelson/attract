@@ -326,6 +326,7 @@ kr;Coréen
 $1 Rule(s);$1 Rule(s)
 Add Exception;Add Exception
 Empty;Empty
+Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
 Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
@@ -337,3 +338,4 @@ _help_back;Exit menu
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_input_action;
+_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode

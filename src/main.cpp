@@ -425,6 +425,7 @@ int main(int argc, char *argv[])
 				{
 					window.on_exit();
 					window.initial_create();
+					feVM.init_monitors();
 				}
 			}
 			feVM.reset_screen_saver();

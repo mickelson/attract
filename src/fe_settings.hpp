@@ -111,6 +111,7 @@ public:
 		WindowMode,
 		FilterWrapMode,
 		TrackUsage,
+		MultiMon,
 		SmoothImages,
 		AccelerateSelection,
 		SelectionSpeed,
@@ -158,6 +159,7 @@ private:
 	bool m_autolaunch_last_game;
 	bool m_confirm_favs;
 	bool m_track_usage;
+	bool m_multimon;
 	WindowType m_window_mode;
 	bool m_smooth_images;
 	FilterWrapModeType m_filter_wrap_mode;

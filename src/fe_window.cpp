@@ -101,10 +101,22 @@ FeWindow::FeWindow( FeSettings &fes )
 void FeWindow::onCreate()
 {
 #ifdef SFML_SYSTEM_WINDOWS
-	int left = GetSystemMetrics( SM_XVIRTUALSCREEN );
-	int top = GetSystemMetrics( SM_YVIRTUALSCREEN );
-	int width = GetSystemMetrics( SM_CXVIRTUALSCREEN );
-	int height = GetSystemMetrics( SM_CYVIRTUALSCREEN );
+	int left, top, width, height;
+	if (( m_fes.get_info_bool( FeSettings::MultiMon ) )
+		&& ( m_fes.get_window_mode() != FeSettings::Window ))
+	{
+		left = GetSystemMetrics( SM_XVIRTUALSCREEN );
+		top = GetSystemMetrics( SM_YVIRTUALSCREEN );
+		width = GetSystemMetrics( SM_CXVIRTUALSCREEN );
+		height = GetSystemMetrics( SM_CYVIRTUALSCREEN );
+	}
+	else
+	{
+		left = getPosition().x;
+		top = getPosition().y;
+		width = getSize().x;
+		height = getSize().y;
+	}
 
 	// In Windows, the "WS_POPUP" style creates grief switching to MAME.
 	// Use the "WS_BORDER" style to fix this...
@@ -132,11 +144,14 @@ void FeWindow::onCreate()
 #endif
 
 #ifdef USE_XINERAMA
-	int x, y, width, height;
-	get_xinerama_geometry( x, y, width, height );
+	if ( m_fes.get_info_bool( FeSettings::MultiMon ) )
+	{
+		int x, y, width, height;
+		get_xinerama_geometry( x, y, width, height );
 
-	setPosition( sf::Vector2i( x, y ) );
-	setSize( sf::Vector2u( width, height ) );
+		setPosition( sf::Vector2i( x, y ) );
+		setSize( sf::Vector2u( width, height ) );
+	}
 #endif
 
 #ifndef SFML_SYSTEM_MACOS

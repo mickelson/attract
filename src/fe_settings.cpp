@@ -220,6 +220,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_autolaunch_last_game( false ),
 	m_confirm_favs( false ),
 	m_track_usage( true ),
+	m_multimon( true ),
 #ifdef FE_RPI
 	m_window_mode( Fullscreen ),
 	m_smooth_images( false ),
@@ -371,6 +372,7 @@ const char *FeSettings::configSettingStrings[] =
 	"window_mode",
 	"filter_wrap_mode",
 	"track_usage",
+	"multiple_monitors",
 	"smooth_images",
 	"accelerate_selection",
 	"selection_speed_ms",
@@ -1889,6 +1891,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_confirm_favs;
 	case TrackUsage:
 		return m_track_usage;
+	case MultiMon:
+		return m_multimon;
 	case SmoothImages:
 		return m_smooth_images;
 	case AccelerateSelection:
@@ -2016,6 +2020,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case TrackUsage:
 		m_track_usage = config_str_to_bool( value );
+		break;
+
+	case MultiMon:
+		m_multimon = config_str_to_bool( value );
 		break;
 
 	case SmoothImages:

@@ -75,6 +75,10 @@ private:
 class FeMonitor
 {
 public:
+	FeMonitor( int num, int w, int h );
+	FeMonitor( const FeMonitor & );
+	FeMonitor &operator=( const FeMonitor & );
+
 	FeImage *add_image(const char *,int, int, int, int);
 	FeImage *add_image(const char *, int, int);
 	FeImage *add_image(const char *);
@@ -186,6 +190,8 @@ protected:
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
 	virtual ~FePresent( void );
+
+	void init_monitors();
 
 	bool load_intro(); // returns false if no intro is available
 	void load_screensaver();

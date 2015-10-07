@@ -1477,6 +1477,12 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_track_usage" );
 	ctx.back_opt().append_vlist( bool_opts );
 
+	ctx.add_optl( Opt::LIST,
+			"Enable Multiple Monitors",
+			ctx.fe_settings.get_info_bool( FeSettings::MultiMon ) ? bool_opts[0] : bool_opts[1],
+			"_help_multiple_monitors" );
+	ctx.back_opt().append_vlist( bool_opts );
+
 	std::string filterwrapmode;
 	ctx.fe_settings.get_resource( FeSettings::filterWrapDispTokens[ ctx.fe_settings.get_filter_wrap_mode() ], filterwrapmode );
 	std::vector < std::string > wrap_modes;
@@ -1542,21 +1548,24 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::TrackUsage,
 			ctx.opt_list[5].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
+	ctx.fe_settings.set_info( FeSettings::MultiMon,
+			ctx.opt_list[6].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
 	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
-			FeSettings::filterWrapTokens[ ctx.opt_list[6].get_vindex() ] );
+			FeSettings::filterWrapTokens[ ctx.opt_list[7].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[7].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[8].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath,
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[9].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::FontPath,
+			ctx.opt_list[10].get_value() );
 
 #ifndef FE_RPI
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
-			FeSettings::windowModeTokens[ ctx.opt_list[10].get_vindex() ] );
+			FeSettings::windowModeTokens[ ctx.opt_list[11].get_vindex() ] );
 #endif
 
 	return true;

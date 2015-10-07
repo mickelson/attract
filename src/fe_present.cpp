@@ -38,13 +38,15 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 {
 	std::vector < FeMonitor > *monitors = (std::vector < FeMonitor > *)data;
 
-	FeMonitor mon;
+	FeMonitor mon(
+		monitors->size(),
+		mon_rect->right - mon_rect->left,
+		mon_rect->bottom - mon_rect->top );
+
 	mon.transform = sf::Transform().translate( mon_rect->left, mon_rect->top );
-	mon.size.x = mon_rect->right - mon_rect->left;
-	mon.size.y = mon_rect->bottom - mon_rect->top;
-	mon.num = monitors->size();
 
 	// make sure primary monitor is first in m_mon vector
+	//
 	if (( mon_rect->left == 0 ) && ( mon_rect->top == 0 ))
 		monitors->insert( monitors->begin(), mon );
 	else
@@ -85,6 +87,31 @@ void FeFontContainer::set_font( const std::string &p, const std::string &n )
 	}
 	else
 		m_font.loadFromFile( p + n );
+}
+
+FeMonitor::FeMonitor( int n, int w, int h )
+	: num( n )
+{
+	size.x = w;
+	size.y = h;
+}
+
+FeMonitor::FeMonitor( const FeMonitor &o )
+	: elements( o.elements ),
+	transform( o.transform ),
+	size( o.size ),
+	num( o.num )
+{
+}
+
+FeMonitor &FeMonitor::operator=( const FeMonitor &o )
+{
+	elements = o.elements;
+	transform = o.transform;
+	size = o.size;
+	num = o.num;
+
+	return *this;
 }
 
 FeImage *FeMonitor::add_image(const char *n, int x, int y, int w, int h)
@@ -193,14 +220,22 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_listBox( NULL ),
 	m_emptyShader( NULL )
 {
+	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
+	init_monitors();
+}
+
+void FePresent::init_monitors()
+{
+	m_mon.clear();
 
 	//
-	// Handle multi-monitors now
+	// Handle multi-monitors
 	//
 	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
 	//
 #ifdef SFML_SYSTEM_WINDOWS
-	if ( m_feSettings->get_window_mode() != FeSettings::Window )
+	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
+		&& ( m_feSettings->get_window_mode() != FeSettings::Window ))
 	{
 		EnumDisplayMonitors( NULL, NULL, my_mon_enum_proc, (LPARAM)&m_mon );
 
@@ -217,7 +252,8 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	else
 #else
 #ifdef USE_XINERAMA
-	if ( m_feSettings->get_window_mode() != FeSettings::Window )
+	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
+		&& ( m_feSettings->get_window_mode() != FeSettings::Window ))
 	{
 		Display *xdisp = XOpenDisplay( NULL );
 		int num=0;
@@ -227,14 +263,14 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 		{
 			for ( int i=0; i<num; i++ )
 			{
-				FeMonitor mon;
+				FeMonitor mon(
+					si[i].screen_number,
+					si[i].width,
+					si[i].height );
+
 				mon.transform = sf::Transform().translate(
 					si[i].x_org,
 					si[i].y_org );
-
-				mon.size.x = si[i].width;
-				mon.size.y = si[i].height;
-				mon.num = si[i].screen_number;
 
 				m_mon.push_back( mon );
 			}
@@ -251,17 +287,14 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 		// Where there is no multi-monitor support, we just use the desktop dimensions returned by SFML
 		//
 		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-		FeMonitor mc;
-		mc.size.x = vm.width;
-		mc.size.y = vm.height;
-		mc.num = 0;
+
+		FeMonitor mc( 0, vm.width, vm.height );
 		m_mon.push_back( mc );
 	}
 
 	ASSERT( m_mon.size() > 0 );
 
 	m_layoutSize = m_mon[0].size;
-	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 }
 
 FePresent::~FePresent()
