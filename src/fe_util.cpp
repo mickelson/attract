@@ -932,13 +932,15 @@ bool run_program( const std::string &prog,
 
 std::string name_with_brackets_stripped( const std::string &name )
 {
-	size_t pos = name.find_first_of( "([" );
+	size_t pos = name.find_first_of( "(/[" );
 
-	if ( pos == std::string::npos )
+	if (( pos == std::string::npos ) || ( pos == 0 ))
 		return name;
 
-	return name.substr( 0,
-			name.find_last_of( FE_WHITESPACE, pos ) );
+	if ( name.at( pos-1 ) == ' ' )
+		pos = name.find_last_of( FE_WHITESPACE, pos );
+
+	return name.substr( 0, pos );
 }
 
 
