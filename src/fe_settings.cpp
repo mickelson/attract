@@ -215,6 +215,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_last_launch_rom( 0 ),
 	m_joy_thresh( 75 ),
 	m_mouse_thresh( 10 ),
+	m_current_search_index( 0 ),
 	m_displays_menu_exit( true ),
 	m_hide_brackets( false ),
 	m_autolaunch_last_game( false ),
@@ -495,6 +496,8 @@ int FeSettings::process_setting( const std::string &setting,
 
 void FeSettings::init_display()
 {
+	set_search_rule( "" );
+
 	if ( m_current_display < 0 )
 	{
 		m_rl.init_as_empty_list();
@@ -705,6 +708,10 @@ int FeSettings::get_filter_count() const
 
 int FeSettings::get_filter_size( int filter_index ) const
 {
+	if ( !m_current_search.empty()
+			&& ( get_current_filter_index() == filter_index ))
+		return m_current_search.size();
+
 	return m_rl.filter_size( filter_index );
 }
 
@@ -713,10 +720,20 @@ int FeSettings::get_rom_index( int filter_index, int offset ) const
 	if ( m_current_display < 0 )
 		return -1;
 
-	int retval = m_displays[m_current_display].get_rom_index( filter_index );
+	int retval, rl_size;
+	if ( !m_current_search.empty()
+			&& ( get_current_filter_index() == filter_index ))
+	{
+		retval = m_current_search_index;
+		rl_size = m_current_search.size();
+	}
+	else
+	{
+		retval = m_displays[m_current_display].get_rom_index( filter_index );
+		rl_size = m_rl.filter_size( filter_index );
+	}
 
 	// keep in bounds
-	int rl_size = m_rl.filter_size( filter_index );
 	if ( retval >= rl_size )
 		retval = rl_size - 1;
 
@@ -741,6 +758,38 @@ int FeSettings::get_rom_index( int filter_index, int offset ) const
 	return retval;
 }
 
+void FeSettings::set_search_rule( const std::string &rule_str )
+{
+	m_current_search.clear();
+	m_current_search_index=0;
+	m_current_search_str.clear();
+
+	if ( rule_str.empty() )
+		return;
+
+	FeRule rule;
+	if ( rule.process_setting( "", rule_str, "" ) )
+		return;
+
+	rule.init();
+
+	int filter_index = get_current_filter_index();
+	for ( int i=0; i<m_rl.filter_size( filter_index ); i++ )
+	{
+		FeRomInfo &r = m_rl.lookup( filter_index, i );
+		if ( rule.apply_rule( r ) )
+			m_current_search.push_back( &r );
+	}
+
+	if ( !m_current_search.empty() )
+		m_current_search_str = rule_str;
+}
+
+const std::string &FeSettings::get_search_rule() const
+{
+	return m_current_search_str;
+}
+
 const std::string &FeSettings::get_current_display_title() const
 {
 	if ( m_current_display < 0 )
@@ -753,27 +802,39 @@ const std::string &FeSettings::get_rom_info( int filter_offset, int rom_offset, 
 {
 	int filter_index = get_filter_index_from_offset( filter_offset );
 	return get_rom_info_absolute(
-				filter_index,
-				get_rom_index( filter_index, rom_offset ),
-				index );
+		filter_index,
+		get_rom_index( filter_index, rom_offset ),
+		index );
 }
 
 const std::string &FeSettings::get_rom_info_absolute( int filter_index, int rom_index, FeRomInfo::Index index )
 {
-	if ( m_rl.is_filter_empty( filter_index ) )
+	if ( get_filter_size( filter_index ) < 1 )
 		return FE_EMPTY_STRING;
 
 	// Make sure we have file availability information if user is requesting it.
 	if ( index == FeRomInfo::FileIsAvailable )
 		m_rl.get_file_availability();
 
+	// handle situation where we are currently showing a search result
+	//
+	if ( !m_current_search.empty()
+			&& ( get_current_filter_index() == filter_index ))
+		return m_current_search[ rom_index ]->get_info( index );
+
 	return m_rl.lookup( filter_index, rom_index ).get_info( index );
 }
 
 FeRomInfo *FeSettings::get_rom_absolute( int filter_index, int rom_index )
 {
-	if ( m_rl.is_filter_empty( filter_index ) )
+	if ( get_filter_size( filter_index ) < 1 )
 		return NULL;
+
+	// handle situation where we are currently showing a search result
+	//
+	if ( !m_current_search.empty()
+			&& ( get_current_filter_index() == filter_index ))
+		return m_current_search[ rom_index ];
 
 	return &(m_rl.lookup( filter_index, rom_index ));
 }
@@ -1088,6 +1149,7 @@ bool FeSettings::navigate_filter( int step )
 		new_filter = ( m_filter_wrap_mode == NoWrap ) ? 0 : filter_count - 1;
 	}
 
+	set_search_rule( "" );
 	set_current_selection( new_filter, -1 );
 	return false;
 }
@@ -1113,10 +1175,19 @@ void FeSettings::set_current_selection( int filter_index, int rom_index )
 	if ( m_current_display < 0 )
 		return;
 
-	m_displays[m_current_display].set_current_filter_index( filter_index );
-
-	if ( rom_index >= 0 )
-		m_displays[m_current_display].set_rom_index( filter_index, rom_index );
+	// handle situation where we are currently showing a search result
+	//
+	if ( !m_current_search.empty()
+			&& ( get_current_filter_index() == filter_index ))
+	{
+		m_current_search_index = rom_index;
+	}
+	else
+	{
+		m_displays[m_current_display].set_current_filter_index( filter_index );
+		if ( rom_index >= 0 )
+			m_displays[m_current_display].set_rom_index( filter_index, rom_index );
+	}
 }
 
 int FeSettings::get_current_filter_index() const
@@ -1175,18 +1246,19 @@ bool FeSettings::select_last_launch()
 		retval = true;
 	}
 
+	set_search_rule( "" );
 	set_current_selection( m_last_launch_filter, m_last_launch_rom );
 	return retval;
 }
 
-bool FeSettings::get_current_fav() const
+bool FeSettings::get_current_fav()
 {
 	int filter_index = get_current_filter_index();
 
-	if ( m_rl.is_filter_empty( filter_index ) )
-		return false;
+	const std::string &s = get_rom_info_absolute( filter_index,
+		get_rom_index( filter_index, 0 ),
+		FeRomInfo::Favourite );
 
-	const std::string &s = m_rl.lookup( filter_index, get_rom_index( filter_index, 0 ) ).get_info(FeRomInfo::Favourite);
 	if ( s.empty() || ( s.compare("1") != 0 ))
 		return false;
 	else
@@ -1200,66 +1272,70 @@ bool FeSettings::set_current_fav( bool status )
 
 	int filter_index = get_current_filter_index();
 
-	return m_rl.set_fav(
-			filter_index,
-			get_rom_index( filter_index, 0 ),
-			m_displays[m_current_display],
-			status );
+	FeRomInfo *r = get_rom_absolute( filter_index,
+			get_rom_index( filter_index, 0 ) );
+
+	if ( !r )
+		return false;
+
+	return m_rl.set_fav( *r, m_displays[m_current_display], status );
 }
 
-int FeSettings::get_prev_fav_offset() const
+int FeSettings::get_prev_fav_offset()
 {
 	int filter_index = get_current_filter_index();
 	int idx = get_rom_index( filter_index, 0 );
 
-	for ( int i=1; i < m_rl.filter_size( filter_index ); i++ )
+	for ( int i=1; i < get_filter_size( filter_index ); i++ )
 	{
-		int t_idx = ( i <= idx ) ? ( idx - i ) : ( m_rl.filter_size( filter_index ) - ( i - idx ) );
-		if ( m_rl.lookup( filter_index, t_idx ).get_info(FeRomInfo::Favourite).compare("1")==0 )
+		int t_idx = ( i <= idx ) ? ( idx - i )
+			: ( get_filter_size( filter_index ) - ( i - idx ) );
+
+		if ( get_rom_info_absolute( filter_index,
+				t_idx,
+				FeRomInfo::Favourite ).compare( "1" ) == 0 )
 			return ( t_idx - idx );
 	}
 
 	return 0;
 }
 
-int FeSettings::get_next_fav_offset() const
+int FeSettings::get_next_fav_offset()
 {
 	int filter_index = get_current_filter_index();
 	int idx = get_rom_index( filter_index, 0 );
 
-	for ( int i=1; i < m_rl.filter_size( filter_index ); i++ )
+	for ( int i=1; i < get_filter_size( filter_index ); i++ )
 	{
-		int t_idx = ( idx + i ) % m_rl.filter_size( filter_index );
-		if ( m_rl.lookup( filter_index, t_idx ).get_info(FeRomInfo::Favourite).compare("1")==0 )
+		int t_idx = ( idx + i ) % get_filter_size( filter_index );
+		if ( get_rom_info_absolute( filter_index,
+				t_idx,
+				FeRomInfo::Favourite ).compare( "1" ) == 0 )
 			return ( t_idx - idx );
 	}
 
 	return 0;
 }
 
-int FeSettings::get_next_letter_offset( int step ) const
+int FeSettings::get_next_letter_offset( int step )
 {
 	int filter_index = get_current_filter_index();
-
-	if ( m_rl.is_filter_empty( filter_index ) )
-		return 0;
+	int idx = get_rom_index( filter_index, 0 );
 
 	FeRomListSorter s;
-
-	int idx = get_rom_index( filter_index, 0 );
-	const char curr_l = s.get_first_letter( m_rl.lookup( filter_index, idx ) );
+	const char curr_l = s.get_first_letter( get_rom_absolute( filter_index, idx ) );
 	bool is_alpha = std::isalpha( curr_l );
 	int retval = 0;
 
-	for ( int i=1; i < m_rl.filter_size( filter_index ); i++ )
+	for ( int i=1; i < get_filter_size( filter_index ); i++ )
 	{
 		int t_idx;
 		if ( step > 0 )
-			t_idx = ( idx + i ) % m_rl.filter_size( filter_index );
+			t_idx = ( idx + i ) % get_filter_size( filter_index );
 		else
-			t_idx = ( i <= idx ) ? ( idx - i ) : ( m_rl.filter_size( filter_index ) - ( i - idx ) );
+			t_idx = ( i <= idx ) ? ( idx - i ) : ( get_filter_size( filter_index ) - ( i - idx ) );
 
-		const char test_l = s.get_first_letter( m_rl.lookup( filter_index, t_idx ) );
+		const char test_l = s.get_first_letter( get_rom_absolute( filter_index, t_idx ) );
 
 		if ((( is_alpha ) && ( test_l != curr_l ))
 				|| ((!is_alpha) && ( std::isalpha( test_l ) )))
@@ -1273,10 +1349,17 @@ int FeSettings::get_next_letter_offset( int step ) const
 }
 
 void FeSettings::get_current_tags_list(
-	std::vector< std::pair<std::string, bool> > &tags_list ) const
+	std::vector< std::pair<std::string, bool> > &tags_list )
 {
 	int filter_index = get_current_filter_index();
-	m_rl.get_tags_list( filter_index, get_rom_index( filter_index, 0 ), tags_list );
+
+	FeRomInfo *r = get_rom_absolute( filter_index,
+			get_rom_index( filter_index, 0 ) );
+
+	if ( !r )
+		return;
+
+	m_rl.get_tags_list( *r, tags_list );
 }
 
 bool FeSettings::set_current_tag(
@@ -1287,12 +1370,13 @@ bool FeSettings::set_current_tag(
 
 	int filter_index = get_current_filter_index();
 
-	return m_rl.set_tag(
-			filter_index,
-			get_rom_index( filter_index, 0 ),
-			m_displays[m_current_display],
-			tag,
-			flag );
+	FeRomInfo *r = get_rom_absolute( filter_index,
+			get_rom_index( filter_index, 0 ) );
+
+	if ( !r )
+		return false;
+
+	return m_rl.set_tag( *r, m_displays[m_current_display], tag, flag );
 }
 
 void FeSettings::toggle_layout()
@@ -1392,22 +1476,46 @@ void FeSettings::run( int &minimum_run_seconds )
 	minimum_run_seconds=0;
 	int filter_index = get_current_filter_index();
 
-	if ( m_rl.is_filter_empty( filter_index ) )
+	if ( get_filter_size( filter_index ) < 1 )
 		return;
 
 	int rom_index = get_rom_index( filter_index, 0 );
-	FeRomInfo &rom = m_rl.lookup( filter_index, rom_index );
 
-	const FeEmulatorInfo *emu = get_emulator( rom.get_info( FeRomInfo::Emulator ) );
-	if ( emu == NULL )
+	FeRomInfo *rom = get_rom_absolute( filter_index, rom_index );
+	if ( !rom )
 		return;
 
-	const std::string &rom_name = rom.get_info( FeRomInfo::Romname );
+	const FeEmulatorInfo *emu = get_emulator(
+			rom->get_info( FeRomInfo::Emulator ) );
+	if ( !emu )
+		return;
+
+	const std::string &rom_name = rom->get_info( FeRomInfo::Romname );
 	minimum_run_seconds = as_int( emu->get_info( FeEmulatorInfo::Minimum_run_time ) );
 
 	m_last_launch_display = get_current_display_index();
 	m_last_launch_filter = filter_index;
-	m_last_launch_rom = rom_index;
+
+	if ( !m_current_search.empty()
+			&& ( get_current_filter_index() == filter_index ))
+	{
+		//
+		// Search results are temporary, so if we are currently
+		// showing search results we need to find the selected game
+		// in the filter itself (without the search applied)
+		//
+		m_last_launch_rom = 0;
+		for ( int i=0; i<m_rl.filter_size( filter_index ); i++ )
+		{
+			if ( m_rl.lookup( filter_index, i ) == *rom )
+			{
+				m_last_launch_rom = i;
+				break;
+			}
+		}
+	}
+	else
+		m_last_launch_rom = rom_index;
 
 	std::string command, args, rom_path, extension, romfilename;
 
@@ -1507,13 +1615,13 @@ void FeSettings::run( int &minimum_run_seconds )
 
 	sf::Clock play_timer;
 	run_program(
-				command,
-				args,
-				NULL,
-				NULL,
-				true,
-				emu->get_info( FeEmulatorInfo::Exit_hotkey ),
-				m_joy_thresh );
+		command,
+		args,
+		NULL,
+		NULL,
+		true,
+		emu->get_info( FeEmulatorInfo::Exit_hotkey ),
+		m_joy_thresh );
 
 	if ( m_track_usage )
 	{
@@ -1522,7 +1630,7 @@ void FeSettings::run( int &minimum_run_seconds )
 		confirm_directory( path, rl_name );
 
 		path += rl_name + "/";
-		rom.update_stats( path, 1, play_timer.getElapsedTime().asSeconds() );
+		rom->update_stats( path, 1, play_timer.getElapsedTime().asSeconds() );
 	}
 }
 
@@ -1579,6 +1687,8 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 		n -= perform_substitution( str, "[ListEntry]",
 				as_str( rom_index + 1 ) );
 
+		n -= perform_substitution( str, "[Search]",
+				m_current_search_str );
 
 		// [ListTitle] deprecated as of 1.5
 		n -= perform_substitution( str, "[ListTitle]",

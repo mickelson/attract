@@ -652,10 +652,11 @@ bool FeVM::on_new_layout()
 		.Prop( _SC("name"), &FePresent::get_display_name )
 		.Prop( _SC("index"), &FePresent::get_selection_index, &FePresent::set_selection_index )
 		.Prop( _SC("filter_index"), &FePresent::get_filter_index, &FePresent::set_filter_index )
+		.Prop( _SC("search_rule"), &FePresent::get_search_rule, &FePresent::set_search_rule )
+		.Prop( _SC("size"), &FePresent::get_current_filter_size )
 
 		// The following are deprecated as of version 1.5 in favour of using the fe.filters array:
 		.Prop( _SC("filter"), &FePresent::get_filter_name )	// deprecated as of 1.5
-		.Prop( _SC("size"), &FePresent::get_list_size )			// deprecated as of 1.5
 		.Prop( _SC("sort_by"), &FePresent::get_sort_by )		// deprecated as of 1.5
 		.Prop( _SC("reverse_order"), &FePresent::get_reverse_order ) // deprecated as of 1.5
 		.Prop( _SC("list_limit"), &FePresent::get_list_limit ) // deprecated as of 1.5
@@ -963,7 +964,7 @@ bool FeVM::on_tick()
 	return m_redraw_triggered;
 }
 
-bool FeVM::on_transition(
+void FeVM::on_transition(
 	FeTransitionType t,
 	int var )
 {
@@ -974,7 +975,6 @@ bool FeVM::on_transition(
 #endif // FE_DEBUG
 
 	sf::Clock ttimer;
-	m_redraw_triggered = false;
 
 	std::vector<FeCallback *> worklist( m_trans.size() );
 	for ( unsigned int i=0; i < m_trans.size(); i++ )
@@ -1048,18 +1048,13 @@ bool FeVM::on_transition(
 				//sf::sleep( sf::milliseconds( 10 ) );
 			}
 #endif
-
-			m_redraw_triggered = false; // clear redraw flag
 		}
 	}
-
-	return m_redraw_triggered;
 }
 
-bool FeVM::script_handle_event( FeInputMap::Command c, bool &redraw )
+bool FeVM::script_handle_event( FeInputMap::Command c )
 {
 	using namespace Sqrat;
-	m_redraw_triggered = false;
 
 	//
 	// Go through the list in reverse so that the most recently registered signal handler
@@ -1078,12 +1073,7 @@ bool FeVM::script_handle_event( FeInputMap::Command c, bool &redraw )
 			Function &func = (*itr).get_fn();
 			if (( !func.IsNull() )
 					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
-			{
-				if ( m_redraw_triggered )
-					redraw = true;
-
 				return true;
-			}
 		}
 		catch( Exception e )
 		{
@@ -1091,9 +1081,6 @@ bool FeVM::script_handle_event( FeInputMap::Command c, bool &redraw )
 					<< e.Message() << std::endl;
 		}
 	}
-
-	if ( m_redraw_triggered )
-		redraw = true;
 
 	return false;
 }

@@ -117,12 +117,12 @@ public:
 	void vm_init();
 	bool on_new_layout();
 	bool on_tick();
-	bool on_transition( FeTransitionType, int var );
+	void on_transition( FeTransitionType, int var );
 	void init_with_default_layout();
 	int get_script_id() { return m_script_id; };
 	void set_script_id( int id ) { m_script_id=id; };
 
-	bool script_handle_event( FeInputMap::Command c, bool &redraw );
+	bool script_handle_event( FeInputMap::Command c );
 
 	//
 	// overlay functions used from scripts

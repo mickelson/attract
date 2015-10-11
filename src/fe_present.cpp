@@ -744,7 +744,7 @@ void FePresent::set_filter_index( int idx )
 	}
 }
 
-int FePresent::get_list_size() const
+int FePresent::get_current_filter_size() const
 {
 	return m_feSettings->get_filter_size( m_feSettings->get_current_filter_index() );
 }
@@ -1259,6 +1259,17 @@ FeShader *FePresent::get_empty_shader()
 		m_emptyShader = new FeShader();
 
 	return m_emptyShader;
+}
+
+void FePresent::set_search_rule( const char *s )
+{
+	m_feSettings->set_search_rule( s );
+	update_to_new_list( 0 );
+}
+
+const char *FePresent::get_search_rule()
+{
+	return m_feSettings->get_search_rule().c_str();
 }
 
 void FePresent::script_do_update( FeBasePresentable *bp )

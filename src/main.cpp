@@ -590,8 +590,11 @@ int main(int argc, char *argv[])
 			//
 			// Give the script the option to handle the command.
 			//
-			if ( feVM.script_handle_event( c, redraw ) )
+			if ( feVM.script_handle_event( c ) )
+			{
+				redraw=true;
 				continue;
+			}
 
 			//
 			// Check if we need to get out of intro mode
@@ -888,9 +891,11 @@ int main(int argc, char *argv[])
 							step = list_size - curr_sel - 1;
 					}
 
-					if (( step != 0 ) && ( feVM.script_handle_event( move_state, redraw ) == false ))
+					if ( step != 0 )
 					{
-						feVM.change_selection( step, false );
+						if ( feVM.script_handle_event( move_state ) == false )
+							feVM.change_selection( step, false );
+
 						redraw=true;
 					}
 				}

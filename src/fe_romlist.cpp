@@ -113,9 +113,12 @@ bool FeRomListSorter::operator()( const FeRomInfo &one_obj, const FeRomInfo &two
 		return ( one.compare( two ) < 0 );
 }
 
-const char FeRomListSorter::get_first_letter( const FeRomInfo &one_info )
+const char FeRomListSorter::get_first_letter( const FeRomInfo *one_info )
 {
-	const std::string &name = one_info.get_info( FeRomInfo::Title );
+	if ( !one_info )
+		return '0';
+
+	const std::string &name = one_info->get_info( FeRomInfo::Title );
 	if ( name.empty() )
 		return '0';
 
@@ -569,24 +572,18 @@ void FeRomList::save_tags()
 	}
 }
 
-bool FeRomList::set_fav( int filter_index, int rom_index, FeDisplayInfo &display, bool fav )
+bool FeRomList::set_fav( FeRomInfo &r, FeDisplayInfo &display, bool fav )
 {
-	if (( rom_index < 0 ) || ( rom_index >= filter_size( filter_index ) ))
-		return false;
-
-	(m_filtered_list[filter_index][rom_index])->set_info( FeRomInfo::Favourite, fav ? "1" : "" );
+	r.set_info( FeRomInfo::Favourite, fav ? "1" : "" );
 	m_fav_changed=true;
 
 	return fix_filters( display, FeRomInfo::Favourite );
 }
 
-void FeRomList::get_tags_list( int filter_index, int rom_index,
+void FeRomList::get_tags_list( FeRomInfo &rom,
 		std::vector< std::pair<std::string, bool> > &tags_list ) const
 {
-	if (( rom_index < 0 ) || ( rom_index >= filter_size( filter_index ) ))
-		return;
-
-	std::string curr_tags = (m_filtered_list[filter_index][rom_index])->get_info(FeRomInfo::Tags);
+	std::string curr_tags = rom.get_info(FeRomInfo::Tags);
 
 	std::set<std::string> my_set;
 	size_t pos=0;
@@ -609,12 +606,9 @@ void FeRomList::get_tags_list( int filter_index, int rom_index,
 	}
 }
 
-bool FeRomList::set_tag( int filter_index, int rom_index, FeDisplayInfo &display, const std::string &tag, bool flag )
+bool FeRomList::set_tag( FeRomInfo &rom, FeDisplayInfo &display, const std::string &tag, bool flag )
 {
-	if (( rom_index < 0 ) || ( rom_index >= filter_size( filter_index ) ))
-		return false;
-
-	std::string curr_tags = (m_filtered_list[filter_index][rom_index])->get_info(FeRomInfo::Tags);
+	std::string curr_tags = rom.get_info(FeRomInfo::Tags);
 	size_t pos = curr_tags.find( FE_TAGS_SEP + tag + FE_TAGS_SEP );
 
 	std::map<std::string, bool>::iterator itt = m_tags.begin();
@@ -623,7 +617,7 @@ bool FeRomList::set_tag( int filter_index, int rom_index, FeDisplayInfo &display
 	{
 		if ( pos == std::string::npos )
 		{
-			(m_filtered_list[filter_index][rom_index])->append_tag( tag );
+			rom.append_tag( tag );
 			m_tags_changed = true;
 
 			itt = m_tags.find( tag );
@@ -650,7 +644,7 @@ bool FeRomList::set_tag( int filter_index, int rom_index, FeDisplayInfo &display
 		if (( curr_tags.size() == 1 ) && (curr_tags[0] == FE_TAGS_SEP ))
 			curr_tags.clear();
 
-		(m_filtered_list[filter_index][rom_index])->set_info( FeRomInfo::Tags, curr_tags );
+		rom.set_info( FeRomInfo::Tags, curr_tags );
 		m_tags_changed = true;
 
 		itt = m_tags.find( tag );

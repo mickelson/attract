@@ -132,11 +132,13 @@ private:
 	std::string m_default_font;
 	std::string m_exit_command;
 	std::string m_language;
+	std::string m_current_search_str;
 
 	std::vector<std::string> m_font_paths;
 	std::vector<FeDisplayInfo> m_displays;
 	std::vector<FePlugInfo> m_plugins;
 	std::vector<FeLayoutInfo> m_layout_params;
+	std::vector<FeRomInfo *> m_current_search;
 	FeRomList m_rl;
 
 	FeInputMap m_inputmap;
@@ -154,6 +156,7 @@ private:
 	int m_last_launch_rom;
 	int m_joy_thresh;		// [1..100], 100=least sensitive
 	int m_mouse_thresh;	// [1..100], 100=least sensitive
+	int m_current_search_index;
 	bool m_displays_menu_exit;
 	bool m_hide_brackets;
 	bool m_autolaunch_last_game;
@@ -240,6 +243,14 @@ public:
 	int get_filter_index_from_offset( int offset ) const;
 	int get_filter_size( int filter_index ) const;
 	int get_filter_count() const;
+
+	// apply a search rule (see FeRule) to the currently selected
+	// filter
+	//
+	// set to an empty string to clear the current search
+	//
+	void set_search_rule( const std::string &rule );
+	const std::string &get_search_rule() const;
 
 	bool select_last_launch();
 	int get_joy_thresh() const { return m_joy_thresh; }
@@ -342,17 +353,17 @@ public:
 	FilterWrapModeType get_filter_wrap_mode() const;
 	int get_screen_saver_timeout() const;
 
-	bool get_current_fav() const;
+	bool get_current_fav();
 
 	// returns true if the current list chnaged as a result of setting the tag
 	bool set_current_fav( bool );
-	int get_prev_fav_offset() const;
-	int get_next_fav_offset() const;
+	int get_prev_fav_offset();
+	int get_next_fav_offset();
 
-	int get_next_letter_offset( int step ) const;
+	int get_next_letter_offset( int step );
 
 	void get_current_tags_list(
-		std::vector< std::pair<std::string, bool> > &tags_list ) const;
+		std::vector< std::pair<std::string, bool> > &tags_list );
 
 	// returns true if the current list changed as a result of setting the tag
 	bool set_current_tag(

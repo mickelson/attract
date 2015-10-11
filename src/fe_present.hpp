@@ -172,11 +172,13 @@ protected:
 	const char *get_filter_name() const;
 	int get_filter_index() const;
 	void set_filter_index( int );
-	int get_list_size() const;
+	int get_current_filter_size() const;
 	int get_selection_index() const;
 	int get_sort_by() const;
 	bool get_reverse_order() const;
 	int get_list_limit() const;
+	void set_search_rule( const char * );
+	const char *get_search_rule();
 
 	void set_selection_index( int );
 	const char *get_layout_font() const;
@@ -248,7 +250,7 @@ public:
 	//
 	virtual bool on_new_layout()=0;
 	virtual bool on_tick()=0;
-	virtual bool on_transition( FeTransitionType, int var )=0;
+	virtual void on_transition( FeTransitionType, int var )=0;
 	virtual void flag_redraw()=0;
 	virtual void init_with_default_layout()=0;
 	virtual int get_script_id()=0;

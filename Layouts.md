@@ -159,6 +159,7 @@ Manufacturer's name.  There are more examples below.
       - `[ListSize]` - the number of items in the game list
       - `[ListEntry]` - the number of the current selection in the game list
       - `[FilterName]` - the name of the filter
+      - `[Search]` - the search rule currently applied to the game list
       - `[SortName]` - the attribute that the list was sorted by
       - `[Name]` - the short name of the selected game
       - `[Title]` - the full name of the selected game
@@ -1070,7 +1071,7 @@ This class is a container for global layout settings.  The instance of this
 class is the `fe.layout` object.  This class cannot be otherwise instantiated
 in a script.
 
-Attributes:
+Properties:
 
    * `width` - Get/set the layout width.  Default value is `ScreenWidth`.
    * `height` - Get/set the layout height.  Default value is `ScreenHeight`.
@@ -1106,12 +1107,19 @@ This class is a container for status information regarding the current display.
 The instance of this class is the `fe.list` object.  This class cannot be
 otherwise instantiated in a script.
 
-Attributes:
+Properties:
 
    * `name` - Get the name of the current display.
    * `filter_index` - Get/set the index of the currently selected filter.
      (see `fe.filters` for the list of available filters).
    * `index` - Get/set the index of the currently selected game.
+   * `search_rule` - Get/set the search rule applied to the current game list.
+     If you set this and the resulting search finds no results, then the
+     current game list remains displayed in its entirety.  If there are
+     results, then those results are shown instead, until search_rule is
+     cleared or the user navigates away from the display/filter.
+   * `size` - Get the size of the current game list.  If a search rule has
+     been applied, this will be the number of matches found (if > 0)
 
 
 <a name="Overlay" />
@@ -1121,7 +1129,7 @@ This class is a container for overlay functionality.  The instance of this
 class is the `fe.overlay` object.  This class cannot be otherwise instantiated
 in a script.
 
-Attributes:
+Properties:
 
    * `is_up` - Get whether the overlay is currently being displayed (i.e. config
      mode, etc).
@@ -1153,7 +1161,7 @@ This class is a container for information about the available filters.
 Instances of this class are contained in the `fe.filters` array.  This class
 cannot otherwise be instantiated in a script.
 
-Attributes:
+Properties:
 
    * `name` - Get the filter name.
    * `index` - Get the index of the currently selected game in this filter.
@@ -1196,7 +1204,7 @@ to the extra monitors in a multi-monitor setup.  Instances of this class are
 contained in the `fe.monitors` array.  This class cannot otherwise be
 instantiated in a script.
 
-Attributes:
+Properties:
 
    * `num` - Get the monitor number.
    * `width` - Get the monitor width in pixels.
@@ -1234,7 +1242,7 @@ are returned by the `add_image()`, `add_artwork()`, `add_surface` and
 Attract-Mode draw list).  This class cannot be otherwise instantiated in
 a script.
 
-Attributes:
+Properties:
 
    * `x` - Get/set x position of top left corner (in layout coordinates).
    * `y` - Get/set y position of top left corner (in layout coordinates).
@@ -1401,7 +1409,7 @@ class are returned by the `add_text()` functions and also appear in the
 `fe.obj` array (the Attract-Mode draw list).  This class cannot be
 otherwise instantiated in a script.
 
-Attributes:
+Properties:
    * `msg` - Get/set the text label's message.  Magic tokens can be used here,
      see [Magic Tokens](#magic) for more information.
    * `x` - Get/set x position of top left corner (in layout coordinates).
@@ -1474,7 +1482,7 @@ class are returned by the `add_listbox()` functions and also appear in the
 `fe.obj` array (the Attract-Mode draw list).  This class cannot be
 otherwise instantiated in a script.
 
-Attributes:
+Properties:
 
    * `x` - Get/set x position of top left corner (in layout coordinates).
    * `y` - Get/set y position of top left corner (in layout coordinates).
@@ -1573,7 +1581,7 @@ by the `fe.add_sound()` function.  This is also the class for the
 `fe.ambient_sound` object.  Object of this class cannot be otherwise
 instantiated in a script.
 
-Attributes:
+Properties:
 
    * `file_name` - Get/set the audio filename.
    * `playing` - Get/set whether the track is currently playing (boolean).
@@ -1599,7 +1607,7 @@ The class representing a GLSL shader.  Instances of this class are returned
 by the `fe.add_shader()` function.  This class cannot be otherwise
 instantiated in a script.
 
-Attributes:
+Properties:
 
    * `type` - Get the shader type.   Can be one of the following values:
       - `Shader.VertexAndFragment`

@@ -47,7 +47,7 @@ public:
 
 	bool operator()( const FeRomInfo &obj1, const FeRomInfo &obj2 ) const;
 
-	const char get_first_letter( const FeRomInfo &one );
+	const char get_first_letter( const FeRomInfo *one );
 
 	static void init_title_rex( const std::string & );
 	static void clear_title_rex();
@@ -113,11 +113,11 @@ public:
 		const std::string &fn );
 
 	void save_state();
-	bool set_fav( int filter_index, int rom_index, FeDisplayInfo &display, bool fav );
+	bool set_fav( FeRomInfo &rom, FeDisplayInfo &display, bool fav );
 
-	void get_tags_list( int filter_index, int idx,
+	void get_tags_list( FeRomInfo &rom,
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
-	bool set_tag( int filter_index, int rom_index, FeDisplayInfo &display, const std::string &tag, bool flag );
+	bool set_tag( FeRomInfo &rom, FeDisplayInfo &display, const std::string &tag, bool flag );
 
 	bool is_filter_empty( int filter_idx ) const { return m_filtered_list[filter_idx].empty(); };
 	int filter_size( int filter_idx ) const { return (int)m_filtered_list[filter_idx].size(); };
