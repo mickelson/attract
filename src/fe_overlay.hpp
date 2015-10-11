@@ -68,7 +68,8 @@ public:
 		FeSettings &fes,
 		FePresent &fep );
 
-	void splash_message( const std::string &, const std::string &rep="" );
+	void splash_message( const std::string &, const std::string &rep="",
+				const std::string &aux="" );
 	int confirm_dialog( const std::string &msg, const std::string &rep="" );
 	bool config_dialog();
 	int languages_dialog();

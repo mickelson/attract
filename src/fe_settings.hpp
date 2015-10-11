@@ -371,7 +371,7 @@ public:
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,
 	// overwriting any previous list of this name.
 	//
-	typedef bool (*UiUpdate) ( void *, int );
+	typedef bool (*UiUpdate) ( void *, int, const std::string & );
 	bool build_romlist( const std::string &emu_name, UiUpdate, void *, int & );
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 

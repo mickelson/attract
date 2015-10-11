@@ -348,10 +348,12 @@ bool process_q_simple( FeNetQueue &q,
 	//
 	// Process the output queue from our worker threads
 	//
+	std::string aux;
 	while ( !( q.input_done() && q.output_done() ) )
 	{
 		int id;
 		std::string result;
+
 		if ( q.pop_completed_task( id, result ) )
 		{
 			if ( id < 0 )
@@ -360,6 +362,12 @@ bool process_q_simple( FeNetQueue &q,
 				{
 					std::cout << " + Downloaded: " << result << std::endl;
 					c.download_count++;
+
+					// find second last forward slash in filename
+					// we assume that there will always be at least two
+					size_t pos = result.find_last_of( "\\/" );
+					pos = result.find_last_of( "\\/", pos-1 );
+					aux = result.substr( pos );
 				}
 
 				done++;
@@ -369,7 +377,7 @@ bool process_q_simple( FeNetQueue &q,
 		if ( c.uiupdate )
 		{
 			int p = c.progress_past + done * c.progress_range / taskc;
-			if ( c.uiupdate( c.uiupdatedata, p ) == false )
+			if ( c.uiupdate( c.uiupdatedata, p, aux ) == false )
 				return false;
 		}
 	}
@@ -666,6 +674,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	// artwork files where appropriate
 	//
 	FeNetWorker worker1( q ), worker2( q ), worker3( q ), worker4( q );
+	std::string aux;
 
 	//
 	// Process the output queue from our worker threads
@@ -674,6 +683,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	{
 		int id;
 		std::string result;
+
 		if ( q.pop_completed_task( id, result ) )
 		{
 			if ( id < 0 )
@@ -682,6 +692,12 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 				{
 					std::cout << " + Downloaded: " << result << std::endl;
 					c.download_count++;
+
+					// find second last forward slash in filename
+					// we assume that there will always be at least two
+					size_t pos = result.find_last_of( "\\/" );
+					pos = result.find_last_of( "\\/", pos-1 );
+					aux = result.substr( pos );
 				}
 
 				if ( id == FeNetTask::FileTask ) // we don't increment if id = FeNetTask::SpecialFileTask
@@ -781,13 +797,16 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 						done_count++;
 				}
 				else
+				{
+					aux = (worklist[id])->get_info( FeRomInfo::Title );
 					done_count+=NUM_ARTS;
+				}
 			}
 
 			if ( c.uiupdate )
 			{
 				int p = c.progress_past + done_count * c.progress_range / ( NUM_ARTS * worklist.size() );
-				if ( c.uiupdate( c.uiupdatedata, p ) == false )
+				if ( c.uiupdate( c.uiupdatedata, p, aux ) == false )
 					return false;
 			}
 		}
@@ -1139,7 +1158,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	// Put up the "building romlist" message at 0 percent while we get going...
 	//
 	if ( uiu )
-		uiu( uid, 0 );
+		uiu( uid, 0, "" );
 
 	std::cout << "*** Generating Collection/Rom List" << std::endl;
 
@@ -1166,7 +1185,7 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	confirm_directory( filename, FE_ROMLIST_SUBDIR );
 
 	if ( uiu )
-		uiu( uid, 100 );
+		uiu( uid, 100, "" );
 
 	filename += FE_ROMLIST_SUBDIR;
 	filename += emu_name;
@@ -1186,7 +1205,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	// Put up the "scraping artwork" message at 0 percent while we get going...
 	//
 	if ( uiu )
-		uiu( uid, 0 );
+		uiu( uid, 0, "" );
 
 	std::cout << "*** Scraping artwork for: " << emu_name << std::endl;
 
@@ -1227,7 +1246,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	}
 
 	if ( uiu )
-		uiu( uid, 100 );
+		uiu( uid, 100, "" );
 
 	std::cout << "*** Scraping done." << std::endl;
 

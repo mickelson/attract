@@ -133,6 +133,7 @@ public:
 	int list_dialog( Sqrat::Array );
 	const char *edit_dialog( const char *, const char * );
 	bool overlay_is_on();
+	bool splash_message( const char *, const char * );
 	bool splash_message( const char * );
 
 	static void script_get_config_options(

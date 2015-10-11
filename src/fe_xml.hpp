@@ -32,7 +32,7 @@
 class FeXMLParser
 {
 public:
-	typedef bool (*UiUpdate) (void *, int);
+	typedef bool (*UiUpdate) (void *, int, const std::string &);
 
 	void set_continue_parse( bool f ) { m_continue_parse=f; };
 	bool get_continue_parse() { return m_continue_parse; };
@@ -98,7 +98,6 @@ private:
 	std::map<const char *, FeRomInfoListType::iterator, FeMapComp> m_map;
 	std::vector<FeRomInfoListType::iterator> m_discarded;
 	int m_count;
-	int m_percent;
 	int m_displays;
 	bool m_collect_data;
 	bool m_chd;

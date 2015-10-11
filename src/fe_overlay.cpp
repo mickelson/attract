@@ -47,7 +47,8 @@ public:
 		const std::string &rep );
 
 	void splash_message( const std::string &msg,
-		const std::string &rep );
+		const std::string &rep,
+		const std::string &aux=0 );
 
 	void input_map_dialog( const std::string &m,
 		std::string &ms,
@@ -77,9 +78,11 @@ bool FeConfigContextImp::confirm_dialog( const std::string &msg,
 }
 
 void FeConfigContextImp::splash_message(
-			const std::string &msg, const std::string &rep )
+			const std::string &msg,
+			const std::string &rep,
+			const std::string &aux )
 {
-	m_feo.splash_message( msg, rep );
+	m_feo.splash_message( msg, rep, aux );
 }
 
 void FeConfigContextImp::input_map_dialog( const std::string &m,
@@ -176,7 +179,8 @@ void FeOverlay::get_common(
 }
 
 void FeOverlay::splash_message( const std::string &msg,
-				const std::string &rep )
+				const std::string &rep,
+				const std::string &aux )
 {
 	sf::Vector2i size;
 	sf::Vector2f text_scale;
@@ -196,13 +200,27 @@ void FeOverlay::splash_message( const std::string &msg,
 
 	message.setWordWrap( true );
 	message.setPosition( 2, 2 );
-	message.setSize( size.x - 4, size.y - 4 );
+	message.setSize( size.x - 4, size.y - char_size/2 - 4 );
 	message.setTextScale( text_scale );
 
 	std::string msg_str;
 	m_feSettings.get_resource( msg, rep, msg_str );
 
 	message.setString( msg_str );
+
+	FeTextPrimative extra(
+		m_fePresent.get_font(),
+		m_textColour,
+		sf::Color::Transparent,
+		char_size/2 );
+
+	extra.setWordWrap( true );
+	extra.setAlignment( FeTextPrimative::Left );
+	extra.setPosition( 2, size.y - char_size/2 + 2 );
+	extra.setSize( size.x - 4, char_size/2 );
+	extra.setTextScale( text_scale );
+
+	extra.setString( aux );
 
 	const sf::Transform &t = m_fePresent.get_transform();
 
@@ -212,6 +230,7 @@ void FeOverlay::splash_message( const std::string &msg,
 	m_wnd.draw( m_fePresent, t );
 	m_wnd.draw( bg, t );
 	m_wnd.draw( message, t );
+	m_wnd.draw( extra, t );
 	m_wnd.display();
 }
 

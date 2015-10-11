@@ -1141,8 +1141,9 @@ Member Functions:
    * `edit_dialog( msg, text )` - Prompt the user to input/edit text.  The `msg`
      parameter is the prompt caption.  `text` is the initial text to be edited.
      The return value a the string of text as edited by the user.
-   * `splash_message( msg )` - immediately provide a text message to the user.
-     This could be useful to provide feedback during time-intensive operations.
+   * `splash_message( msg, second_msg="" )` - immediately provide text feedback
+     to the user.  This could be useful during computationally-intensive
+     operations.
 
 
 <a name="Filter" />

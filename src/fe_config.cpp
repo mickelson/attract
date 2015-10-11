@@ -309,19 +309,19 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 namespace
 {
-	bool gen_ui_update( void *d, int i )
+	bool gen_ui_update( void *d, int i, const std::string &aux )
 	{
 		FeConfigContext *od = (FeConfigContext *)d;
 
-		od->splash_message( "Generating Rom List: $1%", as_str( i ) );
+		od->splash_message( "Generating Rom List: $1%", as_str( i ), aux );
 		return !od->check_for_cancel();
 	}
 
-	bool scrape_ui_update( void *d, int i )
+	bool scrape_ui_update( void *d, int i, const std::string &aux )
 	{
 		FeConfigContext *od = (FeConfigContext *)d;
 
-		od->splash_message( "Scraping Artwork: $1%", as_str( i ) );
+		od->splash_message( "Scraping Artwork: $1%", as_str( i ), aux );
 		return !od->check_for_cancel();
 	}
 };

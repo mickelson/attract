@@ -668,7 +668,8 @@ bool FeVM::on_new_layout()
 		.Overload<int (FeVM::*)(Array, const char *)>(_SC("list_dialog"), &FeVM::list_dialog)
 		.Overload<int (FeVM::*)(Array)>(_SC("list_dialog"), &FeVM::list_dialog)
 		.Func( _SC("edit_dialog"), &FeVM::edit_dialog )
-		.Func( _SC("splash_message"), &FeVM::splash_message )
+		.Overload<bool (FeVM::*)(const char *, const char *)>( _SC("splash_message"), &FeVM::splash_message )
+		.Overload<bool (FeVM::*)(const char *)>( _SC("splash_message"), &FeVM::splash_message )
 	);
 
 	fe.Bind( _SC("Sound"), Class <FeSound, NoConstructor>()
@@ -1164,10 +1165,15 @@ bool FeVM::overlay_is_on()
 	return m_overlay->overlay_is_on();
 }
 
+bool FeVM::splash_message( const char *msg, const char *aux )
+{
+	m_overlay->splash_message( msg, aux );
+	return m_overlay->check_for_cancel();
+}
+
 bool FeVM::splash_message( const char *msg )
 {
-	m_overlay->splash_message( msg );
-	return m_overlay->check_for_cancel();
+	return splash_message( msg, "" );
 }
 
 //
@@ -1282,7 +1288,8 @@ public:
 		//
 		fe.Bind( _SC("Overlay"), Sqrat::Class <FeVM, Sqrat::NoConstructor>()
 			.Prop( _SC("is_up"), &FeVM::overlay_is_on )
-			.Func( _SC("splash_message"), &FeVM::splash_message )
+			.Overload<bool (FeVM::*)(const char *, const char *)>( _SC("splash_message"), &FeVM::splash_message )
+			.Overload<bool (FeVM::*)(const char *)>( _SC("splash_message"), &FeVM::splash_message )
 		);
 
 		fe.SetInstance( _SC("overlay"), fe_vm );
