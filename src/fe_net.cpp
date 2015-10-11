@@ -25,9 +25,9 @@
 #include <iostream>
 
 FeNetTask::FeNetTask( const std::string &host,
-							const std::string &req,
-							const std::string &filename,
-							TaskType t )
+		const std::string &req,
+		const std::string &filename,
+		TaskType t )
 	: m_type( t ),
 	m_host( host ),
 	m_req( req ),
@@ -37,7 +37,7 @@ FeNetTask::FeNetTask( const std::string &host,
 }
 
 FeNetTask::FeNetTask( const std::string &host,
-							const std::string &req, int id )
+		const std::string &req, int id )
 	: m_type( BufferTask ),
 	m_host( host ),
 	m_req( req ),
@@ -47,8 +47,8 @@ FeNetTask::FeNetTask( const std::string &host,
 
 
 FeNetTask::FeNetTask()
-: m_type( NoTask ),
-m_id( 0 )
+	: m_type( NoTask ),
+	m_id( 0 )
 {
 }
 
@@ -66,7 +66,7 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 	req.setField( FROM_FIELD, FROM_VALUE );
 	req.setField( UA_FIELD, UA_VALUE );
 
-	sf::Http::Response resp = http.sendRequest( req );
+	sf::Http::Response resp = http.sendRequest( req, sf::seconds( 8 ) );
 	status = resp.getStatus();
 
 	if ( status != sf::Http::Response::Ok )
@@ -114,7 +114,7 @@ void FeNetQueue::add_file_task( const std::string &host,
 {
 	sf::Lock l( m_mutex );
 	m_in_queue.push_front( FeNetTask( host, req, file_name,
-						flag_special ? FeNetTask::SpecialFileTask : FeNetTask::FileTask ) );
+		flag_special ? FeNetTask::SpecialFileTask : FeNetTask::FileTask ) );
 }
 
 void FeNetQueue::add_buffer_task( const std::string &host,
