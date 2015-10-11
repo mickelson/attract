@@ -216,19 +216,22 @@ bool FeWindow::run()
 	int min_run;
 
 #ifndef SFML_SYSTEM_MACOS
+	// Don't move so much to the corner on Macs due to hot corners
 	//
+	const int HIDE_OFFSET=3;
+#else
+	const int HIDE_OFFSET=1;
+#endif
 	// Move the mouse to the bottom left corner so it isn't visible
-	// when the emulator launches.  We don't do this on macs due to the
-	// hot corners.
+	// when the emulator launches.
 	//
 	sf::Vector2i reset_pos = sf::Mouse::getPosition();
 
 	sf::Vector2i hide_pos = getPosition();
-	hide_pos.x += getSize().x - 1;
-	hide_pos.y += getSize().y - 1;
+	hide_pos.x += getSize().x - HIDE_OFFSET;
+	hide_pos.y += getSize().y - HIDE_OFFSET;
 
 	sf::Mouse::setPosition( hide_pos );
-#endif
 
 #ifdef SFML_SYSTEM_LINUX
 	//
@@ -289,9 +292,7 @@ bool FeWindow::run()
 		}
 	}
 
-#ifndef SFML_SYSTEM_MACOS
 	sf::Mouse::setPosition( reset_pos );
-#endif
 
 	// Empty the window event queue, so we don't go triggering other
 	// right away after running an emulator
