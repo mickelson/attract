@@ -251,19 +251,17 @@ FeTextureContainer::FeTextureContainer(
 	m_video_flags( VF_Normal )
 {
 	if ( is_artwork )
+	{
 		m_type = IsArtwork;
+		m_art_name = art_name.empty() ? FE_DEFAULT_ARTWORK : art_name;
+	}
 	else if ( art_name.find_first_of( "[" ) != std::string::npos )
+	{
 		m_type = IsDynamic;
+		m_art_name = clean_path( art_name );
+	}
 	else
 		m_type = IsStatic;
-
-	if ( m_type != IsStatic )
-	{
-		m_art_name = art_name;
-
-		if (( m_type == IsArtwork ) && m_art_name.empty() )
-			m_art_name = FE_DEFAULT_ARTWORK;
-	}
 }
 
 FeTextureContainer::~FeTextureContainer()
@@ -825,6 +823,8 @@ void FeTextureContainer::set_file_name( const char *n )
 		notify_texture_change();
 		return;
 	}
+
+	filename = clean_path( filename );
 
 	// If it is a relative path we assume it is in the
 	// layout/screensaver/intro directory

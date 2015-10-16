@@ -1971,6 +1971,7 @@ const std::string FeSettings::get_info( int index ) const
 	case AutoLaunchLastGame:
 	case ConfirmFavourites:
 	case TrackUsage:
+	case MultiMon:
 	case SmoothImages:
 	case AccelerateSelection:
 	case ScrapeSnaps:
@@ -2314,6 +2315,9 @@ void FeSettings::save() const
 	confirm_directory( m_config_path, FE_ROMLIST_SUBDIR );
 	confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
 	confirm_directory( m_config_path, FE_LAYOUT_SUBDIR );
+	confirm_directory( m_config_path, FE_SCREENSAVER_SUBDIR );
+	confirm_directory( m_config_path, FE_INTRO_SUBDIR );
+	confirm_directory( m_config_path, FE_MODULES_SUBDIR );
 	confirm_directory( m_config_path, FE_SOUND_SUBDIR );
 	confirm_directory( m_config_path, FE_PLUGIN_SUBDIR );
 	// no FE_LANGUAGE_SUBDIR
@@ -2940,24 +2944,25 @@ bool FeSettings::get_best_dynamic_image_file(
 	do_text_substitutions_absolute( base, filter_index, rom_index );
 
 	std::string path;
-	get_path( Current, path );
 
 	// split filename from directory paths correctly
-	size_t pos( 0 );
 	if ( is_relative_path( base ) )
+		get_path( Current, path );
+
+	size_t pos = base.find_last_of( "/\\" );
+	if ( pos != std::string::npos )
 	{
-		pos = base.find_last_of( "/\\" );
-		if ( pos != std::string::npos )
-		{
-			path += base.substr( 0, pos+1 );
-			base.erase( 0, pos+1 );
-		}
+		path += base.substr( 0, pos+1 );
+		base.erase( 0, pos+1 );
 	}
 
 	// strip extension from filename, if present
 	pos = base.find_last_of( "." );
 	if ( pos != std::string::npos )
 		base.erase( pos );
+
+	if ( base.empty() )
+		return false;
 
 	std::vector< std::string > paths;
 	paths.push_back( path );
