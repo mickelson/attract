@@ -20,6 +20,7 @@ distributions.  Other distributions should have similar packages available.
       avcodec, swscale, avutil and either swresample or avresample.
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
+      - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
 
 2. Extract the Attract-Mode source to your system.
 
@@ -64,10 +65,11 @@ These instructions assume that you have X Code installed.
 
            ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
 
-2.  Install the "pkg-config", "ffmpeg" and "sfml" homebrew recipes:
+2.  Install the "pkg-config", "ffmpeg", "sfml" and "libarchive" homebrew
+    recipes:
 
            brew update
-           brew install pkg-config ffmpeg sfml
+           brew install pkg-config ffmpeg sfml libarchive
 
 3. Extract the Attract-Mode source to your system.
 
@@ -101,9 +103,9 @@ OS X.
 1. Follow the steps in the mxe tutorial to set up mxe on your system:
    <http://mxe.cc/#tutorial>
 
-2. Make mxe's sfml and ffmpeg packages:
+2. Make mxe's sfml, ffmpeg and libarchive packages:
 
-           make ffmpeg sfml
+           make ffmpeg sfml libarchive
 
    the above command will make 32-bit versions of ffmpeg and sfml (and anything
    else that they depend on). To make the 64-bit version use the following:
@@ -143,7 +145,7 @@ Windows (native compile):
 4. Install required packaged. (optionally use the mingw-w64-i686-toolchain
    instead for 32-bit windows architectures):
 
-           pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg
+           pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg mingw64/mingw-w64-x86_64-libarchive
 
 5. Clone and make Attract-Mode
 

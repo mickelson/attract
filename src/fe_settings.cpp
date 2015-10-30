@@ -110,7 +110,6 @@ const char *FE_INTRO_FILE				= "intro.nut";
 const char *FE_LAYOUT_FILE_BASE		= "layout";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
-const char *FE_ZIP_EXT = ".zip";
 const char *FE_SWF_EXT = ".swf";
 const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
@@ -130,6 +129,35 @@ const char *FE_CFG_YES_STR				= "yes";
 const char *FE_CFG_NO_STR				= "no";
 
 const std::string FE_EMPTY_STRING;
+
+const char *FE_ARCHIVE_EXT[] =
+{
+	".zip",
+#ifdef USE_LIBARCHIVE
+	".rar",
+	".7z",
+	".tar.gz",
+	".tgz",
+	".tar.bz2",
+	".tbz2",
+	".tar",
+#endif
+	NULL
+};
+
+bool is_supported_archive( const std::string &fname )
+{
+	int i=0;
+	while ( FE_ARCHIVE_EXT[i] != NULL )
+	{
+		if ( tail_compare( fname, FE_ARCHIVE_EXT[i] ) )
+			return true;
+
+		i++;
+	}
+
+	return false;
+}
 
 bool internal_resolve_config_file(
 	const std::string &config_path,
@@ -922,7 +950,7 @@ bool FeSettings::get_path(
 		file = m_displays[m_current_display].get_current_layout_file();
 		if ( file.empty() )
 		{
-			if ( tail_compare( path, FE_ZIP_EXT ) )
+			if ( is_supported_archive( path ) )
 			{
 				std::vector<std::string> zdir;
 				if ( !fe_zip_get_dir( path.c_str(), zdir ) )
@@ -973,12 +1001,28 @@ void FeSettings::get_layout_file_basenames_from_path(
 {
 	std::vector<std::string> temp_list;
 
-	if ( tail_compare( path, FE_ZIP_EXT ) )
+	// check if we are dealing with an archive (.zip, .7z, etc.)
+	int i=0;
+	int a_index=-1;
+	while ( FE_ARCHIVE_EXT[i] != NULL )
 	{
+		if ( tail_compare( path, FE_ARCHIVE_EXT[i] ) )
+		{
+			a_index = i;
+			break;
+		}
+
+		i++;
+	}
+
+	if ( a_index >= 0 )
+	{
+		// Archive
+
 		std::vector<std::string> t2;
 		fe_zip_get_dir( path.c_str(), t2 );
 
-		size_t zlen = strlen( FE_ZIP_EXT );
+		size_t zlen = strlen( FE_ARCHIVE_EXT[a_index] );
 
 		for ( std::vector<std::string>::iterator itr=t2.begin();
 			itr != t2.end(); ++itr )
@@ -1016,8 +1060,19 @@ bool FeSettings::get_layout_dir(
 			FE_LAYOUT_SUBDIR, layout_name + "/" ) )
 		return true;
 
-	return internal_resolve_config_file( m_config_path, layout_dir,
-		FE_LAYOUT_SUBDIR, layout_name + FE_ZIP_EXT );
+	int i=0;
+	while ( FE_ARCHIVE_EXT[i] != NULL )
+	{
+		if ( internal_resolve_config_file( m_config_path,
+				layout_dir,
+				FE_LAYOUT_SUBDIR,
+				layout_name + FE_ARCHIVE_EXT[i] ) )
+			return true;
+
+		i++;
+	}
+
+	return false;
 }
 
 FeLayoutInfo &FeSettings::get_layout_config( const std::string &layout_name )
@@ -1807,7 +1862,7 @@ bool FeSettings::get_font_file( std::string &fpath,
 	std::string layout_dir;
 	get_path( Current, layout_dir );
 
-	if ( tail_compare( layout_dir, FE_ZIP_EXT ) )
+	if ( is_supported_archive( layout_dir ) )
 	{
 		std::vector<std::string> cl;
 		fe_zip_get_dir( layout_dir.c_str(), cl );
@@ -2255,7 +2310,13 @@ void FeSettings::get_layouts_list( std::vector<std::string> &layouts ) const
 	std::string path = m_config_path + FE_LAYOUT_SUBDIR;
 
 	get_subdirectories( layouts, path );
-	get_basename_from_extension( layouts, path, FE_ZIP_EXT );
+
+	int i=0;
+	while ( FE_ARCHIVE_EXT[i] != NULL )
+	{
+		get_basename_from_extension( layouts, path, FE_ARCHIVE_EXT[i] );
+		i++;
+	}
 
 	if ( FE_DATA_PATH != NULL )
 	{
@@ -2263,7 +2324,13 @@ void FeSettings::get_layouts_list( std::vector<std::string> &layouts ) const
 		t += FE_LAYOUT_SUBDIR;
 
 		get_subdirectories( layouts, t );
-		get_basename_from_extension( layouts, t, FE_ZIP_EXT );
+
+		i=0;
+		while ( FE_ARCHIVE_EXT[i] != NULL )
+		{
+			get_basename_from_extension( layouts, t, FE_ARCHIVE_EXT[i] );
+			i++;
+		}
 	}
 
 	if ( !layouts.empty() )
@@ -2433,12 +2500,17 @@ void FeSettings::get_available_plugins( std::vector < std::string > &ll ) const
 		FE_PLUGIN_SUBDIR );
 
 	//
-	// Can be a .zip files in the plugins directory as well
+	// Can be an archive file (.zip, etc) in the plugins directory as well
 	//
-	internal_gather_config_files(
-		ll,
-		FE_ZIP_EXT,
-		FE_PLUGIN_SUBDIR );
+	int i=0;
+	while ( FE_ARCHIVE_EXT[i] != NULL )
+	{
+		internal_gather_config_files(
+			ll,
+			FE_ARCHIVE_EXT[i],
+			FE_PLUGIN_SUBDIR );
+		i++;
+	}
 
 	if ( !ll.empty() )
 	{
@@ -2504,7 +2576,10 @@ void FeSettings::get_plugin_full_path(
 		return;
 	}
 
-	if ( internal_resolve_config_file( m_config_path, temp, FE_PLUGIN_SUBDIR, label + FE_PLUGIN_FILE_EXTENSION ) )
+	if ( internal_resolve_config_file( m_config_path,
+			temp,
+			FE_PLUGIN_SUBDIR,
+			label + FE_PLUGIN_FILE_EXTENSION ) )
 	{
 		size_t len = temp.find_last_of( "/\\" );
 		ASSERT( len != std::string::npos );
@@ -2514,11 +2589,19 @@ void FeSettings::get_plugin_full_path(
 		return;
 	}
 
-	if ( internal_resolve_config_file( m_config_path, temp, FE_PLUGIN_SUBDIR, label + FE_ZIP_EXT ) )
+	int i=0;
+	while ( FE_ARCHIVE_EXT[i] != NULL )
 	{
-		path.swap( temp );
-		filename = FE_PLUGIN_FILE;
-		return;
+		if ( internal_resolve_config_file( m_config_path,
+				temp,
+				FE_PLUGIN_SUBDIR,
+				label + FE_ARCHIVE_EXT[i] ) )
+		{
+			path.swap( temp );
+			filename = FE_PLUGIN_FILE;
+			return;
+		}
+		i++;
 	}
 
 

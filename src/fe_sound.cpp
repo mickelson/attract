@@ -111,12 +111,12 @@ void FeSound::tick()
 
 void FeSound::load( const std::string &path, const std::string &fn )
 {
-	if ( tail_compare( path, FE_ZIP_EXT ) )
+	if ( is_supported_archive( path ) )
 	{
 #ifndef NO_MOVIE
 		if ( !m_sound.openFromArchive( path, fn ) )
 		{
-			std::cout << "Error loading sound file from zip: "
+			std::cout << "Error loading sound file from archive: "
 				<< path << " (" << fn << ")" << std::endl;
 			m_file_name = "";
 			return;
@@ -126,7 +126,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 
 		if ( !m_zip.open( fn ) )
 		{
-			std::cout << "Error loading sound file from zip: "
+			std::cout << "Error loading sound file from archive: "
 				<< path << " (" << fn << ")" << std::endl;
 			m_file_name = "";
 			return;

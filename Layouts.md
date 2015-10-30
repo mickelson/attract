@@ -69,8 +69,10 @@ consist of a `layout.nut` script file and a collection of related resources
 (images, other scripts, etc.) used by the script.
 
 Layouts are stored under the "layouts" subdirectory of the Attract-Mode
-config directory.  Each layout gets its own separate subdirectory or .zip
-file (Attract-Mode can read layouts and plugins directly from .zip files).
+config directory.  Each layout is stored in its own separate subdirectory or
+archive file (Attract-Mode can read layouts and plugins directly from .zip,
+.7z, .rar, .tar.gz, .tar.bz2 and .tar files).
+
 Each layout can have one or more `layout*.nut` script files.  The "Toggle
 Layout" command in Attract-Mode allows users to cycle between each of the
 `layout*.nut` script files located in the layout's directory.  Attract-Mode
@@ -92,7 +94,7 @@ Plug-ins are similar to layouts in that they consist of at least one squirrel
 script file and a collection of related resources.  Plug-ins are stored in the
 "plugins" subdirectory of the Attract-Mode config directory.  Plug-ins can be a
 single ".nut" file stored in this subdirectory.  They can also have their own
-separate subdirectory or .zip file (in which case the script itself needs to
+separate subdirectory or archive file (in which case the script itself needs to
 be in a file called `plugin.nut`).
 
 
@@ -120,10 +122,12 @@ Attract-Mode includes the following home-brewed extensions to the squirrel
 language and standard libraries:
 
    * A `zip_extract_archive( zipfile, filename )` function that will open a
-     specified `zipfile` .zip file and extract `filename` from it, returning
+     specified `zipfile` archive file and extract `filename` from it, returning
      the contents as a squirrel blob.
    * A `zip_get_dir( zipfile )` function that will return an array of the
-     filenames contained in the `zipfile` .zip file.
+     filenames contained in the `zipfile` archive file.
+
+Supported archive formats are: .zip, .7z, .rar, .tar.gz, .tar.bz2 and .tar
 
 <a name="binding" />
 Frontend Binding
@@ -250,10 +254,10 @@ Parameters:
      provided (i.e. "bg.png") it is assumed to be relative to the current
      layout directory (or the plugin directory, if called from  a plugin
      script).  If a relative path is provided and the layout/plugin is
-     contained in a .zip file, Attract-Mode will open the corresponding file
-     stored inside of the .zip.  Supported image formats are: PNG, JPEG, GIF,
-     BMP and TGA.  Videos can be in any format supported by FFmpeg.  One or
-     more "Magic Tokens" can be used in the name, in which case Attract-Mode
+     contained in an archive, Attract-Mode will open the corresponding file
+     stored inside of the archive.  Supported image formats are: PNG, JPEG,
+     GIF, BMP and TGA.  Videos can be in any format supported by FFmpeg.  One
+     or more "Magic Tokens" can be used in the name, in which case Attract-Mode
      will automatically update the image/video file appropriately in response
      to user navigation.  For example "man/[Manufacturer]" will load
      the file corresponding to the manufacturer's name from the man

@@ -313,7 +313,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 	std::string loaded_name;
 	bool res=false;
 
-	if ( tail_compare( path, FE_ZIP_EXT ) )
+	if ( is_supported_archive( path ) )
 	{
 		loaded_name = filename;
 		if ( loaded_name.compare( m_file_name ) == 0 )
@@ -374,7 +374,7 @@ bool FeTextureContainer::try_to_load(
 	if ( !is_image && tail_compare( filename, FE_SWF_EXT ) )
 	{
 
-		if ( tail_compare( path, FE_ZIP_EXT ) )
+		if ( is_supported_archive( path ) )
 		{
 			loaded_name = filename;
 			if ( loaded_name.compare( m_file_name ) == 0 )
@@ -384,7 +384,7 @@ bool FeTextureContainer::try_to_load(
 
 			if (!m_swf->open_from_archive( path, filename ))
 			{
-				std::cout << " ! ERROR loading SWF from zip: "
+				std::cout << " ! ERROR loading SWF from archive: "
 					<< path << " (" << loaded_name << ")" << std::endl;
 
 				delete m_swf;
@@ -420,7 +420,7 @@ bool FeTextureContainer::try_to_load(
 		return load_with_ffmpeg( path, filename, false );
 #endif
 
-	if ( tail_compare( path, FE_ZIP_EXT ) )
+	if ( is_supported_archive( path ) )
 	{
 		loaded_name = filename;
 		if ( loaded_name.compare( m_file_name ) == 0 )
@@ -539,7 +539,7 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 				const std::string &emu_name = rom->get_info(
 					FeRomInfo::Emulator );
 
-				if ( tail_compare( layout_path, FE_ZIP_EXT ) )
+				if ( is_supported_archive( layout_path ) )
 				{
 					archive_name = layout_path;
 

@@ -251,6 +251,10 @@ ifeq ($(shell $(PKG_CONFIG) --exists libavresample && echo "1" || echo "0"), 1)
  USE_AVRESAMPLE=1
 endif
 
+ifeq ($(shell $(PKG_CONFIG) --exists libarchive && echo "1" || echo "0"), 1)
+ USE_LIBARCHIVE=1
+endif
+
 #
 # Now process the various settings...
 #
@@ -276,6 +280,13 @@ ifeq ($(USE_FONTCONFIG),1)
  TEMP_LIBS += fontconfig
 else
  BUILD_EXPAT=1
+endif
+
+ifeq ($(USE_LIBARCHIVE),1)
+ FE_FLAGS += -DUSE_LIBARCHIVE
+ TEMP_LIBS += libarchive
+else
+ CFLAGS += -I$(EXTLIBS_DIR)/miniz
 endif
 
 ifeq ($(NO_MOVIE),1)
@@ -321,7 +332,7 @@ else
  EXPAT =
 endif
 
-CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/miniz
+CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include
 SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
 
 ifeq ($(NO_SWF),1)

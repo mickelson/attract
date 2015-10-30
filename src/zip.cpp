@@ -22,10 +22,114 @@
 
 #include "zip.hpp"
 #include "fe_util.hpp"
-#include "miniz.c"
 #include <iostream>
 
 typedef void *(*FE_ZIP_ALLOC_CALLBACK) ( size_t );
+
+#ifdef USE_LIBARCHIVE
+
+#include "archive.h"
+#include "archive_entry.h"
+#include <cstring>
+
+namespace
+{
+	struct archive *my_archive_init()
+	{
+		struct archive *a = archive_read_new();
+
+		archive_read_support_filter_gzip( a );
+		archive_read_support_filter_bzip2( a );
+		archive_read_support_format_7zip( a );
+		archive_read_support_format_rar( a );
+		archive_read_support_format_tar( a );
+		archive_read_support_format_zip( a );
+
+		return a;
+	}
+};
+
+bool fe_zip_open_to_buff(
+	const char *archive,
+	const char *filename,
+	FE_ZIP_ALLOC_CALLBACK callback,
+	void **buff,
+	size_t *buff_size )
+{
+	ASSERT( buff != NULL );
+
+	struct archive *a = my_archive_init();
+	int r = archive_read_open_filename( a, archive, 8192 );
+
+	if ( r != ARCHIVE_OK )
+	{
+		std::cerr << "Error opening archive: "
+			<< archive << std::endl;
+		archive_read_free( a );
+		return false;
+	}
+
+	struct archive_entry *ae;
+
+	std::string fn = filename;
+	while ( archive_read_next_header( a, &ae ) == ARCHIVE_OK )
+	{
+		if ( fn.compare( archive_entry_pathname( ae ) ) == 0 )
+		{
+			size_t total = archive_entry_size( ae );
+
+			void *tb = callback( total );
+
+			if ( tb == NULL )
+			{
+				std::cerr << "Error allocating archive buffer: "
+					<< archive << ", file: " << filename << std::endl;
+				break;
+			}
+
+			archive_read_data( a, tb, total );
+
+			if ( buff_size )
+				*buff_size = total;
+
+			*buff = tb;
+
+			archive_read_free( a );
+			return true;
+		}
+	}
+
+	archive_read_free( a );
+	return false;
+}
+
+bool fe_zip_get_dir(
+	const char *archive,
+	std::vector<std::string> &result )
+{
+	struct archive *a = my_archive_init();
+	int r = archive_read_open_filename( a, archive, 8192 );
+
+	if ( r != ARCHIVE_OK )
+	{
+		std::cerr << "Error opening archive: "
+			<< archive << std::endl;
+		archive_read_free( a );
+		return false;
+	}
+
+	struct archive_entry *ae;
+
+	while ( archive_read_next_header( a, &ae ) == ARCHIVE_OK )
+		result.push_back( archive_entry_pathname( ae ) );
+
+	archive_read_free( a );
+	return true;
+}
+
+#else
+
+#include "miniz.c"
 
 bool fe_zip_open_to_buff(
 	const char *archive,
@@ -120,6 +224,8 @@ bool fe_zip_get_dir(
 	mz_zip_reader_end( &zip );
 	return true;
 }
+
+#endif // USE_LIBARCHIVE
 
 void *zip_stream_alloc_cb( size_t s )
 {

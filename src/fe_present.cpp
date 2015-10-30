@@ -75,7 +75,7 @@ void FeFontContainer::set_font( const std::string &p, const std::string &n )
 {
 	m_name = n;
 
-	if ( tail_compare( p, FE_ZIP_EXT ) )
+	if ( is_supported_archive( p ) )
 	{
 		if ( m_zs )
 			delete m_zs;
@@ -493,7 +493,7 @@ FeSound *FePresent::add_sound( const char *n, bool reuse )
 		if ( reuse )
 		{
 			std::string test;
-			if ( tail_compare( path, FE_ZIP_EXT ) )
+			if ( is_supported_archive( path ) )
 				test = name;
 			else
 				test = path + name;
@@ -537,7 +537,7 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 	switch ( type )
 	{
 		case FeShader::VertexAndFragment:
-			if ( tail_compare( path, FE_ZIP_EXT ) )
+			if ( is_supported_archive( path ) )
 			{
 				//
 				// Known Issue: We don't properly handle the
@@ -568,7 +568,7 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 
 		case FeShader::Vertex:
 		case FeShader::Fragment:
-			if ( tail_compare( path, FE_ZIP_EXT ) )
+			if ( is_supported_archive( path ) )
 			{
 				FeZipStream zs( path );
 				zs.open( shader1 );

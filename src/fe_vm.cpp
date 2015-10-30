@@ -91,7 +91,7 @@ namespace
 		try
 		{
 			Sqrat::Script sc;
-			if ( tail_compare( path, FE_ZIP_EXT ) )
+			if ( is_supported_archive( path ) )
 			{
 				FeZipStream zip( path );
 				if ( !zip.open( filename ) )
