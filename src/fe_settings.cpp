@@ -1664,6 +1664,13 @@ void FeSettings::run( int &minimum_run_seconds )
 	perform_substitution( args, "[emulator]",
 				emu->get_info( FeEmulatorInfo::Name ) );
 
+	const std::vector<std::string> &systems = emu->get_systems();
+	if ( !systems.empty() )
+	{
+		perform_substitution( args, "[system]", systems.front() );
+		perform_substitution( args, "[systemn]", systems.back() );
+	}
+
 	command = clean_path( emu->get_info( FeEmulatorInfo::Executable ) );
 
 	std::cout << "*** Running: " << command << " " << args << std::endl;
@@ -1714,118 +1721,226 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 	//
 	size_t n = std::count( str.begin(), str.end(), '[' );
 
-	for ( int i=0; ((i< FeRomInfo::LAST_INDEX) && ( n > 0 )); i++ )
+	size_t open = 0;
+	for ( int x=0; x<n; x++ )
 	{
-		if (( i == FeRomInfo::Title ) // these are special cases dealt with below
-				|| ( i == FeRomInfo::PlayedTime ))
+		open = str.find_first_of( '[', open );
+		size_t close = str.find_first_of( ']', open );
+
+		if ( close == std::string::npos )
+			break; // done, no more enclosed tokens
+
+		std::string token = str.substr( open+1, close-open-1 );
+		bool matched=false;
+
+		//
+		// First check for rom info attribute matches
+		//
+		for ( int i=0; i<FeRomInfo::LAST_INDEX; i++ )
+		{
+			// these are special cases dealt with elsewhere
+			if (( i == FeRomInfo::Title )
+					|| ( i == FeRomInfo::PlayedTime ))
+				continue;
+
+			if ( token.compare( FeRomInfo::indexStrings[i] ) == 0 )
+			{
+				const std::string &rep = get_rom_info_absolute(
+						filter_index,
+						rom_index,
+						(FeRomInfo::Index)i );
+
+				str.replace( open, close-open+1, rep );
+				open += rep.size();
+				matched=true;
+			}
+		}
+
+		if ( matched )
 			continue;
 
-		std::string from = "[";
-		from += FeRomInfo::indexStrings[i];
-		from += "]";
+		//
+		// Next check for various special case attributes
+		//
+		const char *tokenStrings[] =
+		{
+			"DisplayName",
+			"ListTitle", // deprecated as of 1.5
+			"FilterName",
+			"ListFilterName", // deprecated as of 1.5
+			"ListSize",
+			"ListEntry",
+			"Search",
+			FeRomInfo::indexStrings[FeRomInfo::Title],
+			"TitleFull",
+			FeRomInfo::indexStrings[FeRomInfo::PlayedTime],
+			"SortName",
+			"SortValue",
+			"System",
+			"SystemN",
+			NULL
+		};
 
-		n -= perform_substitution( str, from,
-				get_rom_info_absolute( filter_index, rom_index, (FeRomInfo::Index)i) );
+		int i=0;
+		while ( tokenStrings[i] != NULL )
+		{
+			if ( token.compare( tokenStrings[i] ) == 0 )
+			{
+				matched = true;
+				break;
+			}
+
+			i++;
+		}
+
+		if ( !matched )
+		{
+			open++;
+			continue;
+		}
+
+		std::string rep;
+		switch ( i )
+		{
+		case 0: // "DisplayName"
+		case 1: // "ListTitle" // deprecated as of 1.5
+			rep = get_current_display_title();
+			break;
+
+		case 2:	// "FilterName"
+		case 3: // "ListFilterName" // deprecated as of 1.5
+			rep = get_filter_name( filter_index );
+			break;
+
+		case 4: // "ListSize"
+			rep = as_str( get_filter_size( filter_index ) );
+			break;
+
+		case 5: // "ListEntry"
+			rep = as_str( rom_index + 1 );
+			break;
+
+		case 6: // "Search"
+			rep = m_current_search_str;
+			break;
+
+		case 7: // "Title"
+		case 8: // "TitleFull"
+			rep = get_rom_info_absolute( filter_index,
+				rom_index, FeRomInfo::Title );
+			if (( m_hide_brackets ) && ( i == 7 )) // 7 == Title
+				rep = name_with_brackets_stripped( rep );
+			break;
+
+		case 9: // "PlayedTime"
+			rep = get_played_display_string( filter_index, rom_index );
+			break;
+
+		case 10: // "SortName"
+		case 11: // "SortValue"
+			{
+				FeRomInfo::Index sort_by;
+				bool reverse_sort;
+				int list_limit;
+				std::string sort_name;
+
+				get_current_sort( sort_by, reverse_sort, list_limit );
+
+				if ( sort_by == FeRomInfo::LAST_INDEX )
+				{
+					get_resource( "None", sort_name );
+					sort_by = FeRomInfo::Title;
+				}
+				else
+					get_resource( FeRomInfo::indexStrings[sort_by], sort_name );
+
+
+				if ( i == 10 ) // SortName
+				{
+					rep = sort_name;
+				}
+				else
+				{
+					if ( sort_by == FeRomInfo::PlayedTime )
+						rep = get_played_display_string(
+							filter_index,
+							rom_index );
+					else
+						rep = get_rom_info_absolute(
+							filter_index,
+							rom_index, sort_by );
+				}
+			}
+			break;
+
+		case 12: // "System"
+		case 13: // "SystemN"
+			{
+				const std::string &en
+					= get_rom_info_absolute(
+						filter_index,
+						rom_index,
+						FeRomInfo::Emulator );
+
+				const FeEmulatorInfo *emu = get_emulator( en );
+				if ( emu )
+				{
+					const std::vector< std::string > &ss =
+						emu->get_systems();
+
+					if ( !ss.empty() )
+					{
+						rep = ( i == 12 )
+							? ss.front()
+							: ss.back();
+					}
+				}
+			}
+			break;
+
+		default:
+			ASSERT( 0 ); // unhandled token
+			break;
+		}
+
+		str.replace( open, close-open+1, rep );
+		open += rep.size();
 	}
-
-	if ( n > 0 )
-	{
-		n -= perform_substitution( str, "[DisplayName]",
-				get_current_display_title() );
-
-		n -= perform_substitution( str, "[FilterName]",
-				get_filter_name( filter_index ) );
-
-		n -= perform_substitution( str, "[ListSize]",
-				as_str( get_filter_size( filter_index ) ) );
-
-		n -= perform_substitution( str, "[ListEntry]",
-				as_str( rom_index + 1 ) );
-
-		n -= perform_substitution( str, "[Search]",
-				m_current_search_str );
-
-		// [ListTitle] deprecated as of 1.5
-		n -= perform_substitution( str, "[ListTitle]",
-				get_current_display_title() );
-
-		// [ListFilterName] deprecated as of 1.5
-		n -= perform_substitution( str, "[ListFilterName]",
-				get_filter_name( filter_index ) );
 }
 
-	if ( n > 0 )
+std::string FeSettings::get_played_display_string( int filter_index, int rom_index )
+{
+	std::string label;
+
+	int raw = as_int(
+		get_rom_info_absolute( filter_index,
+			rom_index,
+			FeRomInfo::PlayedTime ) );
+
+	float num;
+
+	if ( raw < 3600 )
 	{
-		const std::string &title_full =
-				get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Title );
-
-		n -= perform_substitution( str, "[TitleFull]", title_full );
-
-		if ( m_hide_brackets )
-			n -= perform_substitution( str, "[Title]", name_with_brackets_stripped( title_full ) );
-		else
-			n -= perform_substitution( str, "[Title]", title_full );
+		num = raw / 60.f;
+		label = "Minutes";
+	}
+	else if ( raw < 86400 )
+	{
+		num = raw / 3600.f;
+		label = "Hours";
+	}
+	else
+	{
+		num = raw / 86400.f;
+		label = "Days";
 	}
 
-	std::string played_string;
-	if ( n > 0 )
-	{
-		std::string label;
+	std::string op_label;
+	get_resource( label, op_label );
 
-		int raw = as_int(
-			get_rom_info_absolute( filter_index, rom_index, FeRomInfo::PlayedTime ) );
-		float num;
-
-		if ( raw < 3600 )
-		{
-			num = raw / 60.f;
-			label = "Minutes";
-		}
-		else if ( raw < 86400 )
-		{
-			num = raw / 3600.f;
-			label = "Hours";
-		}
-		else
-		{
-			num = raw / 86400.f;
-			label = "Days";
-		}
-
-		std::string op_label;
-		get_resource( label, op_label );
-
-		played_string = as_str( num, 1 ) + " " + op_label;
-
-		n -= perform_substitution( str, "[PlayedTime]", played_string );
-	}
-
-	if ( n > 0 )
-	{
-		FeRomInfo::Index sort_by;
-		bool reverse_sort;
-		int list_limit;
-		std::string sort_name;
-
-		get_current_sort( sort_by, reverse_sort, list_limit );
-
-		if ( sort_by == FeRomInfo::LAST_INDEX )
-		{
-			get_resource( "None", sort_name );
-			sort_by = FeRomInfo::Title;
-		}
-		else
-			get_resource( FeRomInfo::indexStrings[sort_by], sort_name );
-
-		n -= perform_substitution( str, "[SortName]", sort_name );
-
-		if ( sort_by == FeRomInfo::PlayedTime )
-			n -= perform_substitution( str, "[SortValue]", played_string );
-		else
-			n -= perform_substitution( str, "[SortValue]",
-					get_rom_info_absolute( filter_index, rom_index, sort_by ) );
-	}
+	return as_str( num, 1 ) + " " + op_label;
 }
+
 
 FeEmulatorInfo *FeSettings::get_emulator( const std::string &n )
 {

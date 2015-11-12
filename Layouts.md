@@ -187,6 +187,10 @@ Manufacturer's name.  There are more examples below.
         played
       - `[SortValue]` - the value used to order the selected game in the
         list
+      - `[System]` - the first "System" name configured for the selected
+        game's emulator
+      - `[SystemN]` - the last "System" name configured for the selected
+        game's emulator
    * Magic tokens can also be used to run a function defined in your layout
      or plugin's squirrel script to obtain the desired text.  These tokens are
      in the form `[!<function_name>]`.  When used, Attract-Mode will run the

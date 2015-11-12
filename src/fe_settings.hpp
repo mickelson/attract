@@ -195,6 +195,9 @@ private:
 
 	void internal_load_language( const std::string &lang );
 
+	std::string get_played_display_string( int filter_index, int rom_index );
+
+
 	bool mameps_scraper( FeImporterContext & );
 	bool mamedb_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
