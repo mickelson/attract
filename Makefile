@@ -588,8 +588,9 @@ $(DATA_PATH):
 	$(MD) $@
 
 install: $(EXE) $(DATA_PATH)
-	cp $(EXE) $(bindir)
-	cp -r config/* $(DATA_PATH)
+	cp $(EXE) $(DESTDIR)$(bindir)
+	cp -r config/* $(DESTDIR)$(DATA_PATH)
+
 
 smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core

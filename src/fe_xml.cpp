@@ -426,10 +426,6 @@ bool FeMameXMLParser::parse( const std::string &prog )
 	FeRomInfoListType::iterator itr;
 	m_count=0;
 
-	// special case for mess parsing
-	if ( m_ctx.romlist.size() == 1 )
-		return ( parse_internal( prog, base_args + " " + m_ctx.romlist.front().get_info( FeRomInfo::Romname ) ) );
-
 	//
 	// run "mame -listxml" and find each rom.
 	//
@@ -440,7 +436,21 @@ bool FeMameXMLParser::parse( const std::string &prog )
 
 	std::cout << "    ";
 
-	if ( parse_internal( prog, base_args ) == false )
+	//
+	// Special case for really small romlists... this gets used in
+	// connection with -listsoftware parsing as well
+	//
+	if (  m_ctx.romlist.size() < 10 )
+	{
+		for ( FeRomInfoListType::iterator itr=m_ctx.romlist.begin();
+				itr != m_ctx.romlist.end(); ++itr )
+		{
+			parse_internal( prog,
+				base_args + " "
+				+ (*itr).get_info( FeRomInfo::Romname ) );
+		}
+	}
+	else if ( parse_internal( prog, base_args ) == false )
 	{
 		std::cout << std::endl;
 		return false;
