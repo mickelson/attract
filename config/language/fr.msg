@@ -247,13 +247,13 @@ _help_display_sel;Configurer la liste d'affichage
 _help_displays;Configurer les listes d'affichage
 _help_displays_menu_exit;Indiquer si une option de sortie doit être prévue dans le menu des listes
 _help_emu_add;Ajouter un nouvel émulateur
-_help_emu_args;Arguments de la ligne de commande de cet émulateur. Options de substitution: [name], [romext], [rompath], [emulator], [romfilename]
+_help_emu_args;Arguments de la ligne de commande de cet émulateur. Options de substitution: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;Supprime l'entrée pour cet émulateur
 _help_emu_executable;Chemin et nom de l'exécutable de l'émulateur. $HOME sera remplacé par le répertoire de l'utilisateur
 _help_emu_exit_hotkey;Définit un raccourci clavier pour sortir de l'émulateur. Attract-Mode arrêtera le process de l'émulateur lorsque ce raccourci clavier sera pressé.
 _help_emu_gen_romlist;Génére une liste de ROM en cherchant dans le chemin des ROM avec l'extension choisie, incorporant l'XML et les fichiers additionnels d'information dans la liste générée (si disponible)
 _help_emu_import_extras;Fichiers additionels nécessitant d'être lus lors de la génération de la liste de ROM pour cet émulateur. Fichiers supportés: catver.ini (catégories) et nplayers.ini (nombre de joueur). Plusieurs fichiers peuvent être saisis si séparés par un point-virgule
-_help_emu_info_source;Saisir "mame" si cet émulateur propose un fichier de type mame -listxml, "mess" pour les fichiers du type mess -listsoftware, "thegamesdb.net" pour extraire les informations du site thegamesdb.net, ou "steam" pour les lires depuis une installation de steam. Les sources "mess" et "thegamesdb.net" nécessitent que des identifiants systèmes spécifiques soient configurés pour fonctionner correctement
+_help_emu_info_source;Saisir "listxml" si cet émulateur propose un fichier de type mame -listxml, "listsoftware" pour les fichiers du type mame/mess -listsoftware, "thegamesdb.net" pour extraire les informations du site thegamesdb.net, ou "steam" pour les lires depuis une installation de steam. Les sources "listsoftware" et "thegamesdb.net" nécessitent que des identifiants systèmes spécifiques soient configurés pour fonctionner correctement
 _help_emu_minimum_run_time;Définit un temps minimum de fonctionnement (en secondes). Attract-Mode va attendre, après avoir lancé l'émulateur, que ce temps minimum se soit écoulé avant de re-basculer au premier plan. Ceci est nécessaire pour que Steam fonctionne correctement sous Windows. Saisir 0 si vous n'en avez pas besoin
 _help_emu_romext;Extension des ROM pour cet émulateur (ex .zip).  Possibilité d'utiliser des extensions multiples séparées par un point-virgule
 _help_emu_rompath;Chemin des ROM pour cet émulateur

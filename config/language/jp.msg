@@ -243,7 +243,7 @@ _help_display_sel;このディスプレイを設定します
 _help_displays;ディスプレイ(ゲームリスト)を設定します
 _help_displays_menu_exit;ディスプレイメニューに"プログラム終了"項目を追加するか設定します
 _help_emu_add;新しいエミュレータを登録します
-_help_emu_args;エミュレータの実行パラメータを設定します. 以下のパラメータはその内容で置換されます : [name], [romext], [rompath], [emulator], [romfilename]
+_help_emu_args;エミュレータの実行パラメータを設定します. 以下のパラメータはその内容で置換されます : [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;エミュレータに関する設定を削除します
 _help_emu_executable;エミュレータの実行ファイルの位置を指定します. $HOMEはユーザーのホームディレクトリに置換されます
 _help_emu_exit_hotkey;このエミュレータを終了するグローバルホットキーを設定します. このホットキーを押せばこのエミュレータを強制終了できます.

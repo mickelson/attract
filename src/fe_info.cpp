@@ -808,13 +808,27 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	NULL
 };
 
+const char *FeEmulatorInfo::infoSourceStrings[] =
+{
+	"",
+	"listxml",
+	"listsoftware",
+	"steam",
+	"thegamesdb.net",
+	"scummvm",
+	NULL
+};
+
 FeEmulatorInfo::FeEmulatorInfo()
-	: m_min_run( 0 )
+	: m_info_source( None ),
+	m_min_run( 0 )
 {
 }
 
 FeEmulatorInfo::FeEmulatorInfo( const std::string &n )
-: m_name( n ), m_min_run( 0 )
+	: m_name( n ),
+	m_info_source( None ),
+	m_min_run( 0 )
 {
 }
 
@@ -835,7 +849,7 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 	case System:
 		return vector_to_string( m_systems );
 	case Info_source:
-		return m_info_source;
+		return infoSourceStrings[m_info_source];
 	case Import_extras:
 		return vector_to_string( m_import_extras );
 	case Minimum_run_time:
@@ -870,7 +884,27 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 		string_to_vector( s, m_systems );
 		break;
 	case Info_source:
-		m_info_source = s; break;
+		for ( int i=0; i<LAST_INFOSOURCE; i++ )
+		{
+			if ( s.compare( infoSourceStrings[i] ) == 0 )
+			{
+				m_info_source = (InfoSource)i;
+				return;
+			}
+		}
+
+		//
+		// Special case handling for versions <= 1.6.0
+		//
+		if ( s.compare( "mame" ) == 0 )
+			m_info_source = Listxml;
+		else if ( s.compare( "mess" ) == 0 )
+			m_info_source = Listsoftware;
+		else
+			m_info_source = None;
+
+		break;
+
 	case Import_extras:
 		m_import_extras.clear();
 		string_to_vector( s, m_import_extras );
@@ -932,7 +966,7 @@ bool FeEmulatorInfo::get_artwork( const std::string &label, std::vector< std::st
 }
 
 void FeEmulatorInfo::add_artwork( const std::string &label,
-							const std::string &artwork )
+		const std::string &artwork )
 {
 	// don't clear m_artwork[ label ], it may have entries already
 	// see process_setting() and special case for migrating movie settings
@@ -942,7 +976,7 @@ void FeEmulatorInfo::add_artwork( const std::string &label,
 }
 
 void FeEmulatorInfo::get_artwork_list(
-			std::vector< std::pair< std::string, std::string > > &out_list ) const
+		std::vector< std::pair< std::string, std::string > > &out_list ) const
 {
 	out_list.clear();
 	std::map<std::string, std::vector<std::string> >::const_iterator itm;
@@ -978,60 +1012,6 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 			return 0;
 		}
 	}
-
-	//
-	// Special case for migration from versions <=1.3.2
-	//
-	if ( setting.compare( "listxml" ) == 0 )
-	{
-		//
-		// value will one of the following:
-		//    mame
-		//    mess <system>
-		//
-		size_t pos=0;
-		token_helper( value, pos, m_info_source, FE_WHITESPACE );
-
-		std::string temp;
-		token_helper( value, pos, temp, "\n" );
-		m_systems.push_back( temp );
-		return 0;
-	}
-
-	//
-	// Special case for migration from versions <=1.2.2
-	//
-	// version 1.2.2 and earlier had "movie_path" and
-	// "movie_artwork" settings which are now deprecated.
-	// Handle them in a way that gets things working in the
-	// new method of configuration...
-	//
-	// Assumption: these settings will always be encountered
-	// before the other artwork settings, which is true unless
-	// the user did manual sorting of the .cfg file...
-	//
-	if ( setting.compare( "movie_path" ) == 0 )
-	{
-		add_artwork( FE_DEFAULT_ARTWORK, value );
-		return 0;
-	}
-	else if ( setting.compare( "movie_artwork" ) == 0 )
-	{
-		if ( value.compare( FE_DEFAULT_ARTWORK ) != 0 )
-		{
-			// We guessed wrong, user didn't have snaps set as the movie artwork
-			// so go in and change the snaps artwork to the one the user configured
-			//
-			std::string temp;
-			get_artwork( FE_DEFAULT_ARTWORK, temp );
-			delete_artwork( FE_DEFAULT_ARTWORK );
-			add_artwork( value, temp );
-		}
-		return 0;
-	}
-	//
-	// End migration code
-	//
 
 	if ( setting.compare( stokens[0] ) == 0 ) // artwork
 	{

@@ -77,8 +77,8 @@ public:
 	void append_tag( const std::string &tag );
 
 	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &fn );
+		const std::string &value,
+		const std::string &fn );
 	std::string as_output( void ) const;
 
 	void load_stats( const std::string &path );
@@ -158,8 +158,8 @@ public:
 	bool apply_filter( const FeRomInfo &rom ) const;
 
 	int process_setting( const std::string &setting,
-				const std::string &value,
-				const std::string &fn );
+		const std::string &value,
+		const std::string &fn );
 
 	void save( std::ofstream &, const char *filter_tag ) const;
 	const std::string &get_name() const { return m_name; };
@@ -190,8 +190,9 @@ private:
 	std::string m_name;
 	std::vector<FeRule> m_rules;
 	int m_rom_index;
-	int m_list_limit; // limit the number of list entries if non-zero.  Positive value limits to the first
-							// x values, Negative value limits to the last abs(x) values.
+	int m_list_limit; // limit the number of list entries if non-zero.
+		// Positive value limits to the first
+		// x values, Negative value limits to the last abs(x) values.
 	int m_size;
 	FeRomInfo::Index m_sort_by;
 	bool m_reverse_order;
@@ -219,8 +220,8 @@ public:
 	void set_info( int setting, const std::string &value );
 
 	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &fn );
+		const std::string &value,
+		const std::string &fn );
 
 	int process_state( const std::string &state_string );
 	std::string state_as_output() const;
@@ -275,14 +276,29 @@ public:
 		Exit_hotkey,
 		LAST_INDEX
 	};
+
+	enum InfoSource
+	{
+		None=0,
+		Listxml,	// "mame"
+		Listsoftware,	// "mess"
+		Steam,
+		Thegamesdb,
+		Scummvm,
+		LAST_INFOSOURCE
+	};
+
 	static const char *indexStrings[];
 	static const char *indexDispStrings[];
+	static const char *infoSourceStrings[];
 
 	FeEmulatorInfo();
 	FeEmulatorInfo( const std::string &name );
 
 	const std::string get_info( int ) const;
 	void set_info( enum Index, const std::string & );
+
+	InfoSource get_info_source() const { return m_info_source; };
 
 	// get artwork path.  Multiple paths are semicolon separated
 	bool get_artwork( const std::string &label, std::string &paths ) const;
@@ -304,8 +320,8 @@ public:
 	const std::vector<std::string> &get_import_extras() const;
 
 	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &filename );
+		const std::string &value,
+		const std::string &filename );
 
 	void save( const std::string &filename ) const;
 
@@ -313,13 +329,13 @@ public:
 
 private:
 	std::string vector_to_string( const std::vector< std::string > &vec ) const;
-	void string_to_vector( const std::string &input, std::vector< std::string > &vec,
-								bool allow_empty = false ) const;
+	void string_to_vector( const std::string &input,
+		std::vector< std::string > &vec,
+		bool allow_empty = false ) const;
 
 	std::string m_name;
 	std::string m_executable;
 	std::string m_command;
-	std::string m_info_source;
 	std::string m_exit_hotkey;
 
 	std::vector<std::string> m_paths;
@@ -327,6 +343,7 @@ private:
 	std::vector<std::string> m_systems;
 	std::vector<std::string> m_import_extras;
 
+	InfoSource m_info_source;
 	int m_min_run;
 
 	//
@@ -346,8 +363,8 @@ public:
 	void clear_params() { m_params.clear(); };
 
 	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &filename );
+		const std::string &value,
+		const std::string &filename );
 
 	void save( std::ofstream & ) const;
 
@@ -369,8 +386,8 @@ public:
 	void set_enabled( bool e ) { m_enabled=e; };
 
 	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &filename );
+		const std::string &value,
+		const std::string &filename );
 
 	void save( std::ofstream & ) const;
 
@@ -411,11 +428,11 @@ public:
 	void clear() { m_map.clear(); }
 
 	int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &filename );
+		const std::string &value,
+		const std::string &filename );
 
 	void get_resource( const std::string &token,
-				std::string &str ) const;
+		std::string &str ) const;
 
 private:
 	FeResourceMap( const FeResourceMap & );

@@ -246,13 +246,13 @@ _help_display_sel;Konfiguriere Bildschirm
 _help_displays;Konfiguriere die Romlisten/Themen-Gruppierungen (die "Bildschirme") welche in Attract-Mode zum Durchblättern verfügbar sind
 _help_displays_menu_exit;Lege fest, ob eine Beenden-Option im "Bildschirm Menü" verfügbar sein soll
 _help_emu_add;Neuen Emulator hinzufügen
-_help_emu_args;Die Kommandozeilenargumente für diesen Emulator. Folgende Einträge werden entsprechend ersetzt: [name], [romext], [rompath], [emulator], [romfilename]
+_help_emu_args;Die Kommandozeilenargumente für diesen Emulator. Folgende Einträge werden entsprechend ersetzt: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;Lösche den Eintrag für diesen Emulator
 _help_emu_executable;Der komplette Pfad und Bezeichnung der Emulator Executable. $HOME wird durch die Homedir des Users ersetzt
 _help_emu_exit_hotkey;Definiere einen globalen Hotkey, um den Emulator zu verlassen.  Attract-Mode wird den Emulator Prozess beenden, wenn dieser Hotkey betätigt wird.
 _help_emu_gen_romlist;Generiere eine Romliste, indem der eingestellte ROM-Pfad nach ROMs mit der definierten Endung durchsucht wird. Falls verfügbar, werden XML-Informationen und zusätzliche Import-Dateien mit einbezogen.
 _help_emu_import_extras;Pfad zu beliebigen zusätzlichen Dateien welche gelesen werden müssen wenn eine Romliste für diesen Emulator generiert wird. Unterstützte Dateien sind: catver.ini (für Spiele Kategorien) und nplayers.ini (für Anzahl an Spielern).  Mehrere Dateipfade können durch Semikolon getrennt werden.
-_help_emu_info_source;Verwende "mame" falls der Emulator mame -listxml Ausgabe bereitstellt, "mess" für mess -listsoftware Ausgabe, "thegamesdb.net" um Daten von thegamesdb.net zu scrapen, oder "steam" um von einer Steam-Installation zu lesen. "mess" und "thegamesdb.net" benötigen zusätzlich die Konfiguration einer System-Kennung welche von diesen Ressourcen erkannt wird
+_help_emu_info_source;Verwende "listxml" falls der Emulator mame -listxml Ausgabe bereitstellt, "listsoftware" für mame/mess -listsoftware Ausgabe, "thegamesdb.net" um Daten von thegamesdb.net zu scrapen, oder "steam" um von einer Steam-Installation zu lesen. "listsoftware" und "thegamesdb.net" benötigen zusätzlich die Konfiguration einer System-Kennung welche von diesen Ressourcen erkannt wird
 _help_emu_minimum_run_time;Definiere eine minimale Laufzeit (in Sekunden).  Attract-Mode wird nach dem Lauf dieses Emulators warten bis die minimale Zeit verstrichen ist und es zum Vordergund-Fenster wird. Dies wird speziell benötigt, um Steam korrekt unter Windows auszuführen. Lass es auf 0 stehen, ausser du weisst, dass du es benötigst
 _help_emu_romext;Die ROM Dateiendung(en) für diesen Emulator (z.B. .zip). Mehrere Endungen können durch Semikolon getrennt werden. Gib "<DIR>" als Eintrag an, falls die Spiele in separaten Unterverzeichnissen gespeichert sind
 _help_emu_rompath;Der Pfad zu den ROMs für diesen Emulator. Mehrere Pfade können durch Semikolon getrennt werden.

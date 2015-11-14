@@ -238,23 +238,12 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 			if ( i == FeEmulatorInfo::Info_source )
 			{
-				const char *source_options[] =
-				{
-					"",
-					"mame",
-					"mess",
-					"thegamesdb.net",
-					"steam",
-					"scummvm",
-					NULL
-				};
-
 				ctx.add_optl( Opt::LIST,
 						FeEmulatorInfo::indexDispStrings[i],
 						m_emulator->get_info( (FeEmulatorInfo::Index)i ),
 						help );
 
-				ctx.back_opt().append_vlist( source_options );
+				ctx.back_opt().append_vlist( FeEmulatorInfo::infoSourceStrings );
 			}
 			else if ( i == FeEmulatorInfo::Exit_hotkey )
 			{

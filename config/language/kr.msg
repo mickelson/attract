@@ -243,7 +243,7 @@ _help_display_sel;목록의 설정을 변경합니다
 _help_displays;목록을 설정합니다
 _help_displays_menu_exit;리스트 메뉴에 '프로그램 종료' 항목을 넣을 지 여부를 설정합니다
 _help_emu_add;새로운 에뮬레이터를 등록합니다.
-_help_emu_args;에뮬레이터에 전달할 실행 인자를 설정합니다. 이하의 항목은 각각 알맞게 치환되어 전달됩니다 : [name], [romext], [rompath], [emulator], [romfilename]
+_help_emu_args;에뮬레이터에 전달할 실행 인자를 설정합니다. 이하의 항목은 각각 알맞게 치환되어 전달됩니다 : [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;에뮬레이터에 대한 항목을 삭제합니다.
 _help_emu_executable;에뮬레이터의 실행파일 위치를 지정합니다. $HOME 은 사용자의 홈 디렉토리로 치환됩니다.
 _help_emu_exit_hotkey;해당 에뮬레이터를 종료할 전역 핫키를 지정합니다. 해당 핫키가 눌리면 Attract-Mode 에서 에뮬레이터를 강제종료합니다.

@@ -246,13 +246,13 @@ _help_display_sel;Configurar pantalla
 _help_displays;Configura los grupos de lista de roms/temas ("Pantallas") que están disponibles para hacer circular enAttract-Mode
 _help_displays_menu_exit;configura si la opción de Salir debe ser provista en el "menú de pantallas"
 _help_emu_add;Agrega un nuevo emulador
-_help_emu_args;Argumento de linea de comandos usado por este emulador.  Los siguientes pueden ser propiamente sustituidos: [name], [romext], [rompath], [emulator], [romfilename]
+_help_emu_args;Argumento de linea de comandos usado por este emulador.  Los siguientes pueden ser propiamente sustituidos: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;Borra la entrada para este emulador
 _help_emu_executable;Ruta completa y nombre del ejecutable del emulador. $HOME es reemplazado por con el directorio home del usuario
 _help_emu_exit_hotkey;Configura una tecla global para salir del emulador. Attract-Mode terminará el proceso del emulador si esta tecla es presionada
 _help_emu_gen_romlist;Genera una lista de roms buscando en las rutas de roms configuradas con las extensiones configuradas, incorporando XML e importando información adicional a la lista generada (si está disponible)
 _help_emu_import_extras;Ruta de cualquier archivo adicional que neceiste ser leido cuando se genera la lista de roms para este emulador.  Los archivos soportados son: catver.ini (para categorias de juegos) y nplayers.ini (para el número de jugadores). Es posible ingresar multiples rutas separadas por punto y coma.
-_help_emu_info_source;Use "mame" si el emulador prove la salida de mame -listxml, "mess" para la salida de mess -listsoftware, "thegamesdb.net" para extraer información desde thegamesdb.net, o "steam" para leer desde una instalación de steam.  "mess" y "thegamesdb.net" también requieren que sea configurado un identificador de sistema reconocible por esas fuentes
+_help_emu_info_source;Use "listxml" si el emulador prove la salida de mame -listxml, "listsoftware" para la salida de mame/mess -listsoftware, "thegamesdb.net" para extraer información desde thegamesdb.net, o "steam" para leer desde una instalación de steam.  "listsoftware" y "thegamesdb.net" también requieren que sea configurado un identificador de sistema reconocible por esas fuentes
 _help_emu_minimum_run_time;Configura un tiempo mínimo de ejecución (en segundos).  Attract-Mode esperará después de ejecutar este emulador hasta que haya transcurrido el tiempo mínimo de ejecución y pasará a ejecución de fondo. Esto necesita ser configurado por Steam para funcionar correctamente en Windows. Configure esto en 0 a menos que sepa que lo necesita
 _help_emu_romext;Extensión(es) para este emulador (por ej. .zip). Es posible ingresar multiples extensiones separadas por punto y coma. Especificar "<DIR>" como entrada si los juegos se encuientran en subdirectorios separados
 _help_emu_rompath;Ruta a las roms para este emulador.  Es posible ingresar multiples rutas separadas por punto y coma.

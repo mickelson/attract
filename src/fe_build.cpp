@@ -442,7 +442,7 @@ bool scummvm_lookup( FeImporterContext &c )
 bool FeSettings::mameps_scraper( FeImporterContext &c )
 {
 #ifndef NO_NET
-	if (( c.emulator.get_info( FeEmulatorInfo::Info_source ).compare( "mame" ) != 0 )
+	if (( c.emulator.get_info_source() != FeEmulatorInfo::Listxml )
 				|| ( !m_scrape_vids ))
 		return true;
 
@@ -491,7 +491,7 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 bool FeSettings::mamedb_scraper( FeImporterContext &c )
 {
 #ifndef NO_NET
-	if (( c.emulator.get_info( FeEmulatorInfo::Info_source ).compare( "mame" ) != 0 )
+	if (( c.emulator.get_info_source() != FeEmulatorInfo::Listxml )
 				|| ( !m_scrape_snaps && !m_scrape_marquees ))
 		return true;
 
@@ -591,13 +591,13 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	{
 		// Correct if we can based on the configured info source,
 		// otherwise we error out
-		const std::string source = c.emulator.get_info( FeEmulatorInfo::Info_source );
-		if ( source.compare( "mame" ) == 0 )
-			system_list.push_back( "Arcade" );
-		else if ( source.compare( "steam" ) == 0 )
-			system_list.push_back( "PC" );
-		else
+		switch( c.emulator.get_info_source() )
 		{
+		case FeEmulatorInfo::Listxml:
+			system_list.push_back( "Arcade" ); break;
+		case FeEmulatorInfo::Steam:
+			system_list.push_back( "PC" ); break;
+		default:
 			get_resource( "Error: None of the configured system identifier(s) are recognized by thegamesdb.net.",
 								c.user_message );
 
@@ -825,23 +825,23 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 void FeSettings::apply_xml_import( FeImporterContext &c )
 {
-	std::string source = c.emulator.get_info(
-				FeEmulatorInfo::Info_source );
-
-	if ( source.empty() )
-		return;
-
 	std::string base_command = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Executable ) );
 
-	if ( source.compare( "mame" ) == 0 )
+	switch ( c.emulator.get_info_source() )
+	{
+
+	case FeEmulatorInfo::Listxml:
 	{
 		std::cout << " - Obtaining -listxml info...";
 		FeMameXMLParser mamep( c );
 		if ( !mamep.parse( base_command ) )
-			std::cout << "No XML output found, command: " << base_command << " -listxml" << std::endl;
+			std::cout << "No XML output found, command: "
+				<< base_command << " -listxml" << std::endl;
 	}
-	else if ( source.compare( "mess" ) == 0 )
+	break;
+
+	case FeEmulatorInfo::Listsoftware:
 	{
 		const std::vector < std::string > &system_names = c.emulator.get_systems();
 		if ( system_names.empty() )
@@ -856,7 +856,9 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 		FeMessXMLParser messp( c );
 		messp.parse( base_command, system_names );
 	}
-	else if ( source.compare( "steam" ) == 0 )
+	break;
+
+	case FeEmulatorInfo::Steam:
 	{
 		const std::vector<std::string> &paths = c.emulator.get_paths();
 		const std::vector<std::string> &exts = c.emulator.get_extensions();
@@ -927,17 +929,20 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 		}
 		thegamesdb_scraper( c );
 	}
-	else if ( source.compare( "thegamesdb.net" ) == 0 )
+	break;
+
+	case FeEmulatorInfo::Thegamesdb:
 		thegamesdb_scraper( c );
-	else if ( source.compare( "scummvm" ) == 0 )
-	{
+		break;
+
+	case FeEmulatorInfo::Scummvm:
 		scummvm_lookup( c );
 		thegamesdb_scraper( c );
-	}
-	else
-	{
-		std::cout << "Unrecognized import_source setting: " << source
-					<< std::endl;
+		break;
+
+	case FeEmulatorInfo::None:
+	default:
+		break;
 	}
 }
 

@@ -258,13 +258,13 @@ _help_display_sel;Configure display
 _help_displays;Configure the romlist/layout groupings (a.k.a. "Displays") that are available to be cycled through in Attract-Mode
 _help_displays_menu_exit;Configure whether an Exit option should be provided in the"Displays Menu"
 _help_emu_add;Add a new emulator
-_help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename]
+_help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;Delete the entry for this emulator
 _help_emu_executable;The full path and name of the emulator executable. $HOME gets replaced with the user's home dir
 _help_emu_exit_hotkey;Set a global hotkey to exit the emulator.  Attract-Mode will terminate the emulator process if this hotkey gets pressed
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
 _help_emu_import_extras;Path to any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories) and nplayers.ini (for number of players).  Multiple file paths can be entered if separated by a semicolon
-_help_emu_info_source;Use "mame" if the emulator provides mame -listxml output, "mess" for mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, "steam" to read from a steam installation, or "scummvm" if the emulator is scummvm.  "mess" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
+_help_emu_info_source;Use "listxml" for mame -listxml output, "listsoftware" for mame/mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, "steam" to read from a steam installation, or "scummvm" if the emulator is scummvm.  "listsoftware" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
 _help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
 _help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple extensions can be entered if separated by a semicolon.  Specify "<DIR>" as an entry if games are stored in separate subdirectories
 _help_emu_rompath;The path to the roms for this emulator.  Multiple paths can be entered if separated by a semicolon.
