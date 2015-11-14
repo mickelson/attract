@@ -325,7 +325,8 @@ public:
 		const std::string &art_name,
 		std::vector<std::string> &vid_list,
 		std::vector<std::string> &image_list,
-		bool image_only );
+		bool image_only,
+		bool ignore_emu=false );
 
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
 	bool has_video_artwork( const FeRomInfo &rom, const std::string &art_name );

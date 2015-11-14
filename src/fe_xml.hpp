@@ -147,16 +147,20 @@ private:
 	bool m_collect_data;
 };
 
-class FeGameDBPlatformParser : private FeXMLParser
+class FeGameDBPlatformListParser : private FeXMLParser
 {
 public:
+	FeGameDBPlatformListParser();
 	bool parse( const std::string &filename );
 
-	std::set<std::string> m_set;
+	std::map<std::string, int> m_set;
 
 private:
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
+
+	int m_id;
+	std::string m_name;
 };
 
 class FeGameDBArt
@@ -172,6 +176,20 @@ public:
 
 	void clear();
 };
+
+class FeGameDBPlatformParser : private FeXMLParser
+{
+public:
+	FeGameDBPlatformParser( FeGameDBArt &art );
+	bool parse( const std::string &filename );
+
+private:
+	void start_element( const char *, const char ** );
+	void end_element( const char * );
+
+	FeGameDBArt &m_art;
+};
+
 
 class FeGameDBParser : private FeXMLParser
 {

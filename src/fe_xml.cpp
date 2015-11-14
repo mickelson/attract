@@ -789,25 +789,43 @@ bool FeHyperSpinXMLParser::parse( const std::string &filename )
 	return ret_val;
 }
 
-void FeGameDBPlatformParser::start_element(
+FeGameDBPlatformListParser::FeGameDBPlatformListParser()
+	: m_id( -1 )
+{
+}
+
+void FeGameDBPlatformListParser::start_element(
 			const char *element,
 			const char **attribute )
 {
-	if ( strcmp( element, "name" ) == 0 )
+	if (( strcmp( element, "name" ) == 0 )
+			|| ( strcmp( element, "id" ) == 0 ))
 		m_element_open=true;
 }
 
-void FeGameDBPlatformParser::end_element( const char *element )
+void FeGameDBPlatformListParser::end_element( const char *element )
 {
 	if ( strcmp( element, "name" ) == 0 )
 	{
-		m_set.insert( m_current_data );
+		m_name = m_current_data;
 		m_current_data.clear();
 		m_element_open=false;
 	}
+	else if ( strcmp( element, "id" ) == 0 )
+	{
+		m_id = as_int( m_current_data );
+		m_current_data.clear();
+		m_element_open=false;
+	}
+	else if ( strcmp( element, "Platform" ) == 0 )
+	{
+		m_set[ m_name ] = m_id;
+		m_name.clear();
+		m_id=-1;
+	}
 }
 
-bool FeGameDBPlatformParser::parse( const std::string &data )
+bool FeGameDBPlatformListParser::parse( const std::string &data )
 {
 	m_set.clear();
 	m_element_open=m_keep_rom=false;
@@ -842,6 +860,91 @@ void FeGameDBArt::clear()
 	snap.clear();
 	marquee.clear();
 	fanart.clear();
+}
+
+FeGameDBPlatformParser::FeGameDBPlatformParser( FeGameDBArt &art )
+	: m_art( art )
+{
+}
+
+void FeGameDBPlatformParser::start_element(
+			const char *element,
+			const char **attribute )
+{
+	if (( strcmp( element, "baseImgUrl" ) == 0 )
+			|| ( strcmp( element, "banner" ) == 0 )
+			|| ( strcmp( element, "original" ) == 0 )
+			|| ( strcmp( element, "consoleart" ) == 0 ))
+	{
+		m_element_open=true;
+	}
+	else if ( strcmp( element, "boxart" ) == 0 )
+	{
+		std::string side;
+		int width( 0 ), height( 0 );
+
+		for ( int i=0; attribute[i]; i+=2 )
+		{
+			if ( strcmp( attribute[i], "side" ) == 0 )
+				side = attribute[i+1];
+			else if ( strcmp( attribute[i], "width" ) == 0 )
+				width = atoi( attribute[i+1] );
+			else if ( strcmp( attribute[i], "height" ) == 0 )
+				height = atoi( attribute[i+1] );
+		}
+
+		// don't bother if it is too big
+		if (( width * height ) >= 4194304 )
+			return;
+
+		if (( side.compare( "front" ) == 0 )
+				|| ( m_art.flyer.empty() ))
+			m_element_open = true;
+	}
+}
+void FeGameDBPlatformParser::end_element( const char *element )
+{
+	if ( !m_element_open )
+		return;
+
+	if ( strcmp( element, "baseImgUrl" ) == 0 )
+		m_art.base = m_current_data;
+	else if ( strcmp( element, "banner" ) == 0 )
+		m_art.marquee = m_current_data;
+	else if ( strcmp( element, "consoleart" ) == 0 )
+		m_art.wheel = m_current_data;
+	else if ( strcmp( element, "original" ) == 0 )
+		m_art.fanart.push_back( m_current_data );
+	else if ( strcmp( element, "boxart" ) == 0 )
+		m_art.flyer = m_current_data;
+
+	m_element_open=false;
+	m_current_data.clear();
+}
+
+bool FeGameDBPlatformParser::parse( const std::string &data )
+{
+	m_element_open=m_keep_rom=false;
+	m_continue_parse=true;
+	bool ret_val=true;
+
+	XML_Parser parser = XML_ParserCreate( NULL );
+	XML_SetUserData( parser, (void *)this );
+	XML_SetElementHandler( parser, exp_start_element, exp_end_element );
+	XML_SetCharacterDataHandler( parser, exp_handle_data );
+
+	if ( XML_Parse( parser, data.c_str(),
+			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
+	{
+		std::cout << "Error parsing xml." << std::endl;
+		ret_val = false;
+	}
+
+	// need to pass true to XML Parse on last line
+	XML_Parse( parser, 0, 0, XML_TRUE );
+	XML_ParserFree( parser );
+
+	return ret_val;
 }
 
 FeGameDBParser::FeGameDBParser( std::vector<std::string> &system_list, FeRomInfo &rom, FeGameDBArt *art )

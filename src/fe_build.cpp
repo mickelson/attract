@@ -81,6 +81,31 @@ std::string url_escape( const std::string &raw )
 	return escaped.str();
 }
 
+void get_url_components( const std::string &url,
+	std::string &host,
+	std::string &req )
+{
+	size_t pos=0;
+
+	for ( int i=0; i<3 && ( pos != std::string::npos ); i++ )
+		pos = url.find_first_of( '/', pos+1 );
+
+	if (( pos != std::string::npos ) && ( pos < url.size()-1 ) )
+	{
+		host = url.substr( 0, pos+1 );
+		req = url.substr( pos+1 );
+	}
+}
+
+bool art_exists( const std::string &path, const std::string &base )
+{
+	std::vector<std::string> u1;
+	std::vector<std::string> u2;
+
+	return ( get_filename_from_base(
+		u1, u2, path, base, FE_ART_EXTENSIONS ) );
+}
+
 void write_romlist( const std::string &filename,
 				const FeRomInfoListType &romlist )
 {
@@ -549,21 +574,27 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 {
 #ifndef NO_NET
 	const char *HOSTNAME = "http://thegamesdb.net";
-	const char *PLATFORM_REQ = "api/GetPlatformsList.php";
+	const char *PLATFORM_LIST_REQ = "api/GetPlatformsList.php";
+	const char *PLAT_REQ = "api/GetPlatform.php?id=$1";
 	const char *GAME_REQ = "api/GetGame.php?name=$1";
+	const char *FLYER = "flyer/";
+	const char *WHEEL = "wheel/";
+	const char *MARQUEE = "marquee/";
+	const char *SNAP = "snap/";
+	const char *FANART = "fanart/";
 
 	//
 	// Get a list of valid platforms
 	//
 	FeNetQueue q;
-	q.add_buffer_task( HOSTNAME, PLATFORM_REQ, 0 );
+	q.add_buffer_task( HOSTNAME, PLATFORM_LIST_REQ, 0 );
 	sf::Http::Response::Status status;
 	q.do_next_task( status );
 
 	if ( status != sf::Http::Response::Ok )
 	{
 		get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
-							as_str( status ), c.user_message );
+			as_str( status ), c.user_message );
 
 		std::cout << " * " << c.user_message << std::endl;
 		return true;
@@ -573,15 +604,20 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	std::string body;
 	q.pop_completed_task( temp, body );
 
-	FeGameDBPlatformParser gdbpp;
-	gdbpp.parse( body );
+	FeGameDBPlatformListParser gdbplp;
+	gdbplp.parse( body );
 
 	const std::vector<std::string> &sl_temp = c.emulator.get_systems();
 	std::vector<std::string> system_list;
+	std::vector<int> system_ids;
 	for ( std::vector<std::string>::const_iterator itr = sl_temp.begin(); itr!=sl_temp.end(); ++itr )
 	{
-		if ( gdbpp.m_set.find( *itr ) != gdbpp.m_set.end() )
+		std::map<std::string, int>::iterator itm = gdbplp.m_set.find( *itr );
+		if ( itm != gdbplp.m_set.end() )
+		{
 			system_list.push_back( *itr );
+			system_ids.push_back( (*itm).second );
+		}
 		else
 			std::cout << " * System identifier '" << (*itr) << "' not recognized by "
 				<< HOSTNAME << std::endl;
@@ -607,6 +643,89 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	}
 
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
+	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
+	base_path += emu_name + "/";
+
+	if ( c.scrape_art )
+	{
+		//
+		// Get emulator-specific images
+		//
+		for ( std::vector<int>::iterator iti=system_ids.begin();
+				iti != system_ids.end(); ++iti )
+		{
+			std::string plat_string = PLAT_REQ;
+			perform_substitution( plat_string, "$1", as_str( *iti ) );
+
+			q.add_buffer_task( HOSTNAME, plat_string, 0 );
+			q.do_next_task( status );
+
+			body.clear();
+			q.pop_completed_task( temp, body );
+
+			FeGameDBArt my_art;
+			FeGameDBPlatformParser gdbpp( my_art );
+			gdbpp.parse( body );
+
+			std::string hostn = HOSTNAME;
+			std::string base_req = "banners/";
+			get_url_components( my_art.base,
+				hostn, base_req );
+
+			std::string path = base_path + FLYER;
+			if ( m_scrape_flyers && ( !my_art.flyer.empty() )
+				&& ( !art_exists( path, emu_name ) ))
+			{
+				confirm_directory( base_path, FLYER );
+				q.add_file_task( hostn, base_req + my_art.flyer,
+					path + emu_name );
+			}
+
+			path = base_path + WHEEL;
+			if ( m_scrape_wheels && ( !my_art.wheel.empty() )
+				&& ( !art_exists( path, emu_name ) ))
+			{
+				confirm_directory( base_path, WHEEL );
+				q.add_file_task( hostn, base_req + my_art.wheel,
+					path + emu_name );
+			}
+
+			path = base_path + MARQUEE;
+			if ( m_scrape_marquees && ( !my_art.marquee.empty() )
+				&& ( !art_exists( path, emu_name ) ))
+			{
+				confirm_directory( base_path, MARQUEE );
+				q.add_file_task( hostn, base_req + my_art.marquee,
+					path + emu_name );
+			}
+
+			if ( m_scrape_fanart && !my_art.fanart.empty() )
+			{
+				std::string path_base = base_path + FANART + emu_name + "/";
+				confirm_directory( base_path, "" );
+				confirm_directory( base_path + FANART, emu_name );
+
+				for ( std::vector<std::string>::iterator itr = my_art.fanart.begin();
+							itr != my_art.fanart.end(); ++itr )
+				{
+					size_t start_pos = (*itr).find_last_of( "/\\" );
+					size_t end_pos = (*itr).find_last_of( '.' );
+
+					if (( start_pos != std::string::npos )
+						&& ( !file_exists( path_base + (*itr).substr( start_pos+1 ) ) ))
+					{
+						if (( end_pos != std::string::npos ) && ( end_pos > start_pos ))
+						{
+							q.add_file_task( hostn,
+								base_req + (*itr),
+								path_base + (*itr).substr( start_pos+1,
+											end_pos-start_pos-1 ) );
+						}
+					}
+				}
+			}
+		}
+	}
 
 	//
 	// Build a map for looking up parents
@@ -666,9 +785,6 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		q.add_buffer_task( HOSTNAME, req_string, i );
 	}
 
-	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
-	base_path += emu_name + "/";
-
 	//
 	// Create worker threads to process the queue, adding new tasks to download
 	// artwork files where appropriate
@@ -713,21 +829,13 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 				{
 					std::string hostn = HOSTNAME;
 					std::string base_req = "banners/";
-					size_t pos=0;
-					for ( int i=0; i<3 && ( pos != std::string::npos ); i++ )
-						pos = my_art.base.find_first_of( '/', pos+1 );
-
-					if (( pos != std::string::npos ) && ( pos < my_art.base.size()-1 ) )
-					{
-						hostn = my_art.base.substr( 0, pos+1 );
-						base_req = my_art.base.substr( pos+1 );
-					}
+					get_url_components( my_art.base,
+						hostn, base_req );
 
 					FeRomInfo &rom = *(worklist[id]);
 
 					if ( m_scrape_flyers && ( !my_art.flyer.empty() ) && (!has_artwork( rom, "flyer" )) )
 					{
-						const char *FLYER = "flyer/";
 						std::string fname = base_path + FLYER + rom.get_info( FeRomInfo::Romname );
 						confirm_directory( base_path, FLYER );
 						q.add_file_task( hostn, base_req + my_art.flyer, fname );
@@ -737,7 +845,6 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_wheels && ( !my_art.wheel.empty() ) && (!has_artwork( rom, "wheel" )) )
 					{
-						const char *WHEEL = "wheel/";
 						std::string fname = base_path + WHEEL + rom.get_info( FeRomInfo::Romname );
 						confirm_directory( base_path, WHEEL );
 						q.add_file_task( hostn, base_req + my_art.wheel, fname );
@@ -747,7 +854,6 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_marquees && (!my_art.marquee.empty() ) && (!has_artwork( rom, "marquee" )) )
 					{
-						const char *MARQUEE = "marquee/";
 						std::string fname = base_path + MARQUEE + rom.get_info( FeRomInfo::Romname );
 						confirm_directory( base_path, MARQUEE );
 						q.add_file_task( hostn, base_req + my_art.marquee, fname );
@@ -757,7 +863,6 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_snaps && (!my_art.snap.empty() ) && (!has_image_artwork( rom, "snap" )) )
 					{
-						const char *SNAP = "snap/";
 						std::string fname = base_path + SNAP + rom.get_info( FeRomInfo::Romname );
 						confirm_directory( base_path, SNAP );
 						q.add_file_task( hostn, base_req + my_art.snap, fname );
@@ -767,7 +872,6 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_fanart && !my_art.fanart.empty() )
 					{
-						const char *FANART = "fanart/";
 						std::string fname_base = base_path + FANART + rom.get_info( FeRomInfo::Romname ) + "/";
 						confirm_directory( base_path, "" );
 						confirm_directory( base_path + FANART, rom.get_info( FeRomInfo::Romname ) );

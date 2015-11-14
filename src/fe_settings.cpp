@@ -1722,7 +1722,7 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 	size_t n = std::count( str.begin(), str.end(), '[' );
 
 	size_t open = 0;
-	for ( int x=0; x<n; x++ )
+	for ( size_t x=0; x<n; x++ )
 	{
 		open = str.find_first_of( '[', open );
 		size_t close = str.find_first_of( ']', open );
@@ -3012,7 +3012,8 @@ bool FeSettings::get_best_artwork_file(
 	const std::string &art_name,
 	std::vector<std::string> &vid_list,
 	std::vector<std::string> &image_list,
-	bool image_only )
+	bool image_only,
+	bool ignore_emu )
 {
 	const std::string &emu_name = rom.get_info( FeRomInfo::Emulator );
 
@@ -3104,7 +3105,9 @@ bool FeSettings::get_best_artwork_file(
 		}
 
 		// then "emulator"
-		if ( !emu_name.empty() && gather_artwork_filenames( art_paths, emu_name, vid_list, image_list ) )
+		if ( !ignore_emu && !emu_name.empty()
+			&& gather_artwork_filenames( art_paths,
+				emu_name, vid_list, image_list ) )
 			return true;
 	}
 
@@ -3114,13 +3117,13 @@ bool FeSettings::get_best_artwork_file(
 bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> temp1, temp2;
-	return ( get_best_artwork_file( rom, art_name, temp1, temp2, false ) );
+	return ( get_best_artwork_file( rom, art_name, temp1, temp2, false, true ) );
 }
 
 bool FeSettings::has_video_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> vids, temp;
-	get_best_artwork_file( rom, art_name, vids, temp, false );
+	get_best_artwork_file( rom, art_name, vids, temp, false, true );
 	return (!vids.empty());
 }
 
