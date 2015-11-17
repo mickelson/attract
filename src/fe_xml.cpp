@@ -391,8 +391,14 @@ void FeMameXMLParser::end_element( const char *element )
 
 			m_count++;
 
-			int percent = m_ctx.progress_past
-				+ m_count * m_ctx.progress_range / m_ctx.romlist.size();
+			int percent( 0 );
+			if ( m_ctx.romlist.size() > 0 )
+			{
+				percent = m_ctx.progress_past
+					+ m_count * m_ctx.progress_range
+					/ m_ctx.romlist.size();
+			}
+
 			std::cout << "\b\b\b\b" << std::setw(3)
 				<< percent << '%' << std::flush;
 

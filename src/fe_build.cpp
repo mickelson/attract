@@ -399,7 +399,7 @@ bool process_q_simple( FeNetQueue &q,
 			}
 		}
 
-		if ( c.uiupdate )
+		if ( c.uiupdate && ( taskc > 0 ) )
 		{
 			int p = c.progress_past + done * c.progress_range / taskc;
 			if ( c.uiupdate( c.uiupdatedata, p, aux ) == false )
@@ -907,7 +907,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 				}
 			}
 
-			if ( c.uiupdate )
+			if (( c.uiupdate ) && !worklist.empty() )
 			{
 				int p = c.progress_past + done_count * c.progress_range / ( NUM_ARTS * worklist.size() );
 				if ( c.uiupdate( c.uiupdatedata, p, aux ) == false )
