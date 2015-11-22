@@ -1,0 +1,17 @@
+Source: attract
+Section: games
+Priority: optional
+Maintainer: Andrew Mickelson <andrew@attractmode.org>
+Build-Depends: debhelper (>= 9), pkg-config
+Standards-Version: 3.9.5
+Homepage: http://attractmode.org
+
+Package: attract
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libsfml-graphics, libsfml-network, libsfml-system, libsfml-window, libavutil, libavcodec, libavformat, libavresample, libswscale, libfontconfig, libarchive, libxinerama
+Description: Attract-Mode emulator frontend
+ Attract-Mode is a graphical frontend for command line emulators such as MAME,
+ MESS and Nestopia. It hides the underlying operating system and is intended
+ to be controlled with a joystick, gamepad or spin dial, making it ideal for
+ use in arcade cabinets. Attract-Mode is open source and runs on Linux, OS X
+ and Windows. 

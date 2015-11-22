@@ -585,10 +585,10 @@ $(GSBASE_OBJ_DIR):
 	$(MD) $@
 
 $(DATA_PATH):
-	$(MD) $@
+	$(MD) -p $(DESTDIR)$@
 
 install: $(EXE) $(DATA_PATH)
-	cp $(EXE) $(DESTDIR)$(bindir)
+	install -D -t $(DESTDIR)$(bindir) $(EXE)
 	cp -r config/* $(DESTDIR)$(DATA_PATH)
 
 

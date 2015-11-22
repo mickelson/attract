@@ -1,0 +1,5 @@
+attract (1.6.1-1) unstable; urgency=low
+
+  * Initial debian package.
+
+ -- Andrew Mickelson <andrew@attractmode.org>  Mon, 02 Nov 2015 22:33:19 -0800
