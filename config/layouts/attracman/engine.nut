@@ -14,8 +14,16 @@
 // Load playfield info
 fe.do_nut("field.nut");
 
+// Define the source file and dimensions for our sprites
 const SpriteFile = "resource.png";
 const SpriteSize = 32;
+
+// Define the filenames for sounds
+//
+const IntroSoundFile = "intro.mp3"; // played once at start of each maze
+const DeathSoundFile = "death.mp3"; // played once on player death
+const ChaseSoundFile = "chase.mp3"; // continous when player being chased
+const FrightSoundFile = "fright.mp3"; // countinous when monsters are frightened
 
 const GhostHouseX = 28; const GhostHouseY = 1;
 const BonusX = 28; const BonusY = 18;
@@ -384,6 +392,7 @@ class Player extends Sprite
 	{
 		base.constructor()
 		obj.subimg_y=0;
+		obj.subimg_x = 2 * SpriteSize;
 	}
 
 	function init()
@@ -404,7 +413,12 @@ class Player extends Sprite
 	function death( frame )
 	{
 		if ( die == 0 )
+		{
 			die = frame;
+			set_sound( "chase", false );
+			set_sound( "fright", false );
+			set_sound( "death", true );
+		}
 	}
 
 	function animate( frame )
@@ -1084,6 +1098,23 @@ function state_update( ttime, animate_frame )
 	}
 }
 
+function set_sound( name, value )
+{
+	if ( ::sounds[name].file_name.len() > 0 )
+	{
+		if ( ::sounds[name].playing != value )
+			::sounds[name].playing = value;
+
+		// set the position of the sound to match the current pos
+		// of the player
+		if ( value && ( name != "intro" ))
+		{
+			::sounds[name].x = (::pman.my_x.tofloat()/fe.layout.width) - 0.5;
+			::sounds[name].y = (::pman.my_y.tofloat()/fe.layout.height) - 0.5;
+		}
+	}
+}
+
 function maze_init()
 {
 	::dots_up = 0;
@@ -1138,6 +1169,13 @@ function maze_init()
 
 	if ( !::rawin( "ghosts" ) )
 		::ghosts <- [ Ghost( 0 ), Ghost( 1 ), Ghost( 2 ), Ghost( 3 ) ];
+
+	::pman.set_pos( g2p( StartX ), g2p( StartY ) );
+	::pman.obj.x = ::pman.my_x; ::pman.obj.y = ::pman.my_y;
+
+	set_sound( "chase", false );
+	set_sound( "fright", false );
+	set_sound( "intro", true );
 }
 
 //
@@ -1186,6 +1224,18 @@ function speed_adjust()
 ::last_ghost <- -3001;	// the time the last ghost was released
 ::reset_actors <- true;
 ::last_frame <- 0;
+::sounds <- {};
+
+::sounds["intro"] <- fe.add_sound( IntroSoundFile );
+::sounds["death"] <- fe.add_sound( DeathSoundFile );
+
+::sounds["chase"] <- fe.add_sound( ChaseSoundFile );
+if ( ::sounds["chase"].file_name.len() > 0 )
+	::sounds["chase"].loop = true;
+
+::sounds["fright"] <- fe.add_sound( FrightSoundFile );
+if ( ::sounds["fright"].file_name.len() > 0 )
+	::sounds["fright"].loop = true;
 
 maze_init();
 
@@ -1198,6 +1248,20 @@ fe.add_ticks_callback( "tick" );
 function tick( ttime )
 {
 	local frame = ttime / 8.3; // 8.3=1000/120
+
+	if (( ::sounds["intro"].file_name.len() > 0 )
+		&& ( ::sounds["intro"].playing ))
+	{
+		::last_frame = frame;
+		return;
+	}
+	else if ( ( ::sounds["death"].file_name.len() == 0 )
+			|| !::sounds["death"].playing )
+	{
+		local in_fright = ( ::pman.speed > 0.85 );
+		set_sound( "fright", in_fright );
+		set_sound( "chase", !in_fright );
+	}
 
 	::pman.update_direction( ttime );
 	speed_adjust();
