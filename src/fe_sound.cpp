@@ -25,6 +25,7 @@
 #include "fe_present.hpp"
 #include "fe_util.hpp"
 #include <iostream>
+#include <cstring>
 
 FeSoundSystem::FeSoundSystem( FeSettings *fes )
 	: m_sound( false ),
@@ -159,7 +160,12 @@ void FeSound::load( const std::string &path, const std::string &fn )
 
 void FeSound::set_file_name( const char *n )
 {
-	std::string fn = n;
+	load_from_archive( NULL, n );
+}
+
+void FeSound::load_from_archive( const char *a, const char *n )
+{
+	std::string fn = clean_path( n );
 	if ( fn.empty() )
 	{
 		m_file_name = "";
@@ -167,7 +173,10 @@ void FeSound::set_file_name( const char *n )
 	}
 
 	std::string path;
-	if ( is_relative_path( fn ) )
+
+	if ( a && ( strlen( a ) > 0 ) )
+		path = a;
+	else if ( is_relative_path( fn ) )
 		path = FePresent::script_get_base_path();
 
 	load( path, fn );

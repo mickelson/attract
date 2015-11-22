@@ -399,7 +399,7 @@ FeImage *FePresent::add_image( bool is_artwork,
 	// if this is a static image/video then load it now
 	//
 	if (( !is_artwork ) && ( n.find_first_of( "[" ) == std::string::npos ))
-		new_tex->set_file_name( n.c_str() );
+		new_image->setFileName( n.c_str() );
 
 	flag_redraw();
 	m_texturePool.push_back( new_tex );

@@ -1342,6 +1342,8 @@ Member Functions:
      and `video_playing`) will be swapped as well.
    * `fix_masked_image()` - Takes the colour of the top left pixel in the image
      and makes all the pixels in the image with that colour transparent.
+   * `load_from_archive( archive, filename )` - Load the image from the
+     specified archive file (.zip, etc).
    * `add_image()` - [surface only] add an image to the end of this surface's
      draw list (see [`fe.add_image()`](#add_image) for parameters and return
      value).
@@ -1606,6 +1608,8 @@ Member Functions:
 
    * `get_metadata( tag )` - Get the meta data (if available in the source 
      file) that corresponds to the specified tag (i.e. "artist", "album", etc.)
+   * `load_from_archive( archive, filename )` - Load the sound from the
+     specified archive file (.zip, etc).
 
 
 <a name="Shader" />

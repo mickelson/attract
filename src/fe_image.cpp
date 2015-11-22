@@ -37,6 +37,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 
 namespace
 {
@@ -136,7 +137,7 @@ int FeBaseTextureContainer::get_video_time() const
 	return 0;
 }
 
-void FeBaseTextureContainer::set_file_name( const char *n )
+void FeBaseTextureContainer::load_from_archive( const char *a, const char *n )
 {
 }
 
@@ -813,9 +814,9 @@ int FeTextureContainer::get_video_time() const
 	return 0;
 }
 
-void FeTextureContainer::set_file_name( const char *n )
+void FeTextureContainer::load_from_archive( const char *a, const char *n )
 {
-	std::string path, filename=n;
+	std::string path, filename = clean_path( n );
 
 	if ( filename.empty() )
 	{
@@ -824,12 +825,13 @@ void FeTextureContainer::set_file_name( const char *n )
 		return;
 	}
 
-	filename = clean_path( filename );
+	if ( a && ( strlen( a ) > 0 ))
+		path = a;
 
 	// If it is a relative path we assume it is in the
 	// layout/screensaver/intro directory
 	//
-	if ( is_relative_path( filename ) )
+	else if ( is_relative_path( filename ) )
 		path = FePresent::script_get_base_path();
 
 	bool is_image=false;
@@ -1309,7 +1311,12 @@ const char *FeImage::getFileName() const
 
 void FeImage::setFileName( const char *n )
 {
-	m_tex->set_file_name( n );
+	m_tex->load_from_archive( NULL, n );
+}
+
+void FeImage::loadFromArchive( const char *a, const char *n )
+{
+	m_tex->load_from_archive( a, n );
 }
 
 int FeImage::getTrigger() const

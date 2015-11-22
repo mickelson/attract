@@ -579,6 +579,7 @@ bool FeVM::on_new_layout()
 		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
 		.Func( _SC("rawset_filter_offset"), &FeImage::rawset_filter_offset )
 		.Func(_SC("fix_masked_image"), &FeImage::fix_masked_image)
+		.Func(_SC("load_from_archive"), &FeImage::loadFromArchive)
 
 		//
 		// Surface-specific functionality:
@@ -684,6 +685,7 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("duration"), &FeSound::get_duration )
 		.Prop(_SC("time"), &FeSound::get_time )
 		.Func( _SC("get_metadata"), &FeSound::get_metadata )
+		.Func( _SC("load_from_archive"), &FeSound::load_from_archive )
 	);
 
 	fe.Bind( _SC("Shader"), Class <FeShader, NoConstructor>()
