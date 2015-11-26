@@ -313,6 +313,8 @@ int main(int argc, char *argv[])
 	std::string config_path, cmdln_font;
 	bool launch_game = false;
 
+	preinit_helper();
+
 	process_args( argc, argv, config_path, cmdln_font );
 
 	//

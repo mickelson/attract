@@ -53,6 +53,7 @@ AR=ar
 ARFLAGS=rc
 RM=rm -f
 MD=mkdir
+WINDRES=windres
 
 ifneq ($(origin TOOLCHAIN),undefined)
 override CC := $(TOOLCHAIN)-$(CC)
@@ -63,6 +64,7 @@ endif
 ifneq ($(origin CROSS),undefined)
 override STRIP := $(TOOLCHAIN)-$(STRIP)
 override PKG_CONFIG := $(TOOLCHAIN)-$(PKG_CONFIG)
+override WINDRES := $(TOOLCHAIN)-$(WINDRES)
 endif
 
 prefix=/usr/local
@@ -228,6 +230,8 @@ ifneq ($(NO_SWF),1)
 endif
 
 ifeq ($(FE_WINDOWS_COMPILE),1)
+ _DEP += attract.rc
+ _OBJ += attract.res
  CFLAGS += -mconsole
  EXE_EXT = .exe
 else
@@ -344,6 +348,30 @@ endif
 
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
+
+VERSION := $(shell git describe --tags)
+VERSION_PARTS = $(subst ., ,$(subst -, ,$(VERSION)))
+DEFS += -DVERSION_MAJOR=$(subst v,,$(word 1,$(VERSION_PARTS)))
+DEFS += -DVERSION_MINOR=$(word 2,$(VERSION_PARTS))
+ifeq ($(shell git describe --tags --dirty),%dirty)
+DEFS += -DVERSION_DIRTY
+endif
+ifneq ($(word 3,$(VERSION_PARTS)),)
+DEFS += -DVERSION_POINT=$(word 3,$(VERSION_PARTS))
+else
+DEFS += -DVERSION_POINT=0
+endif
+ifneq ($(word 4,$(VERSION_PARTS)),)
+DEFS += -DVERSION_COUNT=$(word 4,$(VERSION_PARTS))
+else
+DEFS += -DVERSION_COUNT=0
+endif
+ifneq ($(FE_DEBUG),1)
+DEFS += -DFE_DEBUG
+endif
+
+$(OBJ_DIR)/%.res: $(SRC_DIR)/%.rc | $(OBJ_DIR)
+	$(WINDRES) $(DEFS) $< -O coff -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 	$(CXX) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
@@ -596,4 +624,4 @@ smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
 
 clean:
-	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core

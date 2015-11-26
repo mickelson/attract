@@ -723,6 +723,12 @@ bool run_program( const std::string &prog,
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
 
+	if ( !have_console() )
+	{
+		si.dwFlags |= STARTF_USESHOWWINDOW;
+		si.wShowWindow = SW_HIDE;
+	}
+
 	LPSTR cmdline = new char[ comstr.length() + 1 ];
 	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
@@ -1017,3 +1023,25 @@ void get_xinerama_geometry( int &x, int &y, int &width, int &height )
 	XCloseDisplay( xdisp );
 }
 #endif
+
+void preinit_helper()
+{
+#ifdef SFML_SYSTEM_WINDOWS
+	if ( !have_console() )
+	{
+		FreeConsole();
+	}
+#endif
+}
+
+bool have_console()
+{
+#ifdef SFML_SYSTEM_WINDOWS
+	static STARTUPINFO startup_info = { sizeof(STARTUPINFO) };
+	GetStartupInfo(&startup_info);
+	if (startup_info.dwFlags && !(startup_info.dwFlags & STARTF_USESTDHANDLES)) {
+		return false;
+	}
+#endif
+	return true;
+}

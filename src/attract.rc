@@ -1,0 +1,54 @@
+#define STRINGIZE_HELPER(...) #__VA_ARGS__
+#define STRINGIZE(x) STRINGIZE_HELPER(x)
+
+#ifndef APP_ICON
+  #define APP_ICON "attract.ico"
+#endif
+
+#ifdef FE_DEBUG
+  #define FLAGS 0x1L
+#else
+  #define FLAGS 0x0L
+#endif
+
+#define LANG 0x409
+// TODO: UTFize attract
+//#ifdef _UNICODE
+#define CHARSET 1200
+#define LANG_WITH_CHARSET "040904B0"
+//#else
+//#define CHARSET 1252
+//#define LANG_WITH_CHARSET "040904E4"
+//#endif
+
+#define VERSION_BUILD VERSION_MAJOR.VERSION_MINOR.VERSION_POINT.VERSION_COUNT
+#define VERSION_FILE VERSION_MAJOR,VERSION_MINOR,VERSION_POINT,VERSION_COUNT
+
+1 VERSIONINFO
+	FILEVERSION VERSION_FILE
+	PRODUCTVERSION VERSION_FILE
+	FILEFLAGS FE_DEBUG
+	BEGIN
+		BLOCK "StringFileInfo"
+		BEGIN
+			BLOCK LANG_WITH_CHARSET
+			BEGIN
+				VALUE "Author", "Andrew Mickelson\0"
+				VALUE "Comments", "Attract Mode\0"
+				VALUE "CompanyName", "Attract Mode\0"
+				VALUE "FileDescription", "Graphical front-end for command line emulators\0"
+				VALUE "FileVersion", STRINGIZE(VERSION_FILE) "\0"
+				VALUE "InternalName", "attract\0"
+				VALUE "LegalCopyright", "Andrew Mickelson\0"
+				VALUE "OriginalFilename", "ATTRACT.EXE\0"
+				VALUE "ProductName", "Attract Mode\0"
+				VALUE "ProductVersion", STRINGIZE(VERSION_BUILD) "\0"
+			END
+		END
+
+		BLOCK "VarFileInfo"
+		BEGIN
+			VALUE "Translation", LANG, CHARSET
+		END
+	END
+103 ICON APP_ICON "\0"

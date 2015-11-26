@@ -226,6 +226,16 @@ void get_xinerama_geometry( int &, int &, int &, int & );
 void print_ffmpeg_version_info();
 #endif
 
+//
+// First call in main for things that should happen ... first
+//
+void preinit_helper();
+
+//
+// Used by run_program to tell if we started from a console (Win only)
+//
+bool have_console();
+
 #ifdef FE_DEBUG
 #define ASSERT(a) assert(a)
 #else
