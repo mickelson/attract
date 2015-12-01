@@ -617,6 +617,7 @@ $(DATA_PATH):
 
 install: $(EXE) $(DATA_PATH)
 	install -D -t $(DESTDIR)$(bindir) $(EXE)
+	mkdir -p $(DESTDIR)$(DATA_PATH)
 	cp -r config/* $(DESTDIR)$(DATA_PATH)
 
 
