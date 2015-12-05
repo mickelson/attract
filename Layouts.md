@@ -1468,6 +1468,7 @@ Properties:
       - `Align.Right`
    * `word_wrap` - Get/set whether word wrapping is enabled in this text
      (boolean).  Default is `false`.
+   * `msg_width` - Get the width of the text message, in layout coordinates.
    * `font` - Get/set the name of the font used for this text.  Default is
      the layout font name.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to

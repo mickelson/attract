@@ -175,7 +175,7 @@ void FeSound::load_from_archive( const char *a, const char *n )
 	std::string path;
 
 	if ( a && ( strlen( a ) > 0 ) )
-		path = a;
+		path = clean_path( a );
 	else if ( is_relative_path( fn ) )
 		path = FePresent::script_get_base_path();
 

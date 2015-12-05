@@ -87,6 +87,8 @@ public:
 	int getFirstLineHint() const;
 	const sf::Vector2f &getTextScale() const;
 
+	int getActualWidth(); // return the width of the actual text
+
 private:
 	sf::RectangleShape m_bgRect;
 	mutable std::vector<sf::Text> m_texts;

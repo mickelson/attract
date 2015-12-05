@@ -292,6 +292,22 @@ void FeTextPrimative::set_positions() const
 	m_needs_pos_set = false;
 }
 
+int FeTextPrimative::getActualWidth()
+{
+	float w = 0;
+
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+	{
+		sf::FloatRect textSize = m_texts[i].getLocalBounds();
+		textSize.width *= m_texts[i].getScale().x;
+
+		if ( textSize.width > w )
+			w = textSize.width;
+	}
+
+	return (int)w;
+}
+
 void FeTextPrimative::setFont( const sf::Font &font )
 {
 	for ( unsigned int i=0; i < m_texts.size(); i++ )

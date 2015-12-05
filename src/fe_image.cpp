@@ -826,7 +826,7 @@ void FeTextureContainer::load_from_archive( const char *a, const char *n )
 	}
 
 	if ( a && ( strlen( a ) > 0 ))
-		path = a;
+		path = clean_path( a );
 
 	// If it is a relative path we assume it is in the
 	// layout/screensaver/intro directory
