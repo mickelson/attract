@@ -18,13 +18,6 @@ fe.do_nut("field.nut");
 const SpriteFile = "resource.png";
 const SpriteSize = 32;
 
-// Define the filenames for sounds
-//
-const IntroSoundFile = "intro.mp3"; // played once at start of each maze
-const DeathSoundFile = "death.mp3"; // played once on player death
-const ChaseSoundFile = "chase.mp3"; // continous when player being chased
-const FrightSoundFile = "fright.mp3"; // countinous when monsters are frightened
-
 const GhostHouseX = 28; const GhostHouseY = 1;
 const BonusX = 28; const BonusY = 18;
 const StartX = 28; const StartY = 37;
@@ -1100,7 +1093,7 @@ function state_update( ttime, animate_frame )
 
 function set_sound( name, value )
 {
-	if ( ::sounds[name].file_name.len() > 0 )
+	if ( ::sounds.rawin( name ) )
 	{
 		if ( ::sounds[name].playing != value )
 			::sounds[name].playing = value;
@@ -1226,16 +1219,23 @@ function speed_adjust()
 ::last_frame <- 0;
 ::sounds <- {};
 
-::sounds["intro"] <- fe.add_sound( IntroSoundFile );
-::sounds["death"] <- fe.add_sound( DeathSoundFile );
+if ( AM_CONFIG["intro_sound"].len() > 0 )
+	::sounds["intro"] <- fe.add_sound( AM_CONFIG["intro_sound"] );
 
-::sounds["chase"] <- fe.add_sound( ChaseSoundFile );
-if ( ::sounds["chase"].file_name.len() > 0 )
+if ( AM_CONFIG["death_sound"].len() > 0 )
+	::sounds["death"] <- fe.add_sound( AM_CONFIG["death_sound"] );
+
+if ( AM_CONFIG["chase_sound"].len() > 0 )
+{
+	::sounds["chase"] <- fe.add_sound( AM_CONFIG["chase_sound"] );
 	::sounds["chase"].loop = true;
+}
 
-::sounds["fright"] <- fe.add_sound( FrightSoundFile );
-if ( ::sounds["fright"].file_name.len() > 0 )
+if ( AM_CONFIG["fright_sound"].len() > 0 )
+{
+	::sounds["fright"] <- fe.add_sound( AM_CONFIG["fright_sound"] );
 	::sounds["fright"].loop = true;
+}
 
 maze_init();
 

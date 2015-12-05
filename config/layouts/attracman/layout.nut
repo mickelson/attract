@@ -11,7 +11,7 @@ const DEFAULT_SPEED = 0.8;
 //
 const SPEED_INCREMENT = 0.1;
 
-class UserConfig {
+class UserConfig </ help="Playable layout based on Pac-Man arcade game by Toru Iwatani (Namco, 1980)" /> {
 	</ label="Player Up", help="Set player controls", is_input="yes", order=1 />
 	p1_up="R";
 
@@ -42,7 +42,17 @@ class UserConfig {
 	</ label="Ghost Right", help="Set controls to influence Blinky", is_input="yes" order=10 />
 	p2_right="";
 
+	</ label="Intro Sound", help="Sound file to play on game intro", order=11 />
+	intro_sound="";
 
+	</ label="Death Sound", help="Sound file to play on player death", order=12 />
+	death_sound="";
+
+	</ label="Chase Sound", help="Sound file to play (repeatedly) as player is being chased", order=13 />
+	chase_sound="";
+
+	</ label="Fright Sound", help="Sound file to play (repeatedly) when monsters are frightened", order=14 />
+	fright_sound="";
 }
 
 ::AM_CONFIG <- fe.get_config();
