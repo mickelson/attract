@@ -237,7 +237,7 @@ void FeMameXMLParser::start_element(
 				break;
 			}
 		}
-		if ( m_collect_data == true )
+		if ( m_collect_data )
 		{
 			for ( i=0; attribute[i]; i+=2 )
 			{
@@ -260,13 +260,14 @@ void FeMameXMLParser::start_element(
 			}
 		}
 	}
-	else if ( m_collect_data==true )
+	else if ( m_collect_data )
 	{
 		if ( strcmp( element, "input" ) == 0 )
 		{
 			for ( int i=0; attribute[i]; i+=2 )
 			{
-				if ( strcmp( attribute[i], "players" ) == 0 )
+				if (( strcmp( attribute[i], "players" ) == 0 )
+					&& (*m_itr).get_info( FeRomInfo::Players ).empty() )
 				{
 					(*m_itr).set_info( FeRomInfo::Players, attribute[i+1] );
 					break;
@@ -348,7 +349,10 @@ void FeMameXMLParser::start_element(
 		{
 			m_chd=true;
 		}
+		// "cloneof" and "genre" elements appear in hyperspin .xml
 		else if (( strcmp( element, "description" ) == 0 )
+				|| ( strcmp( element, "cloneof" ) == 0 )
+				|| ( strcmp( element, "genre" ) == 0 )
 				|| ( strcmp( element, "year" ) == 0 )
 				|| ( strcmp( element, "manufacturer" ) == 0 ))
 		{
@@ -392,15 +396,15 @@ void FeMameXMLParser::end_element( const char *element )
 			m_count++;
 
 			int percent( 0 );
-			if ( m_ctx.romlist.size() > 0 )
+			if ( !m_ctx.full && ( m_ctx.romlist.size() > 0 ))
 			{
 				percent = m_ctx.progress_past
 					+ m_count * m_ctx.progress_range
 					/ m_ctx.romlist.size();
-			}
 
-			std::cout << "\b\b\b\b" << std::setw(3)
-				<< percent << '%' << std::flush;
+				std::cout << "\b\b\b\b" << std::setw(3)
+					<< percent << '%' << std::flush;
+			}
 
 			if ( m_ui_update )
 			{
@@ -420,48 +424,31 @@ void FeMameXMLParser::end_element( const char *element )
 			(*m_itr).set_info( FeRomInfo::Year, m_current_data );
 		else if ( strcmp( element, "manufacturer" ) == 0 )
 			(*m_itr).set_info( FeRomInfo::Manufacturer, m_current_data );
+		else if ( strcmp( element, "cloneof" ) == 0 ) // Hyperspin .xml
+			(*m_itr).set_info( FeRomInfo::Cloneof, m_current_data );
+		else if ( strcmp( element, "genre" ) == 0 ) // Hyperspin .xml
+			(*m_itr).set_info( FeRomInfo::Category, m_current_data );
 
 		m_current_data.clear();
 		m_element_open=false;
 	}
 }
 
-bool FeMameXMLParser::parse( const std::string &prog )
+void FeMameXMLParser::pre_parse()
 {
-	std::string base_args = "-listxml";
 	FeRomInfoListType::iterator itr;
 	m_count=0;
 
-	//
-	// run "mame -listxml" and find each rom.
-	//
 	m_map.clear();
 	for ( FeRomInfoListType::iterator itr=m_ctx.romlist.begin();
 			itr != m_ctx.romlist.end(); ++itr )
 		m_map[ (*itr).get_info( FeRomInfo::Romname ).c_str() ] = itr;
 
 	std::cout << "    ";
+}
 
-	//
-	// Special case for really small romlists... this gets used in
-	// connection with -listsoftware parsing as well
-	//
-	if (  m_ctx.romlist.size() < 10 )
-	{
-		for ( FeRomInfoListType::iterator itr=m_ctx.romlist.begin();
-				itr != m_ctx.romlist.end(); ++itr )
-		{
-			parse_internal( prog,
-				base_args + " "
-				+ (*itr).get_info( FeRomInfo::Romname ) );
-		}
-	}
-	else if ( parse_internal( prog, base_args ) == false )
-	{
-		std::cout << std::endl;
-		return false;
-	}
-
+void FeMameXMLParser::post_parse()
+{
 	std::cout << std::endl;
 
 	if ( !m_discarded.empty() )
@@ -476,8 +463,79 @@ bool FeMameXMLParser::parse( const std::string &prog )
 		}
 		std::cout << std::endl;
 	}
+}
 
-	return true;
+bool FeMameXMLParser::parse_command( const std::string &prog )
+{
+	pre_parse();
+
+	std::string base_args = "-listxml";
+
+	//
+	// Special case for really small romlists... this gets used in
+	// connection with -listsoftware parsing as well
+	//
+	bool ret_val=true;
+	if (  m_ctx.romlist.size() < 10 )
+	{
+		for ( FeRomInfoListType::iterator itr=m_ctx.romlist.begin();
+				itr != m_ctx.romlist.end(); ++itr )
+		{
+			parse_internal( prog,
+				base_args + " "
+				+ (*itr).get_info( FeRomInfo::Romname ) );
+		}
+	}
+	else
+		ret_val = parse_internal( prog, base_args );
+
+	post_parse();
+	return ret_val;
+}
+
+bool FeMameXMLParser::parse_file( const std::string &filename )
+{
+	pre_parse();
+
+	m_element_open=m_keep_rom=false;
+	m_continue_parse=true;
+
+	std::ifstream myfile( filename.c_str() );
+	if ( !myfile.is_open() )
+	{
+		std::cerr << "Error opening file: " << filename << std::endl;
+		return false;
+	}
+
+	XML_Parser parser = XML_ParserCreate( NULL );
+	XML_SetUserData( parser, (void *)this );
+	XML_SetElementHandler( parser, exp_start_element, exp_end_element );
+	XML_SetCharacterDataHandler( parser, exp_handle_data );
+	bool ret_val = true;
+
+	while ( myfile.good() )
+	{
+		std::string line;
+		getline( myfile, line );
+
+		if ( XML_Parse( parser, line.c_str(),
+				line.size(), XML_FALSE ) == XML_STATUS_ERROR )
+		{
+			std::cout << "Error parsing xml:"
+				<< line << std::endl;
+			ret_val = false;
+			break;
+		}
+	}
+
+	myfile.close();
+
+	// need to pass true to XML Parse on last line
+	XML_Parse( parser, 0, 0, XML_TRUE );
+	XML_ParserFree( parser );
+
+	post_parse();
+	return ret_val;
 }
 
 //
@@ -640,7 +698,7 @@ bool FeMessXMLParser::parse( const std::string &prog,
 		FeImporterContext temp( ignored, temp_list );
 		FeMameXMLParser listxml( temp );
 
-		if (( listxml.parse( prog ) )
+		if (( listxml.parse_command( prog ) )
 				&& ( !temp_list.empty() ))
 		{
 			const FeRomInfo &ri = temp_list.front();
@@ -688,111 +746,6 @@ bool FeMessXMLParser::parse( const std::string &prog,
 		(*itr).set_info( FeRomInfo::BuildScratchPad, "" );
 
 	return retval;
-}
-
-FeHyperSpinXMLParser::FeHyperSpinXMLParser(  FeRomInfoListType & li )
-	: m_romlist( li ), m_collect_data( false )
-{
-}
-
-void FeHyperSpinXMLParser::start_element(
-			const char *element,
-			const char **attribute )
-{
-	if ( strcmp( element, "game" ) == 0 )
-	{
-		m_current_rom.clear();
-		m_collect_data = true;
-
-		for ( int i=0; attribute[i]; i+=2 )
-		{
-			if ( strcmp( attribute[i], "name" ) == 0 )
-			{
-				m_current_rom.set_info( FeRomInfo::Romname, attribute[i+1] );
-				break;
-			}
-		}
-	}
-	else if ( m_collect_data )
-	{
-		if (( strcmp( element, "description" ) == 0 )
-			|| ( strcmp( element, "cloneof" ) == 0 )
-			|| ( strcmp( element, "year" ) == 0 )
-			|| ( strcmp( element, "manufacturer" ) == 0 )
-			|| ( strcmp( element, "genre" ) == 0 ))
-		{
-			m_element_open=true;
-		}
-	}
-}
-
-void FeHyperSpinXMLParser::end_element( const char *element )
-{
-	if ( strcmp( element, "game" ) == 0 )
-	{
-		m_romlist.push_back( m_current_rom );
-		m_collect_data = false;
-	}
-	else if ( m_element_open )
-	{
-		if ( strcmp( element, "description" ) == 0 )
-			m_current_rom.set_info( FeRomInfo::Title, m_current_data );
-		else if ( strcmp( element, "cloneof" ) == 0 )
-			m_current_rom.set_info( FeRomInfo::Cloneof, m_current_data );
-		else if ( strcmp( element, "manufacturer" ) == 0 )
-			m_current_rom.set_info( FeRomInfo::Manufacturer, m_current_data );
-		else if ( strcmp( element, "year" ) == 0 )
-			m_current_rom.set_info( FeRomInfo::Year, m_current_data );
-		else if ( strcmp( element, "genre" ) == 0 )
-			m_current_rom.set_info( FeRomInfo::Category, m_current_data );
-
-		m_current_data.clear();
-		m_element_open=false;
-	}
-}
-
-bool FeHyperSpinXMLParser::parse( const std::string &filename )
-{
-	m_element_open=m_keep_rom=false;
-	m_continue_parse=true;
-
-	XML_Parser parser = XML_ParserCreate( NULL );
-	XML_SetUserData( parser, (void *)this );
-	XML_SetElementHandler( parser, exp_start_element, exp_end_element );
-	XML_SetCharacterDataHandler( parser, exp_handle_data );
-
-	std::ifstream myfile( filename.c_str() );
-	if ( !myfile.is_open() )
-	{
-		std::cerr << "Error opening file: " << filename << std::endl;
-		XML_ParserFree( parser );
-		return false;
-	}
-
-	bool ret_val = true;
-
-	while ( myfile.good() )
-	{
-		std::string line;
-		getline( myfile, line );
-
-		if ( XML_Parse( parser, line.c_str(),
-				line.size(), XML_FALSE ) == XML_STATUS_ERROR )
-		{
-			std::cout << "Error parsing xml:"
-						<< line << std::endl;
-			ret_val = false;
-			break;
-		}
-	}
-
-	myfile.close();
-
-	// need to pass true to XML Parse on last line
-	XML_Parse( parser, 0, 0, XML_TRUE );
-	XML_ParserFree( parser );
-
-	return ret_val;
 }
 
 FeGameDBPlatformListParser::FeGameDBPlatformListParser()

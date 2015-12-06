@@ -230,7 +230,7 @@ void ini_import( const std::string &filename,
 		<< " entries." << std::endl;
 }
 
-void apply_import_extras( FeImporterContext &c )
+void apply_import_extras( FeImporterContext &c, bool skip_xml )
 {
 	const std::vector< std::string > &extras = c.emulator.get_import_extras();
 
@@ -243,6 +243,19 @@ void apply_import_extras( FeImporterContext &c )
 			ini_import( path, c.romlist, FeRomInfo::Category, "[Category]" );
 		else if ( tail_compare( path, "nplayers.ini" ) )
 			ini_import( path, c.romlist, FeRomInfo::Players, "[NPlayers]" );
+		else if ( tail_compare( path, ".xml" ) )
+		{
+			if ( skip_xml )
+			{
+				std::cout << " - Skipping import_extras file: "
+					<< path << std::endl;
+			}
+			else
+			{
+				FeMameXMLParser mamep( c );
+				mamep.parse_file( path );
+			}
+		}
 		else
 			std::cout << "Unsupported import_extras file: " << path << std::endl;
 	}
@@ -939,7 +952,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 	{
 		std::cout << " - Obtaining -listxml info...";
 		FeMameXMLParser mamep( c );
-		if ( !mamep.parse( base_command ) )
+		if ( !mamep.parse_command( base_command ) )
 			std::cout << "No XML output found, command: "
 				<< base_command << " -listxml" << std::endl;
 	}
@@ -1064,7 +1077,8 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 		if ( (*itr).task_type == FeImportTask::BuildRomlist )
 		{
 			// Build romlist task
-			std::cout << "*** Generating Collection/Rom List" << std::endl;
+			std::cout << "*** Generating Collection/Rom List: "
+				<< (*itr).emulator_name << std::endl;
 
 			FeEmulatorInfo *emu = m_rl.get_emulator( (*itr).emulator_name );
 			if ( emu == NULL )
@@ -1082,7 +1096,8 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 				build_basic_romlist( ctx );
 
 				apply_xml_import( ctx );
-				apply_import_extras( ctx );
+				apply_import_extras( ctx,
+					( emu->get_info_source() == FeEmulatorInfo::Listxml ) );
 
 				apply_emulator_name( best_name, romlist );
 				total_romlist.splice( total_romlist.end(), romlist );
@@ -1091,7 +1106,8 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 		else if ( (*itr).task_type == FeImportTask::ImportRomlist )
 		{
 			// import romlist from file task
-			std::cout << "*** Importing Collection/Rom List" << std::endl;
+			std::cout << "*** Importing Collection/Rom List: "
+				<< (*itr).file_name << std::endl;
 
 			FeRomInfoListType romlist;
 			std::string emu_name;
@@ -1134,10 +1150,12 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			}
 			else if ( tail_compare( (*itr).file_name, ".xml" ) )
 			{
-				// HyperSpin format list
-				//
-				FeHyperSpinXMLParser my_parser( romlist );
-				if ( my_parser.parse( (*itr).file_name ) )
+				FeEmulatorInfo temp_emu( emu_name );
+				FeImporterContext ctx( temp_emu, romlist );
+				ctx.full = true; // Flag that all xml entries go into romlist
+
+				FeMameXMLParser mamep( ctx );
+				if ( mamep.parse_file( (*itr).file_name ) )
 					apply_emulator_name( emu_name, romlist );
 			}
 			else
@@ -1158,7 +1176,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			else
 			{
 				FeImporterContext ctx( *emu, romlist );
-				apply_import_extras( ctx );
+				apply_import_extras( ctx, true );
 			}
 
 			total_romlist.splice( total_romlist.end(), romlist );
@@ -1279,7 +1297,8 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 
 	build_basic_romlist( ctx );
 	apply_xml_import( ctx );
-	apply_import_extras( ctx );
+	apply_import_extras( ctx,
+		( emu->get_info_source() == FeEmulatorInfo::Listxml ) );
 	apply_emulator_name( emu_name, romlist );
 
 	romlist.sort( FeRomListSorter() );

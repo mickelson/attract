@@ -185,10 +185,11 @@ emulators from the command line using the following command:
 
 		attract --build-romlist <emulator names...>
 
-You can also import romlists from MameWah/Wahcade! (.lst), Attract-Mode
-(.txt) and HyperSpin (.xml) list files using the following command:
+You can also import romlists from mame listxml files as well as gamelists for
+other frontends.  Supported source files include: *.lst (MameWah lists), *.txt
+(Attract-Mode lists) and *.xml (Mame listxml and HyperSpin lists):
 
-		attract --import-romlist <file> [emulator name]
+		attract --import-romlist <source_file> [emulator name]
 
 The --build-romlist and --import-romlist options can be chained together in
 all sorts of strange and wonderful ways to generate combined Attract-Mode

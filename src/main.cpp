@@ -236,6 +236,9 @@ void process_args( int argc, char *argv[],
 #ifndef NO_SWF
 				<< " +SWF"
 #endif
+#ifdef USE_LIBARCHIVE
+				<< " +7z"
+#endif
 				<< ") " << std::endl << std::endl;
 
 #ifdef NO_MOVIE
@@ -272,7 +275,7 @@ void process_args( int argc, char *argv[],
 				<< "     Import romlist from the specified file. Supported formats:" << std::endl
 				<< "        *.lst (Mamewah/Wahcade!)" << std::endl
 				<< "        *.txt (Attract-Mode)" << std::endl
-				<< "        *.xml (HyperSpin)" << std::endl
+				<< "        *.xml (Mame listxml format or HyperSpin)" << std::endl
 				<< "     The emulator to use for list entries can be specified as well" << std::endl
 				<< "  -F, --filter <rule>" << std::endl
 				<< "     Apply the specified filter rule when creating romlist" << std::endl

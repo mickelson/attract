@@ -90,7 +90,9 @@ class FeMameXMLParser : private FeXMLParser
 {
 public:
 	FeMameXMLParser( FeImporterContext &ctx );
-	bool parse( const std::string &base_command );
+
+	bool parse_command( const std::string &base_command );
+	bool parse_file( const std::string &filename );
 
 private:
 	FeImporterContext &m_ctx;
@@ -102,6 +104,9 @@ private:
 	bool m_collect_data;
 	bool m_chd;
 	bool m_mechanical;
+
+	void pre_parse();
+	void post_parse();
 
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
@@ -130,21 +135,6 @@ private:
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
 	void clear_parse_state();
-};
-
-class FeHyperSpinXMLParser : private FeXMLParser
-{
-public:
-	FeHyperSpinXMLParser( FeRomInfoListType & );
-	bool parse( const std::string &filename );
-
-private:
-	void start_element( const char *, const char ** );
-	void end_element( const char * );
-
-	FeRomInfoListType &m_romlist;
-	FeRomInfo m_current_rom;
-	bool m_collect_data;
 };
 
 class FeGameDBPlatformListParser : private FeXMLParser
