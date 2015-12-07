@@ -1249,14 +1249,12 @@ function tick( ttime )
 {
 	local frame = ttime / 8.3; // 8.3=1000/120
 
-	if (( ::sounds["intro"].file_name.len() > 0 )
-		&& ( ::sounds["intro"].playing ))
+	if ( ::sounds.rawin("intro") && ::sounds["intro"].playing )
 	{
 		::last_frame = frame;
 		return;
 	}
-	else if ( ( ::sounds["death"].file_name.len() == 0 )
-			|| !::sounds["death"].playing )
+	else if ( !::sounds.rawin("death") || !::sounds["death"].playing )
 	{
 		local in_fright = ( ::pman.speed > 0.85 );
 		set_sound( "fright", in_fright );
