@@ -136,6 +136,7 @@ protected:
 	std::vector<FeMonitor> m_mon;
 	bool m_playMovies;
 	int m_user_page_size;
+	bool m_preserve_aspect;
 
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
@@ -179,6 +180,7 @@ protected:
 	int get_list_limit() const;
 	void set_search_rule( const char * );
 	const char *get_search_rule();
+	bool get_preserve_aspect_ratio();
 
 	void set_selection_index( int );
 	const char *get_layout_font() const;
@@ -188,6 +190,7 @@ protected:
 	void set_toggle_rotation( int );
 	void set_layout_font( const char * );
 	void set_video_play_state( bool state );
+	void set_preserve_aspect_ratio( bool );
 
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );

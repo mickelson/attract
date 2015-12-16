@@ -1101,6 +1101,8 @@ Properties:
       - `RotateScreen.Left`
    * `page_size` - Get/set the number of entries to jump each time the "Page Up"
      or "Page Down" button is pressed.
+   * `preserve_aspect_ratio` - Get/set whether the overall layout aspect ratio
+     should be preserved by the frontend.  Default value is false.
 
 Notes:
 

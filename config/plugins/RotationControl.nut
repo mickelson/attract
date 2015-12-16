@@ -13,6 +13,9 @@ class UserConfig </ help="This plugin can automatically rotate the frontend disp
 
 	</ label="Automatic Rotation", help="Set the additional rotation to apply when automatic rotation is needed (set this to None to disable automatic rotation)", options="None,90,180,270", order=2 />
 	auto_rot="270";
+
+	</ label="Preserve Layout Aspect Ratio", help="Change the default setting for whether the overall layout aspect ratio should be preserved", options="Default,Yes,No", order=3 />
+	preserve_aspect_ratio="Default";
 }
 
 // There is nothing to do if the screen saver is running
@@ -21,6 +24,11 @@ if ( ScreenSaverActive )
 	return;
 
 local config=fe.get_config();
+
+if ( config["preserve_aspect_ratio"] == "Yes" )
+	fe.layout.preserve_aspect_ratio = true;
+else if ( config["preserve_aspect_ratio"] == "No" )
+	fe.layout.preserve_aspect_ratio = false;
 
 class AutoRotate
 {
