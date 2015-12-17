@@ -1288,10 +1288,20 @@ void FeMedia::onSeek( sf::Time timeOffset )
 bool FeMedia::is_supported_media_file( const std::string &filename )
 {
 	init_av();
-	return ( av_guess_format(
-					NULL,
-					filename.c_str(),
-					NULL ) != NULL ) ? true : false;
+
+	// Work around for FFmpeg not recognizing certain file extensions
+	// that it supports (xmv reported as of Dec 2015)
+	//
+	size_t pos = filename.find_last_of( '.' );
+	if ( pos != std::string::npos )
+	{
+		std::string f = filename.substr(pos+1);
+		std::transform( f.begin(), f.end(), f.begin(), ::tolower );
+		return ( av_guess_format( f.c_str(), filename.c_str(),
+			NULL ) != NULL );
+	}
+
+	return ( av_guess_format( NULL, filename.c_str(), NULL ) != NULL );
 }
 
 
