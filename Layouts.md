@@ -1325,11 +1325,13 @@ Properties:
      selection.
    * `shader` - Get/set the GLSL shader for this image. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
-   * trigger - Get/set the transition that triggers updates of this artwork/
+   * `trigger` - Get/set the transition that triggers updates of this artwork/
      dynamic image.  Can be set to `Transition.ToNewSelection` or
      `Transition.EndNavigation`.  Default value is `Transition.ToNewSelection`.
-   * smooth - Get/set whether the image is to be smoothed.  Default value can be
-     configured in attract.cfg
+   * `smooth` - Get/set whether the image is to be smoothed.  Default value can
+     be configured in attract.cfg
+   * `zorder` - Get/set the Image's order in the applicable draw list.  When
+     objects overlap, the one with the higher zorder will be drawn on top.
 
 Member Functions:
 
@@ -1475,6 +1477,8 @@ Properties:
      the layout font name.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
+   * `zorder` - Get/set the Text's order in the applicable draw list.  When
+     objects overlap, the one with the higher zorder will be drawn on top.
 
 Member Functions:
 
@@ -1570,6 +1574,8 @@ Properties:
      behaviour as if set to "[Title]").  Default is an empty value.
    * `shader` - Get/set the GLSL shader for this listbox. This can only be set
      to an instance of the class `fe.Shader` (see: `fe.add_shader()`).
+   * `zorder` - Get/set the Listbox's order in the applicable draw list.  When
+     objects overlap, the one with the higher zorder will be drawn on top.
 
 Member Functions:
 

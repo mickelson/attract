@@ -37,11 +37,11 @@ class FeTextureContainer;
 
 enum FeVideoFlags
 {
-	VF_Normal					= 0,
-	VF_DisableVideo			= 0x01,
-	VF_NoLoop					= 0x02,
-	VF_NoAutoStart				= 0x04,
-	VF_NoAudio					= 0x08
+	VF_Normal	= 0,
+	VF_DisableVideo	= 0x01,
+	VF_NoLoop	= 0x02,
+	VF_NoAutoStart	= 0x04,
+	VF_NoAudio	= 0x08
 };
 
 class FeBaseTextureContainer
@@ -82,15 +82,9 @@ public:
 	virtual void set_smooth( bool )=0;
 	virtual bool get_smooth() const=0;
 
+	// function for use with surface objects
 	//
-	// Callback functions for use with surface objects
-	//
-	virtual FeImage *add_image(const char *,int, int, int, int);
-	virtual FeImage *add_artwork(const char *,int, int, int, int);
-	virtual FeImage *add_clone(FeImage *);
-	virtual FeText *add_text(const char *,int, int, int, int);
-	virtual FeListBox *add_listbox(int, int, int, int);
-	virtual FeImage *add_surface(int, int);
+	virtual FePresentableParent *get_presentable_parent();
 
 	void register_image( FeImage * );
 
@@ -190,7 +184,7 @@ private:
 	FeVideoFlags m_video_flags;
 };
 
-class FeSurfaceTextureContainer : public FeBaseTextureContainer
+class FeSurfaceTextureContainer : public FeBaseTextureContainer, public FePresentableParent
 {
 public:
 
@@ -208,19 +202,10 @@ public:
 	void set_smooth( bool );
 	bool get_smooth() const;
 
-	//
-	// Callback functions for use with surface objects
-	//
-	FeImage *add_image(const char *,int, int, int, int);
-	FeImage *add_artwork(const char *,int, int, int, int);
-	FeImage *add_clone(FeImage *);
-	FeText *add_text(const char *,int, int, int, int);
-	FeListBox *add_listbox(int, int, int, int);
-	FeImage *add_surface(int, int);
+	FePresentableParent *get_presentable_parent();
 
 private:
 	sf::RenderTexture m_texture;
-	std::vector <FeBasePresentable *> m_draw_list;
 };
 
 class FeImage : public sf::Drawable, public FeBasePresentable
@@ -238,7 +223,9 @@ protected:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
 public:
-	FeImage( FeBaseTextureContainer *, float x, float y, float w, float h );
+	FeImage( FePresentableParent &p, FeBaseTextureContainer *,
+		float x, float y, float w, float h );
+
 	FeImage( FeImage * ); // clone the given image (texture is not copied)
 	~FeImage();
 

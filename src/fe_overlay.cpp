@@ -277,7 +277,8 @@ int FeOverlay::common_list_dialog(
 	heading.setString( title );
 	draw_list.push_back( &heading );
 
-	FeListBox dialog(
+	FePresentableParent temp;
+	FeListBox dialog( temp,
 		m_fePresent.get_font(),
 		m_textColour,
 		sf::Color::Transparent,
@@ -374,7 +375,8 @@ int FeOverlay::languages_dialog()
 	heading.setString( "" );
 	draw_list.push_back( &heading );
 
-	FeListBox dialog(
+	FePresentableParent temp;
+	FeListBox dialog( temp,
 		m_fePresent.get_font(),
 		m_textColour,
 		sf::Color::Transparent,
@@ -497,7 +499,8 @@ int FeOverlay::common_basic_dialog(
 	message.setWordWrap( true );
 	message.setTextScale( text_scale );
 
-	FeListBox dialog(
+	FePresentableParent temp;
+	FeListBox dialog( temp,
 		m_fePresent.get_font(),
 		m_textColour,
 		sf::Color::Transparent,
@@ -700,7 +703,8 @@ int FeOverlay::display_config_dialog(
 	//
 	// The "settings" (left) list, also used to list submenu and exit options...
 	//
-	FeListBox sdialog(
+	FePresentableParent temp;
+	FeListBox sdialog( temp,
 		font,
 		m_textColour,
 		sf::Color::Transparent,
@@ -718,7 +722,7 @@ int FeOverlay::display_config_dialog(
 	//
 	// The "values" (right) list shows the values corresponding to a setting.
 	//
-	FeListBox vdialog(
+	FeListBox vdialog( temp,
 		font,
 		m_textColour,
 		sf::Color::Transparent,

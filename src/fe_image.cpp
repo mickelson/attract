@@ -186,32 +186,7 @@ FeTextureContainer *FeBaseTextureContainer::get_derived_texture_container()
 	return NULL;
 }
 
-FeImage *FeBaseTextureContainer::add_image(const char *,int, int, int, int)
-{
-	return NULL;
-}
-
-FeImage *FeBaseTextureContainer::add_artwork(const char *,int, int, int, int)
-{
-	return NULL;
-}
-
-FeImage *FeBaseTextureContainer::add_clone(FeImage *)
-{
-	return NULL;
-}
-
-FeText *FeBaseTextureContainer::add_text(const char *,int, int, int, int)
-{
-	return NULL;
-}
-
-FeListBox *FeBaseTextureContainer::add_listbox(int, int, int, int)
-{
-	return NULL;
-}
-
-FeImage *FeBaseTextureContainer::add_surface(int, int)
+FePresentableParent *FeBaseTextureContainer::get_presentable_parent()
 {
 	return NULL;
 }
@@ -935,10 +910,10 @@ FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )
 
 FeSurfaceTextureContainer::~FeSurfaceTextureContainer()
 {
-	while ( !m_draw_list.empty() )
+	while ( !elements.empty() )
 	{
-		FeBasePresentable *p = m_draw_list.back();
-		m_draw_list.pop_back();
+		FeBasePresentable *p = elements.back();
+		elements.pop_back();
 		delete p;
 	}
 }
@@ -950,8 +925,8 @@ const sf::Texture &FeSurfaceTextureContainer::get_texture()
 
 void FeSurfaceTextureContainer::on_new_selection( FeSettings *s )
 {
-	for ( std::vector<FeBasePresentable *>::iterator itr = m_draw_list.begin();
-				itr != m_draw_list.end(); ++itr )
+	for ( std::vector<FeBasePresentable *>::iterator itr = elements.begin();
+				itr != elements.end(); ++itr )
 		(*itr)->on_new_selection( s );
 }
 
@@ -965,8 +940,8 @@ void FeSurfaceTextureContainer::on_new_list( FeSettings *s, bool )
 	// We don't do any scaling of the objects when they are being drawn
 	// to the surface.
 	//
-	for ( std::vector<FeBasePresentable *>::iterator itr = m_draw_list.begin();
-				itr != m_draw_list.end(); ++itr )
+	for ( std::vector<FeBasePresentable *>::iterator itr = elements.begin();
+				itr != elements.end(); ++itr )
 		(*itr)->on_new_list( s );
 }
 
@@ -976,8 +951,8 @@ bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, 
 	// Draw the surface's draw list to the render texture
 	//
 	m_texture.clear( sf::Color::Transparent );
-	for ( std::vector<FeBasePresentable *>::const_iterator itr = m_draw_list.begin();
-				itr != m_draw_list.end(); ++itr )
+	for ( std::vector<FeBasePresentable *>::const_iterator itr = elements.begin();
+				itr != elements.end(); ++itr )
 	{
 		if ( (*itr)->get_visible() )
 			m_texture.draw( (*itr)->drawable() );
@@ -985,66 +960,6 @@ bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, 
 
 	m_texture.display();
 	return true;
-}
-
-FeImage *FeSurfaceTextureContainer::add_image(const char *n, int x, int y, int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_image( false, n, x, y, w, h, m_draw_list );
-
-	return NULL;
-}
-
-FeImage *FeSurfaceTextureContainer::add_artwork(const char *l, int x, int y, int w, int h )
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_image( true, l, x, y, w, h, m_draw_list );
-
-	return NULL;
-}
-
-FeImage *FeSurfaceTextureContainer::add_clone(FeImage *i )
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_clone( i, m_draw_list );
-
-	return NULL;
-}
-
-FeText *FeSurfaceTextureContainer::add_text(const char *t, int x, int y, int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_text( t, x, y, w, h, m_draw_list );
-
-	return NULL;
-}
-
-FeListBox *FeSurfaceTextureContainer::add_listbox(int x, int y, int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_listbox( x, y, w, h, m_draw_list );
-
-	return NULL;
-}
-
-FeImage *FeSurfaceTextureContainer::add_surface(int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_surface( w, h, m_draw_list );
-
-	return NULL;
 }
 
 void FeSurfaceTextureContainer::set_smooth( bool s )
@@ -1057,8 +972,14 @@ bool FeSurfaceTextureContainer::get_smooth() const
 	return m_texture.isSmooth();
 }
 
-FeImage::FeImage( FeBaseTextureContainer *tc, float x, float y, float w, float h )
-	: FeBasePresentable(),
+FePresentableParent *FeSurfaceTextureContainer::get_presentable_parent()
+{
+	return this;
+}
+
+FeImage::FeImage( FePresentableParent &p,
+	FeBaseTextureContainer *tc, float x, float y, float w, float h )
+	: FeBasePresentable( p ),
 	m_tex( tc ),
 	m_pos( x, y ),
 	m_size( w, h ),
@@ -1070,7 +991,7 @@ FeImage::FeImage( FeBaseTextureContainer *tc, float x, float y, float w, float h
 }
 
 FeImage::FeImage( FeImage *o )
-	: FeBasePresentable(),
+	: FeBasePresentable( *o ),
 	m_tex( o->m_tex ),
 	m_sprite( o->m_sprite ),
 	m_pos( o->m_pos ),
@@ -1482,7 +1403,11 @@ bool FeImage::get_smooth() const
 
 FeImage *FeImage::add_image(const char *n, int x, int y, int w, int h)
 {
-	return m_tex->add_image( n, x, y, w, h );
+	FePresentableParent *p = m_tex->get_presentable_parent();
+	if ( p )
+		return p->add_image( n, x, y, w, h );
+
+	return NULL;
 }
 
 FeImage *FeImage::add_image(const char *n, int x, int y )
@@ -1497,7 +1422,11 @@ FeImage *FeImage::add_image(const char *n )
 
 FeImage *FeImage::add_artwork(const char *l, int x, int y, int w, int h )
 {
-	return m_tex->add_artwork( l, x, y, w, h );
+	FePresentableParent *p = m_tex->get_presentable_parent();
+	if ( p )
+		return p->add_artwork( l, x, y, w, h );
+
+	return NULL;
 }
 
 FeImage *FeImage::add_artwork(const char *l, int x, int y)
@@ -1512,20 +1441,36 @@ FeImage *FeImage::add_artwork(const char *l )
 
 FeImage *FeImage::add_clone(FeImage *i )
 {
-	return m_tex->add_clone( i );
+	FePresentableParent *p = m_tex->get_presentable_parent();
+	if ( p )
+		return p->add_clone( i );
+
+	return NULL;
 }
 
 FeText *FeImage::add_text(const char *t, int x, int y, int w, int h)
 {
-	return m_tex->add_text( t, x, y, w, h );
+	FePresentableParent *p = m_tex->get_presentable_parent();
+	if ( p )
+		return p->add_text( t, x, y, w, h );
+
+	return NULL;
 }
 
 FeListBox *FeImage::add_listbox(int x, int y, int w, int h)
 {
-	return m_tex->add_listbox( x, y, w, h );
+	FePresentableParent *p = m_tex->get_presentable_parent();
+	if ( p )
+		return p->add_listbox( x, y, w, h );
+
+	return NULL;
 }
 
 FeImage *FeImage::add_surface(int w, int h)
 {
-	return m_tex->add_surface( w, h );
+	FePresentableParent *p = m_tex->get_presentable_parent();
+	if ( p )
+		return p->add_surface( w, h );
+
+	return NULL;
 }

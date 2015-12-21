@@ -24,9 +24,11 @@
 #define FE_PRESENTABLE_HPP
 
 #include <SFML/System/Vector2.hpp>
+#include <vector>
 
 class FeSettings;
 class FeShader;
+class FePresentableParent;
 
 namespace sf
 {
@@ -37,14 +39,12 @@ namespace sf
 class FeBasePresentable
 {
 private:
+	FePresentableParent &m_parent;
 	FeShader *m_shader;
 	bool m_visible;
 
-	FeBasePresentable( const FeBasePresentable & );
-	FeBasePresentable &operator=( const FeBasePresentable & );
-
 public:
-	FeBasePresentable();
+	FeBasePresentable( FePresentableParent &p );
 	virtual ~FeBasePresentable();
 
 	virtual void on_new_selection( FeSettings * );
@@ -97,6 +97,30 @@ public:
 	FeShader *get_shader() const;
 	FeShader *script_get_shader() const;
 	void script_set_shader( FeShader *s );
+
+	int get_zorder();
+	void set_zorder( int );
+};
+
+class FeImage;
+class FeText;
+class FeListBox;
+
+class FePresentableParent
+{
+public:
+	std::vector< FeBasePresentable * > elements;
+
+	FeImage *add_image(const char *,int, int, int, int);
+	FeImage *add_image(const char *, int, int);
+	FeImage *add_image(const char *);
+	FeImage *add_artwork(const char *,int, int, int, int);
+	FeImage *add_artwork(const char *, int, int);
+	FeImage *add_artwork(const char *);
+	FeImage *add_clone(FeImage *);
+	FeText *add_text(const char *,int, int, int, int);
+	FeListBox *add_listbox(int, int, int, int);
+	FeImage *add_surface(int, int);
 };
 
 #endif

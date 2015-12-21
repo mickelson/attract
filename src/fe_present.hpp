@@ -36,6 +36,7 @@ class FeListBox;
 class FeFontContainer;
 class FeSurfaceTextureContainer;
 class FeZipStream;
+class FePresentableParent;
 
 enum FeTransitionType
 {
@@ -72,29 +73,17 @@ private:
 //
 // Container class for our per-monitor settings
 //
-class FeMonitor
+class FeMonitor : public FePresentableParent
 {
 public:
 	FeMonitor( int num, int w, int h );
 	FeMonitor( const FeMonitor & );
 	FeMonitor &operator=( const FeMonitor & );
 
-	FeImage *add_image(const char *,int, int, int, int);
-	FeImage *add_image(const char *, int, int);
-	FeImage *add_image(const char *);
-	FeImage *add_artwork(const char *,int, int, int, int);
-	FeImage *add_artwork(const char *, int, int);
-	FeImage *add_artwork(const char *);
-	FeImage *add_clone(FeImage *);
-	FeText *add_text(const char *,int, int, int, int);
-	FeListBox *add_listbox(int, int, int, int);
-	FeImage *add_surface(int, int);
-
 	int get_width();
 	int get_height();
 	int get_num();
 
-	std::vector<FeBasePresentable *> elements;
 	sf::Transform transform;
 	sf::Vector2i size;
 	int num;
@@ -104,8 +93,7 @@ public:
 class FePresent
 	: public sf::Drawable
 {
-	friend class FeSurfaceTextureContainer;
-	friend class FeMonitor;
+	friend class FePresentableParent;
 	friend class FeVM;
 
 protected:
@@ -158,11 +146,11 @@ protected:
 	//
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
-	FeImage *add_image(bool a, const std::string &n, int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
-	FeImage *add_clone(FeImage *, std::vector<FeBasePresentable *> &l);
-	FeText *add_text(const std::string &n, int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
-	FeListBox *add_listbox(int x, int y, int w, int h, std::vector<FeBasePresentable *> &l);
-	FeImage *add_surface(int w, int h, std::vector<FeBasePresentable *> &l);
+	FeImage *add_image(bool a, const std::string &n, int x, int y, int w, int h, FePresentableParent &p);
+	FeImage *add_clone(FeImage *, FePresentableParent &p);
+	FeText *add_text(const std::string &n, int x, int y, int w, int h, FePresentableParent &p);
+	FeListBox *add_listbox(int x, int y, int w, int h, FePresentableParent &p);
+	FeImage *add_surface(int w, int h, FePresentableParent &p);
 	FeSound *add_sound(const char *n, bool reuse);
 	FeShader *add_shader(FeShader::Type type, const char *shader1, const char *shader2);
 	int get_layout_width() const;

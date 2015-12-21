@@ -27,8 +27,8 @@
 #include "fe_util.hpp"
 #include <iostream>
 
-FeListBox::FeListBox( int x, int y, int w, int h )
-	: FeBasePresentable(),
+FeListBox::FeListBox( FePresentableParent &p, int x, int y, int w, int h )
+	: FeBasePresentable( p ),
 	m_selColour( sf::Color::Yellow ),
 	m_selBg( sf::Color::Blue ),
 	m_selStyle( sf::Text::Regular ),
@@ -46,6 +46,7 @@ FeListBox::FeListBox( int x, int y, int w, int h )
 }
 
 FeListBox::FeListBox(
+		FePresentableParent &p,
 		const sf::Font *font,
 		const sf::Color &colour,
 		const sf::Color &bgcolour,
@@ -53,7 +54,7 @@ FeListBox::FeListBox(
 		const sf::Color &selbgcolour,
 		unsigned int charactersize,
 		int rows )
-	: FeBasePresentable(),
+	: FeBasePresentable( p ),
 	m_base_text( font, colour, bgcolour, charactersize, FeTextPrimative::Centre ),
 	m_selColour( selcolour ),
 	m_selBg( selbgcolour ),

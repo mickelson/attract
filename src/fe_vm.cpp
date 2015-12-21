@@ -547,6 +547,7 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("index_offset"), &FeBasePresentable::getIndexOffset, &FeBasePresentable::setIndexOffset )
 		.Prop(_SC("filter_offset"), &FeBasePresentable::getFilterOffset, &FeBasePresentable::setFilterOffset )
 		.Prop(_SC("shader"), &FeBasePresentable::script_get_shader, &FeBasePresentable::script_set_shader )
+		.Prop(_SC("zorder"), &FeBasePresentable::get_zorder, &FeBasePresentable::set_zorder )
 		.Func( _SC("set_rgb"), &FeBasePresentable::set_rgb )
 		.Overload<void (FeBasePresentable::*)(float, float)>(_SC("set_pos"), &FeBasePresentable::set_pos)
 		.Overload<void (FeBasePresentable::*)(float, float, float, float)>(_SC("set_pos"), &FeBasePresentable::set_pos)
@@ -714,16 +715,16 @@ bool FeVM::on_new_layout()
 		.Prop( _SC("width"), &FeMonitor::get_width )
 		.Prop( _SC("height"), &FeMonitor::get_height )
 
-		.Overload<FeImage * (FeMonitor::*)(const char *, int, int, int, int)>(_SC("add_image"), &FeMonitor::add_image)
-		.Overload<FeImage * (FeMonitor::*)(const char *, int, int)>(_SC("add_image"), &FeMonitor::add_image)
-		.Overload<FeImage * (FeMonitor::*)(const char *)>(_SC("add_image"), &FeMonitor::add_image)
-		.Overload<FeImage * (FeMonitor::*)(const char *, int, int, int, int)>(_SC("add_artwork"), &FeMonitor::add_artwork)
-		.Overload<FeImage * (FeMonitor::*)(const char *, int, int)>(_SC("add_artwork"), &FeMonitor::add_artwork)
-		.Overload<FeImage * (FeMonitor::*)(const char *)>(_SC("add_artwork"), &FeMonitor::add_artwork)
-		.Func( _SC("add_clone"), &FeMonitor::add_clone )
-		.Func( _SC("add_text"), &FeMonitor::add_text )
-		.Func( _SC("add_listbox"), &FeMonitor::add_listbox )
-		.Func( _SC("add_surface"), &FeMonitor::add_surface )
+		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int, int, int)>(_SC("add_image"), &FePresentableParent::add_image)
+		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int)>(_SC("add_image"), &FePresentableParent::add_image)
+		.Overload<FeImage * (FePresentableParent::*)(const char *)>(_SC("add_image"), &FePresentableParent::add_image)
+		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int, int, int)>(_SC("add_artwork"), &FePresentableParent::add_artwork)
+		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int)>(_SC("add_artwork"), &FePresentableParent::add_artwork)
+		.Overload<FeImage * (FePresentableParent::*)(const char *)>(_SC("add_artwork"), &FePresentableParent::add_artwork)
+		.Func( _SC("add_clone"), &FePresentableParent::add_clone )
+		.Func( _SC("add_text"), &FePresentableParent::add_text )
+		.Func( _SC("add_listbox"), &FePresentableParent::add_listbox )
+		.Func( _SC("add_surface"), &FePresentableParent::add_surface )
 	);
 
 	//
@@ -1496,7 +1497,7 @@ FeImage* FeVM::cb_add_image(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_image( false, n, x, y, w, h, fev->m_mon[0].elements );
+	FeImage *ret = fev->add_image( false, n, x, y, w, h, fev->m_mon[0] );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1522,7 +1523,7 @@ FeImage* FeVM::cb_add_artwork(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_image( true, n, x, y, w, h, fev->m_mon[0].elements );
+	FeImage *ret = fev->add_image( true, n, x, y, w, h, fev->m_mon[0] );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1548,7 +1549,7 @@ FeImage* FeVM::cb_add_clone( FeImage *o )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_clone( o, fev->m_mon[0].elements );
+	FeImage *ret = fev->add_clone( o, fev->m_mon[0] );
 
 	// Add the image to the "fe.obj" array in Squirrel
 	//
@@ -1564,7 +1565,7 @@ FeText* FeVM::cb_add_text(const char *n, int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeText *ret = fev->add_text( n, x, y, w, h, fev->m_mon[0].elements );
+	FeText *ret = fev->add_text( n, x, y, w, h, fev->m_mon[0] );
 
 	// Add the text to the "fe.obj" array in Squirrel
 	//
@@ -1580,7 +1581,7 @@ FeListBox* FeVM::cb_add_listbox(int x, int y, int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeListBox *ret = fev->add_listbox( x, y, w, h, fev->m_mon[0].elements );
+	FeListBox *ret = fev->add_listbox( x, y, w, h, fev->m_mon[0] );
 
 	// Add the listbox to the "fe.obj" array in Squirrel
 	//
@@ -1596,7 +1597,7 @@ FeImage* FeVM::cb_add_surface( int w, int h )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	FeImage *ret = fev->add_surface( w, h, fev->m_mon[0].elements );
+	FeImage *ret = fev->add_surface( w, h, fev->m_mon[0] );
 
 	// Add the surface to the "fe.obj" array in Squirrel
 	//

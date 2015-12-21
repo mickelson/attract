@@ -39,10 +39,11 @@ class FeListBox : public FeBasePresentable, public sf::Drawable
 public:
 
 	// Constructor for use in scripts.  sets m_scripted to true
-	FeListBox( int x, int y, int w, int h );
+	FeListBox( FePresentableParent &p, int x, int y, int w, int h );
 
 	// Constructor for use in overlay.  sets m_scripted to false
-	FeListBox( const sf::Font *font,
+	FeListBox( FePresentableParent &p,
+			const sf::Font *font,
 			const sf::Color &colour,
 			const sf::Color &bgcolour,
 			const sf::Color &selcolour,

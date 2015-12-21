@@ -23,8 +23,9 @@
 #include "fe_presentable.hpp"
 #include "fe_present.hpp"
 
-FeBasePresentable::FeBasePresentable()
-	: m_shader( NULL ),
+FeBasePresentable::FeBasePresentable( FePresentableParent &p )
+	: m_parent( p ),
+	m_shader( NULL ),
 	m_visible( true )
 {
 }
@@ -184,4 +185,115 @@ FeShader *FeBasePresentable::script_get_shader() const
 void FeBasePresentable::script_set_shader( FeShader *sh )
 {
 	m_shader = sh;
+}
+
+int FeBasePresentable::get_zorder()
+{
+	for ( size_t i=0; i< m_parent.elements.size(); i++ )
+	{
+		if ( this == m_parent.elements[i] )
+			return i;
+	}
+
+	return -1;
+}
+
+void FeBasePresentable::set_zorder( int pos )
+{
+	if ( pos >= (int)m_parent.elements.size() )
+		pos = m_parent.elements.size()-1;
+	if ( pos < 0 )
+		pos = 0;
+
+	int old = get_zorder();
+	if (( old >= 0 ) && ( old != pos ))
+	{
+		FeBasePresentable *temp = m_parent.elements[old];
+		m_parent.elements.erase( m_parent.elements.begin() + old );
+
+		m_parent.elements.insert( m_parent.elements.begin() + pos,
+			temp );
+
+		FePresent::script_flag_redraw();
+	}
+}
+
+FeImage *FePresentableParent::add_image(const char *n, int x, int y, int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_image( false, n, x, y, w, h, *this );
+
+	return NULL;
+}
+
+FeImage *FePresentableParent::add_image(const char *n, int x, int y )
+{
+	return add_image( n, x, y, 0, 0 );
+}
+
+FeImage *FePresentableParent::add_image(const char *n )
+{
+	return add_image( n, 0, 0, 0, 0 );
+}
+
+FeImage *FePresentableParent::add_artwork(const char *l, int x, int y, int w, int h )
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_image( true, l, x, y, w, h, *this );
+
+	return NULL;
+}
+
+FeImage *FePresentableParent::add_artwork(const char *l, int x, int y)
+{
+	return add_artwork( l, x, y, 0, 0 );
+}
+
+FeImage *FePresentableParent::add_artwork(const char *l )
+{
+	return add_artwork( l, 0, 0, 0, 0 );
+}
+
+FeImage *FePresentableParent::add_clone(FeImage *i )
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_clone( i, *this );
+
+	return NULL;
+}
+
+FeText *FePresentableParent::add_text(const char *t, int x, int y, int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_text( t, x, y, w, h, *this );
+
+	return NULL;
+}
+
+FeListBox *FePresentableParent::add_listbox(int x, int y, int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_listbox( x, y, w, h, *this );
+
+	return NULL;
+}
+
+FeImage *FePresentableParent::add_surface(int w, int h)
+{
+	FePresent *fep = FePresent::script_get_fep();
+
+	if ( fep )
+		return fep->add_surface( w, h, *this );
+
+	return NULL;
 }

@@ -27,8 +27,9 @@
 #include "fe_present.hpp"
 #include <iostream>
 
-FeText::FeText( const std::string &str, int x, int y, int w, int h )
-	: FeBasePresentable(),
+FeText::FeText( FePresentableParent &p, const std::string &str,
+	int x, int y, int w, int h )
+	: FeBasePresentable( p ),
 	m_string( str ),
 	m_index_offset( 0 ),
 	m_filter_offset( 0 ),

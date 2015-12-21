@@ -97,7 +97,7 @@ FeMonitor::FeMonitor( int n, int w, int h )
 }
 
 FeMonitor::FeMonitor( const FeMonitor &o )
-	: elements( o.elements ),
+	: FePresentableParent( o ),
 	transform( o.transform ),
 	size( o.size ),
 	num( o.num )
@@ -112,86 +112,6 @@ FeMonitor &FeMonitor::operator=( const FeMonitor &o )
 	num = o.num;
 
 	return *this;
-}
-
-FeImage *FeMonitor::add_image(const char *n, int x, int y, int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_image( false, n, x, y, w, h, elements );
-
-	return NULL;
-}
-
-FeImage *FeMonitor::add_image(const char *n, int x, int y )
-{
-	return add_image( n, x, y, 0, 0 );
-}
-
-FeImage *FeMonitor::add_image(const char *n )
-{
-	return add_image( n, 0, 0, 0, 0 );
-}
-
-FeImage *FeMonitor::add_artwork(const char *l, int x, int y, int w, int h )
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_image( true, l, x, y, w, h, elements );
-
-	return NULL;
-}
-
-FeImage *FeMonitor::add_artwork(const char *l, int x, int y)
-{
-	return add_artwork( l, x, y, 0, 0 );
-}
-
-FeImage *FeMonitor::add_artwork(const char *l )
-{
-	return add_artwork( l, 0, 0, 0, 0 );
-}
-
-FeImage *FeMonitor::add_clone(FeImage *i )
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_clone( i, elements );
-
-	return NULL;
-}
-
-FeText *FeMonitor::add_text(const char *t, int x, int y, int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_text( t, x, y, w, h, elements );
-
-	return NULL;
-}
-
-FeListBox *FeMonitor::add_listbox(int x, int y, int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_listbox( x, y, w, h, elements );
-
-	return NULL;
-}
-
-FeImage *FeMonitor::add_surface(int w, int h)
-{
-	FePresent *fep = FePresent::script_get_fep();
-
-	if ( fep )
-		return fep->add_surface( w, h, elements );
-
-	return NULL;
 }
 
 int FeMonitor::get_width()
@@ -390,12 +310,12 @@ FeImage *FePresent::add_image( bool is_artwork,
 		int y,
 		int w,
 		int h,
-		std::vector<FeBasePresentable *> &l )
+		FePresentableParent &p )
 {
 	FeTextureContainer *new_tex = new FeTextureContainer( is_artwork, n );
 	new_tex->set_smooth( m_feSettings->get_info_bool( FeSettings::SmoothImages ) );
 
-	FeImage *new_image = new FeImage( new_tex, x, y, w, h );
+	FeImage *new_image = new FeImage( p, new_tex, x, y, w, h );
 	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
 	// if this is a static image/video then load it now
@@ -405,38 +325,38 @@ FeImage *FePresent::add_image( bool is_artwork,
 
 	flag_redraw();
 	m_texturePool.push_back( new_tex );
-	l.push_back( new_image );
+	p.elements.push_back( new_image );
 
 	return new_image;
 }
 
 FeImage *FePresent::add_clone( FeImage *o,
-			std::vector<FeBasePresentable *> &l )
+			FePresentableParent &p )
 {
 	FeImage *new_image = new FeImage( o );
 	flag_redraw();
-	l.push_back( new_image );
+	p.elements.push_back( new_image );
 	return new_image;
 }
 
 FeText *FePresent::add_text( const std::string &n, int x, int y, int w, int h,
-			std::vector<FeBasePresentable *> &l )
+			FePresentableParent &p )
 {
-	FeText *new_text = new FeText( n, x, y, w, h );
+	FeText *new_text = new FeText( p, n, x, y, w, h );
 
 	ASSERT( m_currentFont );
 	new_text->setFont( m_currentFont->get_font() );
 	new_text->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
 	flag_redraw();
-	l.push_back( new_text );
+	p.elements.push_back( new_text );
 	return new_text;
 }
 
 FeListBox *FePresent::add_listbox( int x, int y, int w, int h,
-			std::vector<FeBasePresentable *> &l )
+		FePresentableParent &p )
 {
-	FeListBox *new_lb = new FeListBox( x, y, w, h );
+	FeListBox *new_lb = new FeListBox( p, x, y, w, h );
 
 	ASSERT( m_currentFont );
 	new_lb->setFont( m_currentFont->get_font() );
@@ -444,11 +364,11 @@ FeListBox *FePresent::add_listbox( int x, int y, int w, int h,
 
 	flag_redraw();
 	m_listBox = new_lb;
-	l.push_back( new_lb );
+	p.elements.push_back( new_lb );
 	return new_lb;
 }
 
-FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> &l )
+FeImage *FePresent::add_surface( int w, int h, FePresentableParent &p )
 {
 	FeSurfaceTextureContainer *new_surface = new FeSurfaceTextureContainer( w, h );
 	new_surface->set_smooth( m_feSettings->get_info_bool( FeSettings::SmoothImages ) );
@@ -456,13 +376,13 @@ FeImage *FePresent::add_surface( int w, int h, std::vector<FeBasePresentable *> 
 	//
 	// Set the default sprite size to the same as the texture itself
 	//
-	FeImage *new_image = new FeImage( new_surface, 0, 0, w, h );
+	FeImage *new_image = new FeImage( p, new_surface, 0, 0, w, h );
 	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
 
 	new_image->texture_changed();
 
 	flag_redraw();
-	l.push_back( new_image );
+	p.elements.push_back( new_image );
 	m_texturePool.push_back( new_surface );
 	return new_image;
 }
