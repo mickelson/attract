@@ -723,12 +723,6 @@ bool run_program( const std::string &prog,
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
 
-	if ( !have_console() )
-	{
-		si.dwFlags |= STARTF_USESHOWWINDOW;
-		si.wShowWindow = SW_HIDE;
-	}
-
 	LPSTR cmdline = new char[ comstr.length() + 1 ];
 	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
@@ -1029,7 +1023,8 @@ void preinit_helper()
 #ifdef SFML_SYSTEM_WINDOWS
 	if ( !have_console() )
 	{
-		FreeConsole();
+		HWND handle = GetConsoleWindow();
+		ShowWindow(handle, SW_HIDE);
 	}
 #endif
 }
