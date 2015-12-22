@@ -419,8 +419,6 @@ int main(int argc, char *argv[])
 				feSettings.set_display(
 					feSettings.get_current_display_index() );
 
-				feVM.load_layout();
-
 				soundsys.stop();
 				soundsys.update_volumes();
 				soundsys.play_ambient();
@@ -432,6 +430,8 @@ int main(int argc, char *argv[])
 					window.initial_create();
 					feVM.init_monitors();
 				}
+
+				feVM.load_layout();
 			}
 			feVM.reset_screen_saver();
 			config_mode=false;

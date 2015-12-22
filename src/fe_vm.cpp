@@ -1961,6 +1961,7 @@ void FeVM::cb_signal( const char *sig )
 		fev->m_window.on_exit();
 		fev->m_window.initial_create();
 		fev->init_monitors();
+		fev->m_posted_commands.push( FeInputMap::Reload );
 		break;
 
 	case 1: // "reload"
