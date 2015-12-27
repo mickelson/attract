@@ -257,7 +257,7 @@ void apply_import_extras( FeImporterContext &c, bool skip_xml )
 			}
 		}
 		else
-			std::cout << "Unsupported import_extras file: " << path << std::endl;
+			std::cout << " * Unsupported import_extras file: " << path << std::endl;
 	}
 }
 
@@ -287,7 +287,7 @@ bool import_mamewah( const std::string &input_filename,
 	std::ifstream myfile( input_filename.c_str() );
 	if ( !myfile.is_open() )
 	{
-		std::cerr << "Error opening file: " << input_filename << std::endl;
+		std::cerr << " ! Error opening file: " << input_filename << std::endl;
 		return false;
 	}
 
@@ -328,7 +328,7 @@ bool import_mamewah( const std::string &input_filename,
 
 	if ( count > 1 )
 	{
-		std::cout << "Warning: Unexpected end of file encountered: " << input_filename
+		std::cout << " * Warning: Unexpected end of file encountered: " << input_filename
 			<< ", this probably means the import failed." << std::endl;
 	}
 
@@ -602,14 +602,16 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	FeNetQueue q;
 	q.add_buffer_task( HOSTNAME, PLATFORM_LIST_REQ, 0 );
 	sf::Http::Response::Status status;
-	q.do_next_task( status );
+	std::string err_req;
+
+	q.do_next_task( status, err_req );
 
 	if ( status != sf::Http::Response::Ok )
 	{
 		get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
 			as_str( status ), c.user_message );
 
-		std::cout << " * " << c.user_message << std::endl;
+		std::cerr << " ! " << c.user_message << " (" << err_req << ")" << std::endl;
 		return true;
 	}
 
@@ -650,7 +652,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			get_resource( "Error: None of the configured system identifier(s) are recognized by thegamesdb.net.",
 								c.user_message );
 
-			std::cout << " * " << c.user_message << std::endl;
+			std::cerr << " ! " << c.user_message << std::endl;
 			return true;
 		}
 	}
@@ -671,7 +673,13 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			perform_substitution( plat_string, "$1", as_str( *iti ) );
 
 			q.add_buffer_task( HOSTNAME, plat_string, 0 );
-			q.do_next_task( status );
+			q.do_next_task( status, err_req );
+			if ( status != sf::Http::Response::Ok )
+			{
+				std::cout << " * Unable to get platform information. Status code: "
+					<< status << " (" << err_req << ")" << std::endl;
+				continue;
+			}
 
 			body.clear();
 			q.pop_completed_task( temp, body );
@@ -930,7 +938,13 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		else if ( q.output_done() )
 		{
 			sf::Http::Response::Status status;
-			q.do_next_task( status );
+			std::string err_req;
+			q.do_next_task( status, err_req );
+			if ( status != sf::Http::Response::Ok )
+			{
+				std::cout << " * Error processing request. Status code: "
+					<< status << " (" << err_req << ")" << std::endl;
+			}
 		}
 		else
 			sf::sleep( sf::milliseconds( 10 ) );
@@ -953,7 +967,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 		std::cout << " - Obtaining -listxml info...";
 		FeMameXMLParser mamep( c );
 		if ( !mamep.parse_command( base_command ) )
-			std::cout << "No XML output found, command: "
+			std::cerr << " ! No XML output found, command: "
 				<< base_command << " -listxml" << std::endl;
 	}
 	break;
@@ -963,7 +977,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 		const std::vector < std::string > &system_names = c.emulator.get_systems();
 		if ( system_names.empty() )
 		{
-			std::cout << "Note: No system configured for emulator: "
+			std::cout << " * Note: No system configured for emulator: "
 				<< c.emulator.get_info( FeEmulatorInfo::Name )
 				<< ", unable to obtain -listsoftware info."
 				<< std::endl;
@@ -1042,7 +1056,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 				ASSERT( !fields_left );
 			}
 			else
-				std::cerr << "Error opening file: " << fname << std::endl;
+				std::cerr << " ! Error opening file: " << fname << std::endl;
 		}
 		thegamesdb_scraper( c );
 	}
@@ -1083,8 +1097,8 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			FeEmulatorInfo *emu = m_rl.get_emulator( (*itr).emulator_name );
 			if ( emu == NULL )
 			{
-				std::cout << "Error: Invalid -build-rom-list target: " <<  (*itr).emulator_name
-					<< std::endl;
+				std::cerr << " ! Error: Invalid --build-rom-list target: "
+					<<  (*itr).emulator_name << std::endl;
 			}
 			else
 			{
@@ -1160,17 +1174,17 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			}
 			else
 			{
-				std::cerr << "Error: Unsupported --import-rom-list file: "
+				std::cerr << " ! Error: Unsupported --import-rom-list file: "
 					<<  (*itr).file_name << std::endl;
 			}
 
-			std::cout << "[Import " << (*itr).file_name << "] - Imported " << romlist.size() << " entries."
-				<< std::endl;
+			std::cout << "[Import " << (*itr).file_name << "] - Imported "
+				<< romlist.size() << " entries." << std::endl;
 
 			FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
 			if ( emu == NULL )
 			{
-				std::cout << "Warning: The emulator specified with --import-rom-list was not found: "
+				std::cout << " * Warning: The emulator specified with --import-rom-list was not found: "
 					<<  emu_name << std::endl;
 			}
 			else
@@ -1287,7 +1301,8 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	if ( uiu )
 		uiu( uid, 0, "" );
 
-	std::cout << "*** Generating Collection/Rom List" << std::endl;
+	std::cout << "*** Generating Collection/Rom List: "
+		<< emu->get_info( FeEmulatorInfo::Name ) << std::endl;
 
 	FeRomInfoListType romlist;
 

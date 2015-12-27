@@ -82,7 +82,11 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 
 		std::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
 		if ( !outfile.is_open() )
+		{
+			std::cerr << " ! Unable to open file for writing: "
+				<< m_filename << std::endl;
 			return false;
+		}
 
 		outfile << resp.getBody();
 		outfile.close();
@@ -96,10 +100,10 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 	return true;
 }
 
-void FeNetTask::get_result( int &id, std::string &result )
+void FeNetTask::grab_result( int &id, std::string &result )
 {
 	id = m_id;
-	result = m_result;
+	result.swap( m_result );
 }
 
 FeNetQueue::FeNetQueue()
@@ -125,9 +129,11 @@ void FeNetQueue::add_buffer_task( const std::string &host,
 	m_in_queue.push_back( FeNetTask( host, req, id ) );
 }
 
-bool FeNetQueue::do_next_task( sf::Http::Response::Status &status )
+bool FeNetQueue::do_next_task( sf::Http::Response::Status &status,
+	std::string &err_req )
 {
 	FeNetTask t;
+	status = sf::Http::Response::Ok;
 
 	// Grab next task from the input queue
 	//
@@ -144,15 +150,16 @@ bool FeNetQueue::do_next_task( sf::Http::Response::Status &status )
 
 	// Perform task
 	//
-	t.do_task( status );
-
-	// Queue Result
-	//
+	if ( t.do_task( status ) )
 	{
+		// Queue Result
+		//
 		sf::Lock l( m_mutex );
 		m_out_queue.push( t );
 		m_in_flight--;
 	}
+	else if ( status != sf::Http::Response::Ok )
+		err_req = t.get_req();
 
 	return true;
 }
@@ -163,7 +170,7 @@ bool FeNetQueue::pop_completed_task( int &id,
 	sf::Lock l( m_mutex );
 	if ( !m_out_queue.empty() )
 	{
-		m_out_queue.front().get_result( id, result );
+		m_out_queue.front().grab_result( id, result );
 		m_out_queue.pop();
 		return true;
 	}
@@ -192,7 +199,8 @@ FeNetWorker::FeNetWorker( FeNetQueue &queue )
 
 FeNetWorker::~FeNetWorker()
 {
-	m_thread.terminate();
+	m_proceed = false;
+	m_thread.wait();
 }
 
 void FeNetWorker::work_process()
@@ -200,7 +208,17 @@ void FeNetWorker::work_process()
 	while ( !m_queue.input_done() && m_proceed )
 	{
 		sf::Http::Response::Status status;
-		if ( !m_queue.do_next_task( status ) )
+		std::string err_req;
+
+		bool completed = m_queue.do_next_task( status, err_req );
+
+		if ( status != sf::Http::Response::Ok )
+		{
+			std::cerr << " ! Error processing request. Status code: "
+				<< status << " (" << err_req << ")" << std::endl;
+		}
+
+		if ( !completed ) // sleep if there is nothing in the queue
 			sf::sleep( sf::milliseconds( 10 ) );
 	}
 }

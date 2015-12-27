@@ -27,8 +27,11 @@
 #include <deque>
 #include <queue>
 
+class FeNetQueue;
+
 class FeNetTask
 {
+	friend class FeNetQueue;
 public:
 	enum TaskType
 	{
@@ -39,6 +42,7 @@ public:
 		BufferTask=-4
 	};
 
+protected:
 	FeNetTask(
 		const std::string &host,
 		const std::string &req,
@@ -53,7 +57,12 @@ public:
 	FeNetTask();
 
 	bool do_task( sf::Http::Response::Status &status );
-	void get_result( int &id, std::string &result );
+
+	// this function consumes the task's result, so it will no longer be
+	// available for future calls to this function...
+	void grab_result( int &id, std::string &result );
+
+	const std::string &get_req() { return m_req; };
 
 private:
 	TaskType m_type;
@@ -87,7 +96,13 @@ public:
 			const std::string &req,
 			int id );
 
-	bool do_next_task( sf::Http::Response::Status &status );
+	// err_req is set to the request string that caused the error
+	// if status is not ok
+	//
+	// Returns true if a task is performed, false if no task in queue
+	//
+	bool do_next_task( sf::Http::Response::Status &status,
+		std::string &err_req );
 
 	bool pop_completed_task( int &id,
 			std::string &result );
