@@ -88,7 +88,7 @@ _DEP =\
 	fe_info.hpp \
 	fe_input.hpp \
 	fe_romlist.hpp \
-	fe_xml.hpp \
+	scraper_xml.hpp \
 	fe_settings.hpp \
 	fe_config.hpp \
 	fe_presentable.hpp \
@@ -110,12 +110,14 @@ _OBJ =\
 	fe_base.o \
 	fe_util.o \
 	fe_util_sq.o \
+	fe_cmdline.o \
 	fe_info.o \
 	fe_input.o \
 	fe_romlist.o \
-	fe_xml.o \
 	fe_settings.o \
-	fe_build.o \
+	scraper_xml.o \
+	scraper_general.o \
+	scraper_net.o \
 	fe_config.o \
 	fe_presentable.o \
 	fe_present.o \

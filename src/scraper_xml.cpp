@@ -20,7 +20,7 @@
  *
  */
 
-#include "fe_xml.hpp"
+#include "scraper_xml.hpp"
 #include "fe_util.hpp"
 #include <cstring>
 #include <cstdio>

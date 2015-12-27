@@ -226,6 +226,12 @@ void get_xinerama_geometry( int &, int &, int &, int & );
 void print_ffmpeg_version_info();
 #endif
 
+std::string url_escape( const std::string &raw );
+
+void get_url_components( const std::string &url,
+	std::string &host,
+	std::string &req );
+
 //
 // First call in main for things that should happen ... first
 //

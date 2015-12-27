@@ -440,4 +440,6 @@ bool gather_artwork_filenames(
 	std::vector<std::string> &vids,
 	std::vector<std::string> &images );
 
+bool art_exists( const std::string &path, const std::string &base );
+
 #endif

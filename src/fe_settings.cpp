@@ -3007,6 +3007,16 @@ bool gather_artwork_filenames(
 	return false;
 }
 
+bool art_exists( const std::string &path, const std::string &base )
+{
+	std::vector<std::string> u1;
+	std::vector<std::string> u2;
+
+	return ( get_filename_from_base(
+		u1, u2, path, base, FE_ART_EXTENSIONS ) );
+}
+
+
 bool FeSettings::get_best_artwork_file(
 	const FeRomInfo &rom,
 	const std::string &art_name,

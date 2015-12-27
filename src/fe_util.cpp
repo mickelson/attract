@@ -1040,3 +1040,43 @@ bool have_console()
 #endif
 	return true;
 }
+
+std::string url_escape( const std::string &raw )
+{
+	std::ostringstream escaped;
+	escaped.fill('0');
+	escaped << std::hex;
+
+	for (std::string::const_iterator i = raw.begin(); i != raw.end(); ++i)
+	{
+		const unsigned char c = (*i);
+
+		// Keep alphanumeric and other accepted characters intact
+		if (isalnum( c ) || c == '-' || c == '_' || c == '.' || c == '~')
+		{
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << '%' << std::setw(2) << int(c);
+	}
+
+	return escaped.str();
+}
+
+void get_url_components( const std::string &url,
+	std::string &host,
+	std::string &req )
+{
+	size_t pos=0;
+
+	for ( int i=0; i<3 && ( pos != std::string::npos ); i++ )
+		pos = url.find_first_of( '/', pos+1 );
+
+	if (( pos != std::string::npos ) && ( pos < url.size()-1 ) )
+	{
+		host = url.substr( 0, pos+1 );
+		req = url.substr( pos+1 );
+	}
+}
