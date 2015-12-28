@@ -51,13 +51,19 @@ namespace sf
 class FeCallback
 {
 public:
-	FeCallback( int pid, const Sqrat::Object &env, const std::string &fn );
+	FeCallback( int pid,
+		const Sqrat::Object &env,
+		const std::string &fn,
+		FeSettings &fes );
 	Sqrat::Function &get_fn();
-
 
 	int m_sid;		// -1 for layout, otherwise the plugin index
 	Sqrat::Object m_env;	// callback function environment
 	std::string m_fn;	// callback function name
+
+	std::string m_path;
+	std::string m_file;
+	const FeScriptConfigurable *m_cfg;
 
 private:
 	Sqrat::Function m_cached_fn;

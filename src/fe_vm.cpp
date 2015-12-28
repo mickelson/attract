@@ -236,11 +236,27 @@ namespace
 
 FeCallback::FeCallback( int pid,
 		const Sqrat::Object &env,
-		const std::string &fn )
+		const std::string &fn,
+		FeSettings &fes )
 	: m_sid( pid ),
 	m_env( env ),
 	m_fn( fn )
 {
+	// the layout/screensaver/intro will have a m_pid < 0
+	if ( pid < 0 )
+	{
+		fes.get_path( FeSettings::Current,
+			m_path,
+			m_file );
+
+		m_cfg = &(fes.get_current_config( FeSettings::Current ));
+	}
+	else // otherwise this is a plugin
+	{
+		const std::vector< FePlugInfo > &pg = fes.get_plugins();
+		fes.get_plugin_full_path( pg[pid].get_name(), m_path, m_file );
+		m_cfg = &(pg[pid]);
+	}
 }
 
 Sqrat::Function &FeCallback::get_fn()
@@ -358,19 +374,19 @@ void FeVM::clear()
 void FeVM::add_ticks_callback( Sqrat::Object func, const char *slot )
 {
 	m_ticks.push_back(
-		FeCallback( m_script_id, func, slot ) );
+		FeCallback( m_script_id, func, slot, *m_feSettings ) );
 }
 
 void FeVM::add_transition_callback( Sqrat::Object func, const char *slot )
 {
 	m_trans.push_back(
-		FeCallback( m_script_id, func, slot ) );
+		FeCallback( m_script_id, func, slot, *m_feSettings ) );
 }
 
 void FeVM::add_signal_handler( Sqrat::Object func, const char *slot )
 {
 	m_sig_handlers.push_back(
-		FeCallback( m_script_id, func, slot ) );
+		FeCallback( m_script_id, func, slot, *m_feSettings ) );
 }
 
 void FeVM::remove_signal_handler( Sqrat::Object func, const char *slot )
@@ -909,23 +925,10 @@ void FeVM::set_for_callback( const FeCallback &c )
 {
 	Sqrat::Table fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
 
-	std::string path, name;
-	if ( c.m_sid < 0 )
-	{
-		// the layout/screensaver/intro will have a m_pid < 0
-		m_feSettings->get_path( FeSettings::Current, path, name );
-		m_script_cfg = &(m_feSettings->get_current_config( FeSettings::Current ));
-	}
-	else // otherwise this is a plugin
-	{
-		const std::vector< FePlugInfo > &pg = m_feSettings->get_plugins();
-		m_feSettings->get_plugin_full_path( pg[c.m_sid].get_name(),
-			path, name );
-		m_script_cfg = &(pg[c.m_sid]);
-	}
+	fe.SetValue( _SC("script_dir"), c.m_path );
+	fe.SetValue( _SC("script_file"), c.m_file );
 
-	fe.SetValue( _SC("script_dir"), path );
-	fe.SetValue( _SC("script_file"), name );
+	m_script_cfg = c.m_cfg;
 	m_script_id = c.m_sid;
 }
 
