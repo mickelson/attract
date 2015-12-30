@@ -22,6 +22,8 @@
 
 #include "scraper_xml.hpp"
 #include "fe_util.hpp"
+#include "zip.hpp"
+
 #include <cstring>
 #include <cstdio>
 #include <iostream>
@@ -59,7 +61,94 @@ void fix_last_word( std::string &str, int pos )
 	}
 }
 
+std::string truncate( FeRomInfo &ri, FeRomInfo::Index idx, size_t width )
+{
+	const std::string &str = ri.get_info( idx );
+	if ( str.length() > width )
+		return str.substr(0, width-3) + "...";
+
+	return str;
 }
+
+bool correct_buff_for_format( char *&buff, int &size,
+	const std::string &filename )
+{
+	if ( tail_compare( filename, "nes" ) )
+	{
+		//
+		// .nes files: 16 bit header
+		// we only want the first prg block
+		//
+		if (( size <= 16 ) || ( buff[0] != 'N' )
+				|| ( buff[1] != 'E' ) || ( buff[2] != 'S' ))
+			return false;
+
+		int new_size = 16384 * buff[4];
+		bool trainer_present = buff[6] & 0x04;
+
+		int buff_move = 16 + ( trainer_present ? 512 : 0 );
+		if ( new_size + buff_move > size )
+			return false;
+
+		buff += buff_move;
+		size = new_size;
+	}
+
+	return true;
+}
+
+std::string get_crc( const std::string &full_path,
+	const std::vector<std::string> &exts )
+{
+	if ( is_supported_archive( full_path ) )
+	{
+		std::vector<std::string> contents;
+		if ( !fe_zip_get_dir( full_path.c_str(), contents ) )
+			return "";
+
+		// check for extension matches
+		std::vector<std::string>::iterator itr;
+		for ( itr=contents.begin(); itr != contents.end(); ++itr )
+		{
+			//
+			// Run the crc on this file if there is only one file
+			// in the archive or if this file matches one of the
+			// supported extensions
+			//
+			if ( tail_compare( *itr, exts ) || ( contents.size() == 1 ) )
+			{
+				FeZipStream zs( full_path );
+				zs.open( *itr );
+
+				char *buff = zs.getData();
+				int size = zs.getSize();
+
+				correct_buff_for_format( buff, size, *itr );
+				return get_crc32( buff, size );
+			}
+		}
+	}
+
+	std::ifstream myfile( full_path.c_str(),
+		std::ios_base::in | std::ios_base::binary );
+
+	if ( !myfile.is_open() )
+		return "";
+
+	myfile.seekg(0, myfile.end);
+	int size = myfile.tellg();
+	myfile.seekg(0, myfile.beg);
+
+	char buff[ size ];
+	char *buff_ptr = (char *)buff;
+	myfile.read( buff, size );
+	myfile.close();
+
+	correct_buff_for_format( buff_ptr, size, full_path );
+	return get_crc32( buff_ptr, size );
+}
+
+} // end namespace
 
 //
 // Utility function to get strings to use to see if game names match filenames
@@ -83,6 +172,25 @@ std::string get_fuzzy( const std::string &orig )
 	}
 	fix_last_word( retval, word_start );
 	return retval;
+}
+
+void romlist_console_report( FeRomInfoListType &rl )
+{
+	FeRomInfoListType::iterator itr;
+	for ( itr=rl.begin(); itr!=rl.end(); ++itr )
+	{
+		std::cout << " > " << std::left << std::setw( 25 )
+			<< truncate( *itr, FeRomInfo::Romname, 25 ) << " ==> "
+			<< std::setw( 25 )
+			<< truncate( *itr, FeRomInfo::Title, 25 );
+
+		if ( (*itr).get_info( FeRomInfo::BuildScore ).empty() )
+			std::cout << std::endl;
+		else
+			std::cout << " [" << std::right << std::setw( 3 )
+			<< (*itr).get_info( FeRomInfo::BuildScore ) << "]"
+			<< std::endl;
+	}
 }
 
 //
@@ -182,9 +290,9 @@ FeImporterContext::FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType
 }
 
 //
-// Mame XML Parser
+// Mame -listxml Parser
 //
-FeMameXMLParser::FeMameXMLParser( FeImporterContext &ctx )
+FeListXMLParser::FeListXMLParser( FeImporterContext &ctx )
 	: FeXMLParser( ctx.uiupdate, ctx.uiupdatedata ),
 	m_ctx( ctx ),
 	m_count( 0 ),
@@ -194,7 +302,7 @@ FeMameXMLParser::FeMameXMLParser( FeImporterContext &ctx )
 {
 }
 
-void FeMameXMLParser::start_element(
+void FeListXMLParser::start_element(
 			const char *element,
 			const char **attribute )
 {
@@ -349,6 +457,24 @@ void FeMameXMLParser::start_element(
 		{
 			m_chd=true;
 		}
+		else if ( strcmp( element, "extension" ) == 0 )
+		{
+			//
+			// The extension attribute is encountered when parsing machines
+			// in connection with -listsoftware processing.  This indicates
+			// file extensions supported when emulating software on the given
+			// machine (so for sega genesis for example, this should be giving
+			// us "smd", "bin", "md" and "gen")
+			//
+			for ( int i=0; attribute[i]; i+=2 )
+			{
+				if ( strcmp( attribute[i], "name" ) == 0 )
+				{
+					m_sl_exts.push_back( attribute[i+1] );
+					break;
+				}
+			}
+		}
 		// "cloneof" and "genre" elements appear in hyperspin .xml
 		else if (( strcmp( element, "description" ) == 0 )
 				|| ( strcmp( element, "cloneof" ) == 0 )
@@ -361,7 +487,7 @@ void FeMameXMLParser::start_element(
 	}
 }
 
-void FeMameXMLParser::end_element( const char *element )
+void FeListXMLParser::end_element( const char *element )
 {
 	if (( strcmp( element, "game" ) == 0 )
 		|| ( strcmp( element, "machine" ) == 0 ))
@@ -434,7 +560,7 @@ void FeMameXMLParser::end_element( const char *element )
 	}
 }
 
-void FeMameXMLParser::pre_parse()
+void FeListXMLParser::pre_parse()
 {
 	FeRomInfoListType::iterator itr;
 	m_count=0;
@@ -447,7 +573,7 @@ void FeMameXMLParser::pre_parse()
 	std::cout << "    ";
 }
 
-void FeMameXMLParser::post_parse()
+void FeListXMLParser::post_parse()
 {
 	std::cout << std::endl;
 
@@ -465,7 +591,7 @@ void FeMameXMLParser::post_parse()
 	}
 }
 
-bool FeMameXMLParser::parse_command( const std::string &prog )
+bool FeListXMLParser::parse_command( const std::string &prog )
 {
 	pre_parse();
 
@@ -493,7 +619,7 @@ bool FeMameXMLParser::parse_command( const std::string &prog )
 	return ret_val;
 }
 
-bool FeMameXMLParser::parse_file( const std::string &filename )
+bool FeListXMLParser::parse_file( const std::string &filename )
 {
 	pre_parse();
 
@@ -539,28 +665,28 @@ bool FeMameXMLParser::parse_file( const std::string &filename )
 }
 
 //
-// Mess XML Parser
+// Mame -listsofware XML Parser
 //
-FeMessXMLParser::FeMessXMLParser( FeImporterContext &ctx )
+FeListSoftwareParser::FeListSoftwareParser( FeImporterContext &ctx )
 	: FeXMLParser( ctx.uiupdate, ctx.uiupdatedata ),
 	m_ctx( ctx )
 {
 }
 
-void FeMessXMLParser::clear_parse_state()
+void FeListSoftwareParser::clear_parse_state()
 {
 	m_element_open=m_keep_rom=false;
 	m_name.clear();
 	m_description.clear();
 	m_year.clear();
 	m_man.clear();
-	m_fuzzydesc.clear();
 	m_cloneof.clear();
 	m_altname.clear();
 	m_alttitle.clear();
+	m_crc.clear();
 }
 
-void FeMessXMLParser::start_element(
+void FeListSoftwareParser::start_element(
 			const char *element,
 			const char **attribute )
 {
@@ -572,24 +698,6 @@ void FeMessXMLParser::start_element(
 			if ( strcmp( attribute[i], "name" ) == 0 )
 			{
 				m_altname = m_name = attribute[i+1];
-
-				for ( m_itr=m_ctx.romlist.begin(); m_itr!=m_ctx.romlist.end(); ++m_itr )
-				{
-					std::string romname = (*m_itr).get_info( FeRomInfo::Romname );
-					if ( romname.compare( attribute[i+1] ) == 0 )
-					{
-						m_keep_rom=true;
-						break;
-					}
-				}
-
-				if ( !m_keep_rom && m_ctx.full )
-				{
-					m_ctx.romlist.push_back( FeRomInfo( attribute[i+1] ) );
-					m_itr = m_ctx.romlist.end();
-					m_itr--;
-					m_keep_rom=true;
-				}
 			}
 			else if ( strcmp( attribute[i], "cloneof" ) == 0 )
 			{
@@ -620,47 +728,96 @@ void FeMessXMLParser::start_element(
 		if ( found )
 			m_alttitle.swap( value );
 	}
+	else if ( strcmp( element, "rom" ) == 0 )
+	{
+		int i;
+		for ( i=0; attribute[i]; i+=2 )
+		{
+			if ( strcmp( attribute[i], "crc" ) == 0 )
+			{
+				if ( !m_crc.empty() )
+					m_crc += ";";
+
+				m_crc += attribute[i+1];
+				break;
+			}
+		}
+	}
 }
 
-void FeMessXMLParser::end_element( const char *element )
+void FeListSoftwareParser::end_element( const char *element )
 {
 	if ( strcmp( element, "software" ) == 0 )
 	{
-		if ( m_keep_rom )
+		std::string fuzzydesc = get_fuzzy( m_description );
+
+		//
+		// 1.) check for CRC match(es)
+		//
+		// we can have multiple crcs in m_crc at this stage,
+		// separated by ';' characters.  Check each one for a match
+		//
+		std::pair< std::multimap<std::string, FeRomInfo *>::iterator,
+			std::multimap<std::string, FeRomInfo *>::iterator> itc;
+		std::multimap<std::string, FeRomInfo *>::iterator itr;
+
+		std::vector<std::string> crcs;
+		string_to_vector( m_crc, crcs, false );
+
+		while ( !crcs.empty() )
 		{
-			set_info_values( *m_itr );
-		}
-		else
-		{
-			// otherwise try matching based on description
-			for ( m_itr=m_ctx.romlist.begin(); m_itr!=m_ctx.romlist.end(); ++m_itr )
+			itc = m_crc_map.equal_range( crcs.back() );
+			if ( itc.first != itc.second )
 			{
-				if ( m_description.compare(
-							(*m_itr).get_info( FeRomInfo::Romname ) ) == 0 )
+				for ( itr = itc.first; itr != itc.second; ++itr )
 				{
-					set_info_values( *m_itr );
-				}
-				else if ( (*m_itr).get_info( FeRomInfo::AltRomname ).empty() )
-				{
-					// Try using a "fuzzy" match (ignores brackets).
+					int score = 100;
+
 					//
-					const std::string &temp = (*m_itr).get_info( FeRomInfo::BuildScratchPad );
-					if ( temp.compare( m_fuzzydesc ) == 0 )
+					// Do additional scoring if there is a name
+					// or fuzzy match as well
+					//
+					if ( fuzzydesc.compare(
+							get_fuzzy( (*itr).second->get_info( FeRomInfo::Romname ) ) ) == 0 )
 					{
-						set_info_values( *m_itr );
+						score += 1;
+
+						if ( m_description.compare(
+								(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
+							score += 10;
 					}
+
+					set_info_values( *((*itr).second), score );
 				}
 			}
+
+			crcs.pop_back();
 		}
+
+		//
+		// 2.) Now check for fuzzy and exact name matches
+		//
+		itc = m_fuzzy_map.equal_range( fuzzydesc );
+		if ( itc.first != itc.second )
+		{
+			for ( itr = itc.first; itr != itc.second; ++itr )
+			{
+				int score = 1;
+
+				if ( m_description.compare(
+							(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
+					score += 10;
+
+				set_info_values( (*(*itr).second), score );
+			}
+		}
+
 		clear_parse_state();
 	}
 	else if ( m_element_open )
 	{
 		if ( strcmp( element, "description" ) == 0 )
-		{
 			m_description = m_current_data;
-			m_fuzzydesc = get_fuzzy( m_current_data );
-		}
 		else if ( strcmp( element, "year" ) == 0 )
 			m_year = m_current_data;
 		else if ( strcmp( element, "publisher" ) == 0 )
@@ -671,17 +828,27 @@ void FeMessXMLParser::end_element( const char *element )
 	}
 }
 
-void FeMessXMLParser::set_info_values( FeRomInfo &r )
+void FeListSoftwareParser::set_info_values( FeRomInfo &r, int score )
 {
-	r.set_info( FeRomInfo::Title, m_description );
-	r.set_info( FeRomInfo::Year, m_year );
-	r.set_info( FeRomInfo::Manufacturer, m_man );
-	r.set_info( FeRomInfo::Cloneof, m_cloneof );
-	r.set_info( FeRomInfo::AltRomname, m_altname );
-	r.set_info( FeRomInfo::AltTitle, m_alttitle );
+	int old_score = 0;
+
+	std::string oss = r.get_info( FeRomInfo::BuildScore );
+	if ( !oss.empty() )
+		old_score = as_int( oss );
+
+	if ( old_score < score )
+	{
+		r.set_info( FeRomInfo::Title, m_description );
+		r.set_info( FeRomInfo::Year, m_year );
+		r.set_info( FeRomInfo::Manufacturer, m_man );
+		r.set_info( FeRomInfo::Cloneof, m_cloneof );
+		r.set_info( FeRomInfo::AltRomname, m_altname );
+		r.set_info( FeRomInfo::AltTitle, m_alttitle );
+		r.set_info( FeRomInfo::BuildScore, as_str( score ) );
+	}
 }
 
-bool FeMessXMLParser::parse( const std::string &prog,
+bool FeListSoftwareParser::parse( const std::string &prog,
 		const std::vector < std::string > &system_names )
 {
 	// First get our machine -listxml settings
@@ -689,33 +856,44 @@ bool FeMessXMLParser::parse( const std::string &prog,
 	std::string system_name;
 	FeRomInfoListType::iterator itr;
 
-	for ( std::vector<std::string>::const_iterator its=system_names.begin(); its!=system_names.end(); ++its )
+	for ( std::vector<std::string>::const_iterator its=system_names.begin();
+			its!=system_names.end(); ++its )
 	{
 		FeRomInfoListType temp_list;
 		temp_list.push_back( FeRomInfo( *its ) );
 
 		FeEmulatorInfo ignored;
 		FeImporterContext temp( ignored, temp_list );
-		FeMameXMLParser listxml( temp );
+		FeListXMLParser listxml( temp );
 
 		if (( listxml.parse_command( prog ) )
 				&& ( !temp_list.empty() ))
 		{
-			const FeRomInfo &ri = temp_list.front();
+			FeRomInfo &ri = temp_list.front();
 			for ( itr=m_ctx.romlist.begin(); itr!=m_ctx.romlist.end(); ++itr )
 			{
-				(*itr).set_info( FeRomInfo::Players, ri.get_info( FeRomInfo::Players ));
-				(*itr).set_info( FeRomInfo::Rotation, ri.get_info( FeRomInfo::Rotation ));
-				(*itr).set_info( FeRomInfo::Control, ri.get_info( FeRomInfo::Control ));
-				(*itr).set_info( FeRomInfo::Status, ri.get_info( FeRomInfo::Status ));
-				(*itr).set_info( FeRomInfo::DisplayCount, ri.get_info( FeRomInfo::DisplayCount ));
-				(*itr).set_info( FeRomInfo::DisplayType, ri.get_info( FeRomInfo::DisplayType ));
+				ri.copy_info( *itr, FeRomInfo::Players );
+				ri.copy_info( *itr, FeRomInfo::Rotation );
+				ri.copy_info( *itr, FeRomInfo::Control );
+				ri.copy_info( *itr, FeRomInfo::Status );
+				ri.copy_info( *itr, FeRomInfo::DisplayCount );
+				ri.copy_info( *itr, FeRomInfo::DisplayType );
 
-				// A bit of a hack here: the Category field gets repurposed for this stage of a MESS
-				// import...We temporarily store a "fuzzy" match romname
 				//
-				(*itr).set_info( FeRomInfo::BuildScratchPad,
-							get_fuzzy( (*itr).get_info( FeRomInfo::Romname ) ) );
+				// Add rom to our crc and fuzzy name maps
+				//
+				m_crc_map.insert(
+					std::pair<std::string, FeRomInfo *>(
+						get_crc(
+							(*itr).get_info( FeRomInfo::BuildFullPath ),
+							listxml.get_sl_extensions() ),
+						&(*itr) ) );
+
+				m_fuzzy_map.insert(
+					std::pair<std::string, FeRomInfo *>(
+						get_fuzzy(
+							(*itr).get_info( FeRomInfo::Romname ) ),
+						&(*itr) ) );
 			}
 			system_name=(*its);
 			break;
@@ -724,11 +902,12 @@ bool FeMessXMLParser::parse( const std::string &prog,
 
 	if ( system_name.empty() )
 	{
-		std::cerr << " * Error: No system identifier found that is recognized by MESS -listxml" << std::endl;
+		std::cerr << " * Error: No system identifier found that is recognized by -listxml" << std::endl;
 		return false;
 	}
 
-	std::cout << " - Obtaining -listsoftware info [" << system_name << "]" << std::endl;
+	std::cout << " - Obtaining -listsoftware info ["
+		<< system_name << "]" << std::endl;
 
 	// Now get the individual game -listsoftware settings
 	//
@@ -740,11 +919,7 @@ bool FeMessXMLParser::parse( const std::string &prog,
 					<< system_name + " -listsoftware" << std::endl;
 	}
 
-	// We're done with our "fuzzy" matching, so clear where we were storing them
-	//
-	for ( itr=m_ctx.romlist.begin(); itr!=m_ctx.romlist.end(); ++itr )
-		(*itr).set_info( FeRomInfo::BuildScratchPad, "" );
-
+	romlist_console_report( m_ctx.romlist );
 	return retval;
 }
 

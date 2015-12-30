@@ -24,6 +24,7 @@
 #include "fe_settings.hpp"
 #include "fe_present.hpp"
 #include "fe_util.hpp"
+#include "zip.hpp"
 #include <iostream>
 #include <cstring>
 

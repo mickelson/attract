@@ -62,9 +62,10 @@ public:
 		LAST_INDEX
 	};
 
-	// The Category index gets repurposed at certain stages of mess
+	// Certain indices gets repurposed during -listsoftware
 	// romlist building/importing...
-	static const Index BuildScratchPad;
+	static const Index BuildFullPath;
+	static const Index BuildScore;
 
 	static const char *indexStrings[];
 
@@ -85,6 +86,9 @@ public:
 	void update_stats( const std::string &path, int count_incr, int played_incr );
 
 	void clear();
+
+	// convenience method to copy info attribute at idx from src
+	void copy_info( const FeRomInfo &src, Index idx );
 
 	bool operator==( const FeRomInfo & ) const;
 
@@ -325,14 +329,16 @@ public:
 
 	void save( const std::string &filename ) const;
 
+	// search paths and exts to gather all base rom names (i.e. "galaga")
 	void gather_rom_names( std::vector<std::string> &name_list ) const;
+
+	// same as above but pair base and full paths
+	// (i.e. "galaga", "c:\beer\galaga.zip")
+	void gather_rom_names( std::vector<std::string> &name_list,
+		std::vector<std::string> &full_path_list ) const;
 
 private:
 	std::string vector_to_string( const std::vector< std::string > &vec ) const;
-	void string_to_vector( const std::string &input,
-		std::vector< std::string > &vec,
-		bool allow_empty = false ) const;
-
 	std::string m_name;
 	std::string m_executable;
 	std::string m_command;

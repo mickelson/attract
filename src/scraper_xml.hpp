@@ -86,13 +86,15 @@ public:
 	std::string user_message;
 };
 
-class FeMameXMLParser : private FeXMLParser
+class FeListXMLParser : private FeXMLParser
 {
 public:
-	FeMameXMLParser( FeImporterContext &ctx );
+	FeListXMLParser( FeImporterContext &ctx );
 
 	bool parse_command( const std::string &base_command );
 	bool parse_file( const std::string &filename );
+
+	std::vector<std::string> get_sl_extensions() { return m_sl_exts; };
 
 private:
 	FeImporterContext &m_ctx;
@@ -104,6 +106,7 @@ private:
 	bool m_collect_data;
 	bool m_chd;
 	bool m_mechanical;
+	std::vector<std::string> m_sl_exts; // softlists: supported extensions
 
 	void pre_parse();
 	void post_parse();
@@ -112,25 +115,27 @@ private:
 	void end_element( const char * );
 };
 
-class FeMessXMLParser : private FeXMLParser
+class FeListSoftwareParser : private FeXMLParser
 {
 public:
-	FeMessXMLParser( FeImporterContext &ctx );
+	FeListSoftwareParser( FeImporterContext &ctx );
 	bool parse( const std::string &command, const std::vector < std::string > &system_names );
 
 private:
 	FeImporterContext &m_ctx;
-	FeRomInfoListType::iterator m_itr;
 	std::string m_name;
 	std::string m_description;
 	std::string m_year;
 	std::string m_man;
-	std::string m_fuzzydesc;
 	std::string m_cloneof;
 	std::string m_altname;
 	std::string m_alttitle;
+	std::string m_crc;
 
-	void set_info_values( FeRomInfo &r );
+	std::multimap<std::string, FeRomInfo *> m_crc_map;
+	std::multimap<std::string, FeRomInfo *> m_fuzzy_map;
+
+	void set_info_values( FeRomInfo &r, int score );
 
 	void start_element( const char *, const char ** );
 	void end_element( const char * );

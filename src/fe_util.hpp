@@ -58,6 +58,10 @@ bool tail_compare(
          const std::string &filename,
          const std::string &extension );
 
+bool tail_compare(
+         const std::string &filename,
+         const std::vector<std::string> &ext_list );
+
 //
 // Case insensitive compare of one and two
 // returns 0 if equal
@@ -231,6 +235,11 @@ std::string url_escape( const std::string &raw );
 void get_url_components( const std::string &url,
 	std::string &host,
 	std::string &req );
+
+std::string get_crc32( char *buff, int size );
+
+void string_to_vector( const std::string &input,
+        std::vector< std::string > &vec, bool allow_empty=false );
 
 //
 // First call in main for things that should happen ... first

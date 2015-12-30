@@ -41,8 +41,6 @@ extern const char *FE_SWF_EXT;
 extern const char *FE_CFG_YES_STR;
 extern const char *FE_CFG_NO_STR;
 
-bool is_supported_archive( const std::string & );
-
 class FeImporterContext;
 
 // A container for each task when importing/building romlists from the command line

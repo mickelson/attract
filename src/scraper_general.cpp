@@ -38,19 +38,22 @@ namespace {
 
 void build_basic_romlist( FeImporterContext &c )
 {
-	std::vector<std::string> names_list;
-	c.emulator.gather_rom_names( names_list );
+	std::vector<std::string> names;
+	std::vector<std::string> paths;
+	c.emulator.gather_rom_names( names, paths );
+	ASSERT( names.size() == paths.size() );
 
-	for ( std::vector<std::string>::const_iterator its=names_list.begin(); its != names_list.end(); ++its )
+	for ( unsigned int i=0; i<names.size(); i++ )
 	{
 		FeRomInfo new_rom;
-		new_rom.set_info( FeRomInfo::Romname, (*its) );
-		new_rom.set_info( FeRomInfo::Title, (*its) );
+		new_rom.set_info( FeRomInfo::Romname, names[i] );
+		new_rom.set_info( FeRomInfo::Title, names[i] );
+		new_rom.set_info( FeRomInfo::BuildFullPath, paths[i] );
 
 		c.romlist.push_back( new_rom );
 	}
 
-	std::cout << " - Found " << names_list.size() << " files." << std::endl;
+	std::cout << " - Found " << names.size() << " files." << std::endl;
 }
 
 void write_romlist( const std::string &filename,
@@ -199,7 +202,7 @@ void apply_import_extras( FeImporterContext &c, bool skip_xml )
 			}
 			else
 			{
-				FeMameXMLParser mamep( c );
+				FeListXMLParser mamep( c );
 				mamep.parse_file( path );
 			}
 		}
@@ -356,7 +359,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 	case FeEmulatorInfo::Listxml:
 	{
 		std::cout << " - Obtaining -listxml info...";
-		FeMameXMLParser mamep( c );
+		FeListXMLParser mamep( c );
 		if ( !mamep.parse_command( base_command ) )
 			std::cerr << " ! No XML output found, command: "
 				<< base_command << " -listxml" << std::endl;
@@ -375,8 +378,8 @@ void FeSettings::apply_xml_import( FeImporterContext &c )
 			return;
 		}
 
-		FeMessXMLParser messp( c );
-		messp.parse( base_command, system_names );
+		FeListSoftwareParser lsp( c );
+		lsp.parse( base_command, system_names );
 	}
 	break;
 
@@ -559,7 +562,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 				FeImporterContext ctx( temp_emu, romlist );
 				ctx.full = true; // Flag that all xml entries go into romlist
 
-				FeMameXMLParser mamep( ctx );
+				FeListXMLParser mamep( ctx );
 				if ( mamep.parse_file( (*itr).file_name ) )
 					apply_emulator_name( emu_name, romlist );
 			}

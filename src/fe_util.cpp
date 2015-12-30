@@ -40,6 +40,10 @@
 
 #include <SFML/Config.hpp>
 
+#ifdef USE_LIBARCHIVE
+#include <zlib.h>
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -100,10 +104,10 @@ namespace {
 // Case insensitive check if filename has the specified extension/ending.
 //
 bool c_tail_compare(
-			const char *filename,
-			size_t filelen,
-			const char *extension,
-			size_t extlen )
+	const char *filename,
+	size_t filelen,
+	const char *extension,
+	size_t extlen )
 {
 	if ( extlen > filelen )
 		return false;
@@ -119,8 +123,8 @@ bool c_tail_compare(
 }
 
 bool tail_compare(
-			const std::string &filename,
-			const std::string &extension )
+	const std::string &filename,
+	const std::string &extension )
 {
 	return c_tail_compare( filename.c_str(),
 		filename.size(),
@@ -128,9 +132,27 @@ bool tail_compare(
 		extension.size() );
 }
 
+bool tail_compare(
+	const std::string &filename,
+	const std::vector<std::string> &ext_list )
+{
+	for ( std::vector<std::string>::const_iterator itr=ext_list.begin();
+			itr != ext_list.end(); ++itr )
+	{
+		if ( c_tail_compare( filename.c_str(),
+				filename.size(),
+				(*itr).c_str(),
+				(*itr).size() ) )
+			return true;
+
+	}
+
+	return false;
+}
+
 int icompare(
-			const std::string &one,
-			const std::string &two )
+	const std::string &one,
+	const std::string &two )
 {
 	unsigned int one_len = one.size();
 
@@ -938,7 +960,7 @@ std::string name_with_brackets_stripped( const std::string &name )
 		return name;
 
 	if ( name.at( pos-1 ) == ' ' )
-		pos = name.find_last_of( FE_WHITESPACE, pos );
+		pos = name.find_last_not_of( FE_WHITESPACE, pos-1 ) + 1;
 
 	return name.substr( 0, pos );
 }
@@ -1079,4 +1101,34 @@ void get_url_components( const std::string &url,
 		host = url.substr( 0, pos+1 );
 		req = url.substr( pos+1 );
 	}
+}
+
+std::string get_crc32( char *buff, int size )
+{
+#ifdef USE_LIBARCHIVE
+	uLong crc = crc32( 0L, Z_NULL, 0 );
+	crc = crc32( crc, (Bytef *)buff, size );
+
+	std::ostringstream ss;
+	ss.fill('0');
+	ss << std::hex << std::setw(8) << crc;
+	return ss.str();
+#else
+	return "";
+#endif
+}
+
+void string_to_vector( const std::string &input,
+	std::vector< std::string > &vec, bool allow_empty )
+{
+	size_t pos=0;
+	do
+	{
+		std::string val;
+		token_helper( input, pos, val );
+
+		if ( ( !val.empty() ) || allow_empty )
+			vec.push_back( val );
+
+	} while ( pos < input.size() );
 }

@@ -270,7 +270,7 @@ void process_args( int argc, char *argv[],
 				<< "  -E, --exception <exception>" << std::endl
 				<< "     Apply the specified filter rules exception when creating romlist" << std::endl
 				<< "  --full" << std::endl
-				<< "     Use with --build-romlist to include all possible roms [mame/mess only]" << std::endl
+				<< "     Use with --build-romlist to include all possible roms [mame -listxml only]" << std::endl
 				<< "  -o, --output <romlist>" << std::endl
 				<< "     Specify the name of the romlist to create, overwriting any existing"
 				<< std::endl << std::endl

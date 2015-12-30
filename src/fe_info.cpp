@@ -33,7 +33,8 @@
 const char *FE_STAT_FILE_EXTENSION = ".stat";
 const char FE_TAGS_SEP = ';';
 
-const FeRomInfo::Index FeRomInfo::BuildScratchPad = FeRomInfo::Category;
+const FeRomInfo::Index FeRomInfo::BuildFullPath = FeRomInfo::Tags;
+const FeRomInfo::Index FeRomInfo::BuildScore = FeRomInfo::PlayedCount;
 
 const char *FeRomInfo::indexStrings[] =
 {
@@ -188,6 +189,11 @@ void FeRomInfo::clear()
 {
 	for ( int i=0; i < LAST_INDEX; i++ )
 		m_info[i].clear();
+}
+
+void FeRomInfo::copy_info( const FeRomInfo &src, Index idx )
+{
+	m_info[idx]=src.m_info[idx];
 }
 
 bool FeRomInfo::operator==( const FeRomInfo &o ) const
@@ -1096,34 +1102,49 @@ std::string FeEmulatorInfo::vector_to_string( const std::vector< std::string > &
 	return ret_str;
 }
 
-void FeEmulatorInfo::string_to_vector(
-			const std::string &input, std::vector< std::string > &vec, bool allow_empty ) const
-{
-	size_t pos=0;
-	do
-	{
-		std::string val;
-		token_helper( input, pos, val );
-
-		if ( ( !val.empty() ) || allow_empty )
-			vec.push_back( val );
-
-	} while ( pos < input.size() );
-}
-
 void FeEmulatorInfo::gather_rom_names( std::vector<std::string> &name_list ) const
 {
-	for ( std::vector<std::string>::const_iterator itr=m_paths.begin(); itr!=m_paths.end(); ++itr )
+	std::vector< std::string > ignored;
+	gather_rom_names( name_list, ignored );
+}
+
+void FeEmulatorInfo::gather_rom_names(
+	std::vector<std::string> &name_list,
+	std::vector<std::string> &full_path_list ) const
+{
+	for ( std::vector<std::string>::const_iterator itr=m_paths.begin();
+			itr!=m_paths.end(); ++itr )
 	{
 		std::string path = clean_path( *itr, true );
 
 		for ( std::vector<std::string>::const_iterator ite = m_extensions.begin();
-						ite != m_extensions.end(); ++ite )
+				ite != m_extensions.end(); ++ite )
 		{
+			std::vector<std::string> temp_list;
+			std::vector<std::string>::iterator itn;
+
 			if ( (*ite).compare( FE_DIR_TOKEN ) == 0 )
-				get_subdirectories( name_list, path );
+			{
+				get_subdirectories( temp_list, path );
+
+				for ( itn = temp_list.begin(); itn != temp_list.end(); ++itn )
+				{
+					full_path_list.push_back( path + *itn );
+					name_list.push_back( std::string() );
+					name_list.back().swap( *itn );
+				}
+			}
 			else
-				get_basename_from_extension( name_list, path, (*ite), true );
+			{
+				get_basename_from_extension( temp_list, path, (*ite), true );
+
+				for ( itn = temp_list.begin(); itn != temp_list.end(); ++itn )
+				{
+					full_path_list.push_back( path + *itn + *ite );
+					name_list.push_back( std::string() );
+					name_list.back().swap( *itn );
+				}
+			}
 		}
 	}
 }

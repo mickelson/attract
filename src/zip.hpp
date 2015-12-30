@@ -40,6 +40,9 @@ bool fe_zip_get_dir(
         const char *archive,
 	std::vector<std::string> &result );
 
+extern const char *FE_ARCHIVE_EXT[];
+bool is_supported_archive( const std::string & );
+
 class FeZipStream : public sf::InputStream, sf::NonCopyable
 {
 public:

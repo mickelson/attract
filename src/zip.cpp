@@ -227,6 +227,35 @@ bool fe_zip_get_dir(
 
 #endif // USE_LIBARCHIVE
 
+const char *FE_ARCHIVE_EXT[] =
+{
+	".zip",
+#ifdef USE_LIBARCHIVE
+	".rar",
+	".7z",
+	".tar.gz",
+	".tgz",
+	".tar.bz2",
+	".tbz2",
+	".tar",
+#endif
+	NULL
+};
+
+bool is_supported_archive( const std::string &fname )
+{
+	int i=0;
+	while ( FE_ARCHIVE_EXT[i] != NULL )
+	{
+		if ( tail_compare( fname, FE_ARCHIVE_EXT[i] ) )
+			return true;
+
+		i++;
+	}
+
+	return false;
+}
+
 void *zip_stream_alloc_cb( size_t s )
 {
 	return (void *)(new char[s]);
