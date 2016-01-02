@@ -31,6 +31,8 @@
 #include <fstream>
 #include <expat.h>
 
+#include <SFML/System/Clock.hpp>
+
 namespace {
 
 void fix_last_word( std::string &str, int pos )
@@ -749,6 +751,7 @@ void FeListSoftwareParser::end_element( const char *element )
 {
 	if ( strcmp( element, "software" ) == 0 )
 	{
+		std::string fuzzyname = get_fuzzy( m_name );
 		std::string fuzzydesc = get_fuzzy( m_description );
 
 		//
@@ -767,28 +770,28 @@ void FeListSoftwareParser::end_element( const char *element )
 		while ( !crcs.empty() )
 		{
 			itc = m_crc_map.equal_range( crcs.back() );
-			if ( itc.first != itc.second )
+			for ( itr = itc.first; itr != itc.second; ++itr )
 			{
-				for ( itr = itc.first; itr != itc.second; ++itr )
+				int score = 100;
+				std::string itr_fuzz = get_fuzzy(
+					(*itr).second->get_info( FeRomInfo::Romname ) );
+
+				//
+				// Do additional scoring if there is a name
+				// or fuzzy match as well
+				//
+				if ( fuzzyname.compare( itr_fuzz ) == 0 )
+					score += 11;
+				else if ( fuzzydesc.compare( itr_fuzz ) == 0 )
 				{
-					int score = 100;
+					score += 1;
 
-					//
-					// Do additional scoring if there is a name
-					// or fuzzy match as well
-					//
-					if ( fuzzydesc.compare(
-							get_fuzzy( (*itr).second->get_info( FeRomInfo::Romname ) ) ) == 0 )
-					{
-						score += 1;
-
-						if ( m_description.compare(
-								(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
-							score += 10;
-					}
-
-					set_info_values( *((*itr).second), score );
+					if ( m_description.compare(
+							(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
+						score += 10;
 				}
+
+				set_info_values( *((*itr).second), score );
 			}
 
 			crcs.pop_back();
@@ -798,19 +801,20 @@ void FeListSoftwareParser::end_element( const char *element )
 		// 2.) Now check for fuzzy and exact name matches
 		//
 		itc = m_fuzzy_map.equal_range( fuzzydesc );
-		if ( itc.first != itc.second )
+		for ( itr = itc.first; itr != itc.second; ++itr )
 		{
-			for ( itr = itc.first; itr != itc.second; ++itr )
-			{
-				int score = 1;
+			int score = 1;
 
-				if ( m_description.compare(
-							(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
-					score += 10;
+			if ( m_description.compare(
+						(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
+				score += 10;
 
-				set_info_values( (*(*itr).second), score );
-			}
+			set_info_values( (*(*itr).second), score );
 		}
+
+		itc = m_fuzzy_map.equal_range( fuzzyname );
+		for ( itr = itc.first; itr != itc.second; ++itr )
+				set_info_values( (*(*itr).second), 11 );
 
 		clear_parse_state();
 	}
@@ -856,6 +860,10 @@ bool FeListSoftwareParser::parse( const std::string &prog,
 	std::string system_name;
 	FeRomInfoListType::iterator itr;
 
+	sf::Clock my_timer;
+	int s = m_ctx.romlist.empty() ? 1 : m_ctx.romlist.size();
+	int c = 0;
+
 	for ( std::vector<std::string>::const_iterator its=system_names.begin();
 			its!=system_names.end(); ++its )
 	{
@@ -879,26 +887,42 @@ bool FeListSoftwareParser::parse( const std::string &prog,
 				ri.copy_info( *itr, FeRomInfo::DisplayCount );
 				ri.copy_info( *itr, FeRomInfo::DisplayType );
 
+				std::string crc = get_crc(
+					(*itr).get_info( FeRomInfo::BuildFullPath ),
+					listxml.get_sl_extensions() );
+
 				//
 				// Add rom to our crc and fuzzy name maps
 				//
-				m_crc_map.insert(
-					std::pair<std::string, FeRomInfo *>(
-						get_crc(
-							(*itr).get_info( FeRomInfo::BuildFullPath ),
-							listxml.get_sl_extensions() ),
-						&(*itr) ) );
+				if ( !crc.empty() )
+					m_crc_map.insert(
+						std::pair<std::string, FeRomInfo *>( crc, &(*itr) ) );
 
 				m_fuzzy_map.insert(
 					std::pair<std::string, FeRomInfo *>(
 						get_fuzzy(
 							(*itr).get_info( FeRomInfo::Romname ) ),
 						&(*itr) ) );
+
+
+				if ( m_ui_update )
+				{
+					if ( m_ui_update( m_ui_update_data,
+							c*90/s, "") == false )
+					{
+						set_continue_parse( false );
+						break;
+					}
+				}
+				c++;
 			}
 			system_name=(*its);
 			break;
 		}
 	}
+
+	std::cout << " * Calculated CRCs for " << m_crc_map.size() << " files in "
+		<< my_timer.getElapsedTime().asMilliseconds() << "ms." << std::endl;
 
 	if ( system_name.empty() )
 	{
