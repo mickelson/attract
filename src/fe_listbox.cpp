@@ -485,10 +485,7 @@ void FeListBox::set_bg_rgb(int r, int g, int b )
 	c.r=r;
 	c.g=g;
 	c.b=b;
-	m_base_text.setBgColor(c);
-
-	if ( m_scripted )
-		FePresent::script_flag_redraw();
+	setBgColor(c);
 }
 
 void FeListBox::set_charsize(int s)
@@ -512,7 +509,7 @@ void FeListBox::set_rows(int r)
 		m_rows = r;
 
 		if ( m_scripted )
-			FePresent::script_flag_redraw();
+			FePresent::script_do_update( this );
 	}
 }
 
