@@ -1875,7 +1875,7 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 	int filter_index = fes->get_filter_index_from_offset( filter_offset );
 
 	FeRomInfo *rom = fes->get_rom_absolute( filter_index,
-									fes->get_rom_index( filter_index, index_offset ) );
+			fes->get_rom_index( filter_index, index_offset ) );
 
 	static std::string retval;
 
@@ -1892,6 +1892,14 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 			retval = vid_list.front();
 		else
 			retval = image_list.front();
+
+		// We force our return value to an absolute path, to work
+		// around Attract-Mode's tendency to assume that relative
+		// paths are relative to the layout directory.
+		//
+		// We are almost certain that is not the case here...
+		//
+		retval = absolute_path( retval );
 	}
 	else
 		retval.clear();

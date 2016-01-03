@@ -261,7 +261,9 @@ std::string absolute_path( const std::string &path )
 	if ( realpath( path.c_str(), buff ) )
 	{
 		std::string retval = buff;
-		if (( retval.size() > 0 ) && ( retval[ retval.size()-1 ] != '/' ))
+		if (( retval.size() > 0 )
+				&& ( retval[ retval.size()-1 ] != '/' )
+				&& directory_exists( retval ))
 			retval += "/";
 
 		return retval;
