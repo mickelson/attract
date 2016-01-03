@@ -60,6 +60,23 @@ function set_bright( x, o )
 	o.set_rgb( x, x, x );
 }
 
+local last_op = 0;
+local last_x = 0;
+
+function set_bright_lb( x, o )
+{
+	last_x = x;
+	o.set_rgb( x, x, x );
+	o.set_selbg_rgb( x, x, x );
+
+	last_op = ( x + 120 ) % 255;
+	if (( x > 135 ) && ( x < 145 ))
+		last_op = 25 * ( 145 - x );
+
+	o.set_bg_rgb( last_op, last_op, last_op );
+	o.set_sel_rgb( last_op, last_op, last_op );
+}
+
 //
 // Create a class to contain an orbit artwork
 //
@@ -150,6 +167,15 @@ else
 
 local snap = fe.add_artwork( "snap", 224, 59, 352, 264 );
 snap.trigger = Transition.EndNavigation;
+
+local overlay_lb = fe.add_listbox( 224, 59, 352, 264 );
+overlay_lb.rows = 10;
+const OVERLAY_ALPHA = 190;
+overlay_lb.bg_alpha = overlay_lb.selbg_alpha = OVERLAY_ALPHA;
+overlay_lb.set_sel_rgb( 0, 0, 0 );
+overlay_lb.set_selbg_rgb( 255, 255, 255 );
+overlay_lb.visible=false;
+
 local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
 
 //
@@ -189,6 +215,8 @@ l = fe.add_text( "[DisplayName]", 0, 0, 800, 55 );
 l.set_rgb( 180, 180, 70 ); 
 l.style = Style.Bold;
 
+fe.overlay.set_custom_controls( l, overlay_lb );
+
 //
 // Set the shader effect if configured
 //
@@ -225,14 +253,22 @@ fe.add_text( "[Title], [Manufacturer] [Year]", 1, 551, 800, 30 )
 // black and back
 //
 fe.add_ticks_callback( "orbit_tick" );
+
 function orbit_tick( ttime )
 {
 	local block = ttime / 30000;
+	local bright = ( ( ttime % 30000 ) / 30000.0 ) * 255;
 
 	if ( block % 2 )
-		set_bright( ( ( ttime % 30000 ) / 30000.0 ) * 255, frame );
+	{
+		set_bright( bright, frame );
+		set_bright_lb( bright, overlay_lb );
+	}
 	else
-		set_bright( 255 - ( ( ttime % 30000 ) / 30000.0 ) * 255, frame );
+	{
+		set_bright( 255 - bright, frame );
+		set_bright_lb( 255 - bright, overlay_lb );
+	}
 }
 
 //
@@ -311,6 +347,39 @@ function orbit_transition( ttype, var, ttime )
 				return true;
 		}
 
+		break;
+
+	case Transition.ShowOverlay:
+		overlay_lb.rows = ( var == Overlay.Exit ) ? 6 : 10;
+		overlay_lb.visible = true;
+
+		// Do a fade in effect for the overlay text, lasting for
+		// spin_ms.  selection text goes from sel bg colour to
+		// selection text colour, and unselected text goes from bg
+		// colour to unselected text colour
+		//
+		if ( ttime < spin_ms )
+		{
+			local percent = ttime / spin_ms.tofloat();
+			local span = ( last_op - last_x ) * percent;
+			local x = last_op - span;
+			local op = last_x + span;
+
+			local alpha = OVERLAY_ALPHA
+				+ ( 255 - OVERLAY_ALPHA ) * percent;
+
+			overlay_lb.sel_alpha = alpha;
+			overlay_lb.alpha = alpha;
+			overlay_lb.set_rgb( x, x, x );
+			overlay_lb.set_sel_rgb( op, op, op );
+			return true;
+		}
+		overlay_lb.sel_alpha = 255;
+		overlay_lb.alpha = 255;
+		break;
+
+	case Transition.HideOverlay:
+		overlay_lb.visible = false;
 		break;
 	}
 

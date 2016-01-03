@@ -43,11 +43,13 @@ enum FeTransitionType
 	StartLayout=0,		// var: FromToScreenSaver, FromToFrontend or FromToNoValue
 	EndLayout,			// var: FromToScreenSaver, FromToFrontend or FromToNoValue
 	ToNewSelection,	// var = index_offset of new selection
-	FromOldSelection,	// var == index_offset of old selection
+	FromOldSelection,	// var = index_offset of old selection
 	ToGame,				// var = 0
 	FromGame,			// var = 0
 	ToNewList,			// var = filter offset of new filter (if available), otherwise 0
-	EndNavigation		// var = 0
+	EndNavigation,		// var = 0
+	ShowOverlay,		// var = Custom, Exit, Displays, Filters, Tags
+	HideOverlay			// var = 0
 };
 
 //
@@ -131,6 +133,9 @@ protected:
 	sf::Vector2f m_layoutScale;
 
 	FeShader *m_emptyShader;
+
+	FeText *m_overlay_caption;
+	FeListBox *m_overlay_lb;
 
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );
@@ -224,6 +229,9 @@ public:
 
 	const sf::Vector2i &get_layout_size() const { return m_layoutSize; }
 	FeShader *get_empty_shader();
+
+	// return any custom overlay controls set by the script
+	void get_overlay_custom_controls( FeText *&, FeListBox *& );
 
 	//
 	// Script static functions

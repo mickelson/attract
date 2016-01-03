@@ -77,17 +77,20 @@ public:
 	FeTextPrimative *setEditMode( bool, sf::Color );
 
 	void setRotation( float );
-	void setText( const int index, const std::vector<std::string> &list );
+
+	// Set an empty list here to reset control from "custom text" mode
+	void setCustomText( const int index, const std::vector<std::string> &list );
+	void setCustomSelection( const int index );
 
 	// special case for the language selection listbox (different fonts)
-	void setText( const int index,
+	void setLanguageText( const int index,
 			const std::vector<FeLanguage> &list,
 			FePresent *fep );
 
 	int getRowCount() const;
 
 	void clear();
-	void init();
+	void init_dimensions();
 
 	// Overrides from base class:
 	//
@@ -142,6 +145,8 @@ private:
 	FeListBox( const FeListBox & );
 	FeListBox &operator=( const FeListBox & );
 
+	void internalSetText( const int index );
+
 	FeTextPrimative m_base_text;
 	std::vector<std::string> m_displayList;
 	std::vector<FeTextPrimative> m_texts;
@@ -156,6 +161,13 @@ private:
 	float m_rotation;
 	float m_scale_factor;
 	bool m_scripted;
+
+	// this contains the custom selection index, if custom text has been
+	// set (in which case m_displayList contains the custom set text). If
+	// no custom text is set, then this is set to -1, and the control gets
+	// automagically updated with game info whenever the selection
+	// changes, etc
+	int m_custom_sel;
 
 	void draw( sf::RenderTarget &target, sf::RenderStates states ) const;
 };

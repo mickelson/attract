@@ -81,7 +81,9 @@ tmp = fe.add_artwork( "snap", 240, 96, 192, 192 );
 tmp.trigger = Transition.EndNavigation;
 
 fe.add_image( "field.png", 0, 0, 456, 336 );
-fe.add_text( "[DisplayName]", 118, 316, 220, 14 );
+local main_caption = fe.add_text( "[DisplayName]", 118, 316, 220, 14 );
+
+fe.overlay.set_custom_controls( main_caption, lb );
 
 local l = fe.add_text( "[ListEntry]/[ListSize]", 0, 322, 60, 10 );
 l.align = Align.Left;

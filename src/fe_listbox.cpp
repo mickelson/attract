@@ -37,7 +37,8 @@ FeListBox::FeListBox( FePresentableParent &p, int x, int y, int w, int h )
 	m_filter_offset( 0 ),
 	m_rotation( 0.0 ),
 	m_scale_factor( 1.0 ),
-	m_scripted( true )
+	m_scripted( true ),
+	m_custom_sel( -1 )
 {
 	m_base_text.setPosition( sf::Vector2f( x, y ) );
 	m_base_text.setSize( sf::Vector2f( w, h ) );
@@ -64,7 +65,8 @@ FeListBox::FeListBox(
 	m_filter_offset( 0 ),
 	m_rotation( 0.0 ),
 	m_scale_factor( 1.0 ),
-	m_scripted( false )
+	m_scripted( false ),
+	m_custom_sel( -1 )
 {
 }
 
@@ -109,7 +111,7 @@ const sf::Color &FeListBox::getColor() const
 	return m_base_text.getColor();
 }
 
-void FeListBox::init()
+void FeListBox::init_dimensions()
 {
 	sf::Vector2f size = getSize();
 	sf::Vector2f pos = getPosition();
@@ -242,8 +244,25 @@ FeTextPrimative *FeListBox::setEditMode( bool e, sf::Color c )
 	return NULL;
 }
 
-void FeListBox::setText( const int index,
+void FeListBox::setCustomSelection( const int index )
+{
+	m_custom_sel = index;
+	internalSetText( index );
+}
+
+void FeListBox::setCustomText( const int index,
 			const std::vector<std::string> &list )
+{
+	if ( list.empty() )
+		m_custom_sel = -1;
+	else
+		m_custom_sel = index;
+
+	m_displayList = list;
+	internalSetText( m_custom_sel );
+}
+
+void FeListBox::internalSetText( const int index )
 {
 	if ( !m_texts.empty() )
 	{
@@ -252,18 +271,20 @@ void FeListBox::setText( const int index,
 		for ( int i=0; i < (int)m_texts.size(); i++ )
 		{
 			int listentry = offset + i;
-			if (( listentry < 0 ) || ( listentry >= (int)list.size() ))
+			if (( listentry < 0 ) || ( listentry >= (int)m_displayList.size() ))
 				m_texts[i].setString("");
 			else
-				m_texts[i].setString( list[listentry] );
+				m_texts[i].setString( m_displayList[listentry] );
 		}
 	}
 }
 
-void FeListBox::setText( const int index,
+void FeListBox::setLanguageText( const int index,
 			const std::vector<FeLanguage> &list,
 			FePresent *fep )
 {
+	m_custom_sel = index;
+
 	if ( !m_texts.empty() )
 	{
 		int offset = index - ( (int)m_texts.size() / 2 );
@@ -297,7 +318,13 @@ void FeListBox::setRotation( float r )
 
 void FeListBox::on_new_list( FeSettings *s )
 {
-	init();
+	init_dimensions();
+
+	if ( m_custom_sel >= 0 )
+	{
+		internalSetText( m_custom_sel );
+		return;
+	}
 
 	int filter_index = s->get_filter_index_from_offset( m_filter_offset );
 	int filter_size = s->get_filter_size( filter_index );
@@ -306,45 +333,34 @@ void FeListBox::on_new_list( FeSettings *s )
 	m_displayList.clear();
 	m_displayList.reserve( filter_size );
 
-	if ( !m_format_string.empty() )
-	{
-		for ( int i=0; i < filter_size; i++ )
-		{
-			m_displayList.push_back( m_format_string );
+	std::string format_string = m_format_string;
+	if ( format_string.empty() )
+		format_string = "[Title]";
 
-			FePresent::script_process_magic_strings(
-				m_displayList.back(),
-				m_filter_offset, i - current_sel );
-
-			s->do_text_substitutions_absolute(
-				m_displayList.back(), filter_index, i );
-		}
-	}
-	else
+	for ( int i=0; i < filter_size; i++ )
 	{
-		if ( s->get_info_bool( FeSettings::HideBrackets ) )
-		{
-			for ( int i=0; i < filter_size; i++ )
-			{
-				const std::string &temp = s->get_rom_info_absolute( filter_index, i, FeRomInfo::Title );
-				m_displayList.push_back( name_with_brackets_stripped( temp ));
-			}
-		}
-		else
-		{
-			for ( int i=0; i < filter_size; i++ )
-				m_displayList.push_back( s->get_rom_info_absolute( filter_index, i, FeRomInfo::Title ) );
-		}
+		m_displayList.push_back( format_string );
+
+		FePresent::script_process_magic_strings(
+			m_displayList.back(),
+			m_filter_offset, i - current_sel );
+
+		s->do_text_substitutions_absolute(
+			m_displayList.back(), filter_index, i );
 	}
 
-	setText( current_sel, m_displayList );
+	internalSetText( current_sel );
 }
 
 void FeListBox::on_new_selection( FeSettings *s )
 {
-	setText(
-			s->get_rom_index( s->get_filter_index_from_offset( m_filter_offset ), 0 ),
-			m_displayList );
+	if ( m_custom_sel >= 0 )
+		internalSetText( m_custom_sel );
+	else
+		internalSetText(
+			s->get_rom_index(
+				s->get_filter_index_from_offset(
+					m_filter_offset ), 0 ) );
 }
 
 void FeListBox::set_scale_factor( float scale_x, float scale_y )
@@ -492,7 +508,7 @@ void FeListBox::set_charsize(int s)
 {
 	m_userCharSize = s;
 
-	// We call script_do_update to trigger a call to our init() function
+	// We call script_do_update to trigger a call to our init_demensions() function
 	// with the appropriate parameters
 	//
 	if ( m_scripted )

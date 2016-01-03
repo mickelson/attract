@@ -277,6 +277,8 @@ const char *FeVM::transitionTypeStrings[] =
 		"FromGame",
 		"ToNewList",
 		"EndNavigation",
+		"ShowOverlay",
+		"HideOverlay",
 		NULL
 };
 
@@ -512,6 +514,13 @@ bool FeVM::on_new_layout()
 			.Const( _SC("Default"), AF_Default )
 			.Const( _SC("ImagesOnly"), AF_ImagesOnly )
 			)
+		.Enum( _SC("Overlay"), Enumeration()
+			.Const( "Custom", 0 )
+			.Const( "Exit", FeInputMap::ExitMenu )
+			.Const( "Displays", FeInputMap::DisplaysMenu )
+			.Const( "Filters", FeInputMap::FiltersMenu )
+			.Const( "Tags", FeInputMap::ToggleTags )
+                        )
 		;
 
 	Enumeration info;
@@ -684,6 +693,8 @@ bool FeVM::on_new_layout()
 
 	fe.Bind( _SC("Overlay"), Class <FeVM, NoConstructor>()
 		.Prop( _SC("is_up"), &FeVM::overlay_is_on )
+		.Func( _SC("set_custom_controls"), &FeVM::overlay_set_custom_controls)
+		.Func( _SC("clear_custom_controls"), &FeVM::overlay_clear_custom_controls)
 		.Overload<int (FeVM::*)(Array, const char *, int, int)>(_SC("list_dialog"), &FeVM::list_dialog)
 		.Overload<int (FeVM::*)(Array, const char *, int)>(_SC("list_dialog"), &FeVM::list_dialog)
 		.Overload<int (FeVM::*)(Array, const char *)>(_SC("list_dialog"), &FeVM::list_dialog)
@@ -1158,6 +1169,17 @@ const char *FeVM::edit_dialog( const char *msg, const char *txt )
 bool FeVM::overlay_is_on()
 {
 	return m_overlay->overlay_is_on();
+}
+
+void FeVM::overlay_set_custom_controls( FeText *caption, FeListBox *opts )
+{
+	m_overlay_caption = caption;
+	m_overlay_lb = opts;
+}
+
+void FeVM::overlay_clear_custom_controls()
+{
+	overlay_set_custom_controls( NULL, NULL );
 }
 
 bool FeVM::splash_message( const char *msg, const char *aux )

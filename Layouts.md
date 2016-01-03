@@ -559,6 +559,8 @@ happening.  It will have one of the following values:
    * `Transition.FromGame`
    * `Transition.ToNewList`
    * `Transition.EndNavigation`
+   * `Transition.ShowOverlay`
+   * `Transition.HideOverlay`
 
 The value of the `var` parameter passed to the transition function depends
 upon the value of `ttype`:
@@ -590,8 +592,16 @@ upon the value of `ttype`:
      offset of the filter being transitioned to (i.e. -1 when moving back one
      filter, 1 when moving forward) if known, otherwise `var` is 0.
 
-   * When `ttype` is `Transition.ToGame`, `Transition.FromGame`, or
-     `Transition.EndNavigation`, `var` will be `FromTo.NoValue`.
+   * When `ttype` is `Transition.ShowOverlay`, var will be:
+      - `Overlay.Custom` if a script generated overlay is being shown
+      - `Overlay.Exit` if the exit menu is being shown
+      - `Overlay.Displays` if the displays menu is being shown
+      - `Overlay.Filters` if the filters menu is being shown
+      - `Overlay.Tags` if the tags menu is being shown
+
+   * When `ttype` is `Transition.ToGame`, `Transition.FromGame`,
+     `Transition.EndNavigation`, or `Transition.HideOverlay`, `var` will be
+     `FromTo.NoValue`.
 
 The `transition_time` parameter passed to the transition function is the
 amount of time (in milliseconds) since the transition began.
@@ -1094,13 +1104,14 @@ Properties:
    * `toggle_rotation` - Get/set the "toggle" orientation of the layout.  The
      toggle rotation is added to the `base_rotation` to determine what the
      actual rotation is at any given time.  The user can change this value
-     using the Rotation Toggle inputs.  This can be one of the following values:
+     using the Rotation Toggle inputs.  This can be one of the following
+     values:
       - `RotateScreen.None` (default)
       - `RotateScreen.Right`
       - `RotateScreen.Flip`
       - `RotateScreen.Left`
-   * `page_size` - Get/set the number of entries to jump each time the "Page Up"
-     or "Page Down" button is pressed.
+   * `page_size` - Get/set the number of entries to jump each time the "Page
+     Up" or "Page Down" button is pressed.
    * `preserve_aspect_ratio` - Get/set whether the overall layout aspect ratio
      should be preserved by the frontend.  Default value is false.
 
@@ -1146,19 +1157,28 @@ Properties:
 
 Member Functions:
 
+   * `set_custom_controls( caption_text, options_listbox )` - set custom
+     controls for display overlay menus such as the exit dialog, displays menu,
+     etc.  The `caption_text` parameter is the FeText object that the overlay
+     caption should be displayed in (i.e. "Exit Attract-Mode?").  The
+     `options_listbox` parameter is the FeListBox object that the overlay
+     options should be listed in for user selection.
+   * `clear_custom_controls()` - clear any custom controls set previously with
+     `set_custom_controls()`.  This will result in the frontend using its
+     built-in default menus instead for overlays.
    * `list_dialog( options, title, default_sel, cancel_sel )`
    * `list_dialog( options, title, default_sel )`
    * `list_dialog( options, title )`
-   * `list_dialog( options )` - The list_dialog function prompts the user with a
-     menu containing a list of options, returning the index of the selection.
-     The `options` parameter is an array of strings that are the menu options to
-     display in the list.  The `title` parameter is a caption for the list.
-     `default_sel` is the index of the entry to be selected initially (default is
-     0).  `cancel_sel` is the index to return if the user cancels (default is -1).
-     The return value is the index selected by the user.
-   * `edit_dialog( msg, text )` - Prompt the user to input/edit text.  The `msg`
-     parameter is the prompt caption.  `text` is the initial text to be edited.
-     The return value a the string of text as edited by the user.
+   * `list_dialog( options )` - The list_dialog function prompts the user with
+     a menu containing a list of options, returning the index of the selection.
+     The `options` parameter is an array of strings that are the menu options
+     to display in the list.  The `title` parameter is a caption for the list.
+     `default_sel` is the index of the entry to be selected initially (default
+     is 0).  `cancel_sel` is the index to return if the user cancels (default
+     is -1).  The return value is the index selected by the user.
+   * `edit_dialog( msg, text )` - Prompt the user to input/edit text.  The
+     `msg` parameter is the prompt caption.  `text` is the initial text to be
+     edited.  The return value a the string of text as edited by the user.
    * `splash_message( msg, second_msg="" )` - immediately provide text feedback
      to the user.  This could be useful during computationally-intensive
      operations.

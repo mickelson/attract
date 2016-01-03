@@ -354,7 +354,11 @@ int main(int argc, char *argv[])
 				{
 				case FeInputMap::ExitMenu:
 					{
-						int retval = feOverlay.confirm_dialog( "Exit Attract-Mode?" );
+						int retval = feOverlay.confirm_dialog(
+							"Exit Attract-Mode?",
+							"",
+							FeInputMap::ExitMenu );
+
 						//
 						// retval is 0 if the user confirmed exit.
 						// it is <0 if we are being forced to close
@@ -433,7 +437,8 @@ int main(int argc, char *argv[])
 										title,
 										names_list,
 										feSettings.get_current_display_index(),
-										-1 );
+										-1,
+										FeInputMap::DisplaysMenu );
 
 						if ( display_index == exit_opt )
 						{
@@ -463,7 +468,8 @@ int main(int argc, char *argv[])
 										title,
 										names_list,
 										feSettings.get_current_filter_index(),
-										-1 );
+										-1,
+										FeInputMap::FiltersMenu );
 
 						if ( filter_index >= 0 )
 						{

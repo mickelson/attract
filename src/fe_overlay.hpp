@@ -69,23 +69,28 @@ public:
 		FePresent &fep );
 
 	void splash_message( const std::string &, const std::string &rep="",
-				const std::string &aux="" );
-	int confirm_dialog( const std::string &msg, const std::string &rep="" );
+		const std::string &aux="" );
+	int confirm_dialog( const std::string &msg,
+		const std::string &rep="",
+		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
+
 	bool config_dialog();
 	int languages_dialog();
 	int tags_dialog();
 
 	int common_list_dialog(
-			const std::string &title,
-			const std::vector < std::string > &options,
-			int default_sel,
-			int cancel_sel );
+		const std::string &title,
+		const std::vector < std::string > &options,
+		int default_sel,
+		int cancel_sel,
+		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
 
 	int common_basic_dialog(
-			const std::string &message,
-			const std::vector<std::string> &options,
-			int default_sel,
-			int cancel_sel );
+		const std::string &message,
+		const std::vector<std::string> &options,
+		int default_sel,
+		int cancel_sel,
+		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
 
 	void edit_dialog( const std::string &msg_str, std::string &text );
 
