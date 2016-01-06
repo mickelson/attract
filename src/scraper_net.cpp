@@ -108,6 +108,8 @@ bool process_q_simple( FeNetQueue &q,
 				done++;
 			}
 		}
+		else
+			sf::sleep( sf::milliseconds( 10 ) );
 
 		if ( c.uiupdate && ( taskc > 0 ) )
 		{
@@ -460,7 +462,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	//
 	// Process the output queue from our worker threads
 	//
-	while ( !q.input_done() || !q.output_done() )
+	while ( !( q.input_done() && q.output_done() ) )
 	{
 		int id;
 		std::string result;

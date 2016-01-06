@@ -156,11 +156,14 @@ bool FeNetQueue::do_next_task( sf::Http::Response::Status &status,
 		//
 		sf::Lock l( m_mutex );
 		m_out_queue.push( t );
-		m_in_flight--;
 	}
 	else if ( status != sf::Http::Response::Ok )
 		err_req = t.get_req();
 
+	{
+		sf::Lock l( m_mutex );
+		m_in_flight--;
+	}
 	return true;
 }
 
@@ -205,14 +208,18 @@ FeNetWorker::~FeNetWorker()
 
 void FeNetWorker::work_process()
 {
-	while ( !m_queue.input_done() && m_proceed )
+	while ( m_proceed )
 	{
+		if ( m_queue.input_done() && m_queue.output_done() )
+			break;
+
 		sf::Http::Response::Status status;
 		std::string err_req;
 
 		bool completed = m_queue.do_next_task( status, err_req );
 
-		if ( status != sf::Http::Response::Ok )
+		if (( status != sf::Http::Response::Ok )
+			&& ( status != sf::Http::Response::NotFound ))
 		{
 			std::cerr << " ! Error processing request. Status code: "
 				<< status << " (" << err_req << ")" << std::endl;
