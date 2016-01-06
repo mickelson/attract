@@ -370,9 +370,17 @@ bool FeEmulatorEditMenu::on_option_select(
 					return false;
 			}
 
+			FePresent *fep = FePresent::script_get_fep();
+			if ( fep )
+				fep->set_video_play_state( false );
+
 			int list_size( 0 );
 			ctx.fe_settings.build_romlist( emu_name, gen_ui_update, &ctx,
 								list_size );
+
+			if ( fep )
+				fep->set_video_play_state(
+					fep->get_video_toggle() );
 
 			ctx.fe_settings.get_resource( "Wrote $1 entries to Collection/Rom List",
 											as_str(list_size), ctx.help_msg );
@@ -393,8 +401,16 @@ bool FeEmulatorEditMenu::on_option_select(
 		break;
 	case 4: // Scrape Artwork
 		{
+			FePresent *fep = FePresent::script_get_fep();
+			if ( fep )
+				fep->set_video_play_state( false );
+
 			std::string emu_name = m_emulator->get_info( FeEmulatorInfo::Name );
 			ctx.fe_settings.scrape_artwork( emu_name, scrape_ui_update, &ctx, ctx.help_msg );
+
+			if ( fep )
+				fep->set_video_play_state(
+					fep->get_video_toggle() );
 		}
 		break;
 	case 5: // Delete this Emulator

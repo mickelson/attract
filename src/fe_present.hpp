@@ -182,7 +182,6 @@ protected:
 	void set_base_rotation( int );
 	void set_toggle_rotation( int );
 	void set_layout_font( const char * );
-	void set_video_play_state( bool state );
 	void set_preserve_aspect_ratio( bool );
 
 public:
@@ -232,6 +231,9 @@ public:
 
 	// return any custom overlay controls set by the script
 	void get_overlay_custom_controls( FeText *&, FeListBox *& );
+
+	void set_video_play_state( bool state );
+	bool get_video_toggle() { return m_playMovies; };
 
 	//
 	// Script static functions
