@@ -218,6 +218,7 @@ public:
 
 	const sf::Transform &get_transform() const;
 	const sf::Font *get_font() const; // get the current font (used by overlay)
+	const sf::Font *get_default_font() const; // get the default font (used by config overlay)
 
 	float get_layout_scale_x() const;
 	float get_layout_scale_y() const;

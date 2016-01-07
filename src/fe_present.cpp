@@ -1127,6 +1127,11 @@ const sf::Font *FePresent::get_font() const
 	return &(m_currentFont->get_font());
 }
 
+const sf::Font *FePresent::get_default_font() const
+{
+	return &(m_defaultFont.get_font());
+}
+
 void FePresent::toggle_rotate( FeSettings::RotationState r )
 {
 	if ( m_toggleRotation != FeSettings::RotateNone )

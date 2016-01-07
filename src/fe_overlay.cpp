@@ -792,7 +792,7 @@ int FeOverlay::display_config_dialog(
 	int char_size;
 	get_common( size, text_scale, char_size );
 
-	const sf::Font *font = m_fePresent.get_font();
+	const sf::Font *font = m_fePresent.get_default_font();
 	std::vector<sf::Drawable *> draw_list;
 	float slice = size.y / 8;
 
