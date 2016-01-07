@@ -923,22 +923,13 @@ bool FeSettings::get_path(
 		{
 			if ( is_supported_archive( path ) )
 			{
-				std::vector<std::string> zdir;
-				if ( !fe_zip_get_dir( path.c_str(), zdir ) )
-					return false;
-
 				std::string temp = FE_LAYOUT_FILE_BASE;
 				temp += FE_LAYOUT_FILE_EXTENSION;
 
-				for ( std::vector<std::string>::iterator itr=zdir.begin();
-						itr != zdir.end(); ++itr )
-				{
-					if ( temp.compare( (*itr) ) == 0 )
-					{
-						file = temp;
-						break;
-					}
-				}
+				get_archive_filename_with_base(
+				        file,
+				        path,
+				        temp );
 			}
 			else
 			{
@@ -1950,40 +1941,15 @@ bool FeSettings::get_font_file( std::string &fpath,
 
 	if ( is_supported_archive( layout_dir ) )
 	{
-		std::vector<std::string> cl;
-		fe_zip_get_dir( layout_dir.c_str(), cl );
-		for ( std::vector<std::string>::iterator itr=cl.begin();
-			itr!=cl.end(); ++itr )
+		std::string temp;
+		if ( get_archive_filename_with_base( temp,
+			layout_dir,
+			fontname,
+			FE_FONT_EXTENSIONS ) )
 		{
-			// check for font extension
-			int i=0;
-			bool is_font=false;
-			while ( FE_FONT_EXTENSIONS[i] != 0 )
-			{
-				if ( tail_compare( *itr, FE_FONT_EXTENSIONS[i] ) )
-				{
-					is_font = true;
-					break;
-				}
-				i++;
-			}
-
-			if ( !is_font )
-				continue;
-
-			size_t pos = (*itr).find_last_of( "\\/" );
-			if ( pos == std::string::npos )
-				pos = 0;
-			else
-				pos++;
-
-			if ( icompare( (*itr).substr( pos, fontname.size() ),
-					fontname ) == 0 )
-			{
-				fpath = layout_dir;
-				ffile = *itr;
-				return true;
-			}
+			fpath = layout_dir;
+			ffile = temp;
+			return true;
 		}
 	}
 	else if ( !layout_dir.empty() && search_for_file( layout_dir,
@@ -2915,6 +2881,50 @@ bool gather_artwork_filenames(
 	for ( std::vector< std::string >::const_iterator itr = art_paths.begin();
 			itr != art_paths.end(); ++itr )
 	{
+		if ( is_supported_archive( *itr ) )
+		{
+			std::vector < std::string > img_contents;
+			std::vector < std::string > vid_contents;
+
+			gather_archive_filenames_with_base(
+				        img_contents,
+				        vid_contents,
+				        *itr,
+				        target_name + ".",
+					FE_ART_EXTENSIONS );
+
+#ifdef NO_MOVIE
+			vid_contents.clear();
+#else
+			for ( std::vector<std::string>::iterator itn = vids.begin();
+					itn != vids.end(); )
+			{
+				if ( FeMedia::is_supported_media_file( *itn ) )
+					++itn;
+				else
+					itn = vid_contents.erase( itn );
+			}
+#endif
+			if ( !img_contents.empty() || !vid_contents.empty() )
+			{
+				while ( !img_contents.empty() )
+				{
+					images.push_back( (*itr) + "|" + img_contents.back() );
+					img_contents.pop_back();
+				}
+
+				while ( !vid_contents.empty() )
+				{
+					vids.push_back( (*itr) + "|" + vid_contents.back() );
+					vid_contents.pop_back();
+				}
+
+				return true;
+			}
+
+			continue;
+		}
+
 		get_filename_from_base(
 			images,
 			vids,
@@ -3011,7 +3021,7 @@ bool FeSettings::get_best_artwork_file(
 		for ( std::vector< std::string >::iterator itr = temp_list.begin();
 				itr != temp_list.end(); ++itr )
 		{
-			art_paths.push_back( clean_path( (*itr), true ) );
+			art_paths.push_back( clean_path( (*itr) ) );
 			perform_substitution( art_paths.back(), "$LAYOUT", layout_path );
 		}
 	}

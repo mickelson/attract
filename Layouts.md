@@ -705,7 +705,9 @@ Parameters:
 Return Value:
 
    * A string containing the filename of the requested artwork.  If no file
-     is found, an empty string is returned.
+     is found, an empty string is returned.  If the artwork is contained in
+     an archive, then both the archive path and the internal path are returned,
+     separated by a pipe `|` character: "<archive_path>|<content_path>"
 
 
 <a name="get_input_state" />
@@ -1342,7 +1344,8 @@ Properties:
    * `file_name` - [image & artwork only] Get/set the name of the image/video
      file being shown.  Note that if you set this on an artwork or a dynamic
      image object it will get reset the next time the user changes the game
-     selection.
+     selection.  If file_name is contained in an archive, this string should be
+     formatted: "<archive_name>|<filename>"
    * `shader` - Get/set the GLSL shader for this image. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
    * `trigger` - Get/set the transition that triggers updates of this artwork/
@@ -1622,7 +1625,8 @@ instantiated in a script.
 
 Properties:
 
-   * `file_name` - Get/set the audio filename.
+   * `file_name` - Get/set the audio filename.  If file_name is contained in
+     an archive, this string should formatted: "<archive_name>|<filename>"
    * `playing` - Get/set whether the track is currently playing (boolean).
    * `loop` - Get/set whether the track should be looped (boolean).
    * `pitch` - Get/set the audio pitch (float). Default value is 1.

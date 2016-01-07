@@ -364,3 +364,71 @@ char *FeZipStream::getData()
 {
 	return m_data;
 }
+
+void gather_archive_filenames_with_base(
+	std::vector < std::string > &in_list,
+	std::vector < std::string > &out_list,
+	const std::string &archive,
+	const std::string &basename,
+	const char **exts )
+{
+	std::vector<std::string> wl;
+	fe_zip_get_dir( archive.c_str(), wl );
+	for ( std::vector<std::string>::iterator itr=wl.begin();
+		itr!=wl.end(); ++itr )
+	{
+		size_t pos = (*itr).find_last_of( "\\/" );
+		if ( pos == std::string::npos )
+			pos = 0;
+		else
+			pos++;
+
+		if ( icompare( (*itr).substr( pos, basename.size() ),
+				basename ) == 0 )
+		{
+			if ( !exts )
+				in_list.push_back( *itr );
+			else
+			{
+				bool match_ext=false;
+				int i=0;
+				while ( exts[i] != 0 )
+				{
+					if ( tail_compare( *itr, exts[i] ) )
+					{
+						match_ext = true;
+						break;
+					}
+					i++;
+				}
+
+				if ( match_ext )
+					in_list.push_back( *itr );
+				else
+					out_list.push_back( *itr );
+			}
+
+		}
+
+	}
+}
+
+bool get_archive_filename_with_base(
+	std::string &filename,
+	const std::string &archive,
+	const std::string &basename,
+	const char **exts )
+{
+	std::vector < std::string > t1;
+	std::vector < std::string > t2;
+
+	gather_archive_filenames_with_base( t1, t2, archive, basename, exts );
+
+	if ( !t1.empty() )
+	{
+		filename = t1.front();
+		return true;
+	}
+
+	return false;
+}

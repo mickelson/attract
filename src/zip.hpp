@@ -40,6 +40,29 @@ bool fe_zip_get_dir(
         const char *archive,
 	std::vector<std::string> &result );
 
+//
+// Gather files with the specified basename from archive contents
+//
+// if an ext_filter is provided, files matching the ext_filter are returned
+// in "in_list", otherwise they are returned in "out_list"
+// listed extensions are matched
+//
+void gather_archive_filenames_with_base(
+        std::vector < std::string > &in_list,
+        std::vector < std::string > &out_list,
+        const std::string &archive,
+        const std::string &basename,
+        const char **ext_filter=NULL );
+
+// single file version of the above
+// return true if found
+bool get_archive_filename_with_base(
+        std::string &filename,
+        const std::string &archive,
+        const std::string &basename,
+        const char **ext_filter=NULL );
+
+
 extern const char *FE_ARCHIVE_EXT[];
 bool is_supported_archive( const std::string & );
 

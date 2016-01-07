@@ -143,7 +143,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 		}
 #endif
 
-		m_file_name = fn;
+		m_file_name = path + "|" + fn;
 	}
 	else
 	{
@@ -161,7 +161,21 @@ void FeSound::load( const std::string &path, const std::string &fn )
 
 void FeSound::set_file_name( const char *n )
 {
-	load_from_archive( NULL, n );
+	std::string path;
+	std::string filename = n;
+
+	// Test for sound from an archive
+	// format of filename is "<archivename>|<filename>"
+	//
+	size_t pos = filename.find( "|" );
+	if ( pos != std::string::npos )
+	{
+		path = filename.substr( 0, pos );
+		filename = filename.substr( pos+1 );
+	}
+
+
+	load_from_archive( path.c_str(), filename.c_str() );
 }
 
 void FeSound::load_from_archive( const char *a, const char *n )

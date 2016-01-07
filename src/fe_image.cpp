@@ -47,34 +47,22 @@ namespace
 			std::vector<std::string> &vids,
 			std::vector<std::string> &images )
 	{
-		std::vector<std::string> zdir;
-		fe_zip_get_dir( archive_name.c_str(), zdir );
-
-		for ( std::vector<std::string>::iterator itr=zdir.begin();
-				itr!=zdir.end(); ++itr )
-		{
-			if ( (*itr).compare( 0, target_name.size(), target_name ) == 0 )
-			{
-				int i=0;
-				bool is_image=false;
-				while ( FE_ART_EXTENSIONS[i] )
-				{
-					if ( tail_compare( *itr, FE_ART_EXTENSIONS[i] ) )
-					{
-						is_image=true;
-						images.push_back( *itr );
-						break;
-					}
-					i++;
-				}
+		std::vector < std::string > out;
+		gather_archive_filenames_with_base(
+			images,
+			out,
+			archive_name,
+			target_name,
+			FE_ART_EXTENSIONS );
 
 #ifndef NO_MOVIE
-				if ( !is_image && FeMedia::is_supported_media_file( *itr ) )
-					vids.push_back( *itr );
-#endif
-			}
+		for ( std::vector<std::string>::iterator itr=out.begin();
+				itr!=out.end(); ++itr )
+		{
+			if ( FeMedia::is_supported_media_file( *itr ) )
+				vids.push_back( *itr );
 		}
-
+#endif
 		return ( !images.empty() || !vids.empty() );
 	}
 };
@@ -291,7 +279,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 
 	if ( is_supported_archive( path ) )
 	{
-		loaded_name = filename;
+		loaded_name = path + "|" + filename;
 		if ( loaded_name.compare( m_file_name ) == 0 )
 			return true;
 
@@ -352,7 +340,7 @@ bool FeTextureContainer::try_to_load(
 
 		if ( is_supported_archive( path ) )
 		{
-			loaded_name = filename;
+			loaded_name = path + "|" + filename;
 			if ( loaded_name.compare( m_file_name ) == 0 )
 				return true;
 
@@ -361,7 +349,7 @@ bool FeTextureContainer::try_to_load(
 			if (!m_swf->open_from_archive( path, filename ))
 			{
 				std::cout << " ! ERROR loading SWF from archive: "
-					<< path << " (" << loaded_name << ")" << std::endl;
+					<< path << " (" << filename << ")" << std::endl;
 
 				delete m_swf;
 				m_swf = NULL;
@@ -398,17 +386,28 @@ bool FeTextureContainer::try_to_load(
 
 	if ( is_supported_archive( path ) )
 	{
-		loaded_name = filename;
+		loaded_name = path + "|" + filename;
 		if ( loaded_name.compare( m_file_name ) == 0 )
 			return true;
 
 		clear();
 		FeZipStream zs( path );
-		zs.open( filename );
+		if ( !zs.open( filename ) )
+		{
+			// Error opening specified filename.  Try to correct
+			// in case filename is in a subdir of the archive
+			std::string temp;
+			if ( get_archive_filename_with_base(
+					temp, path, filename ) )
+			{
+				zs.open( temp );
+				loaded_name = path + "|" + temp;
+			}
+		}
 
 		if ( m_texture.loadFromStream( zs ) )
 		{
-			m_file_name = filename;
+			m_file_name = loaded_name;
 			return true;
 		}
 	}
@@ -572,7 +571,22 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 
 	for ( itr=vid_list.begin(); itr != vid_list.end(); ++itr )
 	{
-		if ( try_to_load( archive_name, *itr ) )
+		std::string path = archive_name;
+		std::string filename = *itr;
+
+		if ( path.empty() )
+		{
+			// test for artwork in an archive
+			// format of filename is "<archivename>|<filename>"
+			size_t pos = (*itr).find( "|" );
+			if ( pos != std::string::npos )
+			{
+				path = (*itr).substr( 0, pos );
+				filename = (*itr).substr( pos+1 );
+			}
+		}
+
+		if ( try_to_load( path, filename ) )
 		{
 			loaded = true;
 			break;
@@ -589,7 +603,22 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 			for ( itr=image_list.begin();
 				itr != image_list.end(); ++itr )
 			{
-				if ( try_to_load( archive_name, *itr, true ) )
+				std::string path = archive_name;
+				std::string filename = *itr;
+
+				if ( path.empty() )
+				{
+					// test for artwork in an archive
+					// format of filename is "<archivename>|<filename>"
+					size_t pos = (*itr).find( "|" );
+					if ( pos != std::string::npos )
+					{
+						path = (*itr).substr( 0, pos );
+						filename = (*itr).substr( pos+1 );
+					}
+				}
+
+				if ( try_to_load( path, filename, true ) )
 				{
 					loaded = true;
 					break;
@@ -959,7 +988,7 @@ bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, 
 	}
 
 	m_texture.display();
-	return true;
+	return false;
 }
 
 void FeSurfaceTextureContainer::set_smooth( bool s )
@@ -1232,7 +1261,20 @@ const char *FeImage::getFileName() const
 
 void FeImage::setFileName( const char *n )
 {
-	m_tex->load_from_archive( NULL, n );
+	std::string path;
+	std::string filename = n;
+
+	// Test for artwork in an archive
+	// format of filename is "<archivename>|<filename>"
+	//
+	size_t pos = filename.find( "|" );
+	if ( pos != std::string::npos )
+	{
+		path = filename.substr( 0, pos );
+		filename = filename.substr( pos+1 );
+	}
+
+	m_tex->load_from_archive( path.c_str(), filename.c_str() );
 }
 
 void FeImage::loadFromArchive( const char *a, const char *n )
