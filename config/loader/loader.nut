@@ -4,7 +4,6 @@
 local loadmap = [
 	[ ".mll", "mala.nut" ],
 	[ ".lay", "mamewah.nut" ],
-	[ ".xml", "attract_xml.nut" ]
 ];
 
 fe.load_module( "file" );
@@ -19,5 +18,17 @@ foreach ( f in dir.results )
 			::file_to_load<-f;
 			return dofile(fe.loader_dir+m[1]);
 		}
+	}
+}
+
+//
+// Try XML only if the previous stuff didn't work
+//
+foreach ( f in dir.results )
+{
+	if ( f.slice( f.len()-4 ) == ".xml" )
+	{
+		::file_to_load<-f;
+		return dofile(fe.loader_dir+"attract_xml.nut");
 	}
 }
