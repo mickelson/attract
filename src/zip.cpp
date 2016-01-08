@@ -31,9 +31,75 @@ typedef void *(*FE_ZIP_ALLOC_CALLBACK) ( size_t );
 #include "archive.h"
 #include "archive_entry.h"
 #include <cstring>
+#include <SFML/System/Mutex.hpp>
+#include <SFML/System/Lock.hpp>
 
 namespace
 {
+	//
+	// We keep a cache of zip file content results, with the cache
+	// growing up to CONTENT_CACHE_SIZE entries max
+	//
+	const int CONTENT_CACHE_SIZE = 8;
+	std::vector < std::pair < std::string, std::vector < std::string > > > g_ccache;
+	sf::Mutex g_ccache_mutex;
+
+	bool check_content_cache( const std::string &archive,
+			std::vector < std::string > &contents )
+	{
+		sf::Lock l( g_ccache_mutex );
+
+		size_t i=0;
+		for ( i=0; i < g_ccache.size(); i++ )
+		{
+			if ( g_ccache[i].first.compare( archive ) == 0 )
+			{
+				// Cache hit
+				//
+				contents = g_ccache[i].second; // vector copy
+
+				//
+				// Promote hit to the top of the cache
+				//
+				for ( int j=i; j>0; j-- )
+				{
+					g_ccache[j].first.swap( g_ccache[j-1].first );
+					g_ccache[j].second.swap( g_ccache[j-1].second );
+				}
+
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void add_to_content_cache( const std::string &archive,
+			std::vector < std::string > &contents )
+	{
+		sf::Lock l( g_ccache_mutex );
+
+		std::pair< std::string, std::vector< std::string > > temp;
+		temp.first = archive;
+		temp.second = contents; // vector copy
+
+		if ( g_ccache.size() < CONTENT_CACHE_SIZE )
+			g_ccache.push_back(
+				std::pair< std::string, std::vector< std::string > >() );
+
+		g_ccache.back().first.swap( temp.first );
+		g_ccache.back().second.swap( temp.second );
+
+		for ( size_t i=g_ccache.size()-1; i > 0; i-- )
+		{
+			g_ccache[i].first.swap( g_ccache[i-1].first );
+			g_ccache[i].second.swap( g_ccache[i-1].second );
+		}
+
+		//
+		// Result is the new entry at the front of the cache
+		//
+	}
+
 	struct archive *my_archive_init()
 	{
 		struct archive *a = archive_read_new();
@@ -107,6 +173,9 @@ bool fe_zip_get_dir(
 	const char *archive,
 	std::vector<std::string> &result )
 {
+	if ( check_content_cache( archive, result ) )
+		return true;
+
 	struct archive *a = my_archive_init();
 	int r = archive_read_open_filename( a, archive, 8192 );
 
@@ -124,6 +193,8 @@ bool fe_zip_get_dir(
 		result.push_back( archive_entry_pathname( ae ) );
 
 	archive_read_free( a );
+
+	add_to_content_cache( archive, result );
 	return true;
 }
 
