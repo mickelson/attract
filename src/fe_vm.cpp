@@ -95,7 +95,16 @@ namespace
 			{
 				FeZipStream zip( path );
 				if ( !zip.open( filename ) )
-					return false;
+				{
+					// Error opening specified filename.  Try to correct
+					// in case filename is in a subdir of the archive
+					std::string temp;
+					if ( get_archive_filename_with_base(
+							temp, path, filename ) )
+						zip.open( temp );
+					else
+						return false;
+				}
 
 				// in case error reporting is needed
 				path_to_run += " (";
