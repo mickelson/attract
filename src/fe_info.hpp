@@ -289,6 +289,7 @@ public:
 		Steam,
 		Thegamesdb,
 		Scummvm,
+		Listsoftware_tgdb,	// "mess" + thegamesdb.net
 		LAST_INFOSOURCE
 	};
 
@@ -336,6 +337,9 @@ public:
 	// (i.e. "galaga", "c:\beer\galaga.zip")
 	void gather_rom_names( std::vector<std::string> &name_list,
 		std::vector<std::string> &full_path_list ) const;
+
+	bool is_mame() const;
+	bool is_mess() const;
 
 private:
 	std::string vector_to_string( const std::vector< std::string > &vec ) const;

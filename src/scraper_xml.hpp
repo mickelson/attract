@@ -200,11 +200,18 @@ private:
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
 
+	void set_info_val( FeRomInfo::Index i, const std::string &v );
+
 	std::vector<std::string> &m_system_list;
 
-	FeRomInfo m_work;
 	FeGameDBArt m_work_art;
-	std::string m_work_platform;
+	std::string m_title;
+	std::string m_alt_title;
+	std::string m_year;
+	std::string m_category;
+	std::string m_players;
+	std::string m_manufacturer;
+	std::string m_platform;
 
 	FeRomInfo &m_rom;
 	FeGameDBArt *m_art;

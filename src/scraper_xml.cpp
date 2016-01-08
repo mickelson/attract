@@ -678,7 +678,6 @@ FeListSoftwareParser::FeListSoftwareParser( FeImporterContext &ctx )
 void FeListSoftwareParser::clear_parse_state()
 {
 	m_element_open=m_keep_rom=false;
-	m_name.clear();
 	m_description.clear();
 	m_year.clear();
 	m_man.clear();
@@ -699,7 +698,7 @@ void FeListSoftwareParser::start_element(
 		{
 			if ( strcmp( attribute[i], "name" ) == 0 )
 			{
-				m_altname = m_name = attribute[i+1];
+				m_altname = attribute[i+1];
 			}
 			else if ( strcmp( attribute[i], "cloneof" ) == 0 )
 			{
@@ -721,7 +720,7 @@ void FeListSoftwareParser::start_element(
 		for ( int i=0; attribute[i]; i+=2 )
 		{
 			if (( strcmp( attribute[i], "name" ) == 0 )
-						&& ( strcmp( attribute[i+1], "alt_title" ) == 0 ))
+					&& ( strcmp( attribute[i+1], "alt_title" ) == 0 ))
 				found = true;
 			else if ( strcmp( attribute[i], "value" ) == 0 )
 				value = attribute[i+1];
@@ -751,7 +750,7 @@ void FeListSoftwareParser::end_element( const char *element )
 {
 	if ( strcmp( element, "software" ) == 0 )
 	{
-		std::string fuzzyname = get_fuzzy( m_name );
+		std::string fuzzyname = get_fuzzy( m_altname );
 		std::string fuzzydesc = get_fuzzy( m_description );
 
 		//
@@ -772,9 +771,9 @@ void FeListSoftwareParser::end_element( const char *element )
 			itc = m_crc_map.equal_range( crcs.back() );
 			for ( itr = itc.first; itr != itc.second; ++itr )
 			{
+				const std::string &rn = (*itr).second->get_info( FeRomInfo::Romname );
 				int score = 100;
-				std::string itr_fuzz = get_fuzzy(
-					(*itr).second->get_info( FeRomInfo::Romname ) );
+				std::string itr_fuzz = get_fuzzy( rn );
 
 				//
 				// Do additional scoring if there is a name
@@ -786,8 +785,7 @@ void FeListSoftwareParser::end_element( const char *element )
 				{
 					score += 1;
 
-					if ( m_description.compare(
-							(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
+					if ( m_description.compare( rn ) == 0 )
 						score += 10;
 				}
 
@@ -1125,9 +1123,14 @@ void FeGameDBParser::start_element(
 		m_ignore=true;
 	else if ( strcmp( element, "Game" ) == 0 )
 	{
-		m_work.clear();
 		m_work_art.clear();
-		m_work_platform.clear();
+		m_title.clear();
+		m_alt_title.clear();
+		m_year.clear();
+		m_category.clear();
+		m_players.clear();
+		m_manufacturer.clear();
+		m_platform.clear();
 	}
 	else if (( strcmp( element, "ReleaseDate" ) == 0 )
 			|| ( strcmp( element, "genre" ) == 0 )
@@ -1141,9 +1144,7 @@ void FeGameDBParser::start_element(
 		m_element_open=true;
 	}
 	else if ( strcmp( element, "Genres" ) == 0 )
-	{
-		m_work.set_info( FeRomInfo::Category, "" );
-	}
+		m_category.clear();
 	else if ( m_art )
 	{
 		if (( strcmp( element, "baseImgUrl" ) == 0 )
@@ -1203,39 +1204,37 @@ void FeGameDBParser::end_element( const char *element )
 	if ( m_element_open )
 	{
 		if ( strcmp( element, "GameTitle" ) == 0 )
-			m_work.set_info( FeRomInfo::Title, m_current_data );
+			m_title = m_current_data;
 		else if ( strcmp( element, "title" ) == 0 )
 		{
-			if ( m_work.get_info( FeRomInfo::AltTitle ).empty() )
-				m_work.set_info( FeRomInfo::AltTitle, m_current_data );
+			if ( !m_alt_title.empty() )
+				m_alt_title = m_current_data;
 		}
 		else if ( strcmp( element, "ReleaseDate" ) == 0 )
 		{
 			size_t cut = m_current_data.find_last_of( "/" );
 
 			if ( cut != std::string::npos )
-				m_work.set_info( FeRomInfo::Year, m_current_data.substr( cut+1 ) );
+				m_year = m_current_data.substr( cut+1 );
 			else
-				m_work.set_info( FeRomInfo::Year, m_current_data );
+				m_year = m_current_data;
 		}
 		else if ( strcmp( element, "genre" ) == 0 )
 		{
-			std::string cat = m_work.get_info( FeRomInfo::Category );
-			if ( cat.size() == 0 )
-				cat = m_current_data;
+			if ( m_category.empty() )
+				m_category = m_current_data;
 			else
 			{
-				cat += " / ";
-				cat += m_current_data;
+				m_category += " / ";
+				m_category += m_current_data;
 			}
-			m_work.set_info( FeRomInfo::Category, cat );
 		}
 		else if ( strcmp( element, "Players" ) == 0 )
-			m_work.set_info( FeRomInfo::Players, m_current_data );
+			m_players = m_current_data;
 		else if ( strcmp( element, "Publisher" ) == 0 )
-			m_work.set_info( FeRomInfo::Manufacturer, m_current_data );
+			m_manufacturer = m_current_data;
 		else if ( strcmp( element, "Platform" ) == 0 )
-			m_work_platform = m_current_data;
+			m_platform = m_current_data;
 
 		else if ( m_art )
 		{
@@ -1271,12 +1270,12 @@ void FeGameDBParser::end_element( const char *element )
 	if ( strcmp( element, "Game" ) == 0 )
 	{
 		std::string title_str = get_fuzzy( m_rom.get_info( FeRomInfo::Title ) );
-		std::string work_title = get_fuzzy( m_work.get_info(FeRomInfo::Title ) );
+		std::string work_title = get_fuzzy( m_title );
 
 		bool match_plat=false;
 		for ( std::vector<std::string>::iterator itr=m_system_list.begin(); itr!=m_system_list.end(); ++itr )
 		{
-			if ( m_work_platform.compare( *itr ) == 0 )
+			if ( m_platform.compare( *itr ) == 0 )
 			{
 				match_plat=true;
 				break;
@@ -1287,9 +1286,12 @@ void FeGameDBParser::end_element( const char *element )
 		{
 			if ( match_plat )
 			{
-				m_work.set_info( FeRomInfo::Emulator, m_rom.get_info( FeRomInfo::Emulator ) );
-				m_work.set_info( FeRomInfo::Romname, m_rom.get_info( FeRomInfo::Romname ) );
-				m_rom = m_work;
+				set_info_val( FeRomInfo::Title, m_title );
+				set_info_val( FeRomInfo::AltTitle, m_alt_title );
+				set_info_val( FeRomInfo::Year, m_year );
+				set_info_val( FeRomInfo::Category, m_category );
+				set_info_val( FeRomInfo::Players, m_players );
+				set_info_val( FeRomInfo::Manufacturer, m_manufacturer );
 
 				if ( m_art )
 				{
@@ -1307,7 +1309,7 @@ void FeGameDBParser::end_element( const char *element )
 		}
 		else
 		{
-			std::string work_alt = get_fuzzy( m_work.get_info(FeRomInfo::AltTitle ) );
+			std::string work_alt = get_fuzzy( m_alt_title );
 			bool match_alt = ( work_alt.compare( title_str ) == 0 );
 
 			if ( match_alt && !m_work_art.wheel.empty() && m_art->wheel.empty() )
@@ -1326,6 +1328,12 @@ void FeGameDBParser::end_element( const char *element )
 			}
 		}
 	}
+}
+
+void FeGameDBParser::set_info_val( FeRomInfo::Index i, const std::string &v )
+{
+	if ( m_rom.get_info( i ).empty() )
+		m_rom.set_info( i, v );
 }
 
 bool FeGameDBParser::parse( const std::string &data )

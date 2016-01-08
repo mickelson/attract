@@ -822,6 +822,7 @@ const char *FeEmulatorInfo::infoSourceStrings[] =
 	"steam",
 	"thegamesdb.net",
 	"scummvm",
+	"listsoftware+thegamesdb.net",
 	NULL
 };
 
@@ -1147,6 +1148,17 @@ void FeEmulatorInfo::gather_rom_names(
 			}
 		}
 	}
+}
+
+bool FeEmulatorInfo::is_mame() const
+{
+	return ( m_info_source == Listxml );
+}
+
+bool FeEmulatorInfo::is_mess() const
+{
+	return (( m_info_source == Listsoftware )
+		|| ( m_info_source == Listsoftware_tgdb ));
 }
 
 const char *FeScriptConfigurable::indexString = "param";

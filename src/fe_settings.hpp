@@ -199,7 +199,7 @@ private:
 	bool mameps_scraper( FeImporterContext & );
 	bool mamedb_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
-	void apply_xml_import( FeImporterContext & );
+	void apply_xml_import( FeImporterContext &, bool );
 
 
 public:

@@ -40,19 +40,27 @@ extern const char *FE_ROMLIST_SUBDIR;
 
 namespace {
 
+typedef std::map < std::string, FeRomInfo * > ParentMapType;
+
 void build_parent_map(
-	std::map < std::string, FeRomInfo * > &parent_map,
-	FeRomInfoListType &romlist )
+	ParentMapType &parent_map,
+	FeRomInfoListType &romlist,
+	bool prefer_alt_filename )
 {
 	for ( FeRomInfoListType::iterator itr=romlist.begin(); itr!=romlist.end(); ++itr )
 	{
 		if ( (*itr).get_info( FeRomInfo::Cloneof ).empty() )
+		{
 			parent_map[ (*itr).get_info( FeRomInfo::Romname ) ] = &(*itr);
+
+			if (( prefer_alt_filename )
+					&& (!(*itr).get_info( FeRomInfo::AltRomname ).empty() ))
+				parent_map[ (*itr).get_info( FeRomInfo::AltRomname ) ] = &(*itr);
+		}
 	}
 }
 
-bool has_same_name_as_parent( FeRomInfo &rom,
-	std::map < std::string, FeRomInfo * > &parent_map )
+bool has_same_name_as_parent( FeRomInfo &rom, ParentMapType &parent_map )
 {
 	const std::string &cloneof = rom.get_info( FeRomInfo::Cloneof );
 	if ( !cloneof.empty() )
@@ -60,8 +68,8 @@ bool has_same_name_as_parent( FeRomInfo &rom,
 		std::map<std::string, FeRomInfo * >::iterator itm = parent_map.find( cloneof );
 		if ( itm != parent_map.end() )
 		{
-			std::string clone_fuzz = get_fuzzy( rom.get_info( FeRomInfo::Title ) );
-			std::string parent_fuzz = get_fuzzy( (*itm).second->get_info( FeRomInfo::Title ) );
+			std::string clone_fuzz = get_fuzzy( name_with_brackets_stripped( rom.get_info( FeRomInfo::Title ) ) );
+			std::string parent_fuzz = get_fuzzy( name_with_brackets_stripped( (*itm).second->get_info( FeRomInfo::Title ) ) );
 
 			if ( clone_fuzz.compare( parent_fuzz ) == 0 )
 				return true;
@@ -126,15 +134,14 @@ bool process_q_simple( FeNetQueue &q,
 bool FeSettings::mameps_scraper( FeImporterContext &c )
 {
 #ifndef NO_NET
-	if (( c.emulator.get_info_source() != FeEmulatorInfo::Listxml )
-				|| ( !m_scrape_vids ))
+	if ( !c.emulator.is_mame() || !m_scrape_vids )
 		return true;
 
 	//
 	// Build a map for looking up parents
 	//
-	std::map < std::string, FeRomInfo * > parent_map;
-	build_parent_map( parent_map, c.romlist );
+	ParentMapType parent_map;
+	build_parent_map( parent_map, c.romlist, false );
 
 	const char *MAMEPS = "http://www.progettosnaps.net";
 	const char *REQ = "/videosnaps/mp4/";
@@ -175,15 +182,14 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 bool FeSettings::mamedb_scraper( FeImporterContext &c )
 {
 #ifndef NO_NET
-	if (( c.emulator.get_info_source() != FeEmulatorInfo::Listxml )
-				|| ( !m_scrape_snaps && !m_scrape_marquees ))
+	if ( !c.emulator.is_mame() || ( !m_scrape_snaps && !m_scrape_marquees ))
 		return true;
 
 	//
 	// Build a map for looking up parents
 	//
-	std::map < std::string, FeRomInfo * > parent_map;
-	build_parent_map( parent_map, c.romlist );
+	ParentMapType parent_map;
+	build_parent_map( parent_map, c.romlist, false );
 
 	const char *MAMEDB = "http://mamedb.com";
 
@@ -394,11 +400,13 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		}
 	}
 
+	bool prefer_alt_filename = c.emulator.is_mess();
+
 	//
 	// Build a map for looking up parents
 	//
-	std::map < std::string, FeRomInfo * > parent_map;
-	build_parent_map( parent_map, c.romlist );
+	ParentMapType parent_map;
+	build_parent_map( parent_map, c.romlist, prefer_alt_filename );
 
 	//
 	// Build a worklist of the roms where we need to lookup
@@ -479,8 +487,12 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 					// find second last forward slash in filename
 					// we assume that there will always be at least two
 					size_t pos = result.find_last_of( "\\/" );
-					pos = result.find_last_of( "\\/", pos-1 );
-					aux = result.substr( pos );
+					if ( pos != std::string::npos )
+					{
+						pos = result.find_last_of( "\\/", pos-1 );
+						if ( pos != std::string::npos )
+							aux = result.substr( pos );
+					}
 				}
 
 				if ( id == FeNetTask::FileTask ) // we don't increment if id = FeNetTask::SpecialFileTask
@@ -499,11 +511,18 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 					get_url_components( my_art.base,
 						hostn, base_req );
 
-					FeRomInfo &rom = *(worklist[id]);
+					const FeRomInfo &rom = *(worklist[id]);
 
 					if ( m_scrape_flyers && ( !my_art.flyer.empty() ) && (!has_artwork( rom, "flyer" )) )
 					{
-						std::string fname = base_path + FLYER + rom.get_info( FeRomInfo::Romname );
+						std::string fname = base_path + FLYER;
+
+						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
+						if ( prefer_alt_filename && !altname.empty() )
+							fname += rom.get_info( FeRomInfo::AltRomname );
+						else
+							fname += rom.get_info( FeRomInfo::Romname );
+
 						confirm_directory( base_path, FLYER );
 						q.add_file_task( hostn, base_req + my_art.flyer, fname );
 					}
@@ -512,7 +531,14 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_wheels && ( !my_art.wheel.empty() ) && (!has_artwork( rom, "wheel" )) )
 					{
-						std::string fname = base_path + WHEEL + rom.get_info( FeRomInfo::Romname );
+						std::string fname = base_path + WHEEL;
+
+						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
+						if ( prefer_alt_filename && !altname.empty() )
+							fname += rom.get_info( FeRomInfo::AltRomname );
+						else
+							fname += rom.get_info( FeRomInfo::Romname );
+
 						confirm_directory( base_path, WHEEL );
 						q.add_file_task( hostn, base_req + my_art.wheel, fname );
 					}
@@ -521,7 +547,14 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_marquees && (!my_art.marquee.empty() ) && (!has_artwork( rom, "marquee" )) )
 					{
-						std::string fname = base_path + MARQUEE + rom.get_info( FeRomInfo::Romname );
+						std::string fname = base_path + MARQUEE;
+
+						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
+						if ( prefer_alt_filename && !altname.empty() )
+							fname += rom.get_info( FeRomInfo::AltRomname );
+						else
+							fname += rom.get_info( FeRomInfo::Romname );
+
 						confirm_directory( base_path, MARQUEE );
 						q.add_file_task( hostn, base_req + my_art.marquee, fname );
 					}
@@ -530,7 +563,14 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_snaps && (!my_art.snap.empty() ) && (!has_image_artwork( rom, "snap" )) )
 					{
-						std::string fname = base_path + SNAP + rom.get_info( FeRomInfo::Romname );
+						std::string fname = base_path + SNAP;
+
+						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
+						if ( prefer_alt_filename && !altname.empty() )
+							fname += rom.get_info( FeRomInfo::AltRomname );
+						else
+							fname += rom.get_info( FeRomInfo::Romname );
+
 						confirm_directory( base_path, SNAP );
 						q.add_file_task( hostn, base_req + my_art.snap, fname );
 					}
@@ -539,9 +579,26 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 					if ( m_scrape_fanart && !my_art.fanart.empty() )
 					{
-						std::string fname_base = base_path + FANART + rom.get_info( FeRomInfo::Romname ) + "/";
+						std::string fname_base = base_path + FANART;
+
 						confirm_directory( base_path, "" );
-						confirm_directory( base_path + FANART, rom.get_info( FeRomInfo::Romname ) );
+
+						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
+						if ( prefer_alt_filename && !altname.empty() )
+						{
+							fname_base += rom.get_info( FeRomInfo::AltRomname );
+							confirm_directory( base_path + FANART,
+								rom.get_info( FeRomInfo::AltRomname ) );
+						}
+						else
+						{
+							fname_base += rom.get_info( FeRomInfo::Romname );
+							confirm_directory( base_path + FANART,
+								rom.get_info( FeRomInfo::Romname ) );
+						}
+
+						fname_base += "/";
+
 						bool done_first=false; // we only count the first fanart against our percentage completed...
 
 						for ( std::vector<std::string>::iterator itr = my_art.fanart.begin();
