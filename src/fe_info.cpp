@@ -774,7 +774,7 @@ void FeDisplayInfo::save( std::ofstream &f ) const
 	using std::left;
 	using std::endl;
 
-	f << "list" << '\t' << get_info( Name ) << endl;
+	f << "display" << '\t' << get_info( Name ) << endl;
 
 	if ( !get_info( Layout ).empty() )
 		f << '\t' << setw(20) << left
