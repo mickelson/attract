@@ -1728,12 +1728,20 @@ void FePluginSelMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_resource( "Enabled", enabled_str );
 	ctx.fe_settings.get_resource( "Disabled", disabled_str );
 
+
 	for ( std::vector<std::string>::iterator itr=plugins.begin();
 					itr != plugins.end(); ++itr )
+	{
+		std::string file_path, file_name, gen_help( "_help_plugin_sel" );
+		ctx.fe_settings.get_plugin_full_path( *itr, file_path, file_name );
+		FeVM::script_get_config_options( gen_help, file_path, file_name );
+
 		ctx.add_opt( Opt::MENU,
-						(*itr),
-						ctx.fe_settings.get_plugin_enabled( *itr ) ? enabled_str : disabled_str,
-						"_help_plugin_sel" );
+			(*itr),
+			ctx.fe_settings.get_plugin_enabled( *itr )
+			? enabled_str : disabled_str,
+			gen_help );
+	}
 
 	FeBaseConfigMenu::get_options( ctx );
 }

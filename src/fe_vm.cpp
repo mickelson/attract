@@ -1438,6 +1438,26 @@ void FeVM::script_run_config_function(
 }
 
 void FeVM::script_get_config_options(
+		std::string &gen_help,
+		const std::string &script_path,
+		const std::string &script_file )
+{
+	if ( !script_path.empty() )
+	{
+		FeScriptConfigurable ignored;
+		FeConfigVM config_vm( ignored, script_path, script_file );
+
+		Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
+		if ( !uConfig.IsNull() )
+		{
+			fe_get_attribute_string(
+				config_vm.get_vm(),
+				uConfig.GetObject(), "", "help", gen_help );
+		}
+	}
+}
+
+void FeVM::script_get_config_options(
 		FeConfigContext &ctx,
 		std::string &gen_help,
 		FeScriptConfigurable &configurable,

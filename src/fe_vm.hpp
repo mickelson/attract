@@ -151,6 +151,12 @@ public:
 			const std::string &script_path,
 			const std::string &script_file );
 
+	// Simply get the general help message for the specified script:
+	static void script_get_config_options(
+			std::string &gen_help,
+			const std::string &script_path,
+			const std::string &script_file );
+
 	static void script_run_config_function(
 			const FeScriptConfigurable &configurable,
 			const std::string &script_path,
