@@ -213,6 +213,8 @@ public:
 		Name=0,
 		Layout,
 		Romlist,
+		InCycle,
+		InMenu,
 		LAST_INDEX
 	};
 	static const char *indexStrings[];
@@ -247,6 +249,13 @@ public:
 	void set_rom_index( int filter_index, int rom_index );
 
 	void save( std::ofstream & ) const;
+
+	const std::string &get_name() const { return m_info[Name]; };
+	const std::string &get_layout() const { return m_info[Layout]; };
+	const std::string &get_romlist_name() const { return m_info[Romlist]; };
+
+	bool show_in_cycle() const;
+	bool show_in_menu() const;
 
 private:
 	std::string m_info[LAST_INDEX];

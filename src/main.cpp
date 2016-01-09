@@ -415,9 +415,11 @@ int main(int argc, char *argv[])
 
 				case FeInputMap::DisplaysMenu:
 					{
-						std::vector<std::string> names_list;
-						feSettings.get_display_names( names_list );
+						std::vector<std::string> disp_names;
+						std::vector<int> disp_indices;
+						int current_idx;
 
+						feSettings.get_display_menu( disp_names, disp_indices, current_idx );
 						std::string title;
 						feSettings.get_resource( "Displays", title );
 
@@ -429,30 +431,33 @@ int main(int argc, char *argv[])
 							//
 							std::string exit_str;
 							feSettings.get_resource( "Exit Attract-Mode", exit_str );
-							names_list.push_back( exit_str );
-							exit_opt = names_list.size() - 1;
+							disp_names.push_back( exit_str );
+							exit_opt = disp_names.size() - 1;
 						}
 
-						int display_index = feOverlay.common_list_dialog(
-										title,
-										names_list,
-										feSettings.get_current_display_index(),
-										-1,
-										FeInputMap::DisplaysMenu );
+						if ( !disp_names.empty() )
+						{
+							int sel_idx = feOverlay.common_list_dialog(
+								title,
+								disp_names,
+								current_idx,
+								-1,
+								FeInputMap::DisplaysMenu );
 
-						if ( display_index == exit_opt )
-						{
-							exit_selected = true;
-							feSettings.exit_command();
+							if ( sel_idx == exit_opt )
+							{
+								exit_selected = true;
+								feSettings.exit_command();
+							}
+							else if ( sel_idx >= 0 )
+							{
+								if ( feSettings.set_display( disp_indices[sel_idx] ) )
+									feVM.load_layout();
+								else
+									feVM.update_to_new_list( 0, true );
+							}
+							redraw=true;
 						}
-						else if ( display_index >= 0 )
-						{
-							if ( feSettings.set_display( display_index ) )
-								feVM.load_layout();
-							else
-								feVM.update_to_new_list( 0, true );
-						}
-						redraw=true;
 					}
 					break;
 

@@ -557,6 +557,8 @@ const char *FeDisplayInfo::indexStrings[] =
 	"name",
 	"layout",
 	"romlist",
+	"in_cycle",
+	"in_menu",
 	NULL
 };
 
@@ -574,6 +576,8 @@ FeDisplayInfo::FeDisplayInfo( const std::string &n )
 	m_global_filter( "" )
 {
 	m_info[ Name ] = n;
+	m_info[ InCycle ] = "yes";
+	m_info[ InMenu ] = "yes";
 }
 
 const std::string &FeDisplayInfo::get_info( int i ) const
@@ -622,6 +626,10 @@ int FeDisplayInfo::process_setting( const std::string &setting,
 		m_info[ Layout ] = value;
 	else if ( setting.compare( indexStrings[Romlist] ) == 0 ) // romlist
 		m_info[ Romlist ] = value;
+	else if ( setting.compare( indexStrings[InCycle] ) == 0 ) // in_cycle
+		m_info[ InCycle ] = value;
+	else if ( setting.compare( indexStrings[InMenu] ) == 0 ) // in_menu
+		m_info[ InMenu ] = value;
 	else if ( setting.compare( otherStrings[0] ) == 0 ) // filter
 	{
 		size_t pos=0;
@@ -776,12 +784,28 @@ void FeDisplayInfo::save( std::ofstream &f ) const
 		f << '\t' << setw(20) << left
 			<< indexStrings[Romlist] << ' ' << get_info( Romlist ) << endl;
 
+	f << '\t' << setw(20) << left
+		<< indexStrings[InCycle] << ' ' << get_info( InCycle ) << endl;
+
+	f << '\t' << setw(20) << left
+		<< indexStrings[InMenu] << ' ' << get_info( InMenu ) << endl;
+
 	if ( m_global_filter.get_rule_count() > 0 )
 		m_global_filter.save( f, otherStrings[1] );
 
 	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 		(*itr).save( f, otherStrings[0] );
+}
+
+bool FeDisplayInfo::show_in_cycle() const
+{
+	return config_str_to_bool( m_info[InCycle] );
+}
+
+bool FeDisplayInfo::show_in_menu() const
+{
+	return config_str_to_bool( m_info[InMenu] );
 }
 
 const char *FeEmulatorInfo::indexStrings[] =

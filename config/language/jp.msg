@@ -323,12 +323,16 @@ Intro;Intro
 Play Sound;Play Sound
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Show in Cycle;Show in Cycle
+Show in Menu;Show in Menu
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)
 _help_control_custom6;Set the "Custom6" control(s)
+_help_display_in_cycle;Include this display in the "Previous Display"/"Next Display" cycle?
+_help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_input_action;

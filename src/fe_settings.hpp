@@ -138,6 +138,8 @@ private:
 	std::vector<FePlugInfo> m_plugins;
 	std::vector<FeLayoutInfo> m_layout_params;
 	std::vector<FeRomInfo *> m_current_search;
+	std::vector<int> m_display_cycle; // display indices to show in cycle
+	std::vector<int> m_display_menu; // display indices to show in menu
 	FeRomList m_rl;
 
 	FeInputMap m_inputmap;
@@ -232,6 +234,7 @@ public:
 	// returns true if the display change results in a new layout, false otherwise
 	//
 	bool set_display( int index );
+
 	int get_current_display_index() const;
 	int get_display_index_from_name( const std::string &name ) const;
 	int displays_count() const;
@@ -400,7 +403,9 @@ public:
 	bool get_info_bool( int index ) const;
 	bool set_info( int index, const std::string & );
 
-	void get_display_names( std::vector<std::string> &d ) const;
+	void get_display_menu( std::vector<std::string> &names,
+		std::vector<int> &indices,
+		int &current_idx ) const;
 	FeDisplayInfo *get_display( int index );
 	FeDisplayInfo *create_display( const std::string &n );
 	void delete_display( int index );

@@ -163,6 +163,21 @@ bool internal_resolve_config_file(
 	return false;
 }
 
+int find_idx_in_vec( int idx, const std::vector<int> &vec )
+{
+	if ( vec.empty() )
+		return 0;
+
+	int i=0;
+	for ( i=0; i < vec.size() - 1; i++ )
+	{
+		if ( idx <= vec[i] )
+			break;
+	}
+
+	return i;
+}
+
 FeLanguage::FeLanguage( const std::string &l )
 	: language( l )
 {
@@ -539,6 +554,24 @@ void FeSettings::init_display()
 				stat_path,
 				m_displays[m_current_display] ) == false )
 		std::cerr << "Error opening romlist: " << romlist_name << std::endl;
+
+	//
+	// Construct our display index views here, for lack of a better spot
+	//
+	// Do this here so that index views are rebuilt on a forced reset of
+	// the display (which happens when settings get changed for example)
+	//
+	m_display_cycle.clear();
+	m_display_menu.clear();
+
+	for ( int i=0; i<m_displays.size(); i++ )
+	{
+		if ( m_displays[i].show_in_cycle() )
+			m_display_cycle.push_back( i );
+
+		if ( m_displays[i].show_in_menu() )
+			m_display_menu.push_back( i );
+	}
 }
 
 void FeSettings::save_state()
@@ -1109,10 +1142,13 @@ bool FeSettings::set_display( int index )
 	std::string old_path, old_file;
 	get_path( Layout, old_path, old_file );
 
+	//
+	// Keep it in bounds
+	//
 	if ( index >= (int)m_displays.size() )
-		m_current_display = 0;
+		m_current_display = m_displays.size()-1;
 	else if ( index < 0 )
-		m_current_display = m_displays.size() - 1;
+		m_current_display = 0;
 	else
 		m_current_display = index;
 
@@ -1129,7 +1165,15 @@ bool FeSettings::set_display( int index )
 // return true if layout needs to be reloaded as a result
 bool FeSettings::navigate_display( int step, bool wrap_mode )
 {
-	bool retval = set_display( m_current_display + step );
+	int i = find_idx_in_vec( m_current_display, m_display_cycle );
+	i += step;
+
+	if ( i >= (int)m_display_cycle.size() )
+		i = 0;
+	else if ( i < 0 )
+		i = m_display_cycle.size()-1;
+
+	bool retval = set_display( m_display_cycle[i] );
 
 	if ( wrap_mode )
 	{
@@ -2028,14 +2072,20 @@ int FeSettings::get_screen_saver_timeout() const
 	return m_ssaver_time;
 }
 
-void FeSettings::get_display_names( std::vector<std::string> &list ) const
+void FeSettings::get_display_menu(
+	std::vector<std::string> &names,
+	std::vector<int> &indices,
+	int &current_index ) const
 {
-	list.clear();
-	list.reserve( m_displays.size() );
+	names.clear();
+	indices = m_display_menu;
 
-	for ( std::vector<FeDisplayInfo>::const_iterator itr=m_displays.begin();
-			itr < m_displays.end(); ++itr )
-		list.push_back( (*itr).get_info( FeDisplayInfo::Name ) );
+	for ( int i=0; i<indices.size(); i++ )
+		names.push_back(
+			m_displays[indices[i]].get_info( FeDisplayInfo::Name ) );
+
+	int temp = find_idx_in_vec( m_current_display, m_display_menu );
+	current_index = ( temp < 0 ) ? 0 : temp;
 }
 
 const std::string FeSettings::get_info( int index ) const

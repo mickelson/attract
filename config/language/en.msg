@@ -42,7 +42,7 @@ _help_control_replay_last_game;Set the control(s) that relaunch the last game pl
 _help_control_screen_saver;Set the control(s) that launch screen saver mode
 _help_control_screenshot;Set the control(s) that take a screenshot of the frontend
 _help_control_select;Set the control(s) that launch the current selection
-_help_control_toggle_flip;Set the control(s) that toggle whether the display should be rotated 100 degrees
+_help_control_toggle_flip;Set the control(s) that toggle whether the display should be rotated 180 degrees
 _help_control_toggle_layout;Set the control(s) that toggle the layout script to use (It depends on the layout you are using whether this does anything)
 _help_control_toggle_movie;Set the control(s) that toggle whether or not videos should be played
 _help_control_toggle_mute;Set the control(s) that mute/unmute frontend sound
@@ -56,6 +56,8 @@ _help_display_add_filter;Add a filter to this display's filter set
 _help_display_delete;Delete this display
 _help_display_filter;Configure this filter from the display's filter set
 _help_display_global_filter;Configure global filter rules that are applied to every entry in this display's collection/rom list
+_help_display_in_cycle;Include this display in the "Previous Display"/"Next Display" cycle?
+_help_display_in_menu;Include this display in the "Displays Menu"?
 _help_display_layout;The layout to use for this display
 _help_display_layout_options;Configure any layout-specific options
 _help_display_name;The title for this display

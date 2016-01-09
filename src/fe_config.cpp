@@ -890,6 +890,21 @@ void FeDisplayEditMenu::get_options( FeConfigContext &ctx )
 		ctx.fe_settings.get_romlists_list( romlists );
 		ctx.back_opt().append_vlist( romlists );
 
+		std::vector<std::string> bool_opts( 2 );
+		ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
+		ctx.fe_settings.get_resource( "No", bool_opts[1] );
+
+		ctx.add_optl( Opt::LIST, "Show in Cycle",
+			m_display->show_in_cycle() ? bool_opts[0] : bool_opts[1],
+			"_help_display_in_cycle" );
+
+		ctx.back_opt().append_vlist( bool_opts );
+
+		ctx.add_optl( Opt::LIST, "Show in Menu",
+			m_display->show_in_menu() ? bool_opts[0] : bool_opts[1],
+			"_help_display_in_menu" );
+		ctx.back_opt().append_vlist( bool_opts );
+
 		FeFilter *f = m_display->get_filter( -1 );
 
 		std::string filter_desc;
@@ -988,7 +1003,17 @@ bool FeDisplayEditMenu::save( FeConfigContext &ctx )
 	if ( m_display )
 	{
 		for ( int i=0; i< FeDisplayInfo::LAST_INDEX; i++ )
-			m_display->set_info( i, ctx.opt_list[i].get_value() );
+		{
+			if (( i == FeDisplayInfo::InCycle )
+				|| ( i == FeDisplayInfo::InMenu ))
+			{
+				m_display->set_info( i,
+					ctx.opt_list[i].get_vindex() == 0
+						? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			}
+			else
+				m_display->set_info( i, ctx.opt_list[i].get_value() );
+		}
 
 		m_display->set_current_layout_file( "" );
 	}
@@ -1006,16 +1031,13 @@ void FeDisplaySelMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::SelectionList, "Configure / Displays" );
 
-	std::vector<std::string> name_list;
-	ctx.fe_settings.get_display_names( name_list );
-
-	int i=0;
-	for ( std::vector<std::string>::iterator itr=name_list.begin();
-			itr < name_list.end(); ++itr )
+	int display_count = ctx.fe_settings.displays_count();
+	for ( int i=0; i< display_count; i++ )
 	{
-		ctx.add_opt( Opt::MENU, (*itr), "", "_help_display_sel" );
+		ctx.add_opt( Opt::MENU,
+			ctx.fe_settings.get_display( i )->get_info( FeDisplayInfo::Name ),
+			"", "_help_display_sel" );
 		ctx.back_opt().opaque = i;
-		i++;
 	}
 
 	ctx.add_optl( Opt::MENU, "Add New Display", "", "_help_display_add" );
