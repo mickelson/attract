@@ -68,8 +68,8 @@ bool has_same_name_as_parent( FeRomInfo &rom, ParentMapType &parent_map )
 		std::map<std::string, FeRomInfo * >::iterator itm = parent_map.find( cloneof );
 		if ( itm != parent_map.end() )
 		{
-			std::string clone_fuzz = get_fuzzy( name_with_brackets_stripped( rom.get_info( FeRomInfo::Title ) ) );
-			std::string parent_fuzz = get_fuzzy( name_with_brackets_stripped( (*itm).second->get_info( FeRomInfo::Title ) ) );
+			std::string clone_fuzz = get_fuzzy( rom.get_info( FeRomInfo::Title ) );
+			std::string parent_fuzz = get_fuzzy( (*itm).second->get_info( FeRomInfo::Title ) );
 
 			if ( clone_fuzz.compare( parent_fuzz ) == 0 )
 				return true;

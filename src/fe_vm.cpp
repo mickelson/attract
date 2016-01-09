@@ -737,6 +737,14 @@ bool FeVM::on_new_layout()
 		.Overload<void (FeShader::*)(const char *, FeImage *)>( _SC("set_texture_param"), &FeShader::set_texture_param )
 	);
 
+	fe.Bind( _SC("Display"), Class <FeDisplayInfo, NoConstructor>()
+		.Prop( _SC("name"), &FeDisplayInfo::get_name )
+		.Prop( _SC("layout"), &FeDisplayInfo::get_layout )
+		.Prop( _SC("romlist"), &FeDisplayInfo::get_romlist_name )
+		.Prop( _SC("in_cycle"), &FeDisplayInfo::show_in_cycle )
+		.Prop( _SC("in_menu"), &FeDisplayInfo::show_in_menu )
+	);
+
 	fe.Bind( _SC("Filter"), Class <FeFilter, NoConstructor>()
 		.Prop( _SC("name"), &FeFilter::get_name )
 		.Prop( _SC("index"), &FeFilter::get_rom_index )
@@ -810,11 +818,29 @@ bool FeVM::on_new_layout()
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 	fe.Func<Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
+	fe.Func<void (*)(int)>(_SC("set_display"), &FeVM::cb_set_display);
 
 	//
 	// Define variables that get exposed to Squirrel
 	//
+
+	//
+	// fe.displays
+	//
+	Table dtab;  // hack Table to Array because creating the Array straight up doesn't work
+	fe.Bind( _SC("displays"), dtab );
+	Array darray( dtab.GetObject() );
+
+	int display_count = m_feSettings->displays_count();
+	for ( i=0; i< display_count; i++ )
+		darray.SetInstance( darray.GetSize(),
+			m_feSettings->get_display( i ) );
+
+	//
+	// fe.filters
+	//
 	FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
+
 
 	Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("filters"), ftab );
@@ -826,6 +852,9 @@ bool FeVM::on_new_layout()
 			farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
 	}
 
+	//
+	// fe.monitors
+	//
 	Table mtab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("monitors"), mtab );
 	Array marray( mtab.GetObject() );
@@ -2015,6 +2044,16 @@ void FeVM::cb_signal( const char *sig )
 		break;
 
 	}
+}
+
+void FeVM::cb_set_display( int idx )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+	FeSettings *fes = fev->m_feSettings;
+
+	fes->set_display( idx );
+	fev->m_posted_commands.push( FeInputMap::Reload );
 }
 
 void FeVM::init_with_default_layout()

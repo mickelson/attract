@@ -47,8 +47,6 @@ namespace
 	bool check_content_cache( const std::string &archive,
 			std::vector < std::string > &contents )
 	{
-		sf::Lock l( g_ccache_mutex );
-
 		size_t i=0;
 		for ( i=0; i < g_ccache.size(); i++ )
 		{
@@ -76,8 +74,6 @@ namespace
 	void add_to_content_cache( const std::string &archive,
 			std::vector < std::string > &contents )
 	{
-		sf::Lock l( g_ccache_mutex );
-
 		std::pair< std::string, std::vector< std::string > > temp;
 		temp.first = archive;
 		temp.second = contents; // vector copy
@@ -173,6 +169,7 @@ bool fe_zip_get_dir(
 	const char *archive,
 	std::vector<std::string> &result )
 {
+	sf::Lock l( g_ccache_mutex );
 	if ( check_content_cache( archive, result ) )
 		return true;
 

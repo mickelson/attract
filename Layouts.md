@@ -27,6 +27,7 @@ Contents
       * [`fe.get_input_state()`](#get_input_state)
       * [`fe.get_input_pos()`](#get_input_pos)
       * [`fe.signal()`](#signal)
+      * [`fe.set_display()`](#set_display)
       * [`fe.add_signal_handler()`](#add_signal_handler)
       * [`fe.remove_signal_handler()`](#remove_signal_handler)
       * [`fe.do_nut()`](#do_nut)
@@ -41,6 +42,7 @@ Contents
       * [`fe.list`](#list)
       * [`fe.overlay`](#overlay)
       * [`fe.obj`](#obj)
+      * [`fe.displays`](#displays)
       * [`fe.filters`](#filters)
       * [`fe.monitors`](#monitors)
       * [`fe.script_dir`](#script_dir)
@@ -50,6 +52,7 @@ Contents
       * [`fe.LayoutGlobals`](#LayoutGlobals)
       * [`fe.CurrentList`](#CurrentList)
       * [`fe.Overlay`](#Overlay)
+      * [`fe.Display`](#Filter)
       * [`fe.Filter`](#Filter)
       * [`fe.Monitor`](#Monitor)
       * [`fe.Image`](#Image)
@@ -811,6 +814,27 @@ Return Value:
    * None.
 
 
+<a name="set_display" />
+#### `fe.set_display()` ####
+
+    fe.set_display( index )
+
+Change to the display at the specified index.  This should align with the
+index of the fe.displays array that contains the intended display.
+
+NOTE that changing the display causes all layout and plugin scripts to reload.
+
+Parameters:
+
+   * index - The index of the display to change to.  This should correspond to
+   the index in the fe.displays array of the intended new display.
+
+
+Return Value:
+
+   * None.
+
+
 <a name="add_signal_handler" />
 #### `fe.add_signal_handler()` ####
 
@@ -1043,6 +1067,13 @@ functionality may be accessed.
 `fe.Text` and `fe.ListBox` instances.
 
 
+<a name="displays" />
+#### `fe.displays` ####
+
+`fe.displays` contains information on the available displays.  It is an array
+of `fe.Display` instances.
+
+
 <a name="filters" />
 #### `fe.filters` ####
 
@@ -1184,6 +1215,23 @@ Member Functions:
    * `splash_message( msg, second_msg="" )` - immediately provide text feedback
      to the user.  This could be useful during computationally-intensive
      operations.
+
+
+<a name="Display" />
+#### `fe.Display` ####
+
+This class is a container for information about the available displays.
+Instances of this class are contained in the `fe.displays` array.  This class
+cannot otherwise be instantiated in a script.
+
+Properties:
+
+   * `name` - Get the name of the display.
+   * `layout` - Get the layout used by this display.
+   * `romlist` - Get the romlist used by this display.
+   * `in_cycle` - Get whether the display is shown in the prev display/next
+     display cycle.
+   * `in_menu` - Get whether the display is shown in the "Displays Menu"
 
 
 <a name="Filter" />

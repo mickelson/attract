@@ -165,11 +165,8 @@ bool internal_resolve_config_file(
 
 int find_idx_in_vec( int idx, const std::vector<int> &vec )
 {
-	if ( vec.empty() )
-		return 0;
-
 	int i=0;
-	for ( i=0; i < vec.size() - 1; i++ )
+	for ( i=0; i < (int)vec.size() - 1; i++ )
 	{
 		if ( idx <= vec[i] )
 			break;
@@ -564,7 +561,7 @@ void FeSettings::init_display()
 	m_display_cycle.clear();
 	m_display_menu.clear();
 
-	for ( int i=0; i<m_displays.size(); i++ )
+	for ( unsigned int i=0; i<m_displays.size(); i++ )
 	{
 		if ( m_displays[i].show_in_cycle() )
 			m_display_cycle.push_back( i );
@@ -2080,7 +2077,7 @@ void FeSettings::get_display_menu(
 	names.clear();
 	indices = m_display_menu;
 
-	for ( int i=0; i<indices.size(); i++ )
+	for ( unsigned int i=0; i<indices.size(); i++ )
 		names.push_back(
 			m_displays[indices[i]].get_info( FeDisplayInfo::Name ) );
 

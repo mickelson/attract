@@ -200,7 +200,7 @@ std::string as_str( float f, int decimals=3 );
 int as_int( const std::string &s );
 
 //
-// Return config string (i.e. "ues", "true", "no", "false" as bool
+// Return config string (i.e. "yes", "true", "no", "false" as bool
 //
 bool config_str_to_bool( const std::string &s );
 
