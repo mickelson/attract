@@ -23,7 +23,6 @@
 
 #include "fe_window.hpp"
 #include "fe_settings.hpp"
-#include "fe_icon.hpp"
 #include "fe_util.hpp"
 
 #ifdef SFML_SYSTEM_WINDOWS
@@ -152,11 +151,6 @@ void FeWindow::onCreate()
 		setPosition( sf::Vector2i( x, y ) );
 		setSize( sf::Vector2u( width, height ) );
 	}
-#endif
-
-#ifndef SFML_SYSTEM_MACOS
-	// We don't set the icon on OS X, it looks like crap (too low res).
-	setIcon( fe_icon.width, fe_icon.height, fe_icon.pixel_data );
 #endif
 
 	setVerticalSyncEnabled(true);

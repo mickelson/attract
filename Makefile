@@ -103,7 +103,6 @@ _DEP =\
 	fe_text.hpp \
 	fe_listbox.hpp \
 	fe_vm.hpp \
-	fe_icon.hpp \
 	zip.hpp
 
 _OBJ =\
