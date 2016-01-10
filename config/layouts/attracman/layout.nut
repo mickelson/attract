@@ -53,9 +53,15 @@ class UserConfig </ help="Playable layout based on Pac-Man arcade game by Toru I
 
 	</ label="Fright Sound", help="Sound file to play (repeatedly) when monsters are frightened", order=14 />
 	fright_sound="";
+
+	</ label="Artwork Mode", help="How to fit artwork images into their spot...", options="Stretch,Zoom,Preserve Aspect Ratio", order=15 />
+	art_mode="Stretch";
 }
 
 ::AM_CONFIG <- fe.get_config();
+
+local zoom = (::AM_CONFIG["art_mode"]=="Zoom");
+local pres_ar = (::AM_CONFIG["art_mode"]=="Preserve Aspect Ratio");
 
 //
 // Initialize the layout's frontend-related graphic elements
@@ -63,22 +69,59 @@ class UserConfig </ help="Playable layout based on Pac-Man arcade game by Toru I
 fe.layout.width=456;
 fe.layout.height=336;
 
-local sort_lb = fe.add_listbox( 176, 96, 45, 192 );
+local snap;
+if ( zoom )
+{
+	snap = fe.add_artwork( "snap", 215, 71, 242, 242 );
+	fe.add_transition_callback( "fix_zoom" );
+}
+else
+	snap = fe.add_artwork( "snap", 240, 96, 192, 192 );
+
+snap.trigger = Transition.EndNavigation;
+
+if ( pres_ar || zoom )
+	snap.preserve_aspect_ratio = true;
+
+function fix_zoom( ttype, var, ttime )
+{
+	if ( ttype == snap.trigger )
+	{
+		if ( snap.texture_height > snap.texture_width )
+		{
+			snap.x = 215;
+			snap.y = 51;
+			snap.width  = 242;
+			snap.height = 252;
+		}
+		else
+		{
+			snap.x = 210;
+			snap.y = 71;
+			snap.width  = 252;
+			snap.height = 242;
+		}
+	}
+	return false;
+}
+
+local sort_lb = fe.add_listbox( 176, 96, 45, 202 );
 sort_lb.rows = 13;
 sort_lb.charsize = 10;
 sort_lb.set_rgb( 255, 255, 0 );
 sort_lb.format_string = "[SortValue]";
+sort_lb.bg_alpha=255;
 sort_lb.visible = false;
 
-local lb = fe.add_listbox( 24, 96, 192, 192 );
+local lb = fe.add_listbox( 24, 96, 192, 202 );
 lb.rows = 13;
 lb.charsize = 10;
+lb.bg_alpha=255;
 
 local tmp = fe.add_artwork( "marquee", 144, 24, 168, 48 );
 tmp.trigger = Transition.EndNavigation;
-
-tmp = fe.add_artwork( "snap", 240, 96, 192, 192 );
-tmp.trigger = Transition.EndNavigation;
+if ( pres_ar )
+	tmp.preserve_aspect_ratio = true;
 
 fe.add_image( "field.png", 0, 0, 456, 336 );
 local main_caption = fe.add_text( "[DisplayName]", 118, 316, 220, 14 );
