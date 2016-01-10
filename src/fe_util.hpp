@@ -111,8 +111,10 @@ bool directory_exists( const std::string &file );
 bool is_relative_path( const std::string &file );
 
 // clean the path string for usage.  Performs substitution of $HOME etc...
+// if add_trailing_slash is true, this function adds a trailing '/' if
+// path is to a directory
 std::string clean_path( const std::string &path,
-		bool require_trailing_slash = false );
+		bool add_trailing_slash = false );
 
 // return path as an absolute path
 std::string absolute_path( const std::string &path );

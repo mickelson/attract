@@ -3068,7 +3068,7 @@ bool FeSettings::get_best_artwork_file(
 		for ( std::vector< std::string >::iterator itr = temp_list.begin();
 				itr != temp_list.end(); ++itr )
 		{
-			art_paths.push_back( clean_path( (*itr) ) );
+			art_paths.push_back( clean_path( (*itr), true ) );
 			perform_substitution( art_paths.back(), "$LAYOUT", layout_path );
 		}
 	}

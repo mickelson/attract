@@ -201,7 +201,7 @@ bool is_relative_path( const std::string &name )
 	return (( !name.empty() ) && ( name[0] != '/' ));
 }
 
-std::string clean_path( const std::string &path, bool require_trailing_slash )
+std::string clean_path( const std::string &path, bool add_trailing_slash )
 {
 	std::string retval = path;
 
@@ -235,11 +235,12 @@ std::string clean_path( const std::string &path, bool require_trailing_slash )
 	if (( retval.size() >= 5 ) && ( retval.compare( 0, 5, "$HOME" ) == 0 ))
 		retval.replace( 0, 5, get_home_dir() );
 
-	if (( require_trailing_slash )
+	if (( add_trailing_slash )
 #ifdef SFML_SYSTEM_WINDOWS
 			&& (retval[retval.size()-1] != '\\')
 #endif
-			&& (retval[retval.size()-1] != '/'))
+			&& (retval[retval.size()-1] != '/')
+			&& (directory_exists(retval)) )
 		retval += '/';
 
 	return retval;
