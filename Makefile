@@ -289,7 +289,7 @@ endif
 
 ifeq ($(USE_LIBARCHIVE),1)
  FE_FLAGS += -DUSE_LIBARCHIVE
- TEMP_LIBS += libarchive
+ TEMP_LIBS += libarchive zlib
 else
  CFLAGS += -I$(EXTLIBS_DIR)/miniz
 endif
