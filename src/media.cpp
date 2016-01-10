@@ -184,6 +184,8 @@ public:
 	sf::Texture *display_texture;
 	SwsContext *sws_ctx;
 	int sws_flags;
+	int disptex_width;
+	int disptex_height;
 
 	//
 	// The video thread sets display_frame and display_frame_ready when
@@ -353,6 +355,8 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		display_texture( NULL ),
 		sws_ctx( NULL ),
 		sws_flags( SWS_BILINEAR ),
+		disptex_width( 0 ),
+		disptex_height( 0 ),
 		display_frame( NULL )
 {
 }
@@ -445,8 +449,8 @@ void FeVideoImp::preload()
 			{
 				AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
 				avpicture_alloc( my_pict, PIX_FMT_RGBA,
-										codec_ctx->width,
-										codec_ctx->height );
+										disptex_width,
+										disptex_height );
 
 				if ( !my_pict )
 				{
@@ -461,7 +465,7 @@ void FeVideoImp::preload()
 
 				sws_ctx = sws_getCachedContext( NULL,
 								codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
-								codec_ctx->width, codec_ctx->height, PIX_FMT_RGBA,
+								disptex_width, disptex_height, PIX_FMT_RGBA,
 								sws_flags, NULL, NULL, NULL );
 
 				if ( !sws_ctx )
@@ -511,8 +515,8 @@ void FeVideoImp::video_thread()
 
 	AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
 	avpicture_alloc( my_pict, PIX_FMT_RGBA,
-							codec_ctx->width,
-							codec_ctx->height );
+							disptex_width,
+							disptex_height );
 
 	if ((!sws_ctx) || (!my_pict) )
 	{
@@ -1015,9 +1019,17 @@ bool FeMedia::internal_open( sf::Texture *outt )
 				m_video->time_base = sf::seconds(
 						av_q2d(m_imp->m_format_ctx->streams[stream_id]->time_base) );
 
+				float aspect_ratio = 1.0;
+				if ( m_video->codec_ctx->sample_aspect_ratio.num != 0 )
+					aspect_ratio = av_q2d( m_video->codec_ctx->sample_aspect_ratio );
+
+				m_video->disptex_width = m_video->codec_ctx->width * aspect_ratio;
+				m_video->disptex_height = m_video->codec_ctx->height;
+
 				m_video->display_texture = outt;
-				m_video->display_texture->create( m_video->codec_ctx->width,
-						m_video->codec_ctx->height );
+				m_video->display_texture->create( m_video->disptex_width,
+						m_video->disptex_height );
+
 				m_video->preload();
 			}
 		}
