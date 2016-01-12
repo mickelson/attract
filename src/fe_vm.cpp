@@ -688,6 +688,7 @@ bool FeVM::on_new_layout()
 
 	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()
 		.Prop( _SC("name"), &FePresent::get_display_name )
+		.Prop( _SC("display_index"), &FePresent::get_display_index )
 		.Prop( _SC("index"), &FePresent::get_selection_index, &FePresent::set_selection_index )
 		.Prop( _SC("filter_index"), &FePresent::get_filter_index, &FePresent::set_filter_index )
 		.Prop( _SC("search_rule"), &FePresent::get_search_rule, &FePresent::set_search_rule )
@@ -1889,7 +1890,7 @@ const char *FeVM::cb_path_expand( const char *path )
 {
 		static std::string internal_str;
 
-		internal_str = clean_path( path );
+		internal_str = absolute_path( clean_path( path ) );
 		return internal_str.c_str();
 }
 

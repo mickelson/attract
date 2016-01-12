@@ -827,7 +827,8 @@ NOTE that changing the display causes all layout and plugin scripts to reload.
 Parameters:
 
    * index - The index of the display to change to.  This should correspond to
-   the index in the fe.displays array of the intended new display.
+   the index in the fe.displays array of the intended new display.  The index for
+   the current display is stored in `fe.list.display_index`.
 
 
 Return Value:
@@ -1164,6 +1165,8 @@ otherwise instantiated in a script.
 Properties:
 
    * `name` - Get the name of the current display.
+   * `display_index` - Gett the index of the current display.  Use the
+     `fe.set_display()` function if you want to change the current display.
    * `filter_index` - Get/set the index of the currently selected filter.
      (see `fe.filters` for the list of available filters).
    * `index` - Get/set the index of the currently selected game.

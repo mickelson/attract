@@ -163,6 +163,7 @@ protected:
 	int get_base_rotation() const;
 	int get_toggle_rotation() const;
 	const char *get_display_name() const;
+	int get_display_index() const;
 	const char *get_filter_name() const;
 	int get_filter_index() const;
 	void set_filter_index( int );
