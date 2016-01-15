@@ -856,8 +856,9 @@ namespace gameswf
 	{
 		m_global->this_alive();
 		for (hash<gc_ptr<as_object>, bool>::iterator it = m_heap.begin();
-			it != m_heap.end(); ++it)
+			it != m_heap.end(); )
 		{
+			bool erase_it = false;
 			as_object* obj = it->first.get_ptr();
 			if (obj)
 			{
@@ -868,9 +869,13 @@ namespace gameswf
 						hash<as_object*, bool> visited_objects;
 						obj->clear_refs(&visited_objects, obj);
 					}
-					m_heap.erase(obj);
+					erase_it = true;
 				}
 			}
+
+			++it;
+			if ( erase_it )
+				m_heap.erase(obj);
 		}
 	}
 
