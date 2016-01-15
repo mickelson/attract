@@ -48,7 +48,7 @@ namespace gameswf
 	//	gameswf's statics
 	//
 
-	static glyph_provider* s_glyph_provider;
+	static glyph_provider* s_glyph_provider = NULL;
 	void set_glyph_provider(glyph_provider* gp)
 	{
 		s_glyph_provider = gp;
@@ -98,6 +98,7 @@ namespace gameswf
 			if (s_standard_method_map[i])
 			{
 				delete s_standard_method_map[i];
+				s_standard_method_map[i] = NULL;
 			}
 		}
 	}
@@ -488,7 +489,7 @@ namespace gameswf
 		// Clear shared stuff only when all players are deleted
 		if (s_player_count == 0)
 		{
-			clears_tag_loaders();
+//			clears_tag_loaders();
 			clear_shared_libs();
 			clear_registered_type_handlers();
 			clear_standard_method_map();
