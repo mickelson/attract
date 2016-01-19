@@ -97,7 +97,7 @@ h6 {
 }
 
 p {
-  margin: 10px 0 15px 0;
+  width: 95%;
 }
 
 footer p {
@@ -193,12 +193,14 @@ ul, ol, dl {
 
 ul li {
   list-style: inside;
-  padding-left: 20px;
+  padding-left: 0%;
+  width: 95%;
 }
 
 ol li {
   list-style: decimal inside;
-  padding-left: 20px;
+  padding-left: 0%;
+  width: 95%;
 }
 
 dl dt {
@@ -246,8 +248,8 @@ form {
 }
 
 img {
-  width: 100%;
-  max-width: 100%;
+  width: 95%;
+  max-width: 95%;
 }
 
 /*******************************************************************************
