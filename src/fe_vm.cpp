@@ -200,7 +200,14 @@ namespace
 			path = archive;
 
 		std::vector < std::string > res;
-		fe_zip_get_dir( path.c_str(), res );
+
+		// if we are given a directory, simply return the contents of
+		// the directory
+		//
+		if ( directory_exists( path ) )
+			get_basename_from_extension( res, path, "", false );
+		else
+			fe_zip_get_dir( path.c_str(), res );
 
 		sq_newarray( vm, 0 );
 
@@ -288,6 +295,7 @@ const char *FeVM::transitionTypeStrings[] =
 		"EndNavigation",
 		"ShowOverlay",
 		"HideOverlay",
+		"NewSelOverlay",
 		NULL
 };
 
@@ -703,7 +711,10 @@ bool FeVM::on_new_layout()
 
 	fe.Bind( _SC("Overlay"), Class <FeVM, NoConstructor>()
 		.Prop( _SC("is_up"), &FeVM::overlay_is_on )
-		.Func( _SC("set_custom_controls"), &FeVM::overlay_set_custom_controls)
+		.Overload<void (FeVM::*)(FeText *, FeListBox *)>(_SC("set_custom_controls"), &FeVM::overlay_set_custom_controls)
+		.Overload<void (FeVM::*)(FeText *)>(_SC("set_custom_controls"), &FeVM::overlay_set_custom_controls)
+		.Overload<void (FeVM::*)()>(_SC("set_custom_controls"), &FeVM::overlay_set_custom_controls)
+//		.Func( _SC("set_custom_controls"), &FeVM::overlay_set_custom_controls)
 		.Func( _SC("clear_custom_controls"), &FeVM::overlay_clear_custom_controls)
 		.Overload<int (FeVM::*)(Array, const char *, int, int)>(_SC("list_dialog"), &FeVM::list_dialog)
 		.Overload<int (FeVM::*)(Array, const char *, int)>(_SC("list_dialog"), &FeVM::list_dialog)
@@ -1214,11 +1225,24 @@ void FeVM::overlay_set_custom_controls( FeText *caption, FeListBox *opts )
 {
 	m_overlay_caption = caption;
 	m_overlay_lb = opts;
+	m_custom_overlay = true;
+}
+
+void FeVM::overlay_set_custom_controls( FeText *caption )
+{
+	overlay_set_custom_controls( caption, NULL );
+}
+
+void FeVM::overlay_set_custom_controls()
+{
+	overlay_set_custom_controls( NULL, NULL );
 }
 
 void FeVM::overlay_clear_custom_controls()
 {
-	overlay_set_custom_controls( NULL, NULL );
+	m_overlay_caption = NULL;
+	m_overlay_lb = NULL;
+	m_custom_overlay = false;
 }
 
 bool FeVM::splash_message( const char *msg, const char *aux )

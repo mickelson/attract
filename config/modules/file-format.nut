@@ -43,9 +43,6 @@
 //
 // TODO
 //
-//  XML
-//      SPACES IN ATTRIBUTES VALUES NOT YET SUPPORTED (need to rewrite attribute splitting)
-//
 //  ALL
 //      Validation of XML, INI, TXT (checking tag-endtags match), proper XML format
 //      Allow for reading a string or reading from filename for INI and TXT
@@ -374,14 +371,40 @@ class XML
                 }
                 local attributes = xmlStr.slice( pos - 1, attrEnd );
                 if ( DEBUG_FILEFORMAT ) print( attributes + "\n" );
-                    local attrs = split(attributes, " ");
-                    foreach( attr in attrs )
-                    {
-                        local attribute = split( attr, "=" );
-                        local name = lstrip( attribute[0] );
-                        local val = lstrip( attribute[1].slice( 1, attribute[1].len() - 1) );
-                        doc.attr[ name ] <- val;
-                    }
+
+                local p=0;
+                while ( p < attributes.len() )
+                {
+                   local eq = attributes.find( "=", p );
+                   if ( eq == null )
+                      break;
+
+                   local name = strip( attributes.slice( p, eq ) );
+                   p = eq+1;
+
+                   // pass whitespace after '='
+                   while ( attributes[p] <= 32 )
+                      p++;
+
+                   local val;
+                   if ( attributes[p] == 34 ) // double quote
+                   {
+                      p++;
+                      eq = attributes.find( "\"", p );
+                      val = attributes.slice( p, eq );
+                   }
+                   else
+                   {
+                      eq = attributes.find( " ", p );
+                      if ( eq == null )
+                         eq = attributes.len();
+
+                      val = attributes.slice( p, eq );
+                   }
+                   p = eq+1;
+                   doc.attr[ name ] <- val;
+                }
+
                 pos = attrEnd - 1;
             }
 

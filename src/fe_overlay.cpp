@@ -298,28 +298,45 @@ int FeOverlay::common_list_dialog(
 
 	FeText *custom_caption;
 	FeListBox *custom_lb;
-	m_fePresent.get_overlay_custom_controls( custom_caption, custom_lb );
+	bool do_custom = m_fePresent.get_overlay_custom_controls(
+		custom_caption, custom_lb );
 
-	if ( fm.flag_set() && custom_caption && custom_lb )
+	if ( fm.flag_set() && do_custom )
 	{
 		//
 		// Use custom controls set by script
 		//
-		std::string old_cap = custom_caption->get_string();
-		custom_caption->set_string( title.c_str() );
-		custom_lb->setCustomText( sel, options );
+		std::string old_cap;
+		if ( custom_caption )
+		{
+			old_cap = custom_caption->get_string();
+			custom_caption->set_string( title.c_str() );
+		}
+
+		if ( custom_lb )
+			custom_lb->setCustomText( sel, options );
 
 		m_fePresent.on_transition( ShowOverlay, var );
 
 		while ( event_loop( c ) == false )
-			custom_lb->setCustomSelection( sel );
+		{
+			m_fePresent.on_transition( NewSelOverlay, sel );
+
+			if ( custom_lb )
+				custom_lb->setCustomSelection( sel );
+		}
 
 		m_fePresent.on_transition( HideOverlay, 0 );
 
 		// reset to the old text in these controls when done
-		custom_caption->set_string( old_cap.c_str() );
-		custom_lb->setCustomText( 0, std::vector<std::string>() );
-		custom_lb->on_new_list( &m_feSettings );
+		if ( custom_caption )
+			custom_caption->set_string( old_cap.c_str() );
+
+		if ( custom_lb )
+		{
+			custom_lb->setCustomText( 0, std::vector<std::string>() );
+			custom_lb->on_new_list( &m_feSettings );
+		}
 	}
 	else
 	{
@@ -370,7 +387,11 @@ int FeOverlay::common_list_dialog(
 			m_fePresent.on_transition( ShowOverlay, var );
 
 		while ( event_loop( c ) == false )
+		{
+			if ( fm.flag_set() )
+				m_fePresent.on_transition( NewSelOverlay, sel );
 			dialog.setCustomSelection( sel );
+		}
 
 		if ( fm.flag_set() )
 			m_fePresent.on_transition( HideOverlay, 0 );
@@ -568,28 +589,45 @@ int FeOverlay::common_basic_dialog(
 
 	FeText *custom_caption;
 	FeListBox *custom_lb;
-	m_fePresent.get_overlay_custom_controls( custom_caption, custom_lb );
+	bool do_custom = m_fePresent.get_overlay_custom_controls(
+		custom_caption, custom_lb );
 
-	if ( fm.flag_set() && custom_caption && custom_lb )
+	if ( fm.flag_set() && do_custom )
 	{
 		//
-		// Use custom controls set by script
+		// Custom overlay controlled by the script
 		//
-		std::string old_cap = custom_caption->get_string();
-		custom_caption->set_string( msg_str.c_str() );
-		custom_lb->setCustomText( sel, list );
+		std::string old_cap;
+		if ( custom_caption )
+		{
+			old_cap = custom_caption->get_string();
+			custom_caption->set_string( msg_str.c_str() );
+		}
+
+		if ( custom_lb )
+			custom_lb->setCustomText( sel, list );
 
 		m_fePresent.on_transition( ShowOverlay, var );
 
 		while ( event_loop( c ) == false )
-			custom_lb->setCustomSelection( sel );
+		{
+			m_fePresent.on_transition( NewSelOverlay, sel );
+
+			if ( custom_lb )
+				custom_lb->setCustomSelection( sel );
+		}
 
 		m_fePresent.on_transition( HideOverlay, 0 );
 
 		// reset to the old text in these controls when done
-		custom_caption->set_string( old_cap.c_str() );
-		custom_lb->setCustomText( 0, std::vector<std::string>() );
-		custom_lb->on_new_list( &m_feSettings );
+		if ( custom_caption )
+			custom_caption->set_string( old_cap.c_str() );
+
+		if ( custom_lb )
+		{
+			custom_lb->setCustomText( 0, std::vector<std::string>() );
+			custom_lb->on_new_list( &m_feSettings );
+		}
 	}
 	else
 	{
@@ -645,7 +683,11 @@ int FeOverlay::common_basic_dialog(
 			m_fePresent.on_transition( ShowOverlay, var );
 
 		while ( event_loop( c ) == false )
+		{
+			if ( fm.flag_set() )
+				m_fePresent.on_transition( NewSelOverlay, sel );
 			dialog.setCustomSelection( sel );
+		}
 
 		if ( fm.flag_set() )
 			m_fePresent.on_transition( HideOverlay, 0 );

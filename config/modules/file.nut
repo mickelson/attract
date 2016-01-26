@@ -1,9 +1,28 @@
 
 ///////////////////////////////////////////////////
-function IS_ZIP(p)
+function IS_ARCHIVE(p)
 {
-	return ((p.len()>3)&&(p.slice(p.len()-4).tolower()==".zip"));
+	local ar_types = [
+		".zip",
+		".rar",
+		".7z",
+		".tar.gz",
+		".tgz",
+		".tar.bz2",
+		".tbz2",
+		".tar" ];
+
+	foreach ( a in ar_types )
+	{
+		if (( p.len() >= a.len() )
+				&& ( p.slice( p.len() - a.len() ).tolower() == a ))
+			return true;
+	}
+
+	return false;
 }
+
+function IS_ZIP(p) { return IS_ARCHIVE(p); };
 
 ///////////////////////////////////////////////////
 //
@@ -16,30 +35,14 @@ class DirectoryListing
 {
 	constructor( path, fullnames=true )
 	{
+		results = [];
 		local temp_list;
 
-		if ( IS_ZIP( path ) )
-		{
-			temp_list = zip_get_dir( path );
-		}
-		else
-		{
-			local command = "/bin/sh";
-			local param = "-c \"ls ";
-			if ( OS == "Windows" )
-			{
-				command = "cmd";
-				param = " /c dir /b \"";
-			}
-			param += path;
-			param += "\"";
-
-			// This will load the directory listing into m_work
-			//
-			fe.plugin_command( command, param, this, "_callback" );
-
-			temp_list = split( _work, "\n" );
-		}
+		//
+		// It's undocumented, but zip_get_dir() simply returns the
+		// directory contents if path points to a directory
+		//
+		temp_list = zip_get_dir( path );
 
 		if ( fullnames )
 		{
@@ -58,9 +61,6 @@ class DirectoryListing
 	}
 
 	results=[];
-
-	function _callback( m ) { _work += m; }
-	_work="";
 };
 
 ///////////////////////////////////////////////////
@@ -79,7 +79,7 @@ class ReadTextFile
 		//
 		// Handle zip files
 		//
-		if ( IS_ZIP( path ) )
+		if ( IS_ARCHIVE( path ) )
 		{
 			try
 			{

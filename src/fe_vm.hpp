@@ -140,6 +140,8 @@ public:
 	const char *edit_dialog( const char *, const char * );
 	bool overlay_is_on();
 	void overlay_set_custom_controls( FeText *caption, FeListBox *opts );
+	void overlay_set_custom_controls( FeText *caption );
+	void overlay_set_custom_controls();
 	void overlay_clear_custom_controls();
 	bool splash_message( const char *, const char * );
 	bool splash_message( const char * );

@@ -49,7 +49,8 @@ enum FeTransitionType
 	ToNewList,			// var = filter offset of new filter (if available), otherwise 0
 	EndNavigation,		// var = 0
 	ShowOverlay,		// var = Custom, Exit, Displays, Filters, Tags
-	HideOverlay			// var = 0
+	HideOverlay,		// var = 0
+	NewSelOverlay		// var = index of new selection
 };
 
 //
@@ -127,6 +128,7 @@ protected:
 	bool m_playMovies;
 	int m_user_page_size;
 	bool m_preserve_aspect;
+	bool m_custom_overlay;
 
 	FeListBox *m_listBox; // we only keep this ptr so we can get page sizes
 	sf::Vector2i m_layoutSize;
@@ -231,8 +233,10 @@ public:
 	const sf::Vector2i &get_layout_size() const { return m_layoutSize; }
 	FeShader *get_empty_shader();
 
-	// return any custom overlay controls set by the script
-	void get_overlay_custom_controls( FeText *&, FeListBox *& );
+	// Returns true if a script has set custom overlay controls.
+	// parameters are set to those controls (which may be NULL!)
+	//
+	bool get_overlay_custom_controls( FeText *&, FeListBox *& );
 
 	void set_video_play_state( bool state );
 	bool get_video_toggle() { return m_playMovies; };

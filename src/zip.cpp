@@ -23,16 +23,11 @@
 #include "zip.hpp"
 #include "fe_util.hpp"
 #include <iostream>
-
-typedef void *(*FE_ZIP_ALLOC_CALLBACK) ( size_t );
-
-#ifdef USE_LIBARCHIVE
-
-#include "archive.h"
-#include "archive_entry.h"
 #include <cstring>
 #include <SFML/System/Mutex.hpp>
 #include <SFML/System/Lock.hpp>
+
+typedef void *(*FE_ZIP_ALLOC_CALLBACK) ( size_t );
 
 namespace
 {
@@ -95,7 +90,15 @@ namespace
 		// Result is the new entry at the front of the cache
 		//
 	}
+};
 
+#ifdef USE_LIBARCHIVE
+
+#include "archive.h"
+#include "archive_entry.h"
+
+namespace
+{
 	struct archive *my_archive_init()
 	{
 		struct archive *a = archive_read_new();
@@ -272,6 +275,10 @@ bool fe_zip_get_dir(
 	const char *archive,
 	std::vector<std::string> &result )
 {
+	sf::Lock l( g_ccache_mutex );
+	if ( check_content_cache( archive, result ) )
+		return true;
+
 	mz_zip_archive zip;
 	memset( &zip, 0, sizeof( zip ) );
 
@@ -290,6 +297,8 @@ bool fe_zip_get_dir(
 	}
 
 	mz_zip_reader_end( &zip );
+
+	add_to_content_cache( archive, result );
 	return true;
 }
 

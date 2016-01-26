@@ -138,6 +138,7 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_playMovies( true ),
 	m_user_page_size( -1 ),
 	m_preserve_aspect( false ),
+	m_custom_overlay( false ),
 	m_listBox( NULL ),
 	m_emptyShader( NULL ),
 	m_overlay_caption( NULL ),
@@ -239,6 +240,7 @@ void FePresent::clear()
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	m_user_page_size = -1;
 	m_preserve_aspect = false;
+	m_custom_overlay = false;
 	m_overlay_caption = NULL;
 	m_overlay_lb = NULL;
 
@@ -1270,10 +1272,12 @@ bool FePresent::get_preserve_aspect_ratio()
 	return m_preserve_aspect;
 }
 
-void FePresent::get_overlay_custom_controls( FeText *&t, FeListBox *&lb )
+bool FePresent::get_overlay_custom_controls( FeText *&t, FeListBox *&lb )
 {
 	t = m_overlay_caption;
 	lb = m_overlay_lb;
+
+	return m_custom_overlay;
 }
 
 void FePresent::script_do_update( FeBasePresentable *bp )

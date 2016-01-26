@@ -564,6 +564,7 @@ happening.  It will have one of the following values:
    * `Transition.EndNavigation`
    * `Transition.ShowOverlay`
    * `Transition.HideOverlay`
+   * `Transition.NewSelOverlay`
 
 The value of the `var` parameter passed to the transition function depends
 upon the value of `ttype`:
@@ -601,6 +602,9 @@ upon the value of `ttype`:
       - `Overlay.Displays` if the displays menu is being shown
       - `Overlay.Filters` if the filters menu is being shown
       - `Overlay.Tags` if the tags menu is being shown
+
+   * When `ttype` is `Transition.NewSelOverlay`, var will be the index of the
+     new selection in the Overlay menu.
 
    * When `ttype` is `Transition.ToGame`, `Transition.FromGame`,
      `Transition.EndNavigation`, or `Transition.HideOverlay`, `var` will be
@@ -775,7 +779,7 @@ Parameters:
       - "page_down"
       - "prev_list"
       - "next_list"
-      - "lists_menu"
+      - "displays_menu"
       - "prev_filter"
       - "next_filter"
       - "filters_menu"
@@ -1193,15 +1197,17 @@ Properties:
 
 Member Functions:
 
-   * `set_custom_controls( caption_text, options_listbox )` - set custom
-     controls for display overlay menus such as the exit dialog, displays menu,
-     etc.  The `caption_text` parameter is the FeText object that the overlay
-     caption should be displayed in (i.e. "Exit Attract-Mode?").  The
-     `options_listbox` parameter is the FeListBox object that the overlay
-     options should be listed in for user selection.
-   * `clear_custom_controls()` - clear any custom controls set previously with
-     `set_custom_controls()`.  This will result in the frontend using its
-     built-in default menus instead for overlays.
+   * `set_custom_controls( caption_text, options_listbox )`
+   * `set_custom_controls( caption_text )`
+   * `set_custom_controls()` - tells the frontend that the layout will provide
+     custom controls for displaying overlay menus such as the exit dialog,
+     displays menu, etc.  The `caption_text` parameter is the FeText object
+     that the frontend end should use to display the overlay caption (i.e.
+     "Exit Attract-Mode?").  The `options_listbox` parameter is the FeListBox
+     object that the frontend should use to display the overlay options.
+   * `clear_custom_controls()` - tell the frontend that the layout will NOT
+     do any custom control handling for overlay menus.  This will result in
+     the frontend using its built-in default menus instead for overlays.
    * `list_dialog( options, title, default_sel, cancel_sel )`
    * `list_dialog( options, title, default_sel )`
    * `list_dialog( options, title )`

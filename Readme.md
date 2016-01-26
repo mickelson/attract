@@ -159,13 +159,26 @@ Attract-Mode's native layouts are made up of a squirrel script (a .nut file)
 and related resources.  See [Layouts.md][] for more information on
 Attract-Mode layouts.
 
-Attract-Mode can also display layouts made for the [MaLa frontend][malafe.net].
-To use a MaLa layout in Attract-Mode, treat the MaLa layout just as you would
-an Attract-Mode native layout... i.e.  copy the MaLa .mll file and related
-resources into a subdirectory of the "layouts" directory, or place a .zip file
-containing these things in the "layouts" directory.  After doing this you
-should be able to select the MaLa layout when configuring a Display in config
-mode.
+Attract-Mode can also display layouts made for other frontends, including
+MaLa and Hyperspin.  This feature is experimental, and certain features from
+these other frontends might not be fully implemented.
+
+For MaLa layouts, just copy the layout and related resources into a new
+subdirectory of the "layouts" directory, or place a zip, 7z or rar file
+containing these things into the "layouts" directory.  After doing this, you
+hould be able to select the layout when configuring a Display in
+Attract-Mode, just as you would for a native Attract- Mode layout.
+
+For Hyperspin, copy the Hyperspin "Media" directory into its own directory
+in the Attract-Mode layouts directory.  Create a Display in Attract-Mode
+and configure the layout to be the directory you copied "Media" into.  The
+Display's name needs to match the name of one of the system subdirectories
+in the Hyperspin "Media" directory.  This will allow Attract-Mode to find the
+Hyperspin themes and graphics to use.  So for example, naming the Display
+"MAME" will cause it to match Hyperspin's MAME/Themes/* for themes,
+MAME/Images/Artwork1/* for artwork1, etc.  Note that the wheel images are
+located using Attract-Mode's built-in wheel artwork.  Wheel images located in
+the Hyperspin directories are ignored.
 
 **PLUG-INS:** Plug-ins are squirrel scripts that need to be placed in the
 "plugins" subdirectory of your Attract-Mode config directory.  Available
