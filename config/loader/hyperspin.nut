@@ -33,8 +33,6 @@
 // 
 // KNOWN ISSUES:
 //
-// - Doesn't play well with plugins that may be using the animate module
-//
 // - Only proof-of-concept at this point, there are many, many Hyperspin
 //   features that are unimplemented and completely missing
 //
@@ -55,6 +53,9 @@ class UserConfig </ help="Hyperspin Layout: " + fe.script_dir + ::file_to_load /
 
    </ label="Show Flyers", help="Show flyers in Artwork2", order=5, options="yes,no" />
    show_flyers="yes";
+
+   </ label="Show Prompts", help="Show Hyperspin prompts", order=6, options="yes,no" />
+   show_prompts="yes";
 };
 
 local my_config = fe.get_config();
@@ -409,10 +410,7 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 	}
 
 	//
-	// We abuse the animate module a bit, which will cause problems
-	// for any plugins that do animation using the module as well.
-	//
-	animation.animations.clear();
+	hs_animation.animations.clear();
 	local call_into_transition=false;
 	
 	foreach ( c in current_theme_root.children )
@@ -493,7 +491,7 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 						time = tint
 					};
 
-					animation.add( PropertyAnimation( obj, cfg ) );
+					hs_animation.add( PropertyAnimation( obj, cfg ) );
 					call_into_transition=true;
 				}
 				break;
@@ -514,7 +512,7 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 						easing = Easing.In
 					};
 
-					animation.add( PropertyAnimation( obj, cfg ) );
+					hs_animation.add( PropertyAnimation( obj, cfg ) );
 					call_into_transition=true;
 				}
 				break;
@@ -522,9 +520,37 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 		}
 	}
 	if ( call_into_transition )
-		return animation.transition_callback( ttype, var, ttime );
+		return hs_animation.transition_callback( ttype, var, ttime );
 	else
 		return false;
+}
+
+function setup_prompts( is_display_menu )
+{
+	if ( my_config["show_prompts"] != "yes" )
+		return;
+
+	if ( !is_display_menu )
+	{
+		special1.file_name = work_d
+			+ "Main Menu/Images/Special/SpecialB1.swf";
+		special1.set_pos( 0, 5 );
+
+		special2.file_name = work_d +
+			"Main Menu/Images/Special/SpecialB2.swf";
+		special2.set_pos( 0, fe.layout.height-special2.texture_height-5 );
+	}
+	else
+	{
+		special1.file_name = work_d
+			+ "Main Menu/Images/Special/SpecialA1.swf";
+		special1.set_pos( 60, fe.layout.height-special1.texture_height-10 );
+
+		special2.file_name = work_d +
+			"Main Menu/Images/Special/SpecialA2.swf";
+		special2.set_pos( fe.layout.width-special2.texture_width-60,
+			fe.layout.height-special2.texture_height-10 );
+	}
 }
 
 /////////////////////////////////////////////////////////
@@ -587,6 +613,7 @@ function hs_transition( ttype, var, ttime )
 	case Transition.ToNewList:
 	case Transition.EndNavigation:
 		navigate_in_progress = false;
+		setup_prompts( false );
 		return load( ttype, var, ttime, get_match_map(), get_hs_system_dir() );
 
 	case Transition.ToNewSelection:
@@ -626,6 +653,7 @@ function hs_transition( ttype, var, ttime )
 		{
 			doing_display_menu = true;
 			wheel.visible = false; // hide the wheel
+			setup_prompts( true );
 
 			local unmapped_index=0;
 			for ( local i=0; i < dm_map.len(); i++ )
@@ -651,13 +679,20 @@ function hs_transition( ttype, var, ttime )
 				fe.overlay.clear_custom_controls();
 
 				wheel.visible = true;
+				setup_prompts( false );
 
-				// Reload to the newly selected display
-				return load( Transition.EndNavigation,
-					0,
-					ttime,
-					get_match_map(),
-					get_hs_system_dir() );
+				// Not fully understood, but the reload signal seems to
+				// work better here than calling into our load() fn.
+				//
+				fe.signal( "reload" );
+				return false;
+
+//				// Reload to the newly selected display
+//				return load( Transition.EndNavigation,
+//					0,
+//					ttime,
+//					get_match_map(),
+//					get_hs_system_dir() );
 			}
 			else if ( ttype == Transition.NewSelOverlay )
 			{
@@ -769,5 +804,18 @@ wheel <- Conveyor();
 wheel.set_slots( wheel_entries );
 wheel.transition_ms = wheel_ms;
 
+if ( my_config["show_prompts"] == "yes" )
+{
+	::special1 <- fe.add_image( "" );
+	::special2 <- fe.add_image( "" );
+}
+
 // make sure the override transition object is drawn over the wheel
 ::hs_ent["override_transition"].obj.zorder=9999;
+
+hs_animation <- AnimationCore();
+//
+// don't register the AnimationCore transition callback, our transition
+// callback will call into AnimationCore itself
+//
+fe.add_ticks_callback( hs_animation, "ticks_callback" );

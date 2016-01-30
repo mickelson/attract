@@ -80,8 +80,11 @@ namespace
 			swf_render->open();
 //			swf_render->set_antialiased( true );
 
-			swf_sound = gameswf::create_sound_handler_openal();
-			gameswf::set_sound_handler( swf_sound );
+// TODO: Sound is disable for now. gameswf openal doesn't play nice
+// with Attract-Mode's other sounds
+//
+//			swf_sound = gameswf::create_sound_handler_openal();
+//			gameswf::set_sound_handler( swf_sound );
 
 			gameswf::register_file_opener_callback( swf_file_opener );
 #if TU_CONFIG_LINK_TO_FREETYPE == 1
@@ -102,9 +105,12 @@ namespace
 			delete swf_render;
 			swf_render = NULL;
 
-			gameswf::set_sound_handler( NULL );
-			delete swf_sound;
-			swf_sound = NULL;
+			if ( swf_sound )
+			{
+				gameswf::set_sound_handler( NULL );
+				delete swf_sound;
+				swf_sound = NULL;
+			}
 		}
 	}
 };
@@ -116,7 +122,6 @@ struct FeSwfState
 	sf::Clock timer;
 	sf::Time last_tick;
 };
-
 
 FeSwf::FeSwf()
 {
@@ -137,7 +142,7 @@ bool FeSwf::open_from_archive( const std::string &path, const std::string &file 
 		return false;
 
 	swf_zip = &zs;
-	bool retval = open_from_file( file );
+	bool retval = open_from_file( path + "|" + file );
 	swf_zip = NULL;
 
 	return retval;
@@ -162,8 +167,8 @@ bool FeSwf::open_from_file( const std::string &file )
 	if ( m_imp->root == NULL )
 		return false;
 
-	m_texture.create( m_imp->root->get_movie_width() * 3,
-		m_imp->root->get_movie_height() * 3);
+	m_texture.create( m_imp->root->get_movie_width(),
+		m_imp->root->get_movie_height() );
 
 	m_texture.setActive();
 
@@ -180,7 +185,7 @@ bool FeSwf::open_from_file( const std::string &file )
 	glOrtho( -1.f, 1.f, 1.f, -1.f, -1, 1 );
 #endif
 
-	glMatrixMode( GL_MODELVIEW );	
+	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 
 	glDisable( GL_LIGHTING );
@@ -190,13 +195,13 @@ bool FeSwf::open_from_file( const std::string &file )
 #endif
 
 	m_imp->root->set_display_viewport( 0, 0,
-		m_imp->root->get_movie_width() * 3,
-		m_imp->root->get_movie_height() * 3 );
+		m_imp->root->get_movie_width(),
+		m_imp->root->get_movie_height() );
 
-	m_imp->root->set_background_alpha( 1.0f );
+	m_imp->root->set_background_alpha( 0.0f );
 
 	do_frame( false );
-	return true; 
+	return true;
 }
 
 const sf::Vector2u FeSwf::get_size() const
@@ -217,14 +222,18 @@ bool FeSwf::tick()
 bool FeSwf::do_frame( bool is_tick )
 {
 	m_texture.setActive();
-	m_texture.clear();
+	m_texture.clear( sf::Color::Transparent );
 
 	if ( m_imp->root != NULL )
 	{
+
 		if ( is_tick )
 		{
-			m_imp->root->advance(
-				m_imp->timer.getElapsedTime().asMilliseconds() );
+			int elapsed = m_imp->timer.getElapsedTime().asMilliseconds();
+			m_imp->root->advance( elapsed );
+
+			if ( swf_sound )
+				swf_sound->advance( elapsed );
 
 			m_imp->timer.restart();
 		}
