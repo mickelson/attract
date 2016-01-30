@@ -28,9 +28,10 @@ distributions.  Other distributions should have similar packages available.
 
            make -j 3
 
-   or, to build without movie support:
+   or, if you are building on a Raspberry Pi, O-Droid or another embedded
+   system, you can build the OpenGL ES version with the following:
 
-           make -j 3 NO_MOVIE=1
+           make -j 3 USE_GLES=1
 
    This step will create the "attract" executable file.
 

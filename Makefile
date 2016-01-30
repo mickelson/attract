@@ -23,6 +23,9 @@
 #
 # BUILD CONFIGURATION OPTIONS:
 #
+# Uncomment next line to build GLES version (embedded systems)
+#USE_GLES=1
+#
 # Uncomment next line to disable movie support (i.e. no FFmpeg).
 #NO_MOVIE=1
 #
@@ -160,6 +163,7 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
    #
    ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
     FE_RPI=1
+    USE_GLES=1
    else
     #
     # Test for Xinerama...
@@ -217,7 +221,7 @@ ifneq ($(NO_SWF),1)
  ifneq ($(FE_WINDOWS_COMPILE),1)
   ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
-   ifeq ($(FE_RPI),1)
+   ifeq ($(USE_GLES),1)
     LIBS += -ldl -lGLESv1_CM
    else
     LIBS += -ldl -lGL
@@ -273,6 +277,10 @@ endif
 ifeq ($(FE_RPI),1)
  FE_FLAGS += -DFE_RPI
  CFLAGS += -I/opt/vc/include -L/opt/vc/lib
+endif
+
+ifeq ($(USE_GLES),1)
+ FE_FLAGS += -DUSE_GLES
 endif
 
 ifeq ($(USE_XINERAMA),1)
@@ -588,7 +596,7 @@ else
 	GAMESWFOBJS += $(GAMESWF_OBJ_DIR)/gameswf_freetype.o
 endif
 
-ifeq ($(FE_RPI),1)
+ifeq ($(USE_GLES),1)
 	GAMESWFOBJS += $(GAMESWF_OBJ_DIR)/gameswf_render_handler_ogles.o
 else
 	GAMESWFOBJS += $(GAMESWF_OBJ_DIR)/gameswf_render_handler_ogl.o
