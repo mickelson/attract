@@ -314,7 +314,7 @@ class AnimationCore
     //return the system time in ms
     function time()
     {
-        return ::clock() * 1000;
+        return fe.layout.time.tofloat();
     }
     
     //handle transitions for all animations

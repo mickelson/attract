@@ -25,6 +25,12 @@
 
 #include <string.h>	// for memset()
 
+extern "C"
+{
+#include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
+};
+
 // Pointers to opengl extension functions.
 typedef char GLchar;
 
@@ -1172,139 +1178,38 @@ void	generate_mipmaps(unsigned int internal_format, unsigned int input_format, i
 	}
 }
 
-
-void	software_resample(
-	int bytes_per_pixel,
-	int src_width,
-	int src_height,
-	int src_pitch,
-	uint8* src_data,
-	int dst_width,
-	int dst_height)
-// Code from Alex Streit
-//
-// Creates an OpenGL texture of the specified dst dimensions, from a
-// resampled version of the given src image.  Does a bilinear
-// resampling to create the dst image.
+void ffmpeg_resample( int bpp, int src_width, int src_height, int src_pitch,
+	uint8* src_data, int dst_width, int dst_height )
 {
-//	printf("original bitmap %dx%d, resampled bitmap %dx%d\n",
-//		src_width, src_height, dst_width, dst_height);
+	AVPixelFormat fmt = ( bpp == 3 ) ? PIX_FMT_RGB24 : PIX_FMT_RGBA;
 
-	assert(bytes_per_pixel == 3 || bytes_per_pixel == 4);
+	SwsContext *ctx = sws_getCachedContext( NULL,
+		src_width, src_height, fmt, dst_width, dst_height, fmt,
+		SWS_FAST_BILINEAR, NULL, NULL, NULL );
 
-//	assert(dst_width >= src_width);
-//	assert(dst_height >= src_height);
+	if ( !ctx )
+		return;
 
-//	unsigned int	internal_format = bytes_per_pixel == 3 ? GL_RGB : GL_RGBA;
-	unsigned int	input_format = bytes_per_pixel == 3 ? GL_RGB : GL_RGBA;
+	AVPicture my_pict;
+	avpicture_alloc( &my_pict, fmt, dst_width, dst_height );
 
-	// FAST bi-linear filtering
-	// the code here is designed to be fast, not readable
-	Uint8* rescaled = new Uint8[dst_width * dst_height * bytes_per_pixel];
-	float Uf, Vf;		// fractional parts
-	float Ui, Vi;		// integral parts
-	float w1, w2, w3, w4;	// weighting
-	Uint8* psrc;
-	Uint8* pdst = rescaled;
+	const uint8_t *src[4] = { src_data, NULL, NULL, NULL };
+	const int src_stride[4] = { src_pitch, 0, 0, 0 };
 
-	// i1,i2,i3,i4 are the offsets of the surrounding 4 pixels
-	const int i1 = 0;
-	const int i2 = bytes_per_pixel;
-	int i3 = src_pitch;
-	int i4 = src_pitch + bytes_per_pixel;
+	sws_scale( ctx, src, src_stride, 0, src_height,
+		my_pict.data, my_pict.linesize );
 
-	// change in source u and v
-	float dv = (float)(src_height - 2) / dst_height;
-	float du = (float)(src_width - 2) / dst_width;
-
-	// source u and source v
-	float U;
-	float V = 0;
-
-#define BYTE_SAMPLE(offset)	\
-	(Uint8) (w1 * psrc[i1 + (offset)] + w2 * psrc[i2 + (offset)] + w3 * psrc[i3 + (offset)] + w4 * psrc[i4 + (offset)])
-
-	if (bytes_per_pixel == 3)
-	{
-		for (int v = 0; v < dst_height; ++v)
-		{
-			Vf = modff(V, &Vi);
-			V += dv;
-			U = 0;
-
-			for (int u = 0; u < dst_width; ++u)
-			{
-				Uf = modff(U, &Ui);
-				U += du;
-
-				w1 = (1 - Uf) * (1 - Vf);
-				w2 = Uf * (1 - Vf);
-				w3 = (1 - Uf) * Vf;
-				w4 = Uf * Vf;
-				psrc = &src_data[(int) (Vi * src_pitch) + (int) (Ui * bytes_per_pixel)];
-
-				*pdst++ = BYTE_SAMPLE(0);	// red
-				*pdst++ = BYTE_SAMPLE(1);	// green
-				*pdst++ = BYTE_SAMPLE(2);	// blue
-
-				psrc += 3;
-			}
-		}
-
-#ifdef DEBUG_WRITE_TEXTURES_TO_PPM
-		static int s_image_sequence = 0;
-		char temp[256];
-		sprintf(temp, "image%d.ppm", s_image_sequence++);
-		FILE* f = fopen(temp, "wb");
-		if (f)
-		{
-			fprintf(f, "P6\n# test code\n%d %d\n255\n", dst_width, dst_height);
-			fwrite(rescaled, dst_width * dst_height * 3, 1, f);
-			fclose(f);
-		}
-#endif
-	}
-	else
-	{
-		assert(bytes_per_pixel == 4);
-
-		for (int v = 0; v < dst_height; ++v)
-		{
-			Vf = modff(V, &Vi);
-			V += dv;
-			U = 0;
-
-			for (int u = 0; u < dst_width; ++u)
-			{
-				Uf = modff(U, &Ui);
-				U += du;
-
-				w1 = (1 - Uf) * (1 - Vf);
-				w2 = Uf * (1 - Vf);
-				w3 = (1 - Uf) * Vf;
-				w4 = Uf * Vf;
-				psrc = &src_data[(int) (Vi * src_pitch) + (int) (Ui * bytes_per_pixel)];
-
-				*pdst++ = BYTE_SAMPLE(0);	// red
-				*pdst++ = BYTE_SAMPLE(1);	// green
-				*pdst++ = BYTE_SAMPLE(2);	// blue
-				*pdst++ = BYTE_SAMPLE(3);	// alpha
-
-				psrc += 4;
-			}
-		}
-	}
-
-//	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, dst_width, dst_height, 0, input_format, GL_UNSIGNED_BYTE, rescaled);
-	create_texture(input_format, dst_width, dst_height, rescaled, 0);
+	create_texture( ( bpp == 3 ) ? GL_RGB : GL_RGBA,
+		dst_width, dst_height, my_pict.data[0], 0 );
 
 #if GENERATE_MIPMAPS
 	// Build mipmaps.
-	image::image_base	im(rescaled, dst_width, dst_height, dst_width * bytes_per_pixel);
-	generate_mipmaps(internal_format, input_format, bytes_per_pixel, &im);
+	image::image_base im(my_pict.data[0], dst_width, dst_height, dst_width*bpp);
+	generate_mipmaps(fmt, fmt, bpp, &im);
 #endif // GENERATE_MIPMAPS
 
-	delete [] rescaled;
+	avpicture_free( &my_pict );
+	sws_freeContext( ctx );
 }
 
 bitmap_info_ogl::bitmap_info_ogl() :
@@ -1382,8 +1287,8 @@ void bitmap_info_ogl::layout()
 				int	h = p2(m_suspended_image->m_height);
 				if (w != m_suspended_image->m_width || h != m_suspended_image->m_height)
 				{
-					// Faster/simpler software bilinear rescale.
-					software_resample(bpp, m_suspended_image->m_width, m_suspended_image->m_height,
+					ffmpeg_resample(
+						bpp, m_suspended_image->m_width, m_suspended_image->m_height,
 						m_suspended_image->m_pitch, m_suspended_image->m_data, w, h);
 				}
 				else

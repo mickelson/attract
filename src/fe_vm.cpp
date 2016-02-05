@@ -206,7 +206,7 @@ namespace
 		//
 		if ( directory_exists( path ) )
 			get_basename_from_extension( res, path, "", false );
-		else
+		else if ( is_supported_archive( path ) )
 			fe_zip_get_dir( path.c_str(), res );
 
 		sq_newarray( vm, 0 );
@@ -692,6 +692,7 @@ bool FeVM::on_new_layout()
 		.Prop( _SC("toggle_rotation"), &FePresent::get_toggle_rotation, &FePresent::set_toggle_rotation )
 		.Prop( _SC("page_size"), &FePresent::get_page_size, &FePresent::set_page_size )
 		.Prop(_SC("preserve_aspect_ratio"), &FePresent::get_preserve_aspect_ratio, &FePresent::set_preserve_aspect_ratio )
+		.Prop(_SC("time"), &FePresent::get_layout_ms )
 	);
 
 	fe.Bind( _SC("CurrentList"), Class <FePresent, NoConstructor>()

@@ -241,6 +241,8 @@ public:
 	void set_video_play_state( bool state );
 	bool get_video_toggle() { return m_playMovies; };
 
+	int get_layout_ms();
+
 	//
 	// Script static functions
 	//

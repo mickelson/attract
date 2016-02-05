@@ -50,6 +50,12 @@
 #define TU_USE_SDL 0
 #define TU_USE_OPENAL 1
 
+// Uncomment to resample textures to power of two in
+// gameswf_render_handler_ogl.cpp.  This slows things down
+// and shouldn't be needed on modern OpenGL.
+//
+//#define MAKE_POT_TEXTURES 1
+
 #ifndef __APPLE__
 #define TU_CONFIG_LINK_TO_FREETYPE 1
 #endif

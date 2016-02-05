@@ -1280,6 +1280,11 @@ bool FePresent::get_overlay_custom_controls( FeText *&t, FeListBox *&lb )
 	return m_custom_overlay;
 }
 
+int FePresent::get_layout_ms()
+{
+	return m_layoutTimer.getElapsedTime().asMilliseconds();
+}
+
 void FePresent::script_do_update( FeBasePresentable *bp )
 {
 	FePresent *fep = script_get_fep();

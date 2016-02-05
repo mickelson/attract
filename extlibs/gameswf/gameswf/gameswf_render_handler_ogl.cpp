@@ -1723,8 +1723,10 @@ void bitmap_info_ogl::layout()
 
 			case image::image_base::RGBA:
 			{
+#ifdef MAKE_POT_TEXTURES
 				int	w = p2(m_suspended_image->m_width);
 				int	h = p2(m_suspended_image->m_height);
+
 				if (w != m_suspended_image->m_width || h != m_suspended_image->m_height)
 				{
 					ffmpeg_resample(
@@ -1736,6 +1738,14 @@ void bitmap_info_ogl::layout()
 					// Use original image directly.
 					create_texture(format, w, h, m_suspended_image->m_data, 0);
 				}
+#else
+				// Modern opengl should be able to handle non-power of two textures
+				//
+				create_texture(format,
+					m_suspended_image->m_width,
+					m_suspended_image->m_height,
+					m_suspended_image->m_data, 0);
+#endif
 				break;
 			}
 

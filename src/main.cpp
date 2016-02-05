@@ -336,6 +336,9 @@ int main(int argc, char *argv[])
 			//
 			if ( feSettings.get_present_state() == FeSettings::Intro_Showing )
 			{
+				move_state = FeInputMap::LAST_COMMAND;
+				move_last_triggered = 0;
+
 				feVM.load_layout( true );
 				redraw=true;
 				continue;

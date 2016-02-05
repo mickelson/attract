@@ -1152,6 +1152,7 @@ Properties:
      Up" or "Page Down" button is pressed.
    * `preserve_aspect_ratio` - Get/set whether the overall layout aspect ratio
      should be preserved by the frontend.  Default value is false.
+   * `time` - Get the number of millseconds that the layout has been showing.
 
 Notes:
 

@@ -56,6 +56,9 @@ class UserConfig </ help="Hyperspin Layout: " + fe.script_dir + ::file_to_load /
 
    </ label="Show Prompts", help="Show Hyperspin prompts", order=6, options="yes,no" />
    show_prompts="yes";
+
+   </ label="Animation Speed", help="Set animation speed", order=7, options="default,2X,4X" />
+   speed="default";
 };
 
 local my_config = fe.get_config();
@@ -73,7 +76,7 @@ fe.layout.height = 768;
 //
 /////////////////////////////////////////////////////////
 wheel_ms <- 100;
-override_lag_ms <- 100;
+override_lag_ms <- 400;
 work_d <- fe.script_dir + ::file_to_load;	// base directory
 hs_systems <- [];	// list of the subdirectories in work_d
 current_theme <- ""; // path of the currently loaded theme file
@@ -111,6 +114,7 @@ for ( local i=0; i< fe.displays.len(); i++ )
 // - art2
 // - art1
 // - video 
+// - video_overlay
 // - art3
 // - art4
 //
@@ -138,16 +142,22 @@ for ( local i=0; i< fe.displays.len(); i++ )
 		zorder = 3
 	};
 
+::hs_ent.video_overlay <- {
+		dir = ""
+		obj = fe.add_image( "" )
+		zorder = 4
+	};
+
 ::hs_ent.artwork3 <- {
 		dir = "Images/Artwork3/"
 		obj = fe.add_image( "" )
-		zorder = 4
+		zorder = 5
 	};
 
 ::hs_ent.artwork4 <- {
 		dir = "Images/Artwork4/"
 		obj = fe.add_image( "" )
-		zorder = 5
+		zorder = 6
 	};
 
 ::hs_ent.override_transition <- {
@@ -295,27 +305,31 @@ function get_theme_file( sys_d, match_map )
 
 function get_art_file( tag, sys_d, theme_fname, match_map )
 {
-	local temp = DirectoryListing( sys_d + ::hs_ent[tag].dir, false );
-
-	foreach ( t in temp.results )
+	if ( tag != "video_overlay" )
 	{
-		local temp = strip_ext( t ).tolower();
+		local temp = DirectoryListing( sys_d + ::hs_ent[tag].dir, false );
 
-		foreach ( m in match_map )
+		foreach ( t in temp.results )
 		{
-			if ( m == temp )
-				return sys_d + ::hs_ent[tag].dir + t;
+			local temp = strip_ext( t ).tolower();
+
+			foreach ( m in match_map )
+			{
+				if ( m == temp )
+					return sys_d + ::hs_ent[tag].dir + t;
+			}
 		}
 	}
 
-	if ( theme_fname.len() > 0 )
+	if (( theme_fname.len() > 0 ) && ( tag != "video" ))
 	{
 		// check in the theme file
 		local temp2 = DirectoryListing( theme_fname, false );
 
+		local test = ( tag == "video_overlay" ) ? "video" : tag;
 		foreach ( f in temp2.results )
 		{
-			if ( strip_ext( f ).tolower() == tag )
+			if ( strip_ext( f ).tolower() == test )
 				return theme_fname + "|" + f;
 		}
 	}
@@ -353,7 +367,8 @@ function find_theme_node( node )
 	return null;
 }
 
-function load( ttype, var, ttime, match_map, hs_sys_dir )
+// return true if we should call into the animate on_transition function
+function load( ttype, match_map, hs_sys_dir )
 {
 	local theme = get_theme_file( hs_sys_dir, match_map );
 //	print( " - Loading theme: " + theme + "\n" );
@@ -367,8 +382,11 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 		{
 			e.obj.visible = false;
 			e.obj.zorder = e.zorder;
+			e.obj.alpha = 255;
 		}
 	}
+
+	::hs_ent["video"].obj.preserve_aspect_ratio = true;
 
 	//
 	// Set up background
@@ -412,13 +430,31 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 	//
 	hs_animation.animations.clear();
 	local call_into_transition=false;
-	
+
+	// tags where we need to clear the resource if we don't find them
+	// defined in this theme
+	//
+	local found_tags = {
+		artwork1 = false
+		artwork2 = false
+		artwork3 = false
+		artwork4	= false
+		video		= false
+	};
+
 	foreach ( c in current_theme_root.children )
 	{
 		if ( ::hs_ent.rawin( c.tag ) )
 		{
+			if ( found_tags.rawin( c.tag ) )
+				found_tags[ c.tag ] = true;
+
 			local obj = ::hs_ent[c.tag].obj;
+			local obj2 = null;
 			obj.visible = true;
+
+			if ( c.tag == "video" )
+				::hs_ent["video_overlay"].obj.visible=true;
 
 			local af = get_art_file( c.tag, hs_sys_dir, theme, match_map );
 			if ( af == obj.file_name )
@@ -432,8 +468,10 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 			local h=obj.texture_height;
 			local r=0;
 			local t=0.0;
+			local d=0.0;
 			local type = "";
 			local start = "";
+			local vid_below=false;
 
 			foreach ( k,v in c.attr )
 			{
@@ -445,15 +483,45 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 				case "h": h=v.tointeger(); break;
 				case "r": r=v.tointeger(); break;
 				case "time": t=v.tofloat(); break;
+//				case "delay": d=v.tofloat(); break;
 				case "type": type = v; break;
 				case "start": start = v; break;
-				case "below":
+				case "overlaybelow":
 					if ( v == "true" )
-						obj.zorder = 1;
+						vid_below = true;
 					break;
+				case "forceaspect":
+					if (( c.tag == "video" ) && ( v == "both" ))
+						obj.preserve_aspect_ratio=false;
 				default:
 					break;
 				}
+			}
+
+			obj.x        = x - w/2;
+			obj.y        = y - h/2;
+
+			obj.width    = w;
+			obj.height   = h;
+			obj.rotation = r;
+
+			if ( c.tag == "video" )
+			{
+				// Deal with video overlay
+				//
+				local af2
+					= get_art_file( "video_overlay", hs_sys_dir, theme, match_map );
+
+				obj2 = ::hs_ent["video_overlay"].obj;
+				obj2.file_name = af2;
+				obj2.x        = x - obj2.texture_width/2;
+				obj2.y        = y - obj2.texture_height/2;
+				obj2.width    = obj2.texture_width;
+				obj2.height   = obj2.texture_height;
+				obj2.rotation = obj.rotation;
+
+				if ( vid_below )
+					obj2.zorder = obj.zorder-1;
 			}
 
 			if ( r != 0 )
@@ -462,21 +530,31 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 				// (instead of top left corner), so correct for that
 				//
 				local mr = PI * r / 180;
-				x += cos( mr ) * (-w/2) - sin( mr ) * (-h/2) + w/2;
-				y += sin( mr ) * (-w/2) + cos( mr ) * (-h/2) + h/2;
+				obj.x += cos( mr ) * (-w/2) - sin( mr ) * (-h/2) + w/2;
+				obj.y += sin( mr ) * (-w/2) + cos( mr ) * (-h/2) + h/2;
+
+				if ( obj2 )
+				{
+					local w2 = obj2.width;
+					local h2 = obj2.height;
+					obj2.x += cos( mr ) * (-w2/2) - sin( mr ) * (-h2/2) + w2/2;
+					obj2.y += sin( mr ) * (-w2/2) + cos( mr ) * (-h2/2) + h2/2;
+				}
 			}
 
-			obj.x        = x - w/2;
-			obj.y        = y - h/2;
-			obj.width    = w;
-			obj.height   = h;
-			obj.rotation = r;
+			local tint = (t * 1000);
+			local dint = (d * 1000).tointeger();
 
-			local tint = (t * 1000).tointeger();
-
-			// Hack around animation times being too slow on Linux
-			if ( OS == "Linux" )
-				tint = (t * 250).tointeger();
+			if ( my_config["speed"] == "4X" )
+			{
+				tint /= 4;
+				dint /= 4;
+			}
+			else if ( my_config["speed"] == "2X" )
+			{
+				tint /= 2;
+				dint /= 2;
+			}
 
 			switch ( type )
 			{
@@ -484,45 +562,138 @@ function load( ttype, var, ttime, match_map, hs_sys_dir )
 				if ( tint > 0 )
 				{
 					local cfg = {
-						when = Transition.EndNavigation,
+						when = ttype,
 						property="alpha",
 						start=0,
 						end =255,
-						time = tint
+						time = tint,
+						delay = dint
 					};
 
 					hs_animation.add( PropertyAnimation( obj, cfg ) );
+					if ( obj2 )
+						hs_animation.add( PropertyAnimation( obj2, cfg ) );
 					call_into_transition=true;
 				}
 				break;
 			case "ease":
+			case "elastic":
+			case "elastic bounce":
 				if ( tint > 0 )
 				{
 					local vert = ((start=="top") || (start=="bottom"));
 					local flip = ((start=="bottom") || (start=="right"));
 
+					local tw = "linear";
+					if ( type == "elastic bounce" )
+						tw = "bounce";
+					else if ( type == "elastic" )
+						tw = "elastic";
+
 					local cfg = {
-						when = Transition.EndNavigation,
+						when = ttype,
 						property= vert ? "y" : "x",
 						start = flip ?
 							( vert ? fe.layout.height : fe.layout.width )
-							: -300,
+							: ( vert ? -h : -w ),
 						end = vert ? y - h/2 : x - w/2,
 						time = tint,
+						delay = dint,
+						tween = tw,
 						easing = Easing.In
 					};
 
 					hs_animation.add( PropertyAnimation( obj, cfg ) );
+					if ( obj2 )
+					{
+						local cfg2 = clone cfg;
+						cfg2["end"] = vert ? y - obj2.height/2 : x - obj2.width/2;
+						hs_animation.add( PropertyAnimation( obj2, cfg2 ) );
+					}
+					call_into_transition=true;
+				}
+				break;
+			case "grow x":
+			case "grow":
+			case "grow bounce":
+				if ( tint > 0 )
+				{
+					local cfg = {
+						when = ttype,
+						property= "width",
+						start=0,
+						end = w,
+						tween = ( type == "grow bounce" ) ? "bounce" : "linear",
+						time = tint,
+						delay = dint
+					};
+
+					hs_animation.add( PropertyAnimation( obj, cfg ) );
+
+					if ( obj2 )
+					{
+						local cfg2 = clone cfg;
+						cfg2["end"] = obj2.width;
+						hs_animation.add( PropertyAnimation( obj2, cfg2 ) );
+					}
+
+					if ( type != "grow x" )
+					{
+						local cfg2 = {
+							when = ttype,
+							property= "x",
+							start=x-w/2,
+							end = x-w/2,
+							time = tint,
+							delay = dint
+						};
+
+						hs_animation.add( PropertyAnimation( obj, cfg2 ) );
+						if ( obj2 )
+						{
+							local cfg3 = clone cfg2;
+							cfg3["start"] = x - obj2.width/2;
+							cfg3["end"] = x - obj2.width/2;
+							hs_animation.add( PropertyAnimation( obj2, cfg3 ) );
+						}
+					}
+					call_into_transition=true;
+				}
+				break;
+
+			case "grow y":
+				if ( tint > 0 )
+				{
+					local cfg = {
+						when = ttype,
+						property= "height",
+						start=0,
+						end = h,
+						time = tint,
+						delay = dint
+					};
+
+					hs_animation.add( PropertyAnimation( obj, cfg ) );
+					if ( obj2 )
+					{
+						local cfg2 = clone cfg;
+						cfg2["end"] = x - obj2.height;
+						hs_animation.add( PropertyAnimation( obj2, cfg2 ) );
+					}
 					call_into_transition=true;
 				}
 				break;
 			}
 		}
 	}
-	if ( call_into_transition )
-		return hs_animation.transition_callback( ttype, var, ttime );
-	else
-		return false;
+
+	foreach ( k,v in found_tags )
+	{
+		if ( !v )
+			::hs_ent[k].obj.file_name = "";
+	}
+
+	return call_into_transition;
 }
 
 function setup_prompts( is_display_menu )
@@ -605,16 +776,37 @@ function load_override_transition( sys_d, match_map )
 	return false;
 }
 
+// if call_animate is true, we simply pass transitions along to the
+// animate module's transition handling
+//
+local call_animate=false;
+
 fe.add_transition_callback( "hs_transition" );
 function hs_transition( ttype, var, ttime )
 {
+	if ( call_animate )
+	{
+		// As of this writing the animate module's transition function never
+		// returns true so this part is unlikely to ever be used...
+		//
+		if ( hs_animation.transition_callback( ttype, var, ttime ) )
+			return true;
+
+		call_animate = false;
+		return false;
+	}
+
 	switch ( ttype )
 	{
 	case Transition.ToNewList:
 	case Transition.EndNavigation:
 		navigate_in_progress = false;
 		setup_prompts( false );
-		return load( ttype, var, ttime, get_match_map(), get_hs_system_dir() );
+		if ( load( ttype, get_match_map(), get_hs_system_dir() ) )
+		{
+			call_animate = hs_animation.transition_callback( ttype, var, ttime );
+			return call_animate;
+		}
 
 	case Transition.ToNewSelection:
 		if ( override_first_part )
@@ -655,21 +847,13 @@ function hs_transition( ttype, var, ttime )
 			wheel.visible = false; // hide the wheel
 			setup_prompts( true );
 
-			local unmapped_index=0;
-			for ( local i=0; i < dm_map.len(); i++ )
-			{
-				if ( dm_map[i] > fe.list.display_index )
-				{
-					unmapped_index = i;
-					break;
-				}
-			}
-
-			return load( Transition.EndNavigation,
-				0,
-				ttime,
+			if ( load( ttype,
 				get_system_match_map( fe.list.display_index ),
-				work_d + "Main Menu/" );
+				work_d + "Main Menu/" ) )
+			{
+				call_animate = hs_animation.transition_callback( ttype, var, ttime );
+				return call_animate;
+			}
 		}
 		else if ( doing_display_menu )
 		{
@@ -681,49 +865,39 @@ function hs_transition( ttype, var, ttime )
 				wheel.visible = true;
 				setup_prompts( false );
 
-				// Not fully understood, but the reload signal seems to
-				// work better here than calling into our load() fn.
-				//
-				fe.signal( "reload" );
-				return false;
-
-//				// Reload to the newly selected display
-//				return load( Transition.EndNavigation,
-//					0,
-//					ttime,
-//					get_match_map(),
-//					get_hs_system_dir() );
+				if ( load( ttype, get_match_map(), get_hs_system_dir() ) )
+				{
+					// It seems we need to force a different transition type here?
+					//
+					call_animate = hs_animation.transition_callback(
+						Transition.ToNewList, var, ttime );
+					return call_animate;
+				}
 			}
 			else if ( ttype == Transition.NewSelOverlay )
 			{
-				if ( override_first_part )
+				if ( var >= dm_map.len() )
 				{
+					// Handle Exit option on the Displays Menu
 					//
-					// Show the override video for override_lag_ms before starting
-					// the switch to the new selection
-					//
- 					if ( ttime < override_lag_ms )
-						return true;
+					foreach ( o in ::hs_ent )
+						o.obj.visible = false;
 
-					override_first_part = false;
+					::hs_ent["background"].obj.file_name = work_d
+						+ "Frontend/Images/Menu_Exit_Background.png";
+					::hs_ent["background"].obj.visible = true;
+
 					return false;
 				}
 
-				local mapped_var = ( var < dm_map.len() ) ? dm_map[var] : 0;
-				local mm = get_system_match_map( mapped_var );
+				local mm = get_system_match_map( dm_map[var] );
 
-				//
-				// We switch the transition type here because we want to
-				// trick the animate module into handling this like a typical
-				// game navigation...
-				//
-				local r1 = load_override_transition(
-					work_d + "Main Menu/", mm );
+				load_override_transition( work_d + "Main Menu/", mm );
 
-				local r2 = load( Transition.EndNavigation,
-					0, ttime, mm, work_d + "Main Menu/" );
+				if ( load( ttype, mm, work_d + "Main Menu/" ) )
+					call_animate = hs_animation.transition_callback( ttype, var, ttime );
 
-				return (r1 || r2);
+				return call_animate;
 			}
 		}
 	}
