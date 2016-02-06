@@ -105,7 +105,6 @@ Info Source/Scraper;외부 정보 제공자 설정
 Joystick Threshold;조이스틱 민감도
 Jump to Next Display;다음 목록으로 이동
 Language;언어 설정
-Launch Last Game on Startup;기동시 직전 게임 자동 재시작
 Layout;레이아웃 명
 Layout Options;레이아웃 별 옵션
 Left;270도
@@ -194,7 +193,6 @@ equals;일치
 _help_art_add;새로운 아트워크 (스크린샷, 타이틀 화면, 기타 동영상 등) 를 추가할 수 있습니다.
 _help_art_label;지정된 라벨명이 레이아웃에서 사용됩니다
 _help_art_path;해당 동영상/그림 파일의 경로입니다
-_help_autolaunch_last_game;프로그램 시작 시에, 마지막으로 실행하였던 게임을 바로 재 시작할지 여부를 설정합니다
 _help_confirm_favs;즐겨하는 게임을 추가/삭제할 때에 사용자에게 Yes/No 로 물을 지 여부를 설정합니다
 _help_control_add_favourite;현재 선택된 게임을 즐겨찾기에 추가/삭제 하는 키를 설정합니다.
 _help_control_add_tags;현재 선택된 게임의 태그를 편집하는 키를 설정합니다.
@@ -302,10 +300,12 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 Ambient Sounds;배경 음악 파일
 Exit menu;나가기
 Extra;기타정보(Extra)
+Launch Last Game on Startup;기동시 직전 게임 자동 재시작
 en;영어
 fr;불어
 jp;일어
 kr;한글
+_help_autolaunch_last_game;프로그램 시작 시에, 마지막으로 실행하였던 게임을 바로 재 시작할지 여부를 설정합니다
 _help_control_sel;
 _help_emu_listxml;
 
@@ -320,11 +320,15 @@ Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
 Exception Edit;Exception Edit
 Intro;Intro
+Launch Last Game;Launch Last Game
 Play Sound;Play Sound
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Show Displays Menu;Show Displays Menu
+Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
+Startup Mode;Startup Mode
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
 _help_control_custom3;Set the "Custom3" control(s)
@@ -339,3 +343,4 @@ _help_input_action;
 _help_intro;Configure intro
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_scrape_vids;Set whether game videos should be downloaded when scraping
+_help_startup_mode;Set what should happen when Attract-Mode first starts up

@@ -105,7 +105,6 @@ Info Source/Scraper;情報元 設定
 Joystick Threshold;ジョイスティックの感度
 Jump to Next Display;次のリストに
 Language;言語
-Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
 Layout;レイアウットの名前
 Layout Options;レイアウト別設定
 Left;270°
@@ -194,7 +193,6 @@ equals;一致する
 _help_art_add;新しいアートワーク (スクリンショット, タイトル, ムービー) を追加します
 _help_art_label;指定したレーベルがレイアウトに使われます
 _help_art_path;アートワークの位置です
-_help_autolaunch_last_game;プラグラムの起動時, 最後にプレイしたゲームを一緒に起動するかを設定します
 _help_confirm_favs;お気に入りのゲームを追加,削除する時, Yes/Noで確認するかを設定します
 _help_control_add_favourite;現在選択されたゲームをお気に入りに追加/削除するキーを設定します
 _help_control_add_tags;現在選択されたゲームのタッグを編集するキーを設定します
@@ -302,10 +300,12 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 Ambient Sounds;BGMファイル
 Exit menu;出る
 Extra;その他(Extra)
+Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
 en;英語
 fr;フランス語
 jp;日本語
 kr;韓国語
+_help_autolaunch_last_game;プラグラムの起動時, 最後にプレイしたゲームを一緒に起動するかを設定します
 _help_control_sel;
 _help_emu_listxml;
 
@@ -320,11 +320,15 @@ Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
 Exception Edit;Exception Edit
 Intro;Intro
+Launch Last Game;Launch Last Game
 Play Sound;Play Sound
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Show Displays Menu;Show Displays Menu
+Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
+Startup Mode;Startup Mode
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
 _help_control_custom3;Set the "Custom3" control(s)
@@ -339,3 +343,4 @@ _help_input_action;
 _help_intro;Configure intro
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_scrape_vids;Set whether game videos should be downloaded when scraping
+_help_startup_mode;Set what should happen when Attract-Mode first starts up

@@ -59,12 +59,6 @@ int main(int argc, char *argv[])
 	FeSettings feSettings( config_path, cmdln_font );
 	feSettings.load();
 
-	if ( feSettings.get_info_bool( FeSettings::AutoLaunchLastGame ) )
-	{
-		feSettings.select_last_launch();
-		launch_game=true;
-	}
-
 	std::string def_font_path, def_font_file;
 	if ( feSettings.get_font_file( def_font_path, def_font_file ) == false )
 	{
@@ -128,7 +122,26 @@ int main(int argc, char *argv[])
 	{
 		// start the intro now
 		if ( !feVM.load_intro() )
+		{
+			// ... or start the layout if there is no intro
 			feVM.load_layout( true );
+
+			switch ( feSettings.get_startup_mode() )
+			{
+			case FeSettings::LaunchLastGame:
+				feSettings.select_last_launch();
+				launch_game=true;
+				break;
+
+			case FeSettings::ShowDisplaysMenu:
+				FeVM::cb_signal( "displays_menu" );
+				break;
+
+			default:
+				break;
+			}
+
+		}
 	}
 
 	while (window.isOpen() && (!exit_selected))
@@ -340,6 +353,22 @@ int main(int argc, char *argv[])
 				move_last_triggered = 0;
 
 				feVM.load_layout( true );
+
+				switch ( feSettings.get_startup_mode() )
+				{
+				case FeSettings::LaunchLastGame:
+					feSettings.select_last_launch();
+					launch_game=true;
+					break;
+
+				case FeSettings::ShowDisplaysMenu:
+					FeVM::cb_signal( "displays_menu" );
+					break;
+
+				default:
+					break;
+				}
+
 				redraw=true;
 				continue;
 			}

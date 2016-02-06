@@ -105,7 +105,6 @@ Info Source/Scraper;Fuente de información/Scraper
 Joystick Threshold;Umbral de la palanca
 Jump to Next Display;Saltar a la siguiente pantalla 
 Language;Idioma
-Launch Last Game on Startup;Lanzar último juego en el inicio
 Layout;Tema
 Layout Options;Opciones de temas
 Left;Izquierda
@@ -196,7 +195,6 @@ _help_art;Una fuente de artwork disponible para ser usado por el temas
 _help_art_add;Agregar una nueva fuente de artwork (marquesinas, capturas de pantalla, etc.)
 _help_art_label;Etiqueta que identifica este artwork (usado por los temas)
 _help_art_path;Ruta a los archivos de este artwork. Es posible ingresar multiples rutas separadas por punto y coma.
-_help_autolaunch_last_game;Lanza automaticamente el útlito juego jugado en el inicio
 _help_back;Salir del menu
 _help_confirm_favs;Confirma la adición/remoción a favoritos
 _help_control_add_favourite;Configura el(los) control(es) que marca/desmarca el juego actualmente seleccionado como favorito
@@ -309,12 +307,14 @@ Basic Movie;Video básico
 Custom 1;Personalizado 1
 Custom 2;Personalizado 2
 Image collage;Collage de imágenes
+Launch Last Game on Startup;Lanzar último juego en el inicio
 Movie collage;Collage de video
 Overlay Artwork;superposición de artworks
 Preserve Aspect Ratio;Preservar relación de aspecto
 en;English
 es;Español
 fr;Français
+_help_autolaunch_last_game;Lanza automaticamente el útlito juego jugado en el inicio
 
 #@DONE_TRANSLATED
 #
@@ -327,10 +327,14 @@ Exception;Exception
 Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
 Intro;Intro
+Launch Last Game;Launch Last Game
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Show Displays Menu;Show Displays Menu
+Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
+Startup Mode;Startup Mode
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)
@@ -341,3 +345,4 @@ _help_filter_add_exception;Add an exception to this filter.  If a game matches a
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_startup_mode;Set what should happen when Attract-Mode first starts up

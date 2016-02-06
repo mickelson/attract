@@ -105,7 +105,7 @@ END {
 	for ( t in extra_help )
 	{
 		if ( length( t ) > 1 )
-			print t,";",extra_help[l];
+			print t,";",extra_help[t];
 	}
 
 	print "";

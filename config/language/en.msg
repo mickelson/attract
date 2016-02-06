@@ -10,7 +10,6 @@ _help_art;An artwork resource available for use by layouts
 _help_art_add;Add a new artwork resource (marquee images, screen shots, etc.)
 _help_art_label;The label that identifies this artwork resource (used by layouts)
 _help_art_path;The path to the files for this artwork.  Multiple paths can be entered if separated by a semicolon.
-_help_autolaunch_last_game;Automatically launch the last game played on startup
 _help_back;Exit menu
 _help_confirm_favs;Confirm the addition/removal of Favourites
 _help_control_add_favourite;Set the control(s) that mark/unmark the currently selected game as a favourite
@@ -120,6 +119,7 @@ _help_screen_saver;Configure screen saver
 _help_screen_saver_timeout;The amount of time in seconds to wait before switching to the screen saver.  0 to disable
 _help_sound;Configure sound volumes, sound event mappings and the ambient soundtrack
 _help_sound_sel;Assign a sound to this event/action
+_help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_track_usage;Configure whether Attract-Mode should track usage (played time and play count for each game)
 _help_volume;Valid volume settings are from 0 (mute) to 100 
 _help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
@@ -134,3 +134,4 @@ fr;Français
 jp;日本語 (Japanese)
 kr;한글 (Korean)
 
+#@DONE_TRANSLATED

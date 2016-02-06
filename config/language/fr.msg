@@ -104,7 +104,6 @@ Info Source/Scraper;Info Source/Aspiration
 Joystick Threshold;Seuil du joystick
 Jump to Next Display;Bascule sur la liste de roms suivante 
 Language;Langage
-Launch Last Game on Startup;Lancer le dernier jeu au démarrage
 Layout;Thème
 Layout Options;Options du Layout
 Left;Gauche
@@ -194,7 +193,6 @@ equals;est égal à
 _help_art_add;Ajouter une nouvelle ressource à l'Artwork (marquee, capture d'écran, etc.)
 _help_art_label;Label identifiant cette ressource d'Artwork (utilisé par les thèmes)
 _help_art_path;Répertoire contenant les Artworks
-_help_autolaunch_last_game;Lancer automatiquement au démarrage le dernier jeu joué
 _help_confirm_favs;Confirmer l'addition/suppression des favoris
 _help_control_add_favourite;Définit le(s) contrôle(s) qui permet(ent) d'ajouter/supprimer le jeu selectionné à la liste des favoris
 _help_control_add_tags;Définit le(s) contrôle(s) qui ajoute(nt)/supprime(nt) des mots clés au jeu sélectionné
@@ -309,6 +307,7 @@ Allow Exit from 'Lists Menu';Permettre la sortie des listes de menu
 Ambient Sounds;Son d'ambiance
 Exit menu;Quitter le menu
 Generate Collection/Romlist;Générer la liste de ROM
+Launch Last Game on Startup;Lancer le dernier jeu au démarrage
 Lists;Listes
 Lists Menu;Menu des listes
 Next List;Liste suivante
@@ -318,6 +317,7 @@ es;Español
 fr;Français
 jp;Japonais
 kr;Coréen
+_help_autolaunch_last_game;Lancer automatiquement au démarrage le dernier jeu joué
 
 #@DONE_TRANSLATED
 #
@@ -331,10 +331,14 @@ Exception;Exception
 Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
 Intro;Intro
+Launch Last Game;Launch Last Game
 Play Sound;Play Sound
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Show Displays Menu;Show Displays Menu
+Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
+Startup Mode;Startup Mode
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
 _help_display_in_cycle;Include this display in the "Previous Display"/"Next Display" cycle?
@@ -343,3 +347,4 @@ _help_filter_add_exception;Add an exception to this filter.  If a game matches a
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_input_action;
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_startup_mode;Set what should happen when Attract-Mode first starts up

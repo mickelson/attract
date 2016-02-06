@@ -1486,11 +1486,18 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_hide_brackets" );
 	ctx.back_opt().append_vlist( bool_opts );
 
-	ctx.add_optl( Opt::LIST,
-			"Launch Last Game on Startup",
-			ctx.fe_settings.get_info_bool( FeSettings::AutoLaunchLastGame ) ? bool_opts[0] : bool_opts[1],
-			"_help_autolaunch_last_game" );
-	ctx.back_opt().append_vlist( bool_opts );
+	std::string startupmode;
+	ctx.fe_settings.get_resource( FeSettings::startupDispTokens[ ctx.fe_settings.get_startup_mode() ], startupmode );
+	std::vector < std::string > startup_modes;
+	i=0;
+	while ( FeSettings::startupDispTokens[i] != 0 )
+	{
+		startup_modes.push_back( std::string() );
+		ctx.fe_settings.get_resource( FeSettings::startupDispTokens[ i ], startup_modes.back() );
+		i++;
+	}
+	ctx.add_optl( Opt::LIST, "Startup Mode", startupmode, "_help_startup_mode" );
+	ctx.back_opt().append_vlist( startup_modes );
 
 	ctx.add_optl( Opt::LIST,
 			"Confirm Favourites",
@@ -1566,8 +1573,8 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::HideBrackets,
 			ctx.opt_list[2].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
-	ctx.fe_settings.set_info( FeSettings::AutoLaunchLastGame,
-			ctx.opt_list[3].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+	ctx.fe_settings.set_info( FeSettings::StartupMode,
+			FeSettings::startupTokens[ ctx.opt_list[3].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
 			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );

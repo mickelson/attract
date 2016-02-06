@@ -94,6 +94,10 @@ public:
 	static const char *filterWrapTokens[];
 	static const char *filterWrapDispTokens[];
 
+	enum StartupModeType { ShowLastSelection=0, LaunchLastGame, ShowDisplaysMenu };
+	static const char *startupTokens[];
+	static const char *startupDispTokens[];
+
 	enum ConfigSettingIndex
 	{
 		Language=0,
@@ -103,7 +107,7 @@ public:
 		ScreenSaverTimeout,
 		DisplaysMenuExit,
 		HideBrackets,
-		AutoLaunchLastGame,
+		StartupMode,
 		ConfirmFavourites,
 		MouseThreshold,
 		JoystickThreshold,
@@ -160,7 +164,7 @@ private:
 	int m_current_search_index;
 	bool m_displays_menu_exit;
 	bool m_hide_brackets;
-	bool m_autolaunch_last_game;
+	StartupModeType m_startup_mode;
 	bool m_confirm_favs;
 	bool m_track_usage;
 	bool m_multimon;
@@ -357,6 +361,7 @@ public:
 
 	WindowType get_window_mode() const;
 	FilterWrapModeType get_filter_wrap_mode() const;
+	StartupModeType get_startup_mode() const;
 	int get_screen_saver_timeout() const;
 
 	bool get_current_fav();

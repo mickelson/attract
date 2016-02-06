@@ -212,6 +212,22 @@ const char *FeSettings::filterWrapDispTokens[] =
 	NULL
 };
 
+const char *FeSettings::startupTokens[] =
+{
+	"default",
+	"launch_last_game",
+	"displays_menu",
+	NULL
+};
+
+const char *FeSettings::startupDispTokens[] =
+{
+	"Show Last Selection (Default)",
+	"Launch Last Game",
+	"Show Displays Menu",
+	NULL
+};
+
 FeSettings::FeSettings( const std::string &config_path,
 				const std::string &cmdln_font )
 	:  m_rl( m_config_path ),
@@ -229,7 +245,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_current_search_index( 0 ),
 	m_displays_menu_exit( true ),
 	m_hide_brackets( false ),
-	m_autolaunch_last_game( false ),
+	m_startup_mode( ShowLastSelection ),
 	m_confirm_favs( false ),
 	m_track_usage( true ),
 	m_multimon( true ),
@@ -377,7 +393,7 @@ const char *FeSettings::configSettingStrings[] =
 	"screen_saver_timeout",
 	"displays_menu_exit",
 	"hide_brackets",
-	"autolaunch_last_game",
+	"startup_mode",
 	"confirm_favourites",
 	"mouse_threshold",
 	"joystick_threshold",
@@ -493,6 +509,13 @@ int FeSettings::process_setting( const std::string &setting,
 			if ( setting.compare( "lists_menu_exit" ) == 0 )
 			{
 				set_info( DisplaysMenuExit, value );
+				return 0;
+			}
+			// After 1.6.2, "autolaunch_last_game" became an option for "startup_mode"
+			else if ( setting.compare( "autolaunch_last_game" ) == 0 )
+			{
+				if ( config_str_to_bool( value ) )
+					m_startup_mode = LaunchLastGame;
 				return 0;
 			}
 
@@ -2064,6 +2087,11 @@ FeSettings::FilterWrapModeType FeSettings::get_filter_wrap_mode() const
 	return m_filter_wrap_mode;
 }
 
+FeSettings::StartupModeType FeSettings::get_startup_mode() const
+{
+	return m_startup_mode;
+}
+
 int FeSettings::get_screen_saver_timeout() const
 {
 	return m_ssaver_time;
@@ -2119,10 +2147,11 @@ const std::string FeSettings::get_info( int index ) const
 		return filterWrapTokens[ m_filter_wrap_mode ];
 	case SelectionSpeed:
 		return as_str( m_selection_speed );
+	case StartupMode:
+		return startupTokens[ m_startup_mode ];
 
 	case DisplaysMenuExit:
 	case HideBrackets:
-	case AutoLaunchLastGame:
 	case ConfirmFavourites:
 	case TrackUsage:
 	case MultiMon:
@@ -2150,8 +2179,6 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_displays_menu_exit;
 	case HideBrackets:
 		return m_hide_brackets;
-	case AutoLaunchLastGame:
-		return m_autolaunch_last_game;
 	case ConfirmFavourites:
 		return m_confirm_favs;
 	case TrackUsage:
@@ -2221,8 +2248,22 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_hide_brackets = config_str_to_bool( value );
 		break;
 
-	case AutoLaunchLastGame:
-		m_autolaunch_last_game = config_str_to_bool( value );
+	case StartupMode:
+		{
+			int i=0;
+			while ( startupTokens[i] != NULL )
+			{
+				if ( value.compare( startupTokens[i] ) == 0 )
+				{
+					m_startup_mode = (StartupModeType)i;
+					break;
+				}
+				i++;
+			}
+
+			if ( startupTokens[i] == NULL )
+				return false;
+		}
 		break;
 
 	case ConfirmFavourites:
