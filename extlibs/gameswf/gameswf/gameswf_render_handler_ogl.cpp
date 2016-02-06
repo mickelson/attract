@@ -1741,9 +1741,12 @@ void bitmap_info_ogl::layout()
 #else
 				// Modern opengl should be able to handle non-power of two textures
 				//
+				int h = m_suspended_image->m_height;
+				h -= ( h & 0x03 );
+
 				create_texture(format,
 					m_suspended_image->m_width,
-					m_suspended_image->m_height,
+					h,
 					m_suspended_image->m_data, 0);
 #endif
 				break;
