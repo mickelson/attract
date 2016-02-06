@@ -304,7 +304,11 @@ endif
 
 ifeq ($(NO_MOVIE),1)
  FE_FLAGS += -DNO_MOVIE
- LIBS += -lsfml-audio
+ ifeq ($(WINDOWS_STATIC),1)
+  LIBS += -lsfml-audio-s
+ else
+  LIBS += -lsfml-audio
+ endif
  AUDIO =
 else
  TEMP_LIBS += libavformat libavcodec libavutil libswscale
@@ -331,6 +335,8 @@ else
  CFLAGS += -I$(EXTLIBS_DIR)/audio/include
  AUDIO = $(OBJ_DIR)/libaudio.a
 endif
+
+CFLAGS += -D__STDC_CONSTANT_MACROS
 
 LIBS += $(shell $(PKG_CONFIG) --libs $(TEMP_LIBS))
 CFLAGS += $(shell $(PKG_CONFIG) --cflags $(TEMP_LIBS))
