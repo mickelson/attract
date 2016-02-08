@@ -1167,8 +1167,6 @@ bool FeSettings::set_display( int index )
 	//
 	if ( index >= (int)m_displays.size() )
 		m_current_display = m_displays.size()-1;
-	else if ( index < 0 )
-		m_current_display = 0;
 	else
 		m_current_display = index;
 
