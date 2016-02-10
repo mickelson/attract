@@ -2098,6 +2098,11 @@ void FeVM::cb_set_display( int idx )
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 	FeSettings *fes = fev->m_feSettings;
 
+	if ( idx >= fes->displays_count() )
+		idx = fes->displays_count()-1;
+	if ( idx < 0 )
+		idx = 0;
+
 	fes->set_display( idx );
 	fev->m_posted_commands.push( FeInputMap::Reload );
 }
