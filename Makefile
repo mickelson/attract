@@ -219,6 +219,7 @@ ifneq ($(NO_SWF),1)
  LIBS += -ljpeg -lz
 
  ifneq ($(FE_WINDOWS_COMPILE),1)
+  LIBS += -lpthread
   ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
    ifeq ($(USE_GLES),1)
@@ -594,6 +595,7 @@ GAMESWFOBJS= \
 	$(GAMESWF_OBJ_DIR)/gameswf_types.o        \
 	$(GAMESWF_OBJ_DIR)/gameswf_value.o        \
 	$(GAMESWF_OBJ_DIR)/gameswf_video_impl.o   \
+	$(GAMESWF_OBJ_DIR)/gameswf_mutex.o   \
 	$(GAMESWF_OBJ_DIR)/gameswf_sound_handler_openal.o
 
 ifeq ($(FE_MACOSX_COMPILE),1)

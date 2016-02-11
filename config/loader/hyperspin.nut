@@ -43,7 +43,7 @@ class UserConfig </ help="Hyperspin Layout: " + fe.script_dir + ::file_to_load /
    overrides="yes";
 
    </ label="Override Lag", help="Time to wait after override starts before switching artwork (in ms)", order=2 />
-   override_lag_ms="400";
+   override_lag_ms="0";
 
    </ label="Wheel Speed", help="Wheel spin speed (in ms)", order=3 />
    wheel_ms="100";
@@ -76,7 +76,7 @@ fe.layout.height = 768;
 //
 /////////////////////////////////////////////////////////
 wheel_ms <- 100;
-override_lag_ms <- 400;
+override_lag_ms <- 0;
 work_d <- fe.script_dir + ::file_to_load;	// base directory
 hs_systems <- [];	// list of the subdirectories in work_d
 current_theme <- ""; // path of the currently loaded theme file
@@ -162,11 +162,6 @@ for ( local i=0; i< fe.displays.len(); i++ )
 
 ::hs_ent.override_transition <- {
 		dir = "Video/Override Transitions/"
-
-		// override transition video gets loaded into obj on initialization,
-		// but doesn't get played.  It gets swapped to obj2 to play when
-		// the transition actually occurs.
-		//
 		obj = fe.add_image( "", 0, 0, fe.layout.width, fe.layout.height )
 		zorder = 9999
 	};
@@ -217,14 +212,14 @@ function get_system_match_map( idx=-1 )
 	return smm;
 }
 
-function get_match_map()
+function get_match_map( index_offset=0 )
 {
 	local mm = [];
-	mm.push( fe.game_info( Info.Name ).tolower() );
+	mm.push( fe.game_info( Info.Name, index_offset ).tolower() );
 	if ( fe.game_info( Info.AltRomname ).len() > 0 )
-		mm.push( fe.game_info( Info.AltRomname ).tolower() );
+		mm.push( fe.game_info( Info.AltRomname, index_offset ).tolower() );
 	if ( fe.game_info( Info.CloneOf ).len() > 0 )
-		mm.push( fe.game_info( Info.CloneOf ).tolower() );
+		mm.push( fe.game_info( Info.CloneOf, index_offset ).tolower() );
 
 	return mm;
 }
@@ -801,14 +796,25 @@ function hs_transition( ttype, var, ttime )
 	case Transition.ToNewList:
 	case Transition.EndNavigation:
 		navigate_in_progress = false;
+
 		setup_prompts( false );
-		if ( load( ttype, get_match_map(), get_hs_system_dir() ) )
+		local hs_sys = get_hs_system_dir();
+		local mm = get_match_map();
+
+		if ( override_lag_ms <= 0 )
+			load_override_transition( hs_sys, mm );
+
+		if ( load( ttype, mm, hs_sys ) )
 		{
 			call_animate = hs_animation.transition_callback( ttype, var, ttime );
 			return call_animate;
 		}
+		break;
 
 	case Transition.ToNewSelection:
+		if ( override_lag_ms <=  0 )
+			break;
+
 		if ( override_first_part )
 		{
 			//
@@ -830,7 +836,7 @@ function hs_transition( ttype, var, ttime )
 
 		navigate_in_progress = true;
 		return load_override_transition(
-			get_hs_system_dir(), get_match_map() );
+			get_hs_system_dir(), get_match_map( var ) );
 
 	default:
 		break;

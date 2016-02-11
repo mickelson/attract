@@ -679,6 +679,7 @@ namespace gameswf
 			if (err != Z_OK)
 			{
 				log_error("error: inflate_wrapper() inflate() returned %d\n", err);
+				break;
 			}
 		}
 

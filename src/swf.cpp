@@ -121,27 +121,45 @@ struct FeSwfState
 	gameswf::gc_ptr<gameswf::root> root;
 	sf::Clock timer;
 	sf::Time last_tick;
+	FeZipStream *zip;
 };
 
 FeSwf::FeSwf()
 {
 	open_swf();
 	m_imp = new FeSwfState();
+	m_imp->zip = NULL;
 }
 
 FeSwf::~FeSwf()
 {
+	// root and play need to be destroyed before m_imp->zip is deleted
+	//
+	m_imp->root = NULL;
+	m_imp->play = NULL;
+
+	if ( m_imp->zip )
+		delete m_imp->zip;
+
 	delete m_imp;
 	close_swf();
 }
 
 bool FeSwf::open_from_archive( const std::string &path, const std::string &file )
 {
-	FeZipStream zs( path );
-	if ( !zs.open( file ) )
+	if ( m_imp->zip )
+	{
+		m_imp->root = NULL;
+		m_imp->play = NULL;
+		delete m_imp->zip;
+	}
+
+	m_imp->zip = new FeZipStream( path );
+
+	if ( !m_imp->zip->open( file ) )
 		return false;
 
-	swf_zip = &zs;
+	swf_zip = m_imp->zip;
 	bool retval = open_from_file( path + "|" + file );
 	swf_zip = NULL;
 
@@ -154,7 +172,7 @@ bool FeSwf::open_from_file( const std::string &file )
 	m_imp->root = NULL;
 
 	m_imp->play = new gameswf::player();
-	m_imp->play->set_separate_thread( false );
+	m_imp->play->set_separate_thread( true );
 
 #ifdef FE_DEBUG
 	m_imp->play->verbose_action( true );
