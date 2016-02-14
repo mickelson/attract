@@ -939,8 +939,8 @@ bool FePresent::load_intro()
 	}
 
 
+	// Don't do the StartLayout signal for the intro
 	update( true, true );
-	on_transition( StartLayout, FromToNoValue );
 	return retval;
 }
 
@@ -960,8 +960,8 @@ void FePresent::load_screensaver()
 	//
 	// if there is no screen saver script then do a blank screen
 	//
-	update( true, true );
 	on_transition( StartLayout, FromToNoValue );
+	update( true, true );
 }
 
 void FePresent::load_layout( bool initial_load )
@@ -1007,8 +1007,8 @@ void FePresent::load_layout( bool initial_load )
 		init_with_default_layout();
 	}
 
-	update_to_new_list( FromToNoValue, true );
 	on_transition( StartLayout, var );
+	update_to_new_list( FromToNoValue, true );
 }
 
 void FePresent::update_to_new_list( int var, bool new_layout )
