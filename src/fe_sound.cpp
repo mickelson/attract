@@ -31,7 +31,8 @@
 FeSoundSystem::FeSoundSystem( FeSettings *fes )
 	: m_sound( false ),
 	m_music( true ),
-	m_fes( fes )
+	m_fes( fes ),
+	m_current_sound( FeInputMap::LAST_COMMAND )
 {
 }
 
@@ -56,7 +57,13 @@ void FeSoundSystem::sound_event( FeInputMap::Command c )
 	if ( sound.compare( m_sound.get_file_name() ) != 0 )
 		m_sound.load( "", sound );
 
+	m_current_sound = c;
 	m_sound.set_playing( true );
+}
+
+bool FeSoundSystem::is_sound_event_playing( FeInputMap::Command c )
+{
+	return (( m_current_sound == c ) && m_sound.get_playing() );
 }
 
 void FeSoundSystem::play_ambient()
@@ -91,6 +98,12 @@ void FeSoundSystem::update_volumes()
 	m_sound.set_volume( m_fes->get_play_volume( FeSoundInfo::Sound ) );
 }
 
+void FeSoundSystem::release_audio( bool state )
+{
+	m_music.release_audio( state );
+	m_sound.release_audio( state );
+}
+
 FeSound::FeSound( bool loop )
 #ifdef NO_MOVIE
 	: m_sound(),
@@ -101,6 +114,13 @@ FeSound::FeSound( bool loop )
 {
 	// default to no looping for script sounds
 	m_sound.setLoop( loop );
+}
+
+void FeSound::release_audio( bool state )
+{
+#ifndef NO_MOVIE
+	m_sound.release_audio( state );
+#endif
 }
 
 void FeSound::tick()

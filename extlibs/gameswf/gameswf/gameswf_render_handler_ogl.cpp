@@ -28,11 +28,13 @@
 
 #include <string.h>	// for memset()
 
+#ifdef MAKE_POT_TEXTURES
 extern "C"
 {
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 };
+#endif
 
 // Pointers to opengl extension functions.
 typedef char GLchar;
@@ -1618,6 +1620,8 @@ void	generate_mipmaps(unsigned int internal_format, unsigned int input_format, i
 	}
 }
 
+#ifdef MAKE_POT_TEXTURES
+
 void ffmpeg_resample( int bpp, int src_width, int src_height, int src_pitch,
 	uint8* src_data, int dst_width, int dst_height )
 {
@@ -1651,6 +1655,8 @@ void ffmpeg_resample( int bpp, int src_width, int src_height, int src_pitch,
 	avpicture_free( &my_pict );
 	sws_freeContext( ctx );
 }
+
+#endif
 
 bitmap_info_ogl::bitmap_info_ogl() :
 	m_texture_id(0),

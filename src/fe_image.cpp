@@ -191,6 +191,10 @@ void FeBaseTextureContainer::notify_texture_change()
 		(*itr)->texture_changed();
 }
 
+void FeBaseTextureContainer::release_audio( bool )
+{
+}
+
 namespace
 {
 	//
@@ -930,6 +934,14 @@ void FeTextureContainer::set_smooth( bool s )
 bool FeTextureContainer::get_smooth() const
 {
 	return m_texture.isSmooth();
+}
+
+void FeTextureContainer::release_audio( bool state )
+{
+#ifndef NO_MOVIE
+	if ( m_movie )
+		m_movie->release_audio( state );
+#endif
 }
 
 FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )

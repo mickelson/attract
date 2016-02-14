@@ -109,8 +109,14 @@ bool process_q_simple( FeNetQueue &q,
 					// find second last forward slash in filename
 					// we assume that there will always be at least two
 					size_t pos = result.find_last_of( "\\/" );
-					pos = result.find_last_of( "\\/", pos-1 );
-					aux = result.substr( pos );
+
+					if ( pos != std::string::npos )
+					{
+						pos = result.find_last_of( "\\/", pos-1 );
+
+						if ( pos != std::string::npos )
+							aux = result.substr( pos );
+					}
 				}
 
 				done++;

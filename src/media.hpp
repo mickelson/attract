@@ -62,6 +62,7 @@ public:
 	using sf::SoundStream::setPitch;
 	using sf::SoundStream::getPitch;
 	using sf::SoundStream::getStatus;
+	using sf::SoundSource::release_audio;
 
 	void play();
 	void stop();

@@ -81,6 +81,8 @@ public:
 	int get_duration();
 	int get_time();
 	const char *get_metadata( const char * );
+
+	void release_audio( bool );
 };
 
 class FeSoundSystem
@@ -92,6 +94,7 @@ private:
 	FeSound m_sound;
 	FeSound m_music;
 	FeSettings *m_fes;
+	FeInputMap::Command m_current_sound;
 
 public:
 	FeSoundSystem( FeSettings * );
@@ -100,10 +103,14 @@ public:
 	FeSound &get_ambient_sound();
 
 	void sound_event( FeInputMap::Command );
+	bool is_sound_event_playing( FeInputMap::Command );
+
 	void play_ambient();
 	void update_volumes();
 	void stop();
 	void tick();
+
+	void release_audio( bool );
 };
 
 #endif

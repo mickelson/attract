@@ -88,6 +88,8 @@ public:
 
 	void register_image( FeImage * );
 
+	virtual void release_audio( bool );
+
 protected:
 	FeBaseTextureContainer();
 	FeBaseTextureContainer( const FeBaseTextureContainer & );
@@ -146,6 +148,8 @@ public:
 
 	void set_smooth( bool );
 	bool get_smooth() const;
+
+	void release_audio( bool );
 
 protected:
 	FeTextureContainer *get_derived_texture_container();

@@ -30,6 +30,10 @@
 
 #include <iostream>
 
+#ifndef NO_MOVIE
+#include <Audio/AudioDevice.hpp>
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 
 #include <windows.h>
@@ -1089,10 +1093,41 @@ void FePresent::pre_run()
 {
 	on_transition( ToGame, FromToNoValue );
 	set_video_play_state( false );
+
+#ifndef NO_MOVIE
+	//
+	// Release all the openAL buffers, contexts and devices so that we don't block
+	// the emulator from accessing the system's sound
+	//
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
+		(*itm)->release_audio( true );
+
+	for ( std::vector<FeSound *>::iterator its=m_sounds.begin();
+				its != m_sounds.end(); ++its )
+		(*its)->release_audio( true );
+
+	sf::AudioDevice::release_audio( true );
+#endif
 }
 
 void FePresent::post_run()
 {
+#ifndef NO_MOVIE
+	//
+	// Re-establish openAL stuff now that we are back from the emulator
+	//
+	sf::AudioDevice::release_audio( false );
+
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
+		(*itm)->release_audio( false );
+
+	for ( std::vector<FeSound *>::iterator its=m_sounds.begin();
+				its != m_sounds.end(); ++its )
+		(*its)->release_audio( false );
+#endif
+
 	set_video_play_state( m_playMovies );
 	on_transition( FromGame, FromToNoValue );
 

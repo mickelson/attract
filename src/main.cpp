@@ -180,7 +180,8 @@ int main(int argc, char *argv[])
 			config_mode=false;
 			redraw=true;
 		}
-		else if ( launch_game )
+		else if (( launch_game )
+			&& ( !soundsys.is_sound_event_playing( FeInputMap::Select ) ))
 		{
 			if ( feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator ).compare( "@" ) == 0 )
 			{
@@ -217,13 +218,16 @@ int main(int argc, char *argv[])
 			{
 				soundsys.stop();
 
+				soundsys.release_audio( true );
 				feVM.pre_run();
 
-				// window.run() returns true if our window has been closed while the other program was running
+				// window.run() returns true if our window has been closed while
+				// the other program was running
 				if ( !window.run() )
 					exit_selected = true;
 
 				feVM.post_run();
+				soundsys.release_audio( false );
 
 				soundsys.sound_event( FeInputMap::EventGameReturn );
 				soundsys.play_ambient();

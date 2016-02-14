@@ -80,6 +80,32 @@ AudioDevice::~AudioDevice()
         alcCloseDevice(audioDevice);
 }
 
+void AudioDevice::release_audio( bool state )
+{
+    if ( state )
+    {
+        // Destroy the context
+        alcMakeContextCurrent(NULL);
+        if (audioContext)
+            alcDestroyContext(audioContext);
+
+        // Destroy the device
+        if (audioDevice)
+            alcCloseDevice(audioDevice);
+    }
+    else
+    {
+        audioDevice = alcOpenDevice(NULL);
+        if (audioDevice)
+        {
+            // Create the context
+            audioContext = alcCreateContext(audioDevice, NULL);
+
+            if (audioContext)
+                alcMakeContextCurrent(audioContext);
+        }
+    }
+}
 
 ////////////////////////////////////////////////////////////
 bool AudioDevice::isExtensionSupported(const std::string& extension)

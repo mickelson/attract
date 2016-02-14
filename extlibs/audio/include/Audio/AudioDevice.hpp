@@ -79,6 +79,12 @@ public :
     ///
     ////////////////////////////////////////////////////////////
     static int getFormatFromChannelCount(unsigned int channelCount);
+
+    ////////////////////////////////////////////////////////////
+    // Attract-Mode customization: true to release audio for launch
+    // of an emulator.  False to get it back
+    ////////////////////////////////////////////////////////////
+    static void release_audio( bool );
 };
 
 } // namespace sf

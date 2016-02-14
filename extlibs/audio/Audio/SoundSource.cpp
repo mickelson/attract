@@ -63,6 +63,22 @@ SoundSource::~SoundSource()
 
 
 ////////////////////////////////////////////////////////////
+void SoundSource::release_audio( bool state )
+{
+    if ( state )
+    {
+        alCheck(alSourcei(m_source, AL_BUFFER, 0));
+        alCheck(alDeleteSources(1, &m_source));
+    }
+    else
+    {
+        alCheck(alGenSources(1, &m_source));
+        alCheck(alSourcei(m_source, AL_BUFFER, 0));
+    }
+}
+
+
+////////////////////////////////////////////////////////////
 void SoundSource::setPitch(float pitch)
 {
     alCheck(alSourcef(m_source, AL_PITCH, pitch));
