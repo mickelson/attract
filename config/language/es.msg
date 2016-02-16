@@ -320,6 +320,7 @@ _help_autolaunch_last_game;Lanza automaticamente el útlito juego jugado en el i
 #
 # Strings still needing translation
 #
+Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Display Name;Display Name
 Enable Multiple Monitors;Enable Multiple Monitors
@@ -328,6 +329,7 @@ Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
 Intro;Intro
 Launch Last Game;Launch Last Game
+Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Show Displays Menu;Show Displays Menu

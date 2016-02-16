@@ -324,6 +324,7 @@ _help_autolaunch_last_game;Lancer automatiquement au démarrage le dernier jeu j
 # Strings still needing translation
 #
 $1 Rule(s);$1 Rule(s)
+Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
@@ -333,6 +334,7 @@ FileIsAvailable;FileIsAvailable
 Intro;Intro
 Launch Last Game;Launch Last Game
 Play Sound;Play Sound
+Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)

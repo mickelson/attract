@@ -314,6 +314,7 @@ _help_emu_listxml;
 # Strings still needing translation
 #
 $1 Rule(s);$1 Rule(s)
+Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
@@ -322,6 +323,7 @@ Exception Edit;Exception Edit
 Intro;Intro
 Launch Last Game;Launch Last Game
 Play Sound;Play Sound
+Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Show Displays Menu;Show Displays Menu

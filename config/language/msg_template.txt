@@ -3,6 +3,7 @@
 #
 $1 Rule(s);$1 Rule(s)
 Action;Action
+Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Artwork;Add Artwork
 Add Emulator;Add Emulator
 Add Exception;Add Exception
@@ -144,6 +145,7 @@ Previous Favourite;Previous Favourite
 Previous Filter;Previous Filter
 Previous Letter;Previous Letter
 Random Game;Random Game
+Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove Input;Remove Input
 Replay Last Game;Replay Last Game
 Right;Right
