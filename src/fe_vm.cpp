@@ -111,12 +111,18 @@ namespace
 				path_to_run += filename;
 				path_to_run += ")";
 
-				std::vector<char> sv( zip.getSize()+1 );
+				char *d = zip.getData();
 
-				zip.read( &(sv[0]), zip.getSize() );
-				sv[zip.getSize()]=0;
+				// CompileString chokes on whitespace at the start of a file,
+				// while CompileFile (below) doesn't seem to have the same
+				// problem...
+				//
+				int i=0;
+				while (( d[i] < 32 ) && ( i < zip.getSize() ))
+					i++;
 
-				sc.CompileString( sv.data() );
+				std::string str( &(d[i]), zip.getSize()-i );
+				sc.CompileString( str );
 			}
 			else
 			{
@@ -137,14 +143,6 @@ namespace
 					<< " - " << e.Message() << std::endl;
 		}
 		return true;
-	}
-
-	void *fe_script_zip_callback( size_t s )
-	{
-		HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
-		SQUserPointer my_ptr = sqstd_createblob( vm, s );
-
-		return (void *)my_ptr;
 	}
 
 	SQInteger zip_extract_file(HSQUIRRELVM vm)
@@ -168,17 +166,15 @@ namespace
 		else
 			path = archive;
 
-		void *my_ptr;
+		std::vector < char > buff;
 		if ( !fe_zip_open_to_buff(
 				path.c_str(),
 				filename,
-				fe_script_zip_callback,
-				&my_ptr, NULL ) )
+				buff ) )
 			return sq_throwerror( vm, "error reading zip" );
 
-		// fe_zip_open_to_buff will have pushed the blob onto the
-		// squirrel stack with the call to sqstd_createblob() in
-		// fe_script_zip_callback
+		SQUserPointer my_ptr = sqstd_createblob( vm, buff.size() );
+		memcpy( my_ptr, &(buff[0]), buff.size() );
 		return 1;
 	}
 

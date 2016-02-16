@@ -100,6 +100,10 @@ void FeSoundSystem::update_volumes()
 
 void FeSoundSystem::release_audio( bool state )
 {
+	// because SoundSystem::stop doesn't actually stop m_sound....
+	if ( state )
+		m_sound.set_playing( false );
+
 	m_music.release_audio( state );
 	m_sound.release_audio( state );
 }

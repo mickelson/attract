@@ -115,21 +115,17 @@ namespace
 };
 
 bool fe_zip_open_to_buff(
-	const char *archive,
+	const char *arch,
 	const char *filename,
-	FE_ZIP_ALLOC_CALLBACK callback,
-	void **buff,
-	size_t *buff_size )
+	std::vector< char > &buff )
 {
-	ASSERT( buff != NULL );
-
 	struct archive *a = my_archive_init();
-	int r = archive_read_open_filename( a, archive, 8192 );
+	int r = archive_read_open_filename( a, arch, 8192 );
 
 	if ( r != ARCHIVE_OK )
 	{
 		std::cerr << "Error opening archive: "
-			<< archive << std::endl;
+			<< arch << std::endl;
 		archive_read_free( a );
 		return false;
 	}
@@ -143,22 +139,8 @@ bool fe_zip_open_to_buff(
 		{
 			size_t total = archive_entry_size( ae );
 
-			void *tb = callback( total );
-
-			if ( tb == NULL )
-			{
-				std::cerr << "Error allocating archive buffer: "
-					<< archive << ", file: " << filename << std::endl;
-				break;
-			}
-
-			archive_read_data( a, tb, total );
-
-			if ( buff_size )
-				*buff_size = total;
-
-			*buff = tb;
-
+			buff.resize( total );
+			archive_read_data( a, &(buff[0]), buff.size() );
 			archive_read_free( a );
 			return true;
 		}
@@ -205,9 +187,7 @@ bool fe_zip_get_dir(
 bool fe_zip_open_to_buff(
 	const char *archive,
 	const char *filename,
-	FE_ZIP_ALLOC_CALLBACK callback,
-	void **buff,
-	size_t *buff_size )
+	std::vector< char > &buff )
 {
 	ASSERT( buff != NULL );
 
@@ -240,34 +220,18 @@ bool fe_zip_open_to_buff(
 		return false;
 	}
 
-	void *tb = callback( file_stat.m_uncomp_size );
-
-	if ( tb == NULL )
-	{
-		std::cerr << "Error allocating zip buffer. zip: "
-			<< archive << ", file: " << filename << std::endl;
-		mz_zip_reader_end( &zip );
-		return false;
-	}
+	buff.resize( file_state.m_uncomp_size );
 
 	if ( !mz_zip_reader_extract_to_mem( &zip,
-		index, tb, file_stat.m_uncomp_size, 0 ) )
+		index, &(buff[0]), buff.size(), 0 ) )
 	{
 		std::cerr << "Error extracting to buffer. zip: "
 			<< archive << ", file: " << filename << std::endl;
 		mz_zip_reader_end( &zip );
-
-		delete (char *)tb;
 		return false;
 	}
 
 	mz_zip_reader_end( &zip );
-
-	*buff = tb;
-
-	if ( buff_size )
-		*buff_size = file_stat.m_uncomp_size;
-
 	return true;
 }
 
@@ -339,17 +303,13 @@ void *zip_stream_alloc_cb( size_t s )
 }
 
 FeZipStream::FeZipStream()
-	: m_data( NULL ),
-	m_pos( 0 ),
-	m_size( 0 )
+	: m_pos( 0 )
 {
 }
 
 FeZipStream::FeZipStream( const std::string &archive )
 	: m_archive( archive ),
-	m_data( NULL ),
-	m_pos( 0 ),
-	m_size( 0 )
+	m_pos( 0 )
 {
 }
 
@@ -360,46 +320,32 @@ FeZipStream::~FeZipStream()
 
 void FeZipStream::clear()
 {
-	if ( m_data )
-		delete m_data;
-
-	m_data = NULL;
+	m_data.resize( 0 );
 	m_pos = 0;
-	m_size = 0;
 }
 
 bool FeZipStream::open( const std::string &filename )
 {
 	clear();
 
-	void *ptr=NULL;
-	size_t sz=0;
-
-	if ( fe_zip_open_to_buff(
+	return fe_zip_open_to_buff(
 		m_archive.c_str(),
 		filename.c_str(),
-		zip_stream_alloc_cb,
-		&ptr,
-		&sz ) )
-	{
-		m_data = (char *)ptr;
-		m_size = sz;
-		return true;
-	}
-	return false;
+		m_data );
 }
 
 sf::Int64 FeZipStream::read( void *data, sf::Int64 size )
 {
-	if ( !m_data )
+	if ( m_data.empty() )
 		return -1;
 
 	sf::Int64 end_pos = m_pos + size;
-	size_t count = ( end_pos <= m_size ) ? size : ( m_size - m_pos );
+	size_t count = ( end_pos <= m_data.size() )
+		? size : ( m_data.size() - m_pos );
 
 	if ( count > 0 )
 	{
-		memcpy( data, m_data + m_pos, count );
+		memcpy( data, &(m_data[m_pos]), count );
 		m_pos += count;
 	}
 
@@ -408,16 +354,16 @@ sf::Int64 FeZipStream::read( void *data, sf::Int64 size )
 
 sf::Int64 FeZipStream::seek( sf::Int64 position )
 {
-	if ( !m_data )
+	if ( m_data.empty() )
 		return -1;
 
-	m_pos = ( position < m_size ) ? position : m_size;
+	m_pos = ( position < m_data.size() ) ? position : m_data.size();
 	return m_pos;
 }
 
 sf::Int64 FeZipStream::tell()
 {
-	if ( !m_data )
+	if ( m_data.empty() )
 		return -1;
 
 	return m_pos;
@@ -425,10 +371,10 @@ sf::Int64 FeZipStream::tell()
 
 sf::Int64 FeZipStream::getSize()
 {
-	if ( !m_data )
+	if ( m_data.empty() )
 		return -1;
 
-	return m_size;
+	return m_data.size();
 }
 
 void FeZipStream::setArchive( const std::string &archive )
@@ -439,7 +385,7 @@ void FeZipStream::setArchive( const std::string &archive )
 
 char *FeZipStream::getData()
 {
-	return m_data;
+	return &(m_data[0]);
 }
 
 void gather_archive_filenames_with_base(

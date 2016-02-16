@@ -30,14 +30,12 @@
 
 typedef void *(*FE_ZIP_ALLOC_CALLBACK) ( size_t );
 bool fe_zip_open_to_buff(
-        const char *archive,
-        const char *filename,
-        FE_ZIP_ALLOC_CALLBACK callback,
-        void **buff,
-        size_t *buff_size );
+	const char *archive,
+	const char *filename,
+	std::vector< char > &buff );
 
 bool fe_zip_get_dir(
-        const char *archive,
+	const char *archive,
 	std::vector<std::string> &result );
 
 //
@@ -75,7 +73,7 @@ public:
 	~FeZipStream();
 
 	bool open( const std::string &filename );
-	sf::Int64 read( void *data, sf::Int64 size );
+	sf::Int64 read( void *data, sf::Int64 size ); // virtual
 
 	sf::Int64 seek( sf::Int64 position );
 	sf::Int64 tell();
@@ -87,9 +85,8 @@ private:
 	void clear();
 
 	std::string m_archive;
-	char *m_data;
+	std::vector < char > m_data;
 	sf::Int64 m_pos;
-	sf::Int64 m_size;
 };
 
 #endif
