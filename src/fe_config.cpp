@@ -509,6 +509,8 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 			path,
 			FE_EMULATOR_FILE_EXTENSION );
 
+	std::sort( emu_file_list.begin(), emu_file_list.end() );
+
 	for ( std::vector<std::string>::iterator itr=emu_file_list.begin();
 			itr < emu_file_list.end(); ++itr )
 		ctx.add_opt( Opt::MENU, *itr, "", "_help_emu_sel" );

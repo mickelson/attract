@@ -340,7 +340,7 @@ sf::Int64 FeZipStream::read( void *data, sf::Int64 size )
 		return -1;
 
 	sf::Int64 end_pos = m_pos + size;
-	size_t count = ( end_pos <= m_data.size() )
+	size_t count = ( end_pos <= (sf::Int64)m_data.size() )
 		? size : ( m_data.size() - m_pos );
 
 	if ( count > 0 )
@@ -357,7 +357,7 @@ sf::Int64 FeZipStream::seek( sf::Int64 position )
 	if ( m_data.empty() )
 		return -1;
 
-	m_pos = ( position < m_data.size() ) ? position : m_data.size();
+	m_pos = ( position < (sf::Int64)m_data.size() ) ? position : m_data.size();
 	return m_pos;
 }
 

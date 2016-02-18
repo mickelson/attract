@@ -429,7 +429,6 @@ bool get_basename_from_extension(
 	closedir( dir );
 #endif
 
-	std::sort( list.begin(), list.end() );
 	return !(list.empty());
 }
 
@@ -718,7 +717,7 @@ bool run_program( const std::string &prog,
 	const std::string &exit_hotkey,
 	int joy_thresh )
 {
-	const int POLL_FOR_EXIT_MS=100;
+	const int POLL_FOR_EXIT_MS=50;
 
 	std::string comstr( prog );
 	comstr += " ";
