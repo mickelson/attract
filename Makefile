@@ -382,7 +382,7 @@ endif
 ifneq ($(VER_COUNT),0)
   VER_TAG := $(VER_TAG)-$(VER_COUNT)
 endif
-ifeq ($(shell git diff-index --quiet HEAD 2>/dev/null || echo 1),1)
+ifneq (,$(findstring -dirty,$(shell git describe --dirty)))
   VER_TAG := $(VER_TAG)-dirty
 endif
 
