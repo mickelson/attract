@@ -220,7 +220,7 @@ bool fe_zip_open_to_buff(
 		return false;
 	}
 
-	buff.resize( file_state.m_uncomp_size );
+	buff.resize( file_stat.m_uncomp_size );
 
 	if ( !mz_zip_reader_extract_to_mem( &zip,
 		index, &(buff[0]), buff.size(), 0 ) )

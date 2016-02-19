@@ -18,7 +18,7 @@ SCRIPT_PATH=`pwd`;
 cd ${SCRIPT_PATH}/..
 
 if [ $# -eq 0 ] ; then
-	TAG=$(git describe --tag)
+	TAG=$(git describe --tag --abbrev=0)
 else
 	## Just for attractmode
 	if [[ $1 =~ ^v ]]; then

@@ -25,7 +25,7 @@ cd ..
 
 LASTTAG=$(git describe --tag --abbrev=0)
 VERSION=$(git describe --tag | sed 's/-[^-]*$//')
-REVCOUNT=$(git rev-list HEAD --count)
+REVCOUNT=$(git rev-list ${LASTTAG}..HEAD --no-merges --count)
 BUNDLEVERSION=${VERSION//[v-]/.}; BUNDLEVERSION=${BUNDLEVERSION#"."}
 SHORTVERSION=${LASTTAG//v/}
 
