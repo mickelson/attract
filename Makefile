@@ -47,6 +47,8 @@
 
 #FE_DEBUG=1
 
+FE_VERSION=v2.0.0
+
 CC=gcc
 CXX=g++
 CFLAGS=$(EXTRA_CFLAGS)
@@ -365,29 +367,31 @@ endif
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
-VERSION := $(shell git describe --tags)
-VERSION_PARTS = $(subst ., ,$(subst -, ,$(VERSION)))
-DEFS += -DVERSION_MAJOR=$(subst v,,$(word 1,$(VERSION_PARTS)))
-DEFS += -DVERSION_MINOR=$(word 2,$(VERSION_PARTS))
-ifeq ($(shell git describe --tags --dirty),%dirty)
-DEFS += -DVERSION_DIRTY
-endif
-ifneq ($(word 3,$(VERSION_PARTS)),)
-DEFS += -DVERSION_POINT=$(word 3,$(VERSION_PARTS))
+# Parse version from git
+VER_TAG   := $(shell git describe --tags --abbrev=0 2>/dev/null || echo $(FE_VERSION))
+VER_COUNT := $(shell git rev-list --no-merges --count ${VER_TAG}..HEAD 2>/dev/null || echo 0)
+VER_TEMP  = $(subst -, ,$(VER_TAG))
+VER_PARTS = $(subst ., ,$(word 1,$(VER_TEMP)))
+VER_MAJOR = $(subst v,,$(word 1,$(VER_PARTS)))
+VER_MINOR = $(word 2,$(VER_PARTS))
+ifneq ($(word 3,$(VER_PARTS)),)
+VER_POINT = $(word 3,$(VER_PARTS))
 else
-DEFS += -DVERSION_POINT=0
+VER_POINT = 0
 endif
-ifneq ($(word 4,$(VERSION_PARTS)),)
-DEFS += -DVERSION_COUNT=$(word 4,$(VERSION_PARTS))
-else
-DEFS += -DVERSION_COUNT=0
+ifneq ($(VER_COUNT),0)
+  VER_TAG := $(VER_TAG)-$(VER_COUNT)
 endif
-ifneq ($(FE_DEBUG),1)
-DEFS += -DFE_DEBUG
+ifeq ($(shell git diff-index --quiet HEAD 2>/dev/null || echo 1),1)
+  VER_TAG := $(VER_TAG)-dirty
 endif
 
+# version macros
+FE_FLAGS += -DFE_VERSION_MAJOR=$(VER_MAJOR) -DFE_VERSION_MINOR=$(VER_MINOR) -DFE_VERSION_POINT=$(word 3,$(VER_PARTS)) -DFE_VERSION_COUNT=$(VER_COUNT)
+FE_FLAGS += -DFE_VERSION_D='"$(VER_TAG)"' -DFE_VERSION_NUM=$(VER_MAJOR)$(VER_MINOR)$(VER_POINT)
+
 $(OBJ_DIR)/%.res: $(SRC_DIR)/%.rc | $(OBJ_DIR)
-	$(WINDRES) $(DEFS) $< -O coff -o $@
+	$(WINDRES) $(FE_FLAGS) $< -O coff -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 	$(CXX) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
