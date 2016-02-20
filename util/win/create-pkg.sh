@@ -24,7 +24,7 @@ cd ..
 ### end: init
 
 LASTTAG=$(git describe --tag --abbrev=0)
-VERSION=$(git describe --tag | sed 's/-[^-]*$//')
+VERSION=$(git describe --tag | sed 's/-[^-]\{8\}$//')
 
 function finish {
 	if [[ ! -z $SCRATCH && -d $SCRATCH ]] ; then
