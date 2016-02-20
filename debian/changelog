@@ -1,3 +1,9 @@
+attract (2.0.0-1) unstable; urgency=low
+
+  * Version 2.0 package.
+
+ -- Andrew Mickelson <andrew@attractmode.org>  Fri, 19 Feb 2016 22:33:19 -0800
+
 attract (1.6.2-1) unstable; urgency=low
 
   * Initial debian package.
