@@ -369,7 +369,7 @@ DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
 # Parse version from git
 VER_TAG   := $(shell git describe --tags --abbrev=0 2>/dev/null || echo $(FE_VERSION))
-VER_COUNT := $(shell git rev-list --no-merges --count ${VER_TAG}..HEAD 2>/dev/null || echo 0)
+VER_COUNT := $(shell git rev-list --count ${VER_TAG}..HEAD 2>/dev/null || echo 0)
 VER_TEMP  = $(subst -, ,$(VER_TAG))
 VER_PARTS = $(subst ., ,$(word 1,$(VER_TEMP)))
 VER_MAJOR = $(subst v,,$(word 1,$(VER_PARTS)))
