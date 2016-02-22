@@ -1181,7 +1181,7 @@ void	generate_mipmaps(unsigned int internal_format, unsigned int input_format, i
 void ffmpeg_resample( int bpp, int src_width, int src_height, int src_pitch,
 	uint8* src_data, int dst_width, int dst_height )
 {
-	AVPixelFormat fmt = ( bpp == 3 ) ? PIX_FMT_RGB24 : PIX_FMT_RGBA;
+	AVPixelFormat fmt = ( bpp == 3 ) ? AV_PIX_FMT_RGB24 : AV_PIX_FMT_RGBA;
 
 	SwsContext *ctx = sws_getCachedContext( NULL,
 		src_width, src_height, fmt, dst_width, dst_height, fmt,

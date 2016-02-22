@@ -443,9 +443,9 @@ void FeVideoImp::preload()
 			if ( got_frame )
 			{
 				AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
-				avpicture_alloc( my_pict, PIX_FMT_RGBA,
-										disptex_width,
-										disptex_height );
+				avpicture_alloc( my_pict, AV_PIX_FMT_RGBA,
+					disptex_width,
+					disptex_height );
 
 				if ( !my_pict )
 				{
@@ -459,9 +459,9 @@ void FeVideoImp::preload()
 					sws_flags |= SWS_ACCURATE_RND;
 
 				sws_ctx = sws_getCachedContext( NULL,
-								codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
-								disptex_width, disptex_height, PIX_FMT_RGBA,
-								sws_flags, NULL, NULL, NULL );
+					codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
+					disptex_width, disptex_height, AV_PIX_FMT_RGBA,
+					sws_flags, NULL, NULL, NULL );
 
 				if ( !sws_ctx )
 				{
@@ -509,9 +509,9 @@ void FeVideoImp::video_thread()
 	std::queue<AVFrame *> frame_queue;
 
 	AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
-	avpicture_alloc( my_pict, PIX_FMT_RGBA,
-							disptex_width,
-							disptex_height );
+	avpicture_alloc( my_pict, AV_PIX_FMT_RGBA,
+		disptex_width,
+		disptex_height );
 
 	if ((!sws_ctx) || (!my_pict) )
 	{
