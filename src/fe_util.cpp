@@ -372,7 +372,13 @@ bool get_basename_from_extension(
 			bool strip_extension )
 {
 #ifdef SFML_SYSTEM_WINDOWS
-	std::string temp = path + "*" + extension;
+	std::string temp = path;
+	if ( !path.empty()
+			&& ( path[path.size()-1] != '/' )
+			&& ( path[path.size()-1] != '\\' ))
+		temp += "/";
+
+	temp += "*" + extension;
 
 	struct _finddata_t t;
 	intptr_t srch = _findfirst( temp.c_str(), &t );

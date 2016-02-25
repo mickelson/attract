@@ -218,10 +218,9 @@ endif
 ifneq ($(NO_SWF),1)
  _DEP += swf.hpp
  _OBJ += swf.o
- LIBS += -ljpeg -lz
+ LIBS += -ljpeg -lz -lpthread
 
  ifneq ($(FE_WINDOWS_COMPILE),1)
-  LIBS += -lpthread
   ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
    ifeq ($(USE_GLES),1)
