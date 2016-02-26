@@ -726,18 +726,16 @@ fe.add_transition_callback(animation, "transition_callback" );
 fe.add_ticks_callback(animation, "ticks_callback" );
 
 //load any animations in the animations folder
-local path = FeConfigDirectory + "modules/animate";
-local dir = DirectoryListing( path );
+local path = fe.module_dir + "animate/";
+local dir = DirectoryListing( path, false );
 foreach ( f in dir.results )
 {
     try
     {
-        local name = f.slice( path.len() + 1, f.len() );
-        local ext = f.slice( f.len() - 4 );
-        if ( ext == ".nut" )
+        if ( f.slice( f.len() - 4 ) == ".nut" )
         {
-            if ( DEBUG_ANIMATION ) print( "Loading animation: " + name + "\n" );
-            fe.load_module( "animate/" + name );
+            if ( DEBUG_ANIMATION ) print( "Loading animation: " + f + "\n" );
+            fe.load_module( "animate/" + f );
         }
     }catch ( e )
     {
