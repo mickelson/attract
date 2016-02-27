@@ -1,0 +1,250 @@
+<html>
+	<head>
+		    <link rel="stylesheet" type="text/css" media="screen" href="/stylesheets/stylesheet.css">
+		<title>Attract-Mode Readme</title>
+	</head>
+	<body>
+
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+[<a href="/">Main Page</a>]
+
+<h2>Attract-Mode Frontend</h2>
+
+<p>Attract-Mode is a graphical frontend for command line emulators such as
+MAME, MESS, and Nestopia.  It hides the underlying operating system and is
+intended to be controlled with a joystick, gamepad or spin dial, making it
+ideal for use in arcade cabinet setups.</p>
+
+<p>Attract-Mode was originally developed for Linux.  It is known to work on
+Linux (x86, Raspberry Pi), Mac OS X (10.6.8+), and Windows (XP, 7, 32 and
+64 bit) based-systems.</p>
+
+<p>Attract-Mode is licensed under the terms of the GNU General Public License,
+version 3 or later.</p>
+
+<p>Please visit <a href="http://attractmode.org">http://attractmode.org</a> for more information.</p>
+
+<p>See <a href="Compile.html">Compile.md</a> if you intend to compile Attract-Mode from source.</p>
+
+<h2>Quick Start</h2>
+
+<ol>
+<li><p>Run Attract-Mode.  By default, Attract-Mode will look for its configuration
+files in the "$HOME/.attract" directory on Linux and Mac OS X, and in the
+current working directory on Windows.  If you want to use a different location
+for the Attract-Mode configuration then you need to specify it at the command
+line as follows:</p>
+
+<pre><code>attract --config /my/config/location
+</code></pre>
+
+<p>In the (hopefully unlikely) event that Attract-Mode has difficulty
+finding a display font to use on your system, you can specify one at the
+command line as follows:</p>
+
+<pre><code>attract --font &lt;font_name&gt;
+</code></pre></li>
+<li><p>If you are running Attract-Mode for the first time, it will load directly
+to its configuration mode.  If you do not start in config mode, pressing "TAB"
+will get you there.  By default, config mode can be navigated using the up/
+down arrows, enter to select an option, and escape to go back.</p></li>
+<li><p>Select the "Emulators" menu and edit/create a configuration for an
+emulator that you wish to use.  Default configurations are provided for some
+popular emulators, however some settings will likely have to be customized
+for your system (file locations etc).</p></li>
+<li><p>Once you have an emulator configured correctly for your system, select
+the "Generate Collection/Rom List" option from the emulator's configuration
+menu.  Attract-Mode will use the configured emulator settings to generate a
+list of available games for the emulator.  Next select the "Scrape Artwork"
+option if you want to have Attract-Mode go and automatically download artwork
+images for this emulator from thegamesdb.net and mamedb.com.</p></li>
+<li><p>Exit config mode by selecting the "Back" option a few times.  You should
+now have a usable front-end!</p></li>
+</ol>
+
+<h2>Basic Organization</h2>
+
+<p>At its most basic level, Attract-Mode is organized into "Displays", of which
+you can configure one or more.  Each "Display" is a grouping of the following:</p>
+
+<ul>
+<li>a Collection/Rom List (the listing of available games/roms to show).  Romlists
+are text files located in the "romlists" directory.  They are created by
+Attract-Mode using the "Generate Collection/Rom List" option available when
+configuring an emulator, or by using the "--build-romlist" or
+"--import-romlist" command line options.</li>
+<li>a Layout (the visual theme/skin to use for the Display).  Layouts are located
+in the "layouts" directory, with each layout either in its own subdirectory
+or contained in a .zip file in the "layouts" directory.</li>
+<li>a Global Filter.  The global filter is a set of filter rules that always get
+applied to a Collection/Rom List.  This filter can be used to remove entries
+you will never want to see</li>
+<li>zero or more "normal" Filters.  Filters are a set of rules for which games to
+display and how to sort them.  Filters can be created to categorize games
+based attributes such as their orientation, category, manufacturer, year,
+times played, favourite status, file availability, etc.  Filters can be
+cycled through using the "Previous Filter" and "Next Filter" controls, and
+can also be selected from the "Filters Menu".</li>
+</ul>
+
+<h2>Further Customization</h2>
+
+<p><strong>CONTROLS:</strong> The inputs used to control Attract-Mode can be configured from
+from the "Controls" menu in config mode.  Attract-Mode actions can be mapped
+to most keyboard, mouse and joystick inputs.</p>
+
+<p><strong>FILTERS:</strong> Filters can be added from the "Displays" menu in config
+mode.  At their core, filters are a list of "rules" and "exceptions" that the
+frontend steps through, in order, to determine whether or not to list a game.
+If a game does not match a "rule", then it is not shown.  If a game matches to
+an "exception", then it gets listed no matter what, ignoring the rest of the
+rules in the filter.  In other words, in order to be listed a game has to
+match <em>all</em> the rules or <em>just one</em> exception.</p>
+
+<p>For example, you might want to have a filter that only shows 1980's
+multiplayer sports games.  This would be achieved by creating a filter with
+three rules: (1) that the year be in the 1980s (Year equals "198."), (2) that
+the number of players in not 1 (Players not_equals "1"), and (3) that the
+category contains "Sports" (Category contains "Sports").  Filters use regular
+expressions, which allow for powerful text matching capabilties.  From the
+example above, the "198." will match any four letter word that starts with
+"198".</p>
+
+<p>Filters also allow you to do some other stuff as well, such as controlling
+how the gamelist gets sorted, and how many entries are listed.</p>
+
+<p><strong>SOUND:</strong> To play sounds in your setup, place the sound file in the "sounds"
+subdirectory of your Attract-Mode config directory.  The sound file can then
+be selected from the "Sound" menu when in config mode and mapped to an action
+or event.  Attract-Mode should support any sound format supported by FFmpeg
+(MP3, etc).</p>
+
+<p><strong>ARTWORK:</strong> Attract-Mode supports PNG, JPEG, GIF, BMP and TGA image formats.
+For video formats, Attract-Mode should support any video format supported by
+FFmpeg (MP4, FLV, AVI, etc).  When deciding what file to use for a particular
+artwork type, Attract-Mode will use the artwork selection order set out below.</p>
+
+<p>The location of artwork resources is configured on a per-emulator basis in the
+"Emulators" configuration menu.  Attract-Mode's default artworks are: "marquee"
+(for cabinet marquee images), "snap" (for attract-mode videos and game screen
+shots), "flyer" (for game flyer/box art) and "wheel" (for Hyperspin wheel art).
+You can add others as needed in the "Emulators" configuration menu.  Multiple
+paths can be specified for each artwork, in which case Attract-Mode will check
+each path in the order they are specified before moving to the next check in
+the selection order.</p>
+
+<p><strong>ARTWORK SELECTION ORDER:</strong></p>
+
+<ul>
+<li><p>From the artwork paths configured for the emulator (if any) and the
+ previously scraped artworks (if any):</p>
+
+<ul><li>[Name].*      (video, i.e. "pacman.mp4")</li>
+<li>[CloneOf].*   (video, i.e. "puckman.mp4")</li>
+<li>[Name].*      (image, i.e. "pacman.jpg")</li>
+<li>[CloneOf].*   (image, i.e. "puckman.png")</li>
+<li>[Emulator].*  (video, i.e. "mame.avi")</li>
+<li>[Emulator].*  (image, i.e. "mame.gif")</li></ul></li>
+<li><p>From the layout path for the current layout (layouts are located in
+the "layouts" subdirectory):</p>
+
+<ul><li>[Emulator]-[ArtLabel].*   (video, i.e. "mame-marquee.mp4")</li>
+<li>[Emulator]-[ArtLabel].*   (image, i.e. "mame-marquee.png")</li>
+<li>[ArtLabel].*              (video, i.e. "marquee.avi")</li>
+<li>[ArtLabel].*              (image, i.e. "marquee.png")</li></ul></li>
+<li><p>If no files are found matching the above rules, then the artwork
+is not drawn.</p>
+
+<p>If no file match is found, Attract-Mode will check for a subdirectory
+that meets the match criteria.  If a subdirectory is found (for example
+a "pacman" directory in the configured artwork path) then Attract-Mode
+will then pick a random video or image from that directory.</p></li>
+</ul>
+
+<p><strong>LAYOUTS:</strong> Attract-Mode's layouts are located in the "layouts" directory.
+Each layout has to be in its own subdirectory or contained in a .zip file.
+Attract-Mode's native layouts are made up of a squirrel script (a .nut file)
+and related resources.  See <a href="Layouts.html">Layouts.md</a> for more information on
+Attract-Mode layouts.</p>
+
+<p>Attract-Mode can also display layouts made for other frontends, including
+MaLa and Hyperspin.  This feature is experimental, and certain features from
+these other frontends might not be fully implemented.</p>
+
+<p>For MaLa layouts, just copy the layout and related resources into a new
+subdirectory of the "layouts" directory, or place a zip, 7z or rar file
+containing these things into the "layouts" directory.  After doing this, you
+hould be able to select the layout when configuring a Display in
+Attract-Mode, just as you would for a native Attract- Mode layout.</p>
+
+<p>For Hyperspin, copy the Hyperspin "Media" directory into its own directory
+in the Attract-Mode layouts directory.  Create a Display in Attract-Mode
+and configure the layout to be the directory you copied "Media" into.  The
+Display's name needs to match the name of one of the system subdirectories
+in the Hyperspin "Media" directory.  This will allow Attract-Mode to find the
+Hyperspin themes and graphics to use.  So for example, naming the Display
+"MAME" will cause it to match Hyperspin's MAME/Themes/* for themes,
+MAME/Images/Artwork1/* for artwork1, etc.  Note that the wheel images are
+located using Attract-Mode's built-in wheel artwork.  Wheel images located in
+the Hyperspin directories are ignored.</p>
+
+<p><strong>PLUG-INS:</strong> Plug-ins are squirrel scripts that need to be placed in the
+"plugins" subdirectory of your Attract-Mode config directory.  Available
+plugins can be enabled/disabled and configured from the "Plug-Ins" menu when
+in config mode.  See <a href="Layouts.html">Layouts.md</a> for a description of Attract-Mode's
+Plug-in API.</p>
+
+<p><strong>ROMLISTS:</strong> Collection/Rom lists are saved in the "romlist" subdirectory of
+your Attract-Mode config directory.  Each list is a semi-colon delimited text
+file that can be edited by most common spreadsheet programs (be sure to
+load it as "Text CSV").  The file has one game entry per line, with the very
+first line of the file specifying what each column represents.</p>
+
+<p>In addition to the romlist generation function available in config mode,
+Attract-Mode can generate a single romlist containing roms for multiple
+emulators from the command line using the following command:</p>
+
+<pre><code>    attract --build-romlist &lt;emulator names...&gt;
+</code></pre>
+
+<p>You can also import romlists from mame listxml files as well as gamelists for
+other frontends.  Supported source files include: *.lst (MameWah lists), *.txt
+(Attract-Mode lists) and *.xml (Mame listxml and HyperSpin lists):</p>
+
+<pre><code>    attract --import-romlist &lt;source_file&gt; [emulator name]
+</code></pre>
+
+<p>The --build-romlist and --import-romlist options can be chained together in
+all sorts of strange and wonderful ways to generate combined Attract-Mode
+romlists. So:</p>
+
+<p><code>attract --import-romlist mame.lst --import-romlist nintendo.lst nestopia</code></p>
+
+<p>will combine the entries from the mame.lst and nintendo.lst files (located
+in the current directory) into a single Attract-Mode romlist.  The "mame"
+emulator will be used for the mame.lst games, while the "nestopia" emulator
+will be used for the nintendo.lst games.</p>
+
+<p>One or more filter rules can also be applied when importing or building a
+romlist from the command line using the "--filter <FILTER RULE>" option.  So
+for example the following command line:</p>
+
+<p><code>attract --build-romlist mame --filter "Rotation equals 90|270"</code></p>
+
+<p>will build a romlist that contains only the vertical games in your collection.
+The <FILTER RULE> can be specified in exactly the same format as how filter
+rules are specified in Attract-Mode's attract.cfg file.</p>
+
+<p>If you wish to specify the name of the created romlist at the command
+line, you can do so with the <code>--output &lt;name&gt;</code> option.  Beware that this will
+overwrite any existing Attract-Mode romlist with the specified name.</p>
+
+<p>For a full description of the command lines options available, run:</p>
+
+<p><code>attract --help</code></p>
+
+
+</section></div>
+</body>
+</html>

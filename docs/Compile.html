@@ -1,0 +1,181 @@
+<html>
+	<head>
+		    <link rel="stylesheet" type="text/css" media="screen" href="/stylesheets/stylesheet.css">
+		<title>Attract-Mode Readme</title>
+	</head>
+	<body>
+
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+[<a href="/">Main Page</a>]
+
+<h2>Compiling Attract-Mode</h2>
+
+<p>Build instructions are set out by operating system below:</p>
+
+<h2>Linux, FreeBSD:</h2>
+
+<p>These instructions assume that you have the GNU C/C++ compilers and basic
+build utilities (make, pkg-config, ar) on your system.  This means the
+"build-essential" and "pkg-config" packages on Debian or Ubuntu-based
+distributions.  Other distributions should have similar packages available.</p>
+
+<ol>
+<li><p>Install the following libraries and related headers on your system:</p>
+
+<ul><li>Required:
+<ul><li>SFML SDK version 2.x (<a href="http://sfml-dev.org">http://sfml-dev.org</a>)</li>
+<li>OpenAL (this is used by SFML as well)</li></ul></li>
+<li>Optional:
+<ul><li>The following FFmpeg libraries (required for movies): avformat,
+avcodec, swscale, avutil and either swresample or avresample.</li>
+<li>Fontconfig (to assist with finding fonts).</li>
+<li>Xinerama (for multiple monitor support).</li>
+<li>libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).</li></ul></li></ul></li>
+<li><p>Extract the Attract-Mode source to your system.</p></li>
+<li><p>From the directory you extracted the source into, run:</p>
+
+<pre><code>   make -j 3
+</code></pre>
+
+<p>or, if you are building on a Raspberry Pi, O-Droid or another embedded
+system, you can build the OpenGL ES version with the following:</p>
+
+<pre><code>   make -j 3 USE_GLES=1
+</code></pre>
+
+<p>This step will create the "attract" executable file.</p></li>
+<li><p>The final step is to actually copy the Attract-Mode executable and data
+to a location where they can be used.  To install on a system-wide basis
+you should run:</p>
+
+<pre><code>   sudo make install
+</code></pre>
+
+<p>This will copy the "attract" executable to <code>/usr/local/bin/</code> and default
+data to <code>/usr/local/share/attract/</code></p>
+
+<p>For a single user install on Linux or FreeBSD, you can complete this step
+by copying the contents of the "config" directory from the Attract-Mode
+source directory to the location that you will use as your Attract-Mode
+config directory.  By default, this config directory is located in
+<code>$HOME/.attract</code> on Linux/FreeBSD systems.</p>
+
+<p>NOTE: The Attract-Mode makefile tries to follow the GNU standards for
+specifying installation directories: <a href="https://www.gnu.org/prep/standards/html_node/Directory-Variables.html">https://www.gnu.org/prep/standards/html_node/Directory-Variables.html</a>.
+If you want to change the location where Attract-Mode looks for its default
+data from <code>/usr/local/share/attract</code> you should change these values
+appropriately before running the <code>make</code> and <code>make install</code> commands.</p></li>
+</ol>
+
+<h2>OS X:</h2>
+
+<p>These instructions assume that you have X Code installed.</p>
+
+<ol>
+<li><p>Install Homebrew (<a href="http://brew.sh">http://brew.sh</a>).  This can be done by running the
+following command at a terminal command prompt:</p>
+
+<pre><code>   ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+</code></pre></li>
+<li><p>Install the "pkg-config", "ffmpeg", "sfml" and "libarchive" homebrew
+recipes:</p>
+
+<pre><code>   brew update
+   brew install pkg-config ffmpeg sfml libarchive
+</code></pre></li>
+<li><p>Extract the Attract-Mode source to your system.</p></li>
+<li><p>From the directory you extracted the Attract-Mode source into, run:</p>
+
+<pre><code>   make -j 3
+</code></pre>
+
+<p>This step will create the "attract" executable file.</p></li>
+<li><p>The final step is to actually copy the Attract-Mode executable and data to
+the location where they will be used.  You can run:</p>
+
+<pre><code>   sudo make install
+</code></pre>
+
+<p>to install on a system-wide basis.  This will copy the 'attract' executable
+to <code>/usr/local/bin/</code> and data to <code>/usr/local/share/attract/</code></p>
+
+<p>If you prefer to do a single user install, you can complete this step by
+copying the contents of the "config" directory from the Attract-Mode
+source directory to the location that you will use as your Attract-Mode
+config directory.  By default, this config directory is <code>$HOME/.attract</code> on
+OS X.</p></li>
+</ol>
+
+<h2>Windows (cross-compile):</h2>
+
+<p>The recommended way to build Windows binaries for Attract-Mode is to cross
+compile on an OS that supports MXE (<a href="http://mxe.cc">http://mxe.cc</a>) such as Linux, FreeBSD or
+OS X.</p>
+
+<ol>
+<li><p>Follow the steps in the mxe tutorial to set up mxe on your system:
+<a href="http://mxe.cc/#tutorial">http://mxe.cc/#tutorial</a></p></li>
+<li><p>Make mxe's sfml, ffmpeg and libarchive packages:</p>
+
+<pre><code>   make ffmpeg sfml libarchive
+</code></pre>
+
+<p>the above command will make 32-bit versions of ffmpeg and sfml (and anything
+else that they depend on). To make the 64-bit version use the following:</p>
+
+<pre><code>   make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml
+</code></pre></li>
+<li><p>Extract the Attract-Mode source to your system.</p></li>
+<li><p>From the directory you extracted the source into, run the following:</p>
+
+<pre><code>   make -j 3 CROSS=1 TOOLCHAIN=i686-w64-mingw32.static WINDOWS_STATIC=1
+</code></pre>
+
+<p>to build the 32-bit version of Attract-Mode. To build 64-bit, run:</p>
+
+<pre><code>   make -j 3 CROSS=1 TOOLCHAIN=x86_64-w64-mingw32.static WINDOWS_STATIC=1
+</code></pre>
+
+<p>This step will create the "attract.exe" executable file.</p></li>
+<li><p>Copy the contents of the config directory from the Attract-Mode source
+directory and the executable you just built into the same directory on your
+Windows-based system, and you should be ready to go!</p></li>
+</ol>
+
+<h2>Windows (native compile):</h2>
+
+<ol>
+<li><p>Install MSYS2
+<a href="https://msys2.github.io/">https://msys2.github.io/</a></p></li>
+<li><p>Launch the MSYS2 shell and update the system:</p>
+
+<pre><code>   pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime`
+</code></pre></li>
+<li><p>Close MSYS2 Shell,  run it again and run the following command:</p>
+
+<pre><code>   pacman -Syu
+</code></pre></li>
+<li><p>Install required packaged. (optionally use the mingw-w64-i686-toolchain
+instead for 32-bit windows architectures):</p>
+
+<pre><code>   pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg mingw64/mingw-w64-x86_64-libarchive
+</code></pre></li>
+<li><p>Clone and make Attract-Mode</p>
+
+<pre><code>   git clone https://github.com/mickelson/attract attract
+   cd attract
+   make -j 3
+</code></pre></li>
+</ol>
+
+<p>This builds a version of Attract-Mode with various .dll dependencies.  To
+run the program, you will need to add <code>c:\msys64\mingw6in</code> to your path
+(for 64-bit systems) or copy the dependent .dlls from that directory into
+the same directory you will run Attract-Mode from.</p>
+
+
+
+</section></div>
+</body>
+</html>
