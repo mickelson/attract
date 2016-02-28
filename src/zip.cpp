@@ -90,6 +90,50 @@ namespace
 		// Result is the new entry at the front of the cache
 		//
 	}
+
+	// Count the number of path separators ('/' or '\') in path
+	//
+	int count_path_seps( const std::string &path )
+	{
+		int count( 0 );
+		size_t pos( 0 );
+
+		while ( pos != std::string::npos )
+		{
+			pos = path.find_first_of( "/\\", pos );
+			if ( pos != std::string::npos )
+			{
+				count++;
+				pos++;
+			}
+		}
+
+		return count;
+	}
+
+	// Return the string position that is immediately after the last
+	// path separator in "path", after skipping "extra_seps" path
+	// separators.
+	//
+	// returns 0 if there aren't enough separators in the string
+	//
+	size_t get_pos_from_back( const std::string &path, int extra_seps )
+	{
+		int i=0;
+		size_t pos( std::string::npos );
+
+		while ( i < extra_seps+1 )
+		{
+			pos = path.find_last_of( "/\\", pos );
+			if ( pos == std::string::npos )
+				return 0;
+
+			i++;
+			pos--;
+		}
+
+		return pos+2;
+	}
 };
 
 #ifdef USE_LIBARCHIVE
@@ -189,8 +233,6 @@ bool fe_zip_open_to_buff(
 	const char *filename,
 	std::vector< char > &buff )
 {
-	ASSERT( buff != NULL );
-
 	mz_zip_archive zip;
 	memset( &zip, 0, sizeof( zip ) );
 
@@ -395,16 +437,15 @@ void gather_archive_filenames_with_base(
 	const std::string &basename,
 	const char **exts )
 {
+	// Need to support basenames that contain path separators.
+	int sep_count = count_path_seps( basename );
+
 	std::vector<std::string> wl;
 	fe_zip_get_dir( archive.c_str(), wl );
 	for ( std::vector<std::string>::iterator itr=wl.begin();
 		itr!=wl.end(); ++itr )
 	{
-		size_t pos = (*itr).find_last_of( "\\/" );
-		if ( pos == std::string::npos )
-			pos = 0;
-		else
-			pos++;
+		size_t pos = get_pos_from_back( *itr, sep_count );
 
 		if ( icompare( (*itr).substr( pos, basename.size() ),
 				basename ) == 0 )

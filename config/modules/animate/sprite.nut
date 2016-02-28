@@ -110,7 +110,8 @@ class SpriteAnimation extends Animation
             }
         }
 
-        mFrameTime = config.time / mFrameCount
+        if ( mFrameCount )
+            mFrameTime = config.time / mFrameCount;
             
     }
     
