@@ -1058,7 +1058,16 @@ void FeSettings::get_layout_file_basenames_from_path(
 	int test_len = strlen( FE_LAYOUT_FILE_BASE );
 	for ( std::vector< std::string >::iterator itr=temp_list.begin(); itr != temp_list.end(); ++itr )
 	{
-		if ( (*itr).compare( 0, test_len, FE_LAYOUT_FILE_BASE ) == 0 )
+		// Archives may contain layout*.nut files in a subfolder of the archive,
+		// so we want to exclude any preceding path info from our comparison here
+		//
+		std::size_t pos = (*itr).find_last_of( "/\\" );
+		if ( pos != std::string::npos )
+			pos++;
+		else
+			pos = 0;
+
+		if ( (*itr).compare( pos, test_len, FE_LAYOUT_FILE_BASE ) == 0 )
 			names_list.push_back( *itr );
 	}
 }

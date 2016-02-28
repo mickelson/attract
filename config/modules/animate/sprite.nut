@@ -45,7 +45,7 @@
 */    
 class SpriteAnimation extends Animation
 {
-    BASE_PATH = FeConfigDirectory + "modules/animate/sprite/";
+    BASE_PATH = fe.module_dir + "sprite/";
     version = 1.5;
     build = 100;
     mOffset = 0;                    //current texture mOffset, or array index for a frame array

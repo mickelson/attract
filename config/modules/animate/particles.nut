@@ -60,7 +60,7 @@
 
 class ParticleAnimation extends Animation
 {
-    BASE_PATH = FeConfigDirectory + "modules/animate/particles/";
+    BASE_PATH = fe.module_dir + "particles/";
     version = 1.5;
     build = 100;
     debug = false;

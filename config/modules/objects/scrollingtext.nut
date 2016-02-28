@@ -312,7 +312,7 @@ ScrollingText <- {
             surface_obj.y = y;
         
         //create a background for our surface
-        local bg_obj = surface_obj.add_image( FeConfigDirectory  + "/modules/objects/scrollingtext/pixel.png", 0, 0, surface_obj.width, surface_obj.height );
+        local bg_obj = surface_obj.add_image( fe.module_dir  + "scrollingtext/pixel.png", 0, 0, surface_obj.width, surface_obj.height );
         bg_obj.alpha = 0;
         if ( ScrollingText.debug )
         {
