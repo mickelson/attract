@@ -510,6 +510,8 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 				best_name = emu->get_info( FeEmulatorInfo::Name );
 
 				FeImporterContext ctx( *emu, romlist );
+				ctx.full = full;
+
 				build_basic_romlist( ctx );
 
 				apply_xml_import( ctx, true );
@@ -691,7 +693,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 	return true;
 }
 
-bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void *uid, int &size )
+bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg )
 {
 	FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
 	if ( emu == NULL )
@@ -723,8 +725,6 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	std::cout << " - Removing any duplicate entries..." << std::endl;
 	romlist.unique();
 
-	size = romlist.size();
-
 	std::string filename = get_config_dir();
 	confirm_directory( filename, FE_ROMLIST_SUBDIR );
 
@@ -735,6 +735,12 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 	filename += emu_name;
 	filename += FE_ROMLIST_FILE_EXTENSION;
 	write_romlist( filename, romlist );
+
+	if ( ctx.user_message.empty() )
+		get_resource( "Wrote $1 entries to Collection/Rom List",
+			as_str( (int)romlist.size() ), msg );
+	else
+		msg = ctx.user_message;
 
 	return true;
 }

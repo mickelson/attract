@@ -158,18 +158,15 @@ std::string get_crc( const std::string &full_path,
 std::string get_fuzzy( const std::string &orig )
 {
 	std::string retval;
-	int word_start( 0 ), i( 0 );
+	int word_start( 0 );
 	for ( std::string::const_iterator itr=orig.begin(); (( itr!=orig.end() ) && ( *itr != '(' )); ++itr )
 	{
 		if ( std::isalnum( *itr ) )
-		{
 			retval += std::tolower( *itr );
-			i++;
-		}
 		else
 		{
 			fix_last_word( retval, word_start );
-			i=word_start=retval.length();
+			word_start=retval.length();
 		}
 	}
 	fix_last_word( retval, word_start );
@@ -299,6 +296,7 @@ FeListXMLParser::FeListXMLParser( FeImporterContext &ctx )
 	m_ctx( ctx ),
 	m_count( 0 ),
 	m_displays( 0 ),
+	m_collect_data( false ),
 	m_chd( false ),
 	m_mechanical( false )
 {
@@ -333,7 +331,7 @@ void FeListXMLParser::start_element(
 					{
 						m_ctx.romlist.push_back( FeRomInfo( attribute[i+1] ) );
 						m_itr = m_ctx.romlist.end();
-						m_itr--;
+						--m_itr;
 						m_collect_data=true;
 						m_displays=0;
 						m_chd=false;
@@ -524,7 +522,7 @@ void FeListXMLParser::end_element( const char *element )
 			m_count++;
 
 			int percent( 0 );
-			if ( !m_ctx.full && ( m_ctx.romlist.size() > 0 ))
+			if ( !m_ctx.full && ( !m_ctx.romlist.empty() ))
 			{
 				percent = m_ctx.progress_past
 					+ m_count * m_ctx.progress_range
@@ -564,7 +562,6 @@ void FeListXMLParser::end_element( const char *element )
 
 void FeListXMLParser::pre_parse()
 {
-	FeRomInfoListType::iterator itr;
 	m_count=0;
 
 	m_map.clear();
@@ -609,9 +606,10 @@ bool FeListXMLParser::parse_command( const std::string &prog )
 		for ( FeRomInfoListType::iterator itr=m_ctx.romlist.begin();
 				itr != m_ctx.romlist.end(); ++itr )
 		{
-			parse_internal( prog,
-				base_args + " "
-				+ (*itr).get_info( FeRomInfo::Romname ) );
+			if ( !parse_internal( prog,
+					base_args + " "
+					+ (*itr).get_info( FeRomInfo::Romname ) ) )
+				ret_val = false;
 		}
 	}
 	else
@@ -975,7 +973,9 @@ void FeGameDBPlatformListParser::end_element( const char *element )
 	}
 	else if ( strcmp( element, "Platform" ) == 0 )
 	{
-		m_set[ m_name ] = m_id;
+		m_names.push_back( m_name );
+		m_ids.push_back( m_id );
+
 		m_name.clear();
 		m_id=-1;
 	}
@@ -983,7 +983,8 @@ void FeGameDBPlatformListParser::end_element( const char *element )
 
 bool FeGameDBPlatformListParser::parse( const std::string &data )
 {
-	m_set.clear();
+	m_names.clear();
+	m_ids.clear();
 	m_element_open=m_keep_rom=false;
 	m_continue_parse=true;
 	bool ret_val=true;

@@ -148,7 +148,8 @@ public:
 	FeGameDBPlatformListParser();
 	bool parse( const std::string &filename );
 
-	std::map<std::string, int> m_set;
+	std::vector<std::string> m_names;
+	std::vector<int> m_ids;
 
 private:
 	void start_element( const char *, const char ** );

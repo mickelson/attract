@@ -374,16 +374,12 @@ bool FeEmulatorEditMenu::on_option_select(
 			if ( fep )
 				fep->set_video_play_state( false );
 
-			int list_size( 0 );
 			ctx.fe_settings.build_romlist( emu_name, gen_ui_update, &ctx,
-								list_size );
+								ctx.help_msg );
 
 			if ( fep )
 				fep->set_video_play_state(
 					fep->get_video_toggle() );
-
-			ctx.fe_settings.get_resource( "Wrote $1 entries to Collection/Rom List",
-											as_str(list_size), ctx.help_msg );
 
 			//
 			// If we don't have a display configured for this romlist,

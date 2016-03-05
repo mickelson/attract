@@ -118,8 +118,11 @@ namespace
 				// problem...
 				//
 				int i=0;
-				while (( d[i] < 32 ) && ( i < zip.getSize() ))
+				while (( i < zip.getSize() ) && ( d[i] < 32 ))
 					i++;
+
+				if ( i == zip.getSize() )
+					return false;
 
 				std::string str( &(d[i]), zip.getSize()-i );
 				sc.CompileString( str );
@@ -1010,7 +1013,7 @@ bool FeVM::on_tick()
 			if ( !func.IsNull() )
 				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
-		catch( Exception e )
+		catch( Exception &e )
 		{
 			std::cout << "Script Error in tick function: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
@@ -1024,7 +1027,7 @@ bool FeVM::on_tick()
 		if ( remove )
 			itr = m_ticks.erase( itr );
 		else
-			itr++;
+			++itr;
 	}
 
 	return m_redraw_triggered;
@@ -1076,7 +1079,7 @@ void FeVM::on_transition(
 						ttimer.getElapsedTime().asMilliseconds() );
 				}
 			}
-			catch( Exception e )
+			catch( Exception &e )
 			{
 				std::cout << "Script Error in transition function: " << (*itr)->m_fn
 						<< " - " << e.Message() << std::endl;
@@ -1085,7 +1088,7 @@ void FeVM::on_transition(
 			if ( !keep )
 				itr = worklist.erase( itr );
 			else
-				itr++;
+				++itr;
 		}
 
 		// redraw now if we are doing another pass...
@@ -1141,7 +1144,7 @@ bool FeVM::script_handle_event( FeInputMap::Command c )
 					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
 				return true;
 		}
-		catch( Exception e )
+		catch( Exception &e )
 		{
 			std::cout << "Script Error in signal handler: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
@@ -1302,7 +1305,7 @@ void FePresent::script_process_magic_strings( std::string &str,
 				}
 			}
 		}
-		catch( Sqrat::Exception e )
+		catch( Sqrat::Exception &e )
 		{
 			std::cout << "Script Error in magic string function: "
 				<< magic << " - "
@@ -1440,7 +1443,7 @@ void FeVM::script_run_config_function(
 		{
 			help_msg = func.Evaluate<const char *>( cb_get_config() );
 		}
-		catch( Sqrat::Exception e )
+		catch( Sqrat::Exception &e )
 		{
 			return_message = "Script error";
 			std::cout << "Script Error in " << script_file

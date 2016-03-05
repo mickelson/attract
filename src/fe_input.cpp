@@ -747,7 +747,7 @@ int FeInputMap::process_setting( const std::string &setting,
 	FeInputSource index( value );
 	if ( index.get_type() == FeInputSource::Unsupported )
 	{
-		std::cout << "Unrecognized input type: " << value << " in file: " << fn << std::cout;
+		std::cout << "Unrecognized input type: " << value << " in file: " << fn << std::endl;
 		return 1;
 	}
 

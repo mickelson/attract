@@ -280,20 +280,42 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	FeGameDBPlatformListParser gdbplp;
 	gdbplp.parse( body );
 
-	const std::vector<std::string> &sl_temp = c.emulator.get_systems();
 	std::vector<std::string> system_list;
 	std::vector<int> system_ids;
-	for ( std::vector<std::string>::const_iterator itr = sl_temp.begin(); itr!=sl_temp.end(); ++itr )
+
+	const std::vector<std::string> &sl_temp = c.emulator.get_systems();
+	for ( std::vector<std::string>::const_iterator itr = sl_temp.begin();
+			itr != sl_temp.end(); ++itr )
 	{
-		std::map<std::string, int>::iterator itm = gdbplp.m_set.find( *itr );
-		if ( itm != gdbplp.m_set.end() )
+		std::string comp_fuzz = get_fuzzy( *itr );
+
+		for ( size_t i=0; i<gdbplp.m_names.size(); i++ )
 		{
-			system_list.push_back( *itr );
-			system_ids.push_back( (*itm).second );
+			ASSERT( gdbplp.m_names.size() == gdbplp.m_ids.size() );
+
+			std::string &n = gdbplp.m_names[i];
+			int id = ( i < gdbplp.m_ids.size() ) ? i : 0;
+
+			if ( comp_fuzz.compare( get_fuzzy( n ) ) == 0 )
+			{
+				system_list.push_back( n );
+				system_ids.push_back( id );
+				break;
+			}
+			else
+			{
+				size_t pos = n.find_first_of( "(" );
+
+				if (( pos != std::string::npos ) &&
+					(( comp_fuzz.compare( get_fuzzy( n.substr(0,pos-1))) == 0 )
+					|| ( comp_fuzz.compare(get_fuzzy( n.substr(pos+1,n.size()-pos-1 ))) == 0 )))
+				{
+					system_list.push_back( n );
+					system_ids.push_back( id );
+					break;
+				}
+			}
 		}
-		else
-			std::cout << " * System identifier '" << (*itr) << "' not recognized by "
-				<< HOSTNAME << std::endl;
 	}
 
 	if ( system_list.size() < 1 )
