@@ -1,7 +1,7 @@
 ##
 ##
 ##  Attract-Mode frontend
-##  Copyright (C) 2013 Andrew Mickelson
+##  Copyright (C) 2013-2016 Andrew Mickelson
 ##
 ##  This file is part of Attract-Mode.
 ##
@@ -46,6 +46,7 @@
 ###############################
 
 #FE_DEBUG=1
+#VERBOSE=1
 
 FE_VERSION=v2.0.0
 
@@ -59,6 +60,17 @@ ARFLAGS=rc
 RM=rm -f
 MD=mkdir
 WINDRES=windres
+
+ifndef OPTIMIZE
+OPTIMIZE=2
+endif
+
+ifndef VERBOSE
+ SILENT=@
+ CC_MSG = @echo Compiling $@...
+ AR_MSG = @echo Archiving $@...
+ EXE_MSG = @echo Creating executable: $@
+endif
 
 ifneq ($(origin TOOLCHAIN),undefined)
 override CC := $(TOOLCHAIN)-$(CC)
@@ -273,7 +285,7 @@ ifeq ($(FE_DEBUG),1)
  CFLAGS += -g -Wall
  FE_FLAGS += -DFE_DEBUG
 else
- CFLAGS += -O2 -DNDEBUG
+ CFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
 
 ifeq ($(FE_RPI),1)
@@ -363,6 +375,8 @@ else
  SQUIRREL += $(OBJ_DIR)/libgameswf.a
 endif
 
+$(info flags:$(CFLAGS) $(FE_FLAGS))
+
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
@@ -390,18 +404,22 @@ FE_FLAGS += -DFE_VERSION_MAJOR=$(VER_MAJOR) -DFE_VERSION_MINOR=$(VER_MINOR) -DFE
 FE_FLAGS += -DFE_VERSION_D='"$(VER_TAG)"' -DFE_VERSION_NUM=$(VER_MAJOR)$(VER_MINOR)$(VER_POINT)
 
 $(OBJ_DIR)/%.res: $(SRC_DIR)/%.rc | $(OBJ_DIR)
-	$(WINDRES) $(FE_FLAGS) $< -O coff -o $@
+	$(CC_MSG)
+	$(SILENT)$(WINDRES) $(FE_FLAGS) $< -O coff -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
-	$(CXX) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
-	$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
+	$(CC_MSG)
+	$(SILENT)$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
 
 $(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
-	$(CXX) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
+	$(EXE_MSG)
+	$(SILENT)$(CXX) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
 ifneq ($(FE_DEBUG),1)
-	$(STRIP) $@
+	$(SILENT)$(STRIP) $@
 endif
 
 .PHONY: clean
@@ -422,10 +440,12 @@ EXPATOBJS = \
 	$(EXPAT_OBJ_DIR)/xmltok.o
 
 $(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
-	$(AR) $(ARFLAGS) $@ $(EXPATOBJS)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(EXPATOBJS)
 
 $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
-	$(CC) -c $< -o $@ $(CFLAGS) -DHAVE_MEMMOVE
+	$(CC_MSG)
+	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) -DHAVE_MEMMOVE
 
 $(EXPAT_OBJ_DIR):
 	$(MD) $@
@@ -451,10 +471,12 @@ SQUIRRELOBJS= \
 	$(SQUIRREL_OBJ_DIR)/sqclass.o
 
 $(OBJ_DIR)/libsquirrel.a: $(SQUIRRELOBJS) | $(SQUIRREL_OBJ_DIR)
-	$(AR) $(ARFLAGS) $@ $(SQUIRRELOBJS)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(SQUIRRELOBJS)
 
 $(SQUIRREL_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/squirrel/%.cpp | $(SQUIRREL_OBJ_DIR)
-	$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS)
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS)
 
 $(SQUIRREL_OBJ_DIR):
 	$(MD) $@
@@ -475,10 +497,12 @@ SQSTDLIBOBJS= \
 	$(SQSTDLIB_OBJ_DIR)/sqstdrex.o
 
 $(OBJ_DIR)/libsqstdlib.a: $(SQSTDLIBOBJS) | $(SQSTDLIB_OBJ_DIR)
-	$(AR) $(ARFLAGS) $@ $(SQSTDLIBOBJS)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(SQSTDLIBOBJS)
 
 $(SQSTDLIB_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/sqstdlib/%.cpp | $(SQSTDLIB_OBJ_DIR)
-	$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS) 
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS)
 
 $(SQSTDLIB_OBJ_DIR):
 	$(MD) $@
@@ -496,10 +520,12 @@ AUDIOOBJS= \
 	$(AUDIO_OBJ_DIR)/SoundStream.o
 
 $(OBJ_DIR)/libaudio.a: $(AUDIOOBJS) | $(AUDIO_OBJ_DIR)
-	$(AR) $(ARFLAGS) $@ $(AUDIOOBJS)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(AUDIOOBJS)
 
 $(AUDIO_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/audio/Audio/%.cpp | $(AUDIO_OBJ_DIR)
-	$(CXX) -c $< -o $@ $(CFLAGS)
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS)
 
 $(AUDIO_OBJ_DIR):
 	$(MD) $@
@@ -614,20 +640,24 @@ else
 endif
 
 $(OBJ_DIR)/libgameswf.a: $(GAMESWFOBJS) | $(GAMESWF_OBJ_DIR) $(GSBASE_OBJ_DIR)
-	$(AR) $(ARFLAGS) $@ $(GAMESWFOBJS)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(GAMESWFOBJS)
 
 $(GAMESWF_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/gameswf/%.cpp | $(GAMESWF_OBJ_DIR)
-	$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
 
 $(GAMESWF_OBJ_DIR):
 	$(MD) $@
 	$(MD) $@/gameswf_as_classes
 
 $(GSBASE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/base/%.cpp | $(GSBASE_OBJ_DIR)
-	$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
 
 $(GSBASE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/base/%.c | $(GSBASE_OBJ_DIR)
-	$(CC) -c $< -o $@ $(CFLAGS)
+	$(CC_MSG)
+	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS)
 
 $(GSBASE_OBJ_DIR):
 	$(MD) $@
