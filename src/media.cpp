@@ -31,6 +31,7 @@ extern "C"
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
 #include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
 
 #if USE_SWRESAMPLE
  #include <libswresample/swresample.h>
@@ -171,6 +172,8 @@ private:
 	//
 	sf::Thread m_video_thread;
 	FeMedia *m_parent;
+	sf::Uint8 *rgba_buffer[4];
+	int rgba_linesize[4];
 
 public:
 	bool run_video_thread;
@@ -183,9 +186,8 @@ public:
 	int disptex_height;
 
 	//
-	// The video thread sets display_frame and display_frame_ready when
-	// the next image is ready for display.  The main thread then copies
-	// the image data into the corresponding sf::Texture
+	// The video thread sets display_frame when the next image frame is decoded.
+	// The main thread then copies the image into the corresponding sf::Texture.
 	//
 	sf::Mutex image_swap_mutex;
 	sf::Uint8 *display_frame;
@@ -296,7 +298,7 @@ void FeBaseStream::push_packet( AVPacket *pkt )
 
 void FeBaseStream::free_packet( AVPacket *pkt )
 {
-	av_free_packet( pkt );
+	av_packet_unref( pkt );
 	av_free( pkt );
 }
 
@@ -346,6 +348,8 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		: FeBaseStream(),
 		m_video_thread( &FeVideoImp::video_thread, this ),
 		m_parent( p ),
+		rgba_buffer(),
+		rgba_linesize(),
 		run_video_thread( false ),
 		display_texture( NULL ),
 		sws_ctx( NULL ),
@@ -359,6 +363,9 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 FeVideoImp::~FeVideoImp()
 {
 	stop();
+
+	if (rgba_buffer[0])
+		av_freep(&rgba_buffer[0]);
 
 	if (sws_ctx)
 		sws_freeContext(sws_ctx);
@@ -408,6 +415,18 @@ namespace
 
 void FeVideoImp::preload()
 {
+	if (rgba_buffer[0])
+		av_freep(&rgba_buffer[0]);
+
+	int ret = av_image_alloc(rgba_buffer, rgba_linesize,
+			disptex_width, disptex_height,
+			AV_PIX_FMT_RGBA, 1);
+	if (ret < 0)
+	{
+		std::cerr << "Error allocating image during preload" << std::endl;
+		return;
+	}
+
 	bool keep_going = true;
 	while ( keep_going )
 	{
@@ -442,19 +461,6 @@ void FeVideoImp::preload()
 
 			if ( got_frame )
 			{
-				AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
-				avpicture_alloc( my_pict, AV_PIX_FMT_RGBA,
-					disptex_width,
-					disptex_height );
-
-				if ( !my_pict )
-				{
-					std::cerr << "Error allocating AVPicture during preload" << std::endl;
-					free_frame( raw_frame );
-					free_packet( packet );
-					return;
-				}
-
 				if ( (codec_ctx->width & 0x7) || (codec_ctx->height & 0x7) )
 					sws_flags |= SWS_ACCURATE_RND;
 
@@ -466,24 +472,19 @@ void FeVideoImp::preload()
 				if ( !sws_ctx )
 				{
 					std::cerr << "Error allocating SwsContext during preload" << std::endl;
-					avpicture_free( my_pict );
-					av_free( my_pict );
 					free_frame( raw_frame );
 					free_packet( packet );
 					return;
 				}
 
 				sws_scale( sws_ctx, raw_frame->data, raw_frame->linesize,
-							0, codec_ctx->height, my_pict->data,
-							my_pict->linesize );
+							0, codec_ctx->height, rgba_buffer,
+							rgba_linesize );
 
 				sf::Lock l( image_swap_mutex );
-				display_texture->update( my_pict->data[0] );
+				display_texture->update( rgba_buffer[0] );
 
 				keep_going = false;
-
-				avpicture_free( my_pict );
-				av_free( my_pict );
 			}
 
 			free_frame( raw_frame );
@@ -508,12 +509,7 @@ void FeVideoImp::video_thread()
 
 	std::queue<AVFrame *> frame_queue;
 
-	AVPicture *my_pict = (AVPicture *)av_malloc( sizeof( AVPicture ) );
-	avpicture_alloc( my_pict, AV_PIX_FMT_RGBA,
-		disptex_width,
-		disptex_height );
-
-	if ((!sws_ctx) || (!my_pict) )
+	if ((!sws_ctx) || (!rgba_buffer[0]))
 	{
 		std::cerr << "Error initializing video thread" << std::endl;
 		goto the_end;
@@ -579,10 +575,11 @@ void FeVideoImp::video_thread()
 				displayed++;
 
 				sws_scale( sws_ctx, detached_frame->data, detached_frame->linesize,
-							0, codec_ctx->height, my_pict->data,
-							my_pict->linesize );
+							0, codec_ctx->height, rgba_buffer,
+							rgba_linesize );
 
-				display_frame = my_pict->data[0];
+				display_frame = rgba_buffer[0];
+
 				free_frame( detached_frame );
 
 				do_process = false;
@@ -672,12 +669,9 @@ the_end:
 	//
 	at_end=true;
 
-	if ( my_pict )
+	if (display_frame)
 	{
 		sf::Lock l( image_swap_mutex );
-
-		avpicture_free( my_pict );
-		av_free( my_pict );
 		display_frame=NULL;
 	}
 
