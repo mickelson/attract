@@ -66,7 +66,7 @@ namespace gameswf
 		button_action( const button_action &c );
 		~button_action();
 
-		button_action &operator=( const button_action &c );
+		void operator=( const button_action &c );
 
 		void	read(stream* in, int tag_type);
 	};

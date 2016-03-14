@@ -16,37 +16,20 @@
 #include "base/tu_swap.h"
 #include <ctype.h>
 #include <new>
+#include <iostream>
 
 
 #ifdef _WIN32
-
-#define __PRETTY_FUNCTION__ __FUNCDNAME__
-#define snprintf _snprintf
-#define strncasecmp _strnicmp
-
-#ifdef SVN_RELEASE
-
-	// It will help users to send messages about bugs
-	#undef assert
-	#define assert(x)		\
+#ifdef NDEBUG
+// It will help users to send messages about bugs
+#undef assert
+#define assert(x)		\
 	if (!(x))		\
-	{		\
-		printf("assert(%s): %s\n%s(%d)\n",  #x, __PRETTY_FUNCTION__, __FILE__, __LINE__);		\
-		exit(0);		\
-	}
-
-#else
-
-	#ifndef NDEBUG
-
-	// On windows, replace ANSI assert with our own, for a less annoying
-	// debugging experience.
-	//int	tu_testbed_assert_break(const char* filename, int linenum, const char* expression);
-	#undef assert
-	#define assert(x)	if (!(x)) { __asm { int 3 } }	// tu_testbed_assert_break(__FILE__, __LINE__, #x))
-
-	#endif // not NDEBUG
-#endif	// not RELEASE
+{		\
+	std::cerr << "assert(" << #x << "): " << __PRETTY_FUNCTION__ << std::endl << __FILE__ << "(" << __LINE__ << ")" << std::endl; \
+	exit(0);		\
+}
+#endif
 #endif // _WIN32
 
 

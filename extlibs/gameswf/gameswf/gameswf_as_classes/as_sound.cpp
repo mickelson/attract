@@ -19,11 +19,10 @@ namespace gameswf
 			as_sound*	snd = cast_to<as_sound>(fn.this_ptr);
 			if (snd)
 			{
-				int offset = 0;
 				int loops = 0;
 				if (fn.nargs >= 2)
 				{
-					offset = fn.arg(0).to_int();
+					fn.arg(0).to_int(); // int offset, unsupported
 					loops = fn.arg(1).to_int();
 				}
 				s->play_sound(snd, snd->m_id, loops);

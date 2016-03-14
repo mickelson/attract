@@ -1299,9 +1299,6 @@ namespace gameswf
 				bool	has_char = in->read_uint(1) ? true : false;
 				bool	flag_move = in->read_uint(1) ? true : false;
 
-				bool	has_image = false;
-				bool	has_class_name = false;
-				bool	has_cache_asbitmap = false;
 				bool	has_blend_mode = false;
 				bool	has_filter_list = false;
 
@@ -1309,9 +1306,9 @@ namespace gameswf
 				{
 					in->read_uint(3); // unused
 
-					has_image = in->read_uint(1) ? true : false;
-					has_class_name = in->read_uint(1) ? true : false;
-					has_cache_asbitmap = in->read_uint(1) ? true : false;
+					in->read_uint(1); // has_image
+					in->read_uint(1); // has_class_name
+					in->read_uint(1); // has_cache_asbitmap
 					has_blend_mode = in->read_uint(1) ? true : false;
 					has_filter_list = in->read_uint(1) ? true : false;
 				}
@@ -1941,10 +1938,9 @@ namespace gameswf
 		bool sample_16bit = in->read_uint(1) ? true : false;
 		bool stereo = in->read_uint(1) ? true : false;
 		int	sample_count = in->read_u16();
-		int  latency_seek = 0;
 		if (format == sound_handler::FORMAT_MP3)
 		{
-			latency_seek = in->read_s16();
+			in->read_s16(); // int latency_seek
 		}
 
 		IF_VERBOSE_PARSE(log_msg("define stream sound: format=%d, rate=%d, 16=%d, stereo=%d, ct=%d\n", int(format), sample_rate, int(sample_16bit), int(stereo), sample_count));
@@ -1976,12 +1972,10 @@ namespace gameswf
 			m->m_ss_start = m->get_loading_frame();
 		}
 
-		int sample_count = 0;
-		int seek_samples = 0;
 		if (m->m_ss_format == sound_handler::FORMAT_MP3)	//MP3
 		{
-			sample_count = in->read_u16();
-			seek_samples = in->read_s16();
+			in->read_u16(); // int sample_count
+			in->read_s16(); // int seek_samples
 		}
 
 		int data_size = in->get_tag_end_position() - in->get_position();

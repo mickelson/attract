@@ -8,20 +8,6 @@
 #include "base/utility.h"
 #include "base/dlmalloc.h"
 
-#ifdef _WIN32
-#ifndef NDEBUG
-
-int	tu_testbed_assert_break(const char* filename, int linenum, const char* expression)
-{
-	// @@ TODO output print error message
-	__asm { int 3 }
-	return 0;
-}
-
-#endif // not NDEBUG
-#endif // _WIN32
-
-
 #ifdef USE_DL_MALLOC
 
 // Overrides of new/delete that use Doug Lea's malloc.  Very helpful

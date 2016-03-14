@@ -171,10 +171,8 @@ namespace gameswf
 			UNUSED(no_multiple);
 			UNUSED(has_envelope);
 			
-			Uint32	in_point = 0;
-			Uint32	out_point = 0;
-			if (has_in_point) { in_point = in->read_u32(); }
-			if (has_out_point) { out_point = in->read_u32(); }
+			if (has_in_point) { in->read_u32(); }
+			if (has_out_point) { in->read_u32(); }
 			if (has_loops) { m_loop_count = in->read_u16(); }
 			if (has_envelope) 
 			{ 
