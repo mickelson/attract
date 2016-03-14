@@ -166,6 +166,13 @@ for ( local i=0; i< fe.displays.len(); i++ )
 		zorder = 9999
 	};
 
+//
+// top_label gets used if no theme is found
+//
+::top_label <- fe.add_text( "", 0, 0, fe.layout.width, fe.layout.height );
+::top_label.charsize = 48;
+::top_label.word_wrap = true;
+
 /////////////////////////////////////////////////////////
 //
 // Functions definitions
@@ -258,11 +265,11 @@ function get_hs_system_dir()
 	return sys_d;
 }
 
-function get_theme_file( sys_d, match_map )
+function get_theme_file( theme_d, match_map )
 {
 	local default_theme="";
 	local theme = "";
-	local temp = DirectoryListing( sys_d + "Themes/", false );
+	local temp = DirectoryListing( theme_d, false );
 
 	foreach ( t in temp.results )
 	{
@@ -272,7 +279,7 @@ function get_theme_file( sys_d, match_map )
 		{
 			if ( m == temp )
 			{
-				theme = sys_d + "Themes/" + t;
+				theme = t;
 				break;
 			}
 		}
@@ -292,8 +299,11 @@ function get_theme_file( sys_d, match_map )
 				+ fe.game_info( Info.Name ) + "\n" );
 		}
 
-		theme = sys_d + "Themes/" + default_theme;
+		theme = default_theme;
 	}
+
+	if ( ( theme.len() > 1 ) && !IS_ARCHIVE( theme ) )
+		theme += "/";
 
 	return theme;
 }
@@ -365,7 +375,10 @@ function find_theme_node( node )
 // return true if we should call into the animate on_transition function
 function load( ttype, match_map, hs_sys_dir )
 {
-	local theme = get_theme_file( hs_sys_dir, match_map );
+	local theme_d = hs_sys_dir + "Themes/";
+	local theme_f = get_theme_file( theme_d, match_map );
+
+	local theme = theme_d + theme_f;
 //	print( " - Loading theme: " + theme + "\n" );
 
 	//
@@ -396,6 +409,20 @@ function load( ttype, match_map, hs_sys_dir )
 		bg_obj.height = fe.layout.height;
 	}
 
+	// handle situation where no theme has been found
+	//
+	if ( theme_f.len() < 1 )
+	{
+		::hs_ent["video"].obj.video_playing = false;
+		::hs_ent["video"].obj.file_name = "";
+		top_label.visible = true;
+		top_label.msg = match_map[0];
+
+		return;
+	}
+	else
+		top_label.visible = false;
+
 	if ( theme != current_theme )
 	{
 		local f = ReadTextFile( theme, "Theme.xml" );
@@ -419,7 +446,6 @@ function load( ttype, match_map, hs_sys_dir )
 		}
 
 		current_theme_root = find_theme_node( xml_root );
-		
 	}
 
 	//
@@ -887,7 +913,12 @@ function hs_transition( ttype, var, ttime )
 					// Handle Exit option on the Displays Menu
 					//
 					foreach ( o in ::hs_ent )
+					{
 						o.obj.visible = false;
+						o.obj.file_name = "";
+					}
+
+					::top_label.visible = false;
 
 					::hs_ent["background"].obj.file_name = work_d
 						+ "Frontend/Images/Menu_Exit_Background.png";

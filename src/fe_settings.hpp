@@ -192,6 +192,8 @@ private:
 	void load_state();
 	void clear();
 
+	void construct_display_maps();
+
 	void internal_gather_config_files(
 		std::vector<std::string> &ll,
 		const std::string &extension,

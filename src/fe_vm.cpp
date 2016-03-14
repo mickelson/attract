@@ -1923,7 +1923,14 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	if ( index == FeRomInfo::LAST_INDEX )
+	if (( index > FeRomInfo::LAST_INDEX ) || ( index < 0 ))
+	{
+		// the better thing to do would be to raise a squirrel error here
+		//
+		std::cerr << "game_info(): index out of range" << std::cout;
+		return "";
+	}
+	else if ( index == FeRomInfo::LAST_INDEX )
 	{
 		std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
 		FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );

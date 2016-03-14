@@ -535,6 +535,8 @@ void FeSettings::init_display()
 	if ( m_current_display < 0 )
 	{
 		m_rl.init_as_empty_list();
+
+		construct_display_maps();
 		return;
 	}
 
@@ -542,6 +544,8 @@ void FeSettings::init_display()
 	if ( romlist_name.empty() )
 	{
 		m_rl.init_as_empty_list();
+
+		construct_display_maps();
 		return;
 	}
 
@@ -581,6 +585,11 @@ void FeSettings::init_display()
 	// Do this here so that index views are rebuilt on a forced reset of
 	// the display (which happens when settings get changed for example)
 	//
+	construct_display_maps();
+}
+
+void FeSettings::construct_display_maps()
+{
 	m_display_cycle.clear();
 	m_display_menu.clear();
 
@@ -1189,12 +1198,18 @@ bool FeSettings::navigate_display( int step, bool wrap_mode )
 	int i = find_idx_in_vec( m_current_display, m_display_cycle );
 	i += step;
 
-	if ( i >= (int)m_display_cycle.size() )
-		i = 0;
-	else if ( i < 0 )
-		i = m_display_cycle.size()-1;
+	int idx=0;
+	if ( !m_display_cycle.empty() )
+	{
+		if ( i >= (int)m_display_cycle.size() )
+			idx = 0;
+		else if ( i < 0 )
+			idx = m_display_cycle.size()-1;
+		else
+			idx = i;
+	}
 
-	bool retval = set_display( m_display_cycle[i] );
+	bool retval = set_display( idx );
 
 	if ( wrap_mode )
 	{
