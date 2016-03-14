@@ -1038,7 +1038,7 @@ namespace gameswf
 	{ 
 		if (get_visible() == false) 
 		{ 
-			return NULL; 
+			return false;
 		} 
 
 		const matrix&  m = get_matrix();
