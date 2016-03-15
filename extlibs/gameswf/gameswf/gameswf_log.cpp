@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <iostream>
 
 
 namespace gameswf
@@ -20,12 +21,12 @@ namespace gameswf
 	{
 		if (error)
 		{
-			fprintf(stderr, message);
+			std::cerr << message << std::endl;
 		}
 		else
 		{
 			// NORMAL or VERBOSE
-			printf(message);
+			std::cout << message << std::endl;
 		}
 	}
 

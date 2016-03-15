@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <iostream>
 
 
 namespace logger
@@ -33,10 +34,10 @@ namespace logger
 	void standard_logger(log_type e, const char* message)
 	{
 		if (e == ERROR) {
-			fprintf(stderr, message);
+			std::cerr << message << std::endl;
 		} else {
 			// NORMAL or VERBOSE
-			printf(message);
+			std::cout << message << std::endl;
 		}
 	}
 

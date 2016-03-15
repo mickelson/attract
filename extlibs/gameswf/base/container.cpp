@@ -46,7 +46,7 @@ void	tu_string::resize(int new_size)
 
 	if (using_heap() == false)
 	{
-		if (new_size <= sizeof(m_union.m_local.m_buffer))
+		if (new_size <= (int)sizeof(m_union.m_local.m_buffer))
 		{
 			// Stay with internal storage.
 			m_union.m_local.m_bufsize_minus_length = (char) (sizeof(m_union.m_local.m_buffer) - new_size);
@@ -75,7 +75,7 @@ void	tu_string::resize(int new_size)
 	else
 	{
 		// Currently using heap storage.
-		if (new_size <= sizeof(m_union.m_local.m_buffer))
+		if (new_size <= (int)sizeof(m_union.m_local.m_buffer))
 		{
 			// Switch to local storage.
 

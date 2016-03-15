@@ -655,7 +655,7 @@ namespace gameswf
 		m_actions.resize(0);
 	}
 
-	button_action &button_action::operator=( const button_action &c )
+	void button_action::operator=( const button_action &c )
 	{
 		m_conditions = c.m_conditions;
 

@@ -1077,6 +1077,7 @@ exception_trap:
 		return false;
 	}
 	assert(0);
+	return false; // for stupid compilers
 }
 
 bool SQVM::CreateClassInstance(SQClass *theclass, SQObjectPtr &inst, SQObjectPtr &constructor)

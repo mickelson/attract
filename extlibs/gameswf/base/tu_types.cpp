@@ -29,7 +29,7 @@ bool	tu_types_validate()
 	}
 
 	// Endian checks.
-	char* buf = "1234";
+	const char* buf = "1234";
 
 #ifdef _TU_LITTLE_ENDIAN_
 	if (*(Uint32*) buf != 0x34333231)

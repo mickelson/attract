@@ -303,8 +303,8 @@ namespace gameswf
 	image::alpha* glyph_freetype_provider::draw_bitmap(const FT_Bitmap& bitmap)
 	{
 		// You must use power-of-two dimensions!!
-		int	w = 1; while (w < bitmap.width) { w <<= 1; }
-		int	h = 1; while (h < bitmap.rows) { h <<= 1; }
+		int	w = 1; while (w < (int)bitmap.width) { w <<= 1; }
+		int	h = 1; while (h < (int)bitmap.rows) { h <<= 1; }
 
 		image::alpha* alpha = image::create_alpha(w, h);
 		memset(alpha->m_data, 0,  w * h);
@@ -332,11 +332,11 @@ namespace gameswf
 		// 8bpp is the most common and simplest case, hence a separate loop
 		if (bpp==8)
 		{
-			for (int j = 0; j < bitmap.rows; ++j)
+			for (int j = 0; j < (int)bitmap.rows; ++j)
 			{
 				Uint8* dst = alpha->m_data + j * w;
 				const Uint8* src = bitmap.buffer + j * bitmap.pitch;
-				for (int i = 0; i < bitmap.width; ++i)
+				for (int i = 0; i < (int)bitmap.width; ++i)
 				{
 					*dst++ = *src++;
 				}
@@ -346,12 +346,12 @@ namespace gameswf
 			Uint8 mask = 0xff >> (8 - bpp);
 			Uint8 multiplier = 255 / ((1 << bpp) - 1);
 
-			for (int j = 0; j < bitmap.rows; ++j)
+			for (int j = 0; j < (int)bitmap.rows; ++j)
 			{
 				Uint8* dst = alpha->m_data + j * w;
 				const Uint8* src = bitmap.buffer + j * bitmap.pitch;
 				int shift = 8 - bpp;
-				for (int i = 0; i < bitmap.width; ++i)
+				for (int i = 0; i < (int)bitmap.width; ++i)
 				{
 					// since w and h have a good chance of getting larger than the bitmaps height and/or width
 					unsigned char csrc = (((*src) >> shift) & mask) * multiplier;

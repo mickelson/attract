@@ -311,7 +311,7 @@ endif
 
 ifeq ($(USE_LIBARCHIVE),1)
  FE_FLAGS += -DUSE_LIBARCHIVE
- TEMP_LIBS += libarchive zlib
+ TEMP_LIBS += libarchive
 else
  CFLAGS += -I$(EXTLIBS_DIR)/miniz
 endif
@@ -352,8 +352,8 @@ endif
 
 CFLAGS += -D__STDC_CONSTANT_MACROS
 
-LIBS += $(shell $(PKG_CONFIG) --libs $(TEMP_LIBS))
-CFLAGS += $(shell $(PKG_CONFIG) --cflags $(TEMP_LIBS))
+LIBS := $(LIBS) $(shell $(PKG_CONFIG) --libs $(TEMP_LIBS))
+CFLAGS := $(CFLAGS) $(shell $(PKG_CONFIG) --cflags $(TEMP_LIBS))
 
 EXE = $(EXE_BASE)$(EXE_EXT)
 

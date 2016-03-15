@@ -715,8 +715,8 @@ void	zoom(image_base* src, image_base* dst)
   rgba;
 
   int x, y, sx, sy, *sax, *say, *csax, *csay, csx, csy, ex, ey, t1, t2;
-  rgba *c00, *c01, *c10, *c11, *sp, *csp, *dp;
-  int sgap, dgap;
+  rgba *c00, *c01, *c10, *c11, *csp, *dp;
+  int dgap;
 
   /* For interpolation: assume source dimension is one pixel */
   /* smaller to avoid overflow on right and bottom edge.     */
@@ -748,9 +748,8 @@ void	zoom(image_base* src, image_base* dst)
   }
 
   /* Pointer setup */
-  sp = csp = (rgba *) src->m_data;
+  csp = (rgba *) src->m_data;
   dp = (rgba *) dst->m_data;
-  sgap = src->m_pitch - src->m_width * 4;
   dgap = dst->m_pitch - dst->m_width * 4;
 
 	/* Interpolating Zoom */

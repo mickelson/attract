@@ -45,7 +45,7 @@ if [[ "$PLATFORM" != "Darwin" ]]; then
 	[[ -z ${TOOLCHAIN} ]] && export TOOLCHAIN=x86_64-apple-${OSXCROSS_TARGET}
 	[[ -z ${LIB_BASE_PATH} ]] && export LIB_BASE_PATH="$(realpath ${OSXCROSS_TARGET_DIR}/macports/pkgs)"
 
-	MAKEOPTS="$MAKEOPTS CC=clang CXX=clang++ AR=libtool ARFLAGS=\"-static -o\" CROSS=1 TOOLCHAIN=${TOOLCHAIN} FE_MACOSX_COMPILE=1 EXTRA_CFLAGS=\"-arch i386 -arch x86_64\""
+	MAKEOPTS="$MAKEOPTS CC=clang CXX=clang++ AR=libtool ARFLAGS=\"-static -o\" CROSS=1 TOOLCHAIN=${TOOLCHAIN} FE_MACOSX_COMPILE=1"
 fi
 
 NPROC=$(getconf _NPROCESSORS_ONLN)

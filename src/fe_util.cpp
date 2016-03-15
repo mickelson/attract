@@ -900,7 +900,8 @@ bool run_program( const std::string &prog,
 		{
 			size_t pos = prog.find_last_of( "/" );
 			if ( pos != std::string::npos )
-				chdir( prog.substr( 0, pos ).c_str() );
+				if (chdir( prog.substr( 0, pos ).c_str() ) != 0)
+					std::cerr << "Warning, chdir(" << prog.substr( 0, pos ) << ") failed.";
 		}
 		execvp( prog.c_str(), arg_list );
 

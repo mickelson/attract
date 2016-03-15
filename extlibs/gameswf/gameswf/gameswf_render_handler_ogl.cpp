@@ -1716,14 +1716,12 @@ void bitmap_info_ogl::layout()
 		m_width = m_suspended_image->m_width;
 		m_height = m_suspended_image->m_height;
 
-		int bpp = 4;
 		int format = GL_RGBA;
 
 		switch (m_suspended_image->m_type)
 		{
 			case image::image_base::RGB:
 			{
-				bpp = 3;
 				format = GL_RGB;
 			}
 
@@ -1736,7 +1734,7 @@ void bitmap_info_ogl::layout()
 				if (w != m_suspended_image->m_width || h != m_suspended_image->m_height)
 				{
 					ffmpeg_resample(
-						bpp, m_suspended_image->m_width, m_suspended_image->m_height,
+						(format == GL_RGB) ? 3 : 4, m_suspended_image->m_width, m_suspended_image->m_height,
 						m_suspended_image->m_pitch, m_suspended_image->m_data, w, h);
 				}
 				else
