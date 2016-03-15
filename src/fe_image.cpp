@@ -1149,10 +1149,16 @@ void FeImage::scale()
 				// We have a size set in both directions and are preserving the aspect
 				// ratio, so calculate how we will centre the image in the space we have
 				//
+				sf::Transform t;
+				t.rotate( m_sprite.getRotation() );
+
 				if ( scale_x > scale_y ) // centre in x direction
-					final_pos.x += ( m_size.x - ( abs( texture_rect.width ) * scale_y )) / 2.0;
+					final_pos += t.transformPoint(
+						( m_size.x - ( abs( texture_rect.width ) * scale_y )) / 2.0,
+						0 );
 				else // centre in y direction
-					final_pos.y += ( m_size.y - ( abs( texture_rect.height ) * scale_x )) / 2.0;
+					final_pos += t.transformPoint( 0,
+						( m_size.y - ( abs( texture_rect.height ) * scale_x )) / 2.0);
 			}
 		}
 
