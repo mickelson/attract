@@ -145,8 +145,8 @@ public:
 						const std::string &rep="" )=0;
 
 	virtual void splash_message( const std::string &msg,
-						const std::string &rep="",
-						const std::string &aux="" )=0;
+						const std::string &rep,
+						const std::string &aux )=0;
 
 	virtual void input_map_dialog( const std::string &msg,
 						std::string &map_str,

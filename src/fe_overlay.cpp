@@ -49,7 +49,7 @@ public:
 
 	void splash_message( const std::string &msg,
 		const std::string &rep,
-		const std::string &aux=0 );
+		const std::string &aux );
 
 	void input_map_dialog( const std::string &m,
 		std::string &ms,
@@ -243,7 +243,6 @@ void FeOverlay::splash_message( const std::string &msg,
 		sf::Color::Transparent,
 		char_size/2 );
 
-	extra.setWordWrap( true );
 	extra.setAlignment( FeTextPrimative::Left );
 	extra.setPosition( 2, size.y - char_size/2 + 2 );
 	extra.setSize( size.x - 4, char_size/2 );

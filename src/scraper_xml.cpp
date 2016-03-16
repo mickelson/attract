@@ -521,23 +521,28 @@ void FeListXMLParser::end_element( const char *element )
 
 			m_count++;
 
-			int percent( 0 );
+			static int last_percent( 0 );
 			if ( !m_ctx.full && ( !m_ctx.romlist.empty() ))
 			{
-				percent = m_ctx.progress_past
+				int per = m_ctx.progress_past
 					+ m_count * m_ctx.progress_range
 					/ m_ctx.romlist.size();
 
-				std::cout << "\b\b\b\b" << std::setw(3)
-					<< percent << '%' << std::flush;
-			}
+				if ( per != last_percent )
+				{
+					last_percent = per;
 
-			if ( m_ui_update )
-			{
-				if ( m_ui_update( m_ui_update_data,
-						percent,
-						(*m_itr).get_info( FeRomInfo::Title ) ) == false )
-					set_continue_parse( false );
+					std::cout << "\b\b\b\b" << std::setw(3)
+						<< last_percent << '%' << std::flush;
+
+					if ( m_ui_update )
+					{
+						if ( m_ui_update( m_ui_update_data,
+								last_percent,
+								(*m_itr).get_info( FeRomInfo::Title ) ) == false )
+							set_continue_parse( false );
+					}
+				}
 			}
 		}
 	}
