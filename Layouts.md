@@ -117,6 +117,10 @@ manuals:
 [SQREFMAN]: http://www.squirrel-lang.org/doc/squirrel3.html
 [SQLIBMAN]: http://www.squirrel-lang.org/doc/sqstdlib3.html
 
+Also check out the Introduction to Squirrel on the Attract-Mode wiki:
+https://github.com/mickelson/attract/wiki/Introduction-to-Squirrel-Programming
+
+
 <a name="squirrel_ext" />
 Language Extensions
 -------------------
