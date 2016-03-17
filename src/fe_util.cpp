@@ -746,9 +746,9 @@ bool run_program( const std::string &prog,
 	ZeroMemory( &pi, sizeof(pi) );
 	si.cb = sizeof(si);
 
-	if ( NULL != callback )
+	if (( NULL != callback )
+		&& CreatePipe( &child_output_read, &child_output_write, &satts, 0 ))
 	{
-		CreatePipe( &child_output_read, &child_output_write, &satts, 1024 );
 		si.hStdOutput = child_output_write;
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
@@ -795,10 +795,11 @@ bool run_program( const std::string &prog,
 
 	if (( NULL != callback ) && ( block ))
 	{
-		char buffer[ 1024 ];
-		buffer[1023]=0;
+		const int BUFF_SIZE = 2048;
+		char buffer[ BUFF_SIZE+1 ];
+		buffer[BUFF_SIZE]=0;
 		DWORD bytes_read;
-		while ( ReadFile( child_output_read, buffer, 1023, &bytes_read, NULL ) != 0 )
+		while ( ReadFile( child_output_read, buffer, BUFF_SIZE, &bytes_read, NULL ) != 0 )
 		{
 			buffer[bytes_read]=0;
 			if ( callback( buffer, opaque ) == false )
@@ -813,20 +814,25 @@ bool run_program( const std::string &prog,
 	if ( child_output_read )
 		CloseHandle( child_output_read );
 
-	DWORD timeout = exit_hotkey.empty() ? INFINITE : POLL_FOR_EXIT_MS;
+	DWORD timeout = ( callback || exit_hotkey.empty() )
+		? INFINITE : POLL_FOR_EXIT_MS;
+
 	FeInputSource exit_is( exit_hotkey );
 
 	bool keep_wait=block;
 	while (keep_wait)
 	{
 		switch (MsgWaitForMultipleObjects(1, &pi.hProcess,
-						FALSE, timeout, QS_ALLINPUT))
+						FALSE, timeout, 0))
 		{
 		case WAIT_OBJECT_0:
 			keep_wait=false;
 			break;
 
 		case WAIT_OBJECT_0 + 1:
+			//
+			// See: https://blogs.msdn.microsoft.com/oldnewthing/20050217-00/?p=36423
+			//
 			// we have a message - peek and dispatch it
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
