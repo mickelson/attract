@@ -39,24 +39,24 @@ class LedBlinky
 		switch ( ttype )
 		{
 		case Transition.ToGame:
-			fe.plugin_command( config["command"],
+			fe.plugin_command_bg( config["command"],
 				"\"" + fe.game_info( Info.Name ) + "\" \""
 				+ fe.game_info( Info.Emulator ) + "\"" );
 			break;
 
 		case Transition.FromGame:
-			fe.plugin_command( config["command"], "4" );
+			fe.plugin_command_bg( config["command"], "4" );
 			break;
 
 		case Transition.StartLayout:
 			switch ( var )
 			{
 			case FromTo.ScreenSaver: // leaving screensaver
-				fe.plugin_command( config["command"], "6" );
+				fe.plugin_command_bg( config["command"], "6" );
 				break;
 
 			case FromTo.Frontend: // starting frontend
-				fe.plugin_command( config["command"], "1" );
+				fe.plugin_command_bg( config["command"], "1" );
 				break;
 			}
 			break;
@@ -65,11 +65,11 @@ class LedBlinky
 			switch ( var )
 			{
 			case FromTo.ScreenSaver: // starting screensaver
-				fe.plugin_command( config["command"], "5" );
+				fe.plugin_command_bg( config["command"], "5" );
 				break;
 
 			case FromTo.Frontend: // ending frontend
-				fe.plugin_command( config["command"], "2" );
+				fe.plugin_command_bg( config["command"], "2" );
 				break;
 			}
 			break;
@@ -77,7 +77,7 @@ class LedBlinky
 		case Transition.ToNewList:
 			// TODO: don't do this one when screensaver is stopping
 			// or frontend is first beginning
-			fe.plugin_command( config["command"], "8" );
+			fe.plugin_command_bg( config["command"], "8" );
 			break;
 		}
 
