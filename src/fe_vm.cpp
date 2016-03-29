@@ -1927,7 +1927,7 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 	{
 		// the better thing to do would be to raise a squirrel error here
 		//
-		std::cerr << "game_info(): index out of range" << std::cout;
+		std::cerr << "game_info(): index out of range" << std::endl;
 		return "";
 	}
 	else if ( index == FeRomInfo::LAST_INDEX )

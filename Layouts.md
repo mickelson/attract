@@ -1321,8 +1321,8 @@ Member Functions:
 
 Notes:
 
-   * As of this writing, multiple monitor support has only been implemented
-     in the Windows version of Attract-Mode.
+   * As of this writing, multiple monitor support has not been implemented
+     for the OS X version of Attract-Mode.
    * The first entry in the `fe.monitors` array is always the "primary" display
      for the system.
 

@@ -756,6 +756,8 @@ void FeListSoftwareParser::end_element( const char *element )
 		std::string fuzzyname = get_fuzzy( m_altname );
 		std::string fuzzydesc = get_fuzzy( m_description );
 
+		bool found=false;
+
 		//
 		// 1.) check for CRC match(es)
 		//
@@ -792,6 +794,7 @@ void FeListSoftwareParser::end_element( const char *element )
 						score += 10;
 				}
 
+				found = true;
 				set_info_values( *((*itr).second), score );
 			}
 
@@ -810,12 +813,23 @@ void FeListSoftwareParser::end_element( const char *element )
 						(*itr).second->get_info( FeRomInfo::Romname ) ) == 0 )
 				score += 10;
 
+			found = true;
 			set_info_values( (*(*itr).second), score );
 		}
 
 		itc = m_fuzzy_map.equal_range( fuzzyname );
 		for ( itr = itc.first; itr != itc.second; ++itr )
-				set_info_values( (*(*itr).second), 11 );
+		{
+			set_info_values( (*(*itr).second), 11 );
+			found = true;
+		}
+
+		//
+		if ( m_ctx.full && !found )
+		{
+			m_ctx.romlist.push_back( FeRomInfo( m_description ) );
+			set_info_values( m_ctx.romlist.back(), 1 );
+		}
 
 		clear_parse_state();
 	}
