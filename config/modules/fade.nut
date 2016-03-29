@@ -77,6 +77,13 @@ class FadeArt
 					index_offset,
 					filter_offset );
 
+			// Start changed: ArcadeBliss to show default artwork from the layout dir
+			if (test=="")
+			{
+				test = fe.script_dir + _label +".png";
+			}
+			// End changed: ArcadeBliss
+
 			if ( test != _back.file_name )
 			{
 				_front.file_name=test;
