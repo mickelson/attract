@@ -28,6 +28,7 @@ CHANGELOG
     Version 0.1     (8th December 2015)     - Initial release (included in Blastcity layout)
     Version 1.0     (14th March 2016)       - Complete rewrite to extend PreserveArt module
     Version 1.1     (14th March 2016)       - Added start_scale and randomize_on_transition
+    Version 1.2     (22th March 2016)       - Fixed bug with bounce animation when art is smaller than surface
 
 */
 
@@ -52,7 +53,7 @@ fe.load_module("preserve-art");
 
 class PanAndScanArt extends PreserveArt
 {
-    VERSION = 1.1;
+    VERSION = 1.2;
     PRESERVEART_VERSION = 1.0;
 
     debug = false;
@@ -200,44 +201,96 @@ class PanAndScanArt extends PreserveArt
                 }
             }
 
-            if (animate_type == ::AnimateType.HorizBounce || animate_type == ::AnimateType.Bounce)
+            if (art.width > surface.width)
             {
-                if (art.x <= surface.width - art.width)
+                if (animate_type == ::AnimateType.HorizBounce || animate_type == ::AnimateType.Bounce)
                 {
-                    _move_direction_x = ::MoveDirection.Left;
-                }
-                if (art.x >= 0)
-                {
-                    _move_direction_x = ::MoveDirection.Right;
-                }
+                    if (art.x <= surface.width - art.width)
+                    {
+                        _move_direction_x = ::MoveDirection.Left;
+                    }
+                    if (art.x >= 0)
+                    {
+                        _move_direction_x = ::MoveDirection.Right;
+                    }
 
-                if (_move_direction_x == ::MoveDirection.Right)
-                {
-                    art.x -= move_speed_x;
-                }
-                else if (_move_direction_x == ::MoveDirection.Left)
-                {
-                    art.x += move_speed_x;
+                    if (_move_direction_x == ::MoveDirection.Right)
+                    {
+                        art.x -= move_speed_x;
+                    }
+                    else if (_move_direction_x == ::MoveDirection.Left)
+                    {
+                        art.x += move_speed_x;
+                    }
                 }
             }
-            if (animate_type == ::AnimateType.VertBounce || animate_type == ::AnimateType.Bounce)
+            else
             {
-                if (art.y <= surface.height - art.height)
+                if (animate_type == ::AnimateType.HorizBounce || animate_type == ::AnimateType.Bounce)
                 {
-                    _move_direction_y = ::MoveDirection.Up;
-                }
-                if (art.y >= 0)
-                {
-                    _move_direction_y = ::MoveDirection.Down;
-                }
+                    if (art.x >= surface.width - art.width)
+                    {
+                        _move_direction_x = ::MoveDirection.Left;
+                    }
+                    if (art.x <= 0)
+                    {
+                        _move_direction_x = ::MoveDirection.Right;
+                    }
 
-                if (_move_direction_y == ::MoveDirection.Down)
-                {
-                    art.y -= move_speed_y;
+                    if (_move_direction_x == ::MoveDirection.Right)
+                    {
+                        art.x += move_speed_x;
+                    }
+                    else if (_move_direction_x == ::MoveDirection.Left)
+                    {
+                        art.x -= move_speed_x;
+                    }
                 }
-                else if (_move_direction_y == ::MoveDirection.Up)
+            }
+            if (art.height > surface.height)
+            {
+                if (animate_type == ::AnimateType.VertBounce || animate_type == ::AnimateType.Bounce)
                 {
-                    art.y += move_speed_y;
+                    if (art.y <= surface.height - art.height)
+                    {
+                        _move_direction_y = ::MoveDirection.Up;
+                    }
+                    if (art.y >= 0)
+                    {
+                        _move_direction_y = ::MoveDirection.Down;
+                    }
+
+                    if (_move_direction_y == ::MoveDirection.Down)
+                    {
+                        art.y -= move_speed_y;
+                    }
+                    else if (_move_direction_y == ::MoveDirection.Up)
+                    {
+                        art.y += move_speed_y;
+                    }
+                }
+            }
+            else
+            {
+                if (animate_type == ::AnimateType.VertBounce || animate_type == ::AnimateType.Bounce)
+                {
+                    if (art.y >= surface.height - art.height)
+                    {
+                        _move_direction_y = ::MoveDirection.Up;
+                    }
+                    if (art.y <= 0)
+                    {
+                        _move_direction_y = ::MoveDirection.Down;
+                    }
+
+                    if (_move_direction_y == ::MoveDirection.Down)
+                    {
+                        art.y += move_speed_y;
+                    }
+                    else if (_move_direction_y == ::MoveDirection.Up)
+                    {
+                        art.y -= move_speed_y;
+                    }
                 }
             }
         }
