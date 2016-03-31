@@ -88,6 +88,7 @@ const char *FE_ART_EXTENSIONS[]		=
 const char *FE_FONT_EXTENSIONS[]		=
 {
 	".ttf",
+	".ttc",
 	".otf",
 	".fnt",
 	".pcf",
