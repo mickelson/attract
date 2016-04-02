@@ -257,6 +257,9 @@ bool FeWindow::run()
 #ifdef SFML_SYSTEM_MACOS
 	osx_take_focus();
 #endif
+#ifdef SFML_SYSTEM_WINDOWS
+	SetForegroundWindow( getSystemHandle() );
+#endif
 
 	if ( min_run > 0 )
 	{
