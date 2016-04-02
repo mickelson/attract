@@ -168,6 +168,7 @@ fe.add_transition_callback( "fade_transitions" );
 function fade_transitions( ttype, var, ttime ) {
  switch ( ttype ) {
   case Transition.ToNewList:
+   var = 0;
   case Transition.ToNewSelection:
    gametitleshadow.msg = gamename ( var );
    gametitle.msg = gametitleshadow.msg;
