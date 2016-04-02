@@ -14,10 +14,12 @@ distributions.  Other distributions should have similar packages available.
 1. Install the following libraries and related headers on your system:
    * Required:
       - SFML SDK version 2.x (<http://sfml-dev.org>)
-      - OpenAL (this is used by SFML as well)
-   * Optional:
-      - The following FFmpeg libraries (required for movies): avformat,
+      - OpenAL
+      - zlib
+      - FreeType 2
+      - The following FFmpeg libraries (required for videos): avformat,
       avcodec, swscale, avutil and either swresample or avresample.
+   * Optional:
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
       - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
