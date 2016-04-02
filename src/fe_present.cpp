@@ -1128,6 +1128,10 @@ void FePresent::post_run()
 		(*its)->release_audio( false );
 #endif
 
+	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
+				itm != m_texturePool.end(); ++itm )
+		(*itm)->set_vol( m_feSettings->get_play_volume( FeSoundInfo::Movie ) );
+
 	set_video_play_state( m_playMovies );
 	on_transition( FromGame, FromToNoValue );
 
