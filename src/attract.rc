@@ -38,15 +38,15 @@
 			BLOCK LANG_WITH_CHARSET
 			BEGIN
 				VALUE "Author", "Andrew Mickelson\0"
-				VALUE "Comments", "Attract Mode\0"
-				VALUE "CompanyName", "Attract Mode\0"
-				VALUE "FileDescription", "Graphical front-end for command line emulators\0"
-				VALUE "FileVersion", STRINGIZE(VERSION_FILE) "\0"
+				VALUE "Comments", "\0"
+				VALUE "CompanyName", "attractmode.org\0"
+				VALUE "FileDescription", "Attract-Mode Frontend\0"
+				VALUE "FileVersion", STRINGIZE(RC_VERSION_FILE) "\0"
 				VALUE "InternalName", "attract\0"
-				VALUE "LegalCopyright", "Andrew Mickelson\0"
+				VALUE "LegalCopyright", "Copyright (c) 2013-2016 Andrew Mickelson\0"
 				VALUE "OriginalFilename", "ATTRACT.EXE\0"
-				VALUE "ProductName", "Attract Mode\0"
-				VALUE "ProductVersion", STRINGIZE(VERSION_BUILD) "\0"
+				VALUE "ProductName", "Attract-Mode\0"
+				VALUE "ProductVersion", STRINGIZE(RC_VERSION_BUILD) "\0"
 			END
 		END
 
