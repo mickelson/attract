@@ -254,13 +254,6 @@ bool FeWindow::run()
 	//
 	m_fes.run( min_run );
 
-#ifdef SFML_SYSTEM_MACOS
-	osx_take_focus();
-#endif
-#ifdef SFML_SYSTEM_WINDOWS
-	SetForegroundWindow( getSystemHandle() );
-#endif
-
 	if ( min_run > 0 )
 	{
 		sf::Time elapsed = timer.getElapsedTime();
@@ -288,6 +281,13 @@ bool FeWindow::run()
 			sf::sleep( sf::milliseconds( 250 ) );
 		}
 	}
+
+#ifdef SFML_SYSTEM_MACOS
+	osx_take_focus();
+#endif
+#ifdef SFML_SYSTEM_WINDOWS
+	SetForegroundWindow( getSystemHandle() );
+#endif
 
 	sf::Mouse::setPosition( reset_pos );
 
