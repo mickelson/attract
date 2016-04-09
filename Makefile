@@ -58,7 +58,7 @@ PKG_CONFIG=pkg-config
 AR=ar
 ARFLAGS=rc
 RM=rm -f
-MD=mkdir
+MD=mkdir -p
 WINDRES=windres
 
 ifndef OPTIMIZE
@@ -556,7 +556,6 @@ GAMESWFOBJS= \
 	$(GSBASE_OBJ_DIR)/triangulate_float.o                   \
 	$(GSBASE_OBJ_DIR)/triangulate_sint32.o                  \
 	$(GSBASE_OBJ_DIR)/tu_file.o                             \
-	$(GSBASE_OBJ_DIR)/tu_file_SDL.o                         \
 	$(GSBASE_OBJ_DIR)/tu_gc_singlethreaded_marksweep.o      \
 	$(GSBASE_OBJ_DIR)/tu_loadlib.o                          \
 	$(GSBASE_OBJ_DIR)/tu_random.o                           \
