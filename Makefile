@@ -247,10 +247,6 @@ ifneq ($(NO_SWF),1)
   TEMP_LIBS += freetype2
  endif
 
- ifneq ("$(wildcard /usr/include/freetype2/ft2build.h)","")
-  CFLAGS += -I/usr/include/freetype2
- endif
-
 endif
 
 ifeq ($(FE_WINDOWS_COMPILE),1)
