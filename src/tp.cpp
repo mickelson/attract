@@ -199,7 +199,7 @@ sf::Vector2f FeTextPrimative::setString(
 			spacing = font->getLineSpacing( spacing );
 
 		sf::FloatRect rectSize = m_bgRect.getLocalBounds();
-		int line_count = rectSize.height / spacing;
+		int line_count = std::max( 1, (int)(rectSize.height / spacing) );
 
 		//
 		// Calculate the wrapped lines
