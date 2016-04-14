@@ -376,6 +376,7 @@ class Player extends Sprite
 	cruise_control=false; // false if user provided input during this life
 	cruise_x=-1;
 	cruise_y=-1;
+	is_mirror=false;
 
 	constructor()
 	{
@@ -419,10 +420,25 @@ class Player extends Sprite
 			if ( df > 11 )
 				::reset_actors = true; // flag to reset player/ghosts
 			else
-				obj.subimg_x = ( 2 + df ) * SpriteSize;
+				obj.subimg_x = _mirror(( 2 + df ) * SpriteSize);
 		}
 		else if ( direction != Direction.None )
-			obj.subimg_x = ( frame % 3 ) * SpriteSize;
+			obj.subimg_x = _mirror(( frame % 3 ) * SpriteSize);
+	}
+
+	function _mirror( x)
+	{
+		if ( is_mirror )
+		{
+			if ( obj.subimg_width > 0 )
+				obj.subimg_width = -(SpriteSize);
+			x = x + SpriteSize;
+		}
+		else if ( obj.subimg_width < 0 )
+		{
+			obj.subimg_width = SpriteSize;
+		}
+		return x;
 	}
 
 	function move( f_adv )
@@ -436,16 +452,20 @@ class Player extends Sprite
 		switch ( direction )
 		{
 		case Direction.Right:
+			is_mirror = false;
 			obj.rotation = 0; obj.x = my_x; obj.y = my_y; break;
 
 		case Direction.Left:
-			obj.rotation = 180; obj.x = my_x + 15; obj.y = my_y + 15; break;
+			is_mirror = true;
+			obj.rotation = 0; obj.x = my_x; obj.y = my_y; break;
 
 		case Direction.Up:
+			is_mirror = false;
 			obj.rotation = 270; obj.x = my_x; obj.y = my_y + 15; break;
 
 		case Direction.Down:
-			obj.rotation = 90; obj.x = my_x + 15; obj.y = my_y; break;
+			is_mirror = true;
+			obj.rotation = 270; obj.x = my_x; obj.y = my_y + 15; break;
 		}
 	}
 
@@ -483,28 +503,35 @@ class Player extends Sprite
 		}
 		else if ( retval.status == SGStatus.Centre )
 		{
-			// confirm that we can still move forward
-			switch ( direction )
+			try
 			{
-			case Direction.Up:
-				if ( ::field[ y - 1 ][ x ]  == 0 )
-					direction = Direction.None;
-				break;
+				// confirm that we can still move forward
+				switch ( direction )
+				{
+				case Direction.Up:
+					if ( ::field[ y - 1 ][ x ]  == 0 )
+						direction = Direction.None;
+					break;
 
-			case Direction.Down:
-				if ( ::field[ y + 1 ][ x ]  == 0 )
-					direction = Direction.None;
-				break;
+				case Direction.Down:
+					if ( ::field[ y + 1 ][ x ]  == 0 )
+						direction = Direction.None;
+					break;
 
-			case Direction.Left:
-				if (( x > 0 ) && ( ::field[ y ][ x - 1 ]  == 0 ))
-					direction = Direction.None;
-				break;
+				case Direction.Left:
+					if (( x > 0 ) && ( ::field[ y ][ x - 1 ]  == 0 ))
+						direction = Direction.None;
+					break;
 
-			case Direction.Right:
-				if ( ( x < ::GridSize[0] ) && ( ::field[ y ][ x + 1 ]  == 0 ))
-					direction = Direction.None;
-				break;
+				case Direction.Right:
+					if ( ( x < ::GridSize[0] ) && ( ::field[ y ][ x + 1 ]  == 0 ))
+						direction = Direction.None;
+					break;
+				}
+			}
+			catch (e)
+			{
+				direction = Direction.None;
 			}
 		}
 
@@ -794,6 +821,17 @@ class Ghost extends Sprite
 
 	function move( f_adv )
 	{
+		// Don't move if we commit murder
+		if ( ::pman.die > 0 )
+		{
+			if ( obj.visible )
+			{
+				gstate = GhostState.Hidden;
+				obj.visible = false;
+			}
+			return;
+		}
+
 		if ( gstate == GhostState.Dead )
 		{
 			if ( eyes_frame != -1 ) // Don't move if we're showing the score
