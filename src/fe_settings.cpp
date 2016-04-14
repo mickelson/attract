@@ -2986,11 +2986,11 @@ bool gather_artwork_filenames(
 	for ( std::vector< std::string >::const_iterator itr = art_paths.begin();
 			itr != art_paths.end(); ++itr )
 	{
+		std::vector < std::string > img_contents;
+		std::vector < std::string > vid_contents;
+
 		if ( is_supported_archive( *itr ) )
 		{
-			std::vector < std::string > img_contents;
-			std::vector < std::string > vid_contents;
-
 			gather_archive_filenames_with_base(
 				        img_contents,
 				        vid_contents,
@@ -3001,8 +3001,8 @@ bool gather_artwork_filenames(
 #ifdef NO_MOVIE
 			vid_contents.clear();
 #else
-			for ( std::vector<std::string>::iterator itn = vids.begin();
-					itn != vids.end(); )
+			for ( std::vector<std::string>::iterator itn = vid_contents.begin();
+					itn != vid_contents.end(); )
 			{
 				if ( FeMedia::is_supported_media_file( *itn ) )
 					++itn;
@@ -3023,35 +3023,37 @@ bool gather_artwork_filenames(
 					vids.push_back( (*itr) + "|" + vid_contents.back() );
 					vid_contents.pop_back();
 				}
-
-				return true;
 			}
 
 			continue;
 		}
 
 		get_filename_from_base(
-			images,
-			vids,
+			img_contents,
+			vid_contents,
 			(*itr),
 			target_name + '.',
 			FE_ART_EXTENSIONS );
 
 #ifdef NO_MOVIE
-		vids.clear();
+		vid_contents.clear();
 #else
-		for ( std::vector<std::string>::iterator itn = vids.begin();
-				itn != vids.end(); )
+		for ( std::vector<std::string>::iterator itn = vid_contents.begin();
+				itn != vid_contents.end(); )
 		{
 			if ( FeMedia::is_supported_media_file( *itn ) )
 				++itn;
 			else
-				itn = vids.erase( itn );
+				itn = vid_contents.erase( itn );
 		}
 #endif
 
-		if ( !images.empty() || !vids.empty() )
-			return true;
+		if ( !img_contents.empty() || !vid_contents.empty() )
+		{
+			images.insert( images.end(), img_contents.begin(), img_contents.end() );
+			vids.insert( vids.end(), vid_contents.begin(), vid_contents.end() );
+			continue;
+		}
 
 		//
 		// If there is a subdirectory in art_path with the
@@ -3064,33 +3066,34 @@ bool gather_artwork_filenames(
 			sd_path += "/";
 
 			get_filename_from_base(
-				images,
-				vids,
+				img_contents,
+				vid_contents,
 				sd_path,
 				"",
 				FE_ART_EXTENSIONS );
 
 #ifdef NO_MOVIE
-			vids.clear();
+			vid_contents.clear();
 #else
-			for ( std::vector<std::string>::iterator itn = vids.begin();
-					itn != vids.end(); )
+			for ( std::vector<std::string>::iterator itn = vid_contents.begin();
+					itn != vid_contents.end(); )
 			{
 				if ( FeMedia::is_supported_media_file( *itn ) )
 					++itn;
 				else
-					itn = vids.erase( itn );
+					itn = vid_contents.erase( itn );
 			}
 #endif
 
-			std::random_shuffle( vids.begin(), vids.end() );
-			std::random_shuffle( images.begin(), images.end() );
+			std::random_shuffle( vid_contents.begin(), vid_contents.end() );
+			std::random_shuffle( img_contents.begin(), img_contents.end() );
 
-			if ( !images.empty() || !vids.empty() )
-				return true;
+			images.insert( images.end(), img_contents.begin(), img_contents.end() );
+			vids.insert( vids.end(), vid_contents.begin(), vid_contents.end() );
 		}
 	}
-	return false;
+
+	return ( !images.empty() || !vids.empty() );
 }
 
 bool art_exists( const std::string &path, const std::string &base )
