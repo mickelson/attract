@@ -18,16 +18,12 @@ fe.do_nut("field.nut");
 const SpriteFile = "resource.png";
 const SpriteSize = 32;
 
-const GhostHouseX = 28; const GhostHouseY = 1;
 const BonusX = 28; const BonusY = 18;
-const StartX = 28; const StartY = 37;
 const G0HomeX = 45; const G0HomeY = 3;
 const G1HomeX = 9; const G1HomeY = 3;
 const G2HomeX = 45; const G2HomeY = 37;
 const G3HomeX = 9; const G3HomeY = 37;
 
-const GridWidth = 56;
-const GridHeight = 42;
 const MinimumMove	= 0.1;
 
 enum Direction
@@ -380,6 +376,7 @@ class Player extends Sprite
 	cruise_control=false; // false if user provided input during this life
 	cruise_x=-1;
 	cruise_y=-1;
+	is_mirror=false;
 
 	constructor()
 	{
@@ -392,7 +389,7 @@ class Player extends Sprite
 	{
 		die=0;
 		speed = 0.8;
-		set_pos( g2p( StartX ), g2p( StartY ) );
+		set_pos( g2p( ::PlayerStart[0] ), g2p( ::PlayerStart[1] ) );
 
 		if ( cruise_control )
 			direction = get_best_direction( -1, -1, Direction.None );
@@ -423,10 +420,25 @@ class Player extends Sprite
 			if ( df > 11 )
 				::reset_actors = true; // flag to reset player/ghosts
 			else
-				obj.subimg_x = ( 2 + df ) * SpriteSize;
+				obj.subimg_x = _mirror(( 2 + df ) * SpriteSize);
 		}
 		else if ( direction != Direction.None )
-			obj.subimg_x = ( frame % 3 ) * SpriteSize;
+			obj.subimg_x = _mirror(( frame % 3 ) * SpriteSize);
+	}
+
+	function _mirror( x)
+	{
+		if ( is_mirror )
+		{
+			if ( obj.subimg_width > 0 )
+				obj.subimg_width = -(SpriteSize);
+			x = x + SpriteSize;
+		}
+		else if ( obj.subimg_width < 0 )
+		{
+			obj.subimg_width = SpriteSize;
+		}
+		return x;
 	}
 
 	function move( f_adv )
@@ -440,16 +452,20 @@ class Player extends Sprite
 		switch ( direction )
 		{
 		case Direction.Right:
+			is_mirror = false;
 			obj.rotation = 0; obj.x = my_x; obj.y = my_y; break;
 
 		case Direction.Left:
-			obj.rotation = 180; obj.x = my_x + 15; obj.y = my_y + 15; break;
+			is_mirror = true;
+			obj.rotation = 0; obj.x = my_x; obj.y = my_y; break;
 
 		case Direction.Up:
+			is_mirror = false;
 			obj.rotation = 270; obj.x = my_x; obj.y = my_y + 15; break;
 
 		case Direction.Down:
-			obj.rotation = 90; obj.x = my_x + 15; obj.y = my_y; break;
+			is_mirror = true;
+			obj.rotation = 270; obj.x = my_x; obj.y = my_y + 15; break;
 		}
 	}
 
@@ -487,28 +503,35 @@ class Player extends Sprite
 		}
 		else if ( retval.status == SGStatus.Centre )
 		{
-			// confirm that we can still move forward
-			switch ( direction )
+			try
 			{
-			case Direction.Up:
-				if ( ::field[ y - 1 ][ x ]  == 0 )
-					direction = Direction.None;
-				break;
+				// confirm that we can still move forward
+				switch ( direction )
+				{
+				case Direction.Up:
+					if ( ::field[ y - 1 ][ x ]  == 0 )
+						direction = Direction.None;
+					break;
 
-			case Direction.Down:
-				if ( ::field[ y + 1 ][ x ]  == 0 )
-					direction = Direction.None;
-				break;
+				case Direction.Down:
+					if ( ::field[ y + 1 ][ x ]  == 0 )
+						direction = Direction.None;
+					break;
 
-			case Direction.Left:
-				if (( x > 0 ) && ( ::field[ y ][ x - 1 ]  == 0 ))
-					direction = Direction.None;
-				break;
+				case Direction.Left:
+					if (( x > 0 ) && ( ::field[ y ][ x - 1 ]  == 0 ))
+						direction = Direction.None;
+					break;
 
-			case Direction.Right:
-				if ( ( x < GridWidth ) && ( ::field[ y ][ x + 1 ]  == 0 ))
-					direction = Direction.None;
-				break;
+				case Direction.Right:
+					if ( ( x < ::GridSize[0] ) && ( ::field[ y ][ x + 1 ]  == 0 ))
+						direction = Direction.None;
+					break;
+				}
+			}
+			catch (e)
+			{
+				direction = Direction.None;
 			}
 		}
 
@@ -545,7 +568,7 @@ class Player extends Sprite
 		else if ( fe.get_input_state( AM_CONFIG["p1_right"] ) )
 		{
 			local temp = p2g( pos_x() ) + 1;
-			if (( temp > GridWidth ) // special case for tunnel movement
+			if (( temp > ::GridSize[0] ) // special case for tunnel movement
 					|| ( ::field[ p2g( pos_y() ) ][ temp ] ))
 				direction = Direction.Right;
 
@@ -691,8 +714,8 @@ class Player extends Sprite
 		}
 
 		// otherwise pick a direction if we are at a ghost decision point
-		if (( gx >= 0 ) && ( gx < GridWidth )
-				&& ( gy >= 0 ) && ( gy < GridHeight ) 
+		if (( gx >= 0 ) && ( gx < ::GridSize[0] )
+				&& ( gy >= 0 ) && ( gy < ::GridSize[1] ) 
 				&& ( ::field[gy][gx] & 4 )) 
 		{
 			if ( ::field[gy][gx] == 7 )
@@ -798,6 +821,17 @@ class Ghost extends Sprite
 
 	function move( f_adv )
 	{
+		// Don't move if we commit murder
+		if ( ::pman.die > 0 )
+		{
+			if ( obj.visible )
+			{
+				gstate = GhostState.Hidden;
+				obj.visible = false;
+			}
+			return;
+		}
+
 		if ( gstate == GhostState.Dead )
 		{
 			if ( eyes_frame != -1 ) // Don't move if we're showing the score
@@ -805,11 +839,11 @@ class Ghost extends Sprite
 
 			// Stop moving if we've hit the ghost house
 			//
-			if (( p2g( pos_x() ) == GhostHouseX )
-					&& ( p2g( pos_y() ) == GhostHouseY ))
+			if (( p2g( pos_x() ) == ::GhostHouse[0] )
+					&& ( p2g( pos_y() ) == ::GhostHouse[1] ))
 			{
 				gstate = GhostState.Hidden;
-				set_pos( g2p( GhostHouseX ), g2p( GhostHouseY + 1 ) );
+				set_pos( g2p( ::GhostHouse[0] ), g2p( ::GhostHouse[1] + 1 ) );
 			}
 		}
 
@@ -833,7 +867,7 @@ class Ghost extends Sprite
 				direction = reverse_direction( direction );
 				reverse = false;
 			}
-			else if (( x < 0 ) || ( x > GridWidth ) || ( !( ::field[y][x] & 4 ) ))
+			else if (( x < 0 ) || ( x > ::GridSize[0] ) || ( !( ::field[y][x] & 4 ) ))
 			{
 				// nothing
 			}
@@ -950,7 +984,7 @@ class Ghost extends Sprite
 						break;
 
 					case GhostState.Dead:
-						target_gx = GhostHouseX; target_gy = GhostHouseY; break;
+						target_gx = ::GhostHouse[0]; target_gy = ::GhostHouse[1]; break;
 					}
 
 					direction = get_best_direction( target_gx, target_gy, direction );
@@ -976,7 +1010,7 @@ function state_update( ttime, animate_frame )
 		foreach ( g in ::ghosts )
 		{
 			g.gstate = GhostState.Hidden;
-			g.set_pos( g2p( GhostHouseX ), g2p( GhostHouseY + 1 ) );
+			g.set_pos( g2p( ::GhostHouse[0] ), g2p( ::GhostHouse[1] + 1 ) );
 		}
 
 		::last_ghost = ttime - 3000;
@@ -1163,7 +1197,7 @@ function maze_init()
 	if ( !::rawin( "ghosts" ) )
 		::ghosts <- [ Ghost( 0 ), Ghost( 1 ), Ghost( 2 ), Ghost( 3 ) ];
 
-	::pman.set_pos( g2p( StartX ), g2p( StartY ) );
+	::pman.set_pos( g2p( ::PlayerStart[0] ), g2p( ::PlayerStart[1] ) );
 	::pman.obj.x = ::pman.my_x; ::pman.obj.y = ::pman.my_y;
 
 	set_sound( "chase", false );
