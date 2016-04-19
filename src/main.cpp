@@ -538,13 +538,13 @@ int main(int argc, char *argv[])
 									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ) ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
-									feVM.update_to_new_list(); // our current display might have changed, so update
+									feVM.update_to_new_list( 0, true ); // our current display might have changed, so update
 							}
 						}
 						else
 						{
 							if ( feSettings.set_current_fav( new_state ) )
-								feVM.update_to_new_list(); // our current display might have changed, so update
+								feVM.update_to_new_list( 0, true ); // our current display might have changed, so update
 						}
 						redraw = true;
 					}
