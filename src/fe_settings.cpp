@@ -277,6 +277,14 @@ FeSettings::FeSettings( const std::string &config_path,
 	else
 		m_config_path = absolute_path( clean_path( config_path, true ) );
 
+	// absolute_path can drop the trailing slash
+	if (
+#ifdef SFML_SYSTEM_WINDOWS
+			(m_config_path[m_config_path.size()-1] != '\\') &&
+#endif
+			(m_config_path[m_config_path.size()-1] != '/') )
+		m_config_path += '/';
+
 	m_default_font = cmdln_font;
 }
 
