@@ -1968,6 +1968,7 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 			fes->get_rom_index( filter_index, index_offset ) );
 
 	static std::string retval;
+	retval.clear();
 
 	std::vector<std::string> vid_list, image_list;
 	if (( rom ) &&
@@ -1980,7 +1981,7 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 	{
 		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
 			retval = vid_list.front();
-		else
+		else if ( !image_list.empty() )
 			retval = image_list.front();
 
 		// We force our return value to an absolute path, to work
@@ -1991,8 +1992,6 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 		//
 		retval = absolute_path( retval );
 	}
-	else
-		retval.clear();
 
 	return retval.c_str();
 }
