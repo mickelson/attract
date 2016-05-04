@@ -2312,7 +2312,6 @@ bool FeSettings::set_info( int index, const std::string &value )
 		break;
 
 	case WindowMode:
-#ifndef FE_RPI
 		{
 			int i=0;
 			while ( windowModeTokens[i] != NULL )
@@ -2328,7 +2327,6 @@ bool FeSettings::set_info( int index, const std::string &value )
 			if ( windowModeTokens[i] == NULL )
 				return false;
 		}
-#endif
 		break;
 
 	case FilterWrapMode:

@@ -1543,7 +1543,6 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::FontPath ),
 			"_help_font_path" );
 
-#ifndef FE_RPI
 	std::string winmode;
 	ctx.fe_settings.get_resource( FeSettings::windowModeDispTokens[ ctx.fe_settings.get_window_mode() ], winmode );
 	std::vector < std::string > modes;
@@ -1556,7 +1555,6 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	}
 	ctx.add_optl( Opt::LIST, "Window Mode", winmode, "_help_window_mode" );
 	ctx.back_opt().append_vlist( modes );
-#endif
 
 	FeBaseConfigMenu::get_options( ctx );
 }
@@ -1595,10 +1593,8 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::FontPath,
 			ctx.opt_list[10].get_value() );
 
-#ifndef FE_RPI
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
 			FeSettings::windowModeTokens[ ctx.opt_list[11].get_vindex() ] );
-#endif
 
 	return true;
 }
