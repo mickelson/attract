@@ -107,7 +107,7 @@ endif()
 # FFmpeg
 if(NOT NO_MOVIE)
     find_package(FFmpeg COMPONENTS avformat avcodec avutil swscale swresample)
-    if(NOT FFMPEG_FOUND)
+    if(NOT FFMPEG_SWRESAMPLE_FOUND)
         find_package(FFmpeg COMPONENTS avformat avcodec avutil swscale avresample REQUIRED)
     endif()
 endif()
