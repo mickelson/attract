@@ -86,7 +86,7 @@ string(REGEX REPLACE "^v" "" RESULT ${VER_TAG})
 string(REGEX REPLACE "[-\\.]" ";" RESULT ${RESULT})
 list(GET RESULT 0 VER_MAJOR)
 list(GET RESULT 1 VER_MINOR)
-list(GET RESULT 2 VER_POINT)
+list(GET RESULT 2 VER_PATCH)
 git_describe(VER_DIRTY --dirty)
 if(NOT "${VER_COUNT}" EQUAL "0")
     set(VER_TAG "${VER_TAG}-${VER_COUNT}")
@@ -137,3 +137,9 @@ add_subdirectory(src)
 
 install(DIRECTORY config/
         DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME})
+
+include(cmake/PackageDeb.cmake)
+add_custom_target(deb DEPENDS attract
+                      COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=/usr .
+                      COMMAND ${CMAKE_CPACK_COMMAND} -G DEB
+                      WORKING_DIRECTORY ${BUILD_DIR})
