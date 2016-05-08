@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-2014 Andrew Mickelson
+ *  Copyright (C) 2013-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -207,8 +207,6 @@ void FeWindow::initial_create()
 
 bool FeWindow::run()
 {
-	int min_run;
-
 #ifndef SFML_SYSTEM_MACOS
 	// Don't move so much to the corner on Macs due to hot corners
 	//
@@ -233,14 +231,11 @@ bool FeWindow::run()
 	// from running...  So we close our main window each time we run
 	// an emulator and then recreate it when the emulator is done.
 	//
+	bool recreate_window=false;
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
 		close();
-		m_fes.run( min_run );
-		sf::VideoMode mode = sf::VideoMode::getDesktopMode();
-		create( mode, "Attract-Mode", sf::Style::Fullscreen );
-
-		return true;
+		recreate_window=true;
 	}
 #endif
 
@@ -252,6 +247,7 @@ bool FeWindow::run()
 	// and we wait at least this amount of time (in seconds) and then wait
 	// for focus to return to Attract-Mode if this value is set greater than 0
 	//
+	int min_run;
 	m_fes.run( min_run );
 
 	if ( min_run > 0 )
@@ -282,10 +278,15 @@ bool FeWindow::run()
 		}
 	}
 
-#ifdef SFML_SYSTEM_MACOS
+#if defined(SFML_SYSTEM_LINUX)
+	if ( recreate_window )
+	{
+		sf::VideoMode mode = sf::VideoMode::getDesktopMode();
+		create( mode, "Attract-Mode", sf::Style::Fullscreen );
+	}
+#elif defined(SFML_SYSTEM_MACOS)
 	osx_take_focus();
-#endif
-#ifdef SFML_SYSTEM_WINDOWS
+#elif defined(SFML_SYSTEM_WINDOWS)
 	SetForegroundWindow( getSystemHandle() );
 #endif
 
