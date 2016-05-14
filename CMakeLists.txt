@@ -117,10 +117,16 @@ endif()
 #### BEGIN: Misc ####
 
 # If ARM, assume GLES
-if(NOT FE_RPI AND "${CMAKE_TARGET_ARCHITECTURES}" MATCHES "arm")
+if("${CMAKE_TARGET_ARCHITECTURES}" MATCHES "arm")
     set(USE_GLES ON)
-    set(FE_RPI ON)
-    message(STATUS "ARM detected: FE_RPI and USE_GLES set")
+    set(VIDEOCORE_PATH /opt/vc)
+    find_file(HAVE_VIDEOCORE bcm_host.h PATHS ${VIDEOCORE_PATH}/include NO_DEFAULT_PATH)
+    if(HAVE_VIDEOCORE)
+        set(FE_RPI ON)
+        include_directories(${VIDEOCORE_PATH}/include)
+        link_directories(${VIDEOCORE_PATH}/lib)
+    endif()
+    message(STATUS "ARM detected: USE_GLES:${USE_GLES} FE_RPI:${FE_RPI}")
 endif()
 
 if(NOT WIN32)
