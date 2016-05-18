@@ -720,6 +720,16 @@ bool FeSettings::config_map_input( const sf::Event &e, std::string &s, FeInputMa
 	return true;
 }
 
+FeInputMap::Command FeSettings::get_default_command( FeInputMap::Command c )
+{
+	return m_inputmap.get_default_command( c );
+}
+
+void FeSettings::set_default_command( FeInputMap::Command c, FeInputMap::Command v )
+{
+	m_inputmap.set_default_command( c, v );
+}
+
 bool FeSettings::get_current_state( FeInputMap::Command c )
 {
 	return m_inputmap.get_current_state( c, m_joy_thresh );

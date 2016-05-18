@@ -1123,7 +1123,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 			switch( c )
 			{
-			case FeInputMap::ExitMenu:
+			case FeInputMap::Back:
 				ctx.sel = ctx.default_sel;
 				return true;
 			case FeInputMap::ExitNoMenu:
@@ -1132,7 +1132,6 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 			case FeInputMap::Select:
 				return true;
 			case FeInputMap::Up:
-			case FeInputMap::PageUp:
 				if ( ctx.sel > 0 )
 					ctx.sel--;
 				else
@@ -1144,7 +1143,6 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 				return false;
 
 			case FeInputMap::Down:
-			case FeInputMap::PageDown:
 				if ( ctx.sel < ctx.max_sel )
 					ctx.sel++;
 				else

@@ -118,14 +118,13 @@ Next Display;Pantalla siguiente
 Next Favourite;Siguiente favorito
 Next Filter;Filtro posterior
 Next Letter;Letra siguiente
+Next Page;Página anterior
 No;No
 No Sort;No ordenar
 No Wrap;No ciclar
 None;Ninguno
 OR;O
 Overwrite existing '$1' list?;¿Desea sobreescribir la lista de roms '$1'?
-Page Down;Página anterior
-Page Up;Página posterior
 Play Sound;Reproducir sonido
 PlayedCount;Cuenta de partidas
 PlayedTime;Tiempo jugado
@@ -136,6 +135,7 @@ Previous Display;Pantalla previa
 Previous Favourite;Anterior favorito
 Previous Filter;Filtro anterior
 Previous Letter;Letra previa
+Previous Page;Página posterior
 Random Game;Juego aleatorio
 Remove Input;Eliminar control
 Replay Last Game;Repetir el último juego
@@ -211,12 +211,12 @@ _help_control_next_display;Configurar el(los) control(es) que mueven hacia la pa
 _help_control_next_favourite;Configura el(los) control(es) que mueven hacia el favorito siguiente
 _help_control_next_filter;Configurar el(los) control(es) que mueven hacia el filtro siguiente
 _help_control_next_letter;Configura el(los) control(es) que mueve hacia la letra siguiente
-_help_control_page_down;Configurar el(los) control(es) que mueven hacia abajo una página la selección
-_help_control_page_up;Configurar el(los) control(es) que mueven hacia arriba una página la selección
+_help_control_next_page;Configurar el(los) control(es) que mueven hacia abajo una página la selección
 _help_control_prev_display;Configurar el(los) control(es) que mueven hacia la pantalla previa
 _help_control_prev_favourite;Configura el(los) control(es) que mueven hacia el favorito previo
 _help_control_prev_filter;Configurar el(los) control(es) que mueven hacia el filtro previo
 _help_control_prev_letter;Configura el(los) control(es) que mueve hacia la letra previa
+_help_control_prev_page;Configurar el(los) control(es) que mueven hacia arriba una página la selección
 _help_control_random_game;Configura el(los) control(es) que selecciona un jego aleatorio de la lista actual
 _help_control_replay_last_game;Configura el(los) control(es) que relanza el último juego jugado
 _help_control_screen_saver;Configura el(los) control(es) que lanzan el protector de pantalla
@@ -322,6 +322,7 @@ _help_autolaunch_last_game;Lanza automaticamente el útlito juego jugado en el i
 #
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Default Action;Default Action
 Display Name;Display Name
 Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
@@ -329,6 +330,8 @@ Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
 Intro;Intro
 Launch Last Game;Launch Last Game
+Next Game;Next Game
+Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
@@ -337,14 +340,20 @@ Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
 Startup Mode;Startup Mode
+_help_control_back;Set the control(s) that go back
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)
 _help_control_custom6;Set the "Custom6" control(s)
+_help_control_left;Set the control(s) that move the selection left
+_help_control_next_game;Set the control(s) that move to the next game
+_help_control_prev_game;Set the control(s) that move to the previous game
+_help_control_right;Set the control(s) that move the selection right
 _help_display_in_cycle;Include this display in the "Previous Display"/"Next Display" cycle?
 _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
+_help_input_default_action;Set the default behaviour for this control
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_startup_mode;Set what should happen when Attract-Mode first starts up

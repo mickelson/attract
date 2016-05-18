@@ -358,8 +358,10 @@ void FeVM::set_overlay( FeOverlay *feo )
 	m_overlay = feo;
 }
 
-bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev )
+bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
 {
+	from_ui=false;
+
 	if ( !m_posted_commands.empty( ))
 	{
 		c = (FeInputMap::Command)m_posted_commands.front();
@@ -371,6 +373,7 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev )
 	else if ( m_window.pollEvent( ev ) )
 	{
 		c = m_feSettings->map_input( ev );
+		from_ui = true;
 		return true;
 	}
 

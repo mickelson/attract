@@ -99,6 +99,22 @@ class Grid extends Conveyor
 		name_t.index_offset = num_t.index_offset = get_sel() - selection_index;	
 	}
 
+	function do_correction()
+	{
+		local corr = get_sel() - selection_index;
+		foreach ( o in m_objs )
+		{
+			local idx = o.m_art.index_offset - corr;
+			o.m_art.rawset_index_offset( idx );
+			if ( o.m_wheels )
+			{
+				o.m_wheel.rawset_index_offset( idx );
+				o.m_wheels.rawset_index_offset( idx );
+				o.m_wheelss.rawset_index_offset( idx );
+			}
+		}
+	}
+
 	function get_sel()
 	{
 		return vert_flow ? ( sel_x * rows + sel_y ) : ( sel_y * cols + sel_x );
@@ -113,61 +129,76 @@ class Grid extends Conveyor
 			{
 				sel_y--;
 				update_frame();
-				return true;
 			}
 			else if ( !vert_flow && ( sel_x > 0 ) )
 			{
 				sel_x--;
 				update_frame();
-				return true;
 			}
-			transition_swap_point=0.5;
-			break;
+			else
+			{
+				transition_swap_point=0.5;
+				do_correction();
+				fe.signal( "prev_game" );
+			}
+			return true;
+
 		case "down":
 			if ( vert_flow && ( sel_y < rows - 1 ))
 			{
 				sel_y++;
 				update_frame();
-				return true;
 			}
 			else if ( !vert_flow && ( sel_x < cols - 1 ) )
 			{
 				sel_x++;
 				update_frame();
-				return true;
 			}
-			transition_swap_point=0.5;
-			break;
-		case "page_up":
+			else
+			{
+				transition_swap_point=0.5;
+				do_correction();
+				fe.signal( "next_game" );
+			}
+			return true;
+
+		case "left":
 			if ( vert_flow && ( sel_x > 0 ))
 			{
 				sel_x--;
 				update_frame();
-				return true;
 			}
 			else if ( !vert_flow && ( sel_y > 0 ) )
 			{
 				sel_y--;
 				update_frame();
-				return true;
 			}
-			transition_swap_point=0.0;
-			break;
-		case "page_down":
+			else
+			{
+				transition_swap_point=0.0;
+				do_correction();
+				fe.signal( "prev_page" );
+			}
+			return true;
+
+		case "right":
 			if ( vert_flow && ( sel_x < cols - 1 ) )
 			{
 				sel_x++;
 				update_frame();
-				return true;
 			}
 			else if ( !vert_flow && ( sel_y < rows - 1 ) )
 			{
 				sel_y++;
 				update_frame();
-				return true;
 			}
-			transition_swap_point=0.0;
-			break;
+			else
+			{
+				transition_swap_point=0.0;
+				do_correction();
+				fe.signal( "next_page" );
+			}
+			return true;
 
 
 		case "exit":

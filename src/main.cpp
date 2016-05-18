@@ -41,6 +41,27 @@ void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font );
 
+// these are the commands that are repeatable if the input key is held down
+//
+bool is_repeatable_command( FeInputMap::Command c )
+{
+	return (( c == FeInputMap::PrevGame )
+		|| ( c == FeInputMap::NextGame )
+		|| ( c == FeInputMap::PrevPage )
+		|| ( c == FeInputMap::NextPage )
+		|| ( c == FeInputMap::NextLetter )
+		|| ( c == FeInputMap::PrevLetter )
+		|| ( c == FeInputMap::NextFavourite )
+		|| ( c == FeInputMap::PrevFavourite ));
+}
+
+// return true if c is the "Up", "Down", "Left", "Right", or "Back" command
+//
+bool is_ui_command( FeInputMap::Command c )
+{
+	return ( c < FeInputMap::Select );
+}
+
 int main(int argc, char *argv[])
 {
 	std::string config_path, cmdln_font;
@@ -109,6 +130,7 @@ int main(int argc, char *argv[])
 
 	// variables used to track movement when a key is held down
 	FeInputMap::Command move_state( FeInputMap::LAST_COMMAND );
+
 	sf::Clock move_timer;
 	sf::Event move_event;
 	int move_last_triggered( 0 );
@@ -239,7 +261,8 @@ int main(int argc, char *argv[])
 
 		FeInputMap::Command c;
 		sf::Event ev;
-		while ( feVM.poll_command( c, ev ) )
+		bool from_ui;
+		while ( feVM.poll_command( c, ev, from_ui ) )
 		{
 			//
 			// Special case handling based on event type
@@ -309,26 +332,8 @@ int main(int argc, char *argv[])
 					break;
 			}
 
-			if (( c == FeInputMap::LAST_COMMAND )
-					|| ( move_state != FeInputMap::LAST_COMMAND ))
+			if ( c == FeInputMap::LAST_COMMAND )
 				continue;
-
-			move_state=FeInputMap::LAST_COMMAND;
-
-			if (( c == FeInputMap::Down )
-				|| ( c == FeInputMap::Up )
-				|| ( c == FeInputMap::PageDown )
-				|| ( c == FeInputMap::PageUp )
-				|| ( c == FeInputMap::NextLetter )
-				|| ( c == FeInputMap::PrevLetter )
-				|| ( c == FeInputMap::NextFavourite )
-				|| ( c == FeInputMap::PrevFavourite ))
-			{
-				// setup variables to test for when the navigation keys are held down
-				move_state = c;
-				move_timer.restart();
-				move_event = ev;
-			}
 
 			//
 			// Special case: handle the reload signal now
@@ -337,6 +342,48 @@ int main(int argc, char *argv[])
 			{
 				feVM.load_layout();
 				continue;
+			}
+
+			//
+			// If we are responding to user input (as opposed to a signal raised from a
+			// script) then manage keyrepeats now.
+			//
+			if ( from_ui )
+			{
+				if ( move_state != FeInputMap::LAST_COMMAND )
+					continue;
+
+				move_state=FeInputMap::LAST_COMMAND;
+
+				if ( is_ui_command( c ) || is_repeatable_command( c ) )
+				{
+					// setup variables to test for when the navigation keys are held down
+					move_state = c;
+					move_timer.restart();
+					move_event = ev;
+				}
+			}
+
+			//
+			// Map Up/Down/Left/Right/Back to their default action now
+			//
+			if ( is_ui_command( c ) )
+			{
+				//
+				// Give the script the option to handle the (pre-map) action.
+				//
+				if ( feVM.script_handle_event( c ) )
+				{
+					redraw=true;
+					continue;
+				}
+
+				c = feSettings.get_default_command( c );
+				if ( c == FeInputMap::LAST_COMMAND )
+				{
+					redraw=true;
+					continue;
+				}
 			}
 
 			//
@@ -608,31 +655,51 @@ int main(int argc, char *argv[])
 			if ( cont )
 			{
 				const int TRIG_CHANGE_MS = 400;
-
 				int t = move_timer.getElapsedTime().asMilliseconds();
 				if (( t > TRIG_CHANGE_MS ) && ( t - move_last_triggered > feSettings.selection_speed() ))
 				{
-					move_last_triggered = t;
-					int step = 1;
-
-					if ( feSettings.get_info_bool( FeSettings::AccelerateSelection ) )
+					FeInputMap::Command ms = move_state;
+					if ( is_ui_command( ms ) )
 					{
-						// As the button is held down, the advancement accelerates
-						int shift = ( t / TRIG_CHANGE_MS ) - 3;
-						if ( shift < 0 )
-							shift = 0;
-						else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
-							shift = 7;
-
-						step = 1 << ( shift );
+						//
+						// Give the script the option to handle the (pre-map) action.
+						//
+						if ( feVM.script_handle_event( ms ) )
+						{
+							redraw=true;
+							ms = FeInputMap::LAST_COMMAND;
+						}
+						else
+						{
+							ms = feSettings.get_default_command( ms );
+							if ( !is_repeatable_command( ms ) )
+								ms = FeInputMap::LAST_COMMAND;
+						}
 					}
 
-					switch ( move_state )
+					if ( ms != FeInputMap::LAST_COMMAND )
 					{
-						case FeInputMap::Up: step = -step; break;
-						case FeInputMap::Down: break; // do nothing
-						case FeInputMap::PageUp: step *= -feVM.get_page_size(); break;
-						case FeInputMap::PageDown: step *= feVM.get_page_size(); break;
+						move_last_triggered = t;
+						int step = 1;
+
+						if ( feSettings.get_info_bool( FeSettings::AccelerateSelection ) )
+						{
+							// As the button is held down, the advancement accelerates
+							int shift = ( t / TRIG_CHANGE_MS ) - 3;
+							if ( shift < 0 )
+								shift = 0;
+							else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
+								shift = 7;
+
+							step = 1 << ( shift );
+						}
+
+						switch ( ms )
+						{
+						case FeInputMap::PrevGame: step = -step; break;
+						case FeInputMap::NextGame: break; // do nothing
+						case FeInputMap::PrevPage: step *= -feVM.get_page_size(); break;
+						case FeInputMap::NextPage: step *= feVM.get_page_size(); break;
 						case FeInputMap::PrevFavourite:
 							{
 								int temp = feSettings.get_prev_fav_offset();
@@ -658,36 +725,48 @@ int main(int argc, char *argv[])
 							}
 							break;
 						default: break;
-					}
+						}
 
-					//
-					// Limit the size of our step so that there is no wrapping around at the end of the list
-					//
-					int curr_sel = feSettings.get_rom_index( feSettings.get_current_filter_index(), 0 );
-					if ( ( curr_sel + step ) < 0 )
-						step = -curr_sel;
-					else
-					{
-						int list_size = feSettings.get_filter_size( feSettings.get_current_filter_index() );
-						if ( ( curr_sel + step ) >= list_size )
-							step = list_size - curr_sel - 1;
-					}
+						//
+						// Limit the size of our step so that there is no wrapping around at the end of the list
+						//
+						int curr_sel = feSettings.get_rom_index( feSettings.get_current_filter_index(), 0 );
+						if ( ( curr_sel + step ) < 0 )
+							step = -curr_sel;
+						else
+						{
+							int list_size = feSettings.get_filter_size( feSettings.get_current_filter_index() );
+							if ( ( curr_sel + step ) >= list_size )
+								step = list_size - curr_sel - 1;
+						}
 
-					if ( step != 0 )
-					{
-						if ( feVM.script_handle_event( move_state ) == false )
-							feVM.change_selection( step, false );
+						if ( step != 0 )
+						{
+							if ( feVM.script_handle_event( ms ) == false )
+								feVM.change_selection( step, false );
 
-						redraw=true;
+							redraw=true;
+						}
 					}
 				}
 			}
 			else
 			{
+				//
+				// If we are ending a "repeatable" input (prev/next game etc) or a UI input
+				// that maps to a repeatable input (i.e. "Up"->"prev game") then trigger the
+				// "End Navigation" stuff now
+				//
+				FeInputMap::Command ms = move_state;
+				if ( is_ui_command( ms ) )
+					ms = feSettings.get_default_command( ms );
+
+				if ( is_repeatable_command( ms ) )
+					feVM.on_end_navigation();
+
 				move_state = FeInputMap::LAST_COMMAND;
 				move_last_triggered = 0;
 
-				feVM.on_end_navigation();
 				redraw=true;
 			}
 		}

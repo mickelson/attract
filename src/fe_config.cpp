@@ -1106,6 +1106,24 @@ void FeInputEditMenu::get_options( FeConfigContext &ctx )
 
 		ctx.add_optl( Opt::RELOAD, "Add Input", "", "_help_input_add" );
 		ctx.back_opt().opaque = 1;
+
+		if ( m_mapping->command < FeInputMap::Select )
+		{
+			std::vector < std::string > ol;
+			int i=FeInputMap::Select+1;
+			while ( FeInputMap::commandDispStrings[i] != NULL )
+				ol.push_back( FeInputMap::commandDispStrings[i++] );
+
+			ol.push_back( "" );
+
+			FeInputMap::Command cc = ctx.fe_settings.get_default_command( m_mapping->command );
+			std::string cc_str = ( cc == FeInputMap::LAST_COMMAND )
+				? "" : FeInputMap::commandDispStrings[cc];
+
+			ctx.add_optl( Opt::LIST, "Default Action", cc_str, "_help_input_default_action" );
+			ctx.back_opt().append_vlist( ol );
+			ctx.back_opt().opaque = 2;
+		}
 	}
 
 	FeBaseConfigMenu::get_options( ctx );
@@ -1124,10 +1142,13 @@ bool FeInputEditMenu::on_option_select(
 		{
 			if (( m_mapping->input_list.size() <= 1 ) && (
 					( m_mapping->command == FeInputMap::Select )
+					|| ( m_mapping->command == FeInputMap::Back )
 					|| ( m_mapping->command == FeInputMap::Up )
-					|| ( m_mapping->command == FeInputMap::Down ) ) )
+					|| ( m_mapping->command == FeInputMap::Down )
+					|| ( m_mapping->command == FeInputMap::Left )
+					|| ( m_mapping->command == FeInputMap::Right ) ) )
 			{
-				// We don't let the user unmap all "Up", "Down" or "Select" controls.
+				// We don't let the user unmap all UI menu controls.
 				// Doing so would prevent them from further navigating configure mode.
 				break;
 			}
@@ -1183,6 +1204,21 @@ bool FeInputEditMenu::save( FeConfigContext &ctx )
 {
 	if ( m_mapping )
 	{
+		int idx = ctx.opt_list.size() - 2;
+		if ( ctx.opt_list[idx].opaque == 2 )
+		{
+			// Set default mapping
+			int val = ctx.opt_list[idx].get_vindex();
+			if ( val == (int)ctx.opt_list[idx].values_list.size()-1 ) // the empty entry
+				val = FeInputMap::LAST_COMMAND;
+			else
+				val += FeInputMap::Select+1;
+
+			ctx.fe_settings.set_default_command(
+				m_mapping->command,
+				(FeInputMap::Command)val );
+		}
+
 		ctx.fe_settings.set_input_mapping( *m_mapping );
 	}
 
@@ -1218,11 +1254,26 @@ void FeInputSelMenu::get_options( FeConfigContext &ctx )
 			value += (*iti);
 		}
 
+		//
+		// Show the default action in brackets beside the UI controls (up/down/left...etc)
+		//
+		std::string name = FeInputMap::commandDispStrings[(*it).command];
+		if ( (*it).command < FeInputMap::Select )
+		{
+			FeInputMap::Command c = ctx.fe_settings.get_default_command( (*it).command );
+			if ( c != FeInputMap::LAST_COMMAND )
+			{
+				name += " (";
+				name += FeInputMap::commandDispStrings[c];
+				name += ")";
+			}
+		}
+
 		std::string help_msg( "_help_control_" );
 		help_msg += FeInputMap::commandStrings[(*it).command];
 
 		ctx.add_optl( Opt::SUBMENU,
-			FeInputMap::commandDispStrings[(*it).command],
+			name,
 			value,
 			help_msg );
 	}

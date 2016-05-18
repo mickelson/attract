@@ -76,29 +76,28 @@ class SubMenu
 
 	function on_signal( signal )
 	{
-		if ( signal == "up" )
+		switch ( signal )
 		{
+		case "up":
 			on_scroll_up();
 			m_curr_scroll_button = signal;
 			return true;
-		}
-		else if ( signal == "down" )
-		{
+
+		case "down":
 			on_scroll_down();
 			m_curr_scroll_button = signal;
 			return true;
-		}
-		else if ( signal == "select" )
-		{
+
+		case "select":
 			on_select();
 			return true;
-		}
-		else if (( signal == "exit_no_menu" )
-			|| ( signal == "exit" ))
-		{
+
+		case "back":
 			show( false );
 			return true;
 		}
+
+		return false;
 	}
 
 	function show( flag )

@@ -51,6 +51,7 @@ Custom3;Custom3
 Custom4;Custom4
 Custom5;Custom5
 Custom6;Custom6
+Default Action;Default Action
 Default Font;Default Font
 Delete display '$1'?;Delete display '$1'?
 Delete emulator '$1'?;Delete emulator '$1'?
@@ -125,15 +126,15 @@ Name;Name
 Next Display;Next Display
 Next Favourite;Next Favourite
 Next Filter;Next Filter
+Next Game;Next Game
 Next Letter;Next Letter
+Next Page;Next Page
 No;No
 No Sort;No Sort
 No Wrap;No Wrap
 None;None
 OR;OR
 Overwrite existing '$1' list?;Overwrite existing '$1' list?
-Page Down;Page Down
-Page Up;Page Up
 Play Sound;Play Sound
 PlayedCount;PlayedCount
 PlayedTime;PlayedTime
@@ -143,7 +144,9 @@ Press Input;Press Input
 Previous Display;Previous Display
 Previous Favourite;Previous Favourite
 Previous Filter;Previous Filter
+Previous Game;Previous Game
 Previous Letter;Previous Letter
+Previous Page;Previous Page
 Random Game;Random Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove Input;Remove Input
@@ -214,7 +217,8 @@ _help_art_path;The path to the files for this artwork.  Multiple paths can be en
 _help_back;Exit menu
 _help_confirm_favs;Confirm the addition/removal of Favourites
 _help_control_add_favourite;Set the control(s) that mark/unmark the currently selected game as a favourite
-_help_control_add_tags;Set the control(s) to add/remove tags from the currently selected game
+_help_control_add_tags;Set the control(s) that add/remove tags from the currently selected game
+_help_control_back;Set the control(s) that go back
 _help_control_configure;Set the control(s) that show the "Configuration Menu"
 _help_control_custom1;Set the "Custom1" control(s)
 _help_control_custom2;Set the "Custom2" control(s)
@@ -227,18 +231,22 @@ _help_control_down;Set the control(s) that move the selection down
 _help_control_exit;Set the control(s) that exit the frontend
 _help_control_exit_no_menu;Set the control(s) that exit the frontend immediately to the desktop
 _help_control_filters_menu;Set the control(s) that show the "Filters Menu"
+_help_control_left;Set the control(s) that move the selection left
 _help_control_next_display;Set the control(s) that move to the next display
 _help_control_next_favourite;Set the control(s) that move to the next favourite
 _help_control_next_filter;Set the control(s) that move to the next filter
+_help_control_next_game;Set the control(s) that move to the next game
 _help_control_next_letter;Set the control(s) that move to the next letter
-_help_control_page_down;Set the control(s) that move the selection down one page
-_help_control_page_up;Set the control(s) that move the selection up one page
+_help_control_next_page;Set the control(s) that move the selection up one page
 _help_control_prev_display;Set the control(s) that move to the previous display
 _help_control_prev_favourite;Set the control(s) that move to the previous favourite
 _help_control_prev_filter;Set the control(s) that move to the previous filter
+_help_control_prev_game;Set the control(s) that move to the previous game
 _help_control_prev_letter;Set the control(s) that move to the previous letter
+_help_control_prev_page;Set the control(s) that move the selection down one page
 _help_control_random_game;Set the control(s) that select a random game from the current list
 _help_control_replay_last_game;Set the control(s) that relaunch the last game played
+_help_control_right;Set the control(s) that move the selection right
 _help_control_screen_saver;Set the control(s) that launch screen saver mode
 _help_control_screenshot;Set the control(s) that take a screenshot of the frontend
 _help_control_select;Set the control(s) that launch the current selection
@@ -293,8 +301,9 @@ _help_filter_wrap_mode;Set what happens when the "Next Filter" or "Previous Filt
 _help_font_path;The directories containing fonts.  Multiple directories can be entered if separated by a semicolon.  Attract-Mode will recursively search these directories to find a specified font
 _help_hide_brackets;Hide text in brackets when showing game titles
 _help_input_action;
-_help_input_add;Add a new control mapping for this action
-_help_input_delete;Remove this control mapping
+_help_input_add;Add a new input mapping for this control
+_help_input_default_action;Set the default behaviour for this control
+_help_input_delete;Remove this input mapping
 _help_intro;Configure intro
 _help_joystick_threshold;The threshold for registering joystick moves, from 1 to 100 (100=least sensitive)
 _help_language;Select the language to use in Attract-Mode's user interface

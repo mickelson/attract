@@ -105,11 +105,16 @@ public:
 	// commandDispStrings[] below.
 	//
 	enum Command {
-		Select=0,
+		Back=0,
 		Up,
 		Down,
-		PageUp,
-		PageDown,
+		Left,
+		Right,
+		Select,	// ^^^^ UI commands (that have default settings) must be before "Select"
+		PrevGame,
+		NextGame,
+		PrevPage,
+		NextPage,
 		PrevDisplay,
 		NextDisplay,
 		DisplaysMenu,
@@ -162,6 +167,10 @@ public:
 
 	Command map_input( const sf::Event &, const sf::IntRect &mc_rect, const int joy_thresh );
 
+	// Get the default command for the Back, Up, Down, Left, Right UI commands
+	Command get_default_command( Command c );
+	void set_default_command( Command c, Command v );
+
 	//
 	// Test if any of the inputs mapped to command c are pressed
 	//
@@ -182,6 +191,7 @@ public:
 
 private:
 	std::map< FeInputSource, Command > m_map;
+	std::vector< Command > m_defaults;
 	int m_mmove_count; // counter of whether mouse moves are mapped
 };
 

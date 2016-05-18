@@ -193,18 +193,24 @@ function on_signal( sig )
 		{
 			sel_index--;
 			update_frame();
-			return true;
 		}
-		break;
+		else
+		{
+			fe.signal( "prev_game" );
+		}
+		return true;
 	case "down":
 		if ( sel_index < sel_count - 1 )
 		{
 			sel_index++;
 			update_frame();
-			return true;
 		}
-		break;
-	case "prev_filter":
+		else
+		{
+			fe.signal( "next_game" );
+		}
+		return true;
+	case "left":
 		if ( ftr_index > 0 )
 		{
 			ftr_index--;
@@ -224,9 +230,12 @@ function on_signal( sig )
 				}
 			}
 			transition_state = TState.Prev;
+
+			fe.signal( "prev_filter" );
+			return true;
 		}
 		break;
-	case "next_filter":
+	case "right":
 		if ( ftr_index < ftr_count - 1 )
 		{
 			ftr_index++;
@@ -246,8 +255,15 @@ function on_signal( sig )
 				}
 			}
 			transition_state = TState.Next;
+
+			fe.signal( "next_filter" );
+			return true;
 		}
 		break;
+	case "next_game":
+	case "prev_game":
+	case "next_filter":
+	case "prev_filter":
 	case "exit":
 	case "exit_no_menu":
 		break;

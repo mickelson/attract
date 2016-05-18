@@ -776,13 +776,18 @@ Parameters:
 
    * signal_str - the action to signal for.  Can be one of the
      following strings:
-      - "select"
+      - "back"
       - "up"
       - "down"
-      - "page_up"
-      - "page_down"
-      - "prev_list"
-      - "next_list"
+      - "left"
+      - "right"
+      - "select"
+      - "prev_game"
+      - "next_game"
+      - "prev_page"
+      - "next_page"
+      - "prev_display"
+      - "next_display"
       - "displays_menu"
       - "prev_filter"
       - "next_filter"
@@ -1152,8 +1157,8 @@ Properties:
       - `RotateScreen.Right`
       - `RotateScreen.Flip`
       - `RotateScreen.Left`
-   * `page_size` - Get/set the number of entries to jump each time the "Page
-     Up" or "Page Down" button is pressed.
+   * `page_size` - Get/set the number of entries to jump each time the "Next
+     Page" or "Previous Page" button is pressed.
    * `preserve_aspect_ratio` - Get/set whether the overall layout aspect ratio
      should be preserved by the frontend.  Default value is false.
    * `time` - Get the number of millseconds that the layout has been showing.

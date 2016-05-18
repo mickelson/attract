@@ -757,19 +757,19 @@ bool FePresent::handle_event( FeInputMap::Command c )
 
 	switch( c )
 	{
-	case FeInputMap::Down:
+	case FeInputMap::NextGame:
 		change_selection( 1, false );
 		break;
 
-	case FeInputMap::Up:
+	case FeInputMap::PrevGame:
 		change_selection( -1, false );
 		break;
 
-	case FeInputMap::PageDown:
+	case FeInputMap::NextPage:
 		change_selection( get_page_size(), false );
 		break;
 
-	case FeInputMap::PageUp:
+	case FeInputMap::PrevPage:
 		change_selection( -get_page_size(), false );
 		break;
 

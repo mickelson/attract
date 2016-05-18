@@ -124,8 +124,6 @@ No Wrap;아무 것도 하지 않음
 None;0도
 OR;또는
 Overwrite existing '$1' list?;기존의 롬 목록 '$1' 에 덮어써도 좋습니까?
-Page Down;페이지 아래로
-Page Up;페이지 위로
 PlayedCount;플레이 횟수
 PlayedTime;플레이 시간
 Players;플레이어 수(Players)
@@ -208,8 +206,6 @@ _help_control_next_display;다음 항목으로 이동하는 키를 설정합니�
 _help_control_next_favourite;다음 즐겨찾기 게임으로 이동하는 키를 설정합니다.
 _help_control_next_filter;다음 필터로 이동하는 키를 설정합니다.
 _help_control_next_letter;다음 글자로 이동하는 키를 설정합니다.
-_help_control_page_down;아래 항목으로 한 페이지 이동하는 키를 설정합니다.
-_help_control_page_up;위 항목으로 한 페이지 이동하는 키를 설정합니다.
 _help_control_prev_display;이전 목록으로 이동하는 키를 설정합니다.
 _help_control_prev_favourite;이전 즐겨찾기 게임으로 이동하는 키를 설정합니다.
 _help_control_prev_filter;이전 필터로 이동하는 키를 설정합니다.
@@ -301,11 +297,15 @@ Ambient Sounds;배경 음악 파일
 Exit menu;나가기
 Extra;기타정보(Extra)
 Launch Last Game on Startup;기동시 직전 게임 자동 재시작
+Page Down;페이지 아래로
+Page Up;페이지 위로
 en;영어
 fr;불어
 jp;일어
 kr;한글
 _help_autolaunch_last_game;프로그램 시작 시에, 마지막으로 실행하였던 게임을 바로 재 시작할지 여부를 설정합니다
+_help_control_page_down;아래 항목으로 한 페이지 이동하는 키를 설정합니다.
+_help_control_page_up;위 항목으로 한 페이지 이동하는 키를 설정합니다.
 _help_control_sel;
 _help_emu_listxml;
 
@@ -316,13 +316,18 @@ _help_emu_listxml;
 $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Default Action;Default Action
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
 Exception Edit;Exception Edit
 Intro;Intro
 Launch Last Game;Launch Last Game
+Next Game;Next Game
+Next Page;Next Page
 Play Sound;Play Sound
+Previous Game;Previous Game
+Previous Page;Previous Page
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
@@ -333,15 +338,23 @@ Show in Menu;Show in Menu
 Startup Mode;Startup Mode
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
+_help_control_back;Set the control(s) that go back
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)
 _help_control_custom6;Set the "Custom6" control(s)
+_help_control_left;Set the control(s) that move the selection left
+_help_control_next_game;Set the control(s) that move to the next game
+_help_control_next_page;Set the control(s) that move the selection up one page
+_help_control_prev_game;Set the control(s) that move to the previous game
+_help_control_prev_page;Set the control(s) that move the selection down one page
+_help_control_right;Set the control(s) that move the selection right
 _help_display_in_cycle;Include this display in the "Previous Display"/"Next Display" cycle?
 _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_input_action;
+_help_input_default_action;Set the default behaviour for this control
 _help_intro;Configure intro
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_scrape_vids;Set whether game videos should be downloaded when scraping

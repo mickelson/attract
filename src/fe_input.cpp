@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-16 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -504,14 +504,19 @@ bool FeMapping::operator< ( const FeMapping o ) const
 //
 const char *FeInputMap::commandStrings[] =
 {
-	"select",
+	"back",
 	"up",
 	"down",
-	"page_up",
-	"page_down",
+	"left",
+	"right",
+	"select",
+	"prev_game",
+	"next_game",
+	"prev_page",    // was page_up
+	"next_page",    // was page_down
 	"prev_display",	// was prev_list
 	"next_display",	// was next_list
-	"displays_menu",	// was lists_menu
+	"displays_menu",// was lists_menu
 	"prev_filter",
 	"next_filter",
 	"filters_menu",
@@ -550,11 +555,16 @@ const char *FeInputMap::commandStrings[] =
 
 const char *FeInputMap::commandDispStrings[] =
 {
-	"Select",
+	"Back",
 	"Up",
 	"Down",
-	"Page Up",
-	"Page Down",
+	"Left",
+	"Right",
+	"Select",
+	"Previous Game",
+	"Next Game",
+	"Previous Page",
+	"Next Page",
 	"Previous Display",
 	"Next Display",
 	"Displays Menu",
@@ -595,39 +605,68 @@ const char *FeInputMap::commandDispStrings[] =
 };
 
 FeInputMap::FeInputMap()
-: m_mmove_count( 0 )
+	: m_defaults( (int)Select ),
+	m_mmove_count( 0 )
 {
+	// Set default actions for the "UI" commands (Back, Up, Down, Left, Right)
+	//
+	m_defaults[ Back ]  = ExitMenu;
+	m_defaults[ Up ]    = PrevGame;
+	m_defaults[ Down ]  = NextGame;
+	m_defaults[ Left ]  = PrevDisplay;
+	m_defaults[ Right ] = NextDisplay;
 }
 
 void FeInputMap::default_mappings()
 {
 	//
-	// Only set default mappings if there has been no mapping by user
+	// Set the 'tab' key to map to 'configure' only if there have been no mapping at all by user
+	// (configure can be unmapped completely, but we want it available initially...)
 	//
-	if ( !m_map.empty() )
-		return;
+	if ( m_map.empty() )
+		m_map[ FeInputSource( FeInputSource::Keyboard, sf::Keyboard::Tab ) ] = Configure;
 
 	//
-	// Set up default input mappings.
+	// Now ensure that the various 'UI' commands are mapped
+	//
+	std::vector < bool > ui_mapped( (int)Select, false );
+
+	std::map< FeInputSource, Command >::iterator it;
+	for ( it = m_map.begin(); it != m_map.end(); ++it )
+	{
+		if ( it->second <= Select )
+			ui_mapped[ it->second ] = true;
+	}
+
+	//
+	// The default UI command mappings:
 	//
 	struct DefaultMappings { FeInputSource::Type type; int code; Command comm; };
 	DefaultMappings dmap[] =
 	{
-		{ FeInputSource::Keyboard, sf::Keyboard::Escape, ExitMenu },
-		{ FeInputSource::Keyboard, sf::Keyboard::Up, Up },
-		{ FeInputSource::Keyboard, sf::Keyboard::Down, Down },
-		{ FeInputSource::Keyboard, sf::Keyboard::Left, PrevDisplay },
-		{ FeInputSource::Keyboard, sf::Keyboard::Right, NextDisplay },
-		{ FeInputSource::Keyboard, sf::Keyboard::Return, Select },
-		{ FeInputSource::Keyboard, sf::Keyboard::LControl, Select },
-		{ FeInputSource::Keyboard, sf::Keyboard::Tab, Configure },
-		{ FeInputSource::Unsupported, sf::Keyboard::Unknown, LAST_COMMAND }	// keep as last
+		{ FeInputSource::Keyboard,    sf::Keyboard::Escape,        Back },
+		{ FeInputSource::Joystick0,   FeInputSource::JoyButton0+1, Back },
+		{ FeInputSource::Keyboard,    sf::Keyboard::Up,            Up },
+		{ FeInputSource::Joystick0,   FeInputSource::JoyUp,        Up },
+		{ FeInputSource::Keyboard,    sf::Keyboard::Down,          Down },
+		{ FeInputSource::Joystick0,   FeInputSource::JoyDown,      Down },
+		{ FeInputSource::Keyboard,    sf::Keyboard::Left,          Left },
+		{ FeInputSource::Joystick0,   FeInputSource::JoyLeft,      Left },
+		{ FeInputSource::Keyboard,    sf::Keyboard::Right,         Right },
+		{ FeInputSource::Joystick0,   FeInputSource::JoyRight,     Right },
+		{ FeInputSource::Keyboard,    sf::Keyboard::Return,        Select },
+		{ FeInputSource::Keyboard,    sf::Keyboard::LControl,      Select },
+		{ FeInputSource::Joystick0,   FeInputSource::JoyButton0,   Select },
+		{ FeInputSource::Unsupported, sf::Keyboard::Unknown,     LAST_COMMAND }	// keep as last
 	};
 
 	int i=0;
 	while ( dmap[i].comm != LAST_COMMAND )
 	{
-		m_map[ FeInputSource( dmap[i].type, dmap[i].code ) ] = dmap[i].comm;
+		// This will overwrite any conflicting input mapping
+		if ( !ui_mapped[ dmap[i].comm ] )
+			m_map[ FeInputSource( dmap[i].type, dmap[i].code ) ] = dmap[i].comm;
+
 		i++;
 	}
 }
@@ -648,6 +687,22 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 		return LAST_COMMAND;
 
 	return (*it).second;
+}
+
+FeInputMap::Command FeInputMap::get_default_command( FeInputMap::Command c )
+{
+	if (( c < 0 ) || ( c >= Select ))
+	{
+		ASSERT( 0 ); // this shouldn't be happening
+		return LAST_COMMAND;
+	}
+
+	return m_defaults[ c ];
+}
+
+void FeInputMap::set_default_command( FeInputMap::Command c, FeInputMap::Command v )
+{
+	m_defaults[ c ] = v;
 }
 
 bool FeInputMap::get_current_state( FeInputMap::Command c, int joy_thresh ) const
@@ -733,9 +788,27 @@ void FeInputMap::set_mapping( const FeMapping &mapping )
 }
 
 int FeInputMap::process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &fn )
+	const std::string &value,
+	const std::string &fn )
 {
+	if ( setting.compare( "default" ) == 0 )
+	{
+		// value: "<command> <command>"
+		size_t pos=0;
+		std::string from, to;
+		Command fc, tc=LAST_COMMAND;
+
+		token_helper( value, pos, from, FE_WHITESPACE );
+		token_helper( value, pos, to, FE_WHITESPACE );
+
+		fc = string_to_command( from );
+
+		if (( fc < Select ) && ( !to.empty() ))
+			tc = string_to_command( to );
+
+		m_defaults[fc]=tc;
+		return 0;
+	}
 
 	Command cmd = string_to_command( setting );
 	if ( cmd == LAST_COMMAND )
@@ -769,6 +842,13 @@ void FeInputMap::save( std::ofstream &f ) const
 			<< commandStrings[ (*it).second ] << ' '
 			<< (*it).first.as_string() << std::endl;
 	}
+
+	for ( int i=0; i < (int)Select; i++ )
+	{
+		std::string def_str = ( m_defaults[i] == LAST_COMMAND ) ? "" : commandStrings[ m_defaults[i] ];
+		f << '\t' << std::setw(20) << std::left << "default "
+			<< commandStrings[ i ] << '\t' << def_str << std::endl;
+	}
 }
 
 FeInputMap::Command FeInputMap::string_to_command( const std::string &s )
@@ -790,8 +870,10 @@ FeInputMap::Command FeInputMap::string_to_command( const std::string &s )
 		return PrevDisplay;
 	else if ( s.compare( "next_list" ) == 0 )
 		return NextDisplay;
-	else if ( s.compare( "displays_menu" ) == 0 )
-		return DisplaysMenu;
+	else if ( s.compare( "page_up" ) == 0 ) // after 2.0.0, page_up/down became prev/next_page
+		return PrevPage;
+	else if ( s.compare( "page_down" ) == 0 )
+		return NextPage;
 
 	return LAST_COMMAND;
 }
@@ -880,8 +962,8 @@ void FeSoundInfo::set_mute( bool m )
 }
 
 int FeSoundInfo::process_setting( const std::string &setting,
-							const std::string &value,
-							const std::string &fn )
+	const std::string &value,
+	const std::string &fn )
 {
 	if ( setting.compare( settingStrings[0] ) == 0 ) // sound_vol
 		set_volume( Sound, value );

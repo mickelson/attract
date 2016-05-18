@@ -118,14 +118,13 @@ Next Display;Nächster Bildschirm
 Next Favourite;Nächster Favorit
 Next Filter;Nächster Filter
 Next Letter;Nächster Buchstabe
+Next Page;Seite zurück
 No;Nein
 No Sort;Keine Sortierung
 No Wrap;Kein Rollieren
 None;Keine
 OR;ODER
 Overwrite existing '$1' list?;Existierende Romliste '$1' überschreiben?
-Page Down;Seite zurück
-Page Up;Seite vor
 Play Sound;Klang abspielen
 PlayedCount;Male gespielt
 PlayedTime;Zeit gespielt
@@ -136,6 +135,7 @@ Previous Display;Vorheriger Bildschirm
 Previous Favourite;Voriger Favorit
 Previous Filter;Vorheriger Filter
 Previous Letter;Voriger Buchstabe
+Previous Page;Seite vor
 Random Game;Zufälliges Spiel
 Remove Input;Steuerung löschen
 Replay Last Game;Letztes Spiel wiederholen
@@ -211,12 +211,12 @@ _help_control_next_display;Definiere die Taste(n), um zum nächsten Bildschirm z
 _help_control_next_favourite;Definiere die Taste(n), um zum nächsten Favoriten zu springen
 _help_control_next_filter;Definiere die Taste(n), um zum nächsten Filter zu springen
 _help_control_next_letter;Definiere die Taste(n), um zum nächsten Buchstaben zu springen
-_help_control_page_down;Definiere die Taste(n), um die Auswahl eine Seite nach unten zu bewegen
-_help_control_page_up;Definiere die Taste(n), um die Auswahl eine Seite nach oben zu bewegen
+_help_control_next_page;Definiere die Taste(n), um die Auswahl eine Seite nach unten zu bewegen
 _help_control_prev_display;Definiere die Taste(n), um zum vorigen Bildschirm zu springen
 _help_control_prev_favourite;Definiere die Taste(n), um zum vorigen Favoriten zu springen
 _help_control_prev_filter;Definiere die Taste(n), um zum vorigen Filter zu springen
 _help_control_prev_letter;Definiere die Taste(n), um zum vorigen Buchstaben zu springen
+_help_control_prev_page;Definiere die Taste(n), um die Auswahl eine Seite nach oben zu bewegen
 _help_control_random_game;Definiere die Taste(n), die ein zufälliges Spiel aus der aktuellen Liste wählen
 _help_control_replay_last_game;Definiere die Taste(n), die das zuletzt gespielte Spiel erneut starten
 _help_control_screen_saver;Definiere die Taste(n), die den Bildschirmschoner starten
@@ -321,6 +321,7 @@ _help_autolaunch_last_game;Beim Hochfahren automatisch das zuletzt gespielte Spi
 #
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Default Action;Default Action
 Display Name;Display Name
 Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
@@ -328,6 +329,8 @@ Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
 Intro;Intro
 Launch Last Game;Launch Last Game
+Next Game;Next Game
+Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
@@ -336,14 +339,20 @@ Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
 Startup Mode;Startup Mode
+_help_control_back;Set the control(s) that go back
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)
 _help_control_custom6;Set the "Custom6" control(s)
+_help_control_left;Set the control(s) that move the selection left
+_help_control_next_game;Set the control(s) that move to the next game
+_help_control_prev_game;Set the control(s) that move to the previous game
+_help_control_right;Set the control(s) that move the selection right
 _help_display_in_cycle;Include this display in the "Previous Display"/"Next Display" cycle?
 _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
+_help_input_default_action;Set the default behaviour for this control
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
