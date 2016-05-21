@@ -298,7 +298,11 @@ void FeBaseStream::push_packet( AVPacket *pkt )
 
 void FeBaseStream::free_packet( AVPacket *pkt )
 {
+#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 16, 0 ))
 	av_packet_unref( pkt );
+#else
+	av_free_packet( pkt );
+#endif
 	av_free( pkt );
 }
 
