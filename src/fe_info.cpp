@@ -54,6 +54,7 @@ const char *FeRomInfo::indexStrings[] =
 	"AltRomname",
 	"AltTitle",
 	"Extra",
+	"Buttons",
 	"Favourite",
 	"Tags",
 	"PlayedCount",

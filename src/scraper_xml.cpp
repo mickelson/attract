@@ -375,11 +375,11 @@ void FeListXMLParser::start_element(
 			for ( int i=0; attribute[i]; i+=2 )
 			{
 				if (( strcmp( attribute[i], "players" ) == 0 )
-					&& (*m_itr).get_info( FeRomInfo::Players ).empty() )
-				{
+						&& (*m_itr).get_info( FeRomInfo::Players ).empty() )
 					(*m_itr).set_info( FeRomInfo::Players, attribute[i+1] );
-					break;
-				}
+				else if (( strcmp( attribute[i], "buttons" ) == 0 )
+						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
+					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
 			}
 		}
 		else if ( strcmp( element, "display" ) == 0 )
@@ -895,12 +895,13 @@ bool FeListSoftwareParser::parse( const std::string &prog,
 			FeRomInfo &ri = temp_list.front();
 			for ( itr=m_ctx.romlist.begin(); itr!=m_ctx.romlist.end(); ++itr )
 			{
-				ri.copy_info( *itr, FeRomInfo::Players );
-				ri.copy_info( *itr, FeRomInfo::Rotation );
-				ri.copy_info( *itr, FeRomInfo::Control );
-				ri.copy_info( *itr, FeRomInfo::Status );
-				ri.copy_info( *itr, FeRomInfo::DisplayCount );
-				ri.copy_info( *itr, FeRomInfo::DisplayType );
+				(*itr).copy_info( ri, FeRomInfo::Players );
+				(*itr).copy_info( ri, FeRomInfo::Rotation );
+				(*itr).copy_info( ri, FeRomInfo::Control );
+				(*itr).copy_info( ri, FeRomInfo::Status );
+				(*itr).copy_info( ri, FeRomInfo::DisplayCount );
+				(*itr).copy_info( ri, FeRomInfo::DisplayType );
+				(*itr).copy_info( ri, FeRomInfo::Buttons );
 
 				std::string crc = get_crc(
 					(*itr).get_info( FeRomInfo::BuildFullPath ),

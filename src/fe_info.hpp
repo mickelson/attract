@@ -54,6 +54,7 @@ public:
 		AltRomname,
 		AltTitle,
 		Extra,
+		Buttons,
 		Favourite,		// everything from Favourite on is not loaded from romlist
 		Tags,
 		PlayedCount,
