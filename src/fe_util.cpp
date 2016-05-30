@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-16 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -695,22 +695,18 @@ bool config_str_to_bool( const std::string &s )
 
 const char *get_OS_string()
 {
-#ifdef SFML_SYSTEM_WINDOWS
+#if defined(SFML_SYSTEM_WINDOWS)
 	return "Windows";
-#else
- #ifdef SFML_SYSTEM_MACOS
+#elif defined(SFML_SYSTEM_MACOS)
 	return "OSX";
- #else
-  #ifdef SFML_SYSTEM_FREEBSD
+#elif defined(SFML_SYSTEM_FREEBSD)
 	return "FreeBSD";
-  #else
-   #ifdef SFML_SYSTEM_LINUX
+#elif defined(SFML_SYSTEM_LINUX)
 	return "Linux";
-   #else
+#elif defined(SFML_SYSTEM_ANDROID)
+	return "Android";
+#else
 	return "Unknown";
-   #endif
-  #endif
- #endif
 #endif
 }
 
@@ -943,11 +939,13 @@ bool run_program( const std::string &prog,
 		{
 			int status;
 			int opt = exit_hotkey.empty() ? 0 : WNOHANG; // option for waitpid.  0= wait for process to complete, WNOHANG=return right away
+
 			FeInputSource exit_is( exit_hotkey );
 
-			do
+			while (1)
 			{
-				if ( waitpid( pid, &status, opt ) == 0 )
+				pid_t w = waitpid( pid, &status, opt );
+				if ( !w )
 				{
 					// waitpid should only return 0 if WNOHANG is used and the child is still running, so we
 					// should only ever get here if there is an exit_hotkey provided
@@ -957,10 +955,11 @@ bool run_program( const std::string &prog,
 						kill( pid, SIGTERM );
 						break; // leave do/while loop
 					}
-
 					sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
 				}
-			} while ( !WIFEXITED( status ) && !WIFSIGNALED( status ) );
+				else if (( w == pid ) && ( WIFEXITED( status ) || WIFSIGNALED( status ) ))
+					break;
+			}
 		}
 	}
 #endif // SFML_SYSTEM_WINDOWS
