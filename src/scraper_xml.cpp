@@ -606,7 +606,7 @@ bool FeListXMLParser::parse_command( const std::string &prog )
 	// connection with -listsoftware parsing as well
 	//
 	bool ret_val=true;
-	if (  m_ctx.romlist.size() < 10 )
+	if ( (!m_ctx.full) &&  (m_ctx.romlist.size() < 10) )
 	{
 		for ( FeRomInfoListType::iterator itr=m_ctx.romlist.begin();
 				itr != m_ctx.romlist.end(); ++itr )
