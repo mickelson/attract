@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014 Andrew Mickelson
+ *  Copyright (C) 2014-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -90,6 +90,7 @@ private:
 	bool m_redraw_triggered;
 	const FeScriptConfigurable *m_script_cfg;
 	int m_script_id;
+	sf::Time m_last_ui_cmd;
 
 	std::queue< FeInputMap::Command > m_posted_commands;
 	std::vector< FeCallback > m_ticks;

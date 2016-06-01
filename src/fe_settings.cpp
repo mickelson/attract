@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-16 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -366,7 +366,7 @@ void FeSettings::load()
 
 	// Make sure we have some keyboard mappings
 	//
-	m_inputmap.default_mappings();
+	m_inputmap.initialize_mappings();
 
 	// If we haven't got our font yet from the config file
 	// or command line then set to the default value now
@@ -708,16 +708,15 @@ FeInputMap::Command FeSettings::map_input( const sf::Event &e )
 	return m_inputmap.map_input( e, m_mousecap_rect, m_joy_thresh );
 }
 
-bool FeSettings::config_map_input( const sf::Event &e, std::string &s, FeInputMap::Command &conflict )
+FeInputMap::Command FeSettings::input_conflict_check( const FeInputMapEntry &e )
 {
-	FeInputSource index( e, m_mousecap_rect, m_joy_thresh );
-	if ( index.get_type() == FeInputSource::Unsupported )
-		return false;
+	return m_inputmap.input_conflict_check( e );
+}
 
-	s = index.as_string();
-
-	conflict = map_input( e );
-	return true;
+void FeSettings::get_input_config_metrics( sf::IntRect &mousecap_rect, int &joy_thresh )
+{
+	mousecap_rect = m_mousecap_rect;
+	joy_thresh = m_joy_thresh;
 }
 
 FeInputMap::Command FeSettings::get_default_command( FeInputMap::Command c )

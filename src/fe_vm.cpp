@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2014-15 Andrew Mickelson
+ *  Copyright (C) 2014-16 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -362,7 +362,7 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
 {
 	from_ui=false;
 
-	if ( !m_posted_commands.empty( ))
+	if ( !m_posted_commands.empty() )
 	{
 		c = (FeInputMap::Command)m_posted_commands.front();
 		m_posted_commands.pop();
@@ -372,7 +372,18 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
 	}
 	else if ( m_window.pollEvent( ev ) )
 	{
+		int t = m_layoutTimer.getElapsedTime().asMilliseconds();
+
+		// Debounce to stop multiples when triggered by a key combo
+		//
+		if ( t - m_last_ui_cmd.asMilliseconds() < 30 )
+			return false;
+
 		c = m_feSettings->map_input( ev );
+
+		if ( c != FeInputMap::LAST_COMMAND )
+			m_last_ui_cmd = m_layoutTimer.getElapsedTime();
+
 		from_ui = true;
 		return true;
 	}
@@ -384,6 +395,7 @@ void FeVM::clear()
 {
 	FePresent::clear();
 
+	m_last_ui_cmd = sf::Time();
 	m_ticks.clear();
 	m_trans.clear();
 	m_sig_handlers.clear();
@@ -1829,12 +1841,12 @@ bool FeVM::cb_get_input_state( const char *input )
 	//
 	// If not, then test based on it being an input string
 	//
-	return FeInputSource( input ).get_current_state( fev->m_feSettings->get_joy_thresh() );
+	return FeInputMapEntry( input ).get_current_state( fev->m_feSettings->get_joy_thresh() );
 }
 
 int FeVM::cb_get_input_pos( const char *input )
 {
-	return FeInputSource( input ).get_current_pos();
+	return FeInputSingle( input ).get_current_pos();
 }
 
 // return false if file not found

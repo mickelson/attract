@@ -31,7 +31,7 @@
 
 class FeMapping;
 
-class FeInputSource
+class FeInputSingle
 {
 public:
 	enum Type
@@ -58,16 +58,16 @@ public:
 
 	static const char *keyStrings[];
 
-	FeInputSource();
+	FeInputSingle();
 
 	// Construct from a known type and code
-	FeInputSource( Type t, int code );
+	FeInputSingle( Type t, int code );
 
 	// Construct from an SFML event
-	FeInputSource( const sf::Event &ev, const sf::IntRect &mc_rect, const int joy_thresh );
+	FeInputSingle( const sf::Event &ev, const sf::IntRect &mc_rect, const int joy_thresh );
 
 	// Construct from a config string
-	FeInputSource( const std::string &str );
+	FeInputSingle( const std::string &str );
 
 	// Output as a config string
 	std::string as_string() const;
@@ -75,7 +75,7 @@ public:
 	Type get_type() const { return m_type; }
 	bool is_mouse_move() const;
 
-	bool operator< ( const FeInputSource &o ) const;
+	bool operator< ( const FeInputSingle &o ) const;
 
 	// test the current state of the input that this object represents and return true if it is depressed,
 	// false otherwise.  Works for keys, buttons and joystick axes.  Does not work for mouse moves or wheels.
@@ -85,6 +85,9 @@ public:
 	// Works for joystick axes
 	int get_current_pos() const;
 
+	bool operator==(const FeInputSingle &) const;
+	bool operator!=(const FeInputSingle &) const;
+
 private:
 	static const char *mouseStrings[];
 	static const char *joyStrings[];
@@ -92,6 +95,8 @@ private:
 	Type m_type;
 	int m_code;
 };
+
+class FeInputMapEntry;
 
 class FeInputMap : public FeBaseConfigurable
 {
@@ -167,6 +172,8 @@ public:
 
 	Command map_input( const sf::Event &, const sf::IntRect &mc_rect, const int joy_thresh );
 
+	Command input_conflict_check( const FeInputMapEntry &e );
+
 	// Get the default command for the Back, Up, Down, Left, Right UI commands
 	Command get_default_command( Command c );
 	void set_default_command( Command c, Command v );
@@ -176,9 +183,13 @@ public:
 	//
 	bool get_current_state( FeInputMap::Command c, int joy_thresh ) const;
 
+	// call this after all the mappings have been loaded (with either process_setting calls or
+	// set_mapping()
+	//
+	void initialize_mappings();
+
 	void get_mappings( std::vector< FeMapping > &mappings ) const;
 	void set_mapping( const FeMapping &mapping );
-	void default_mappings();
 
 	int process_setting( const std::string &setting,
 		const std::string &value,
@@ -190,11 +201,39 @@ public:
 	static Command string_to_command( const std::string &s );
 
 private:
-	std::map< FeInputSource, Command > m_map;
+	// TO allow for key combos, we maintain an initial map of all single input events, mapping
+	// them to all of the entries in m_inputs that contain the same single input
+	//
+	// Note that the vector of FeInputMapEntry pointers is assumed to be ordered based on
+	// the number of FeInputSingles in the InputMapEntry, with the combos with the most keypresses
+	// at the front of the vector
+	//
+	std::map< FeInputSingle, std::vector< FeInputMapEntry * > > m_single_map;
+
+	// Each entry specifies an entire input event (single or combo) and the corresponding command
+	//
+	std::vector < FeInputMapEntry > m_inputs;
+
 	std::vector< Command > m_defaults;
 	int m_mmove_count; // counter of whether mouse moves are mapped
 };
 
+class FeInputMapEntry
+{
+public:
+	FeInputMapEntry();
+	FeInputMapEntry( FeInputSingle::Type t, int code, FeInputMap::Command c );
+	FeInputMapEntry( const std::string &, FeInputMap::Command c = FeInputMap::LAST_COMMAND );
+
+	bool get_current_state( int joy_thresh,
+		const FeInputSingle &trigger=FeInputSingle() ) const;
+
+	std::string as_string() const;
+	bool has_mouse_move() const;
+
+	std::vector < FeInputSingle > inputs;
+	FeInputMap::Command command;
+};
 
 //
 // Container class used in mapping configuration

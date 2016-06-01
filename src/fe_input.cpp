@@ -28,12 +28,13 @@
 #include <iomanip>
 #include <cstring>
 #include <cmath>
+#include <set>
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/System/Vector2.hpp>
 
 // Needs to stay aligned with sf::Keyboard
 //
-const char *FeInputSource::keyStrings[] =
+const char *FeInputSingle::keyStrings[] =
 {
 	"A",
 	"B",
@@ -139,7 +140,7 @@ const char *FeInputSource::keyStrings[] =
 	NULL // needs to be last
 };
 
-const char *FeInputSource::mouseStrings[] =
+const char *FeInputSingle::mouseStrings[] =
 {
 	"Up",
 	"Down",
@@ -155,41 +156,41 @@ const char *FeInputSource::mouseStrings[] =
 	NULL
 };
 
-const char *FeInputSource::joyStrings[] =
+const char *FeInputSingle::joyStrings[] =
 {
 	"Up",
 	"Down",
 	"Left",
 	"Right",
-	"Z+",
-	"Z-",
-	"R+",
-	"R-",
-	"U+",
-	"U-",
-	"V+",
-	"V-",
-	"PovX+",
-	"PovX-",
-	"PovY+",
-	"PovY-",
+	"Zpos",
+	"Zneg",
+	"Rpos",
+	"Rneg",
+	"Upos",
+	"Uneg",
+	"Vpos",
+	"Vneg",
+	"PovXpos",
+	"PovXneg",
+	"PovYpos",
+	"PovYneg",
 	"Button",
 	NULL
 };
 
-FeInputSource::FeInputSource()
+FeInputSingle::FeInputSingle()
 	: m_type( Unsupported ),
 	m_code( 0 )
 {
 }
 
-FeInputSource::FeInputSource( Type t, int c )
+FeInputSingle::FeInputSingle( Type t, int c )
 	: m_type( t ),
 	m_code( c )
 {
 }
 
-FeInputSource::FeInputSource( const sf::Event &e, const sf::IntRect &mc_rect, const int joy_thresh )
+FeInputSingle::FeInputSingle( const sf::Event &e, const sf::IntRect &mc_rect, const int joy_thresh )
 	: m_type( Unsupported ),
 	m_code( 0 )
 {
@@ -211,21 +212,46 @@ FeInputSource::FeInputSource( const sf::Event &e, const sf::IntRect &mc_rect, co
 		case sf::Event::JoystickMoved:
 			if ( std::abs( e.joystickMove.position ) > joy_thresh )
 			{
-				m_type = (Type)(Joystick0 + e.joystickMove.joystickId);
-
 				switch ( e.joystickMove.axis )
 				{
-					case sf::Joystick::X: m_code = ( e.joystickMove.position > 0 ) ? JoyRight : JoyLeft; break;
-					case sf::Joystick::Y: m_code = ( e.joystickMove.position > 0 ) ? JoyDown : JoyUp; break;
-					case sf::Joystick::Z: m_code = ( e.joystickMove.position > 0 ) ? JoyZPos : JoyZNeg; break;
-					case sf::Joystick::R: m_code = ( e.joystickMove.position > 0 ) ? JoyRPos : JoyRNeg; break;
-					case sf::Joystick::U: m_code = ( e.joystickMove.position > 0 ) ? JoyUPos : JoyUNeg; break;
-					case sf::Joystick::V: m_code = ( e.joystickMove.position > 0 ) ? JoyVPos : JoyVNeg; break;
-					case sf::Joystick::PovX: m_code = ( e.joystickMove.position > 0 ) ? JoyPOVXPos : JoyPOVXNeg; break;
-					case sf::Joystick::PovY: m_code = ( e.joystickMove.position > 0 ) ? JoyPOVYPos : JoyPOVYNeg; break;
+					case sf::Joystick::X:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyRight : JoyLeft;
+						break;
+
+					case sf::Joystick::Y:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyDown : JoyUp;
+						break;
+
+					case sf::Joystick::Z:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyZPos : JoyZNeg;
+						break;
+
+					case sf::Joystick::R:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyRPos : JoyRNeg;
+						break;
+
+					case sf::Joystick::U:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyUPos : JoyUNeg;
+						break;
+
+					case sf::Joystick::V:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyVPos : JoyVNeg;
+						break;
+
+					case sf::Joystick::PovX:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyPOVXPos : JoyPOVXNeg;
+						break;
+
+					case sf::Joystick::PovY:
+						m_code = ( e.joystickMove.position > 0 ) ? JoyPOVYPos : JoyPOVYNeg;
+						break;
+
 					default:
 						ASSERT( 0 ); // unhandled joystick axis encountered
+						return;
 				}
+
+				m_type = (Type)(Joystick0 + e.joystickMove.joystickId);
 			}
 			break;
 
@@ -261,7 +287,6 @@ FeInputSource::FeInputSource( const sf::Event &e, const sf::IntRect &mc_rect, co
 			break;
 
 		case sf::Event::MouseButtonPressed:
-			m_type = Mouse;
 			switch ( e.mouseButton.button )
 			{
 				case sf::Mouse::Left: m_code=MouseBLeft; break;
@@ -269,8 +294,11 @@ FeInputSource::FeInputSource( const sf::Event &e, const sf::IntRect &mc_rect, co
 				case sf::Mouse::Middle: m_code=MouseBMiddle; break;
 				case sf::Mouse::XButton1: m_code=MouseBX1; break;
 				case sf::Mouse::XButton2: m_code=MouseBX2; break;
-				default: break;
+				default:
+					ASSERT( 0 ); // unhandled mouse button encountered
+					return;
 			}
+			m_type = Mouse;
 			break;
 
 		default:
@@ -278,7 +306,7 @@ FeInputSource::FeInputSource( const sf::Event &e, const sf::IntRect &mc_rect, co
 	}
 }
 
-FeInputSource::FeInputSource( const std::string &str )
+FeInputSingle::FeInputSingle( const std::string &str )
 	: m_type( Unsupported ),
 	m_code( 0 )
 {
@@ -346,7 +374,7 @@ FeInputSource::FeInputSource( const std::string &str )
 	}
 }
 
-std::string FeInputSource::as_string() const
+std::string FeInputSingle::as_string() const
 {
 	std::string temp;
 
@@ -378,14 +406,14 @@ std::string FeInputSource::as_string() const
 	return temp;
 }
 
-bool FeInputSource::is_mouse_move() const
+bool FeInputSingle::is_mouse_move() const
 {
 	return (( m_type == Mouse )
 		&& ( m_code <= MouseRight )
 		&& ( m_code >= MouseUp ));
 }
 
-bool FeInputSource::operator< ( const FeInputSource &o ) const
+bool FeInputSingle::operator< ( const FeInputSingle &o ) const
 {
 	if ( m_type == o.m_type )
 		return ( m_code < o.m_code );
@@ -393,7 +421,7 @@ bool FeInputSource::operator< ( const FeInputSource &o ) const
 	return ( m_type < o.m_type );
 }
 
-bool FeInputSource::get_current_state( int joy_thresh ) const
+bool FeInputSingle::get_current_state( int joy_thresh ) const
 {
 	if ( m_type == Unsupported )
 		return false;
@@ -445,7 +473,7 @@ bool FeInputSource::get_current_state( int joy_thresh ) const
 	}
 }
 
-int FeInputSource::get_current_pos() const
+int FeInputSingle::get_current_pos() const
 {
 	if ( m_type == Mouse )
 	{
@@ -489,6 +517,81 @@ int FeInputSource::get_current_pos() const
 	return 0;
 }
 
+bool FeInputSingle::operator==( const FeInputSingle &o ) const
+{
+	return (( m_type == o.m_type ) && ( m_code == o.m_code ));
+}
+
+bool FeInputSingle::operator!=( const FeInputSingle &o ) const
+{
+	return (( m_type != o.m_type ) || ( m_code != o.m_code ));
+}
+
+FeInputMapEntry::FeInputMapEntry()
+	: command( FeInputMap::LAST_COMMAND )
+{
+}
+
+FeInputMapEntry::FeInputMapEntry( FeInputSingle::Type t, int code, FeInputMap::Command c )
+	: command( c )
+{
+	inputs.push_back( FeInputSingle( t, code ) );
+}
+
+FeInputMapEntry::FeInputMapEntry( const std::string &s, FeInputMap::Command c )
+	: command( c )
+{
+	size_t pos=0;
+
+	do
+	{
+		std::string tok;
+		token_helper( s, pos, tok, "+" );
+		if ( !tok.empty() )
+			inputs.push_back( FeInputSingle( tok ) );
+
+	} while ( pos < s.size() );
+}
+
+bool FeInputMapEntry::get_current_state( int joy_thresh, const FeInputSingle &trigger ) const
+{
+	if ( inputs.empty() )
+		return false;
+
+	for ( std::vector < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
+	{
+		if (( (*it) != trigger ) && ( !(*it).get_current_state( joy_thresh ) ))
+			return false;
+	}
+
+	return true;
+}
+
+std::string FeInputMapEntry::as_string() const
+{
+	std::string retval;
+
+	for ( std::vector < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
+	{
+		if ( !retval.empty() )
+			retval += "+";
+
+		retval += (*it).as_string();
+	}
+
+	return retval;
+}
+
+bool FeInputMapEntry::has_mouse_move() const
+{
+	for ( std::vector < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
+	{
+		if ( (*it).is_mouse_move() )
+			return true;
+	}
+
+	return false;
+}
 
 FeMapping::FeMapping( FeInputMap::Command cmd )
 	: command( cmd )
@@ -617,58 +720,101 @@ FeInputMap::FeInputMap()
 	m_defaults[ Right ] = NextDisplay;
 }
 
-void FeInputMap::default_mappings()
+bool my_sort_fn( FeInputMapEntry *a, FeInputMapEntry *b )
+{
+	return ( a->inputs.size() > b->inputs.size() );
+}
+
+void FeInputMap::initialize_mappings()
 {
 	//
 	// Set the 'tab' key to map to 'configure' only if there have been no mapping at all by user
 	// (configure can be unmapped completely, but we want it available initially...)
 	//
-	if ( m_map.empty() )
-		m_map[ FeInputSource( FeInputSource::Keyboard, sf::Keyboard::Tab ) ] = Configure;
+	if ( m_inputs.empty() )
+		m_inputs.push_back( FeInputMapEntry( FeInputSingle::Keyboard, sf::Keyboard::Tab, Configure ) );
 
 	//
 	// Now ensure that the various 'UI' commands are mapped
 	//
 	std::vector < bool > ui_mapped( (int)Select, false );
 
-	std::map< FeInputSource, Command >::iterator it;
-	for ( it = m_map.begin(); it != m_map.end(); ++it )
+	std::vector< FeInputMapEntry >::iterator it;
+	for ( it = m_inputs.begin(); it != m_inputs.end(); ++it )
 	{
-		if ( it->second <= Select )
-			ui_mapped[ it->second ] = true;
+		if ( it->command <= Select )
+			ui_mapped[ it->command ] = true;
+	}
+
+	bool fix = false;
+	for ( unsigned int i=0; i<ui_mapped.size(); i++ )
+	{
+		if ( !ui_mapped[i] )
+		{
+			fix=true;
+			break;
+		}
+	}
+
+	if ( fix )
+	{
+		//
+		// The default UI command mappings:
+		//
+		struct DefaultMappings { FeInputSingle::Type type; int code; Command comm; };
+		DefaultMappings dmap[] =
+		{
+			{ FeInputSingle::Keyboard,    sf::Keyboard::Escape,        Back },
+			{ FeInputSingle::Joystick0,   FeInputSingle::JoyButton0+1, Back },
+			{ FeInputSingle::Keyboard,    sf::Keyboard::Up,            Up },
+			{ FeInputSingle::Joystick0,   FeInputSingle::JoyUp,        Up },
+			{ FeInputSingle::Keyboard,    sf::Keyboard::Down,          Down },
+			{ FeInputSingle::Joystick0,   FeInputSingle::JoyDown,      Down },
+			{ FeInputSingle::Keyboard,    sf::Keyboard::Left,          Left },
+			{ FeInputSingle::Joystick0,   FeInputSingle::JoyLeft,      Left },
+			{ FeInputSingle::Keyboard,    sf::Keyboard::Right,         Right },
+			{ FeInputSingle::Joystick0,   FeInputSingle::JoyRight,     Right },
+			{ FeInputSingle::Keyboard,    sf::Keyboard::Return,        Select },
+			{ FeInputSingle::Keyboard,    sf::Keyboard::LControl,      Select },
+			{ FeInputSingle::Joystick0,   FeInputSingle::JoyButton0,   Select },
+			{ FeInputSingle::Unsupported, sf::Keyboard::Unknown,     LAST_COMMAND }	// keep as last
+		};
+
+		int i=0;
+		while ( dmap[i].comm != LAST_COMMAND )
+		{
+			// This will overwrite any conflicting input mapping
+			if ( !ui_mapped[ dmap[i].comm ] )
+				m_inputs.push_back( FeInputMapEntry( dmap[i].type, dmap[i].code, dmap[i].comm ) );
+
+			i++;
+		}
 	}
 
 	//
-	// The default UI command mappings:
+	// Now setup m_single_map
 	//
-	struct DefaultMappings { FeInputSource::Type type; int code; Command comm; };
-	DefaultMappings dmap[] =
-	{
-		{ FeInputSource::Keyboard,    sf::Keyboard::Escape,        Back },
-		{ FeInputSource::Joystick0,   FeInputSource::JoyButton0+1, Back },
-		{ FeInputSource::Keyboard,    sf::Keyboard::Up,            Up },
-		{ FeInputSource::Joystick0,   FeInputSource::JoyUp,        Up },
-		{ FeInputSource::Keyboard,    sf::Keyboard::Down,          Down },
-		{ FeInputSource::Joystick0,   FeInputSource::JoyDown,      Down },
-		{ FeInputSource::Keyboard,    sf::Keyboard::Left,          Left },
-		{ FeInputSource::Joystick0,   FeInputSource::JoyLeft,      Left },
-		{ FeInputSource::Keyboard,    sf::Keyboard::Right,         Right },
-		{ FeInputSource::Joystick0,   FeInputSource::JoyRight,     Right },
-		{ FeInputSource::Keyboard,    sf::Keyboard::Return,        Select },
-		{ FeInputSource::Keyboard,    sf::Keyboard::LControl,      Select },
-		{ FeInputSource::Joystick0,   FeInputSource::JoyButton0,   Select },
-		{ FeInputSource::Unsupported, sf::Keyboard::Unknown,     LAST_COMMAND }	// keep as last
-	};
+	std::map< FeInputSingle, std::vector< FeInputMapEntry * > >::iterator itm;
+	m_single_map.clear();
 
-	int i=0;
-	while ( dmap[i].comm != LAST_COMMAND )
+	for ( std::vector < FeInputMapEntry >::iterator ite=m_inputs.begin(); ite != m_inputs.end(); ++ite )
 	{
-		// This will overwrite any conflicting input mapping
-		if ( !ui_mapped[ dmap[i].comm ] )
-			m_map[ FeInputSource( dmap[i].type, dmap[i].code ) ] = dmap[i].comm;
-
-		i++;
+		for ( std::vector < FeInputSingle >::iterator its=(*ite).inputs.begin(); its != (*ite).inputs.end(); ++its )
+		{
+			itm = m_single_map.find( *its );
+			if ( itm != m_single_map.end() )
+				(*itm).second.push_back( &( *ite ) );
+			else
+			{
+				std::vector< FeInputMapEntry *> temp;
+				temp.push_back( &( *ite ) );
+				m_single_map[ *its ] = temp;
+			}
+		}
 	}
+
+	for ( itm = m_single_map.begin(); itm != m_single_map.end(); ++itm )
+		std::sort( (*itm).second.begin(), (*itm).second.end(), my_sort_fn );
 }
 
 FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect &mc_rect, const int joy_thresh )
@@ -676,17 +822,58 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 	if ( e.type == sf::Event::Closed )
 		return ExitNoMenu;
 
-	FeInputSource index = FeInputSource( e, mc_rect, joy_thresh );
-	if ( index.get_type() == FeInputSource::Unsupported )
+	FeInputSingle index( e, mc_rect, joy_thresh );
+	if ( index.get_type() == FeInputSingle::Unsupported )
 		return LAST_COMMAND;
 
-	std::map< FeInputSource, Command >::const_iterator it;
-	it = m_map.find( index );
+	std::map< FeInputSingle, std::vector< FeInputMapEntry * > >::const_iterator it;
+	it = m_single_map.find( index );
 
-	if ( it == m_map.end() )
+	if ( it == m_single_map.end() )
 		return LAST_COMMAND;
 
-	return (*it).second;
+	std::vector< FeInputMapEntry *>::const_iterator itv;
+	for ( itv = (*it).second.begin(); itv != (*it).second.end(); ++itv )
+	{
+		if ( (*itv)->get_current_state( joy_thresh, index ) )
+			return (*itv)->command;
+	}
+
+	return LAST_COMMAND;
+}
+
+FeInputMap::Command FeInputMap::input_conflict_check( const FeInputMapEntry &e )
+{
+	if ( e.inputs.empty() )
+		return FeInputMap::LAST_COMMAND;
+
+	std::set< FeInputSingle > my_set;
+
+	std::vector< FeInputSingle >::const_iterator it;
+	for ( it=e.inputs.begin(); it!=e.inputs.end(); ++it )
+		my_set.insert( *it );
+
+	std::vector< FeInputMapEntry >::iterator ite;
+	for ( ite=m_inputs.begin(); ite!=m_inputs.end(); ++ite )
+	{
+		if ( (*ite).inputs.size() == e.inputs.size() )
+		{
+			bool match=true;
+			for ( it=(*ite).inputs.begin(); it!=(*ite).inputs.end(); ++it )
+			{
+				if ( my_set.find( (*it) ) == my_set.end() )
+				{
+					match=false;
+					break;
+				}
+			}
+
+			if ( match )
+				return (*ite).command;
+		}
+	}
+
+	return FeInputMap::LAST_COMMAND;
 }
 
 FeInputMap::Command FeInputMap::get_default_command( FeInputMap::Command c )
@@ -707,15 +894,11 @@ void FeInputMap::set_default_command( FeInputMap::Command c, FeInputMap::Command
 
 bool FeInputMap::get_current_state( FeInputMap::Command c, int joy_thresh ) const
 {
-	std::map< FeInputSource, Command >::const_iterator it;
-
-	for ( it=m_map.begin(); it!=m_map.end(); ++it )
+	std::vector< FeInputMapEntry >::const_iterator it;
+	for ( it=m_inputs.begin(); it!=m_inputs.end(); ++it )
 	{
-		if ( (*it).second == c )
-		{
-			if ( (*it).first.get_current_state( joy_thresh ) )
-				return true;
-		}
+		if (( (*it).command == c ) && (*it).get_current_state( joy_thresh ) )
+			return true;
 	}
 
 	return false;
@@ -734,10 +917,10 @@ void FeInputMap::get_mappings( std::vector< FeMapping > &mappings ) const
 	//
 	// Now populate the mappings vector with the various input mappings
 	//
-	std::map< FeInputSource, Command >::const_iterator it;
+	std::vector< FeInputMapEntry >::const_iterator it;
 
-	for ( it=m_map.begin(); it!=m_map.end(); ++it )
-		mappings[ (*it).second ].input_list.push_back( (*it).first.as_string() );
+	for ( it=m_inputs.begin(); it!=m_inputs.end(); ++it )
+		mappings[ (*it).command ].input_list.push_back( (*it).as_string() );
 }
 
 void FeInputMap::set_mapping( const FeMapping &mapping )
@@ -750,21 +933,15 @@ void FeInputMap::set_mapping( const FeMapping &mapping )
 	//
 	// Erase existing mappings to this command
 	//
-	std::map< FeInputSource, Command >::iterator it = m_map.begin();
-	while ( it != m_map.end() )
+	for ( int i=m_inputs.size()-1; i>=0; i-- )
 	{
-		if ( (*it).second == cmd )
+		if ( m_inputs[i].command == cmd )
 		{
-			std::map< FeInputSource,Command>::iterator to_erase = it;
-			++it;
-
-			if ( (*to_erase).first.is_mouse_move() )
+			if ( m_inputs[i].has_mouse_move() )
 				m_mmove_count--;
 
-			m_map.erase( to_erase );
+			m_inputs.erase( m_inputs.begin() + i );
 		}
-		else
-			++it;
 	}
 
 	//
@@ -775,16 +952,18 @@ void FeInputMap::set_mapping( const FeMapping &mapping )
 	for ( iti=mapping.input_list.begin();
 			iti!=mapping.input_list.end(); ++iti )
 	{
-		FeInputSource index( *iti );
+		FeInputMapEntry new_entry( *iti, cmd );
 
-		if (index.get_type() != FeInputSource::Unsupported )
+		if (!new_entry.inputs.empty())
 		{
-			m_map[ index ] = cmd;
+			m_inputs.push_back( new_entry );
 
-			if ( index.is_mouse_move() )
+			if ( new_entry.has_mouse_move() )
 				m_mmove_count++;
 		}
 	}
+
+	initialize_mappings();
 }
 
 int FeInputMap::process_setting( const std::string &setting,
@@ -817,16 +996,16 @@ int FeInputMap::process_setting( const std::string &setting,
 		return 1;
 	}
 
-	FeInputSource index( value );
-	if ( index.get_type() == FeInputSource::Unsupported )
+	FeInputMapEntry new_entry( value, cmd );
+	if ( new_entry.inputs.empty() )
 	{
 		std::cout << "Unrecognized input type: " << value << " in file: " << fn << std::endl;
 		return 1;
 	}
 
-	m_map[index] = cmd;
+	m_inputs.push_back( new_entry );
 
-	if ( index.is_mouse_move() )
+	if ( new_entry.has_mouse_move() )
 		m_mmove_count++;
 
 	return 0;
@@ -834,13 +1013,13 @@ int FeInputMap::process_setting( const std::string &setting,
 
 void FeInputMap::save( std::ofstream &f ) const
 {
-	std::map< FeInputSource, Command >::const_iterator it;
+	std::vector< FeInputMapEntry >::const_iterator it;
 
-	for ( it = m_map.begin(); it != m_map.end(); ++it )
+	for ( it = m_inputs.begin(); it != m_inputs.end(); ++it )
 	{
 		f << '\t' << std::setw(20) << std::left
-			<< commandStrings[ (*it).second ] << ' '
-			<< (*it).first.as_string() << std::endl;
+			<< commandStrings[ (*it).command ] << ' '
+			<< (*it).as_string() << std::endl;
 	}
 
 	for ( int i=0; i < (int)Select; i++ )

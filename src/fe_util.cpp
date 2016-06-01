@@ -813,7 +813,7 @@ bool run_program( const std::string &prog,
 	DWORD timeout = ( callback || exit_hotkey.empty() )
 		? INFINITE : POLL_FOR_EXIT_MS;
 
-	FeInputSource exit_is( exit_hotkey );
+	FeInputMapEntry exit_is( exit_hotkey );
 
 	bool keep_wait=block;
 	while (keep_wait)
@@ -940,7 +940,7 @@ bool run_program( const std::string &prog,
 			int status;
 			int opt = exit_hotkey.empty() ? 0 : WNOHANG; // option for waitpid.  0= wait for process to complete, WNOHANG=return right away
 
-			FeInputSource exit_is( exit_hotkey );
+			FeInputMapEntry exit_is( exit_hotkey );
 
 			while (1)
 			{

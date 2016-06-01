@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-16 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -123,14 +123,15 @@ class FeEventLoopCtx
 {
 public:
 	FeEventLoopCtx(
-			const std::vector<sf::Drawable *> &in_draw_list,
-			int &in_sel, int in_default_sel, int in_max_sel );
+		const std::vector<sf::Drawable *> &in_draw_list,
+		int &in_sel, int in_default_sel, int in_max_sel );
 
 	const std::vector<sf::Drawable *> &draw_list; // [in] draw list
 	int &sel;				// [in,out] selection counter
 	int default_sel;	// [in] default selection
 	int max_sel;		// [in] maximum selection
 
+	int move_count;
 	sf::Event move_event;
 	sf::Clock move_timer;
 	FeInputMap::Command move_command;
@@ -144,6 +145,7 @@ FeEventLoopCtx::FeEventLoopCtx(
 	sel( in_sel ),
 	default_sel( in_default_sel ),
 	max_sel( in_max_sel ),
+	move_count( 0 ),
 	move_command( FeInputMap::LAST_COMMAND ),
 	extra_exit( FeInputMap::LAST_COMMAND )
 {
@@ -780,6 +782,16 @@ void FeOverlay::input_map_dialog(
 	// this should only happen from the config dialog
 	ASSERT( m_overlay_is_on );
 
+	bool multi_mode=false; // flag if we are checking for multiple inputs.
+	bool done=false;
+
+	sf::IntRect mc_rect;
+	int joy_thresh;
+	m_feSettings.get_input_config_metrics( mc_rect, joy_thresh );
+
+	std::set < std::pair<int,int> > joystick_moves;
+	FeInputMapEntry entry;
+
 	const sf::Transform &t = m_fePresent.get_transform();
 	while ( m_wnd.isOpen() )
 	{
@@ -788,8 +800,59 @@ void FeOverlay::input_map_dialog(
 			if ( ev.type == sf::Event::Closed )
 				return;
 
-			if ( m_feSettings.config_map_input( ev, map_str, conflict ) )
+			if ( multi_mode && ((ev.type == sf::Event::KeyReleased )
+					|| ( ev.type == sf::Event::JoystickButtonReleased )
+					|| ( ev.type == sf::Event::MouseButtonReleased )))
+				done = true;
+			else
+			{
+				FeInputSingle single( ev, mc_rect, joy_thresh );
+				if ( single.get_type() != FeInputSingle::Unsupported )
+				{
+					if (( ev.type == sf::Event::KeyPressed )
+							|| ( ev.type == sf::Event::JoystickButtonPressed )
+							|| ( ev.type == sf::Event::MouseButtonPressed ))
+						multi_mode = true;
+					else if ( ev.type == sf::Event::JoystickMoved )
+					{
+						multi_mode = true;
+						joystick_moves.insert( std::pair<int,int>( ev.joystickMove.joystickId, ev.joystickMove.axis ) );
+					}
+
+					bool dup=false;
+
+					std::vector< FeInputSingle >::iterator it;
+					for ( it = entry.inputs.begin(); it != entry.inputs.end(); ++it )
+					{
+						if ( (*it) == single )
+						{
+							dup=true;
+							break;
+						}
+					}
+
+					if ( !dup )
+						entry.inputs.push_back( single );
+
+					if ( !multi_mode )
+						done = true;
+				}
+				else if ( ev.type == sf::Event::JoystickMoved )
+				{
+					// test if a joystick has been released
+					std::pair<int,int> test( ev.joystickMove.joystickId, ev.joystickMove.axis );
+
+					if ( joystick_moves.find( test ) != joystick_moves.end() )
+						done = true;
+				}
+			}
+
+			if ( done )
+			{
+				map_str = entry.as_string();
+				conflict = m_feSettings.input_conflict_check( entry );
 				return;
+			}
 		}
 
 		if ( m_fePresent.tick() )
@@ -1132,6 +1195,10 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 			case FeInputMap::Select:
 				return true;
 			case FeInputMap::Up:
+				if (( ev.type == sf::Event::JoystickMoved )
+						&& ( ctx.move_event.type == sf::Event::JoystickMoved ))
+					return false;
+
 				if ( ctx.sel > 0 )
 					ctx.sel--;
 				else
@@ -1139,10 +1206,15 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 				ctx.move_event = ev;
 				ctx.move_command = FeInputMap::Up;
+				ctx.move_count = 0;
 				ctx.move_timer.restart();
 				return false;
 
 			case FeInputMap::Down:
+				if (( ev.type == sf::Event::JoystickMoved )
+						&& ( ctx.move_event.type == sf::Event::JoystickMoved ))
+					return false;
+
 				if ( ctx.sel < ctx.max_sel )
 					ctx.sel++;
 				else
@@ -1150,6 +1222,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 				ctx.move_event = ev;
 				ctx.move_command = FeInputMap::Down;
+				ctx.move_count = 0;
 				ctx.move_timer.restart();
 				return false;
 
@@ -1218,7 +1291,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 			if ( cont )
 			{
 				int t = ctx.move_timer.getElapsedTime().asMilliseconds();
-				if ( t > 500 )
+				if ( t > 500 + ctx.move_count * m_feSettings.selection_speed() )
 				{
 					if (( ctx.move_command == FeInputMap::Up )
 								&& ( ctx.sel > 0 ))
@@ -1235,7 +1308,10 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 				}
 			}
 			else
+			{
 				ctx.move_command = FeInputMap::LAST_COMMAND;
+				ctx.move_event = sf::Event();
+			}
 		}
 	}
 	return true;

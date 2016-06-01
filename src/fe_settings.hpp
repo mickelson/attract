@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-16 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -218,7 +218,9 @@ public:
 	void save_state();
 
 	FeInputMap::Command map_input( const sf::Event &e );
-	bool config_map_input( const sf::Event &e, std::string &s, FeInputMap::Command &conflict );
+
+	void get_input_config_metrics( sf::IntRect &mousecap_rect, int &joy_thresh );
+	FeInputMap::Command input_conflict_check( const FeInputMapEntry &e );
 
 	// for use with Up, Down, Left, Right, Back commands to get what they are actually mapped to
 	FeInputMap::Command get_default_command( FeInputMap::Command );
