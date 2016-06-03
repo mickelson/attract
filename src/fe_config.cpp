@@ -1175,6 +1175,9 @@ bool FeInputEditMenu::on_option_select(
 			FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
 			ctx.input_map_dialog( "Press Input", res, conflict );
 
+			if ( res.empty() )
+				return true;
+
 			bool save=true;
 			if (( conflict != FeInputMap::LAST_COMMAND )
 				&& ( conflict != m_mapping->command ))

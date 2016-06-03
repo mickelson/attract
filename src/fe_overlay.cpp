@@ -791,6 +791,7 @@ void FeOverlay::input_map_dialog(
 
 	std::set < std::pair<int,int> > joystick_moves;
 	FeInputMapEntry entry;
+	sf::Clock timeout;
 
 	const sf::Transform &t = m_fePresent.get_transform();
 	while ( m_wnd.isOpen() )
@@ -832,7 +833,10 @@ void FeOverlay::input_map_dialog(
 					}
 
 					if ( !dup )
+					{
 						entry.inputs.push_back( single );
+						timeout.restart();
+					}
 
 					if ( !multi_mode )
 						done = true;
@@ -846,13 +850,16 @@ void FeOverlay::input_map_dialog(
 						done = true;
 				}
 			}
+		}
 
-			if ( done )
-			{
-				map_str = entry.as_string();
-				conflict = m_feSettings.input_conflict_check( entry );
-				return;
-			}
+		if ( timeout.getElapsedTime() > sf::seconds( 6 ) )
+			done = true;
+
+		if ( done )
+		{
+			map_str = entry.as_string();
+			conflict = m_feSettings.input_conflict_check( entry );
+			return;
 		}
 
 		if ( m_fePresent.tick() )
