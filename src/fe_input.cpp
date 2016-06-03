@@ -222,6 +222,20 @@ FeInputSingle::FeInputSingle( const sf::Event &e, const sf::IntRect &mc_rect, co
 						m_code = ( e.joystickMove.position > 0 ) ? JoyDown : JoyUp;
 						break;
 
+#ifdef SFML_SYSTEM_LINUX
+					//
+					// On Linux, SFML's Z and R axes are mapped to Throttle and Rudder controls
+					// They seem to rest at -100 and go up to 100
+					//
+					case sf::Joystick::Z:
+					case sf::Joystick::R:
+						if ( e.joystickMove.position < 0 )
+							return;
+
+						m_code = ( e.joystickMove.axis == sf::Joystick::Z )
+							? JoyZPos : JoyRPos;
+						break;
+#else
 					case sf::Joystick::Z:
 						m_code = ( e.joystickMove.position > 0 ) ? JoyZPos : JoyZNeg;
 						break;
@@ -229,6 +243,7 @@ FeInputSingle::FeInputSingle( const sf::Event &e, const sf::IntRect &mc_rect, co
 					case sf::Joystick::R:
 						m_code = ( e.joystickMove.position > 0 ) ? JoyRPos : JoyRNeg;
 						break;
+#endif
 
 					case sf::Joystick::U:
 						m_code = ( e.joystickMove.position > 0 ) ? JoyUPos : JoyUNeg;
