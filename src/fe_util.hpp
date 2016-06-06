@@ -244,14 +244,11 @@ void string_to_vector( const std::string &input,
         std::vector< std::string > &vec, bool allow_empty=false );
 
 //
-// First call in main for things that should happen ... first
+// Windows systems: Hide the console window if not launched from the command line
 //
-void preinit_helper();
-
-//
-// Used by run_program to tell if we started from a console (Win only)
-//
-bool have_console();
+#ifdef SFML_SYSTEM_WINDOWS
+void hide_console();
+#endif
 
 #ifdef FE_DEBUG
 #define ASSERT(a) assert(a)

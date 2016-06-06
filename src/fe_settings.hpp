@@ -124,6 +124,9 @@ public:
 		ScrapeWheels,
 		ScrapeFanArt,
 		ScrapeVids,
+#ifdef SFML_SYSTEM_WINDOWS
+		HideConsole,
+#endif
 		LAST_INDEX
 	};
 
@@ -179,6 +182,9 @@ private:
 	bool m_scrape_wheels;
 	bool m_scrape_fanart;
 	bool m_scrape_vids;
+#ifdef SFML_SYSTEM_WINDOWS
+	bool m_hide_console;
+#endif
 	enum FePresentState m_present_state;
 
 	FeSettings( const FeSettings & );
@@ -309,6 +315,10 @@ public:
 	//
 	FePresentState get_present_state() const { return m_present_state; };
 	void set_present_state( FePresentState s ) { m_present_state=s; };
+
+#ifdef SFML_SYSTEM_WINDOWS
+	bool get_hide_console() const { return m_hide_console; };
+#endif
 
 	enum FePathType
 	{

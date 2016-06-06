@@ -1054,28 +1054,18 @@ void get_xinerama_geometry( int &x, int &y, int &width, int &height )
 }
 #endif
 
-void preinit_helper()
-{
 #ifdef SFML_SYSTEM_WINDOWS
-	if ( !have_console() )
+void hide_console()
+{
+	STARTUPINFO si = { sizeof(STARTUPINFO) };
+	GetStartupInfo(&si);
+	if ( si.dwFlags && !(si.dwFlags & STARTF_USESTDHANDLES ) )
 	{
 		HWND handle = GetConsoleWindow();
 		ShowWindow(handle, SW_HIDE);
 	}
-#endif
 }
-
-bool have_console()
-{
-#ifdef SFML_SYSTEM_WINDOWS
-	static STARTUPINFO startup_info = { sizeof(STARTUPINFO) };
-	GetStartupInfo(&startup_info);
-	if (startup_info.dwFlags && !(startup_info.dwFlags & STARTF_USESTDHANDLES)) {
-		return false;
-	}
 #endif
-	return true;
-}
 
 std::string url_escape( const std::string &raw )
 {

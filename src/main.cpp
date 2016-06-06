@@ -67,8 +67,6 @@ int main(int argc, char *argv[])
 	std::string config_path, cmdln_font;
 	bool launch_game = false;
 
-	preinit_helper();
-
 	process_args( argc, argv, config_path, cmdln_font );
 
 	//
@@ -103,6 +101,11 @@ int main(int argc, char *argv[])
 
 	FeWindow window( feSettings );
 	window.initial_create();
+
+#ifdef SFML_SYSTEM_WINDOWS
+	if ( feSettings.get_hide_console() )
+		hide_console();
+#endif
 
 	FeVM feVM( feSettings, def_font, window, soundsys.get_ambient_sound() );
 	FeOverlay feOverlay( window, feSettings, feVM );
