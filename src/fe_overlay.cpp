@@ -319,6 +319,7 @@ int FeOverlay::common_list_dialog(
 
 		m_fePresent.on_transition( ShowOverlay, var );
 
+		init_event_loop( c );
 		while ( event_loop( c ) == false )
 		{
 			m_fePresent.on_transition( NewSelOverlay, sel );
@@ -387,6 +388,7 @@ int FeOverlay::common_list_dialog(
 		if ( fm.flag_set() )
 			m_fePresent.on_transition( ShowOverlay, var );
 
+		init_event_loop( c );
 		while ( event_loop( c ) == false )
 		{
 			if ( fm.flag_set() )
@@ -492,6 +494,7 @@ int FeOverlay::languages_dialog()
 	FeEventLoopCtx c( draw_list, sel, -1, ll.size() - 1 );
 	FeFlagMinder fm( m_overlay_is_on );
 
+	init_event_loop( c );
 	while ( event_loop( c ) == false )
 		dialog.setLanguageText( sel, ll, &m_fePresent );
 
@@ -610,6 +613,7 @@ int FeOverlay::common_basic_dialog(
 
 		m_fePresent.on_transition( ShowOverlay, var );
 
+		init_event_loop( c );
 		while ( event_loop( c ) == false )
 		{
 			m_fePresent.on_transition( NewSelOverlay, sel );
@@ -683,6 +687,7 @@ int FeOverlay::common_basic_dialog(
 		if ( fm.flag_set() )
 			m_fePresent.on_transition( ShowOverlay, var );
 
+		init_event_loop( c );
 		while ( event_loop( c ) == false )
 		{
 			if ( fm.flag_set() )
@@ -1009,6 +1014,7 @@ int FeOverlay::display_config_dialog(
 	{
 		FeEventLoopCtx c( draw_list, ctx.curr_sel, ctx.exit_sel, ctx.left_list.size() - 1 );
 
+		init_event_loop( c );
 		while ( event_loop( c ) == false )
 		{
 			footer.setString( ctx.curr_opt().help_msg );
@@ -1113,6 +1119,7 @@ int FeOverlay::display_config_dialog(
 
 					FeEventLoopCtx c( draw_list, new_value, -1, ctx.curr_opt().values_list.size() - 1 );
 
+					init_event_loop( c );
 					while ( event_loop( c ) == false )
 					{
 						tp->setString(ctx.curr_opt().values_list[new_value]);
@@ -1168,6 +1175,41 @@ bool FeOverlay::check_for_cancel()
 	}
 
 	return false;
+}
+
+void FeOverlay::init_event_loop( FeEventLoopCtx &ctx )
+{
+	//
+	// Make sure the Back and Select buttons are NOT down, to avoid immediately
+	// triggering an exit/selection
+	//
+	const sf::Transform &t = m_fePresent.get_transform();
+
+	sf::Clock timer;
+	while (( timer.getElapsedTime() < sf::seconds( 6 ) )
+			&& ( m_feSettings.get_current_state( FeInputMap::Back )
+				|| m_feSettings.get_current_state( FeInputMap::ExitNoMenu )
+				|| m_feSettings.get_current_state( FeInputMap::Select ) ))
+	{
+		sf::Event ev;
+		while (m_wnd.pollEvent(ev))
+		{
+		}
+
+		if ( m_fePresent.tick() )
+		{
+			m_wnd.clear();
+			m_wnd.draw( m_fePresent, t );
+
+			for ( std::vector<sf::Drawable *>::const_iterator itr=ctx.draw_list.begin();
+					itr < ctx.draw_list.end(); ++itr )
+				m_wnd.draw( *(*itr), t );
+
+			m_wnd.display();
+		}
+		else
+			sf::sleep( sf::milliseconds( 30 ) );
+	}
 }
 
 //

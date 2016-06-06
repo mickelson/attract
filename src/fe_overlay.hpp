@@ -58,6 +58,7 @@ private:
 			FeInputMap::Command &conflict );
 	int display_config_dialog( FeBaseConfigMenu *, bool & );
 
+	void init_event_loop( FeEventLoopCtx & );
 	bool event_loop( FeEventLoopCtx & );
 
 	bool edit_loop( std::vector<sf::Drawable *> draw_list,

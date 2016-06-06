@@ -1179,8 +1179,9 @@ bool FeInputEditMenu::on_option_select(
 				return true;
 
 			bool save=true;
-			if (( conflict != FeInputMap::LAST_COMMAND )
-				&& ( conflict != m_mapping->command ))
+			if ( conflict == m_mapping->command )
+				save = false; // don't add duplicate entries
+			else if ( conflict != FeInputMap::LAST_COMMAND )
 			{
 				std::string command_str;
 				ctx.fe_settings.get_resource( FeInputMap::commandDispStrings[ conflict ], command_str );

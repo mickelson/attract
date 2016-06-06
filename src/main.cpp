@@ -307,18 +307,7 @@ int main(int argc, char *argv[])
 
 
 				case sf::Event::JoystickMoved:
-					if ( c == FeInputMap::LAST_COMMAND )
-					{
-						if (( (int)ev.joystickMove.joystickId == guard_joyid )
-							&& ( ev.joystickMove.axis == guard_axis ))
-						{
-							// Reset the joystick guard because the axis we are guarding has moved
-							// below the joystick threshold
-							guard_joyid = -1;
-							guard_axis = -1;
-						}
-					}
-					else
+					if ( c != FeInputMap::LAST_COMMAND )
 					{
 						// Only allow one mapped "Joystick Moved" input through at a time
 						//
@@ -333,6 +322,17 @@ int main(int argc, char *argv[])
 				case sf::Event::Count:
 				default:
 					break;
+			}
+
+			// Test if we need to keep the joystick axis guard up
+			//
+			if (( guard_joyid >= 0 )
+				&& ( std::abs( sf::Joystick::getAxisPosition(
+					guard_joyid, (sf::Joystick::Axis)guard_axis )
+						< feSettings.get_joy_thresh() )))
+			{
+				guard_joyid = -1;
+				guard_axis = -1;
 			}
 
 			if ( c == FeInputMap::LAST_COMMAND )
@@ -358,7 +358,8 @@ int main(int argc, char *argv[])
 
 				move_state=FeInputMap::LAST_COMMAND;
 
-				if ( is_ui_command( c ) || is_repeatable_command( c ) )
+				if ( ( is_ui_command( c ) && ( c != FeInputMap::Back ) )
+					|| is_repeatable_command( c ) )
 				{
 					// setup variables to test for when the navigation keys are held down
 					move_state = c;
