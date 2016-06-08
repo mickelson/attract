@@ -3119,13 +3119,13 @@ bool gather_artwork_filenames(
 			}
 #endif
 
-			std::random_shuffle( vid_contents.begin(), vid_contents.end() );
-			std::random_shuffle( img_contents.begin(), img_contents.end() );
-
 			images.insert( images.end(), img_contents.begin(), img_contents.end() );
 			vids.insert( vids.end(), vid_contents.begin(), vid_contents.end() );
 		}
 	}
+
+	std::random_shuffle( vids.begin(), vids.end() );
+	std::random_shuffle( images.begin(), images.end() );
 
 	return ( !images.empty() || !vids.empty() );
 }
