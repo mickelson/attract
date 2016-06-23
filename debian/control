@@ -2,13 +2,17 @@ Source: attract
 Section: games
 Priority: optional
 Maintainer: Andrew Mickelson <andrew@attractmode.org>
-Build-Depends: debhelper (>= 9), pkgconf, libsfml-dev, libfreetype6-dev, libavutil-dev, libavcodec-dev, libavformat-dev, libavresample-dev, libswscale-dev, libfontconfig-dev, libopenal-dev, libjpeg62-turbo-dev, libarchive-dev, libxinerama-dev
+Build-Depends: debhelper (>= 9), pkgconf, git,
+ libarchive-dev, libavcodec-dev, libavformat-dev, libavresample-dev,
+ libavutil-dev, libfontconfig-dev, libfreetype6-dev, libglu-dev,
+ libjpeg62-turbo-dev | libjpeg-turbo8-dev,
+ libopenal-dev, libsfml-dev, libswscale-dev, libxinerama-dev
 Standards-Version: 3.9.5
 Homepage: http://attractmode.org
 
 Package: attract
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libsfml-graphics2, libsfml-network2, libsfml-system2, libsfml-window2, libavutil54, libavcodec56, libavformat56, libavresample2, libswscale3, libfontconfig1, libarchive13, libxinerama1
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Attract-Mode emulator frontend
  Attract-Mode is a graphical frontend for command line emulators such as MAME,
  MESS and Nestopia. It hides the underlying operating system and is intended
