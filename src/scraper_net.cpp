@@ -294,7 +294,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			ASSERT( gdbplp.m_names.size() == gdbplp.m_ids.size() );
 
 			std::string &n = gdbplp.m_names[i];
-			int id = ( i < gdbplp.m_ids.size() ) ? i : 0;
+			int id = ( i < gdbplp.m_ids.size() ) ? gdbplp.m_ids[i] : 0;
 
 			if ( comp_fuzz.compare( get_fuzzy( n ) ) == 0 )
 			{
