@@ -105,7 +105,8 @@ popd >/dev/null
 
 if [[ "$PLATFORM" != "Darwin" ]]; then
 	WORKDMG="${SCRATCH}/uncompressed.dmg"
-	dd if=/dev/zero of="${WORKDMG}" bs=1M count=128
+	DMGSIZE=$[$(du -k -s "${SCRATCH}/disk/" | cut -f1)+1024]
+	dd if=/dev/zero of="${WORKDMG}" bs=1024 count=$DMGSIZE
 	mkfs.hfsplus -v "AttractMode" "${WORKDMG}"
 	hfsplus "${WORKDMG}" addall "${SCRATCH}/disk/"
 	hfsplus "${WORKDMG}" attr / C
