@@ -544,6 +544,7 @@ bool FeVM::on_new_layout()
 		.Enum( _SC("Art"), Enumeration()
 			.Const( _SC("Default"), AF_Default )
 			.Const( _SC("ImagesOnly"), AF_ImagesOnly )
+			.Const( _SC("FullList"), AF_FullList )
 			)
 		.Enum( _SC("Overlay"), Enumeration()
 			.Const( "Custom", 0 )
@@ -1994,18 +1995,47 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 			image_list,
 			(art_flags&AF_ImagesOnly) ) ))
 	{
-		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
-			retval = vid_list.front();
-		else if ( !image_list.empty() )
-			retval = image_list.front();
+		if ( art_flags&AF_FullList )
+		{
+			std::vector<std::string>::iterator itr;
+			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			{
+				for ( itr=vid_list.begin(); itr!=vid_list.end(); ++itr )
+				{
+					if ( !retval.empty() )
+						retval += ";";
 
-		// We force our return value to an absolute path, to work
-		// around Attract-Mode's tendency to assume that relative
-		// paths are relative to the layout directory.
-		//
-		// We are almost certain that is not the case here...
-		//
-		retval = absolute_path( retval );
+					// see note below re: need for absolute path
+					retval += absolute_path( *itr );
+				}
+			}
+			else
+			{
+				for ( itr=image_list.begin(); itr!=image_list.end(); ++itr )
+				{
+					if ( !retval.empty() )
+						retval += ";";
+
+					// see note below re: need for absolute path
+					retval += absolute_path( *itr );
+				}
+			}
+		}
+		else
+		{
+			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+				retval = vid_list.front();
+			else if ( !image_list.empty() )
+				retval = image_list.front();
+
+			// We force our return value to an absolute path, to work
+			// around Attract-Mode's tendency to assume that relative
+			// paths are relative to the layout directory.
+			//
+			// We are almost certain that is not the case here...
+			//
+			retval = absolute_path( retval );
+		}
 	}
 
 	return retval.c_str();

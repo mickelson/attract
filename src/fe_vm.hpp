@@ -206,7 +206,13 @@ public:
 	static const char *cb_game_info(int,int);
 	static const char *cb_game_info(int);
 
-	enum ArtFlags { AF_Default=0,AF_ImagesOnly=1,AF_IncludeLayout=2 };
+	enum ArtFlags
+	{
+		AF_Default=0,
+		AF_ImagesOnly=1,
+		AF_IncludeLayout=2,
+		AF_FullList=4
+	};
 	static const char *cb_get_art( const char *,int,int,int);
 	static const char *cb_get_art( const char *,int,int);
 	static const char *cb_get_art( const char *,int);

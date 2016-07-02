@@ -692,8 +692,7 @@ Return Value:
     fe.get_art( label, index_offset, filter_offset )
     fe.get_art( label, index_offset, filter_offset, flags )
 
-Get the filename of an artwork for the selected game.  If multiple files are
-matched, one is chosen randomly and returned.
+Get the filename of an artwork for the selected game.
 
 Parameters:
 
@@ -709,9 +708,13 @@ Parameters:
      containing the selection to retrieve the filename for.  i.e.
      -1=previous filter, 0=current filter.  Default value is 0.
    * flags - flags to control the filename that gets returned.  Can be set
-     to either of the following:
-      - `Art.Default`
-      - `Art.ImageOnly` (only return an image match, no videos)
+     to any combination of none or more of the following (i.e. `Art.ImageOnly
+     | Art.FullList`):
+      - `Art.Default` - return single match, video or image
+      - `Art.ImageOnly` - Override Art.Default, only return an image match (no
+        video)
+      - `Art.FullList` - Return a full list of the matches made (if multiples
+        available).  Names are returned in a single string, semicolon separated
 
 Return Value:
 
