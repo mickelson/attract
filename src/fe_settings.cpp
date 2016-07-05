@@ -39,7 +39,7 @@
 #endif
 
 #ifndef NO_MOVIE
-#include "media.hpp" // for FeMedia::is_supported_media()
+#include "media.hpp" // for FeMedia::is_supported_media(), get/set_current_decoder()
 #endif
 
 #ifdef SFML_SYSTEM_WINDOWS
@@ -425,6 +425,7 @@ const char *FeSettings::configSettingStrings[] =
 #ifdef SFML_SYSTEM_WINDOWS
 	"hide_console",
 #endif
+	"video_decoder",
 	NULL
 };
 
@@ -2207,6 +2208,12 @@ const std::string FeSettings::get_info( int index ) const
 	case HideConsole:
 #endif
 		return ( get_info_bool( index ) ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+	case VideoDecoder:
+#ifdef NO_MOVIE
+		return "software";
+#else
+		return FeMedia::get_decoder_label( FeMedia::get_current_decoder() );
+#endif
 
 	default:
 		break;
@@ -2420,6 +2427,11 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_hide_console = config_str_to_bool( value );
 		break;
 #endif
+	case VideoDecoder:
+#ifndef NO_MOVIE
+		FeMedia::set_current_decoder_by_label( value );
+#endif
+		break;
 
 	default:
 		return false;

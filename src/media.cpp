@@ -937,10 +937,10 @@ bool FeMedia::internal_open( sf::Texture *outt )
 
 		if ( stream_id >= 0 )
 		{
-			m_imp->m_format_ctx->streams[stream_id]->codec->request_sample_fmt = AV_SAMPLE_FMT_S16;
+			AVCodecContext *codec_ctx = m_imp->m_format_ctx->streams[stream_id]->codec;
+			codec_ctx->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
-			if ( avcodec_open2( m_imp->m_format_ctx->streams[stream_id]->codec,
-										dec, NULL ) < 0 )
+			if ( avcodec_open2( codec_ctx, dec, NULL ) < 0 )
 			{
 				std::cerr << "Could not open audio decoder for file: "
 						<< m_imp->m_format_ctx->filename << std::endl;
@@ -949,7 +949,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 			{
 				m_audio = new FeAudioImp();
 				m_audio->stream_id = stream_id;
-				m_audio->codec_ctx = m_imp->m_format_ctx->streams[stream_id]->codec;
+				m_audio->codec_ctx = codec_ctx;
 				m_audio->codec = dec;
 
 				//
@@ -959,16 +959,16 @@ bool FeMedia::internal_open( sf::Texture *outt )
 				m_audio->buffer = (sf::Int16 *)av_malloc(
 					MAX_AUDIO_FRAME_SIZE
 					+ FF_INPUT_BUFFER_PADDING_SIZE
-					+ m_audio->codec_ctx->sample_rate );
+					+ codec_ctx->sample_rate );
 
 				sf::SoundStream::initialize(
-					m_audio->codec_ctx->channels,
-					m_audio->codec_ctx->sample_rate );
+					codec_ctx->channels,
+					codec_ctx->sample_rate );
 
 				sf::SoundStream::setLoop( false );
 
 #ifndef DO_RESAMPLE
-				if ( m_audio->codec_ctx->sample_fmt != AV_SAMPLE_FMT_S16 )
+				if ( codec_ctx->sample_fmt != AV_SAMPLE_FMT_S16 )
 				{
 					std::cerr << "Warning: Attract-Mode was compiled without an audio resampler (libswresample or libavresample)." << std::endl
 						<< "The audio format in " << m_imp->m_format_ctx->filename << " appears to need resampling.  It will likely sound like garbage." << std::endl;
@@ -992,13 +992,15 @@ bool FeMedia::internal_open( sf::Texture *outt )
 		}
 		else
 		{
-			m_imp->m_format_ctx->streams[stream_id]->codec->workaround_bugs = FF_BUG_AUTODETECT;
+			try_hw_accel( dec );
+
+			AVCodecContext *codec_ctx = m_imp->m_format_ctx->streams[stream_id]->codec;
+			codec_ctx->workaround_bugs = FF_BUG_AUTODETECT;
 
 			// Note also: http://trac.ffmpeg.org/ticket/4404
-			m_imp->m_format_ctx->streams[stream_id]->codec->thread_count=1;
+			codec_ctx->thread_count=1;
 
-			if ( avcodec_open2( m_imp->m_format_ctx->streams[stream_id]->codec,
-										dec, NULL ) < 0 )
+			if ( avcodec_open2( codec_ctx, dec, NULL ) < 0 )
 			{
 				std::cerr << "Could not open video decoder for file: "
 					<< m_imp->m_format_ctx->filename << std::endl;
@@ -1007,17 +1009,18 @@ bool FeMedia::internal_open( sf::Texture *outt )
 			{
 				m_video = new FeVideoImp( this );
 				m_video->stream_id = stream_id;
-				m_video->codec_ctx = m_imp->m_format_ctx->streams[stream_id]->codec;
+				m_video->codec_ctx = codec_ctx;
+
 				m_video->codec = dec;
 				m_video->time_base = sf::seconds(
 						av_q2d(m_imp->m_format_ctx->streams[stream_id]->time_base) );
 
 				float aspect_ratio = 1.0;
-				if ( m_video->codec_ctx->sample_aspect_ratio.num != 0 )
-					aspect_ratio = av_q2d( m_video->codec_ctx->sample_aspect_ratio );
+				if ( codec_ctx->sample_aspect_ratio.num != 0 )
+					aspect_ratio = av_q2d( codec_ctx->sample_aspect_ratio );
 
-				m_video->disptex_width = m_video->codec_ctx->width * aspect_ratio;
-				m_video->disptex_height = m_video->codec_ctx->height;
+				m_video->disptex_width = codec_ctx->width * aspect_ratio;
+				m_video->disptex_height = codec_ctx->height;
 
 				m_video->display_texture = outt;
 				m_video->display_texture->create( m_video->disptex_width,
@@ -1309,7 +1312,6 @@ bool FeMedia::is_supported_media_file( const std::string &filename )
 	return ( av_guess_format( NULL, filename.c_str(), NULL ) != NULL );
 }
 
-
 bool FeMedia::is_multiframe() const
 {
 	if ( m_video && m_imp->m_format_ctx )
@@ -1352,4 +1354,136 @@ const char *FeMedia::get_metadata( const char *tag )
 	entry = av_dict_get( m_imp->m_format_ctx->metadata, tag, NULL, AV_DICT_IGNORE_SUFFIX );
 
 	return ( entry ? entry->value : "" );
+}
+
+#ifdef USE_GLES
+//
+// Raspberry Pi MMAL-specific code
+//
+namespace
+{
+	struct mm_struct
+	{
+		int id;
+		const char *tag;
+		AVCodec *codec;
+	};
+
+	static mm_struct mm[] = {
+		{ AV_CODEC_ID_MPEG4,      "mpeg4_mmal", NULL },
+		{ AV_CODEC_ID_H264,       "h264_mmal",  NULL },
+		{ AV_CODEC_ID_MPEG2VIDEO, "mpeg2_mmal", NULL },
+		{ AV_CODEC_ID_VC1,        "vc1_mmal",   NULL },
+		{ AV_CODEC_ID_NONE,       NULL,         NULL }
+	};
+	static bool mm_init=false;
+
+	void ensure_init()
+	{
+		if ( !mm_init )
+		{
+			int i=0;
+			while ( mm[i].id != AV_CODEC_ID_NONE )
+			{
+				mm[i].codec = avcodec_find_decoder_by_name( mm[i].tag );
+				i++;
+			}
+
+			mm_init = true;
+		}
+	}
+
+
+};
+#endif
+
+FeMedia::VideoDecoder FeMedia::g_decoder=FeMedia::software;
+
+const char *FeMedia::get_decoder_label( VideoDecoder d )
+{
+	const char *label[] =
+	{
+		"software",
+		"mmal",
+		NULL
+	};
+
+	return label[d];
+}
+
+bool FeMedia::get_decoder_available( VideoDecoder d )
+{
+	switch ( d )
+	{
+	case software:
+		return true;
+
+	case mmal:
+#if defined(USE_GLES)
+		ensure_init();
+
+		{
+			int i=0;
+			while ( mm[i].id != AV_CODEC_ID_NONE )
+			{
+				if ( mm[i].codec )
+					return true;
+				i++;
+			}
+		}
+#endif
+		return false;
+
+	default:
+		return false;
+	}
+}
+
+FeMedia::VideoDecoder FeMedia::get_current_decoder()
+{
+	return g_decoder;
+}
+
+void FeMedia::set_current_decoder_by_label( const std::string &l )
+{
+	FeMedia::VideoDecoder d=software;
+	while ( d != LAST_DECODER )
+	{
+		if ( l.compare( get_decoder_label( d ) ) == 0 )
+		{
+			g_decoder=d;
+			break;
+		}
+
+		d=(VideoDecoder)(d+1);
+	}
+}
+
+//
+// Try to use a hardware accelerated decoder where readily available...
+//
+void FeMedia::try_hw_accel( AVCodec *&dec )
+{
+#if defined( USE_GLES )
+
+	if ( g_decoder != mmal )
+		return;
+
+	ensure_init();
+
+	int i=0;
+	while ( mm[i].id != AV_CODEC_ID_NONE )
+	{
+		if (( mm[i].id == dec->id ) && mm[i].codec )
+		{
+			dec = mm[i].codec;
+#ifdef FE_DEBUG
+			std::cout << "Using hardware accelerated video decoder: "
+				<< dec->long_name << std::endl;
+#endif
+			break;
+		}
+		i++;
+	}
+#endif
 }

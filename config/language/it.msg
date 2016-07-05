@@ -358,6 +358,7 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 # Strings still needing translation
 #
 Default Action;Default Action
+Video Decoder;Video Decoder
 _help_control_back;Set the control(s) that go back
 _help_control_left;Set the control(s) that move the selection left
 _help_control_next_game;Set the control(s) that move to the next game
@@ -366,3 +367,4 @@ _help_control_prev_game;Set the control(s) that move to the previous game
 _help_control_prev_page;Set the control(s) that move the selection down one page
 _help_control_right;Set the control(s) that move the selection right
 _help_input_default_action;Set the default behaviour for this control
+_help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)

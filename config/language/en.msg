@@ -127,6 +127,7 @@ _help_sound;Configure sound volumes, sound event mappings and the ambient soundt
 _help_sound_sel;Assign a sound to this event/action
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_track_usage;Configure whether Attract-Mode should track usage (played time and play count for each game)
+_help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)
 _help_volume;Valid volume settings are from 0 (mute) to 100 
 _help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
 _sort_regexp;^(Vs\. The |The |Vs\. )
@@ -138,6 +139,7 @@ de;Deutsch
 en;English
 es;Español
 fr;Français
+it;Italiano
 jp;日本語 (Japanese)
 kr;한글 (Korean)
 

@@ -127,6 +127,7 @@ public:
 #ifdef SFML_SYSTEM_WINDOWS
 		HideConsole,
 #endif
+		VideoDecoder,
 		LAST_INDEX
 	};
 
