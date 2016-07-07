@@ -73,12 +73,18 @@ class FadeArt
 		if ( _trigger_load ||
 			((interval>0)&&(ttime-_last_switch>interval)) )
 		{
-			local temp = split( fe.get_art( _label,
+			local test="";
+
+			local tmp = fe.get_art( _label,
 					index_offset,
 					filter_offset,
-					Art.FullList ), ";" );
+					Art.FullList );
 
-			local test = temp[ rand()%temp.len() ];
+			if ( tmp.len() > 0 )
+			{
+				local arr = split( tmp, ";" );
+				test = arr[ rand()%arr.len() ];
+			}
 
 			// Start changed: ArcadeBliss to show default artwork from the layout dir
 			if (test=="")
