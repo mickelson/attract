@@ -571,6 +571,7 @@ void FeVideoImp::video_thread()
 				qscore_accum += qscore;
 				if ( discard_frames )
 				{
+					free_frame( detached_frame );
 					discarded++;
 					continue;
 				}
