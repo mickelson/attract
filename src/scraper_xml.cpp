@@ -307,6 +307,7 @@ void FeListXMLParser::start_element(
 			const char **attribute )
 {
 	if (( strcmp( element, "game" ) == 0 )
+		|| ( strcmp( element, "software" ) == 0 )
 		|| ( strcmp( element, "machine" ) == 0 ))
 	{
 		int i;
@@ -476,13 +477,33 @@ void FeListXMLParser::start_element(
 			}
 		}
 		// "cloneof" and "genre" elements appear in hyperspin .xml
+		// "publisher" in listsoftware xml
 		else if (( strcmp( element, "description" ) == 0 )
 				|| ( strcmp( element, "cloneof" ) == 0 )
 				|| ( strcmp( element, "genre" ) == 0 )
 				|| ( strcmp( element, "year" ) == 0 )
+				|| ( strcmp( element, "publisher" ) == 0 )
 				|| ( strcmp( element, "manufacturer" ) == 0 ))
 		{
 			m_element_open=true;
+		}
+		// "info"/"alt_title" in listsoftware xml
+		else if ( strcmp( element, "info" ) == 0 )
+		{
+			std::string value;
+			bool found=false;
+
+			for ( int i=0; attribute[i]; i+=2 )
+			{
+				if (( strcmp( attribute[i], "name" ) == 0 )
+						&& ( strcmp( attribute[i+1], "alt_title" ) == 0 ))
+					found = true;
+				else if ( strcmp( attribute[i], "value" ) == 0 )
+					value = attribute[i+1];
+			}
+
+			if ( found )
+				(*m_itr).set_info( FeRomInfo::AltTitle, value );
 		}
 	}
 }
@@ -490,6 +511,7 @@ void FeListXMLParser::start_element(
 void FeListXMLParser::end_element( const char *element )
 {
 	if (( strcmp( element, "game" ) == 0 )
+		|| ( strcmp( element, "software" ) == 0 )
 		|| ( strcmp( element, "machine" ) == 0 ))
 	{
 		if ( m_collect_data )
@@ -553,7 +575,8 @@ void FeListXMLParser::end_element( const char *element )
 			(*m_itr).set_info( FeRomInfo::Title, m_current_data );
 		else if ( strcmp( element, "year" ) == 0 )
 			(*m_itr).set_info( FeRomInfo::Year, m_current_data );
-		else if ( strcmp( element, "manufacturer" ) == 0 )
+		else if (( strcmp( element, "manufacturer" ) == 0 )
+				|| ( strcmp( element, "publisher" ) == 0 ))
 			(*m_itr).set_info( FeRomInfo::Manufacturer, m_current_data );
 		else if ( strcmp( element, "cloneof" ) == 0 ) // Hyperspin .xml
 			(*m_itr).set_info( FeRomInfo::Cloneof, m_current_data );

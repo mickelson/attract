@@ -199,7 +199,7 @@ emulators from the command line using the following command:
 
 You can also import romlists from mame listxml files as well as gamelists for
 other frontends.  Supported source files include: *.lst (MameWah lists), *.txt
-(Attract-Mode lists) and *.xml (Mame listxml and HyperSpin lists):
+(Attract-Mode lists) and *.xml (Mame listxml, listsoftware and HyperSpin lists):
 
 		attract --import-romlist <source_file> [emulator name]
 
