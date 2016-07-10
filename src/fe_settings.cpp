@@ -1227,11 +1227,11 @@ bool FeSettings::navigate_display( int step, bool wrap_mode )
 	if ( !m_display_cycle.empty() )
 	{
 		if ( i >= (int)m_display_cycle.size() )
-			idx = 0;
+			idx = m_display_cycle[0];
 		else if ( i < 0 )
-			idx = m_display_cycle.size()-1;
+			idx = m_display_cycle[m_display_cycle.size()-1];
 		else
-			idx = i;
+			idx = m_display_cycle[i];
 	}
 
 	bool retval = set_display( idx );
