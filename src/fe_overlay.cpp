@@ -1383,6 +1383,114 @@ public:
 	}
 };
 
+namespace
+{
+
+unsigned char my_char_table[] =
+{
+	' ',
+	'0',
+	'1',
+	'2',
+	'3',
+	'4',
+	'5',
+	'6',
+	'7',
+	'8',
+	'9',
+	'a',
+	'b',
+	'c',
+	'd',
+	'e',
+	'f',
+	'g',
+	'h',
+	'i',
+	'j',
+	'k',
+	'l',
+	'm',
+	'n',
+	'o',
+	'p',
+	'q',
+	'r',
+	's',
+	't',
+	'u',
+	'v',
+	'w',
+	'x',
+	'y',
+	'z',
+	'A',
+	'B',
+	'C',
+	'D',
+	'E',
+	'F',
+	'G',
+	'H',
+	'I',
+	'J',
+	'K',
+	'L',
+	'M',
+	'N',
+	'O',
+	'P',
+	'Q',
+	'R',
+	'S',
+	'T',
+	'U',
+	'V',
+	'W',
+	'X',
+	'Y',
+	'Z',
+	'?',
+	'!',
+	',',
+	'.',
+	':',
+	';',
+	'/',
+	'\\',
+	'\"',
+	'\'',
+	')',
+	'(',
+	'*',
+	'+',
+	'-',
+	'=',
+	'_',
+	'$',
+	'@',
+	'%',
+	'&',
+	'~',
+	0
+};
+
+int get_char_idx( unsigned char c )
+{
+	int i=0;
+	while ( my_char_table[i] )
+	{
+		if ( my_char_table[i] == c )
+			return i;
+		i++;
+	}
+
+	return 0;
+}
+
+};
+
 bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *tp )
 {
@@ -1400,6 +1508,9 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 	bool redraw=true;
 	FeKeyRepeat key_repeat_enabler( m_wnd );
 
+	sf::Event joy_guard;
+	bool did_delete( false ); // flag if the user just deleted a character using the UI controls
+
 	while ( m_wnd.isOpen() )
 	{
 		sf::Event ev;
@@ -1411,6 +1522,9 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				return false;
 
 			case sf::Event::TextEntered:
+
+				did_delete = false;
+
 				if ( ev.text.unicode == 8 ) // backspace
 				{
 					if ( cursor_pos > 0 )
@@ -1439,6 +1553,9 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				break;
 
 			case sf::Event::KeyPressed:
+
+				did_delete = false;
+
 				switch ( ev.key.code )
 				{
 				case sf::Keyboard::Left:
@@ -1496,6 +1613,120 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					break;
 				}
 			default:
+				//
+				// Handle UI actions from non-keyboard input
+				//
+				{
+					FeInputMap::Command c = m_feSettings.map_input( ev );
+
+					switch ( c )
+					{
+					case FeInputMap::Left:
+						if (( ev.type == sf::Event::JoystickMoved )
+								&& ( joy_guard.type == sf::Event::JoystickMoved ))
+							break;
+
+						did_delete = false;
+
+						if ( cursor_pos > 0 )
+							cursor_pos--;
+
+						redraw = true;
+
+						if ( ev.type == sf::Event::JoystickMoved )
+							joy_guard = ev;
+						break;
+
+					case FeInputMap::Right:
+						if (( ev.type == sf::Event::JoystickMoved )
+								&& ( joy_guard.type == sf::Event::JoystickMoved ))
+							break;
+
+						did_delete = false;
+
+						if ( cursor_pos < (int)str.size() )
+							cursor_pos++;
+
+						redraw = true;
+
+						if ( ev.type == sf::Event::JoystickMoved )
+							joy_guard = ev;
+						break;
+
+					case FeInputMap::Up:
+						if (( ev.type == sf::Event::JoystickMoved )
+								&& ( joy_guard.type == sf::Event::JoystickMoved ))
+							break;
+
+						if ( cursor_pos < (int)str.size() )
+						{
+							if ( did_delete )
+							{
+								str.insert( cursor_pos, 1, my_char_table[0] );
+								redraw = true;
+								did_delete = false;
+							}
+							else
+							{
+								int idx = get_char_idx( str[cursor_pos] );
+
+								if ( my_char_table[idx+1] )
+								{
+									str[cursor_pos] = my_char_table[idx+1];
+									redraw = true;
+									did_delete = false;
+								}
+							}
+						}
+						else // allow inserting new characters at the end by pressing Up
+						{
+							str += my_char_table[0];
+							redraw = true;
+							did_delete = false;
+						}
+
+						if ( ev.type == sf::Event::JoystickMoved )
+							joy_guard = ev;
+						break;
+
+					case FeInputMap::Down:
+						if (( ev.type == sf::Event::JoystickMoved )
+								&& ( joy_guard.type == sf::Event::JoystickMoved ))
+							break;
+
+						if ( did_delete ) // force user to do something else to confirm delete
+							break;
+
+						if ( cursor_pos < (int)str.size() )
+						{
+							int idx = get_char_idx( str[cursor_pos] );
+
+							if ( idx > 0 )
+							{
+								str[cursor_pos] = my_char_table[idx-1];
+								redraw = true;
+							}
+							else //if ( idx == 0 )
+							{
+								// Special case allowing the user to delete
+								// a character
+								str.erase( cursor_pos, 1 );
+								redraw = true;
+								did_delete = true;
+							}
+						}
+
+						if ( ev.type == sf::Event::JoystickMoved )
+							joy_guard = ev;
+						break;
+
+					case FeInputMap::Back:
+						return false;
+
+					case FeInputMap::Select:
+						return true;
+					}
+				}
 			break;
 			}
 
@@ -1522,6 +1753,21 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 		}
 		else
 			sf::sleep( sf::milliseconds( 30 ) );
+
+		//
+		// Check if previous joystick move is now done (in which case we clear the guard)
+		//
+		if ( joy_guard.type == sf::Event::JoystickMoved )
+		{
+			sf::Joystick::update();
+
+			float pos = sf::Joystick::getAxisPosition(
+				joy_guard.joystickMove.joystickId,
+				joy_guard.joystickMove.axis );
+
+			if ( std::abs( pos ) < m_feSettings.get_joy_thresh() )
+				joy_guard = sf::Event();
+		}
 
 	}
 	return true;
