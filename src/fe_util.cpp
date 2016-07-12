@@ -39,6 +39,7 @@
 #include <dirent.h>
 
 #include <SFML/Config.hpp>
+#include <SFML/System/Sleep.hpp>
 
 #ifdef USE_LIBARCHIVE
 #include <zlib.h>
@@ -53,7 +54,6 @@
 #include <sys/wait.h>
 #include <pwd.h>
 #include <signal.h>
-#include <SFML/System/Sleep.hpp>
 #endif
 
 #ifdef SFML_SYSTEM_MACOS
@@ -843,6 +843,7 @@ bool run_program( const std::string &prog,
 			if ( exit_is.get_current_state( joy_thresh ) )
 			{
 				TerminateProcess( pi.hProcess, 0 );
+
 				keep_wait=false;
 			}
 			break;
@@ -952,7 +953,14 @@ bool run_program( const std::string &prog,
 					//
 					if ( exit_is.get_current_state( joy_thresh ) )
 					{
-						kill( pid, SIGTERM );
+						// Where the user has configured the "exit hotkey" in Attract-Mode to the same key as the emulator
+						// uses to exit, we often have a problem of losing focus.  Delaying a bit and testing to make sure
+						// the emulator process is still running before sending the kill signal seems to help...
+						//
+						sf::sleep( sf::milliseconds( 100 ) );
+						if ( kill( pid, 0 ) == 0 )
+							kill( pid, SIGTERM );
+
 						break; // leave do/while loop
 					}
 					sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
