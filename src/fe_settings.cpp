@@ -250,13 +250,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_confirm_favs( false ),
 	m_track_usage( true ),
 	m_multimon( true ),
-#ifdef FE_RPI
-	m_window_mode( Fullscreen ),
-	m_smooth_images( false ),
-#else
 	m_window_mode( Default ),
 	m_smooth_images( true ),
-#endif
 	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_accel_selection( true ),
 	m_selection_speed( 40 ),
