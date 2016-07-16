@@ -1169,7 +1169,8 @@ bool FeOverlay::check_for_cancel()
 	{
 		FeInputMap::Command c = m_feSettings.map_input( ev );
 
-		if (( c == FeInputMap::ExitMenu )
+		if (( c == FeInputMap::Back )
+				|| ( c == FeInputMap::ExitMenu )
 				|| ( c == FeInputMap::ExitNoMenu ))
 			return true;
 	}
