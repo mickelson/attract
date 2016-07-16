@@ -22,8 +22,8 @@ AltRomname;Nome alternativo della ROM
 AltTitle;Titolo alternativo
 Ambient Soundtrack;Musica di sottofondo
 Ambient Volume;Volume musica di sottofondo
-Artwork Label;Nome dell'Artwork
-Artwork Path;Percorso dell'Artwork
+Artwork Label;Nome della risorsa
+Artwork Path;Percorso della risorsa
 Back;Indietro
 Category;Categoría
 CloneOf;Clone di
@@ -52,6 +52,7 @@ Custom3; Personalizzato 3
 Custom4; Personalizzato 4
 Custom5; Personalizzato 5
 Custom6; Personalizzato 6
+Default Action;Azione predefinita
 Default Font;Font predefinito
 Delete display '$1'?;Cancello il display '$1'?
 Delete emulator '$1'?;Cancello l'emulatore '$1'?
@@ -69,7 +70,7 @@ DisplayType;Tipo di display
 Displays;Display
 Displays Menu;Menù dei display
 Down;Giù
-Edit Artwork;Modifica Artwork
+Edit Artwork;Modifica risorsa immagini
 Edit Emulator;Modifica emulatore
 Edit Input;Modifica controlli
 Empty;Vuoto
@@ -133,7 +134,7 @@ No;No
 No Sort;Nessun ordinamento
 No Wrap;Non ciclare
 None;Nessuno
-OR;O
+OR;o
 Overwrite existing '$1' list?;Sovrascrivere la lista '$1'?
 Play Sound;Esegui il suono
 PlayedCount;Partite giocate
@@ -166,7 +167,7 @@ Scrape Marquees;Recupera i marquee
 Scrape Snaps;Recupera le snap
 Scrape Videos (MAME only);Scarica video (solo per MAME)
 Scraper;Recupera immagini in rete
-Scraping Artwork: $1%;Sto scaricando l'artwork: $1%
+Scraping Artwork: $1%;Sto recuperando le immagini: $1%
 Screen Saver;Salvaschermo
 Screen Saver Timeout;Timeout salvaschermo
 Screenshot;Screenshot
@@ -185,7 +186,7 @@ System Identifier;Identificatore del sistema
 Tags;Etichette
 Target;Obbiettivo
 The name for this filter;Nome per questo filtro
-This will overwrite an existing mapping ($1).  Proceed?;Questo sovrascriverà la mappatura ($1). Continuare?
+This will overwrite an existing mapping ($1).  Proceed?;Sovrascrivere l'associazione esistente ($1)?
 Title;Titolo
 Toggle Flip;Invertire
 Toggle Layout;Pagina successiva tema
@@ -195,6 +196,7 @@ Toggle Rotate Left;Rotazione a sinistra
 Toggle Rotate Right;Rotazione a destra
 Track Usage;Memorizza statistiche di utilizzo
 Up;Su
+Video Decoder;Decoder video
 Window;Finestra
 Window Mode;Modalità finestra
 Wrap within Display (Default);Non cambiare display (Predefinito)
@@ -212,12 +214,13 @@ equals;è uguale
 #
 _help_art;Una sorgente di immagini disponible per essere utilizzata con questo tema
 _help_art_add;Aggiunge una nuova risorsa immagini (marquee, flyer, screenshot, etc.)
-_help_art_label;Etichetta che identifica questa risorsa per gli artwork (usato per i temi)
-_help_art_path;Il percorso ai file per questo artwork. Più directory possono essere inserite utilizzando il punto e virgola.
+_help_art_label;Nome che identifica questa risorsa immagini (viene utilizzato nei temi)
+_help_art_path;Percorso nel quale è possibile trovare le immagini. Possono essere specificate più directory separandole con il punto e virgola.
 _help_back;Menù precedente
 _help_confirm_favs;Conferma l'aggiunta/rimozione del gioco dai preferiti
 _help_control_add_favourite;Configura i controlli per aggiungere/togliere dai preferiti il gioco selezionato
 _help_control_add_tags;Configura i controlli per aggiungere/togliere etichette al gioco selezionato
+_help_control_back;Configura i controlli per tornare indietro
 _help_control_configure;Configura i controlli per mostrare il menù di configurazione
 _help_control_custom1;Configura i controlli per il "Personalizzato 1"
 _help_control_custom2;Configura i controlli per il "Personalizzato 2"
@@ -230,16 +233,22 @@ _help_control_down;Configura i controlli che muovono la selezione in basso
 _help_control_exit;Configura i controlli che permettono di uscire dal frontend
 _help_control_exit_no_menu;Configura i controlli che permettono di uscire immediatamente dal programma e tornare al desktop
 _help_control_filters_menu;Configura i controlli per mostrare il menù dei filtri
+_help_control_left;Configura i controlli per spostare la selezione a sinistra
 _help_control_next_display;Configura i controlli per passare al display successivo
 _help_control_next_favourite;Configura i controlli per passare al preferito successivo
 _help_control_next_filter;Configura i controlli per passare al filtro successivo
+_help_control_next_game;Configura i controlli per spostarsi al gioco successivo
 _help_control_next_letter;Configura i controlli per passare alla lettera successiva
+_help_control_next_page;Configura i controlli per spostarsi alla pagina successiva
 _help_control_prev_display;Configura i controlli per passare al display precedente
 _help_control_prev_favourite;Configura i controlli per passare al preferito precedente
 _help_control_prev_filter;Configura i controlli per passare al filtro precedente
+_help_control_prev_game;Configura i controlli per spostarsi al gioco precedente
 _help_control_prev_letter;Configura i controlli per passare alla lettera precedente
+_help_control_prev_page;Configura i controlli per spostarsi alla pagina precedente
 _help_control_random_game;Configura i controlli per saltare ad un gioco casuale
 _help_control_replay_last_game;Configura i controlli per eseguire nuovamente l'ultimo titolo giocato
+_help_control_right;Configura i controlli per spostare la selezione a destra
 _help_control_screen_saver;Configura i controlli per eseguire immediatamente il salvaschermo
 _help_control_screenshot;Configura i controlli per realizzare uno screenshot
 _help_control_select;Configura i controlli per eseguire la selezione attuale
@@ -252,9 +261,9 @@ _help_control_toggle_rotate_right;Configura i controlli per ruotare il display a
 _help_control_up;Configura i controlli che muovono la selezione in alto
 _help_controls;Configura gli input di joystick, tastiera e mouse per controllare Attract-Mode
 _help_default_font;Il nome del font predefinito da utilizzare
-_help_display_add;Aggiungere un nuovo display
+_help_display_add;Aggiunge un nuovo display
 _help_display_add_filter;Aggiungere un filtro al gruppo di filtri di questo display
-_help_display_delete;Cancellare questo display
+_help_display_delete;Cancella questo display
 _help_display_filter;Modifica la configurazione di questo filtro
 _help_display_global_filter;Configura regole ed eccezioni che verranno applicate a ciascun titolo presente nella lista di ROM di questo display
 _help_display_in_cycle;Includere questo display nel ciclo "Display precedente"/"Display successivo"?
@@ -272,30 +281,31 @@ _help_emu_delete;Cancella le impostazioni di questo emulatore
 _help_emu_executable;Percorso completo e nome dell'eseguibile dell'emulatore. $HOME verrà rimpiazzato con la home directory dell'utente
 _help_emu_exit_hotkey;Configura una hotkey per uscire dall'emulatore. Attract-Mode terminerà l'emulatore se questa hotkey verrà premuta
 _help_emu_gen_romlist;Genera la lista di ROM cercando all'interno dei percorsi indicati file con le estensioni specificate, incorporando anche le informazioni recuperate dai file aggiuntivi quando disponibili
-_help_emu_import_extras;Percorso per ogni file aggiuntivo che deve essere letto quando viene generata una lista di ROM per questo emulatore. I file supportati sono: catver.ini (per le categorie dei giochi), nplayers.ini (per il numero dei giocatori) e mame.xml.  Più directory possono essere inserite utilizzando il punto e virgola.
+_help_emu_import_extras;Percorso per ogni file aggiuntivo che deve essere letto quando viene generata una lista di ROM per questo emulatore. I file supportati sono: catver.ini (per le categorie dei giochi), nplayers.ini (per il numero dei giocatori) e mame.xml. Possono essere specificate più directory separandole con il punto e virgola.
 _help_emu_info_source;Usare "listxml" se l'emulatore restituisce un output compatibile MAME -listxml, "listsoftware" per le liste software compatibili mame/mess -listsoftware, "thegamesdb.net" per recuperare le informazioni da thegamesdb.net, o "steam" per leggere da una installazione Steam, o "scummvm" se l'emulatore è ScummVM.  "listsoftware" e "thegamesdb.net" richiedono che venga configurato un identificatore di sistema riconosciuto da queste sorgenti.
 _help_emu_minimum_run_time;Configura un tempo mínimo di esecuzione (in secondi).  Attract-Mode aspetterà dopo aver eseguito l'emulatore finché è scaduto il tempo minimo, dopodiché passerà in primo piano. Questo deve essere impostato con Steam per funzionare correttamente su Windows. Impostare questo valore a 0 a meno che non si sappia quello che si fa.
 _help_emu_romext;Estensioni dei file ROM per questo emulatore (per es. .zip) Più estensioni possono essere inserite utilizzando il punto e virgola. Specificare "<DIR>" come valore se i giochi sono memorizzati in sottodirectory separate.
-_help_emu_rompath;Percorsi per le ROM di questo emulatore. Più directory possono essere inserite utilizzando il punto e virgola.
+_help_emu_rompath;Percorsi per le ROM di questo emulatore. Possono essere specificate più directory separandole con il punto e virgola.
 _help_emu_scrape_artwork;Recupera le immagini mancanti per questo emulatore dai siti specializzati
 _help_emu_sel;Configura le impostazioni dell'emulatore
 _help_emu_system;Identificatori del sistema per questo emulatore. Più valori possono essere inseriti utilizzando il punto e virgola.
 _help_emulators;Configura le impostazioni degli emulatori
 _help_exit_command;Comando da eseguire quando viene selezionata l'uscita dal programma (con conferma) [per es. "sudo shutdown"]
-_help_filter_add_exception;Aggiungere un'eccezione per questo filtro. Se un gioco soddisfa l'eccezione (e non è già stato escluso da una regola precedente), questo verrà incluso nel filtro.
-_help_filter_add_rule;Aggiungere una regola per questo filtro
-_help_filter_delete;Cancellare questo filtro
+_help_filter_add_exception;Aggiunge un'eccezione per questo filtro. Se un gioco soddisfa l'eccezione (e non è già stato escluso da una regola precedente), questo verrà incluso nel filtro.
+_help_filter_add_rule;Aggiunge una regola per questo filtro
+_help_filter_delete;Cancella questo filtro
 _help_filter_exception;Configura l'eccezione
 _help_filter_list_limit;Imposta un valore diverso da zero se vuoi limitare il numero di voci presenti nella lista. Utilizza un valore positivo per recuperare i primi titoli (per esempio "10" restituirà i primi 10 titoli), un valore negativo per recuperare gli ultimi (per esempio "-25" restituirà gli ultimi 25 titoli), oppure "0" per averli tutti
 _help_filter_name;Il nome di questo filtro
 _help_filter_rule;Configura le regole per il filtro
 _help_filter_sort_by;L'attributo del gioco che deve essere utilizzato per ordinare la lista. Imposta "Nessun ordinamento" per mantenere l'ordinamento originale della lista
 _help_filter_wrap_mode;Configura cosa succede quando i comandi "Filtro successivo" o "Filtro precedente" raggiungono il termine della lista
-_help_font_path; La directory che contiene i font. Più directory possono essere inserite utilizzando il punto e virgola. Attract-Mode cercherà ricorsivamente all'interno di queste directory il font specificato.
-_help_hide_brackets;Nascondere il testo tra parentesi quando viene mostrato il titolo del gioco
+_help_font_path; La directory che contiene i font. Possono essere specificate più directory separandole con il punto e virgola. Attract-Mode cercherà ricorsivamente all'interno di queste directory il font specificato.
+_help_hide_brackets;Nasconde il testo tra parentesi quando viene mostrato il titolo del gioco
 _help_input_action;
-_help_input_add;Aggiungere una nuova mappatura del controller per questa azione
-_help_input_delete;Cancellare questa mappatura del controller
+_help_input_add;Aggiunge una nuova associazione dei tasti per questa azione
+_help_input_default_action;Configura l'azione predefinita per questo controllo
+_help_input_delete;Cancella questa associazione dei tasti
 _help_intro;Configura il video di introduzione
 _help_joystick_threshold;Umbral para los movimientos de palanca registrados, de 1 a 100 (100=menos sensible)
 _help_language;Seleziona la lingua dell'interfaccia di Attract-Mode
@@ -323,6 +333,7 @@ _help_sound;Configura il volume dei suoni, l'associazione dei suoni agli eventi 
 _help_sound_sel;Assegna un suono a questo evento/azione
 _help_startup_mode;Configura come si deve comportare Attract-Mode quando viene eseguito
 _help_track_usage;Configura se Attract-Mode deve gestire le statistiche di utilizzo (tempo complessivo e numero di partite giocate per ciascun titolo)
+_help_video_decoder;Configura il decoder da utilizzare per riprodurre i video (nel caso siano disponibili più decoder)
 _help_volume;I valori consentiti per il volume vanno da 0 (silenzio) a 100 (massimo)
 _help_window_mode;Configura se il frontend deve lavorare a tutto schermo o essere eseguito in una finestra
 _sort_regexp;^(Vs\. The |The |Vs\. )
@@ -345,6 +356,7 @@ Overlay Artwork;Overlay artwork
 Page Down;Pagina precedente
 Page Up;Pagina seguente
 Preserve Aspect Ratio;Mantieni il rapporto
+Scraped $1 artwork file(s);Immagini recuperate: $1
 en;English
 es;Español
 fr;Français
@@ -357,14 +369,3 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 #
 # Strings still needing translation
 #
-Default Action;Default Action
-Video Decoder;Video Decoder
-_help_control_back;Set the control(s) that go back
-_help_control_left;Set the control(s) that move the selection left
-_help_control_next_game;Set the control(s) that move to the next game
-_help_control_next_page;Set the control(s) that move the selection up one page
-_help_control_prev_game;Set the control(s) that move to the previous game
-_help_control_prev_page;Set the control(s) that move the selection down one page
-_help_control_right;Set the control(s) that move the selection right
-_help_input_default_action;Set the default behaviour for this control
-_help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)
