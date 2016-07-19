@@ -1726,6 +1726,8 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 
 					case FeInputMap::Select:
 						return true;
+					default:
+						break;
 					}
 				}
 			break;

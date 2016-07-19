@@ -78,6 +78,7 @@ bool has_same_name_as_parent( FeRomInfo &rom, ParentMapType &parent_map )
 	return false;
 }
 
+#ifndef NO_NET
 bool process_q_simple( FeNetQueue &q,
 	FeImporterContext &c,
 	int taskc )
@@ -134,6 +135,7 @@ bool process_q_simple( FeNetQueue &q,
 	}
 	return true;
 }
+#endif
 
 }; // end namespace
 
@@ -241,22 +243,31 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 #endif
 }
 
-bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
-{
 #ifndef NO_NET
-	const char *HOSTNAME = "http://thegamesdb.net";
-	const char *PLATFORM_LIST_REQ = "api/GetPlatformsList.php";
-	const char *PLAT_REQ = "api/GetPlatform.php?id=$1";
-	const char *GAME_REQ = "api/GetGame.php?name=$1";
-	const char *FLYER = "flyer/";
-	const char *WHEEL = "wheel/";
-	const char *MARQUEE = "marquee/";
-	const char *SNAP = "snap/";
-	const char *FANART = "fanart/";
+namespace
+{
+//
+// Functions and constants used by thegamesdb_scraper()
+//
+const char *HOSTNAME = "http://thegamesdb.net";
+const char *PLATFORM_LIST_REQ = "api/GetPlatformsList.php";
+const char *PLAT_REQ = "api/GetPlatform.php?id=$1";
+const char *GAME_REQ = "api/GetGame.php?name=$1";
 
-	//
-	// Get a list of valid platforms
-	//
+const char *flyer_sub = "flyer/";
+const char *wheel_sub = "wheel/";
+const char *marquee_sub = "marquee/";
+const char *snap_sub = "snap/";
+const char *fanart_sub = "fanart/";
+
+//
+// Get a list of valid platforms
+//
+bool get_system_list( FeImporterContext &c,
+	FeSettings &fes,
+	std::vector<std::string> &system_list,
+	std::vector<int> &system_ids )
+{
 	FeNetQueue q;
 	q.add_buffer_task( HOSTNAME, PLATFORM_LIST_REQ, 0 );
 	sf::Http::Response::Status status;
@@ -266,22 +277,19 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 	if ( status != sf::Http::Response::Ok )
 	{
-		get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
+		fes.get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
 			as_str( status ), c.user_message );
 
 		std::cerr << " ! " << c.user_message << " (" << err_req << ")" << std::endl;
-		return true;
+		return false;
 	}
 
-	int temp;
+	int ignored;
 	std::string body;
-	q.pop_completed_task( temp, body );
+	q.pop_completed_task( ignored, body );
 
 	FeGameDBPlatformListParser gdbplp;
 	gdbplp.parse( body );
-
-	std::vector<std::string> system_list;
-	std::vector<int> system_ids;
 
 	const std::vector<std::string> &sl_temp = c.emulator.get_systems();
 	for ( std::vector<std::string>::const_iterator itr = sl_temp.begin();
@@ -329,13 +337,113 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		case FeEmulatorInfo::Steam:
 			system_list.push_back( "PC" ); break;
 		default:
-			get_resource( "Error: None of the configured system identifier(s) are recognized by thegamesdb.net.",
-								c.user_message );
+			fes.get_resource( "Error: None of the configured system identifier(s) are recognized by thegamesdb.net.",
+				c.user_message );
 
 			std::cerr << " ! " << c.user_message << std::endl;
-			return true;
+			return false;
 		}
 	}
+
+	return true;
+}
+
+//
+// helper function for creating a "file download" task
+//
+bool create_ft(
+	FeNetQueue &q,
+	const std::string &source_base,
+	const std::string &source_name,
+	const std::string &out_base,
+	const char *out_sub,
+	const std::string &out_name )
+{
+	if ( source_name.empty() )
+		return false;
+
+	std::string fname = out_base;
+	fname += out_sub;
+
+	if ( art_exists( fname, out_name ) )
+		return false;
+
+	fname += out_name;
+
+	confirm_directory( out_base, out_sub );
+
+	std::string hostn = HOSTNAME;
+	std::string base_req = "banners/";
+	get_url_components( source_base, hostn, base_req );
+
+
+	q.add_file_task( hostn, base_req + source_name, fname );
+	return true;
+}
+
+bool create_fanart_ft(
+	FeNetQueue &q,
+	const std::string &source_base,
+	const std::vector < std::string > &source_names,
+	const std::string &out_base,
+	const std::string &out_name,
+	bool done_first=true )
+{
+	if ( source_names.empty() )
+		return false;
+
+	std::string fname = out_base;
+	fname += fanart_sub;
+	fname += out_name;
+	fname += "/";
+
+	confirm_directory( out_base, "" );
+	confirm_directory( out_base + fanart_sub, out_name );
+
+	std::string hostn = HOSTNAME;
+	std::string base_req = "banners/";
+	get_url_components( source_base, hostn, base_req );
+
+	for ( std::vector<std::string>::const_iterator itr = source_names.begin();
+			itr != source_names.end(); ++itr )
+	{
+		size_t start_pos = (*itr).find_last_of( "/\\" );
+
+		if (( start_pos != std::string::npos )
+			&& ( !file_exists( fname + (*itr).substr( start_pos+1 ) ) ))
+		{
+			size_t end_pos = (*itr).find_last_of( '.' );
+			if (( end_pos != std::string::npos ) && ( end_pos > start_pos ))
+			{
+				q.add_file_task( hostn,
+					base_req + (*itr),
+					fname + (*itr).substr( start_pos+1, end_pos-start_pos-1 ),
+					done_first );
+
+				done_first=true;
+			}
+		}
+	}
+
+	return true;
+}
+
+};
+#endif
+
+bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
+{
+#ifndef NO_NET
+	std::vector<std::string> system_list;
+	std::vector<int> system_ids;
+
+	//
+	// Get a list of valid platforms
+	//
+	if ( !get_system_list( c, *this, system_list, system_ids ) )
+		return true;
+
+	FeNetQueue q;
 
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
 	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
@@ -349,6 +457,9 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		for ( std::vector<int>::iterator iti=system_ids.begin();
 				iti != system_ids.end(); ++iti )
 		{
+			sf::Http::Response::Status status;
+			std::string err_req;
+
 			std::string plat_string = PLAT_REQ;
 			perform_substitution( plat_string, "$1", as_str( *iti ) );
 
@@ -361,70 +472,27 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 				continue;
 			}
 
-			body.clear();
-			q.pop_completed_task( temp, body );
+			int ignored;
+			std::string body;
+			q.pop_completed_task( ignored, body );
 
 			FeGameDBArt my_art;
 			FeGameDBPlatformParser gdbpp( my_art );
 			gdbpp.parse( body );
 
-			std::string hostn = HOSTNAME;
-			std::string base_req = "banners/";
-			get_url_components( my_art.base,
-				hostn, base_req );
+#define CHECK_AND_CREATE_FT(LABEL) \
+	do { if ( m_scrape_##LABEL##s  ) \
+		create_ft( q, my_art.base, my_art.LABEL, base_path, LABEL##_sub, emu_name ); \
+	} while(0)
 
-			std::string path = base_path + FLYER;
-			if ( m_scrape_flyers && ( !my_art.flyer.empty() )
-				&& ( !art_exists( path, emu_name ) ))
-			{
-				confirm_directory( base_path, FLYER );
-				q.add_file_task( hostn, base_req + my_art.flyer,
-					path + emu_name );
-			}
-
-			path = base_path + WHEEL;
-			if ( m_scrape_wheels && ( !my_art.wheel.empty() )
-				&& ( !art_exists( path, emu_name ) ))
-			{
-				confirm_directory( base_path, WHEEL );
-				q.add_file_task( hostn, base_req + my_art.wheel,
-					path + emu_name );
-			}
-
-			path = base_path + MARQUEE;
-			if ( m_scrape_marquees && ( !my_art.marquee.empty() )
-				&& ( !art_exists( path, emu_name ) ))
-			{
-				confirm_directory( base_path, MARQUEE );
-				q.add_file_task( hostn, base_req + my_art.marquee,
-					path + emu_name );
-			}
+			CHECK_AND_CREATE_FT(flyer);
+			CHECK_AND_CREATE_FT(wheel);
+			CHECK_AND_CREATE_FT(marquee);
+			CHECK_AND_CREATE_FT(snap);
+#undef CHECK_AND_CREATE_FT
 
 			if ( m_scrape_fanart && !my_art.fanart.empty() )
-			{
-				std::string path_base = base_path + FANART + emu_name + "/";
-				confirm_directory( base_path, "" );
-				confirm_directory( base_path + FANART, emu_name );
-
-				for ( std::vector<std::string>::iterator itr = my_art.fanart.begin();
-							itr != my_art.fanart.end(); ++itr )
-				{
-					size_t start_pos = (*itr).find_last_of( "/\\" );
-					size_t end_pos = (*itr).find_last_of( '.' );
-
-					if (( start_pos != std::string::npos )
-						&& ( !file_exists( path_base + (*itr).substr( start_pos+1 ) ) ))
-					{
-						if (( end_pos != std::string::npos ) && ( end_pos > start_pos ))
-						{
-							q.add_file_task( hostn,
-								base_req + (*itr),
-								path_base + (*itr).substr( start_pos+1,
-											end_pos-start_pos-1 ) );
-						}
-					}
-				}
-			}
+				create_fanart_ft( q, my_art.base, my_art.fanart, base_path, emu_name );
 		}
 	}
 
@@ -534,121 +602,30 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 
 				if ( c.scrape_art && !my_art.base.empty() )
 				{
-					std::string hostn = HOSTNAME;
-					std::string base_req = "banners/";
-					get_url_components( my_art.base,
-						hostn, base_req );
-
 					const FeRomInfo &rom = *(worklist[id]);
 
-					if ( m_scrape_flyers && ( !my_art.flyer.empty() ) && (!has_artwork( rom, "flyer" )) )
-					{
-						std::string fname = base_path + FLYER;
+					bool use_alt = ( prefer_alt_filename
+						&& !rom.get_info( FeRomInfo::AltRomname ).empty() );
 
-						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
-						if ( prefer_alt_filename && !altname.empty() )
-							fname += rom.get_info( FeRomInfo::AltRomname );
-						else
-							fname += rom.get_info( FeRomInfo::Romname );
+					const std::string &rn = use_alt ? rom.get_info( FeRomInfo::AltRomname )
+						: rom.get_info( FeRomInfo::Romname );
 
-						confirm_directory( base_path, FLYER );
-						q.add_file_task( hostn, base_req + my_art.flyer, fname );
-					}
-					else
-						done_count++;
+#define CHECK_AND_CREATE_FT(LABEL) \
+	do { if ( m_scrape_##LABEL##s && ( !my_art.LABEL.empty() ) \
+			&& (!has_artwork( rom, #LABEL )) ) \
+		create_ft( q, my_art.base, my_art.LABEL, base_path, LABEL##_sub, rn ); \
+	else \
+		done_count++; } \
+	while(0)
 
-					if ( m_scrape_wheels && ( !my_art.wheel.empty() ) && (!has_artwork( rom, "wheel" )) )
-					{
-						std::string fname = base_path + WHEEL;
-
-						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
-						if ( prefer_alt_filename && !altname.empty() )
-							fname += rom.get_info( FeRomInfo::AltRomname );
-						else
-							fname += rom.get_info( FeRomInfo::Romname );
-
-						confirm_directory( base_path, WHEEL );
-						q.add_file_task( hostn, base_req + my_art.wheel, fname );
-					}
-					else
-						done_count++;
-
-					if ( m_scrape_marquees && (!my_art.marquee.empty() ) && (!has_artwork( rom, "marquee" )) )
-					{
-						std::string fname = base_path + MARQUEE;
-
-						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
-						if ( prefer_alt_filename && !altname.empty() )
-							fname += rom.get_info( FeRomInfo::AltRomname );
-						else
-							fname += rom.get_info( FeRomInfo::Romname );
-
-						confirm_directory( base_path, MARQUEE );
-						q.add_file_task( hostn, base_req + my_art.marquee, fname );
-					}
-					else
-						done_count++;
-
-					if ( m_scrape_snaps && (!my_art.snap.empty() ) && (!has_image_artwork( rom, "snap" )) )
-					{
-						std::string fname = base_path + SNAP;
-
-						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
-						if ( prefer_alt_filename && !altname.empty() )
-							fname += rom.get_info( FeRomInfo::AltRomname );
-						else
-							fname += rom.get_info( FeRomInfo::Romname );
-
-						confirm_directory( base_path, SNAP );
-						q.add_file_task( hostn, base_req + my_art.snap, fname );
-					}
-					else
-						done_count++;
+					CHECK_AND_CREATE_FT(flyer);
+					CHECK_AND_CREATE_FT(wheel);
+					CHECK_AND_CREATE_FT(marquee);
+					CHECK_AND_CREATE_FT(snap);
+#undef CHECK_AND_CREATE_FT
 
 					if ( m_scrape_fanart && !my_art.fanart.empty() )
-					{
-						std::string fname_base = base_path + FANART;
-
-						confirm_directory( base_path, "" );
-
-						const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
-						if ( prefer_alt_filename && !altname.empty() )
-						{
-							fname_base += rom.get_info( FeRomInfo::AltRomname );
-							confirm_directory( base_path + FANART,
-								rom.get_info( FeRomInfo::AltRomname ) );
-						}
-						else
-						{
-							fname_base += rom.get_info( FeRomInfo::Romname );
-							confirm_directory( base_path + FANART,
-								rom.get_info( FeRomInfo::Romname ) );
-						}
-
-						fname_base += "/";
-
-						bool done_first=false; // we only count the first fanart against our percentage completed...
-
-						for ( std::vector<std::string>::iterator itr = my_art.fanart.begin();
-								itr != my_art.fanart.end(); ++itr )
-						{
-							size_t start_pos = (*itr).find_last_of( "/\\" );
-							size_t end_pos = (*itr).find_last_of( '.' );
-
-							if (( start_pos != std::string::npos )
-								&& ( !file_exists( fname_base + (*itr).substr( start_pos+1 ) ) ))
-							{
-								if (( end_pos != std::string::npos ) && ( end_pos > start_pos ))
-								{
-									q.add_file_task( hostn,
-												base_req + (*itr),
-												fname_base + (*itr).substr( start_pos+1, end_pos-start_pos-1 ),
-												done_first );
-									done_first=true;
-								}
-							}
-						}
-					}
+						create_fanart_ft( q, my_art.base, my_art.fanart, base_path, rn, false );
 					else
 						done_count++;
 				}
