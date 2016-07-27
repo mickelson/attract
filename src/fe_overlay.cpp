@@ -1613,6 +1613,8 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				default:
 					break;
 				}
+				break;
+
 			default:
 				//
 				// Handle UI actions from non-keyboard input
