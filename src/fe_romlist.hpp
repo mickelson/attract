@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -103,15 +103,18 @@ public:
 	void init_as_empty_list();
 
 	bool load_romlist( const std::string &romlist_path,
-					const std::string &romlist_name,
-					const std::string &user_path,
-					const std::string &stat_path,
-					FeDisplayInfo &display );
+		const std::string &romlist_name,
+		const std::string &user_path,
+		const std::string &stat_path,
+		FeDisplayInfo &display );
+
+	void create_filters( FeDisplayInfo &display ); // called by load_romlist()
 
 	int process_setting( const std::string &setting,
 		const std::string &value,
 		const std::string &fn );
 
+	void mark_favs_and_tags_changed();
 	void save_state();
 	bool set_fav( FeRomInfo &rom, FeDisplayInfo &display, bool fav );
 

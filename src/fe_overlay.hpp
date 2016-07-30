@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -76,6 +76,7 @@ public:
 		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
 
 	bool config_dialog();
+	bool edit_game_dialog();
 	int languages_dialog();
 	int tags_dialog();
 

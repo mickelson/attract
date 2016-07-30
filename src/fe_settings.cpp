@@ -1760,14 +1760,29 @@ void FeSettings::run( int &minimum_run_seconds )
 		m_joy_thresh );
 
 	if ( m_track_usage )
-	{
-		const std::string rl_name = m_displays[m_current_display].get_info( FeDisplayInfo::Romlist );
-		std::string path = m_config_path + FE_STATS_SUBDIR;
-		confirm_directory( path, rl_name );
+		update_stats( 1, play_timer.getElapsedTime().asSeconds() );
+}
 
-		path += rl_name + "/";
-		rom->update_stats( path, 1, play_timer.getElapsedTime().asSeconds() );
-	}
+void FeSettings::update_stats( int play_count, int play_time )
+{
+	int filter_index = get_current_filter_index();
+
+	if ( get_filter_size( filter_index ) < 1 )
+		return;
+
+	int rom_index = get_rom_index( filter_index, 0 );
+
+	FeRomInfo *rom = get_rom_absolute( filter_index, rom_index );
+	if ( !rom )
+		return;
+
+	const std::string rl_name = m_displays[m_current_display].get_info( FeDisplayInfo::Romlist );
+
+	std::string path = m_config_path + FE_STATS_SUBDIR;
+	confirm_directory( path, rl_name );
+
+	path += rl_name + "/";
+	rom->update_stats( path, play_count, play_time );
 }
 
 int FeSettings::exit_command() const
@@ -2029,6 +2044,19 @@ FeEmulatorInfo *FeSettings::create_emulator( const std::string &n )
 void FeSettings::delete_emulator( const std::string &n )
 {
 	m_rl.delete_emulator( n );
+}
+
+void FeSettings::get_list_of_emulators( std::vector<std::string> &emu_list )
+{
+	std::string path = get_config_dir();
+	path += FE_EMULATOR_SUBDIR;
+
+	get_basename_from_extension(
+		emu_list,
+		path,
+		FE_EMULATOR_FILE_EXTENSION );
+
+	std::sort( emu_list.begin(), emu_list.end() );
 }
 
 bool FeSettings::get_font_file( std::string &fpath,
@@ -3321,4 +3349,132 @@ bool FeSettings::get_best_dynamic_image_file(
 	paths.push_back( path );
 
 	return gather_artwork_filenames( paths, base, vid_list, image_list );
+}
+
+void FeSettings::update_romlist_after_edit(
+	const FeRomInfo &original,
+	const FeRomInfo &replacement,
+	bool erase_it )
+{
+	if ( m_current_display < 0 )
+		return;
+
+	//
+	// Update the in memory romlist now
+	//
+	FeRomInfoListType &rl = m_rl.get_list();
+
+	for ( FeRomInfoListType::iterator it = rl.begin(); it != rl.end(); )
+	{
+		if ( (*it) == original )
+		{
+			if ( erase_it )
+				it = rl.erase( it );
+			else
+			{
+				(*it) = replacement;
+				++it;
+			}
+		}
+		else
+			++it;
+	}
+
+	// RomInfo operator== compares romname and emulator
+	if (!( original == replacement ))
+		m_rl.mark_favs_and_tags_changed();
+
+	m_rl.create_filters( m_displays[m_current_display] );
+
+	std::string in_path( m_config_path );
+	in_path += FE_ROMLIST_SUBDIR;
+
+	const std::string &romlist_name = m_displays[m_current_display].get_info(FeDisplayInfo::Romlist);
+	in_path += romlist_name;
+	in_path += FE_ROMLIST_FILE_EXTENSION;
+
+	std::string out_path( in_path );
+
+	// Check for a romlist in the data path if there isn't one that matches in the
+	// config directory
+	//
+	if (( !file_exists( in_path  ) ) && ( FE_DATA_PATH != NULL ))
+	{
+		std::string temp = FE_DATA_PATH;
+		temp += FE_ROMLIST_SUBDIR;
+		temp += romlist_name;
+		temp += FE_ROMLIST_FILE_EXTENSION;
+
+		if ( file_exists( temp ) )
+			in_path = temp;
+	}
+
+	//
+	// Load the romlist file into temp_list, update the changed entry, and resave now
+	// We reload the file here because our in-memory romlist probably isn't complete (due
+	// to global filtering)
+	//
+	FeRomInfoListType temp_list;
+
+	bool found=false;
+
+	std::ifstream infile( in_path.c_str() );
+	if ( !infile.is_open() )
+		return;
+
+	while ( infile.good() )
+	{
+		std::string line, setting, value;
+
+		getline( infile, line );
+		if ( line_to_setting_and_value( line, setting, value, ";" ) )
+		{
+			FeRomInfo next_rom( setting );
+			next_rom.process_setting( setting, value, "" );
+
+			// It is possible to have multiple entries that match the original.
+			// For now we just blindly update them all.
+			//
+			if ( next_rom == original )
+			{
+				if ( !erase_it )
+					temp_list.push_back( replacement );
+
+				found=true;
+			}
+			else
+				temp_list.push_back( next_rom );
+		}
+	}
+
+	infile.close();
+
+	// If we didn't find the original, add this as a new rom at the end
+	// This way if the user edits on an empty list, they can create a first entry
+	//
+	if ( !found )
+		temp_list.push_back( replacement );
+
+	//
+	// Write out the update romlist file
+	//
+	std::ofstream outfile( out_path.c_str() );
+	if ( outfile.is_open() )
+	{
+                // one line header showing what the columns represent
+                //
+		int i=0;
+                outfile << "#" << FeRomInfo::indexStrings[i++];
+                while ( i < FeRomInfo::Favourite )
+                        outfile << ";" << FeRomInfo::indexStrings[i++];
+                outfile << std::endl;
+
+                // Now output the list
+                //
+                for ( FeRomInfoListType::const_iterator itl=temp_list.begin();
+                                itl != temp_list.end(); ++itl )
+                        outfile << (*itl).as_output() << std::endl;
+
+                outfile.close();
+	}
 }

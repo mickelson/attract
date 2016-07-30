@@ -500,6 +500,13 @@ int main(int argc, char *argv[])
 					config_mode = true;
 					break;
 
+				case FeInputMap::EditGame:
+					if ( feOverlay.edit_game_dialog() )
+						feVM.update_to_new_list();
+
+					redraw=true;
+					break;
+
 				case FeInputMap::DisplaysMenu:
 					{
 						std::vector<std::string> disp_names;

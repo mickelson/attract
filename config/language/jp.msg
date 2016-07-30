@@ -57,7 +57,6 @@ Delete this Display;このディスプレイを削除
 Delete this Emulator;エミュレータを削除
 Delete this Filter;このフィルターを削除
 Delete this Rule;このルールを削除
-Delete this filter;このフィルターを削除
 Disabled;無効
 Display Edit;ディスプレイを設定
 Display Name;ディスプレイの名前
@@ -294,6 +293,7 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 # Extra strings provided by translation
 #
 Ambient Sounds;BGMファイル
+Delete this filter;このフィルターを削除
 Exit menu;出る
 Extra;その他(Extra)
 Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
@@ -317,6 +317,9 @@ $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Default Action;Default Action
+Delete game '$1'?;Delete game '$1'?
+Delete this Game;Delete this Game
+Edit Game;Edit Game
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
@@ -344,6 +347,8 @@ _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)
 _help_control_custom6;Set the "Custom6" control(s)
+_help_control_edit_game;Set the control(s) to edit the current selection
+_help_control_intro;Set the control(s) that show the intro video
 _help_control_left;Set the control(s) that move the selection left
 _help_control_next_game;Set the control(s) that move to the next game
 _help_control_next_page;Set the control(s) that move the selection up one page
@@ -354,6 +359,8 @@ _help_display_in_cycle;Include this display in the "Previous Display"/"Next Disp
 _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
+_help_game_delete;Delete this game from the Romlist
+_help_game_edit;Edit this game information
 _help_input_action;
 _help_input_default_action;Set the default behaviour for this control
 _help_intro;Configure intro

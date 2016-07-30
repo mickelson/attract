@@ -58,7 +58,6 @@ Delete this Display;Borrar esta pantalla
 Delete this Emulator;Suprimir este emulador
 Delete this Filter;Borrar este filtro
 Delete this Rule;Borrar esta regla
-Delete this filter;Borrar este filtro
 Disabled;Disabled
 Display Edit;Editar pantalla
 DisplayCount;Contador de pantalla
@@ -306,6 +305,7 @@ Ambient Sounds;Sondio ambiente
 Basic Movie;Video básico
 Custom 1;Personalizado 1
 Custom 2;Personalizado 2
+Delete this filter;Borrar este filtro
 Image collage;Collage de imágenes
 Launch Last Game on Startup;Lanzar último juego en el inicio
 Movie collage;Collage de video
@@ -323,7 +323,10 @@ _help_autolaunch_last_game;Lanza automaticamente el útlito juego jugado en el i
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Default Action;Default Action
+Delete game '$1'?;Delete game '$1'?
+Delete this Game;Delete this Game
 Display Name;Display Name
+Edit Game;Edit Game
 Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
 Exception Edit;Exception Edit
@@ -346,6 +349,8 @@ _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)
 _help_control_custom5;Set the "Custom5" control(s)
 _help_control_custom6;Set the "Custom6" control(s)
+_help_control_edit_game;Set the control(s) to edit the current selection
+_help_control_intro;Set the control(s) that show the intro video
 _help_control_left;Set the control(s) that move the selection left
 _help_control_next_game;Set the control(s) that move to the next game
 _help_control_prev_game;Set the control(s) that move to the previous game
@@ -354,6 +359,8 @@ _help_display_in_cycle;Include this display in the "Previous Display"/"Next Disp
 _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
+_help_game_delete;Delete this game from the Romlist
+_help_game_edit;Edit this game information
 _help_input_default_action;Set the default behaviour for this control
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode

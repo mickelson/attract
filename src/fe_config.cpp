@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -206,7 +206,7 @@ bool FeEmuArtEditMenu::save( FeConfigContext &ctx )
 }
 
 void FeEmuArtEditMenu::set_art( FeEmulatorInfo *emu,
-					const std::string &art_name )
+	const std::string &art_name )
 {
 	m_emulator = emu;
 	m_art_name = art_name;
@@ -475,7 +475,7 @@ bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 }
 
 void FeEmulatorEditMenu::set_emulator(
-				FeEmulatorInfo *emu, bool is_new, const std::string &romlist_dir )
+	FeEmulatorInfo *emu, bool is_new, const std::string &romlist_dir )
 {
 	m_emulator=emu;
 	m_is_new=is_new;
@@ -496,16 +496,8 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::SelectionList, "Config / Emulators" );
 
-	std::string path = ctx.fe_settings.get_config_dir();
-	path += FE_EMULATOR_SUBDIR;
-
 	std::vector<std::string> emu_file_list;
-	get_basename_from_extension(
-			emu_file_list,
-			path,
-			FE_EMULATOR_FILE_EXTENSION );
-
-	std::sort( emu_file_list.begin(), emu_file_list.end() );
+	ctx.fe_settings.get_list_of_emulators( emu_file_list );
 
 	for ( std::vector<std::string>::iterator itr=emu_file_list.begin();
 			itr < emu_file_list.end(); ++itr )
@@ -518,7 +510,7 @@ void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 }
 
 bool FeEmulatorSelMenu::on_option_select(
-		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+	FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
 
@@ -618,7 +610,7 @@ void FeRuleEditMenu::get_options( FeConfigContext &ctx )
 }
 
 bool FeRuleEditMenu::on_option_select(
-		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+	FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
 {
 	FeMenuOpt &o = ctx.curr_opt();
 	if ( o.opaque == 1 ) // the "delete" option
@@ -2026,5 +2018,154 @@ bool FeConfigMenu::on_option_select(
 bool FeConfigMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.save();
+	return true;
+}
+
+void FeEditGameMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Edit Game" );
+
+	for ( int i=0; i < (int)FeRomInfo::FileIsAvailable; i++ )
+	{
+		int type = Opt::EDIT;
+		std::vector<std::string> ol;
+
+		switch ( i )
+		{
+		case FeRomInfo::Emulator:
+			ctx.fe_settings.get_list_of_emulators( ol );
+			type = Opt::LIST;
+			break;
+
+		case FeRomInfo::Rotation:
+			ol.push_back( "0" );
+			ol.push_back( "90" );
+			ol.push_back( "180" );
+			ol.push_back( "270" );
+			type = Opt::LIST;
+			break;
+
+		case FeRomInfo::DisplayType:
+			ol.push_back( "raster" );
+			ol.push_back( "vector" );
+			ol.push_back( "lcd" );
+			ol.push_back( "unknown" );
+			ol.push_back( "" );
+			type = Opt::LIST;
+			break;
+
+		case FeRomInfo::Status:
+			ol.push_back( "good" );
+			ol.push_back( "imperfect" );
+			ol.push_back( "preliminary" );
+			ol.push_back( "" );
+			type = Opt::LIST;
+			break;
+
+		case FeRomInfo::Favourite:
+		case FeRomInfo::Tags:
+			type = Opt::RELOAD;
+			break;
+
+		default:
+			break;
+		}
+
+		ctx.add_optl( type, FeRomInfo::indexStrings[i],
+			ctx.fe_settings.get_rom_info( 0, 0, (FeRomInfo::Index)i ),
+			"_help_game_edit" );
+
+		if ( !ol.empty() )
+			ctx.back_opt().append_vlist( ol );
+	}
+
+	ctx.opt_list[ FeRomInfo::Favourite ].opaque = 1;
+	ctx.opt_list[ FeRomInfo::Tags ].opaque = 2;
+
+	ctx.opt_list[ FeRomInfo::PlayedCount ].opaque = 3;
+	ctx.opt_list[ FeRomInfo::PlayedTime ].opaque = 3;
+
+	ctx.add_optl( Opt::EXIT, "Delete this Game", "", "_help_game_delete" );
+	ctx.back_opt().opaque = 100;
+
+	m_update_stats=false;
+	m_update_rl=false;
+
+	int filter_idx = ctx.fe_settings.get_filter_index_from_offset( 0 );
+	int rom_idx = ctx.fe_settings.get_rom_index( filter_idx, 0 );
+
+	FeRomInfo *rom = ctx.fe_settings.get_rom_absolute( filter_idx, rom_idx );
+	if ( rom )
+		m_rom_original = *rom;
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+{
+	switch ( ctx.curr_opt().opaque )
+	{
+	case 1: // Favourite
+		{
+			bool new_state = !ctx.fe_settings.get_current_fav();
+
+			std::string msg = ( new_state )
+				? "Add '$1' to Favourites?"
+				: "Remove '$1' from Favourites?";
+
+			if ( ctx.confirm_dialog( msg, ctx.opt_list[1].get_value() ) )
+				ctx.fe_settings.set_current_fav( new_state );
+		}
+		break;
+
+	case 2: // Tags
+		ctx.tags_dialog();
+		break;
+
+	case 3: // PlayedCount, PlayedTime
+		m_update_stats = true;
+		break;
+
+	case 100: // Delete Game
+		if ( ctx.confirm_dialog( "Delete game '$1'?", ctx.opt_list[1].get_value() ) )
+		{
+			ctx.fe_settings.update_romlist_after_edit( m_rom_original, m_rom_original, true );
+			return true;
+		}
+		return false;
+	default:
+		m_update_rl = true;
+		break;
+	}
+
+	return true;
+}
+
+bool FeEditGameMenu::save( FeConfigContext &ctx )
+{
+	int filter_idx = ctx.fe_settings.get_filter_index_from_offset( 0 );
+	int rom_idx = ctx.fe_settings.get_rom_index( filter_idx, 0 );
+
+	FeRomInfo *rom = ctx.fe_settings.get_rom_absolute( filter_idx, rom_idx );
+
+	FeRomInfo replacement;
+	if (rom)
+		replacement = *rom;
+
+	// Update working romlist with the info provided by the user
+	//
+	for ( int i=0; i < (int)FeRomInfo::FileIsAvailable; i++ )
+		replacement.set_info( (FeRomInfo::Index)i, ctx.opt_list[i].get_value() );
+
+	// Resave the romlist file that our romlist was loaded from
+	//
+	if ( m_update_rl )
+		ctx.fe_settings.update_romlist_after_edit( m_rom_original, replacement );
+
+	// Resave the usage stats (if they were changed)
+	//
+	if ( m_update_stats )
+		ctx.fe_settings.update_stats(0,0); // this will force a rewrite of the file
+
 	return true;
 }

@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -42,12 +42,12 @@ const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
 
 void FeBaseConfigurable::invalid_setting(
-					const std::string & fn,
-					const char *base,
-					const std::string &setting,
-					const char **valid1,
-					const char **valid2,
-					const char *label )
+	const std::string & fn,
+	const char *base,
+	const std::string &setting,
+	const char **valid1,
+	const char **valid2,
+	const char *label )
 {
 	std::cerr << "Unrecognized \"" << base << "\" " << label
 					<< " of \"" << setting << "\"";
@@ -75,7 +75,7 @@ void FeBaseConfigurable::invalid_setting(
 }
 
 bool FeBaseConfigurable::load_from_file( const std::string &filename,
-									const char *sep )
+	const char *sep )
 {
    std::ifstream myfile( filename.c_str() );
 
@@ -84,32 +84,11 @@ bool FeBaseConfigurable::load_from_file( const std::string &filename,
 
 	while ( myfile.good() )
 	{
-		size_t pos=0, end=0;
 		std::string line, setting, value;
 		getline( myfile, line );
 
-		// skip opening whitespace on line
-		pos = line.find_first_not_of( FE_WHITESPACE, pos );
-		if ( pos != std::string::npos )
-		{
-			end = line.find_first_of( sep, pos );
-
-			if ( end == std::string::npos )
-				setting = line.substr( pos );
-			else
-				setting = line.substr( pos, end - pos );
-
-			// skip comments
-			if (( setting.size() > 0 ) && (setting[0] != '#' ))
-			{
-				pos = line.find_first_not_of( FE_WHITESPACE, end + 1 );
-				end = line.find_last_not_of( FE_WHITESPACE );
-				if ( pos != std::string::npos )
-					value = line.substr( pos, end - pos + 1 );
-
-				 process_setting( setting, value, filename );
-			}
-		}
+		if ( line_to_setting_and_value( line, setting, value, sep ) )
+			process_setting( setting, value, filename );
 	}
 
 	myfile.close();

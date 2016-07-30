@@ -55,6 +55,8 @@ public:
 		std::string &ms,
 		FeInputMap::Command &conflict );
 
+	void tags_dialog();
+
 	void update_to_menu( FeBaseConfigMenu *m );
 
 	bool check_for_cancel();
@@ -93,6 +95,11 @@ void FeConfigContextImp::input_map_dialog( const std::string &m,
 	std::string t;
 	fe_settings.get_resource( m, t );
 	m_feo.input_map_dialog( t, ms, conflict );
+}
+
+void FeConfigContextImp::tags_dialog()
+{
+	m_feo.tags_dialog();
 }
 
 void FeConfigContextImp::update_to_menu(
@@ -891,6 +898,19 @@ bool FeOverlay::config_dialog()
 		m_wnd.close();
 
 	return settings_changed;
+}
+
+bool FeOverlay::edit_game_dialog()
+{
+	FeEditGameMenu m;
+	bool settings_changed=false;
+
+	if ( display_config_dialog( &m, settings_changed ) < 0 )
+		m_wnd.close();
+
+	// TODO: should only return true when setting_changed is true or when user deleted
+	// the rom completely
+	return true;
 }
 
 int FeOverlay::display_config_dialog(

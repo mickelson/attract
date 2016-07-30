@@ -408,6 +408,17 @@ public:
 		FeFilter &filter,
 		bool full );
 
+	//
+	// Save an updated rom in the current romlist file (used with "Edit Game" command)
+	// original is assumed to be the currently selected rom
+	//
+	void update_romlist_after_edit(
+		const FeRomInfo &original,		// original rom values
+		const FeRomInfo &replacement,		// new rom values
+		bool erase=false );			// if true, erase original instead
+
+	void update_stats( int count_incr, int time_incr );
+
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,
 	// overwriting any previous list of this name.
@@ -419,6 +430,8 @@ public:
 	FeEmulatorInfo *get_emulator( const std::string & );
 	FeEmulatorInfo *create_emulator( const std::string & );
 	void delete_emulator( const std::string & );
+
+	void get_list_of_emulators( std::vector<std::string> &emu_list );
 
 	//
 	// Functions used for configuration

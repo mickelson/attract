@@ -24,9 +24,11 @@ _help_control_custom5;Set the "Custom5" control(s)
 _help_control_custom6;Set the "Custom6" control(s)
 _help_control_displays_menu;Set the control(s) that show the "Displays Menu"
 _help_control_down;Set the control(s) that move the selection down
+_help_control_edit_game;Set the control(s) to edit the current selection
 _help_control_exit;Set the control(s) that exit the frontend
 _help_control_exit_no_menu;Set the control(s) that exit the frontend immediately to the desktop
 _help_control_filters_menu;Set the control(s) that show the "Filters Menu"
+_help_control_intro;Set the control(s) that show the intro video
 _help_control_left;Set the control(s) that move the selection left
 _help_control_next_display;Set the control(s) that move to the next display
 _help_control_next_favourite;Set the control(s) that move to the next favourite
@@ -95,6 +97,8 @@ _help_filter_rule;Configure this filter rule.  A game must match all filter rule
 _help_filter_sort_by;The game information attribute that you wish to sort the collection/rom list by.  Set to "No Sort" to keep the ordering from the source collection/rom list
 _help_filter_wrap_mode;Set what happens when the "Next Filter" or "Previous Filter" actions reach the end of the filter set
 _help_font_path;The directories containing fonts.  Multiple directories can be entered if separated by a semicolon.  Attract-Mode will recursively search these directories to find a specified font
+_help_game_delete;Delete this game from the Romlist
+_help_game_edit;Edit this game information
 _help_hide_brackets;Hide text in brackets when showing game titles
 _help_input_action;
 _help_input_add;Add a new input mapping for this control

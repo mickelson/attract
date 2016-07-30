@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -165,17 +165,22 @@ void FeRomList::init_as_empty_list()
 	m_extra_tags.clear();
 }
 
+void FeRomList::mark_favs_and_tags_changed()
+{
+	m_fav_changed=true;
+	m_tags_changed=true;
+}
+
 bool FeRomList::load_romlist( const std::string &path,
-			const std::string &romlist_name,
-			const std::string &user_path,
-			const std::string &stat_path,
-			FeDisplayInfo &display )
+	const std::string &romlist_name,
+	const std::string &user_path,
+	const std::string &stat_path,
+	FeDisplayInfo &display )
 {
 	m_user_path = user_path;
 	m_romlist_name = romlist_name;
 
 	m_list.clear();
-	m_filtered_list.clear();
 	m_availability_checked = false;
 
 	m_global_filter_ptr = NULL;
@@ -349,12 +354,28 @@ bool FeRomList::load_romlist( const std::string &path,
 			m_list.erase( last_it, m_list.end() );
 	}
 
+	//
+	// make sure stats are loaded now
+	//
+	if ( !stat_path.empty() )
+	{
+		for ( FeRomInfoListType::iterator it=m_list.begin(); it!=m_list.end(); ++it )
+			(*it).load_stats( stat_path );
+	}
+
 	std::cout << " - Loaded master romlist '" << m_romlist_name
 			<< "' in " << load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << m_list.size() << " entries kept, " << m_global_filtered_out_count
 			<< " discarded)" << std::endl;
 
-	load_timer.restart();
+	create_filters( display );
+	return retval;
+}
+
+void FeRomList::create_filters(
+	FeDisplayInfo &display )
+{
+	sf::Clock load_timer;
 
 	//
 	// Apply filters
@@ -368,7 +389,9 @@ bool FeRomList::load_romlist( const std::string &path,
 	if ( filters_count == 0 )
 		filters_count = 1;
 
+	m_filtered_list.clear();
 	m_filtered_list.reserve( filters_count );
+
 	for ( int i=0; i<filters_count; i++ )
 	{
 		m_filtered_list.push_back( std::vector< FeRomInfo *>()  );
@@ -392,17 +415,6 @@ bool FeRomList::load_romlist( const std::string &path,
 			m_filtered_list[i].reserve( m_list.size() );
 			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
 				m_filtered_list[i].push_back( &( *itr ) );
-		}
-
-		//
-		// make sure stats are loaded for the roms we will be showing
-		//
-		if ( !stat_path.empty() )
-		{
-			for ( std::vector< FeRomInfo * >::iterator itf=m_filtered_list[i].begin();
-						itf!=m_filtered_list[i].end();
-						++itf )
-				(*itf)->load_stats( stat_path ); // this will just return if stats are already loaded for the rom
 		}
 
 		if ( f )
@@ -439,8 +451,6 @@ bool FeRomList::load_romlist( const std::string &path,
 	std::cout << " - Constructed " << filters_count << " filters in "
 			<< load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << filters_count * m_list.size() << " comparisons)" << std::endl;
-
-	return retval;
 }
 
 int FeRomList::process_setting( const std::string &setting,

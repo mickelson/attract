@@ -61,7 +61,6 @@ Delete this Display;Cancella questo display
 Delete this Emulator;Cancella questo emulatore
 Delete this Filter;Cancella questo filtro
 Delete this Rule;Cancella questa regola
-Delete this filter;Cancella questo filtro
 Disabled;Disabilitato
 Display Edit;Modifica il display
 Display Name;Nome del display
@@ -347,6 +346,7 @@ Configure / Controls;Configurazione / Controlli
 Configure Intro;Configura il video di introduzione
 Custom 1;Personalizzato 1
 Custom 2;Personalizzato 2
+Delete this filter;Cancella questo filtro
 Edit Control;Modifica controllo
 Image collage;Collezione di immagini
 Launch Last Game on Startup;Esegui l'ultimo gioco alla partenza
@@ -369,3 +369,10 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 #
 # Strings still needing translation
 #
+Delete game '$1'?;Delete game '$1'?
+Delete this Game;Delete this Game
+Edit Game;Edit Game
+_help_control_edit_game;Set the control(s) to edit the current selection
+_help_control_intro;Set the control(s) that show the intro video
+_help_game_delete;Delete this game from the Romlist
+_help_game_edit;Edit this game information

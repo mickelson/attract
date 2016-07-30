@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013 Andrew Mickelson
+ *  Copyright (C) 2013-2016 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -40,20 +40,20 @@ class FeBaseConfigurable
 {
 protected:
 	void invalid_setting(
-			const std::string &filename,
-			const char *base,
-			const std::string &setting,
-			const char **valid1,
-			const char **valid2=NULL,
-			const char *label="setting" );
+		const std::string &filename,
+		const char *base,
+		const std::string &setting,
+		const char **valid1,
+		const char **valid2=NULL,
+		const char *label="setting" );
 
 public:
 	virtual int process_setting( const std::string &setting,
-								const std::string &value,
-								const std::string &filename )=0;
+		const std::string &value,
+		const std::string &filename )=0;
 
 	bool load_from_file( const std::string &filename,
-								const char *sep=FE_WHITESPACE );
+		const char *sep=FE_WHITESPACE );
 };
 
 #endif

@@ -31,6 +31,8 @@
 #include <cassert>
 #endif
 
+extern const char *FE_WHITESPACE;
+
 //
 // Utility functions for processing config files:
 //
@@ -241,7 +243,16 @@ void get_url_components( const std::string &url,
 std::string get_crc32( char *buff, int size );
 
 void string_to_vector( const std::string &input,
-        std::vector< std::string > &vec, bool allow_empty=false );
+	std::vector< std::string > &vec, bool allow_empty=false );
+
+//
+// Take config file line and output setting and value pairs
+// return true if setting and value found, false otherwise (for example if comment line encountered)
+//
+bool line_to_setting_and_value( const std::string &line,
+	std::string &setting,
+	std::string &value,
+	const char *sep=FE_WHITESPACE );
 
 //
 // Windows systems: Hide the console window if not launched from the command line

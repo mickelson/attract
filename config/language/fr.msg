@@ -57,7 +57,6 @@ Delete this Display;Supprimer cette liste
 Delete this Emulator;Supprimer cet émulateur
 Delete this Filter;Supprimer ce filtre
 Delete this Rule;Supprimer cette règle
-Delete this filter;Supprimer ce filtre
 Disabled;Désactivé
 Display Edit;Edition de la liste
 Display Name;Nom de la liste
@@ -304,6 +303,7 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 Allow Exit from 'Lists Menu';Permettre la sortie des listes de menu 
 Ambient Sounds;Son d'ambiance
+Delete this filter;Supprimer ce filtre
 Exit menu;Quitter le menu
 Generate Collection/Romlist;Générer la liste de ROM
 Launch Last Game on Startup;Lancer le dernier jeu au démarrage
@@ -327,6 +327,9 @@ $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Default Action;Default Action
+Delete game '$1'?;Delete game '$1'?
+Delete this Game;Delete this Game
+Edit Game;Edit Game
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
 Exception;Exception
@@ -348,6 +351,8 @@ Video Decoder;Video Decoder
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
 _help_control_back;Set the control(s) that go back
+_help_control_edit_game;Set the control(s) to edit the current selection
+_help_control_intro;Set the control(s) that show the intro video
 _help_control_left;Set the control(s) that move the selection left
 _help_control_next_game;Set the control(s) that move to the next game
 _help_control_prev_game;Set the control(s) that move to the previous game
@@ -357,6 +362,8 @@ _help_display_in_cycle;Include this display in the "Previous Display"/"Next Disp
 _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
+_help_game_delete;Delete this game from the Romlist
+_help_game_edit;Edit this game information
 _help_input_action;
 _help_input_default_action;Set the default behaviour for this control
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
