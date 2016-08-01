@@ -2085,11 +2085,22 @@ void FeEditGameMenu::get_options( FeConfigContext &ctx )
 	ctx.opt_list[ FeRomInfo::PlayedCount ].opaque = 3;
 	ctx.opt_list[ FeRomInfo::PlayedTime ].opaque = 3;
 
+	ctx.add_optl( Opt::EDIT, "Custom Executable",
+		ctx.fe_settings.get_game_extra( FeSettings::Executable ),
+		"_help_game_custom_executable" );
+	ctx.back_opt().opaque = 4;
+
+	ctx.add_optl( Opt::EDIT, "Custom Arguments",
+		ctx.fe_settings.get_game_extra( FeSettings::Arguments ),
+		"_help_game_custom_args" );
+	ctx.back_opt().opaque = 4;
+
 	ctx.add_optl( Opt::EXIT, "Delete this Game", "", "_help_game_delete" );
 	ctx.back_opt().opaque = 100;
 
 	m_update_stats=false;
 	m_update_rl=false;
+	m_update_extras=false;
 
 	int filter_idx = ctx.fe_settings.get_filter_index_from_offset( 0 );
 	int rom_idx = ctx.fe_settings.get_rom_index( filter_idx, 0 );
@@ -2126,6 +2137,10 @@ bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *&
 		m_update_stats = true;
 		break;
 
+	case 4: // Custom Executable, Command Arguments
+		m_update_extras = true;
+		break;
+
 	case 100: // Delete Game
 		if ( ctx.confirm_dialog( "Delete game '$1'?", ctx.opt_list[1].get_value() ) )
 		{
@@ -2154,7 +2169,8 @@ bool FeEditGameMenu::save( FeConfigContext &ctx )
 
 	// Update working romlist with the info provided by the user
 	//
-	for ( int i=0; i < (int)FeRomInfo::FileIsAvailable; i++ )
+	int border = (int)FeRomInfo::FileIsAvailable;
+	for ( int i=0; i < border; i++ )
 		replacement.set_info( (FeRomInfo::Index)i, ctx.opt_list[i].get_value() );
 
 	// Resave the romlist file that our romlist was loaded from
@@ -2166,6 +2182,13 @@ bool FeEditGameMenu::save( FeConfigContext &ctx )
 	//
 	if ( m_update_stats )
 		ctx.fe_settings.update_stats(0,0); // this will force a rewrite of the file
+
+	if ( m_update_extras )
+	{
+		ctx.fe_settings.set_game_extra( FeSettings::Executable, ctx.opt_list[border].get_value() );
+		ctx.fe_settings.set_game_extra( FeSettings::Arguments, ctx.opt_list[border+1].get_value() );
+		ctx.fe_settings.save_game_extras();
+	}
 
 	return true;
 }

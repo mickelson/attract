@@ -369,10 +369,14 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 #
 # Strings still needing translation
 #
+Custom Arguments;Custom Arguments
+Custom Executable;Custom Executable
 Delete game '$1'?;Delete game '$1'?
 Delete this Game;Delete this Game
 Edit Game;Edit Game
 _help_control_edit_game;Set the control(s) to edit the current selection
 _help_control_intro;Set the control(s) that show the intro video
+_help_game_custom_args;Set this to override the default command line arguments for this game.  Set this to [nothing] if you want to override with no parameters.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
+_help_game_custom_executable;Set this to override the default executable for this game
 _help_game_delete;Delete this game from the Romlist
 _help_game_edit;Edit this game information

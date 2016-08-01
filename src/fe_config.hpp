@@ -445,6 +445,7 @@ private:
 	FeRomInfo m_rom_original;
 	bool m_update_rl;
 	bool m_update_stats;
+	bool m_update_extras;
 
 public:
 	void get_options( FeConfigContext &ctx );

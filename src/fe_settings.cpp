@@ -113,6 +113,7 @@ const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
 const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
 const char *FE_SWF_EXT = ".swf";
 const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
+const char *FE_GAME_EXTRA_FILE_EXTENSION = ".cfg";
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
@@ -264,6 +265,7 @@ FeSettings::FeSettings( const std::string &config_path,
 #ifdef SFML_SYSTEM_WINDOWS
 	m_hide_console( false ),
 #endif
+	m_loaded_game_extras( false ),
 	m_present_state( Layout_Showing )
 {
 	int i=0;
@@ -1305,6 +1307,139 @@ void FeSettings::set_current_selection( int filter_index, int rom_index )
 		if ( rom_index >= 0 )
 			m_displays[m_current_display].set_rom_index( filter_index, rom_index );
 	}
+
+	m_loaded_game_extras = false;
+}
+
+namespace {
+	const char *game_extra_strings[] = {
+		"executable",
+		"args",
+		NULL
+	};
+};
+
+std::string FeSettings::get_game_extra( GameExtra id )
+{
+	if ( !m_loaded_game_extras )
+	{
+		m_game_extras.clear();
+		m_loaded_game_extras = true;
+
+		//
+		// Load extra rom settings now (if available)
+		//
+		if ( m_current_display < 0 )
+			return FE_EMPTY_STRING;
+
+		const std::string &romlist_name = m_displays[m_current_display].get_info(FeDisplayInfo::Romlist);
+		if ( romlist_name.empty() )
+			return FE_EMPTY_STRING;
+
+		std::string path( m_config_path );
+		path += FE_ROMLIST_SUBDIR;
+		path += romlist_name;
+		path += "/";
+
+		std::string name = get_rom_info( 0, 0, FeRomInfo::Romname );
+		if (( !directory_exists( path ) ) || name.empty() )
+			return FE_EMPTY_STRING;
+
+		path += name;
+		path += FE_GAME_EXTRA_FILE_EXTENSION;
+		if ( !file_exists( path ) )
+			return FE_EMPTY_STRING;
+
+		std::ifstream in_file( path.c_str() );
+		if ( !in_file.is_open() )
+			return FE_EMPTY_STRING;
+
+		while ( in_file.good() )
+		{
+			std::string line, s, v;
+			getline( in_file, line );
+			if ( line_to_setting_and_value( line, s, v ) )
+			{
+				int i=0;
+				while ( game_extra_strings[i] != NULL )
+				{
+					if ( s.compare( game_extra_strings[i] ) == 0 )
+					{
+						m_game_extras[ (GameExtra)i ] = v;
+						break;
+					}
+					i++;
+				}
+
+				if ( game_extra_strings[i] == NULL )
+					std::cerr << " ! Unrecognized game setting: " << s << " " << v << std::endl;
+			}
+		}
+
+		in_file.close();
+	}
+
+	std::map<GameExtra,std::string>::iterator it = m_game_extras.find( id );
+	if ( it != m_game_extras.end() )
+		return (*it).second;
+
+	return FE_EMPTY_STRING;
+}
+
+void FeSettings::set_game_extra( GameExtra id, const std::string &value )
+{
+	if ( value.empty() )
+	{
+		std::map<GameExtra,std::string>::iterator it=m_game_extras.find( id );
+		if ( it != m_game_extras.end() )
+			m_game_extras.erase( it );
+	}
+	else
+		m_game_extras[ id ] = value;
+}
+
+void FeSettings::save_game_extras()
+{
+	if ( m_current_display < 0 )
+		return;
+
+	const std::string &romlist_name = m_displays[m_current_display].get_info(FeDisplayInfo::Romlist);
+	if ( romlist_name.empty() )
+		return;
+
+	std::string path( m_config_path );
+	path += FE_ROMLIST_SUBDIR;
+
+	confirm_directory( path, romlist_name );
+
+	path += romlist_name;
+	path += "/";
+
+	std::string name = get_rom_info( 0, 0, FeRomInfo::Romname );
+
+	if ( name.empty() )
+		return;
+
+	path += name;
+	path += FE_GAME_EXTRA_FILE_EXTENSION;
+
+	if ( m_game_extras.empty() )
+	{
+		if ( file_exists( path ) )
+			delete_file( path );
+
+		return;
+	}
+
+	std::ofstream out_file( path.c_str() );
+	if ( !out_file.is_open() )
+		return;
+
+	std::map<GameExtra,std::string>::iterator it;
+	for ( it=m_game_extras.begin(); it!=m_game_extras.end(); ++it )
+		out_file << game_extra_strings[(int)(*it).first] << " " << (*it).second << std::endl;
+
+	out_file.close();
 }
 
 int FeSettings::get_current_filter_index() const
@@ -1718,7 +1853,11 @@ void FeSettings::run( int &minimum_run_seconds )
 				<< romfilename << std::endl;
 	}
 
-	args = emu->get_info( FeEmulatorInfo::Command );
+	args = get_game_extra( Arguments );
+	if ( args.empty() )
+		args = emu->get_info( FeEmulatorInfo::Command );
+
+	perform_substitution( args, "[nothing]", "" );
 	perform_substitution( args, "[name]", rom_name );
 	perform_substitution( args, "[rompath]", rom_path );
 	perform_substitution( args, "[romext]", extension );
@@ -1733,7 +1872,11 @@ void FeSettings::run( int &minimum_run_seconds )
 		perform_substitution( args, "[systemn]", systems.back() );
 	}
 
-	command = clean_path( emu->get_info( FeEmulatorInfo::Executable ) );
+	std::string temp = get_game_extra( Executable );
+	if ( temp.empty() )
+		temp = emu->get_info( FeEmulatorInfo::Executable );
+
+	command = clean_path( temp );
 
 	std::cout << "*** Running: " << command << " " << args << std::endl;
 

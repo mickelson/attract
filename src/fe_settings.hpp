@@ -134,6 +134,12 @@ public:
 	static const char *configSettingStrings[];
 	static const char *otherSettingStrings[];
 
+	enum GameExtra
+	{
+		Executable =0, // custom executable to override the configured emulator executable
+		Arguments      // custom arguments to override the configured emulator arguments
+	};
+
 private:
 	std::string m_config_path;
 	std::string m_default_font;
@@ -148,6 +154,7 @@ private:
 	std::vector<FeRomInfo *> m_current_search;
 	std::vector<int> m_display_cycle; // display indices to show in cycle
 	std::vector<int> m_display_menu; // display indices to show in menu
+	std::map<GameExtra,std::string> m_game_extras; // "extra" rom settings for the current rom
 	FeRomList m_rl;
 
 	FeInputMap m_inputmap;
@@ -186,6 +193,7 @@ private:
 #ifdef SFML_SYSTEM_WINDOWS
 	bool m_hide_console;
 #endif
+	bool m_loaded_game_extras;
 	enum FePresentState m_present_state;
 
 	FeSettings( const FeSettings & );
@@ -418,6 +426,16 @@ public:
 		bool erase=false );			// if true, erase original instead
 
 	void update_stats( int count_incr, int time_incr );
+
+	//
+	// The frontend maintains extra per game settings/extra info
+	//
+	// This info is only ever loaded for the currently selected game, and is not intended
+	// to be used in a filter
+	//
+	std::string get_game_extra( GameExtra id );
+	void set_game_extra( GameExtra id, const std::string &value );
+	void save_game_extras();
 
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,

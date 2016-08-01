@@ -321,6 +321,8 @@ _help_autolaunch_last_game;Beim Hochfahren automatisch das zuletzt gespielte Spi
 #
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Custom Arguments;Custom Arguments
+Custom Executable;Custom Executable
 Default Action;Default Action
 Delete game '$1'?;Delete game '$1'?
 Delete this Game;Delete this Game
@@ -358,6 +360,8 @@ _help_display_in_cycle;Include this display in the "Previous Display"/"Next Disp
 _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
+_help_game_custom_args;Set this to override the default command line arguments for this game.  Set this to [nothing] if you want to override with no parameters.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
+_help_game_custom_executable;Set this to override the default executable for this game
 _help_game_delete;Delete this game from the Romlist
 _help_game_edit;Edit this game information
 _help_input_default_action;Set the default behaviour for this control
