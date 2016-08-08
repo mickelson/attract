@@ -11,7 +11,7 @@ Add Filter;Add Filter
 Add Input;Add Input
 Add New Display;Add New Display
 Add Rule;Add Rule
-Add a rule to this filter;Add a rule to this filter
+Add tag: '$1';Add tag: '$1'
 Add/Remove Favourite;Add/Remove Favourite
 Add/Remove Tags;Add/Remove Tags
 Additional Import File(s);Additional Import File(s)
@@ -30,21 +30,22 @@ Collection/Rom List;Collection/Rom List
 Command;Command
 Command Arguments;Command Arguments
 Comparison;Comparison
-Config / Emulators;Config / Emulators
 Configure;Configure
+Configure / Controls;Configure / Controls
 Configure / Displays;Configure / Displays
-Configure / Input;Configure / Input
+Configure / Emulators;Configure / Emulators
 Configure / Miscellaneous;Configure / Miscellaneous
 Configure / Plug-ins;Configure / Plug-ins
 Configure / Scraper;Configure / Scraper
 Configure / Sound;Configure / Sound
+Configure Intro;Configure Intro
+Configure Layout;Configure Layout
 Configure Plug-in;Configure Plug-in
 Configure Screen Saver;Configure Screen Saver
-Configure available emulators;Configure available emulators
-Configure filter rule;Configure filter rule
 Confirm Favourites;Confirm Favourites
 Control;Control
 Controls;Controls
+Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
 Custom1;Custom1
@@ -85,6 +86,7 @@ Enabled;Enabled
 Enter Display Name;Enter Display Name
 Enter Emulator Name;Enter Emulator Name
 Enter Filter Name;Enter Filter Name
+Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
 Executable;Executable
@@ -154,6 +156,7 @@ Previous Page;Previous Page
 Random Game;Random Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove Input;Remove Input
+Remove tag: '$1';Remove tag: '$1'
 Replay Last Game;Replay Last Game
 Right;Right
 Rom Extension(s);Rom Extension(s)
@@ -204,7 +207,6 @@ Window;Window
 Window Mode;Window Mode
 Wrap within Display (Default);Wrap within Display (Default)
 Wrote $1 entries to Collection/Rom List;Wrote $1 entries to Collection/Rom List
-XML Mode;XML Mode
 Year;Year
 Yes;Yes
 contains;contains

@@ -1,4 +1,5 @@
 #@Italiano
+# Traduzione a cura di Piergiorgio Ghezzo <PJ@piggei.com>
 #
 # Interface strings
 #
@@ -12,7 +13,7 @@ Add Filter;Aggiungi filtro
 Add Input;Aggiungi controllo
 Add New Display;Aggiungi nuovo display
 Add Rule;Aggiungi regola
-Add a rule to this filter;Aggiungi una regola per questo filtro
+Add tag: '$1';Aggiungi etichetta: '$1'
 Add/Remove Favourite;Aggiungi/rimuovi preferito
 Add/Remove Tags;Aggiungi/rimuovi etichetta
 Additional Import File(s);File aggiuntivo di import
@@ -31,21 +32,23 @@ Collection/Rom List;Lista di ROM
 Command;Comando
 Command Arguments;Argomenti del comando
 Comparison;Comparazione
-Config / Emulators;Configurazione / Emulatori
 Configure;Configurazione
+Configure / Controls;Configurazione / Controlli
 Configure / Displays;Configurazione / Display
-Configure / Input;Configurazione / Controlli
+Configure / Emulators;Configurazione / Emulatori
 Configure / Miscellaneous;Configurazione / Varie
 Configure / Plug-ins;Configurazione / Plugin
 Configure / Scraper;Configurazione / Recupera dalla rete
 Configure / Sound;Configurazione / Suoni
+Configure Intro;Configura il video di introduzione
 Configure Plug-in;Configura i plugin
 Configure Screen Saver;Configura il salvaschermo
-Configure available emulators;Configura gli emulatori disponibili
-Configure filter rule;Configura la regola del filtro
 Confirm Favourites;Conferma aggiunta preferito
 Control;Controllo
 Controls;Controlli
+Create new tag;Crea una nuova etichetta
+Custom Arguments;Argomenti personalizzati
+Custom Executable;Eseguibile personalizzato
 Custom1; Personalizzato 1
 Custom2; Personalizzato 2
 Custom3; Personalizzato 3
@@ -57,9 +60,11 @@ Default Font;Font predefinito
 Delete display '$1'?;Cancello il display '$1'?
 Delete emulator '$1'?;Cancello l'emulatore '$1'?
 Delete filter '$1'?;Cancello il filtro '$1'?
+Delete game '$1'?;Cancello il gioco '$1'?
 Delete this Display;Cancella questo display
 Delete this Emulator;Cancella questo emulatore
 Delete this Filter;Cancella questo filtro
+Delete this Game;Cancella il gioco
 Delete this Rule;Cancella questa regola
 Disabled;Disabilitato
 Display Edit;Modifica il display
@@ -71,6 +76,7 @@ Displays Menu;Menù dei display
 Down;Giù
 Edit Artwork;Modifica risorsa immagini
 Edit Emulator;Modifica emulatore
+Edit Game;Modifica il gioco
 Edit Input;Modifica controlli
 Empty;Vuoto
 Emulator;Emulatore
@@ -81,6 +87,7 @@ Enabled;Attivo
 Enter Display Name;Inserisci il nome del diplay
 Enter Emulator Name;Inserisci il nome dell'emulatore
 Enter Filter Name;Inserisci il nome del filtro
+Enter new tag name;Inserisci il nome dell'etichetta
 Exception;Eccezione
 Exception Edit;Modifica l'eccezione
 Executable;Eseguibile
@@ -109,7 +116,7 @@ Generating Rom List: $1%;Generazione lista: $1%
 Global Filter;Filtro globale
 Hide Brackets in Game Title;Nascondere le parentesi nei titoli
 Info Source/Scraper;Sorgente informazioni/Recupero
-Intro;Intro
+Intro;Video introduttivo
 Joystick Threshold;Soglia del joystick
 Jump to Next Display;Salta al display successivo 
 Language;Lingua
@@ -150,6 +157,7 @@ Previous Page;Pagina precedente
 Random Game;Gioco casuale
 Remove '$1' from Favourites?;Elimino '$1' dai preferiti?
 Remove Input;Eliminare il controllo
+Remove tag: '$1';Elimina etichetta: '$1'
 Replay Last Game;Esegui l'ultimo gioco
 Right;Destra
 Rom Extension(s);Estensioni delle ROM
@@ -200,7 +208,6 @@ Window;Finestra
 Window Mode;Modalità finestra
 Wrap within Display (Default);Non cambiare display (Predefinito)
 Wrote $1 entries to Collection/Rom List;$1 titoli scritti nella lista di ROM
-XML Mode;Modo XML
 Year;Anno
 Yes;Si
 contains;contiene
@@ -229,9 +236,11 @@ _help_control_custom5;Imposta il controllo "Personalizzato 5"
 _help_control_custom6;Imposta il controllo "Personalizzato 6"
 _help_control_displays_menu;Configura i controlli per mostrare il menù dei display
 _help_control_down;Configura i controlli che muovono la selezione in basso
+_help_control_edit_game;Configura i controlli per modificare la selezione corrente
 _help_control_exit;Configura i controlli che permettono di uscire dal frontend
 _help_control_exit_no_menu;Configura i controlli che permettono di uscire immediatamente dal programma e tornare al desktop
 _help_control_filters_menu;Configura i controlli per mostrare il menù dei filtri
+_help_control_intro;Configura i controlli per riprodurre il video introduttivo
 _help_control_left;Configura i controlli per spostare la selezione a sinistra
 _help_control_next_display;Configura i controlli per passare al display successivo
 _help_control_next_favourite;Configura i controlli per passare al preferito successivo
@@ -300,6 +309,10 @@ _help_filter_rule;Configura le regole per il filtro
 _help_filter_sort_by;L'attributo del gioco che deve essere utilizzato per ordinare la lista. Imposta "Nessun ordinamento" per mantenere l'ordinamento originale della lista
 _help_filter_wrap_mode;Configura cosa succede quando i comandi "Filtro successivo" o "Filtro precedente" raggiungono il termine della lista
 _help_font_path; La directory che contiene i font. Possono essere specificate più directory separandole con il punto e virgola. Attract-Mode cercherà ricorsivamente all'interno di queste directory il font specificato.
+_help_game_custom_args;Imposta dei parametri differenti per questo gioco
+_help_game_custom_executable;Imposta un eseguibile differente per eseguire questo gioco
+_help_game_delete;Cancella questo gioco dalla lista
+_help_game_edit;Modifica le informazioni del gioco
 _help_hide_brackets;Nasconde il testo tra parentesi quando viene mostrato il titolo del gioco
 _help_input_action;
 _help_input_add;Aggiunge una nuova associazione dei tasti per questa azione
@@ -340,23 +353,30 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 # Extra strings provided by translation
 #
+Add a rule to this filter;Aggiungi una regola per questo filtro
 Ambient Sounds;Suono ambiente
+Back (Displays Menu);Indietro (Mostra menù)
 Basic Movie;Video base
-Configure / Controls;Configurazione / Controlli
-Configure Intro;Configura il video di introduzione
+Configure available emulators;Configura gli emulatori disponibili
+Configure filter rule;Configura la regola del filtro
 Custom 1;Personalizzato 1
 Custom 2;Personalizzato 2
 Delete this filter;Cancella questo filtro
+Down (Next Game); Giù (Gioco successivo)
 Edit Control;Modifica controllo
 Image collage;Collezione di immagini
 Launch Last Game on Startup;Esegui l'ultimo gioco alla partenza
+Left (Previous Display); Sinistra (Tema precedente)
 Minutes;minuti
 Movie collage;Collezione di video
 Overlay Artwork;Overlay artwork
 Page Down;Pagina precedente
 Page Up;Pagina seguente
-Preserve Aspect Ratio;Mantieni il rapporto
+Preserve Aspect Ratio;Rispetta le proporzioni
+Right (Next Display); Destra (Tema successivo)
 Scraped $1 artwork file(s);Immagini recuperate: $1
+Up (Previous Game); Su (Gioco precedente)
+XML Mode;Modo XML
 en;English
 es;Español
 fr;Français
@@ -369,14 +389,4 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 #
 # Strings still needing translation
 #
-Custom Arguments;Custom Arguments
-Custom Executable;Custom Executable
-Delete game '$1'?;Delete game '$1'?
-Delete this Game;Delete this Game
-Edit Game;Edit Game
-_help_control_edit_game;Set the control(s) to edit the current selection
-_help_control_intro;Set the control(s) that show the intro video
-_help_game_custom_args;Set this to override the default command line arguments for this game.  Set this to [nothing] if you want to override with no parameters.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
-_help_game_custom_executable;Set this to override the default executable for this game
-_help_game_delete;Delete this game from the Romlist
-_help_game_edit;Edit this game information
+Configure Layout;Configure Layout

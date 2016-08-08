@@ -9,7 +9,6 @@ Add Filter;필터 추가
 Add Input;입력 추가
 Add New Display;목록 추가
 Add Rule;규칙 추가
-Add a rule to this filter;필터에 규칙 추가
 Add/Remove Favourite;즐겨하는 게임 추가/삭제
 Add/Remove Tags;태그 추가/삭제
 Additional Import File(s);기타 입력 파일
@@ -28,18 +27,16 @@ Collection/Rom List;롬 목록 파일
 Command;명령어
 Command Arguments;실행 인자
 Comparison;비교 조건
-Config / Emulators;설정 / 에뮬레이터 관련
 Configure;설정
+Configure / Controls;설정 / 입력
 Configure / Displays;목록 설정
-Configure / Input;설정 / 입력
+Configure / Emulators;설정 / 에뮬레이터 관련
 Configure / Miscellaneous;설정 / 기타
 Configure / Plug-ins;설정 / 플러그 인
 Configure / Scraper;온라인 정보원 설정
 Configure / Sound;설정 / 소리
 Configure Plug-in;플러그 인 설정
 Configure Screen Saver;화면 보호기 설정
-Configure available emulators;기존 에뮬레이터 편집
-Configure filter rule;필터 내용 수정
 Confirm Favourites;즐겨하는 게임 확인 창 표시
 Control;입력 장치(Control)
 Controls;입력
@@ -176,7 +173,6 @@ Window;창 모드
 Window Mode;화면 모드
 Wrap within Display (Default);해당 목록의 첫 필터로 (기본값)
 Wrote $1 entries to Collection/Rom List;총 $1 개의 롬 파일을 목록에 기록하였습니다.
-XML Mode;XML 모드
 Year;제작연도(Year)
 Yes;예
 contains;포함
@@ -292,13 +288,17 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 # Extra strings provided by translation
 #
+Add a rule to this filter;필터에 규칙 추가
 Ambient Sounds;배경 음악 파일
+Configure available emulators;기존 에뮬레이터 편집
+Configure filter rule;필터 내용 수정
 Delete this filter;본 필터 삭제
 Exit menu;나가기
 Extra;기타정보(Extra)
 Launch Last Game on Startup;기동시 직전 게임 자동 재시작
 Page Down;페이지 아래로
 Page Up;페이지 위로
+XML Mode;XML 모드
 en;영어
 fr;불어
 jp;일어
@@ -316,6 +316,10 @@ _help_emu_listxml;
 $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Add tag: '$1';Add tag: '$1'
+Configure Intro;Configure Intro
+Configure Layout;Configure Layout
+Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
 Default Action;Default Action
@@ -324,6 +328,7 @@ Delete this Game;Delete this Game
 Edit Game;Edit Game
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
+Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
 Intro;Intro
@@ -334,6 +339,7 @@ Play Sound;Play Sound
 Previous Game;Previous Game
 Previous Page;Previous Page
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
+Remove tag: '$1';Remove tag: '$1'
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Show Displays Menu;Show Displays Menu

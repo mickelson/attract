@@ -560,8 +560,11 @@ int FeOverlay::tags_dialog()
 
 	if ( sel == (int)tags_list.size() )
 	{
+		std::string title;
+		m_feSettings.get_resource( "Enter new tag name", title );
+
 		std::string name;
-		edit_dialog( "Enter new tag name", name );
+		edit_dialog( title, name );
 
 		if ( !name.empty() )
 		{

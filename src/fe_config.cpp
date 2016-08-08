@@ -494,7 +494,7 @@ void FeEmulatorEditMenu::set_emulator(
 
 void FeEmulatorSelMenu::get_options( FeConfigContext &ctx )
 {
-	ctx.set_style( FeConfigContext::SelectionList, "Config / Emulators" );
+	ctx.set_style( FeConfigContext::SelectionList, "Configure / Emulators" );
 
 	std::vector<std::string> emu_file_list;
 	ctx.fe_settings.get_list_of_emulators( emu_file_list );

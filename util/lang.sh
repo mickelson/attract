@@ -21,12 +21,18 @@ BEGIN {
 	FS=";"
 	OFS=""
 	first_line="";
+	second_line="";
 	reading_template=1;
 	reading_translated=1;
 }
 {
-	if ( ( !reading_template ) && ( length( first_line ) == 0 ))
-		first_line = $0;
+	if ( !reading_template )
+	{
+		if ( length( first_line ) == 0 )
+			first_line = $0;
+		else if ( length( second_line ) == 0 )
+			second_line = $0;
+	}
 
 	if ( substr( $0, 1, 1 ) == "#" )
 	{
@@ -71,6 +77,11 @@ BEGIN {
 }
 END {
 	print first_line;
+	if ( length( second_line ) > 1 )
+	{
+		print second_line;
+	}
+
 	print "#";
 	print "# Interface strings";
 	print "#";

@@ -10,7 +10,6 @@ Add Filter;Agregar filtro
 Add Input;Agregar control
 Add New Display;Agregar nueva pantalla
 Add Rule;Agregar regla
-Add a rule to this filter;Agregar una regla para este filtro
 Add/Remove Favourite;Agregar/eliminar favoritos
 Add/Remove Tags;Agregar/Remover etiquetas
 Additional Import File(s);Archivos de importación adicionales
@@ -29,18 +28,16 @@ Collection/Rom List;Colección/Lista de roms
 Command;Comandos
 Command Arguments;Argumentos
 Comparison;Comparación
-Config / Emulators;Configuración / Emuladores
 Configure;Configuración
+Configure / Controls;Configuración / Controles
 Configure / Displays;Configuración / Pantallas
-Configure / Input;Configuración / Controles
+Configure / Emulators;Configuración / Emuladores
 Configure / Miscellaneous;Configuración / Varios
 Configure / Plug-ins;Configuración / Plugins
 Configure / Scraper;Configure / Scraper
 Configure / Sound;Configuración / Sonido
 Configure Plug-in;Configuración de Plugins
 Configure Screen Saver;Configurar el protector de pantalla
-Configure available emulators;Configurar los emuladores disponibles
-Configure filter rule;Configuración de la regla del filtro
 Confirm Favourites;Confirmar favoritos
 Control;Controles
 Controls;Controles
@@ -179,7 +176,6 @@ Window;Ventana
 Window Mode;Modo ventana
 Wrap within Display (Default);Ciclar dentro de la pantalla (Por defecto)
 Wrote $1 entries to Collection/Rom List;Se agregaron $1 entradas a la lista de roms
-XML Mode;Modo XML
 Year;Año
 Yes;Si
 contains;contiene
@@ -301,8 +297,11 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 # Extra strings provided by translation
 #
+Add a rule to this filter;Agregar una regla para este filtro
 Ambient Sounds;Sondio ambiente
 Basic Movie;Video básico
+Configure available emulators;Configurar los emuladores disponibles
+Configure filter rule;Configuración de la regla del filtro
 Custom 1;Personalizado 1
 Custom 2;Personalizado 2
 Delete this filter;Borrar este filtro
@@ -311,6 +310,7 @@ Launch Last Game on Startup;Lanzar último juego en el inicio
 Movie collage;Collage de video
 Overlay Artwork;superposición de artworks
 Preserve Aspect Ratio;Preservar relación de aspecto
+XML Mode;Modo XML
 en;English
 es;Español
 fr;Français
@@ -322,6 +322,10 @@ _help_autolaunch_last_game;Lanza automaticamente el útlito juego jugado en el i
 #
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Add tag: '$1';Add tag: '$1'
+Configure Intro;Configure Intro
+Configure Layout;Configure Layout
+Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
 Default Action;Default Action
@@ -330,6 +334,7 @@ Delete this Game;Delete this Game
 Display Name;Display Name
 Edit Game;Edit Game
 Enable Multiple Monitors;Enable Multiple Monitors
+Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
@@ -338,6 +343,7 @@ Launch Last Game;Launch Last Game
 Next Game;Next Game
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
+Remove tag: '$1';Remove tag: '$1'
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Show Displays Menu;Show Displays Menu

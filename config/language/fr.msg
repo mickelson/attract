@@ -9,7 +9,6 @@ Add Filter;Ajouter un filtre
 Add Input;Ajouter un contrôle
 Add New Display;Ajouter une nouvelle liste
 Add Rule;Ajouter une règle
-Add a rule to this filter;Ajouter une règle à ce filtre
 Add/Remove Favourite;Ajouter/Supprimer Favoris
 Add/Remove Tags;Ajouter/Supprimer des mots clés
 Additional Import File(s);Fichiers additionnels
@@ -28,18 +27,16 @@ Collection/Rom List;Liste de ROM
 Command;Commandes
 Command Arguments;Ligne de commande
 Comparison;Comparaison
-Config / Emulators;Configuration / Emulateurs
 Configure;Configuration
+Configure / Controls;Configuration / Contrôles
 Configure / Displays;Configuration / Listes
-Configure / Input;Configuration / Contrôles
+Configure / Emulators;Configuration / Emulateurs
 Configure / Miscellaneous;Configuration / Divers
 Configure / Plug-ins;Configuration / Plug-in
 Configure / Scraper;Configurer l'aspiration
 Configure / Sound;Configuration / Son
 Configure Plug-in;Configurer Plug-in
 Configure Screen Saver;Configurer l'économiseur d'écran
-Configure available emulators;Configurer les émulateurs disponibles
-Configure filter rule;Configuration de la règle de filtrage
 Confirm Favourites;Confirmer les favoris
 Control;Contrôle
 Controls;Contrôles
@@ -178,7 +175,6 @@ Window;Fenêtre
 Window Mode;Mode d'affichage
 Wrap within Display (Default);Revient au début de la liste de filtres (Défaut)
 Wrote $1 entries to Collection/Rom List;Création de $1 entrées dans la liste de ROM
-XML Mode;Mode XML
 Year;Année
 Yes;Oui
 contains;contient
@@ -301,8 +297,11 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 # Extra strings provided by translation
 #
+Add a rule to this filter;Ajouter une règle à ce filtre
 Allow Exit from 'Lists Menu';Permettre la sortie des listes de menu 
 Ambient Sounds;Son d'ambiance
+Configure available emulators;Configurer les émulateurs disponibles
+Configure filter rule;Configuration de la règle de filtrage
 Delete this filter;Supprimer ce filtre
 Exit menu;Quitter le menu
 Generate Collection/Romlist;Générer la liste de ROM
@@ -311,6 +310,7 @@ Lists;Listes
 Lists Menu;Menu des listes
 Next List;Liste suivante
 Previous List;Liste précédent
+XML Mode;Mode XML
 en;Anglais
 es;Español
 fr;Français
@@ -326,6 +326,10 @@ _help_control_previous_page;Définit le(s) contrôle(s) qui incrémente(nt) la s
 $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Add tag: '$1';Add tag: '$1'
+Configure Intro;Configure Intro
+Configure Layout;Configure Layout
+Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
 Default Action;Default Action
@@ -334,6 +338,7 @@ Delete this Game;Delete this Game
 Edit Game;Edit Game
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
+Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
@@ -343,6 +348,7 @@ Next Game;Next Game
 Play Sound;Play Sound
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
+Remove tag: '$1';Remove tag: '$1'
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)

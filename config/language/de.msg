@@ -10,7 +10,6 @@ Add Filter;Filter hinzufügen
 Add Input;Steuerung hinzufügen
 Add New Display;Neuen Bildschirm hinzufügen
 Add Rule;Regel hinzufügen
-Add a rule to this filter;Diesem Filter eine Regel hinzufügen
 Add/Remove Favourite;Favorit hinzufügen/löschen
 Add/Remove Tags;Markierungen hinzufügen/löschen
 Additional Import File(s);Zusätzliche Import Datei(en)
@@ -29,18 +28,16 @@ Collection/Rom List;Sammlung/Romliste
 Command;Kommando
 Command Arguments;Kommandozeilenargumente
 Comparison;Vergleich
-Config / Emulators;Konfiguration / Emulator(en)
 Configure;Konfiguration
+Configure / Controls;Konfiguration / Steuerung
 Configure / Displays;Konfiguration / Bildschirme
-Configure / Input;Konfiguration / Steuerung
+Configure / Emulators;Konfiguration / Emulator(en)
 Configure / Miscellaneous;Konfiguration / Verschiedenes
 Configure / Plug-ins;Konfiguration / Plug-ins
 Configure / Scraper;Konfiguration / Scraper
 Configure / Sound;Konfiguration / Klang
 Configure Plug-in;Konfiguriere Plug-in
 Configure Screen Saver;Bildschirmschoner konfigurieren
-Configure available emulators;Verfügbare Emulatoren konfigurieren
-Configure filter rule;Filterregel konfigurieren
 Confirm Favourites;Favoriten bestätigen
 Control;Steuerung
 Controls;Steuerungen
@@ -179,7 +176,6 @@ Window;Fenster
 Window Mode;Fenstermodus
 Wrap within Display (Default);Rollieren innerhalb der Liste (Standard)
 Wrote $1 entries to Collection/Rom List;$1 Einträge zur Romliste hinzugefügt
-XML Mode;XML-Modus
 Year;Jahr
 Yes;Ja
 contains;enthält
@@ -301,14 +297,18 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 # Extra strings provided by translation
 #
+Add a rule to this filter;Diesem Filter eine Regel hinzufügen
 Ambient Sounds;Umgebungs-Klänge
 Basic Movie;Basis Video
+Configure available emulators;Verfügbare Emulatoren konfigurieren
+Configure filter rule;Filterregel konfigurieren
 Delete this filter;Diesen Filter löschen
 Image collage;Bilder Collage
 Launch Last Game on Startup;Letztes Spiel beim Starten ausführen
 Movie collage;Video Collage
 Overlay Artwork;Bilddatei als Overlay
 Preserve Aspect Ratio;Seitenverhältnis beibehalten
+XML Mode;XML-Modus
 de;Deutsch
 en;English
 es;Español
@@ -321,6 +321,10 @@ _help_autolaunch_last_game;Beim Hochfahren automatisch das zuletzt gespielte Spi
 #
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
+Add tag: '$1';Add tag: '$1'
+Configure Intro;Configure Intro
+Configure Layout;Configure Layout
+Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
 Default Action;Default Action
@@ -329,6 +333,7 @@ Delete this Game;Delete this Game
 Display Name;Display Name
 Edit Game;Edit Game
 Enable Multiple Monitors;Enable Multiple Monitors
+Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
@@ -337,6 +342,7 @@ Launch Last Game;Launch Last Game
 Next Game;Next Game
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
+Remove tag: '$1';Remove tag: '$1'
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Show Displays Menu;Show Displays Menu
