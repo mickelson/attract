@@ -419,16 +419,20 @@ namespace
 
 void FeVideoImp::preload()
 {
-	if (rgba_buffer[0])
-		av_freep(&rgba_buffer[0]);
-
-	int ret = av_image_alloc(rgba_buffer, rgba_linesize,
-			disptex_width, disptex_height,
-			AV_PIX_FMT_RGBA, 1);
-	if (ret < 0)
 	{
-		std::cerr << "Error allocating image during preload" << std::endl;
-		return;
+		sf::Lock l( image_swap_mutex );
+
+		if (rgba_buffer[0])
+			av_freep(&rgba_buffer[0]);
+
+		int ret = av_image_alloc(rgba_buffer, rgba_linesize,
+				disptex_width, disptex_height,
+				AV_PIX_FMT_RGBA, 1);
+		if (ret < 0)
+		{
+			std::cerr << "Error allocating image during preload" << std::endl;
+			return;
+		}
 	}
 
 	bool keep_going = true;
@@ -456,7 +460,8 @@ void FeVideoImp::preload()
 #endif
 
 			int len = avcodec_decode_video2( codec_ctx, raw_frame,
-									&got_frame, packet );
+				&got_frame, packet );
+
 			if ( len < 0 )
 			{
 				std::cerr << "Error decoding video" << std::endl;
@@ -481,11 +486,11 @@ void FeVideoImp::preload()
 					return;
 				}
 
+				sf::Lock l( image_swap_mutex );
 				sws_scale( sws_ctx, raw_frame->data, raw_frame->linesize,
 							0, codec_ctx->height, rgba_buffer,
 							rgba_linesize );
 
-				sf::Lock l( image_swap_mutex );
 				display_texture->update( rgba_buffer[0] );
 
 				keep_going = false;
@@ -674,10 +679,10 @@ the_end:
 	//
 	at_end=true;
 
-	if (display_frame)
 	{
 		sf::Lock l( image_swap_mutex );
-		display_frame=NULL;
+		if (display_frame)
+			display_frame=NULL;
 	}
 
 	while ( !frame_queue.empty() )
