@@ -84,6 +84,7 @@ _help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple e
 _help_emu_rompath;The path to the roms for this emulator.  Multiple paths can be entered if separated by a semicolon.
 _help_emu_scrape_artwork;Scrape missing artwork images for this emulator from TheGamesDB.net and mamedb.com
 _help_emu_sel;Configure emulator
+_help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_emu_system;The system identifier(s) for this emulator.  Multiple values can be entered if separated by a semicolon
 _help_emulators;Configure emulator settings
 _help_exit_command;Command to execute when Exit (Confirm) is selected [i.e. "sudo shutdown"]
@@ -101,6 +102,8 @@ _help_game_custom_args;Set this to override the default command line arguments f
 _help_game_custom_executable;Set this to override the default executable for this game
 _help_game_delete;Delete this game from the Romlist
 _help_game_edit;Edit this game information
+_help_generator_build;Generate romlist with the selected emulator(s)
+_help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_hide_brackets;Hide text in brackets when showing game titles
 _help_input_action;
 _help_input_add;Add a new input mapping for this control

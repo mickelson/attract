@@ -693,37 +693,55 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 	return true;
 }
 
-bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg )
+bool FeSettings::build_romlist( const std::vector<std::string> &emu_list, const std::string &out_name,
+	UiUpdate uiu, void *uid, std::string &msg )
 {
-	FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
-	if ( emu == NULL )
-		return false;
-
 	//
 	// Put up the "building romlist" message at 0 percent while we get going...
 	//
 	if ( uiu )
 		uiu( uid, 0, "" );
 
-	std::cout << "*** Generating Collection/Rom List: "
-		<< emu->get_info( FeEmulatorInfo::Name ) << std::endl;
+	FeRomInfoListType total_romlist;
+	bool retval = false;
+	std::string user_message;
 
-	FeRomInfoListType romlist;
+	for ( std::vector<std::string>::const_iterator itr = emu_list.begin(); itr != emu_list.end(); ++itr )
+	{
+		FeEmulatorInfo *emu = m_rl.get_emulator( *itr );
+		if ( emu == NULL )
+			continue;
 
-	FeImporterContext ctx( *emu, romlist );
-	ctx.uiupdate = uiu;
-	ctx.uiupdatedata = uid;
+		retval = true;
 
-	build_basic_romlist( ctx );
-	apply_xml_import( ctx, true );
-	apply_import_extras( ctx, emu->is_mame() );
-	apply_emulator_name( emu_name, romlist );
+		std::cout << "*** Generating Collection/Rom List: "
+			<< emu->get_info( FeEmulatorInfo::Name ) << std::endl;
 
-	romlist.sort( FeRomListSorter() );
+		FeRomInfoListType romlist;
+
+		FeImporterContext ctx( *emu, romlist );
+		ctx.uiupdate = uiu;
+		ctx.uiupdatedata = uid;
+
+		build_basic_romlist( ctx );
+		apply_xml_import( ctx, true );
+		apply_import_extras( ctx, emu->is_mame() );
+		apply_emulator_name( *itr, romlist );
+
+		total_romlist.splice( total_romlist.end(), romlist );
+
+		if ( !ctx.user_message.empty() )
+			user_message = ctx.user_message;
+	}
+
+	if ( !retval )
+		return false;
+
+	total_romlist.sort( FeRomListSorter() );
 
 	// strip duplicate entries
 	std::cout << " - Removing any duplicate entries..." << std::endl;
-	romlist.unique();
+	total_romlist.unique();
 
 	std::string filename = get_config_dir();
 	confirm_directory( filename, FE_ROMLIST_SUBDIR );
@@ -732,15 +750,16 @@ bool FeSettings::build_romlist( const std::string &emu_name, UiUpdate uiu, void 
 		uiu( uid, 100, "" );
 
 	filename += FE_ROMLIST_SUBDIR;
-	filename += emu_name;
+	filename += out_name;
 	filename += FE_ROMLIST_FILE_EXTENSION;
-	write_romlist( filename, romlist );
 
-	if ( ctx.user_message.empty() )
+	write_romlist( filename, total_romlist );
+
+	if ( user_message.empty() )
 		get_resource( "Wrote $1 entries to Collection/Rom List",
-			as_str( (int)romlist.size() ), msg );
+			as_str( (int)total_romlist.size() ), msg );
 	else
-		msg = ctx.user_message;
+		msg = user_message;
 
 	return true;
 }

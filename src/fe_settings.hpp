@@ -442,7 +442,8 @@ public:
 	// overwriting any previous list of this name.
 	//
 	typedef bool (*UiUpdate) ( void *, int, const std::string & );
-	bool build_romlist( const std::string &emu_name, UiUpdate, void *, std::string & );
+	bool build_romlist( const std::vector < std::string > &emu_name, const std::string &out_filename,
+		UiUpdate, void *, std::string & );
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 
 	FeEmulatorInfo *get_emulator( const std::string & );

@@ -139,7 +139,7 @@ public:
 	//
 	// Dialog Toolbox.  "msg" strings get translated
 	//
-	virtual void edit_dialog( const std::string &msg, std::string &text )=0;
+	virtual bool edit_dialog( const std::string &msg, std::string &text )=0;
 
 	virtual bool confirm_dialog( const std::string &msg,
 		const std::string &rep="" )=0;
@@ -270,10 +270,22 @@ public:
 		const std::string &romlist_dir );
 };
 
+class FeEmulatorGenMenu : public FeBaseConfigMenu
+{
+private:
+	std::string m_default_name;
+
+public:
+	void get_options( FeConfigContext &ctx );
+	bool on_option_select( FeConfigContext &ctx,
+		FeBaseConfigMenu *& submenu );
+};
+
 class FeEmulatorSelMenu : public FeBaseConfigMenu
 {
 private:
 	FeEmulatorEditMenu m_edit_menu;
+	FeEmulatorGenMenu m_gen_menu;
 
 public:
 	void get_options( FeConfigContext &ctx );

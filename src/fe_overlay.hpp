@@ -94,7 +94,7 @@ public:
 		int cancel_sel,
 		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
 
-	void edit_dialog( const std::string &msg_str, std::string &text );
+	bool edit_dialog( const std::string &msg_str, std::string &text );
 
 	bool overlay_is_on() const { return m_overlay_is_on; };
 

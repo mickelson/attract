@@ -42,7 +42,7 @@ public:
 	int exit_sel;
 
 	FeConfigContextImp( FeSettings &fes, FeOverlay &feo );
-	void edit_dialog( const std::string &m, std::string &t );
+	bool edit_dialog( const std::string &m, std::string &t );
 
 	bool confirm_dialog( const std::string &m,
 		const std::string &rep );
@@ -67,11 +67,11 @@ FeConfigContextImp::FeConfigContextImp( FeSettings &fes, FeOverlay &feo )
 {
 }
 
-void FeConfigContextImp::edit_dialog( const std::string &m, std::string &t )
+bool FeConfigContextImp::edit_dialog( const std::string &m, std::string &t )
 {
 	std::string trans;
 	fe_settings.get_resource( m, trans );
-	m_feo.edit_dialog( trans, t );
+	return m_feo.edit_dialog( trans, t );
 }
 
 bool FeConfigContextImp::confirm_dialog( const std::string &msg,
@@ -712,7 +712,7 @@ int FeOverlay::common_basic_dialog(
 	return sel;
 }
 
-void FeOverlay::edit_dialog(
+bool FeOverlay::edit_dialog(
 			const std::string &msg_str,
 			std::string &text )
 {
@@ -750,11 +750,14 @@ void FeOverlay::edit_dialog(
 	// NOTE: ShowOverlay and HideOverlay events are  not sent when a
 	// script triggers the edit dialog.  This is on purpose.
 	//
-	if ( edit_loop( draw_list, str, &tp ) == true )
+	if ( edit_loop( draw_list, str, &tp ) )
 	{
 		text.clear();
 		sf::Utf32::toUtf8( str.begin(), str.end(), std::back_inserter( text ) );
+		return true;
 	}
+
+	return false;
 }
 
 void FeOverlay::input_map_dialog(
