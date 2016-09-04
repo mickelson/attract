@@ -253,6 +253,7 @@ int main(int argc, char *argv[])
 
 				feVM.post_run();
 				soundsys.release_audio( false );
+				soundsys.update_volumes();
 
 				soundsys.sound_event( FeInputMap::EventGameReturn );
 				soundsys.play_ambient();
