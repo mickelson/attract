@@ -49,6 +49,21 @@ class KeyboardSearch
 		return temp;
 	}
 
+	function _select( emu, game )
+	{
+		for ( local i=0; i<fe.list.size; i++ )
+		{
+			if (( fe.game_info( Info.Emulator, i ) == emu )
+					&& ( fe.game_info( Info.Name, i ) == game ))
+			{
+				fe.list.index += i;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	function on_signal( signal )
 	{
 		if ( signal == _trigger )
@@ -59,11 +74,18 @@ class KeyboardSearch
 
 			if ( _my_config["results_mode"] == "Show Results" )
 			{
+				local sel_emu = fe.game_info( Info.Emulator );
+				local sel_game = fe.game_info( Info.Name );
+
 				if ( _last_search.len() < 1 )
 					fe.list.search_rule = "";
 				else
+				{
 					fe.list.search_rule = "Title contains "
 						+ _massage( _last_search );
+
+					_select( sel_emu, sel_game );
+				}
 
 				return true;
 			}
@@ -90,6 +112,23 @@ class KeyboardSearch
 					break;
 				}
 			}
+			return true;
+		}
+		else if (( fe.list.search_rule.len() > 0 )
+				&& ( signal == "back" ))
+		{
+			//
+			// Clear the search rule when user selects "back"
+			//
+			// Keep the currently selected game from the search as the selection when
+			// we back out
+			//
+			local sel_emu = fe.game_info( Info.Emulator );
+			local sel_game = fe.game_info( Info.Name );
+
+			fe.list.search_rule = "";
+
+			_select( sel_emu, sel_game );
 			return true;
 		}
 
