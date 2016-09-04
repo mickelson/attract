@@ -13,13 +13,16 @@ class UserConfig {
 	</ label="Image Collage", help="Enable 4x4 image collage mode", options="Yes,No", order=3 />
 	image_collage="Yes";
 
-	</ label="Overlay Artwork", help="Artwork to overlay on videos", options="wheel,flyer,marquee,None", order=4 />
+	</ label="RGB Movie", help="Enable RGB movie mode", options="Yes,No", order=4 />
+	rgb_movie="Yes";
+
+	</ label="Overlay Artwork", help="Artwork to overlay on videos", options="wheel,flyer,marquee,None", order=5 />
 	overlay_art="wheel";
 
-	</ label="Play Sound", help="Play video sounds during screensaver", options="Yes,No", order=5 />
+	</ label="Play Sound", help="Play video sounds during screensaver", options="Yes,No", order=6 />
 	sound="Yes";
 
-	</ label="Preserve Aspect Ratio", help="Preserve the aspect ratio of screensaver snaps/videos", options="Yes,No", order=6 />
+	</ label="Preserve Aspect Ratio", help="Preserve the aspect ratio of screensaver snaps/videos", options="Yes,No", order=7 />
 	preserve_ar="No";
 }
 
@@ -176,6 +179,7 @@ class MovieMode
 	function reset()
 	{
 		obj.visible = false;
+		obj.video_playing = false;
 		logo.reset();
 	}
 
@@ -231,6 +235,7 @@ class MovieCollageMode
 	{
 		local temp = fe.add_artwork( "", x*fe.layout.width/2, y*fe.layout.height/2, fe.layout.width/2, fe.layout.height/2 );
 		temp.visible = false;
+		temp.video_playing = false;
 		temp.video_flags = vf;
 
 		if ( config["preserve_ar"] == "Yes" )
@@ -410,6 +415,215 @@ class ImageCollageMode
 }
 
 //
+//
+//
+class RGBMovieMode
+{
+        MIN_TIME = 4000; // the minimum amount of time this mode should run for (in milliseconds)
+        chance = 25; // precentage chance that this mode is triggered
+
+        _objL=0;
+        _objL1=0;
+        _obj=0;
+        _objR=0;
+        _objR1=0;
+
+        logo=0;
+        start_time=0;
+        is_exclusive=false;
+
+        cstep ={ red=0, green=0, blue=0 };
+
+        last_colour=0;
+        last_lcycle=1;
+        last_rcycle=1;
+        lcycle_ms=1000;
+        rcycle_ms=1000;
+
+        constructor()
+        {
+                _objL = fe.add_artwork( "", 0, 0, fe.layout.width/4, fe.layout.height );
+                _objL1 = fe.add_clone( _objL );
+
+                _objR = fe.add_clone( _objL );
+                _objR1 = fe.add_clone( _objL );
+
+                _obj = fe.add_clone( _objL );
+                _obj.width = fe.layout.width/2;
+
+                if ( config["sound"] == "No" )
+                        _all_set( "video_flags", Vid.NoAudio | Vid.NoAutoStart | Vid.NoLoop );
+                else
+                        _all_set( "video_flags", Vid.NoAutoStart | Vid.NoLoop );
+
+                if ( config["preserve_ar"] == "Yes" )
+                        _all_set( "preserve_aspect_ratio", true );
+
+                logo = ArtOverlay( 10, fe.layout.height - 250, 520, 240, 2 );
+
+                _obj.set_pos( fe.layout.width/4, 0 );
+
+		_all_set( "visible", false );
+		_all_set( "video_playing", false );
+        }
+
+        function _all_set( tag, value )
+        {
+                _objL[tag] = value;
+                _objL1[tag] = value;
+                _obj[tag] = value;
+                _objR[tag] = value;
+                _objR1[tag] = value;
+        }
+
+        function _one_colour( label )
+        {
+                local temp = _obj[label] + cstep[label];
+                if ( temp < 0 )
+                {
+                        cstep[label] *= -1;
+                        temp = temp * -1;
+                }
+                else if ( temp > 255 )
+                {
+                        cstep[label] *= -1;
+                        temp = 512 - temp;
+                }
+
+                _obj[label] = temp;
+        }
+
+        function _set_colour( ttime )
+        {
+                local elapsed = ( ttime - start_time ) / 50.0;
+                if ( elapsed.tointeger() <= last_colour )
+                        return;
+
+                last_colour = elapsed.tointeger();
+
+                _one_colour( "red" );
+                _one_colour( "green" );
+                _one_colour( "blue" );
+        }
+
+        function _reset_lpos()
+        {
+                _objL.set_pos( 0, 0 );
+                _objL1.set_pos( 0, -fe.layout.height );
+        }
+
+        function _set_lpos( ttime )
+        {
+                local elapsed = ( ttime - start_time ) / lcycle_ms.tofloat();
+                if (( elapsed.tointeger() < last_lcycle ))
+                        return;
+                else if ( elapsed.tointeger() > last_lcycle )
+                {
+                        // randomly stick in position reset
+                        last_lcycle = elapsed.tointeger() + (rand()%3);
+                        _reset_lpos();
+                        return;
+                }
+
+                local step= fe.layout.height * ( elapsed - elapsed.tointeger() );
+
+                _objL.set_pos( _objL.x, step );
+                _objL1.set_pos( _objL1.x, -fe.layout.height + step );
+        }
+
+        function _reset_rpos()
+        {
+                _objR.set_pos( fe.layout.width - fe.layout.width/4, 0 );
+                _objR1.set_pos( fe.layout.width - fe.layout.width/4, fe.layout.height );
+        }
+
+        function _set_rpos( ttime )
+        {
+                local elapsed = ( ttime - start_time ) / rcycle_ms.tofloat();
+                if ( elapsed.tointeger() < last_rcycle )
+                        return;
+                else if ( elapsed.tointeger() > last_rcycle )
+                {
+                        // randomly stick in position reset
+                        last_rcycle = elapsed.tointeger() + (rand()%3);
+                        _reset_rpos();
+                        return;
+                }
+
+                local step= fe.layout.height * ( elapsed - elapsed.tointeger() );
+
+                _objR.set_pos( _objR.x, -step );
+                _objR1.set_pos( _objR1.x, fe.layout.height-step );
+        }
+
+        function init( ttime )
+        {
+                start_time=ttime;
+                _all_set( "visible", true );
+
+                get_new_offset( _obj );
+                _all_set( "index_offset", _obj.index_offset );
+
+                _all_set( "subimg_width", _obj.texture_width / 4 );
+                _obj.subimg_width = _obj.texture_width / 2;
+
+                _obj.subimg_x = _obj.texture_width/4;
+                _objR1.subimg_x = _objR.subimg_x = _objL.subimg_width + _obj.subimg_width;
+
+                _all_set( "video_playing", true );
+
+                cstep["red"] = rand()%20-10;
+                cstep["green"] = rand()%20-10;
+                cstep["blue"] = rand()%20-10;
+
+                lcycle_ms = _get_cycle_ms();
+                rcycle_ms = _get_cycle_ms();
+
+                _reset_rpos();
+                _reset_lpos();
+                logo.init( _obj.index_offset, ttime, _obj.video_duration );
+        }
+
+        function _get_cycle_ms()
+        {
+                return 250 + rand()%1500;
+        }
+
+        function reset()
+        {
+                last_colour=0;
+                last_lcycle=1;
+                last_rcycle=1;
+
+                _all_set( "visible", false );
+                _all_set( "video_playing", false );
+
+                logo.reset();
+        }
+
+        // return true if mode should continue, false otherwise
+        function check( ttime )
+        {
+                local elapsed = ttime - start_time;
+                return (( _obj.video_playing == true ) || ( elapsed <= MIN_TIME ));
+        }
+
+        function on_tick( ttime )
+        {
+                _set_colour( ttime );
+                _set_lpos( ttime );
+                _set_rpos( ttime );
+                logo.on_tick( ttime );
+        }
+
+        function on_select()
+        {
+                // select the presently displayed game
+                fe.list.index += _obj.index_offset;
+        }
+};
+
+//
 // Movie mode is always on, turn on the others as configured by the user
 //
 local modes = [];
@@ -420,6 +634,9 @@ if ( config["movie_collage"] == "Yes" )
 
 if ( config["image_collage"] == "Yes" )
 	modes.append( ImageCollageMode() );
+
+if ( config["rgb_movie"] == "Yes" )
+	modes.append( RGBMovieMode() );
 
 if (( config["basic_movie"] == "No" ) && ( modes.len() > 0 ))
 {
