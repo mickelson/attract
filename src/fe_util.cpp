@@ -54,6 +54,7 @@
 #include <sys/wait.h>
 #include <pwd.h>
 #include <signal.h>
+#include <errno.h>
 #endif
 
 #ifdef SFML_SYSTEM_MACOS
@@ -946,7 +947,7 @@ bool run_program( const std::string &prog,
 			while (1)
 			{
 				pid_t w = waitpid( pid, &status, opt );
-				if ( !w )
+				if ( w == 0 )
 				{
 					// waitpid should only return 0 if WNOHANG is used and the child is still running, so we
 					// should only ever get here if there is an exit_hotkey provided
@@ -965,8 +966,14 @@ bool run_program( const std::string &prog,
 					}
 					sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
 				}
-				else if (( w == pid ) && ( WIFEXITED( status ) || WIFSIGNALED( status ) ))
-					break;
+				else
+				{
+					if ( w < 0 )
+						std::cerr << " ! error returned by wait_pid(): "
+							<< strerror( errno ) << std::endl;
+
+					break; // leave do/while loop
+				}
 			}
 		}
 	}
