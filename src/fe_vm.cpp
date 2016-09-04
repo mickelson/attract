@@ -1344,9 +1344,10 @@ private:
 
 public:
 	FeConfigVM(
-			const FeScriptConfigurable &configurable,
-			const std::string &script_path,
-			const std::string &script_file )
+		const FeScriptConfigurable &configurable,
+		const std::string &script_path,
+		const std::string &script_file,
+		bool limited=false )
 	{
 		m_stored_vm = Sqrat::DefaultVM::Get();
 		FeVM *fe_vm = (FeVM *)sq_getforeignptr( m_stored_vm );
@@ -1356,15 +1357,18 @@ public:
 		sq_setprintfunc( m_vm, printFunc, printFunc );
 		sq_pushroottable( m_vm );
 
-		sqstd_register_bloblib( m_vm );
-		sqstd_register_iolib( m_vm );
-		sqstd_register_mathlib( m_vm );
-		sqstd_register_stringlib( m_vm );
-		sqstd_register_systemlib( m_vm );
-//		sqstd_seterrorhandlers( m_vm ); // don't set this on purpose
+		if ( !limited )
+		{
+			sqstd_register_bloblib( m_vm );
+			sqstd_register_iolib( m_vm );
+			sqstd_register_mathlib( m_vm );
+			sqstd_register_stringlib( m_vm );
+			sqstd_register_systemlib( m_vm );
+//			sqstd_seterrorhandlers( m_vm ); // don't set this on purpose
 
-		fe_register_global_func( m_vm, zip_extract_file, "zip_extract_file" );
-		fe_register_global_func( m_vm, zip_get_dir, "zip_get_dir" );
+			fe_register_global_func( m_vm, zip_extract_file, "zip_extract_file" );
+			fe_register_global_func( m_vm, zip_get_dir, "zip_get_dir" );
+		}
 
 		Sqrat::DefaultVM::Set( m_vm );
 
@@ -1378,37 +1382,41 @@ public:
 
 		Sqrat::Table fe;
 
-		//
-		// We only expose a very limited set of frontend functionality
-		// to scripts when they are run in the config mode
-		//
-		fe.Bind( _SC("Overlay"), Sqrat::Class <FeVM, Sqrat::NoConstructor>()
-			.Prop( _SC("is_up"), &FeVM::overlay_is_on )
-			.Overload<bool (FeVM::*)(const char *, const char *)>( _SC("splash_message"), &FeVM::splash_message )
-			.Overload<bool (FeVM::*)(const char *)>( _SC("splash_message"), &FeVM::splash_message )
-		);
+		if ( !limited )
+		{
+			//
+			// We only expose a very limited set of frontend functionality
+			// to scripts when they are run in the config mode
+			//
+			fe.Bind( _SC("Overlay"), Sqrat::Class <FeVM, Sqrat::NoConstructor>()
+				.Prop( _SC("is_up"), &FeVM::overlay_is_on )
+				.Overload<bool (FeVM::*)(const char *, const char *)>( _SC("splash_message"), &FeVM::splash_message )
+				.Overload<bool (FeVM::*)(const char *)>( _SC("splash_message"), &FeVM::splash_message )
+			);
 
-		fe.SetInstance( _SC("overlay"), fe_vm );
+			fe.SetInstance( _SC("overlay"), fe_vm );
 
-		fe.Bind( _SC("Monitor"), Sqrat::Class <FeMonitor, Sqrat::NoConstructor>()
-			.Prop( _SC("num"), &FeMonitor::get_num )
-			.Prop( _SC("width"), &FeMonitor::get_width )
-			.Prop( _SC("height"), &FeMonitor::get_height )
-		);
+			fe.Bind( _SC("Monitor"), Sqrat::Class <FeMonitor, Sqrat::NoConstructor>()
+				.Prop( _SC("num"), &FeMonitor::get_num )
+				.Prop( _SC("width"), &FeMonitor::get_width )
+				.Prop( _SC("height"), &FeMonitor::get_height )
+			);
 
-		Sqrat::Table mtab;  // hack Table to Array because creating the Array straight up doesn't work
-		fe.Bind( _SC("monitors"), mtab );
-		Sqrat::Array marray( mtab.GetObject() );
+			// hack Table to Array because creating the Array straight up doesn't work
+			Sqrat::Table mtab;
+			fe.Bind( _SC("monitors"), mtab );
+			Sqrat::Array marray( mtab.GetObject() );
 
-		for ( int i=0; i < (int)fe_vm->m_mon.size(); i++ )
-			marray.SetInstance( marray.GetSize(), &(fe_vm->m_mon[i]) );
+			for ( int i=0; i < (int)fe_vm->m_mon.size(); i++ )
+				marray.SetInstance( marray.GetSize(), &(fe_vm->m_mon[i]) );
 
-		fe.Overload<bool (*)(const char *, const char *, Sqrat::Object, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
-		fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
-		fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
-		fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
-		fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
-		fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
+			fe.Overload<bool (*)(const char *, const char *, Sqrat::Object, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
+			fe.Overload<bool (*)(const char *, const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
+			fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
+			fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
+			fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
+			fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
+		}
 
 		Sqrat::RootTable().Bind( _SC("fe"),  fe );
 
@@ -1486,7 +1494,7 @@ void FeVM::script_get_config_options(
 	if ( !script_path.empty() )
 	{
 		FeScriptConfigurable ignored;
-		FeConfigVM config_vm( ignored, script_path, script_file );
+		FeConfigVM config_vm( ignored, script_path, script_file, true );
 
 		Sqrat::Object uConfig = Sqrat::RootTable().GetSlot( "UserConfig" );
 		if ( !uConfig.IsNull() )
