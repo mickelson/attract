@@ -117,11 +117,22 @@ void FeWindow::onCreate()
 		height = getSize().y;
 	}
 
-	// In Windows, the "WS_POPUP" style creates grief switching to MAME.
-	// Use the "WS_BORDER" style to fix this...
-	//
 	sf::WindowHandle hw = getSystemHandle();
-	if ( ( GetWindowLong( hw, GWL_STYLE ) & WS_POPUP ) != 0 )
+
+	//
+	// The "WS_POPUP" style can cause grief switching to MAME.  It also looks clunky/flickery
+	// when transitioning between frontend and emulator.
+	//
+	// With Windows 10 v1607, it seems that the "WS_POPUP" style is required in order for a
+	// window to be drawn over the taskbar.
+	//
+	// So we keep WS_POPUP for "Fullscreen Mode", because the user wants to force full screen
+	// with that setting.
+	//
+	// In "Fill screen" and "Window" modes, we use the WS_BORDER style for smoother transitions.
+	//
+	if (( m_fes.get_window_mode() != FeSettings::Fullscreen )
+		&& (( GetWindowLong( hw, GWL_STYLE ) & WS_POPUP ) != 0 ))
 	{
 		SetWindowLong( hw, GWL_STYLE,
 			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
@@ -132,6 +143,7 @@ void FeWindow::onCreate()
 		width += 2;
 		height += 2;
 	}
+
 	SetWindowPos(hw, HWND_TOP, left, top,
 		width, height, SWP_FRAMECHANGED);
 
