@@ -678,7 +678,7 @@ namespace gameswf
 		}
 
 		tu_string class_name;
-		if (m_symbol_class.get(symbol_id, &class_name))
+		if (m_abc && m_symbol_class.get(symbol_id, &class_name))
 		{
 			assert(m_abc != NULL);
 
@@ -720,10 +720,10 @@ namespace gameswf
 
 				ch->set_member(name, val);
 			}
-
 			// get function3 from abc
 			return m_abc->get_class_constructor(class_name);
 		}
+
 		return NULL;
 	}
 

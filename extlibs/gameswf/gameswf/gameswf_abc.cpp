@@ -222,7 +222,7 @@ namespace gameswf
 	//		u30 method_body_count
 	//		method_body_info method_body[method_body_count]
 	//	}
-	void	abc_def::read(stream* in, movie_definition_sub* m)
+	bool	abc_def::read(stream* in, movie_definition_sub* m)
 	{
 		int eof = in->get_tag_end_position();
 		int i, n;
@@ -232,7 +232,9 @@ namespace gameswf
 		assert(minor_version == 16 && major_version == 46);
 
 		// read constant pool
-		read_cpool(in);
+		if ( !read_cpool(in) )
+			return false;
+
 		assert(in->get_position() < eof);
 
 		// read method_info
@@ -314,6 +316,7 @@ namespace gameswf
 
 		assert(in->get_position() == eof);
 
+		return true;
 	}
 
 	//	cpool_info
@@ -333,7 +336,7 @@ namespace gameswf
 	//		u30 multiname_count
 	//		multiname_info multiname[multiname_count]
 	//	}
-	void abc_def::read_cpool(stream* in)
+	bool abc_def::read_cpool(stream* in)
 	{
 		int n;
 
@@ -495,20 +498,11 @@ namespace gameswf
 					}
 
 					case multiname::CONSTANT_RTQName:
-						assert(0&&"todo");
-						break;
-
 					case multiname::CONSTANT_RTQNameA:
-						assert(0&&"todo");
-						break;
-
 					case multiname::CONSTANT_RTQNameL:
-						assert(0&&"todo");
-						break;
-
 					case multiname::CONSTANT_RTQNameLA:
 						assert(0&&"todo");
-						break;
+						return false;
 
 					case multiname::CONSTANT_Multiname:
 					case multiname::CONSTANT_MultinameA:
@@ -538,7 +532,7 @@ namespace gameswf
 			IF_VERBOSE_PARSE(log_msg("cpool_info: no multiname pool\n"));
 		}
 
-
+		return true;
 	}
 
 	const char * abc_def::get_class_from_constructor( int method )

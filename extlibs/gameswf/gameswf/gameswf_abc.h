@@ -214,8 +214,8 @@ namespace gameswf
 		abc_def(player* player);
 		virtual ~abc_def();
 
-		void	read(stream* in, movie_definition_sub* m);
-		void	read_cpool(stream* in);
+		bool	read(stream* in, movie_definition_sub* m);
+		bool	read_cpool(stream* in);
 
 		inline const char * get_super_class(tu_string& name) const
 		{

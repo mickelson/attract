@@ -1013,8 +1013,10 @@ namespace gameswf
 		IF_VERBOSE_PARSE(log_msg("\n doABC tag loader, abc_name = '%s'\n", name.c_str()));
 
 		abc_def* abc = new abc_def(m->get_player());
-		abc->read(in, m);
-		m->add_abc(name, abc);
+		if ( abc->read(in, m) )
+			m->add_abc(name, abc);
+		else
+			delete abc;
 	}
 
 	void	define_font_name(stream* in, int tag_type, movie_definition_sub* m)
