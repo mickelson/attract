@@ -102,7 +102,7 @@ void FeWindow::onCreate()
 #ifdef SFML_SYSTEM_WINDOWS
 	int left, top, width, height;
 	if (( m_fes.get_info_bool( FeSettings::MultiMon ) )
-		&& ( m_fes.get_window_mode() != FeSettings::Window ))
+		&& ( !is_windowed_mode( m_fes.get_window_mode() ) ))
 	{
 		left = GetSystemMetrics( SM_XVIRTUALSCREEN );
 		top = GetSystemMetrics( SM_YVIRTUALSCREEN );
@@ -175,11 +175,12 @@ void FeWindow::onCreate()
 
 void FeWindow::initial_create()
 {
-	int style_map[3] =
+	int style_map[4] =
 	{
 		sf::Style::None,			// FeSettings::Default
 		sf::Style::Fullscreen,	// FeSettings::Fullscreen
-		sf::Style::Default		// FeSettings::Window
+		sf::Style::Default,		// FeSettings::Window
+		sf::Style::None			// FeSettings::WindowNoBorder
 	};
 
 	int win_mode = m_fes.get_window_mode();
@@ -190,7 +191,7 @@ void FeWindow::initial_create()
 		"Attract-Mode",
 		style_map[ win_mode ] );
 
-	if ( win_mode == FeSettings::Window )
+	if ( is_windowed_mode( win_mode ) )
 	{
 		FeWindowPosition win_pos(
 			sf::Vector2i( 0, 0 ),
@@ -318,7 +319,7 @@ bool FeWindow::run()
 
 void FeWindow::on_exit()
 {
-	if ( m_fes.get_window_mode() == FeSettings::Window )
+	if ( is_windowed_mode( m_fes.get_window_mode() ) )
 	{
 		FeWindowPosition win_pos( getPosition(), getSize() );
 		win_pos.save( m_fes.get_config_dir() + FeWindowPosition::FILENAME );

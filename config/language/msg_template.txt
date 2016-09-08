@@ -206,6 +206,7 @@ Up;Up
 Video Decoder;Video Decoder
 Window;Window
 Window Mode;Window Mode
+Window (No Border);Window (No Border)
 Wrap within Display (Default);Wrap within Display (Default)
 Wrote $1 entries to Collection/Rom List;Wrote $1 entries to Collection/Rom List
 Year;Year

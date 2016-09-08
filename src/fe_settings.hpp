@@ -86,7 +86,7 @@ public:
 		ScreenSaver_Showing
 	};
 
-	enum WindowType { Default=0, Fullscreen, Window };
+	enum WindowType { Default=0, Fullscreen, Window, WindowNoBorder };
 	static const char *windowModeTokens[];
 	static const char *windowModeDispTokens[];
 
@@ -488,6 +488,11 @@ public:
 		const std::string &path,
 		std::vector<std::string> &names_list );
 };
+
+inline bool is_windowed_mode( int m )
+{
+	return (( m == FeSettings::Window ) || ( m == FeSettings::WindowNoBorder ));
+}
 
 //
 // Utility function used to collect artwork files with 'target_name' from

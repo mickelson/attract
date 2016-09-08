@@ -187,6 +187,7 @@ const char *FeSettings::windowModeTokens[] =
 	"default",
 	"fullscreen",
 	"window",
+	"window_no_border",
 	NULL
 };
 
@@ -195,6 +196,7 @@ const char *FeSettings::windowModeDispTokens[] =
 	"Fill Screen (Default)",
 	"Fullscreen Mode",
 	"Window",
+	"Window (No Border)",
 	NULL
 };
 

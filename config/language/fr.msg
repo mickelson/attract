@@ -357,6 +357,7 @@ Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
 Startup Mode;Startup Mode
 Video Decoder;Video Decoder
+Window (No Border);Window (No Border)
 multi;multi
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu

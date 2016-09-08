@@ -391,6 +391,7 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 #
 Configure Layout;Configure Layout
 Enter Romlist Name;Enter Romlist Name
+Window (No Border);Window (No Border)
 multi;multi
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_generator_build;Generate romlist with the selected emulator(s)

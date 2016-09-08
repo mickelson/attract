@@ -352,6 +352,7 @@ Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
 Startup Mode;Startup Mode
 Video Decoder;Video Decoder
+Window (No Border);Window (No Border)
 multi;multi
 _help_control_back;Set the control(s) that go back
 _help_control_custom3;Set the "Custom3" control(s)
