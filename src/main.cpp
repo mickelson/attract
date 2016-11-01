@@ -208,35 +208,45 @@ int main(int argc, char *argv[])
 		else if (( launch_game )
 			&& ( !soundsys.is_sound_event_playing( FeInputMap::Select ) ))
 		{
-			if ( feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator ).compare( "@" ) == 0 )
+			const std::string &emu_name = feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator );
+			if ( emu_name.compare( 0, 1, "@" ) == 0 )
 			{
-				// If the rom_info's emulator is set to "@" then this is a shortcut to another
-				// display, so instead of running a game we switch to the display specified in the
-				// rom_info's Romname field
-				//
-				std::string name = feSettings.get_rom_info( 0, 0, FeRomInfo::Romname );
-				int index = feSettings.get_display_index_from_name( name );
-
-				// if index not found or if we are already in the specified display, then
-				// jump to the altromname display instead
-				//
-				if (( index < 0 ) || ( index == feSettings.get_current_display_index() ))
+				if ( emu_name.size() > 1 )
 				{
-					name = feSettings.get_rom_info( 0, 0, FeRomInfo::AltRomname );
-					if ( !name.empty() )
-						index =  feSettings.get_display_index_from_name( name );
-				}
-
-				if ( index < 0 )
-				{
-					std::cerr << "Error resolving shortcut, Display `" << name << "' not found.";
+					// If emu name size >1 and  starts with a "@", then we treat the rest of the
+					// string as the signal we have to send
+					//
+					FeVM::cb_signal( emu_name.substr( 1 ).c_str() );
 				}
 				else
 				{
-					if ( feSettings.set_display( index ) )
-						feVM.load_layout();
+					// If emu name is just "@", then this is a shortcut to another display, so instead
+					// of running a game we switch to the display specified in the rom_info's Romname field
+					//
+					std::string name = feSettings.get_rom_info( 0, 0, FeRomInfo::Romname );
+					int index = feSettings.get_display_index_from_name( name );
+
+					// if index not found or if we are already in the specified display, then
+					// jump to the altromname display instead
+					//
+					if (( index < 0 ) || ( index == feSettings.get_current_display_index() ))
+					{
+						name = feSettings.get_rom_info( 0, 0, FeRomInfo::AltRomname );
+						if ( !name.empty() )
+							index =  feSettings.get_display_index_from_name( name );
+					}
+
+					if ( index < 0 )
+					{
+						std::cerr << "Error resolving shortcut, Display `" << name << "' not found.";
+					}
 					else
-						feVM.update_to_new_list( 0, true );
+					{
+						if ( feSettings.set_display( index ) )
+							feVM.load_layout();
+						else
+							feVM.update_to_new_list( 0, true );
+					}
 				}
 			}
 			else
@@ -383,6 +393,20 @@ int main(int argc, char *argv[])
 					continue;
 				}
 
+				//
+				// If FE is configured to show displays menu on startup, then the "Back" UI
+				// button goes back to that menu accordingly...
+				//
+				if (( c == FeInputMap::Back )
+					&& ( feSettings.get_startup_mode() == FeSettings::ShowDisplaysMenu )
+					&& ( feSettings.get_present_state() == FeSettings::Layout_Showing )
+					&& ( feSettings.get_current_display_index() >= 0 ))
+				{
+					FeVM::cb_signal( "displays_menu" );
+					redraw=true;
+					continue;
+				}
+
 				c = feSettings.get_default_command( c );
 				if ( c == FeInputMap::LAST_COMMAND )
 				{
@@ -510,13 +534,29 @@ int main(int argc, char *argv[])
 
 				case FeInputMap::DisplaysMenu:
 					{
+						if ( !feSettings.get_info( FeSettings::MenuLayout ).empty() )
+						{
+							//
+							// If user has configured a custom layout for the display
+							// menu, then setting display to -1 and loading will
+							// bring up the displays menu using that layout
+							//
+							feSettings.set_display(-1);
+							feVM.load_layout( true );
+							redraw=true;
+							break;
+						}
+						//
+						// If no custom layout is configured, then we simply show the
+						// displays menu the same way as any other popup menu...
+						//
+
 						std::vector<std::string> disp_names;
 						std::vector<int> disp_indices;
 						int current_idx;
 
-						feSettings.get_display_menu( disp_names, disp_indices, current_idx );
 						std::string title;
-						feSettings.get_resource( "Displays", title );
+						feSettings.get_displays_menu( title, disp_names, disp_indices, current_idx );
 
 						int exit_opt=-999;
 						if ( feSettings.get_info_bool( FeSettings::DisplaysMenuExit ) )

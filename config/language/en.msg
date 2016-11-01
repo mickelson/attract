@@ -70,7 +70,10 @@ _help_display_name;The title for this display
 _help_display_romlist;The collection/rom list to use for this display
 _help_display_sel;Configure display
 _help_displays;Configure the romlist/layout groupings (a.k.a. "Displays") that are available to be cycled through in Attract-Mode
+_help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_exit;Configure whether an Exit option should be provided in the"Displays Menu"
+_help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
+_help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_add;Add a new emulator
 _help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;Delete the entry for this emulator

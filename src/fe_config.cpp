@@ -1192,6 +1192,58 @@ void FeDisplayEditMenu::set_display( FeDisplayInfo *d, int index )
 	m_index=index;
 }
 
+void FeDisplayMenuEditMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Configure / Displays Menu" );
+
+	std::string prompt_str = ctx.fe_settings.get_info( FeSettings::MenuPrompt );
+	ctx.add_optl( Opt::EDIT, "Menu Prompt", prompt_str, "_help_displays_menu_prompt" );
+
+	std::string default_str;
+	ctx.fe_settings.get_resource( "Default", default_str );
+
+	std::string layout = ctx.fe_settings.get_info( FeSettings::MenuLayout );
+
+	if ( layout.empty() )
+		layout = default_str;
+
+	std::vector<std::string> layouts;
+	ctx.fe_settings.get_layouts_list( layouts ); // this sorts the list
+	layouts.insert( layouts.begin(), default_str ); // force first enty to the 'default' string
+
+	ctx.add_optl( Opt::LIST, "Menu Style / Layout", layout, "_help_displays_menu_layout" );
+	ctx.back_opt().append_vlist( layouts );
+
+	std::vector<std::string> bool_opts( 2 );
+	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
+	ctx.fe_settings.get_resource( "No", bool_opts[1] );
+
+	ctx.add_optl( Opt::LIST,
+			"Allow Exit from 'Displays Menu'",
+			ctx.fe_settings.get_info_bool( FeSettings::DisplaysMenuExit ) ? bool_opts[0] : bool_opts[1],
+			"_help_displays_menu_exit" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeDisplayMenuEditMenu::save( FeConfigContext &ctx )
+{
+	ctx.fe_settings.set_info( FeSettings::MenuPrompt, ctx.opt_list[0].get_value() );
+
+	std::string layout;
+	if ( ctx.opt_list[1].get_vindex() != 0 ) // if "Default" setting selected, leave layout variable empty
+		layout = ctx.opt_list[1].get_value();
+
+	ctx.fe_settings.set_info( FeSettings::MenuLayout, layout );
+
+	ctx.fe_settings.set_info( FeSettings::DisplaysMenuExit,
+			ctx.opt_list[2].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	return true;
+}
+
 void FeDisplaySelMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::SelectionList, "Configure / Displays" );
@@ -1204,6 +1256,9 @@ void FeDisplaySelMenu::get_options( FeConfigContext &ctx )
 			"", "_help_display_sel" );
 		ctx.back_opt().opaque = i;
 	}
+
+	ctx.add_optl( Opt::MENU, "'Displays Menu' Options", "", "_help_displays_menu" );
+	ctx.back_opt().opaque = 99999;
 
 	ctx.add_optl( Opt::MENU, "Add New Display", "", "_help_display_add" );
 	ctx.back_opt().opaque = 100000;
@@ -1221,6 +1276,12 @@ bool FeDisplaySelMenu::on_option_select(
 
 	FeDisplayInfo *d( NULL );
 	int index(0);
+
+	if ( o.opaque == 99999 )
+	{
+		submenu = &m_menu_menu;
+		return true;
+	}
 
 	if ( o.opaque == 100000 )
 	{
@@ -1693,12 +1754,6 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.fe_settings.get_resource( "No", bool_opts[1] );
 
 	ctx.add_optl( Opt::LIST,
-			"Allow Exit from 'Displays Menu'",
-			ctx.fe_settings.get_info_bool( FeSettings::DisplaysMenuExit ) ? bool_opts[0] : bool_opts[1],
-			"_help_displays_menu_exit" );
-	ctx.back_opt().append_vlist( bool_opts );
-
-	ctx.add_optl( Opt::LIST,
 			"Hide Brackets in Game Title",
 			ctx.fe_settings.get_info_bool( FeSettings::HideBrackets ) ? bool_opts[0] : bool_opts[1],
 			"_help_hide_brackets" );
@@ -1804,41 +1859,38 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ].language );
 
-	ctx.fe_settings.set_info( FeSettings::DisplaysMenuExit,
+	ctx.fe_settings.set_info( FeSettings::HideBrackets,
 			ctx.opt_list[1].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
-	ctx.fe_settings.set_info( FeSettings::HideBrackets,
-			ctx.opt_list[2].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
-
 	ctx.fe_settings.set_info( FeSettings::StartupMode,
-			FeSettings::startupTokens[ ctx.opt_list[3].get_vindex() ] );
+			FeSettings::startupTokens[ ctx.opt_list[2].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
-			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[3].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::TrackUsage,
-			ctx.opt_list[5].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::MultiMon,
-			ctx.opt_list[6].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[5].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
-			FeSettings::filterWrapTokens[ ctx.opt_list[7].get_vindex() ] );
+			FeSettings::filterWrapTokens[ ctx.opt_list[6].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[8].get_value() );
+			ctx.opt_list[7].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::DefaultFont,
-			ctx.opt_list[9].get_value() );
+			ctx.opt_list[8].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::FontPath,
-			ctx.opt_list[10].get_value() );
+			ctx.opt_list[9].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
-			FeSettings::windowModeTokens[ ctx.opt_list[11].get_vindex() ] );
+			FeSettings::windowModeTokens[ ctx.opt_list[10].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
-			ctx.opt_list[12].get_value() );
+			ctx.opt_list[11].get_value() );
 
 	return true;
 }

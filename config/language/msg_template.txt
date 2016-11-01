@@ -33,6 +33,7 @@ Comparison;Comparison
 Configure;Configure
 Configure / Controls;Configure / Controls
 Configure / Displays;Configure / Displays
+Configure / Displays Menu;Configure / Displays Menu
 Configure / Emulators;Configure / Emulators
 Configure / Miscellaneous;Configure / Miscellaneous
 Configure / Plug-ins;Configure / Plug-ins
@@ -54,6 +55,7 @@ Custom3;Custom3
 Custom4;Custom4
 Custom5;Custom5
 Custom6;Custom6
+Default;Default
 Default Action;Default Action
 Default Font;Default Font
 Delete display '$1'?;Delete display '$1'?
@@ -126,6 +128,8 @@ Layout Options;Layout Options
 Left;Left
 List Limit;List Limit
 Manufacturer;Manufacturer
+Menu Prompt;Menu Prompt
+Menu Style / Layout;Menu Style / Layout
 Minimum Run Time;Minimum Run Time
 Mouse Threshold;Mouse Threshold
 Movie Volume;Movie Volume
@@ -284,7 +288,10 @@ _help_display_name;The title for this display
 _help_display_romlist;The collection/rom list to use for this display
 _help_display_sel;Configure display
 _help_displays;Configure the romlist/layout groupings (a.k.a. "Displays") that are available to be cycled through in Attract-Mode
+_help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_exit;Configure whether an Exit option should be provided in the"Displays Menu"
+_help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
+_help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_add;Add a new emulator
 _help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
 _help_emu_delete;Delete the entry for this emulator

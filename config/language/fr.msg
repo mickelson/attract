@@ -327,11 +327,13 @@ $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
+Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
 Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
+Default;Default
 Default Action;Default Action
 Delete game '$1'?;Delete game '$1'?
 Delete this Game;Delete this Game
@@ -345,6 +347,8 @@ Exception Edit;Exception Edit
 FileIsAvailable;FileIsAvailable
 Intro;Intro
 Launch Last Game;Launch Last Game
+Menu Prompt;Menu Prompt
+Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
 Play Sound;Play Sound
 Previous Game;Previous Game
@@ -371,6 +375,9 @@ _help_control_prev_page;Set the control(s) that move the selection down one page
 _help_control_right;Set the control(s) that move the selection right
 _help_display_in_cycle;Include this display in the "Previous Display"/"Next Display" cycle?
 _help_display_in_menu;Include this display in the "Displays Menu"?
+_help_displays_menu;Configure options for the "Displays Menu"
+_help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
+_help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed

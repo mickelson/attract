@@ -647,11 +647,7 @@ const char *FePresent::get_display_name() const
 
 int FePresent::get_display_index() const
 {
-	int display = m_feSettings->get_current_display_index();
-	if ( display < 0 )
-		display=0;
-
-	return display;
+	return m_feSettings->get_current_display_index();
 }
 
 const char *FePresent::get_filter_name() const

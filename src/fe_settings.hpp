@@ -128,6 +128,8 @@ public:
 		HideConsole,
 #endif
 		VideoDecoder,
+		MenuPrompt, // 'Displays Menu' prompt
+		MenuLayout, // 'Displays Menu' layout
 		LAST_INDEX
 	};
 
@@ -147,6 +149,10 @@ private:
 	std::string m_language;
 	std::string m_current_search_str;
 
+	std::string m_menu_prompt;		// 'Displays Menu" prompt
+	std::string m_menu_layout;		// 'Displays Menu' layout.  if blank, use built-in menu
+	std::string m_menu_layout_file;		// 'Displays Menu" toggled layout file
+
 	std::vector<std::string> m_font_paths;
 	std::vector<FeDisplayInfo> m_displays;
 	std::vector<FePlugInfo> m_plugins;
@@ -164,7 +170,7 @@ private:
 	FeLayoutInfo m_intro_params;
 	sf::IntRect m_mousecap_rect;
 
-	int m_current_display;
+	int m_current_display; // -1 if we are currently showing the 'displays menu' w/ custom layout
 	FeBaseConfigurable *m_current_config_object;
 	int m_ssaver_time;
 	int m_last_launch_display;
@@ -172,7 +178,7 @@ private:
 	int m_last_launch_rom;
 	int m_joy_thresh;		// [1..100], 100=least sensitive
 	int m_mouse_thresh;	// [1..100], 100=least sensitive
-	int m_current_search_index;
+	int m_current_search_index; // used when custom searching *AND* when showing 'Displays Menu' w/ custom layout
 	bool m_displays_menu_exit;
 	bool m_hide_brackets;
 	StartupModeType m_startup_mode;
@@ -459,9 +465,11 @@ public:
 	bool get_info_bool( int index ) const;
 	bool set_info( int index, const std::string & );
 
-	void get_display_menu( std::vector<std::string> &names,
+	void get_displays_menu( std::string &title,
+		std::vector<std::string> &names,
 		std::vector<int> &indices,
 		int &current_idx ) const;
+
 	FeDisplayInfo *get_display( int index );
 	FeDisplayInfo *create_display( const std::string &n );
 	void delete_display( int index );

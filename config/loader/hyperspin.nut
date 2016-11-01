@@ -58,7 +58,7 @@ class UserConfig </ help="Hyperspin Layout: " + fe.script_dir + ::file_to_load /
    show_prompts="yes";
 
    </ label="Animation Speed", help="Set animation speed", order=7, options="default,2X,4X" />
-   speed="default";
+   speed="4X";
 };
 
 local my_config = fe.get_config();
@@ -205,13 +205,22 @@ function get_system_match_map( idx=-1 )
 {
 	local i = idx;
 	if ( i == -1 )
+	{
 		i = fe.list.display_index;
+		if ( i<0 )
+			i=0;
+	}
 
 	local smm = [];
 	smm.push( fe.displays[i].name.tolower() );
 
 	if ( idx < 0 )
 	{
+		if ( fe.list.display_index < 0 ) // this means we are showing the 'displays menu' w/ custom layout
+			smm.push( fe.game_info( Info.AltRomname ) );
+		else
+			smm.push( fe.game_info( Info.Emulator ) );
+
 		foreach ( t in split( fe.game_info( Info.System), ";" ) )
 			smm.push( t );
 	}
@@ -296,7 +305,7 @@ function get_theme_file( theme_d, match_map )
 		if ( default_theme.len() < 1 )
 		{
 			print( "Couldn't find hyperspin theme or default: "
-				+ fe.game_info( Info.Name ) + "\n" );
+				+ fe.game_info( Info.Name ) + " (" + theme_d + ")\n" );
 		}
 
 		theme = default_theme;
@@ -825,6 +834,10 @@ function hs_transition( ttype, var, ttime )
 
 		setup_prompts( false );
 		local hs_sys = get_hs_system_dir();
+
+		if ( fe.list.display_index < 0 ) // this means we are showing the 'displays menu' w/ custom layout
+			hs_sys = work_d + "Main Menu/";
+
 		local mm = get_match_map();
 
 		if ( override_lag_ms <= 0 )

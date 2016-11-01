@@ -1182,8 +1182,10 @@ otherwise instantiated in a script.
 Properties:
 
    * `name` - Get the name of the current display.
-   * `display_index` - Gett the index of the current display.  Use the
+   * `display_index` - Get the index of the current display.  Use the
      `fe.set_display()` function if you want to change the current display.
+     If this value is less than 0, then the 'Displays Menu' (with a custom
+     layout) is currently showing.
    * `filter_index` - Get/set the index of the currently selected filter.
      (see `fe.filters` for the list of available filters).
    * `index` - Get/set the index of the currently selected game.

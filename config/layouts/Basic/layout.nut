@@ -10,17 +10,23 @@ t.trigger = Transition.EndNavigation;
 t = fe.add_artwork( "marquee", 348, 64, 262, 72 );
 t.trigger = Transition.EndNavigation;
 
-local l = fe.add_listbox( 32, 64, 262, 352 );
-l.charsize = 16;
-l.set_selbg_rgb( 255, 255, 255 );
-l.set_sel_rgb( 0, 0, 0 );
-l.sel_style = Style.Bold;
+local lb = fe.add_listbox( 32, 64, 262, 352 );
+lb.charsize = 16;
+lb.set_selbg_rgb( 255, 255, 255 );
+lb.set_sel_rgb( 0, 0, 0 );
+lb.sel_style = Style.Bold;
 
 fe.add_image( "bg.png", 0, 0 );
 
-l = fe.add_text( "[DisplayName]", 0, 15, 640, 30 );
+local l = fe.add_text( "[DisplayName]", 0, 15, 640, 30 );
 l.set_rgb( 200, 200, 70 );
 l.style = Style.Bold;
+
+// The following function tells the frontend to use our title
+// text and listbox (created above) for any menus (exit menu,
+// etc...
+//
+fe.overlay.set_custom_controls( l, lb );
 
 // Left side:
 
@@ -45,4 +51,3 @@ l.align = Align.Right;
 l = fe.add_text( "[FilterName]", 320, 441, 290, 16 );
 l.set_rgb( 200, 200, 70 );
 l.align = Align.Right;
-
