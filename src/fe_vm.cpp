@@ -612,6 +612,8 @@ bool FeVM::on_new_layout()
 
 	fe.Bind( _SC("Image"),
 		DerivedClass<FeImage, FeBasePresentable, NoConstructor>()
+		.Prop(_SC("origin_x"), &FeImage::get_origin_x, &FeImage::set_origin_x )
+		.Prop(_SC("origin_y"), &FeImage::get_origin_y, &FeImage::set_origin_y )
 		.Prop(_SC("skew_x"), &FeImage::get_skew_x, &FeImage::set_skew_x )
 		.Prop(_SC("skew_y"), &FeImage::get_skew_y, &FeImage::set_skew_y )
 		.Prop(_SC("pinch_x"), &FeImage::get_pinch_x, &FeImage::set_pinch_x )

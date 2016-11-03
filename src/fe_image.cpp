@@ -1024,6 +1024,7 @@ FeImage::FeImage( FePresentableParent &p,
 	m_tex( tc ),
 	m_pos( x, y ),
 	m_size( w, h ),
+	m_origin( 0.f, 0.f ),
 	m_preserve_aspect_ratio( false )
 {
 	ASSERT( m_tex );
@@ -1037,6 +1038,7 @@ FeImage::FeImage( FeImage *o )
 	m_sprite( o->m_sprite ),
 	m_pos( o->m_pos ),
 	m_size( o->m_size ),
+	m_origin( o->m_origin ),
 	m_preserve_aspect_ratio( o->m_preserve_aspect_ratio )
 {
 	m_tex->register_image( this );
@@ -1177,6 +1179,7 @@ void FeImage::scale()
 		m_sprite.setScale( sf::Vector2f( scale_x, scale_y ) );
 
 	m_sprite.setPosition( final_pos );
+	m_sprite.setOrigin( m_origin.x / scale_x, m_origin.y / scale_y );
 }
 
 const sf::Vector2f &FeImage::getPosition() const
@@ -1211,6 +1214,7 @@ float FeImage::getRotation() const
 void FeImage::setRotation( float r )
 {
 	m_sprite.setRotation( r );
+	scale();
 	FePresent::script_flag_redraw();
 }
 
@@ -1327,6 +1331,16 @@ void FeImage::setMovieEnabled( bool f )
 	m_tex->set_video_flags( (FeVideoFlags)c );
 }
 
+float FeImage::get_origin_x() const
+{
+	return m_origin.x;
+}
+
+float FeImage::get_origin_y() const
+{
+	return m_origin.y;
+}
+
 int FeImage::get_skew_x() const
 {
 	return m_sprite.getSkewX();
@@ -1347,6 +1361,19 @@ int FeImage::get_pinch_y() const
 	return m_sprite.getPinchY();
 }
 
+void FeImage::set_origin_x( float x )
+{
+	m_origin.x = x;
+	scale();
+	FePresent::script_flag_redraw();
+}
+
+void FeImage::set_origin_y( float y )
+{
+	m_origin.y = y;
+	scale();
+	FePresent::script_flag_redraw();
+}
 void FeImage::set_skew_x( int x )
 {
 	m_sprite.setSkewX( x );

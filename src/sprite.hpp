@@ -232,6 +232,7 @@ public :
 	using sf::Transformable::getRotation;
 	using sf::Transformable::setRotation;
 	using sf::Transformable::setPosition;
+	using sf::Transformable::setOrigin;
 
 private :
 

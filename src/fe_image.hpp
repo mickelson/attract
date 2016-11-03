@@ -219,6 +219,7 @@ protected:
 	FeSprite m_sprite;
 	sf::Vector2f m_pos;
 	sf::Vector2f m_size;
+	sf::Vector2f m_origin;
 	bool m_preserve_aspect_ratio;
 
 	void scale();
@@ -274,7 +275,9 @@ public:
 
 	void texture_changed( FeBaseTextureContainer *new_tex=NULL );
 
-	int get_skew_x() const ;
+	float get_origin_x() const;
+	float get_origin_y() const;
+	int get_skew_x() const;
 	int get_skew_y() const;
 	int get_pinch_x() const ;
 	int get_pinch_y() const;
@@ -286,6 +289,8 @@ public:
 	int get_subimg_height() const;
 	bool get_preserve_aspect_ratio() const;
 
+	void set_origin_x( float x );
+	void set_origin_y( float y );
 	void set_skew_x( int x );
 	void set_skew_y( int y );
 	void set_pinch_x( int x );
