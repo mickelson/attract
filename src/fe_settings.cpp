@@ -665,8 +665,9 @@ void FeSettings::construct_display_maps()
 
 void FeSettings::save_state()
 {
-	if ( m_current_display < 0 )
-		return;
+	int display_idx = m_current_display;
+	if ( display_idx < 0 )
+		display_idx = m_current_search_index;
 
 	m_rl.save_state();
 
@@ -678,9 +679,10 @@ void FeSettings::save_state()
 	std::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
-		outfile << m_current_display << ";"
+		outfile << display_idx << ";"
 			<< m_last_launch_display << "," << m_last_launch_filter
-			<< "," << m_last_launch_rom << std::endl;
+			<< "," << m_last_launch_rom << ";" << m_menu_layout_file
+			<< std::endl;
 
 		for ( std::vector<FeDisplayInfo>::const_iterator itl=m_displays.begin();
 					itl != m_displays.end(); ++itl )
@@ -713,11 +715,15 @@ void FeSettings::load_state()
 
 		m_current_display = as_int( tok );
 
+		token_helper( line, pos, tok, ";" );
+
 		int i=0;
-		while (( pos < line.size() ) && ( i < 3 ))
+		size_t pos2=0;
+		while (( pos2 < tok.size() ) && ( i < 3 ))
 		{
-			token_helper( line, pos, tok, "," );
-			int temp = as_int( tok );
+			std::string tok2;
+			token_helper( tok, pos2, tok2, "," );
+			int temp = as_int( tok2 );
 
 			switch (i)
 			{
@@ -727,6 +733,9 @@ void FeSettings::load_state()
 			}
 			i++;
 		}
+
+		token_helper( line, pos, tok, ";" );
+		m_menu_layout_file = tok;
 
 		for ( std::vector<FeDisplayInfo>::iterator itl=m_displays.begin();
 					itl != m_displays.end(); ++itl )
@@ -1703,9 +1712,6 @@ bool FeSettings::set_current_tag(
 
 void FeSettings::toggle_layout()
 {
-	if ( m_current_display < 0 )
-		return;
-
 	std::vector<std::string> list;
 
 	std::string layout_path, layout_file;
@@ -1733,7 +1739,11 @@ void FeSettings::toggle_layout()
 	}
 
 	layout_file = list[ ( index + 1 ) % list.size() ];
-	m_displays[ m_current_display ].set_current_layout_file( layout_file );
+
+	if ( m_current_display < 0 )
+		m_menu_layout_file = layout_file;
+	else
+		m_displays[ m_current_display ].set_current_layout_file( layout_file );
 }
 
 void FeSettings::set_volume( FeSoundInfo::SoundType t, const std::string &v )
@@ -1978,6 +1988,9 @@ void FeSettings::run( int &minimum_run_seconds )
 
 void FeSettings::update_stats( int play_count, int play_time )
 {
+	if ( m_current_display < 0 )
+		return;
+
 	int filter_index = get_current_filter_index();
 
 	if ( get_filter_size( filter_index ) < 1 )
