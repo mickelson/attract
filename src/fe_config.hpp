@@ -346,8 +346,12 @@ public:
 
 class FeDisplayMenuEditMenu : public FeBaseConfigMenu
 {
+private:
+	FeLayoutEditMenu m_layout_menu;
 public:
 	void get_options( FeConfigContext &ctx );
+	bool on_option_select( FeConfigContext &ctx,
+		FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
 };
 

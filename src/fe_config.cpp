@@ -1224,8 +1224,25 @@ void FeDisplayMenuEditMenu::get_options( FeConfigContext &ctx )
 			"_help_displays_menu_exit" );
 	ctx.back_opt().append_vlist( bool_opts );
 
+	ctx.add_optl( Opt::SUBMENU, "Layout Options", "", "_help_display_layout_options" );
+	ctx.back_opt().opaque = 1;
 
 	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeDisplayMenuEditMenu::on_option_select(
+		FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+{
+	FeMenuOpt &o = ctx.curr_opt();
+
+	if (( o.opaque == 1 ) && ( ctx.opt_list[1].get_vindex() != 0 ))
+	{
+		FeLayoutInfo &cfg = ctx.fe_settings.get_layout_config( ctx.opt_list[1].get_value() );
+		m_layout_menu.set_layout( &cfg );
+		submenu=&m_layout_menu;
+	}
+
+	return true;
 }
 
 bool FeDisplayMenuEditMenu::save( FeConfigContext &ctx )

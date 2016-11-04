@@ -144,6 +144,11 @@ the selection order.
       - [ArtLabel].*              (video, i.e. "marquee.avi")
       - [ArtLabel].*              (image, i.e. "marquee.png")
 
+   * When looking for artwork for the 'Displays Menu', artwork is loaded
+   from the "menu-art" subdirectory.  Artwork matching the Display's name or
+   the Display's romlist name are matched from the corresponding artwork
+   directories located there.
+
    * If no files are found matching the above rules, then the artwork
    is not drawn.
 
