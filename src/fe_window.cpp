@@ -308,11 +308,33 @@ bool FeWindow::run()
 	// Empty the window event queue, so we don't go triggering other
 	// right away after running an emulator
 	sf::Event ev;
+
+#if defined(USE_GLES)
+	// Unruly hack for RPI w/ custom sfml-pi (non-X11 version of SFML):
+	//
+	// Keypresses made in the emulator are all cached and replayed in
+	// the frontend after exiting the emulator.  pollEvent() isn't
+	// behaving correctly when we first return from the emulator.
+	//
+	// On my RPI3, repeating the call every 10ms for 60ms after the
+	// return fixes the problem.  We are doing this 180ms just to err
+	// on the side of caution until a better fix can be found...
+	for ( int i=0; i<18; i++ )
+	{
+		sf::sleep( sf::milliseconds( 10 ) );
+		while (isOpen() && pollEvent(ev))
+		{
+			if ( ev.type == sf::Event::Closed )
+				return false;
+		}
+	}
+#else
 	while (isOpen() && pollEvent(ev))
 	{
 		if ( ev.type == sf::Event::Closed )
 			return false;
 	}
+#endif
 
 	return true;
 }

@@ -1212,8 +1212,16 @@ void FeOverlay::init_event_loop( FeEventLoopCtx &ctx )
 	//
 	const sf::Transform &t = m_fePresent.get_transform();
 
+#ifdef USE_GLES
+	// get_current_state() doesn't work reliably on RPI w/ sfml-pi (non-X11 custom SFML)
+	// so we reduce the timeout here for better UI performance
+	int to_sec( 1 );
+#else
+	int to_sec( 6 );
+#endif
+
 	sf::Clock timer;
-	while (( timer.getElapsedTime() < sf::seconds( 6 ) )
+	while (( timer.getElapsedTime() < sf::seconds( to_sec ) )
 			&& ( m_feSettings.get_current_state( FeInputMap::Back )
 				|| m_feSettings.get_current_state( FeInputMap::ExitNoMenu )
 				|| m_feSettings.get_current_state( FeInputMap::Select ) ))
