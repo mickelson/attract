@@ -128,6 +128,7 @@ _help_rule_target;The game information attribute that you wish to filter based o
 _help_rule_value;The regular expression value to filter to.  For example, if the filter target is "Year" and comparison is "equals", a value of "1984" will match the year of 1984, "198." will match any year in the 80s, and "(198.)|(199.)" will match any year in the 80s or 90s
 _help_scrape_fanart;Set whether game fanart should be downloaded when scraping
 _help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
+_help_scrape_mamedb;Set whether mame snaps and marquees should be scraped from mamedb.com
 _help_scrape_marquees;Set whether game marquees and banners should be downloaded when scraping
 _help_scrape_snaps;Set whether game snapshots should be downloaded when scraping
 _help_scrape_vids;Set whether game videos should be downloaded when scraping

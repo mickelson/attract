@@ -124,6 +124,7 @@ public:
 		ScrapeWheels,
 		ScrapeFanArt,
 		ScrapeVids,
+		ScrapeMameDB,
 #ifdef SFML_SYSTEM_WINDOWS
 		HideConsole,
 #endif
@@ -196,6 +197,7 @@ private:
 	bool m_scrape_wheels;
 	bool m_scrape_fanart;
 	bool m_scrape_vids;
+	bool m_scrape_mamedb;
 #ifdef SFML_SYSTEM_WINDOWS
 	bool m_hide_console;
 #endif

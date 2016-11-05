@@ -265,6 +265,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_scrape_wheels( true ),
 	m_scrape_fanart( false ),
 	m_scrape_vids( false ),
+	m_scrape_mamedb( true ),
 #ifdef SFML_SYSTEM_WINDOWS
 	m_hide_console( false ),
 #endif
@@ -427,6 +428,7 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_wheels",
 	"scrape_fanart",
 	"scrape_videos",
+	"scrape_mamedb",
 #ifdef SFML_SYSTEM_WINDOWS
 	"hide_console",
 #endif
@@ -2521,6 +2523,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_scrape_fanart;
 	case ScrapeVids:
 		return m_scrape_vids;
+	case ScrapeMameDB:
+		return m_scrape_mamedb;
 #ifdef SFML_SYSTEM_WINDOWS
 	case HideConsole:
 		return m_hide_console;
@@ -2690,6 +2694,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ScrapeVids:
 		m_scrape_vids = config_str_to_bool( value );
+		break;
+
+	case ScrapeMameDB:
+		m_scrape_mamedb = config_str_to_bool( value );
 		break;
 
 #ifdef SFML_SYSTEM_WINDOWS

@@ -403,3 +403,4 @@ _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
+_help_scrape_mamedb;Set whether mame snaps and marquees should be scraped from mamedb.com

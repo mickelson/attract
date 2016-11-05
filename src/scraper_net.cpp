@@ -190,7 +190,7 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 bool FeSettings::mamedb_scraper( FeImporterContext &c )
 {
 #ifndef NO_NET
-	if ( !c.emulator.is_mame() || ( !m_scrape_snaps && !m_scrape_marquees ))
+	if ( !c.emulator.is_mame() || !m_scrape_mamedb || ( !m_scrape_snaps && !m_scrape_marquees ))
 		return true;
 
 	//

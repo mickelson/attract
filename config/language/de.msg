@@ -386,5 +386,6 @@ _help_generator_opt;Set whether this emulator is to be included in the generated
 _help_input_default_action;Set the default behaviour for this control
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_scrape_mamedb;Set whether mame snaps and marquees should be scraped from mamedb.com
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)
