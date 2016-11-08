@@ -1175,6 +1175,7 @@ void FeGameDBParser::start_element(
 		m_players.clear();
 		m_manufacturer.clear();
 		m_platform.clear();
+		m_overview.clear();
 	}
 	else if (( strcmp( element, "ReleaseDate" ) == 0 )
 			|| ( strcmp( element, "genre" ) == 0 )
@@ -1183,6 +1184,7 @@ void FeGameDBParser::start_element(
 			|| ( strcmp( element, "Platform" ) == 0 )
 			|| ( strcmp( element, "GameTitle" ) == 0 )
 			|| ( strcmp( element, "title" ) == 0 )
+			|| ( strcmp( element, "Overview" ) == 0 )
 		)
 	{
 		m_element_open=true;
@@ -1279,6 +1281,8 @@ void FeGameDBParser::end_element( const char *element )
 			m_manufacturer = m_current_data;
 		else if ( strcmp( element, "Platform" ) == 0 )
 			m_platform = m_current_data;
+		else if ( strcmp( element, "Overview" ) == 0 )
+			m_overview = m_current_data;
 
 		else if ( m_art )
 		{
@@ -1336,6 +1340,7 @@ void FeGameDBParser::end_element( const char *element )
 				set_info_val( FeRomInfo::Category, m_category );
 				set_info_val( FeRomInfo::Players, m_players );
 				set_info_val( FeRomInfo::Manufacturer, m_manufacturer );
+				m_overview_keep.swap( m_overview );
 
 				if ( m_art )
 				{
@@ -1378,6 +1383,26 @@ void FeGameDBParser::set_info_val( FeRomInfo::Index i, const std::string &v )
 {
 	if ( m_rom.get_info( i ).empty() )
 		m_rom.set_info( i, v );
+}
+
+bool FeGameDBParser::get_overview( std::string &overview )
+{
+	if ( m_overview_keep.empty() )
+		return false;
+
+	//
+	// escape newlines in m_overview
+	//
+	size_t pos1=0, pos=0;
+	while ( ( pos = m_overview_keep.find( "\n", pos1 ) ) != std::string::npos )
+	{
+		overview += m_overview_keep.substr( pos1, pos-pos1 );
+		overview += "\\n";
+		pos1 = pos+1;
+	}
+	overview += m_overview_keep.substr( pos1 );
+
+	return true;
 }
 
 bool FeGameDBParser::parse( const std::string &data )

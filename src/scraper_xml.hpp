@@ -84,6 +84,7 @@ public:
 	int progress_range;
 	int download_count;
 	std::string user_message;
+	std::string out_name;
 };
 
 class FeListXMLParser : private FeXMLParser
@@ -197,6 +198,8 @@ public:
 
 	bool parse( const std::string &data );
 
+	bool get_overview( std::string & );
+
 private:
 	void start_element( const char *, const char ** );
 	void end_element( const char * );
@@ -213,6 +216,8 @@ private:
 	std::string m_players;
 	std::string m_manufacturer;
 	std::string m_platform;
+	std::string m_overview;
+	std::string m_overview_keep;
 
 	FeRomInfo &m_rom;
 	FeGameDBArt *m_art;

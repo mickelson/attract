@@ -564,6 +564,7 @@ bool FeVM::on_new_layout()
 	}
 	info.Const( "System", FeRomInfo::LAST_INDEX ); // special cases with same value
 	info.Const( "NoSort", FeRomInfo::LAST_INDEX ); //
+	info.Const( "Overview", FeRomInfo::LAST_INDEX+1 ); //
 	ConstTable().Enum( _SC("Info"), info);
 
 	Enumeration transition;
@@ -1949,7 +1950,9 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	if (( index > FeRomInfo::LAST_INDEX ) || ( index < 0 ))
+	static std::string retval;
+
+	if (( index > FeRomInfo::LAST_INDEX+1 ) || ( index < 0 ))
 	{
 		// the better thing to do would be to raise a squirrel error here
 		//
@@ -1961,13 +1964,24 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 		std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
 		FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );
 
-		static std::string sys_name;
+		retval.clear();
 		if ( emu )
-			sys_name = emu->get_info( FeEmulatorInfo::System );
-		else
-			sys_name = "";
+			retval = emu->get_info( FeEmulatorInfo::System );
 
-		return sys_name.c_str();
+		return retval.c_str();
+	}
+	else if ( index == FeRomInfo::LAST_INDEX+1 )
+	{
+		// Overview
+		retval.clear();
+		if (( offset == 0 ) && ( filter_offset == 0 ))
+			retval = fev->m_feSettings->get_game_extra( FeSettings::Overview ).c_str();
+		//
+		//TODO: loading overview where there is a filter or index offset is not yet implemented
+		//
+
+		perform_substitution( retval, "\\n", "\n" );
+		return retval.c_str();
 	}
 
 	return (fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();

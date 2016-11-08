@@ -79,6 +79,7 @@ Exit Attract-Mode?;종료하시겠습니까?
 Exit Command;종료 명령어
 Exit Hotkey;종료 핫키
 Exit to Desktop;종료
+Extra;기타정보(Extra)
 Favourite;즐겨찾기
 FileIsAvailable;롬파일 존재여부
 Fill Screen (Default);전체 화면 크기로 확장 (기본값)
@@ -294,7 +295,6 @@ Configure available emulators;기존 에뮬레이터 편집
 Configure filter rule;필터 내용 수정
 Delete this filter;본 필터 삭제
 Exit menu;나가기
-Extra;기타정보(Extra)
 Launch Last Game on Startup;기동시 직전 게임 자동 재시작
 Page Down;페이지 아래로
 Page Up;페이지 위로
@@ -317,6 +317,7 @@ $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
+Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
@@ -340,6 +341,7 @@ Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
 Next Page;Next Page
+Overview;Overview
 Play Sound;Play Sound
 Previous Game;Previous Game
 Previous Page;Previous Page
@@ -347,6 +349,7 @@ Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove tag: '$1';Remove tag: '$1'
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Scrape mamedb.com (MAME only);Scrape mamedb.com (MAME only)
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
@@ -382,6 +385,7 @@ _help_game_custom_args;Set this to override the default command line arguments f
 _help_game_custom_executable;Set this to override the default executable for this game
 _help_game_delete;Delete this game from the Romlist
 _help_game_edit;Edit this game information
+_help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_input_action;

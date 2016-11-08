@@ -198,6 +198,7 @@ Manufacturer's name.  There are more examples below.
         game's emulator
       - `[SystemN]` - the last "System" name configured for the selected
         game's emulator
+      - `[Overview]` - the overview description for the selected game
    * Magic tokens can also be used to run a function defined in your layout
      or plugin's squirrel script to obtain the desired text.  These tokens are
      in the form `[!<function_name>]`.  When used, Attract-Mode will run the
@@ -672,6 +673,7 @@ Parameters:
       - `Info.PlayedTime`
       - `Info.FileIsAvailable`
       - `Info.System`
+      - `Info.Overview`
    * index_offset - the offset (from the current selection) of the game to
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.

@@ -105,6 +105,7 @@ _help_game_custom_args;Set this to override the default command line arguments f
 _help_game_custom_executable;Set this to override the default executable for this game
 _help_game_delete;Delete this game from the Romlist
 _help_game_edit;Edit this game information
+_help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_hide_brackets;Hide text in brackets when showing game titles

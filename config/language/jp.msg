@@ -79,6 +79,7 @@ Exit Attract-Mode?;終了しますか?
 Exit Command;終了コマンド
 Exit Hotkey;終了ホットキー
 Exit to Desktop;終了
+Extra;その他(Extra)
 Favourite;お気に入り
 FileIsAvailable;Romファイルの存在
 Fill Screen (Default);全画面に広げる (デフォルト)
@@ -294,7 +295,6 @@ Configure available emulators;エミュレータの設定
 Configure filter rule;フィルターのルールー編集
 Delete this filter;このフィルターを削除
 Exit menu;出る
-Extra;その他(Extra)
 Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
 Page Down;1画面下
 Page Up;1画面上
@@ -317,6 +317,7 @@ $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
+Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
@@ -340,6 +341,7 @@ Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
 Next Page;Next Page
+Overview;Overview
 Play Sound;Play Sound
 Previous Game;Previous Game
 Previous Page;Previous Page
@@ -347,6 +349,7 @@ Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove tag: '$1';Remove tag: '$1'
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Scrape mamedb.com (MAME only);Scrape mamedb.com (MAME only)
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
@@ -382,6 +385,7 @@ _help_game_custom_args;Set this to override the default command line arguments f
 _help_game_custom_executable;Set this to override the default executable for this game
 _help_game_delete;Delete this game from the Romlist
 _help_game_edit;Edit this game information
+_help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_input_action;

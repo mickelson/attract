@@ -266,6 +266,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_scrape_fanart( false ),
 	m_scrape_vids( false ),
 	m_scrape_mamedb( true ),
+	m_scrape_overview( true ),
 #ifdef SFML_SYSTEM_WINDOWS
 	m_hide_console( false ),
 #endif
@@ -429,6 +430,7 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_fanart",
 	"scrape_videos",
 	"scrape_mamedb",
+	"scrape_overview",
 #ifdef SFML_SYSTEM_WINDOWS
 	"hide_console",
 #endif
@@ -555,6 +557,8 @@ int FeSettings::process_setting( const std::string &setting,
 
 void FeSettings::init_display()
 {
+	m_loaded_game_extras = false;
+
 	//
 	// Setting new_index to negative causes us to do the 'Displays Menu' w/ custom layout
 	//
@@ -1395,11 +1399,12 @@ namespace {
 	const char *game_extra_strings[] = {
 		"executable",
 		"args",
+		"overview",
 		NULL
 	};
 };
 
-std::string FeSettings::get_game_extra( GameExtra id )
+const std::string &FeSettings::get_game_extra( GameExtra id )
 {
 	if ( !m_loaded_game_extras )
 	{
@@ -1416,47 +1421,11 @@ std::string FeSettings::get_game_extra( GameExtra id )
 		if ( romlist_name.empty() )
 			return FE_EMPTY_STRING;
 
-		std::string path( m_config_path );
-		path += FE_ROMLIST_SUBDIR;
-		path += romlist_name;
-		path += "/";
-
-		std::string name = get_rom_info( 0, 0, FeRomInfo::Romname );
-		if (( !directory_exists( path ) ) || name.empty() )
+		if ( !load_game_extras(
+				romlist_name,
+				get_rom_info( 0, 0, FeRomInfo::Romname ),
+				m_game_extras ) )
 			return FE_EMPTY_STRING;
-
-		path += name;
-		path += FE_GAME_EXTRA_FILE_EXTENSION;
-		if ( !file_exists( path ) )
-			return FE_EMPTY_STRING;
-
-		std::ifstream in_file( path.c_str() );
-		if ( !in_file.is_open() )
-			return FE_EMPTY_STRING;
-
-		while ( in_file.good() )
-		{
-			std::string line, s, v;
-			getline( in_file, line );
-			if ( line_to_setting_and_value( line, s, v ) )
-			{
-				int i=0;
-				while ( game_extra_strings[i] != NULL )
-				{
-					if ( s.compare( game_extra_strings[i] ) == 0 )
-					{
-						m_game_extras[ (GameExtra)i ] = v;
-						break;
-					}
-					i++;
-				}
-
-				if ( game_extra_strings[i] == NULL )
-					std::cerr << " ! Unrecognized game setting: " << s << " " << v << std::endl;
-			}
-		}
-
-		in_file.close();
 	}
 
 	std::map<GameExtra,std::string>::iterator it = m_game_extras.find( id );
@@ -1464,6 +1433,54 @@ std::string FeSettings::get_game_extra( GameExtra id )
 		return (*it).second;
 
 	return FE_EMPTY_STRING;
+}
+
+bool FeSettings::load_game_extras(
+		const std::string &romlist_name,
+		const std::string &romname,
+		std::map<GameExtra,std::string> &extras )
+{
+	std::string path( m_config_path );
+	path += FE_ROMLIST_SUBDIR;
+	path += romlist_name;
+	path += "/";
+
+	if (( !directory_exists( path ) ) || romname.empty() )
+		return false;
+
+	path += romname;
+	path += FE_GAME_EXTRA_FILE_EXTENSION;
+	if ( !file_exists( path ) )
+		return false;
+
+	std::ifstream in_file( path.c_str() );
+	if ( !in_file.is_open() )
+		return false;
+
+	while ( in_file.good() )
+	{
+		std::string line, s, v;
+		getline( in_file, line );
+		if ( line_to_setting_and_value( line, s, v ) )
+		{
+			int i=0;
+			while ( game_extra_strings[i] != NULL )
+			{
+				if ( s.compare( game_extra_strings[i] ) == 0 )
+				{
+					extras[ (GameExtra)i ] = v;
+					break;
+				}
+				i++;
+			}
+
+			if ( game_extra_strings[i] == NULL )
+				std::cerr << " ! Unrecognized game setting: " << s << " " << v << std::endl;
+		}
+	}
+
+	in_file.close();
+	return true;
 }
 
 void FeSettings::set_game_extra( GameExtra id, const std::string &value )
@@ -1487,6 +1504,16 @@ void FeSettings::save_game_extras()
 	if ( romlist_name.empty() )
 		return;
 
+	save_game_extras(
+		romlist_name,
+		get_rom_info( 0, 0, FeRomInfo::Romname ),
+		m_game_extras );
+}
+
+void FeSettings::save_game_extras( const std::string &romlist_name,
+		const std::string &romname,
+		const std::map<GameExtra,std::string> &extras )
+{
 	std::string path( m_config_path );
 	path += FE_ROMLIST_SUBDIR;
 
@@ -1495,15 +1522,13 @@ void FeSettings::save_game_extras()
 	path += romlist_name;
 	path += "/";
 
-	std::string name = get_rom_info( 0, 0, FeRomInfo::Romname );
-
-	if ( name.empty() )
+	if ( romname.empty() )
 		return;
 
-	path += name;
+	path += romname;
 	path += FE_GAME_EXTRA_FILE_EXTENSION;
 
-	if ( m_game_extras.empty() )
+	if ( extras.empty() )
 	{
 		if ( file_exists( path ) )
 			delete_file( path );
@@ -1515,8 +1540,8 @@ void FeSettings::save_game_extras()
 	if ( !out_file.is_open() )
 		return;
 
-	std::map<GameExtra,std::string>::iterator it;
-	for ( it=m_game_extras.begin(); it!=m_game_extras.end(); ++it )
+	std::map<GameExtra,std::string>::const_iterator it;
+	for ( it=extras.begin(); it!=extras.end(); ++it )
 		out_file << game_extra_strings[(int)(*it).first] << " " << (*it).second << std::endl;
 
 	out_file.close();
@@ -2095,6 +2120,7 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 			"SortValue",
 			"System",
 			"SystemN",
+			"Overview",
 			NULL
 		};
 
@@ -2213,6 +2239,24 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 					}
 				}
 			}
+			break;
+
+		case 14: // "Overview"
+			if (( filter_index == 0 ) && ( rom_index == 0 ))
+				rep = get_game_extra( Overview );
+			else if ( m_current_display >= 0 )
+			{
+				std::map<GameExtra,std::string> extras;
+
+				load_game_extras(
+					m_displays[m_current_display].get_info( FeDisplayInfo::Romlist ),
+					get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Romname ),
+					extras );
+
+				rep = extras[ Overview ];
+			}
+
+			perform_substitution( rep, "\\n", "\n" );
 			break;
 
 		default:
@@ -2525,6 +2569,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_scrape_vids;
 	case ScrapeMameDB:
 		return m_scrape_mamedb;
+	case ScrapeOverview:
+		return m_scrape_overview;
 #ifdef SFML_SYSTEM_WINDOWS
 	case HideConsole:
 		return m_hide_console;
@@ -2698,6 +2744,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ScrapeMameDB:
 		m_scrape_mamedb = config_str_to_bool( value );
+		break;
+
+	case ScrapeOverview:
+		m_scrape_overview = config_str_to_bool( value );
 		break;
 
 #ifdef SFML_SYSTEM_WINDOWS

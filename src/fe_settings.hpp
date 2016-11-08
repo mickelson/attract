@@ -125,6 +125,7 @@ public:
 		ScrapeFanArt,
 		ScrapeVids,
 		ScrapeMameDB,
+		ScrapeOverview,
 #ifdef SFML_SYSTEM_WINDOWS
 		HideConsole,
 #endif
@@ -140,7 +141,8 @@ public:
 	enum GameExtra
 	{
 		Executable =0, // custom executable to override the configured emulator executable
-		Arguments      // custom arguments to override the configured emulator arguments
+		Arguments,     // custom arguments to override the configured emulator arguments
+		Overview
 	};
 
 private:
@@ -198,6 +200,7 @@ private:
 	bool m_scrape_fanart;
 	bool m_scrape_vids;
 	bool m_scrape_mamedb;
+	bool m_scrape_overview;
 #ifdef SFML_SYSTEM_WINDOWS
 	bool m_hide_console;
 #endif
@@ -232,6 +235,15 @@ private:
 	bool thegamesdb_scraper( FeImporterContext & );
 	void apply_xml_import( FeImporterContext &, bool );
 
+	bool load_game_extras(
+		const std::string &romlist_name,
+		const std::string &romname,
+		std::map<GameExtra,std::string> &extras );
+
+	void save_game_extras(
+		const std::string &romlist_name,
+		const std::string &romname,
+		const std::map<GameExtra,std::string> &extras );
 
 public:
 	FeSettings( const std::string &config_dir,
@@ -441,7 +453,7 @@ public:
 	// This info is only ever loaded for the currently selected game, and is not intended
 	// to be used in a filter
 	//
-	std::string get_game_extra( GameExtra id );
+	const std::string &get_game_extra( GameExtra id );
 	void set_game_extra( GameExtra id, const std::string &value );
 	void save_game_extras();
 

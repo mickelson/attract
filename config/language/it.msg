@@ -389,18 +389,23 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 #
 # Strings still needing translation
 #
+Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Layout;Configure Layout
 Default;Default
 Enter Romlist Name;Enter Romlist Name
+Extra;Extra
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
+Overview;Overview
+Scrape mamedb.com (MAME only);Scrape mamedb.com (MAME only)
 Window (No Border);Window (No Border)
 multi;multi
 _help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
 _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
+_help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_scrape_mamedb;Set whether mame snaps and marquees should be scraped from mamedb.com

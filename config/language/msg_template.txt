@@ -24,6 +24,7 @@ Ambient Volume;Ambient Volume
 Artwork Label;Artwork Label
 Artwork Path;Artwork Path
 Back;Back
+Buttons;Buttons
 Category;Category
 CloneOf;CloneOf
 Collection/Rom List;Collection/Rom List
@@ -99,6 +100,7 @@ Exit Attract-Mode?;Exit Attract-Mode?
 Exit Command;Exit Command
 Exit Hotkey;Exit Hotkey
 Exit to Desktop;Exit to Desktop
+Extra;Extra
 Favourite;Favourite
 FileIsAvailable;FileIsAvailable
 Fill Screen (Default);Fill Screen (Default)
@@ -145,6 +147,7 @@ No Sort;No Sort
 No Wrap;No Wrap
 None;None
 OR;OR
+Overview;Overview
 Overwrite existing '$1' list?;Overwrite existing '$1' list?
 Play Sound;Play Sound
 PlayedCount;PlayedCount
@@ -175,6 +178,7 @@ Scrape Fanart;Scrape Fanart
 Scrape Flyers/Boxart;Scrape Flyers/Boxart
 Scrape Game Logos (Wheel Art);Scrape Game Logos (Wheel Art)
 Scrape Marquees;Scrape Marquees
+Scrape mamedb.com (MAME only);Scrape mamedb.com (MAME only)
 Scrape Snaps;Scrape Snaps
 Scrape Videos (MAME only);Scrape Videos (MAME only)
 Scraper;Scraper
@@ -323,6 +327,7 @@ _help_game_custom_args;Set this to override the default command line arguments f
 _help_game_custom_executable;Set this to override the default executable for this game
 _help_game_delete;Delete this game from the Romlist
 _help_game_edit;Edit this game information
+_help_game_overview;Edit game overview
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_hide_brackets;Hide text in brackets when showing game titles

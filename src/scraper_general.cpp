@@ -511,6 +511,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 
 				FeImporterContext ctx( *emu, romlist );
 				ctx.full = full;
+				ctx.out_name = output_name;
 
 				build_basic_romlist( ctx );
 
@@ -722,6 +723,7 @@ bool FeSettings::build_romlist( const std::vector<std::string> &emu_list, const 
 		FeImporterContext ctx( *emu, romlist );
 		ctx.uiupdate = uiu;
 		ctx.uiupdatedata = uid;
+		ctx.out_name = out_name;
 
 		build_basic_romlist( ctx );
 		apply_xml_import( ctx, true );

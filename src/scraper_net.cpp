@@ -145,6 +145,8 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 	if ( !c.emulator.is_mame() || !m_scrape_vids )
 		return true;
 
+	std::cout << " - scraping www.progettosnaps.net..." << std::endl;
+
 	//
 	// Build a map for looking up parents
 	//
@@ -192,6 +194,8 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 #ifndef NO_NET
 	if ( !c.emulator.is_mame() || !m_scrape_mamedb || ( !m_scrape_snaps && !m_scrape_marquees ))
 		return true;
+
+	std::cout << " - scraping mamedb.com..." << std::endl;
 
 	//
 	// Build a map for looking up parents
@@ -437,6 +441,8 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	std::vector<std::string> system_list;
 	std::vector<int> system_ids;
 
+	std::cout << " - scraping thegamesdb.net..." << std::endl;
+
 	//
 	// Get a list of valid platforms
 	//
@@ -631,6 +637,20 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 				}
 				else
 				{
+					std::string overview;
+					if( m_scrape_overview && gdbp.get_overview( overview ) )
+					{
+						//
+						// Save the overview now...
+						//
+						std::map<GameExtra,std::string> extras;
+						const std::string &rn = (worklist[id])->get_info( FeRomInfo::Romname );
+
+						load_game_extras( c.out_name, rn, extras );
+						extras[ Overview ] = overview;
+						save_game_extras( c.out_name, rn, extras );
+					}
+
 					aux = (worklist[id])->get_info( FeRomInfo::Title );
 					done_count+=NUM_ARTS;
 				}

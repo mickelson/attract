@@ -2336,6 +2336,11 @@ void FeEditGameMenu::get_options( FeConfigContext &ctx )
 	ctx.opt_list[ FeRomInfo::PlayedCount ].opaque = 3;
 	ctx.opt_list[ FeRomInfo::PlayedTime ].opaque = 3;
 
+	ctx.add_optl( Opt::EDIT, "Overview",
+		ctx.fe_settings.get_game_extra( FeSettings::Overview ),
+		"_help_game_overview" );
+	ctx.back_opt().opaque = 4;
+
 	ctx.add_optl( Opt::EDIT, "Custom Executable",
 		ctx.fe_settings.get_game_extra( FeSettings::Executable ),
 		"_help_game_custom_executable" );
@@ -2392,6 +2397,7 @@ bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *&
 		m_update_extras = true;
 		break;
 
+
 	case 100: // Delete Game
 		if ( ctx.confirm_dialog( "Delete game '$1'?", ctx.opt_list[1].get_value() ) )
 		{
@@ -2436,8 +2442,9 @@ bool FeEditGameMenu::save( FeConfigContext &ctx )
 
 	if ( m_update_extras )
 	{
-		ctx.fe_settings.set_game_extra( FeSettings::Executable, ctx.opt_list[border].get_value() );
-		ctx.fe_settings.set_game_extra( FeSettings::Arguments, ctx.opt_list[border+1].get_value() );
+		ctx.fe_settings.set_game_extra( FeSettings::Overview, ctx.opt_list[border].get_value() );
+		ctx.fe_settings.set_game_extra( FeSettings::Executable, ctx.opt_list[border+1].get_value() );
+		ctx.fe_settings.set_game_extra( FeSettings::Arguments, ctx.opt_list[border+2].get_value() );
 		ctx.fe_settings.save_game_extras();
 	}
 
