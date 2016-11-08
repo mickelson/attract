@@ -50,9 +50,9 @@ public:
 
 	enum JoyCode
 	{
-		JoyUp, JoyDown, JoyLeft, JoyRight, JoyZPos, JoyZNeg,
-		JoyRPos, JoyRNeg, JoyUPos, JoyUNeg, JoyVPos, JoyVNeg,
+		JoyZPos, JoyZNeg, JoyRPos, JoyRNeg, JoyUPos, JoyUNeg, JoyVPos, JoyVNeg,
 		JoyPOVXPos, JoyPOVXNeg, JoyPOVYPos, JoyPOVYNeg,
+		JoyUp, JoyDown, JoyLeft, JoyRight,
 		JoyButton0 // up to sf::Joystick::ButtonCount buttons supported starting from JoyButton0
 	};
 
