@@ -810,6 +810,7 @@ function load_override_transition( sys_d, match_map )
 // animate module's transition handling
 //
 local call_animate=false;
+local w_alpha = 1000;
 
 fe.add_transition_callback( "hs_transition" );
 function hs_transition( ttype, var, ttime )
@@ -851,6 +852,7 @@ function hs_transition( ttype, var, ttime )
 		break;
 
 	case Transition.ToNewSelection:
+        w_alpha = 1000;
 		if ( override_lag_ms <=  0 )
 			break;
 
@@ -980,8 +982,34 @@ local wheel_w = 300;
 local wheel_x = [ flw*0.70, flw*0.695, flw*0.656, flw*0.625, flw*0.60, flw*0.58, flw*0.54, flw*0.58, flw*0.60, flw*0.625, flw*0.656, flw*0.66, ];
 local wheel_y = [ -flh*0.22, -flh*0.105, flh*0.0, flh*0.105, flh*0.215, flh*0.325, flh*0.436, flh*0.61, flh*0.72 flh*0.83, flh*0.935, flh*0.99, ]
 local wheel_w = [ wheel_w, wheel_w, wheel_w, wheel_w, wheel_w, wheel_w, wheel_w*1.5, wheel_w, wheel_w, wheel_w, wheel_w, wheel_w ];
-local wheel_a = [  80,  80,  80,  80,  80,  80, 255,  80,  80,  80,  80,  80, ];
+local wheel_a = [  130,  130,  130,  130,  130,  130, 255,  130,  130,  130,  130,  130, ];
 local wheel_r = [  30,  25,  20,  15,  10,   5,   0, -10, -15, -20, -25, -30, ];
+//
+// Wheel alpha
+//
+fe.add_ticks_callback( "hs_wheel_alpha" );
+function hs_wheel_alpha( ttime )
+{
+    if (w_alpha > 0) {
+        w_alpha = w_alpha - 10;
+        if (w_alpha < 0) {
+            w_alpha = 0;
+        }
+        for (local i=0; i < wheel.m_objs.len(); i++) {
+            if (i == 5) {
+                if (w_alpha < wheel_a[i+1]) {
+                    wheel.m_objs[i].alpha = w_alpha;
+                }
+            } else if (w_alpha <= 255 + wheel_a[i+1]) {
+if (w_alpha >= 255) {
+                wheel.m_objs[i].alpha = w_alpha - 255;
+} else {
+                wheel.m_objs[i].alpha = 0;
+}
+            }
+        }
+    }
+}
 
 class WheelEntry extends ConveyorSlot
 {
