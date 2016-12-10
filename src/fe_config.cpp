@@ -1775,15 +1775,19 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_language" );
 	ctx.back_opt().append_vlist( disp_lang_list );
 
-	std::vector<std::string> bool_opts( 2 );
-	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
-	ctx.fe_settings.get_resource( "No", bool_opts[1] );
+	std::string winmode;
+	ctx.fe_settings.get_resource( FeSettings::windowModeDispTokens[ ctx.fe_settings.get_window_mode() ], winmode );
+	std::vector < std::string > modes;
+	i=0;
+	while ( FeSettings::windowModeDispTokens[i] != 0 )
+	{
+		modes.push_back( std::string() );
+		ctx.fe_settings.get_resource( FeSettings::windowModeDispTokens[ i ], modes.back() );
+		i++;
+	}
+	ctx.add_optl( Opt::LIST, "Window Mode", winmode, "_help_window_mode" );
+	ctx.back_opt().append_vlist( modes );
 
-	ctx.add_optl( Opt::LIST,
-			"Hide Brackets in Game Title",
-			ctx.fe_settings.get_info_bool( FeSettings::HideBrackets ) ? bool_opts[0] : bool_opts[1],
-			"_help_hide_brackets" );
-	ctx.back_opt().append_vlist( bool_opts );
 
 	std::string startupmode;
 	ctx.fe_settings.get_resource( FeSettings::startupDispTokens[ ctx.fe_settings.get_startup_mode() ], startupmode );
@@ -1798,11 +1802,9 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Startup Mode", startupmode, "_help_startup_mode" );
 	ctx.back_opt().append_vlist( startup_modes );
 
-	ctx.add_optl( Opt::LIST,
-			"Confirm Favourites",
-			ctx.fe_settings.get_info_bool( FeSettings::ConfirmFavourites ) ? bool_opts[0] : bool_opts[1],
-			"_help_confirm_favs" );
-	ctx.back_opt().append_vlist( bool_opts );
+	std::vector<std::string> bool_opts( 2 );
+	ctx.fe_settings.get_resource( "Yes", bool_opts[0] );
+	ctx.fe_settings.get_resource( "No", bool_opts[1] );
 
 	ctx.add_optl( Opt::LIST,
 			"Track Usage",
@@ -1814,6 +1816,18 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"Enable Multiple Monitors",
 			ctx.fe_settings.get_info_bool( FeSettings::MultiMon ) ? bool_opts[0] : bool_opts[1],
 			"_help_multiple_monitors" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST,
+			"Hide Brackets in Game Title",
+			ctx.fe_settings.get_info_bool( FeSettings::HideBrackets ) ? bool_opts[0] : bool_opts[1],
+			"_help_hide_brackets" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST,
+			"Confirm Favourites",
+			ctx.fe_settings.get_info_bool( FeSettings::ConfirmFavourites ) ? bool_opts[0] : bool_opts[1],
+			"_help_confirm_favs" );
 	ctx.back_opt().append_vlist( bool_opts );
 
 	std::string filterwrapmode;
@@ -1844,19 +1858,6 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			ctx.fe_settings.get_info( FeSettings::FontPath ),
 			"_help_font_path" );
 
-	std::string winmode;
-	ctx.fe_settings.get_resource( FeSettings::windowModeDispTokens[ ctx.fe_settings.get_window_mode() ], winmode );
-	std::vector < std::string > modes;
-	i=0;
-	while ( FeSettings::windowModeDispTokens[i] != 0 )
-	{
-		modes.push_back( std::string() );
-		ctx.fe_settings.get_resource( FeSettings::windowModeDispTokens[ i ], modes.back() );
-		i++;
-	}
-	ctx.add_optl( Opt::LIST, "Window Mode", winmode, "_help_window_mode" );
-	ctx.back_opt().append_vlist( modes );
-
 	std::vector < std::string > decoders;
 	std::string vid_dec;
 
@@ -1885,35 +1886,35 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ].language );
 
-	ctx.fe_settings.set_info( FeSettings::HideBrackets,
-			ctx.opt_list[1].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+	ctx.fe_settings.set_info( FeSettings::WindowMode,
+			FeSettings::windowModeTokens[ ctx.opt_list[1].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::StartupMode,
 			FeSettings::startupTokens[ ctx.opt_list[2].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
+	ctx.fe_settings.set_info( FeSettings::TrackUsage,
 			ctx.opt_list[3].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
-	ctx.fe_settings.set_info( FeSettings::TrackUsage,
+	ctx.fe_settings.set_info( FeSettings::MultiMon,
 			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
-	ctx.fe_settings.set_info( FeSettings::MultiMon,
+	ctx.fe_settings.set_info( FeSettings::HideBrackets,
 			ctx.opt_list[5].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
+	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
+			ctx.opt_list[6].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
 	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
-			FeSettings::filterWrapTokens[ ctx.opt_list[6].get_vindex() ] );
+			FeSettings::filterWrapTokens[ ctx.opt_list[7].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[7].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[8].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath,
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[9].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::WindowMode,
-			FeSettings::windowModeTokens[ ctx.opt_list[10].get_vindex() ] );
+	ctx.fe_settings.set_info( FeSettings::FontPath,
+			ctx.opt_list[10].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
 			ctx.opt_list[11].get_value() );
