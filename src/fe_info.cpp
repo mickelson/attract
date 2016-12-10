@@ -814,6 +814,7 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"name",
 	"executable",
 	"args",
+	"workdir",
 	"rompath",
 	"romext",
 	"system",
@@ -829,6 +830,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Name",
 	"Executable",
 	"Command Arguments",
+	"Working Directory",
 	"Rom Path(s)",
 	"Rom Extension(s)",
 	"System Identifier",
@@ -874,6 +876,8 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 		return m_executable;
 	case Command:
 		return m_command;
+	case Working_dir:
+		return m_workdir;
 	case Rom_path:
 		return vector_to_string( m_paths );
 	case Rom_extension:
@@ -903,6 +907,8 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 		m_executable = s; break;
 	case Command:
 		m_command = s; break;
+	case Working_dir:
+		m_workdir = s; break;
 	case Rom_path:
 		m_paths.clear();
 		string_to_vector( s, m_paths );
@@ -1141,7 +1147,7 @@ void FeEmulatorInfo::gather_rom_names(
 	for ( std::vector<std::string>::const_iterator itr=m_paths.begin();
 			itr!=m_paths.end(); ++itr )
 	{
-		std::string path = clean_path( *itr, true );
+		std::string path = clean_path_with_wd( *itr, true );
 
 		for ( std::vector<std::string>::const_iterator ite = m_extensions.begin();
 				ite != m_extensions.end(); ++ite )
@@ -1173,6 +1179,20 @@ void FeEmulatorInfo::gather_rom_names(
 			}
 		}
 	}
+}
+
+std::string FeEmulatorInfo::clean_path_with_wd( const std::string &in_path, bool add_trailing_slash ) const
+{
+	std::string res = clean_path( in_path, add_trailing_slash );
+
+	if ( is_relative_path( res ) )
+	{
+		std::string temp;
+		temp.swap( res );
+		res = clean_path( m_workdir, true ) + temp;
+	}
+
+	return res;
 }
 
 bool FeEmulatorInfo::is_mame() const

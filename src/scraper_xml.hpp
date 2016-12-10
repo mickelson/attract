@@ -61,7 +61,7 @@ protected:
 	FeXMLParser( const FeXMLParser & );
 	FeXMLParser &operator=( const FeXMLParser & );
 
-	bool parse_internal( const std::string &, const std::string & );
+	bool parse_internal( const std::string &, const std::string &, const std::string & );
 };
 
 class FeMapComp
@@ -92,7 +92,7 @@ class FeListXMLParser : private FeXMLParser
 public:
 	FeListXMLParser( FeImporterContext &ctx );
 
-	bool parse_command( const std::string &base_command );
+	bool parse_command( const std::string &base_command, const std::string &work_dir );
 	bool parse_file( const std::string &filename );
 
 	std::vector<std::string> get_sl_extensions() { return m_sl_exts; };
@@ -120,7 +120,8 @@ class FeListSoftwareParser : private FeXMLParser
 {
 public:
 	FeListSoftwareParser( FeImporterContext &ctx );
-	bool parse( const std::string &command, const std::vector < std::string > &system_names );
+	bool parse( const std::string &command, const std::string &work_dir,
+		const std::vector < std::string > &system_names );
 
 private:
 	FeImporterContext &m_ctx;

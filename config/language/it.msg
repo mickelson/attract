@@ -400,11 +400,13 @@ Menu Style / Layout;Menu Style / Layout
 Overview;Overview
 Scrape mamedb.com (MAME only);Scrape mamedb.com (MAME only)
 Window (No Border);Window (No Border)
+Working Directory;Working Directory
 multi;multi
 _help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
 _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
+_help_emu_workdir;The working directory for this emulator.  This is the directory that the frontend runs the emulator from.  Also, any relative rom paths, artwork paths, or additional import file paths are treated as being relative to this directory
 _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist

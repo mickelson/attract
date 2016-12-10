@@ -1906,7 +1906,7 @@ void FeSettings::run( int &minimum_run_seconds )
 	bool found=false;
 	for ( itr = paths.begin(); itr != paths.end(); ++itr )
 	{
-		std::string path = clean_path( *itr, true );
+		std::string path = emu->clean_path_with_wd( *itr, true );
 
 		std::vector < std::string > in_list;
 		std::vector < std::string > out_list;
@@ -1971,6 +1971,8 @@ void FeSettings::run( int &minimum_run_seconds )
 	perform_substitution( args, "[romfilename]", romfilename );
 	perform_substitution( args, "[emulator]",
 				emu->get_info( FeEmulatorInfo::Name ) );
+	perform_substitution( args, "[workdir]",
+				clean_path( emu->get_info( FeEmulatorInfo::Working_dir ) ) );
 
 	const std::vector<std::string> &systems = emu->get_systems();
 	if ( !systems.empty() )
@@ -1984,6 +1986,17 @@ void FeSettings::run( int &minimum_run_seconds )
 		temp = emu->get_info( FeEmulatorInfo::Executable );
 
 	command = clean_path( temp );
+
+	std::string work_dir = clean_path( emu->get_info( FeEmulatorInfo::Working_dir ), true );
+	if ( work_dir.empty() )
+	{
+		size_t pos = command.find_last_of( "/\\" );
+		if ( pos != std::string::npos )
+			work_dir = command.substr( 0, pos );
+	}
+
+	if ( !work_dir.empty() )
+		std::cout << " - Working directory: " << work_dir << std::endl;
 
 	std::cout << "*** Running: " << command << " " << args << std::endl;
 
@@ -2003,6 +2016,7 @@ void FeSettings::run( int &minimum_run_seconds )
 	run_program(
 		command,
 		args,
+		work_dir,
 		NULL,
 		NULL,
 		true,
@@ -2762,7 +2776,11 @@ bool FeSettings::set_info( int index, const std::string &value )
 		break;
 
 	case MenuLayout:
-		m_menu_layout = value;
+		if ( m_menu_layout.compare( value ) != 0 )
+		{
+			m_menu_layout = value;
+			m_menu_layout_file.clear();
+		}
 		break;
 
 	case MenuPrompt:
@@ -3553,7 +3571,9 @@ bool FeSettings::get_best_artwork_file(
 		for ( std::vector< std::string >::iterator itr = temp_list.begin();
 			itr != temp_list.end(); ++itr )
 		{
-			art_paths.push_back( clean_path( (*itr), true ) );
+			art_paths.push_back(
+				emu_info->clean_path_with_wd( *itr, !is_supported_archive( *itr ) ) );
+
 			perform_substitution( art_paths.back(), "$LAYOUT", layout_path );
 		}
 	}

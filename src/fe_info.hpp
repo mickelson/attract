@@ -281,6 +281,7 @@ public:
 		Name=0,
 		Executable,
 		Command,
+		Working_dir,
 		Rom_path,
 		Rom_extension,
 		System,
@@ -348,6 +349,9 @@ public:
 	void gather_rom_names( std::vector<std::string> &name_list,
 		std::vector<std::string> &full_path_list ) const;
 
+	// clean_path() and use Working_dir setting if relative in_path
+	std::string clean_path_with_wd( const std::string &in_path, bool add_trailing_slash=false ) const;
+
 	bool is_mame() const;
 	bool is_mess() const;
 
@@ -356,6 +360,7 @@ private:
 	std::string m_name;
 	std::string m_executable;
 	std::string m_command;
+	std::string m_workdir;
 	std::string m_exit_hotkey;
 
 	std::vector<std::string> m_paths;

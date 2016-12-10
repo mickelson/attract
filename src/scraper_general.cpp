@@ -187,7 +187,7 @@ void apply_import_extras( FeImporterContext &c, bool skip_xml )
 	for ( std::vector< std::string >::const_iterator itr = extras.begin();
 			itr != extras.end(); ++itr )
 	{
-		std::string path = clean_path( *itr );
+		std::string path = c.emulator.clean_path_with_wd( *itr );
 
 		if ( tail_compare( path, "catver.ini" ) )
 			ini_import( path, c.romlist, FeRomInfo::Category, "[Category]" );
@@ -302,10 +302,11 @@ bool scummvm_cb( const char *buff, void *opaque )
 
 void scummvm_target( const std::string &base_command,
 	const std::string &params,
+	const std::string &work_dir,
 	std::map< std::string, std::string, myclasscmp > &my_map )
 {
 	std::string output;
-	run_program( base_command, params, scummvm_cb, &output );
+	run_program( base_command, params, work_dir, scummvm_cb, &output );
 
 	size_t pos( 0 );
 	while ( pos < output.size() )
@@ -331,10 +332,13 @@ bool scummvm_lookup( FeImporterContext &c )
 	std::string base_command = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Executable ) );
 
+	std::string work_dir = clean_path( c.emulator.get_info(
+				FeEmulatorInfo::Working_dir ), true );
+
 	std::map< std::string, std::string, myclasscmp > my_map;
 
-	scummvm_target( base_command, "-z", my_map );
-	scummvm_target( base_command, "-t", my_map );
+	scummvm_target( base_command, "-z", work_dir, my_map );
+	scummvm_target( base_command, "-t", work_dir, my_map );
 
 	for ( FeRomInfoListType::iterator itr = c.romlist.begin(); itr != c.romlist.end(); ++itr )
 	{
@@ -353,6 +357,9 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 	std::string base_command = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Executable ) );
 
+	std::string work_dir = clean_path( c.emulator.get_info(
+				FeEmulatorInfo::Working_dir ), true );
+
 	FeEmulatorInfo::InfoSource is = c.emulator.get_info_source();
 	switch ( is )
 	{
@@ -361,7 +368,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 	{
 		std::cout << " - Obtaining -listxml info...";
 		FeListXMLParser mamep( c );
-		if ( !mamep.parse_command( base_command ) )
+		if ( !mamep.parse_command( base_command, work_dir ) )
 			std::cerr << " ! No XML output found, command: "
 				<< base_command << " -listxml" << std::endl;
 	}
@@ -381,7 +388,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 		}
 
 		FeListSoftwareParser lsp( c );
-		lsp.parse( base_command, system_names );
+		lsp.parse( base_command, work_dir, system_names );
 
 		if ( include_gdb && ( is == FeEmulatorInfo::Listsoftware_tgdb ) )
 			thegamesdb_scraper( c );

@@ -1916,7 +1916,7 @@ bool FeVM::cb_plugin_command( const char *command,
 {
 	Sqrat::Function func( obj, fn );
 	return run_program( clean_path( command ),
-				args, my_callback, (void *)&func );
+				args, "", my_callback, (void *)&func );
 }
 
 bool FeVM::cb_plugin_command( const char *command,
@@ -1929,12 +1929,12 @@ bool FeVM::cb_plugin_command( const char *command,
 
 bool FeVM::cb_plugin_command( const char *command, const char *args )
 {
-	return run_program( clean_path( command ), args );
+	return run_program( clean_path( command ), args, "" );
 }
 
 bool FeVM::cb_plugin_command_bg( const char *command, const char *args )
 {
-	return run_program( clean_path( command ), args, NULL, NULL, false );
+	return run_program( clean_path( command ), args, "", NULL, NULL, false );
 }
 
 const char *FeVM::cb_path_expand( const char *path )

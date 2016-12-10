@@ -240,8 +240,7 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 #ifdef SFML_SYSTEM_WINDOWS
 			&& (retval[retval.size()-1] != '\\')
 #endif
-			&& (retval[retval.size()-1] != '/')
-			&& (directory_exists(retval)) )
+			&& (retval[retval.size()-1] != '/'))
 		retval += '/';
 
 	return retval;
@@ -713,7 +712,8 @@ const char *get_OS_string()
 
 
 bool run_program( const std::string &prog,
-	const::std::string &args,
+	const std::string &args,
+	const std::string &cwork_dir,
 	output_callback_fn callback,
 	void *opaque,
 	bool block,
@@ -725,6 +725,16 @@ bool run_program( const std::string &prog,
 	std::string comstr( prog );
 	comstr += " ";
 	comstr += args;
+
+	std::string work_dir = cwork_dir;
+	if ( work_dir.empty() )
+	{
+		// If no working directory provided, try to divine one from the program name
+		//
+		size_t pos = prog.find_last_of( "/\\" );
+		if ( pos != std::string::npos )
+			work_dir = prog.substr( 0, pos );
+	}
 
 #ifdef SFML_SYSTEM_WINDOWS
 	HANDLE child_output_read=NULL;
@@ -753,14 +763,6 @@ bool run_program( const std::string &prog,
 	LPSTR cmdline = new char[ comstr.length() + 1 ];
 	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
-	LPSTR path = NULL;
-	size_t pos = prog.find_last_of( "/\\" );
-	if ( pos != std::string::npos )
-	{
-		path = new char[ pos + 1 ];
-		strncpy( path, prog.substr( 0, pos ).c_str(), pos + 1 );
-	}
-
 	bool ret = CreateProcess( NULL,
 		cmdline,
 		NULL,
@@ -768,7 +770,7 @@ bool run_program( const std::string &prog,
 		( NULL == callback ) ? FALSE : TRUE,
 		0,
 		NULL,
-		path,
+		work_dir.c_str(),
 		&si,
 		&pi );
 
@@ -779,9 +781,6 @@ bool run_program( const std::string &prog,
 	//
 	// Cleanup our allocated values now
 	//
-	if ( path )
-		delete [] path;
-
 	delete [] cmdline;
 
 	if ( ret == false )
@@ -901,12 +900,9 @@ bool run_program( const std::string &prog,
 			close( mypipe[1] );
 		}
 
-		{
-			size_t pos = prog.find_last_of( "/" );
-			if ( pos != std::string::npos )
-				if (chdir( prog.substr( 0, pos ).c_str() ) != 0)
-					std::cerr << "Warning, chdir(" << prog.substr( 0, pos ) << ") failed.";
-		}
+		if ( !work_dir.empty() && ( chdir( work_dir.c_str() ) != 0 ) )
+			std::cerr << "Warning, chdir(" << work_dir << ") failed.";
+
 		execvp( prog.c_str(), arg_list );
 
 		// execvp doesn't return unless there is an error.
