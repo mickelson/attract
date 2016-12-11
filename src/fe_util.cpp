@@ -718,7 +718,9 @@ bool run_program( const std::string &prog,
 	void *opaque,
 	bool block,
 	const std::string &exit_hotkey,
-	int joy_thresh )
+	int joy_thresh,
+	launch_callback_fn launch_cb,
+	void *launch_opaque )
 {
 	const int POLL_FOR_EXIT_MS=50;
 
@@ -809,6 +811,9 @@ bool run_program( const std::string &prog,
 
 	if ( child_output_read )
 		CloseHandle( child_output_read );
+
+	if ( launch_cb )
+		launch_cb( launch_opaque );
 
 	DWORD timeout = ( callback || exit_hotkey.empty() )
 		? INFINITE : POLL_FOR_EXIT_MS;
@@ -932,6 +937,9 @@ bool run_program( const std::string &prog,
 			fclose( fp );
 			close( mypipe[0] );
 		}
+
+		if ( launch_cb )
+			launch_cb( launch_opaque );
 
 		if ( block )
 		{

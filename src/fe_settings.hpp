@@ -27,6 +27,7 @@
 #include "fe_info.hpp"
 #include "fe_romlist.hpp"
 #include "fe_input.hpp"
+#include "fe_util.hpp"
 
 extern const char *FE_ART_EXTENSIONS[];
 
@@ -309,7 +310,7 @@ public:
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
-	void run( int &minimum_run_seconds ); // run current selection
+	void run( int &minimum_run_seconds, launch_callback_fn launch_cb, void *launch_opaque ); // run current selection
 	int exit_command() const; // run configured exit command (if any)
 
 	void toggle_layout();

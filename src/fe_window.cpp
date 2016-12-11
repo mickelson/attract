@@ -21,9 +21,9 @@
  */
 
 
-#include "fe_window.hpp"
-#include "fe_settings.hpp"
 #include "fe_util.hpp"
+#include "fe_settings.hpp"
+#include "fe_window.hpp"
 
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -218,6 +218,23 @@ void FeWindow::initial_create()
 		sf::Mouse::setPosition( sf::Vector2i( wsize.x / 2, wsize.y / 2 ), *this );
 }
 
+void launch_callback( void *o )
+{
+#if defined(SFML_SYSTEM_LINUX)
+	//
+	// On Linux, fullscreen mode is confirmed to block the emulator
+	// from running...  So we hide our main window each time we run
+	// an emulator and then recreate it (!) when the emulator is done.
+	//
+	FeWindow *win = (FeWindow *)o;
+	if ( win->m_fes.get_window_mode() == FeSettings::Fullscreen )
+	{
+		sf::sleep( sf::milliseconds( 300 ) );
+		win->setVisible( false );
+	}
+#endif
+}
+
 bool FeWindow::run()
 {
 #ifndef SFML_SYSTEM_MACOS
@@ -238,20 +255,6 @@ bool FeWindow::run()
 
 	sf::Mouse::setPosition( hide_pos );
 
-#ifdef SFML_SYSTEM_LINUX
-	//
-	// On Linux, fullscreen mode is confirmed to block the emulator
-	// from running...  So we close our main window each time we run
-	// an emulator and then recreate it when the emulator is done.
-	//
-	bool recreate_window=false;
-	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
-	{
-		close();
-		recreate_window=true;
-	}
-#endif
-
 	sf::Clock timer;
 
 	//
@@ -261,7 +264,7 @@ bool FeWindow::run()
 	// for focus to return to Attract-Mode if this value is set greater than 0
 	//
 	int min_run;
-	m_fes.run( min_run );
+	m_fes.run( min_run, launch_callback, this );
 
 	if ( min_run > 0 )
 	{
@@ -292,10 +295,15 @@ bool FeWindow::run()
 	}
 
 #if defined(SFML_SYSTEM_LINUX)
-	if ( recreate_window )
+	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
-		sf::VideoMode mode = sf::VideoMode::getDesktopMode();
-		create( mode, "Attract-Mode", sf::Style::Fullscreen );
+		//
+		// On linux fullscreen mode we hide our window after launching the program.  Simply showing
+		// the window again doesn't work right (focus doesn't come back), so we close the window
+		// and recreate it completely
+		//
+		close();
+		initial_create();
 	}
 #elif defined(SFML_SYSTEM_MACOS)
 	osx_take_focus();

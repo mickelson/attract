@@ -72,6 +72,7 @@ int icompare( const std::string &one,
 	const std::string &two );
 
 typedef bool (*output_callback_fn)( const char *, void * );
+typedef void (*launch_callback_fn)( void * );
 //
 // Run the specified program, blocks while program running
 //
@@ -90,6 +91,9 @@ typedef bool (*output_callback_fn)( const char *, void * );
 //					(use NULL for no hotkey checking)
 //		"joy_thresh" - joystick threshold, only used if exit_hotkey is mapped to
 //					a joystick
+//		"launch_cb" = callback function to call after program launched
+//		"launch_opaque" - opaque ptr to pass to the launch callback function.  run_program()
+//					doesn't care what this is.
 //
 //	Returns true if program ran successfully
 //
@@ -100,7 +104,9 @@ bool run_program( const std::string &prog,
 	void *opaque=NULL,
 	bool block=true,
 	const std::string &exit_hotkey="",
-	int joy_thresh=0 );
+	int joy_thresh=0,
+	launch_callback_fn launch_cb= NULL,
+	void *launch_opaque=NULL );
 
 //
 // Utility functions for file processing:
