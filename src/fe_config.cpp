@@ -351,7 +351,7 @@ bool FeEmulatorEditMenu::on_option_select(
 			for ( std::vector<std::string>::const_iterator itr = paths.begin();
 					itr != paths.end(); ++itr )
 			{
-				std::string rom_path = clean_path( *itr );
+				std::string rom_path = m_emulator->clean_path_with_wd( *itr );
 				if ( !directory_exists( rom_path ) )
 				{
 					if ( ctx.confirm_dialog( "Rom path '$1' not found, proceed anyways?",

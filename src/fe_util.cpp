@@ -765,6 +765,11 @@ bool run_program( const std::string &prog,
 	LPSTR cmdline = new char[ comstr.length() + 1 ];
 	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
+	DWORD current_wd_len = GetCurrentDirectory( 0, NULL );
+	LPSTR current_wd = new char[ current_wd_len ];
+	GetCurrentDirectory( current_wd_len, current_wd );
+	SetCurrentDirectory( work_dir.c_str() );
+
 	bool ret = CreateProcess( NULL,
 		cmdline,
 		NULL,
@@ -772,9 +777,12 @@ bool run_program( const std::string &prog,
 		( NULL == callback ) ? FALSE : TRUE,
 		0,
 		NULL,
-		work_dir.c_str(),
+		NULL, // use current directory (set above) as working directory for the process
 		&si,
 		&pi );
+
+	SetCurrentDirectory( current_wd );
+	delete [] current_wd;
 
 	// Parent process - close the child write handle after child created
 	if ( child_output_write )
