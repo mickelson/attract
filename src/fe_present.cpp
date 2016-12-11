@@ -163,7 +163,7 @@ void FePresent::init_monitors()
 	//
 #ifdef SFML_SYSTEM_WINDOWS
 	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
-		&& ( m_feSettings->get_window_mode() != FeSettings::Window ))
+		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
 	{
 		EnumDisplayMonitors( NULL, NULL, my_mon_enum_proc, (LPARAM)&m_mon );
 
@@ -181,7 +181,7 @@ void FePresent::init_monitors()
 #else
 #ifdef USE_XINERAMA
 	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
-		&& ( m_feSettings->get_window_mode() != FeSettings::Window ))
+		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
 	{
 		Display *xdisp = XOpenDisplay( NULL );
 		int num=0;

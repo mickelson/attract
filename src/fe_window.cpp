@@ -144,8 +144,9 @@ void FeWindow::onCreate()
 		height += 2;
 	}
 
-	SetWindowPos(hw, HWND_TOP, left, top,
-		width, height, SWP_FRAMECHANGED);
+	SetWindowPos( hw,
+		m_fes.get_window_mode() == FeSettings::Fullscreen ? HWND_BOTTOM : HWND_TOP,
+		left, top, width, height, SWP_FRAMECHANGED);
 
 	// As of 2.1, SFML caches the window size. We call setSize below to update SFML appropriately
 	setSize( sf::Vector2u( width, height ) );
