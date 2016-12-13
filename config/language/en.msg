@@ -150,6 +150,7 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 # Extra strings provided by translation
 #
+cn;中文 (Chinese)
 de;Deutsch
 en;English
 es;Español
