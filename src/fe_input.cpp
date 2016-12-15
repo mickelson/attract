@@ -744,12 +744,40 @@ bool my_sort_fn( FeInputMapEntry *a, FeInputMapEntry *b )
 
 void FeInputMap::initialize_mappings()
 {
-	//
-	// Set the 'tab' key to map to 'configure' only if there have been no mapping at all by user
-	// (configure can be unmapped completely, but we want it available initially...)
-	//
 	if ( m_inputs.empty() )
-		m_inputs.push_back( FeInputMapEntry( FeInputSingle::Keyboard, sf::Keyboard::Tab, Configure ) );
+	{
+		//
+		// Set some convenient initial mappings (user can always choose to unmap)...
+		//
+		struct InitialMappings { const char *label; Command command; } imap[] =
+		{
+			{ "Tab",                      Configure },
+			{ "Up+LControl",              PrevLetter },
+			{ "Down+LControl",            NextLetter },
+			{ "Left+LControl",            FiltersMenu },
+			{ "Right+LControl",           NextFilter },
+			{ "Escape+Up",                Configure },
+			{ "Escape+Down",              EditGame },
+			{ "Escape+LControl",          ToggleFavourite },
+
+			{ "Joy0 Up+Joy0 Button0",     PrevLetter },
+			{ "Joy0 Down+Joy0 Button0",   NextLetter },
+			{ "Joy0 Left+Joy0 Button0",   FiltersMenu },
+			{ "Joy0 Right+Joy0 Button0",  NextFilter },
+			{ "Joy0 Up+Joy0 Button1",     Configure },
+			{ "Joy0 Down+Joy0 Button1",   EditGame },
+			{ "Joy0 Button0+Joy0 Button1",ToggleFavourite },
+
+			{ NULL,                       LAST_COMMAND }
+		};
+
+		int i=0;
+		while ( imap[i].label != NULL )
+		{
+			m_inputs.push_back( FeInputMapEntry( imap[i].label, imap[i].command ) );
+			i++;
+		}
+	}
 
 	//
 	// Now ensure that the various 'UI' commands are mapped
@@ -834,12 +862,110 @@ void FeInputMap::initialize_mappings()
 		std::sort( (*itm).second.begin(), (*itm).second.end(), my_sort_fn );
 }
 
+FeInputMap::Command FeInputMap::get_command_from_tracked_keys( const int joy_thresh ) const
+{
+	FeInputMap::Command retval = FeInputMap::LAST_COMMAND;
+	size_t rank=0; // only replace retval if we found a higher rank
+
+	for ( std::set< FeInputSingle >::iterator itt = m_tracked_keys.begin(); itt != m_tracked_keys.end(); ++itt )
+	{
+		//
+		// Check for trigger on tracked keys
+		//
+		std::map< FeInputSingle, std::vector< FeInputMapEntry * > >::const_iterator it;
+		it = m_single_map.find( *itt );
+
+		if ( it == m_single_map.end() )
+		{
+			// this should not happen!
+			ASSERT( 0 );
+			continue;
+		}
+
+		std::vector< FeInputMapEntry *>::const_iterator itv;
+		for ( itv = (*it).second.begin(); itv != (*it).second.end(); ++itv )
+		{
+			bool found=true;
+
+			for ( std::vector< FeInputSingle >::const_iterator its = (*itv)->inputs.begin();
+					its != (*itv)->inputs.end(); ++its )
+			{
+				if ( m_tracked_keys.find( *its ) == m_tracked_keys.end() )
+				{
+					found=false;
+					break;
+				}
+			}
+
+			if ( found && ( (*itv)->inputs.size() > rank ) )
+			{
+				retval = (*itv)->command;
+				rank = (*itv)->inputs.size();
+			}
+		}
+	}
+
+	if ( rank > 0 )
+		m_tracked_keys.clear();
+
+	return retval;
+}
+
 FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect &mc_rect, const int joy_thresh )
 {
-	if ( e.type == sf::Event::Closed )
+	FeInputSingle index( e, mc_rect, joy_thresh );
+
+	switch ( e.type )
+	{
+	case sf::Event::Closed:
+		m_tracked_keys.clear();
 		return ExitNoMenu;
 
-	FeInputSingle index( e, mc_rect, joy_thresh );
+	case sf::Event::JoystickMoved:
+		{
+			//
+			// Test that this is a release of a tracked key (joystick axis)
+			//
+			if (( !index.get_current_state( joy_thresh ) )
+				&& ( m_tracked_keys.find( index ) != m_tracked_keys.end() ))
+			{
+				FeInputMap::Command temp = get_command_from_tracked_keys( joy_thresh );
+				if ( temp != LAST_COMMAND )
+					return temp;
+			}
+		}
+		break;
+
+	case sf::Event::KeyReleased:
+	case sf::Event::JoystickButtonReleased:
+	case sf::Event::MouseButtonReleased:
+		{
+			//
+			// Test that this is a release of a tracked key (button)
+			//
+			sf::Event te = e;
+			switch ( e.type )
+			{
+			case sf::Event::KeyReleased: te.type = sf::Event::KeyPressed; break;
+			case sf::Event::JoystickButtonReleased: te.type = sf::Event::JoystickButtonPressed; break;
+			case sf::Event::MouseButtonReleased: te.type = sf::Event::MouseButtonPressed; break;
+			default: ASSERT( 0 ); break;
+			}
+
+			FeInputSingle tt( te, mc_rect, joy_thresh );
+			if ( m_tracked_keys.find( tt ) != m_tracked_keys.end() )
+			{
+				FeInputMap::Command temp = get_command_from_tracked_keys( joy_thresh );
+				if ( temp != LAST_COMMAND )
+					return temp;
+			}
+		}
+		break;
+
+	default:
+		break;
+	}
+
 	if ( index.get_type() == FeInputSingle::Unsupported )
 		return LAST_COMMAND;
 
@@ -849,12 +975,31 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 	if ( it == m_single_map.end() )
 		return LAST_COMMAND;
 
+	//
+	// Special case: if this is a single button press for a repeatable command
+	// then we trigger on the down event.  For everthing else we wait for up
+	// to trigger.
+	//
 	std::vector< FeInputMapEntry *>::const_iterator itv;
 	for ( itv = (*it).second.begin(); itv != (*it).second.end(); ++itv )
 	{
-		if ( (*itv)->get_current_state( joy_thresh, index ) )
-			return (*itv)->command;
+		FeInputMap::Command c = (*itv)->command;
+
+		if (( is_repeatable_command(c) || (is_ui_command(c) && ( c != Back )) )
+				&& ( (*itv)->inputs.size() == 1 ) )
+		{
+			m_tracked_keys.insert( index );
+
+			FeInputMap::Command temp = get_command_from_tracked_keys( joy_thresh );
+
+			if ( temp != LAST_COMMAND )
+				return temp;
+
+			return c;
+		}
 	}
+
+	m_tracked_keys.insert( index );
 
 	return LAST_COMMAND;
 }
@@ -1072,6 +1217,23 @@ FeInputMap::Command FeInputMap::string_to_command( const std::string &s )
 		return NextPage;
 
 	return LAST_COMMAND;
+}
+
+// these are the commands that are repeatable if the input key is held down
+//
+bool FeInputMap::is_repeatable_command( FeInputMap::Command c )
+{
+	return (( c == PrevGame ) || ( c == NextGame )
+		|| ( c == PrevPage ) || ( c == NextPage )
+		|| ( c == NextLetter ) || ( c == PrevLetter )
+		|| ( c == NextFavourite ) || ( c == PrevFavourite ));
+}
+
+// return true if c is the "Up", "Down", "Left", "Right", or "Back" command
+//
+bool FeInputMap::is_ui_command( FeInputMap::Command c )
+{
+	return ( c < Select );
 }
 
 // Note the alignment of settingStrings matters in fe_config.cpp

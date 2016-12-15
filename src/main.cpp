@@ -41,27 +41,6 @@ void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font );
 
-// these are the commands that are repeatable if the input key is held down
-//
-bool is_repeatable_command( FeInputMap::Command c )
-{
-	return (( c == FeInputMap::PrevGame )
-		|| ( c == FeInputMap::NextGame )
-		|| ( c == FeInputMap::PrevPage )
-		|| ( c == FeInputMap::NextPage )
-		|| ( c == FeInputMap::NextLetter )
-		|| ( c == FeInputMap::PrevLetter )
-		|| ( c == FeInputMap::NextFavourite )
-		|| ( c == FeInputMap::PrevFavourite ));
-}
-
-// return true if c is the "Up", "Down", "Left", "Right", or "Back" command
-//
-bool is_ui_command( FeInputMap::Command c )
-{
-	return ( c < FeInputMap::Select );
-}
-
 int main(int argc, char *argv[])
 {
 	std::string config_path, cmdln_font;
@@ -369,8 +348,8 @@ int main(int argc, char *argv[])
 
 				move_state=FeInputMap::LAST_COMMAND;
 
-				if ( ( is_ui_command( c ) && ( c != FeInputMap::Back ) )
-					|| is_repeatable_command( c ) )
+				if ( ( FeInputMap::is_ui_command( c ) && ( c != FeInputMap::Back ) )
+					|| FeInputMap::is_repeatable_command( c ) )
 				{
 					// setup variables to test for when the navigation keys are held down
 					move_state = c;
@@ -382,7 +361,7 @@ int main(int argc, char *argv[])
 			//
 			// Map Up/Down/Left/Right/Back to their default action now
 			//
-			if ( is_ui_command( c ) )
+			if ( FeInputMap::is_ui_command( c ) )
 			{
 				//
 				// Give the script the option to handle the (pre-map) action.
@@ -711,7 +690,7 @@ int main(int argc, char *argv[])
 				if (( t > TRIG_CHANGE_MS ) && ( t - move_last_triggered > feSettings.selection_speed() ))
 				{
 					FeInputMap::Command ms = move_state;
-					if ( is_ui_command( ms ) )
+					if ( FeInputMap::is_ui_command( ms ) )
 					{
 						//
 						// Give the script the option to handle the (pre-map) action.
@@ -724,7 +703,7 @@ int main(int argc, char *argv[])
 						else
 						{
 							ms = feSettings.get_default_command( ms );
-							if ( !is_repeatable_command( ms ) )
+							if ( !FeInputMap::is_repeatable_command( ms ) )
 								ms = FeInputMap::LAST_COMMAND;
 						}
 					}
@@ -810,10 +789,10 @@ int main(int argc, char *argv[])
 				// "End Navigation" stuff now
 				//
 				FeInputMap::Command ms = move_state;
-				if ( is_ui_command( ms ) )
+				if ( FeInputMap::is_ui_command( ms ) )
 					ms = feSettings.get_default_command( ms );
 
-				if ( is_repeatable_command( ms ) )
+				if ( FeInputMap::is_repeatable_command( ms ) )
 					feVM.on_end_navigation();
 
 				move_state = FeInputMap::LAST_COMMAND;
