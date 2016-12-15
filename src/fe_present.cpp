@@ -1109,6 +1109,8 @@ void FePresent::pre_run()
 
 void FePresent::post_run()
 {
+	std::vector<FeSound *>::iterator its;
+
 #ifndef NO_MOVIE
 	//
 	// Re-establish openAL stuff now that we are back from the emulator
@@ -1119,14 +1121,16 @@ void FePresent::post_run()
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->release_audio( false );
 
-	for ( std::vector<FeSound *>::iterator its=m_sounds.begin();
-				its != m_sounds.end(); ++its )
+	for ( its=m_sounds.begin(); its != m_sounds.end(); ++its )
 		(*its)->release_audio( false );
 #endif
 
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
 		(*itm)->set_vol( m_feSettings->get_play_volume( FeSoundInfo::Movie ) );
+
+	for ( its=m_sounds.begin(); its != m_sounds.end(); ++its )
+		(*its)->set_volume( m_feSettings->get_play_volume( FeSoundInfo::Sound ) );
 
 	set_video_play_state( m_playMovies );
 	on_transition( FromGame, FromToNoValue );
