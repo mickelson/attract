@@ -39,22 +39,30 @@
 
 void process_args( int argc, char *argv[],
 			std::string &config_path,
-			std::string &cmdln_font );
+			std::string &cmdln_font,
+			bool &process_console );
 
 int main(int argc, char *argv[])
 {
 	std::string config_path, cmdln_font;
 	bool launch_game = false;
+	bool process_console = false;
 
-	process_args( argc, argv, config_path, cmdln_font );
+	process_args( argc, argv, config_path, cmdln_font, process_console );
 
 	//
 	// Run the front-end
 	//
 	std::cout << "Starting " << FE_NAME << " " << FE_VERSION
-			<< " (" << get_OS_string() << ")" << std::endl;
+			<< " (" << get_OS_string() << ")";
+
+	if ( process_console )
+		std::cout << ", Script Console Enabled";
+
+	std::cout << std::endl;
 
 	FeSettings feSettings( config_path, cmdln_font );
+
 	feSettings.load();
 
 	std::string def_font_path, def_font_file;
@@ -86,7 +94,7 @@ int main(int argc, char *argv[])
 		hide_console();
 #endif
 
-	FeVM feVM( feSettings, def_font, window, soundsys.get_ambient_sound() );
+	FeVM feVM( feSettings, def_font, window, soundsys.get_ambient_sound(), process_console );
 	FeOverlay feOverlay( window, feSettings, feVM );
 	feVM.set_overlay( &feOverlay );
 

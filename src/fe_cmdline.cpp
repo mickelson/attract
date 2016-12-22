@@ -28,7 +28,8 @@
 
 void process_args( int argc, char *argv[],
 			std::string &config_path,
-			std::string &cmdln_font )
+			std::string &cmdln_font,
+			bool &process_console )
 {
 	//
 	// Deal with command line arguments
@@ -243,6 +244,13 @@ void process_args( int argc, char *argv[],
 
 			exit(0);
 		}
+#ifndef SFML_SYSTEM_WINDOWS
+		else if ( strcmp( argv[next_arg], "--console" ) == 0 )
+		{
+			process_console=true;
+			next_arg++;
+		}
+#endif
 		else
 		{
 			int retval=1;
@@ -283,6 +291,10 @@ void process_args( int argc, char *argv[],
 				<< "     Specify the configuration to use" << std::endl
 				<< "  -f, --font <font_name>" << std::endl
 				<< "     Specify the default font to use" << std::endl
+#ifndef SFML_SYSTEM_WINDOWS
+				<< "  --console" << std::endl
+				<< "     Enable script console" << std::endl
+#endif
 				<< "  -h, --help: Show this message" << std::endl
 				<< "  -v, --version: Show version information" << std::endl;
 			exit( retval );

@@ -52,6 +52,7 @@
 #include <fcntl.h>
 #else
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 #include <pwd.h>
 #include <signal.h>
 #include <errno.h>
@@ -1196,3 +1197,28 @@ bool line_to_setting_and_value( const std::string &line,
 	return false;
 }
 
+bool get_console_stdin( std::string &str )
+{
+//
+// TODO: Implement non-blocking console input read on Windows
+// PeekNamedPipe() and ReadFile() ??
+//
+#ifndef SFML_SYSTEM_WINDOWS
+	int count=0;
+	ioctl( fileno(stdin), FIONREAD, &count );
+
+	while ( count > 0 )
+	{
+		char buf[count+1];
+		if ( read( fileno(stdin), buf, count ) < 0 )
+			break;
+
+		buf[count]=0;
+		str += buf;
+
+		ioctl( fileno(stdin), FIONREAD, &count );
+	}
+#endif
+
+	return ( !str.empty() );
+}

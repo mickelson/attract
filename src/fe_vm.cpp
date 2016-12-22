@@ -298,12 +298,13 @@ const char *FeVM::transitionTypeStrings[] =
 		NULL
 };
 
-FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound )
+FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound, bool console_input )
 	: FePresent( &fes, defaultfont ),
 	m_window( wnd ),
 	m_overlay( NULL ),
 	m_ambient_sound( ambient_sound ),
 	m_redraw_triggered( false ),
+	m_process_console_input( console_input ),
 	m_script_cfg( NULL ),
 	m_script_id( -1 )
 {
@@ -1012,10 +1013,36 @@ void FeVM::set_for_callback( const FeCallback &c )
 	m_script_id = c.m_sid;
 }
 
+bool FeVM::process_console_input()
+{
+	if ( !m_process_console_input )
+		return false;
+
+	std::string script;
+	if ( !get_console_stdin( script ) )
+		return false;
+
+	bool retval=false;
+	try
+	{
+		Sqrat::Script sc;
+		sc.CompileString( script );
+		sc.Run();
+
+		retval = true;
+	}
+	catch( Sqrat::Exception e )
+	{
+		std::cerr << "Error: " << script << " - " << e.Message() << std::endl;
+	}
+
+	return retval;
+}
+
 bool FeVM::on_tick()
 {
 	using namespace Sqrat;
-	m_redraw_triggered = false;
+	m_redraw_triggered = process_console_input();
 
 	for ( std::vector<FeCallback>::iterator itr = m_ticks.begin();
 		itr != m_ticks.end(); )

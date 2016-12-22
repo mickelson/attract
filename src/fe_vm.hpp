@@ -88,6 +88,7 @@ private:
 	FeSound &m_ambient_sound;
 
 	bool m_redraw_triggered;
+	bool m_process_console_input;
 	const FeScriptConfigurable *m_script_cfg;
 	int m_script_id;
 	sf::Time m_last_ui_cmd;
@@ -105,11 +106,12 @@ private:
 	void add_signal_handler( Sqrat::Object, const char * );
 	void remove_signal_handler( Sqrat::Object, const char * );
 	void set_for_callback( const FeCallback & );
+	bool process_console_input();
 
 	static bool internal_do_nut(const std::string &, const std::string &);
 
 public:
-	FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound );
+	FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound, bool console_input );
 	~FeVM();
 
 	void set_overlay( FeOverlay *feo );

@@ -263,6 +263,12 @@ bool line_to_setting_and_value( const std::string &line,
 	const char *sep=FE_WHITESPACE );
 
 //
+// Non-blocking check for input on stdin
+// return true if input found, false otherwise
+//
+bool get_console_stdin( std::string &str );
+
+//
 // Windows systems: Hide the console window if not launched from the command line
 //
 #ifdef SFML_SYSTEM_WINDOWS
