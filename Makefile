@@ -241,6 +241,7 @@ ifneq ($(NO_SWF),1)
     LIBS += -ldl -lGL
    endif
    TEMP_LIBS += freetype2
+   CFLAGS += $(shell $(PKG_CONFIG) --cflags --silence-errors)
   endif
  else
   LIBS += -lopengl32

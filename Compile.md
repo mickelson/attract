@@ -11,7 +11,7 @@ build utilities (make, pkg-config, ar) on your system.  This means the
 "build-essential" and "pkg-config" packages on Debian or Ubuntu-based
 distributions.  Other distributions should have similar packages available.
 
-1. Install the following libraries and related headers on your system:
+1. Install the following *development* libraries on your system:
    * Required:
       - SFML SDK version 2.x (<http://sfml-dev.org>)
       - OpenAL
@@ -19,6 +19,7 @@ distributions.  Other distributions should have similar packages available.
       - FreeType 2
       - The following FFmpeg libraries (required for videos): avformat,
       avcodec, swscale, avutil and either swresample or avresample.
+      - OpenGL and GLU (or OpenGLES for GLES version)
    * Optional:
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
@@ -28,12 +29,12 @@ distributions.  Other distributions should have similar packages available.
 
 3. From the directory you extracted the source into, run:
 
-           make -j 3
+           make
 
    or, if you are building on a Raspberry Pi, O-Droid or another embedded
    system, you can build the OpenGL ES version with the following:
 
-           make -j 3 USE_GLES=1
+           make USE_GLES=1
 
    This step will create the "attract" executable file.
 
@@ -78,7 +79,7 @@ These instructions assume that you have X Code installed.
 
 4. From the directory you extracted the Attract-Mode source into, run:
 
-           make -j 3
+           make
 
    This step will create the "attract" executable file.
 
@@ -113,17 +114,17 @@ OS X.
    the above command will make 32-bit versions of ffmpeg and sfml (and anything
    else that they depend on). To make the 64-bit version use the following:
 
-           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml
+           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml libarchive
 
 3. Extract the Attract-Mode source to your system.
 
 4. From the directory you extracted the source into, run the following:
 
-           make -j 3 CROSS=1 TOOLCHAIN=i686-w64-mingw32.static WINDOWS_STATIC=1
+           make CROSS=1 TOOLCHAIN=i686-w64-mingw32.static WINDOWS_STATIC=1
 
    to build the 32-bit version of Attract-Mode. To build 64-bit, run:
 
-           make -j 3 CROSS=1 TOOLCHAIN=x86_64-w64-mingw32.static WINDOWS_STATIC=1
+           make CROSS=1 TOOLCHAIN=x86_64-w64-mingw32.static WINDOWS_STATIC=1
 
    This step will create the "attract.exe" executable file.
 
@@ -154,7 +155,7 @@ Windows (native compile):
 
            git clone https://github.com/mickelson/attract attract
            cd attract
-           make -j 3
+           make
 
 This builds a version of Attract-Mode with various .dll dependencies.  To
 run the program, you will need to add `c:\msys64\mingw64\bin` to your path
