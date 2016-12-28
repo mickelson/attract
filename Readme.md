@@ -70,8 +70,8 @@ you can configure one or more.  Each "Display" is a grouping of the following:
 - a Global Filter.  The global filter is a set of filter rules that always get
   applied to a Collection/Rom List.  This filter can be used to remove entries
   you will never want to see
-- zero or more "normal" Filters.  Filters are a set of rules for which games to
-  display and how to sort them.  Filters can be created to categorize games
+- zero or more available filters.  Filters are a set of rules for which games
+  to display and how to sort them.  Filters can be created to categorize games
   based attributes such as their orientation, category, manufacturer, year,
   times played, favourite status, file availability, etc.  Filters can be
   cycled through using the "Previous Filter" and "Next Filter" controls, and
@@ -82,29 +82,46 @@ Further Customization
 
 **CONTROLS:** The inputs used to control Attract-Mode can be configured from
 from the "Controls" menu in config mode.  Attract-Mode actions can be mapped
-to most keyboard, mouse and joystick inputs.
+to most keyboard, mouse and joystick inputs, including combinations.  Here is
+a list of the default control mappings:
 
-**FILTERS:** Filters can be added from the "Displays" menu in config
-mode.  At their core, filters are a list of "rules" and "exceptions" that the
-frontend steps through, in order, to determine whether or not to list a game.
-If a game does not match a "rule", then it is not shown.  If a game matches to
-an "exception", then it gets listed no matter what, ignoring the rest of the
-rules in the filter.  In other words, in order to be listed a game has to
-match *all* the rules or *just one* exception.
+| **Keyboard**      | **Joystick**      | **Action**              |
+| ----------------- | ----------------- | ----------------------- |
+| Up                | Up                | Previous Entry          |
+| Down              | Down              | Next Entry              |
+| Left              | Left              | Previous Display        |
+| Right             | Right             | Next Display            |
+| Enter or LControl | Button A          | Select                  |
+| Escape            | Button B          | Back/Exit               |
+| LControl+Up       | Button A+Up       | Jump to Previous Letter |
+| LControl+Down     | Button A+Down     | Jump to Next Letter     |
+| LControl+Left     | Button A+Left     | Show Filters Menu       |
+| LControl+Right    | Button A+Right    | Next Filter             |
+| LControl+Escape   | Button A+Button B | Toggle Favourite        |
+| Tab or Escape+Up  | Button B+Up       | Configure               |
+| Escape+Down       | Button B+Down     | Edit Game               |
+
+**FILTERS:** Filters can be added to a Display in config mode.  Filters are a
+list of "rules" and "exceptions" that the frontend steps through, in order, to
+determine whether or not to list a game.  If a game does not match a "rule",
+then it is not shown.  If a game matches to an "exception", then it gets listed
+no matter what (ignoring the rest of the rules in the filter).  In other words,
+in  order to be listed, a game has to match *all* the rules or *just one* of
+the exceptions configured for the filter.
 
 For example, you might want to have a filter that only shows 1980's
 multiplayer sports games.  This would be achieved by creating a filter with
 three rules: (1) that the year be in the 1980s (Year equals "198."), (2) that
 the number of players in not 1 (Players not_equals "1"), and (3) that the
 category contains "Sports" (Category contains "Sports").  Filters use regular
-expressions, which allow for powerful text matching capabilties.  From the
+expressions, which allow for powerful text matching capabilities.  From the
 example above, the "198." will match any four letter word that starts with
 "198".
 
 Filters also allow you to do some other stuff as well, such as controlling
 how the gamelist gets sorted, and how many entries are listed.
 
-**SOUND:** To play sounds in your setup, place the sound file in the "sounds"
+**SOUND:** To configure sounds, place the sound file in the "sounds"
 subdirectory of your Attract-Mode config directory.  The sound file can then
 be selected from the "Sound" menu when in config mode and mapped to an action
 or event.  Attract-Mode should support any sound format supported by FFmpeg
