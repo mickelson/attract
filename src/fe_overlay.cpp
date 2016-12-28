@@ -1381,12 +1381,14 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 								&& ( ctx.sel > 0 ))
 					{
 						ctx.sel--;
+						ctx.move_count++;
 						return false;
 					}
 					else if (( ctx.move_command == FeInputMap::Down )
 								&& ( ctx.sel < ctx.max_sel ))
 					{
 						ctx.sel++;
+						ctx.move_count++;
 						return false;
 					}
 				}
