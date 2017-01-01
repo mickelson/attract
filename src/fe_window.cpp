@@ -224,14 +224,14 @@ void launch_callback( void *o )
 #if defined(SFML_SYSTEM_LINUX)
 	//
 	// On Linux, fullscreen mode is confirmed to block the emulator
-	// from running...  So we hide our main window each time we run
+	// from running...  So we close our main window each time we run
 	// an emulator and then recreate it (!) when the emulator is done.
 	//
 	FeWindow *win = (FeWindow *)o;
 	if ( win->m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
-		sf::sleep( sf::milliseconds( 300 ) );
-		win->setVisible( false );
+		sf::sleep( sf::milliseconds( 1000 ) );
+		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
 	}
 #endif
 }
@@ -303,7 +303,6 @@ bool FeWindow::run()
 		// the window again doesn't work right (focus doesn't come back), so we close the window
 		// and recreate it completely
 		//
-		close();
 		initial_create();
 	}
 #elif defined(SFML_SYSTEM_MACOS)
@@ -318,32 +317,11 @@ bool FeWindow::run()
 	// right away after running an emulator
 	sf::Event ev;
 
-#if defined(USE_GLES)
-	// Unruly hack for RPI w/ custom sfml-pi (non-X11 version of SFML):
-	//
-	// Keypresses made in the emulator are all cached and replayed in
-	// the frontend after exiting the emulator.  pollEvent() isn't
-	// behaving correctly when we first return from the emulator.
-	//
-	// On my RPI3, repeating the call every 10ms for 60ms after the
-	// return fixes the problem.  We are doing this 180ms just to err
-	// on the side of caution until a better fix can be found...
-	for ( int i=0; i<18; i++ )
-	{
-		sf::sleep( sf::milliseconds( 10 ) );
-		while (isOpen() && pollEvent(ev))
-		{
-			if ( ev.type == sf::Event::Closed )
-				return false;
-		}
-	}
-#else
 	while (isOpen() && pollEvent(ev))
 	{
 		if ( ev.type == sf::Event::Closed )
 			return false;
 	}
-#endif
 
 	return true;
 }
