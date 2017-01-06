@@ -48,7 +48,7 @@
 #FE_DEBUG=1
 #VERBOSE=1
 
-FE_VERSION=v2.2.0
+FE_VERSION=v2.2.1
 
 CC=gcc
 CXX=g++
