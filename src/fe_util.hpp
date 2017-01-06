@@ -231,8 +231,8 @@ std::basic_string<sf::Uint32> clipboard_get_content();
 // namespace (Window, etc) clashes with the SFML namespace used in fe_window
 // (sf::Window)
 //
-#ifdef USE_XINERAMA
-void get_xinerama_geometry( int &, int &, int &, int & );
+#if defined(USE_XLIB)
+void get_x11_geometry( bool multimon, int &, int &, int &, int & );
 #endif
 
 #ifndef NO_MOVIE

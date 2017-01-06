@@ -180,10 +180,13 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
     USE_GLES=1
    else
     #
-    # Test for Xinerama...
+    # Test for Xlib and Xinerama...
     #
-    ifeq ($(shell $(PKG_CONFIG) --exists xinerama && echo "1" || echo "0"), 1)
-     USE_XINERAMA=1
+    ifeq ($(shell $(PKG_CONFIG) --exists x11 && echo "1" || echo "0"), 1)
+     USE_XLIB=1
+     ifeq ($(shell $(PKG_CONFIG) --exists xinerama && echo "1" || echo "0"), 1)
+      USE_XINERAMA=1
+     endif
     endif
    endif
   endif
@@ -241,7 +244,7 @@ ifneq ($(NO_SWF),1)
     LIBS += -ldl -lGL
    endif
    TEMP_LIBS += freetype2
-   CFLAGS += $(shell $(PKG_CONFIG) --cflags --silence-errors)
+   CFLAGS += $(shell $(PKG_CONFIG) --cflags --silence-errors freetype2)
   endif
  else
   LIBS += -lopengl32
@@ -299,9 +302,15 @@ ifeq ($(USE_GLES),1)
  FE_FLAGS += -DUSE_GLES
 endif
 
-ifeq ($(USE_XINERAMA),1)
- FE_FLAGS += -DUSE_XINERAMA
- LIBS += -lX11 -lXinerama
+ifeq ($(USE_XLIB),1)
+ FE_FLAGS += -DUSE_XLIB
+ LIBS += -lX11
+
+ ifeq ($(USE_XINERAMA),1)
+  FE_FLAGS += -DUSE_XINERAMA
+  LIBS += -lXinerama
+ endif
+
 endif
 
 ifeq ($(USE_FONTCONFIG),1)

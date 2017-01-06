@@ -62,9 +62,13 @@
 #include "fe_util_osx.hpp"
 #endif
 
-#ifdef USE_XINERAMA
-#include <X11/extensions/Xinerama.h>
+#ifdef USE_XLIB
+#include <X11/Xlib.h>
+ #ifdef USE_XINERAMA
+ #include <X11/extensions/Xinerama.h>
+ #endif
 #endif
+
 
 namespace {
 
@@ -1047,13 +1051,13 @@ std::basic_string<sf::Uint32> clipboard_get_content()
 	return retval;
 }
 
-#ifdef USE_XINERAMA
+#if defined(USE_XLIB)
 //
 // We use this in fe_window but implement it here because the XWindows
 // namespace (Window, etc) clashes with the SFML namespace used in fe_window
 // (sf::Window)
 //
-void get_xinerama_geometry( int &x, int &y, int &width, int &height )
+void get_x11_geometry( bool multimon, int &x, int &y, int &width, int &height )
 {
 	x=0;
 	y=0;
@@ -1063,21 +1067,36 @@ void get_xinerama_geometry( int &x, int &y, int &width, int &height )
 	::Display *xdisp = XOpenDisplay( NULL );
 	int num=0;
 
+#ifdef USE_XINERAMA
 	XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
 
-	if ( num > 1 )
+	if ( multimon )
 	{
-		x=-si[0].x_org;
-		y=-si[0].y_org;
-	}
+		if ( num > 1 )
+		{
+			x=-si[0].x_org;
+			y=-si[0].y_org;
+		}
 
-	for ( int i=0; i<num; i++ )
+		for ( int i=0; i<num; i++ )
+		{
+			width = std::max( width, si[i].x_org + si[i].width );
+			height = std::max( height, si[i].y_org + si[i].height );
+		}
+	}
+	else
 	{
-		width = std::max( width, si[i].x_org + si[i].width );
-		height = std::max( height, si[i].y_org + si[i].height );
+		width = si[0].width;
+		height = si[0].height;
 	}
 
 	XFree( si );
+#else
+	::Screen *xscreen = XDefaultScreenOfDisplay( xdisp );
+	width = XWidthOfScreen( xscreen );
+	height = XHeightOfScreen( xscreen );
+#endif
+
 	XCloseDisplay( xdisp );
 }
 #endif

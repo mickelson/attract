@@ -153,17 +153,23 @@ void FeWindow::onCreate()
 
 	ShowWindow(hw, SW_SHOW);
 	SetFocus( hw );
-#endif
 
-#ifdef USE_XINERAMA
-	if ( m_fes.get_info_bool( FeSettings::MultiMon ) )
-	{
-		int x, y, width, height;
-		get_xinerama_geometry( x, y, width, height );
+#elif defined(USE_XLIB)
+	//
+	// Notes: if xinerama and multimon are enabled, this should set our window to cover all available
+	// monitors
+	//
+	// If multimon is disabled, this fixes positioning problems that SFML(?) seems to have where
+	// the window contents aren't drawn in the correct place vertically on fullscreen/fillscreen modes
+	//
+	int x, y, width, height;
+	get_x11_geometry(
+		m_fes.get_info_bool( FeSettings::MultiMon ) && !is_windowed_mode( m_fes.get_window_mode() ),
+		x, y, width, height );
 
-		setPosition( sf::Vector2i( x, y ) );
-		setSize( sf::Vector2u( width, height ) );
-	}
+	setPosition( sf::Vector2i( x, y ) );
+	setSize( sf::Vector2u( width, height ) );
+
 #endif
 
 	setVerticalSyncEnabled(true);
@@ -185,6 +191,11 @@ void FeWindow::initial_create()
 	};
 
 	int win_mode = m_fes.get_window_mode();
+
+#ifdef USE_XINERAMA
+	if ( m_fes.get_info_bool( FeSettings::MultiMon ) && ( win_mode != FeSettings::Default ))
+		std::cout << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
+#endif
 
 	// Create window
 	create(

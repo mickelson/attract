@@ -161,7 +161,7 @@ void FePresent::init_monitors()
 	//
 	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
 	//
-#ifdef SFML_SYSTEM_WINDOWS
+#if defined(SFML_SYSTEM_WINDOWS)
 	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
 		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
 	{
@@ -178,10 +178,8 @@ void FePresent::init_monitors()
 			(*itr).transform *= correction;
 	}
 	else
-#else
-#ifdef USE_XINERAMA
-	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
-		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
+#elif defined(USE_XINERAMA)
+	if ( 1 )
 	{
 		Display *xdisp = XOpenDisplay( NULL );
 		int num=0;
@@ -189,16 +187,29 @@ void FePresent::init_monitors()
 		XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
 		if ( si )
 		{
-			for ( int i=0; i<num; i++ )
+			if (( m_feSettings->get_info_bool( FeSettings::MultiMon ) )
+					&& ( !is_windowed_mode( m_feSettings->get_window_mode() )))
+			{
+				for ( int i=0; i<num; i++ )
+				{
+					FeMonitor mon(
+						si[i].screen_number,
+						si[i].width,
+						si[i].height );
+
+					mon.transform = sf::Transform().translate(
+						si[i].x_org,
+						si[i].y_org );
+
+					m_mon.push_back( mon );
+				}
+			}
+			else
 			{
 				FeMonitor mon(
-					si[i].screen_number,
-					si[i].width,
-					si[i].height );
-
-				mon.transform = sf::Transform().translate(
-					si[i].x_org,
-					si[i].y_org );
+					si[0].screen_number,
+					si[0].width,
+					si[0].height );
 
 				m_mon.push_back( mon );
 			}
@@ -208,7 +219,6 @@ void FePresent::init_monitors()
 		XCloseDisplay( xdisp );
 	}
 	else
-#endif // USE_XINERAMA
 #endif
 	{
 		//
