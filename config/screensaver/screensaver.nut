@@ -24,6 +24,9 @@ class UserConfig {
 
 	</ label="Preserve Aspect Ratio", help="Preserve the aspect ratio of screensaver snaps/videos", options="Yes,No", order=7 />
 	preserve_ar="No";
+
+	</ label="Blank Screen Time", help="Minutes before switching to blank screen (low power) mode.   Set this to 0 to disable.", order=8 />
+	blank_time="120";
 }
 
 local actual_rotation = (fe.layout.base_rotation + fe.layout.toggle_rotation)%4;
@@ -652,12 +655,27 @@ local first_time = true;
 
 fe.add_ticks_callback( "saver_tick" );
 
+local blank_time = 0;
+try { blank_time = config[ "blank_time" ].tointeger() * 60000; } catch (e) {};
+
+local do_blank=false;
+
 //
 // saver_tick gets called repeatedly during screensaver.
-// stime = number of milliseconds since screensaver began.
+// ttime = number of milliseconds since screensaver began.
 //
 function saver_tick( ttime )
 {
+	if ( do_blank )
+		return;
+
+	if ( blank_time && ( ttime > blank_time ))
+	{
+		current_mode.reset();
+		do_blank = true;
+		return;
+	}
+
 	if ( first_time ) // special case for initializing the very first mode
 	{
 		current_mode.init( ttime );
