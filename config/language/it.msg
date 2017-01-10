@@ -91,7 +91,6 @@ Enter new tag name;Inserisci il nome dell'etichetta
 Exception;Eccezione
 Exception Edit;Modifica l'eccezione
 Executable;Eseguibile
-Exit (Confirm);Uscita (Conferma)
 Exit Attract-Mode;Esci da Attract-Mode
 Exit Attract-Mode?;Uscire da Attract-Mode?
 Exit Command;Comando per uscire
@@ -238,7 +237,7 @@ _help_control_displays_menu;Configura i controlli per mostrare il menù dei disp
 _help_control_down;Configura i controlli che muovono la selezione in basso
 _help_control_edit_game;Configura i controlli per modificare la selezione corrente
 _help_control_exit;Configura i controlli che permettono di uscire dal frontend
-_help_control_exit_no_menu;Configura i controlli che permettono di uscire immediatamente dal programma e tornare al desktop
+_help_control_exit_to_desktop;Configura i controlli che permettono di uscire immediatamente dal programma e tornare al desktop
 _help_control_filters_menu;Configura i controlli per mostrare il menù dei filtri
 _help_control_intro;Configura i controlli per riprodurre il video introduttivo
 _help_control_left;Configura i controlli per spostare la selezione a sinistra
@@ -364,6 +363,7 @@ Custom 2;Personalizzato 2
 Delete this filter;Cancella questo filtro
 Down (Next Game); Giù (Gioco successivo)
 Edit Control;Modifica controllo
+Exit;Uscita (Conferma)
 Image collage;Collezione di immagini
 Launch Last Game on Startup;Esegui l'ultimo gioco alla partenza
 Left (Previous Display); Sinistra (Tema precedente)
@@ -392,6 +392,7 @@ _help_control_page_up;Configura i controlli che muovono la selezione una pagina 
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Layout;Configure Layout
+Confirm Exit;Confirm Exit
 Default;Default
 Enter Romlist Name;Enter Romlist Name
 Extra;Extra
@@ -402,6 +403,7 @@ Scrape mamedb.com (MAME only);Scrape mamedb.com (MAME only)
 Window (No Border);Window (No Border)
 Working Directory;Working Directory
 multi;multi
+_help_confirm_exit;Confirm before exiting Attact-Mode?
 _help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
 _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")

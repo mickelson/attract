@@ -74,7 +74,6 @@ Enter Display Name;Ingrese el nombre de la pantalla
 Enter Emulator Name;Ingrese el nombre del emulador
 Enter Filter Name;Ingrese el nombre para el filtro
 Executable;Ejecutable
-Exit (Confirm);Salir (Confirmación)
 Exit Attract-Mode;Salir de Attract-Mode
 Exit Attract-Mode?;Salir de Attract-Mode?
 Exit Command;Comando de salida
@@ -200,7 +199,7 @@ _help_control_custom2;Configura el(los) control(es) "Personalizado2"
 _help_control_displays_menu;Configurar el(los) control(es) que "muestra el menú"
 _help_control_down;Configurar el(los) control(es) que mueven hacia abajo la selección
 _help_control_exit;Configura el(los) control(es) que cierran el frontend
-_help_control_exit_no_menu;Configura el(los) control(es) que sale del frontend inmediatamente al escritorio
+_help_control_exit_to_desktop;Configura el(los) control(es) que sale del frontend inmediatamente al escritorio
 _help_control_filters_menu;Configurar el(los) control(es) que muestran el "Menú de filtros"
 _help_control_next_display;Configurar el(los) control(es) que mueven hacia la pantalla siguiente
 _help_control_next_favourite;Configura el(los) control(es) que mueven hacia el favorito siguiente
@@ -305,6 +304,7 @@ Configure filter rule;Configuración de la regla del filtro
 Custom 1;Personalizado 1
 Custom 2;Personalizado 2
 Delete this filter;Borrar este filtro
+Exit;Salir (Confirmación)
 Image collage;Collage de imágenes
 Launch Last Game on Startup;Lanzar último juego en el inicio
 Movie collage;Collage de video
@@ -327,6 +327,7 @@ Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
+Confirm Exit;Confirm Exit
 Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
@@ -364,6 +365,7 @@ Video Decoder;Video Decoder
 Window (No Border);Window (No Border)
 Working Directory;Working Directory
 multi;multi
+_help_confirm_exit;Confirm before exiting Attact-Mode?
 _help_control_back;Set the control(s) that go back
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)

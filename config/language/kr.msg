@@ -73,7 +73,6 @@ Enter Display Name;새 목록의 이름을 입력하여 주십시오
 Enter Emulator Name;에뮬레이터의 이름을 입력해주십시오
 Enter Filter Name;필터 이름을 입력하여 주십시오
 Executable;실행 파일
-Exit (Confirm);종료 (Yes/No 확인)
 Exit Attract-Mode;프로그램 종료
 Exit Attract-Mode?;종료하시겠습니까?
 Exit Command;종료 명령어
@@ -196,7 +195,7 @@ _help_control_custom2;사용자 지정 키 2를 설정합니다.
 _help_control_displays_menu;'목록 메뉴' 를 호출하는 키를 설정합니다.
 _help_control_down;아래 항목으로 한 칸 이동하는 키를 설정합니다.
 _help_control_exit;본 프로그램을 종료하는 키를 설정합니다.
-_help_control_exit_no_menu;본 프로그램을 확인 창 없이 바로 종료하는 키를 설정합니다.
+_help_control_exit_to_desktop;본 프로그램을 확인 창 없이 바로 종료하는 키를 설정합니다.
 _help_control_filters_menu;'필터 메뉴' 를 호출하는 키를 설정합니다.
 _help_control_next_display;다음 항목으로 이동하는 키를 설정합니다.
 _help_control_next_favourite;다음 즐겨찾기 게임으로 이동하는 키를 설정합니다.
@@ -294,6 +293,7 @@ Ambient Sounds;배경 음악 파일
 Configure available emulators;기존 에뮬레이터 편집
 Configure filter rule;필터 내용 수정
 Delete this filter;본 필터 삭제
+Exit;종료 (Yes/No 확인)
 Exit menu;나가기
 Launch Last Game on Startup;기동시 직전 게임 자동 재시작
 Page Down;페이지 아래로
@@ -321,6 +321,7 @@ Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
+Confirm Exit;Confirm Exit
 Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
@@ -361,6 +362,7 @@ Working Directory;Working Directory
 multi;multi
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
+_help_confirm_exit;Confirm before exiting Attact-Mode?
 _help_control_back;Set the control(s) that go back
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)

@@ -99,6 +99,13 @@ public:
 	bool overlay_is_on() const { return m_overlay_is_on; };
 
 	bool check_for_cancel();
+
+	// Common handler for exit.  Prompts for confirmation (if configured) and executes
+	// the exit_command (if configured).
+	//
+	// returns true if frontend should exit, false otherwise
+	//
+	bool common_exit();
 };
 
 #endif

@@ -82,7 +82,6 @@ Enter Filter Name;进入排序名称
 Exception;其他 Exception
 Exception Edit;其他编辑 Exception Edit
 Executable;执行
-Exit (Confirm);退出 (Yes/No)
 Exit Attract-Mode;退出ATTRACT-MODE
 Exit Attract-Mode?;退出ATTRACT-MODE吗?
 Exit Command;退出指令
@@ -226,6 +225,7 @@ Configure available emulators;可用模拟器
 Configure filter rule;设置分类规则
 Delete this filter;删除分类
 Down(Next Game);↓（下一游戏）
+Exit;退出 (Yes/No)
 Exit menu;退出菜单
 Image Collage;拼图式静态画面
 Launch Last Game on Startup;启动时载入最后一次运行的游戏
@@ -256,6 +256,7 @@ Add tag: '$1';Add tag: '$1'
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Layout;Configure Layout
+Confirm Exit;Confirm Exit
 Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
@@ -275,7 +276,8 @@ _help_art_add;Add a new artwork resource (marquee images, screen shots, etc.)
 _help_art_label;The label that identifies this artwork resource (used by layouts)
 _help_art_path;The path to the files for this artwork.  Multiple paths can be entered if separated by a semicolon.
 _help_back;Exit menu
-_help_confirm_favs;Confirm the addition/removal of Favourites
+_help_confirm_exit;Confirm before exiting Attact-Mode?
+_help_confirm_favs;Confirm the addition/removal of Favourites?
 _help_control_add_favourite;Set the control(s) that mark/unmark the currently selected game as a favourite
 _help_control_add_tags;Set the control(s) that add/remove tags from the currently selected game
 _help_control_back;Set the control(s) that go back
@@ -290,7 +292,7 @@ _help_control_displays_menu;Set the control(s) that show the "Displays Menu"
 _help_control_down;Set the control(s) that move the selection down
 _help_control_edit_game;Set the control(s) to edit the current selection
 _help_control_exit;Set the control(s) that exit the frontend
-_help_control_exit_no_menu;Set the control(s) that exit the frontend immediately to the desktop
+_help_control_exit_to_desktop;Set the control(s) that exit the frontend immediately to the desktop
 _help_control_filters_menu;Set the control(s) that show the "Filters Menu"
 _help_control_intro;Set the control(s) that show the intro video
 _help_control_left;Set the control(s) that move the selection left
@@ -355,7 +357,7 @@ _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for mul
 _help_emu_system;The system identifier(s) for this emulator.  Multiple values can be entered if separated by a semicolon
 _help_emu_workdir;The working directory for this emulator.  This is the directory that the frontend runs the emulator from.  Also, any relative rom paths, artwork paths, or additional import file paths are treated as being relative to this directory
 _help_emulators;Configure emulator settings
-_help_exit_command;Command to execute when Exit (Confirm) is selected [i.e. "sudo shutdown"]
+_help_exit_command;Command to execute when exiting the frontend [i.e. "sudo shutdown"]
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_add_rule;Add a rule to this filter.  A game must match all filter rules (or a single exception) to be listed in a filter
 _help_filter_delete;Delete this filter

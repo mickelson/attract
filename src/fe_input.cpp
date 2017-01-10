@@ -645,7 +645,7 @@ const char *FeInputMap::commandStrings[] =
 	"toggle_flip",
 	"toggle_rotate_left",
 	"exit",
-	"exit_no_menu",
+	"exit_to_desktop",
 	"screenshot",
 	"configure",
 	"random_game",
@@ -696,7 +696,7 @@ const char *FeInputMap::commandDispStrings[] =
 	"Toggle Rotate Right",
 	"Toggle Flip",
 	"Toggle Rotate Left",
-	"Exit (Confirm)",
+	"Exit",
 	"Exit to Desktop",
 	"Screenshot",
 	"Configure",
@@ -730,7 +730,7 @@ FeInputMap::FeInputMap()
 {
 	// Set default actions for the "UI" commands (Back, Up, Down, Left, Right)
 	//
-	m_defaults[ Back ]  = ExitMenu;
+	m_defaults[ Back ]  = Exit;
 	m_defaults[ Up ]    = PrevGame;
 	m_defaults[ Down ]  = NextGame;
 	m_defaults[ Left ]  = PrevDisplay;
@@ -919,7 +919,7 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 	{
 	case sf::Event::Closed:
 		m_tracked_keys.clear();
-		return ExitNoMenu;
+		return ExitToDesktop;
 
 	case sf::Event::JoystickMoved:
 		{
@@ -1215,6 +1215,8 @@ FeInputMap::Command FeInputMap::string_to_command( const std::string &s )
 		return PrevPage;
 	else if ( s.compare( "page_down" ) == 0 )
 		return NextPage;
+	else if ( s.compare( "exit_no_menu" ) == 0 ) // after 2.2.1, exit_no_menu became exit_to_desktop
+		return ExitToDesktop;
 
 	return LAST_COMMAND;
 }

@@ -73,7 +73,6 @@ Enter Display Name;新しいディスプレイの名前を入力して下さい
 Enter Emulator Name;エミュレータの名前を入力して下さい
 Enter Filter Name;フィルターの名前を入れて下さい
 Executable;実行ファイル
-Exit (Confirm);終了 (Yes/No 確認)
 Exit Attract-Mode;プログラムを終了
 Exit Attract-Mode?;終了しますか?
 Exit Command;終了コマンド
@@ -196,7 +195,7 @@ _help_control_custom2;カスタムキー2を設定します
 _help_control_displays_menu;'リストメニュー' を表示するキーを設定します
 _help_control_down;下に移動するキーを設定します
 _help_control_exit;このプログラムを終了するキーを設定します
-_help_control_exit_no_menu;このプログラムを確認無しで終了するキーを設定します
+_help_control_exit_to_desktop;このプログラムを確認無しで終了するキーを設定します
 _help_control_filters_menu;'フィルターメニュー' を表示するキーを設定します
 _help_control_next_display;次のリストに移動するキーを設定します
 _help_control_next_favourite;次のお気に入りゲームに移動するキーを設定します
@@ -294,6 +293,7 @@ Ambient Sounds;BGMファイル
 Configure available emulators;エミュレータの設定
 Configure filter rule;フィルターのルールー編集
 Delete this filter;このフィルターを削除
+Exit;終了 (Yes/No 確認)
 Exit menu;出る
 Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
 Page Down;1画面下
@@ -321,6 +321,7 @@ Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
+Confirm Exit;Confirm Exit
 Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
@@ -361,6 +362,7 @@ Working Directory;Working Directory
 multi;multi
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
+_help_confirm_exit;Confirm before exiting Attact-Mode?
 _help_control_back;Set the control(s) that go back
 _help_control_custom3;Set the "Custom3" control(s)
 _help_control_custom4;Set the "Custom4" control(s)

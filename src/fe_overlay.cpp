@@ -1196,8 +1196,8 @@ bool FeOverlay::check_for_cancel()
 		FeInputMap::Command c = m_feSettings.map_input( ev );
 
 		if (( c == FeInputMap::Back )
-				|| ( c == FeInputMap::ExitMenu )
-				|| ( c == FeInputMap::ExitNoMenu ))
+				|| ( c == FeInputMap::Exit )
+				|| ( c == FeInputMap::ExitToDesktop ))
 			return true;
 	}
 
@@ -1215,7 +1215,7 @@ void FeOverlay::init_event_loop( FeEventLoopCtx &ctx )
 	sf::Clock timer;
 	while (( timer.getElapsedTime() < sf::seconds( 6 ) )
 			&& ( m_feSettings.get_current_state( FeInputMap::Back )
-				|| m_feSettings.get_current_state( FeInputMap::ExitNoMenu )
+				|| m_feSettings.get_current_state( FeInputMap::ExitToDesktop )
 				|| m_feSettings.get_current_state( FeInputMap::Select ) ))
 	{
 		sf::Event ev;
@@ -1258,14 +1258,14 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 			if (( c != FeInputMap::LAST_COMMAND )
 					&& ( c == ctx.extra_exit ))
-				c = FeInputMap::ExitMenu;
+				c = FeInputMap::Exit;
 
 			switch( c )
 			{
 			case FeInputMap::Back:
 				ctx.sel = ctx.default_sel;
 				return true;
-			case FeInputMap::ExitNoMenu:
+			case FeInputMap::ExitToDesktop:
 				ctx.sel = -1;
 				return true;
 			case FeInputMap::Select:
@@ -1804,4 +1804,29 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 
 	}
 	return true;
+}
+
+bool FeOverlay::common_exit()
+{
+	if ( !m_feSettings.get_info_bool( FeSettings::ConfirmExit ) )
+	{
+		m_feSettings.exit_command();
+		return true;
+	}
+
+	int retval = confirm_dialog( "Exit Attract-Mode?", "", FeInputMap::Exit );
+
+	//
+	// retval is 0 if the user confirmed exit.
+	// it is <0 if we are being forced to close
+	//
+	if ( retval < 1 )
+	{
+		if ( retval == 0 )
+			m_feSettings.exit_command();
+
+		return true;
+	}
+
+	return false;
 }

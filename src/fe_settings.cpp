@@ -252,6 +252,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_hide_brackets( false ),
 	m_startup_mode( ShowLastSelection ),
 	m_confirm_favs( true ),
+	m_confirm_exit( true ),
 	m_track_usage( true ),
 	m_multimon( true ),
 	m_window_mode( Default ),
@@ -414,6 +415,7 @@ const char *FeSettings::configSettingStrings[] =
 	"hide_brackets",
 	"startup_mode",
 	"confirm_favourites",
+	"confirm_exit",
 	"mouse_threshold",
 	"joystick_threshold",
 	"window_mode",
@@ -586,8 +588,8 @@ void FeSettings::init_display()
 
 			FeRomInfo rom( exit_str );
 			rom.set_info( FeRomInfo::Title, exit_str );
-			rom.set_info( FeRomInfo::Emulator, "@exit_no_menu" );
-			rom.set_info( FeRomInfo::AltRomname, "exit_no_menu" );
+			rom.set_info( FeRomInfo::Emulator, "@exit" );
+			rom.set_info( FeRomInfo::AltRomname, "exit" );
 
 			l.push_back( rom );
 		}
@@ -2520,6 +2522,7 @@ const std::string FeSettings::get_info( int index ) const
 	case DisplaysMenuExit:
 	case HideBrackets:
 	case ConfirmFavourites:
+	case ConfirmExit:
 	case TrackUsage:
 	case MultiMon:
 	case SmoothImages:
@@ -2563,6 +2566,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_hide_brackets;
 	case ConfirmFavourites:
 		return m_confirm_favs;
+	case ConfirmExit:
+		return m_confirm_exit;
 	case TrackUsage:
 		return m_track_usage;
 	case MultiMon:
@@ -2658,6 +2663,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ConfirmFavourites:
 		m_confirm_favs = config_str_to_bool( value );
+		break;
+
+	case ConfirmExit:
+		m_confirm_exit = config_str_to_bool( value );
 		break;
 
 	case MouseThreshold:

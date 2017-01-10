@@ -73,7 +73,6 @@ Enter Display Name;Entrer le nom de la liste
 Enter Emulator Name;Nom de l'émulateur?
 Enter Filter Name;Entrer le nom du filtre
 Executable;Exécutable
-Exit (Confirm);Sortie (Confirmer)
 Exit Attract-Mode;Quitter Attract-Mode
 Exit Attract-Mode?;Quitter Attract-Mode?
 Exit Command;Commande de sortie
@@ -201,7 +200,7 @@ _help_control_custom6;Définit le(s) contrôle(s) utilisateur(s) "Custom6"
 _help_control_displays_menu;Définit le(s) contrôle(s) qui affiche(nt) la liste des listes 
 _help_control_down;Définit le(s) contrôle(s) qui décrémente(nt) la séléction d'une valeur
 _help_control_exit;Définit le(s) contrôle(s) qui quitte(nt) Attract Mode 
-_help_control_exit_no_menu;Définit le(s) contrôle(s) qui quitte(nt) immédiatement Attract Mode pour revenir au bureau
+_help_control_exit_to_desktop;Définit le(s) contrôle(s) qui quitte(nt) immédiatement Attract Mode pour revenir au bureau
 _help_control_filters_menu;Définit le(s) contrôle(s) qui affiche(nt) la liste des filtres 
 _help_control_next_display;Définit le(s) contrôle(s) qui bascule(nt) à la liste suivante
 _help_control_next_favourite;Définit le(s) contrôle(s) qui selectionne(nt) le jeu favoris suivant
@@ -303,6 +302,7 @@ Ambient Sounds;Son d'ambiance
 Configure available emulators;Configurer les émulateurs disponibles
 Configure filter rule;Configuration de la règle de filtrage
 Delete this filter;Supprimer ce filtre
+Exit;Sortie (Confirmer)
 Exit menu;Quitter le menu
 Generate Collection/Romlist;Générer la liste de ROM
 Launch Last Game on Startup;Lancer le dernier jeu au démarrage
@@ -331,6 +331,7 @@ Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
+Confirm Exit;Confirm Exit
 Create new tag;Create new tag
 Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
@@ -370,6 +371,7 @@ Working Directory;Working Directory
 multi;multi
 _help_art;An artwork resource available for use by layouts
 _help_back;Exit menu
+_help_confirm_exit;Confirm before exiting Attact-Mode?
 _help_control_back;Set the control(s) that go back
 _help_control_edit_game;Set the control(s) to edit the current selection
 _help_control_intro;Set the control(s) that show the intro video

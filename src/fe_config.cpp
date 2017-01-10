@@ -1843,6 +1843,12 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Filter Wrap Mode", filterwrapmode, "_help_filter_wrap_mode" );
 	ctx.back_opt().append_vlist( wrap_modes );
 
+	ctx.add_optl( Opt::LIST,
+			"Confirm Exit",
+			ctx.fe_settings.get_info_bool( FeSettings::ConfirmExit ) ? bool_opts[0] : bool_opts[1],
+			"_help_confirm_exit" );
+	ctx.back_opt().append_vlist( bool_opts );
+
 	ctx.add_optl( Opt::EDIT,
 			"Exit Command",
 			ctx.fe_settings.get_info( FeSettings::ExitCommand ),
@@ -1907,17 +1913,20 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
 			FeSettings::filterWrapTokens[ ctx.opt_list[7].get_vindex() ] );
 
-	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[8].get_value() );
+	ctx.fe_settings.set_info( FeSettings::ConfirmExit,
+			ctx.opt_list[8].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
+	ctx.fe_settings.set_info( FeSettings::ExitCommand,
 			ctx.opt_list[9].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath,
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[10].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
+	ctx.fe_settings.set_info( FeSettings::FontPath,
 			ctx.opt_list[11].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
+			ctx.opt_list[12].get_value() );
 
 	return true;
 }
@@ -1939,8 +1948,8 @@ bool FeScriptConfigMenu::on_option_select(
 		FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
 		ctx.input_map_dialog( "Press Input", res, conflict );
 
-		if (( conflict == FeInputMap::ExitMenu )
-			|| ( conflict == FeInputMap::ExitNoMenu ))
+		if (( conflict == FeInputMap::Exit )
+			|| ( conflict == FeInputMap::ExitToDesktop ))
 		{
 			// Clear the mapping if the user pushed an exit button
 			res.clear();

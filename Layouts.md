@@ -804,7 +804,7 @@ Parameters:
       - "toggle_flip"
       - "toggle_rotate_left"
       - "exit"
-      - "exit_no_menu"
+      - "exit_to_desktop"
       - "screenshot"
       - "configure"
       - "random_game"

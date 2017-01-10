@@ -451,29 +451,16 @@ int main(int argc, char *argv[])
 				// handle the things that fePresent doesn't do
 				switch ( c )
 				{
-				case FeInputMap::ExitMenu:
+				case FeInputMap::Exit:
 					{
-						int retval = feOverlay.confirm_dialog(
-							"Exit Attract-Mode?",
-							"",
-							FeInputMap::ExitMenu );
+						if ( feOverlay.common_exit() )
+							exit_selected=true;
 
-						//
-						// retval is 0 if the user confirmed exit.
-						// it is <0 if we are being forced to close
-						//
-						if ( retval < 1 )
-						{
-							exit_selected = true;
-							if ( retval == 0 )
-								feSettings.exit_command();
-						}
-						else
-							redraw=true;
+						redraw=true;
 					}
 					break;
 
-				case FeInputMap::ExitNoMenu:
+				case FeInputMap::ExitToDesktop:
 					exit_selected = true;
 					break;
 
@@ -568,8 +555,8 @@ int main(int argc, char *argv[])
 
 							if ( sel_idx == exit_opt )
 							{
-								exit_selected = true;
-								feSettings.exit_command();
+								if ( feOverlay.common_exit() )
+									exit_selected = true;
 							}
 							else if ( sel_idx >= 0 )
 							{
