@@ -285,9 +285,9 @@ int main(int argc, char *argv[])
 					}
 					break;
 
-				case sf::Event::KeyPressed:
-				case sf::Event::MouseButtonPressed:
-				case sf::Event::JoystickButtonPressed:
+				case sf::Event::KeyReleased:
+				case sf::Event::MouseButtonReleased:
+				case sf::Event::JoystickButtonReleased:
 					//
 					// We always want to reset the screen saver on these events,
 					// even if they aren't mapped otherwise (mapped events cause

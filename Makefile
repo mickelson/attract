@@ -323,6 +323,7 @@ endif
 ifeq ($(USE_LIBARCHIVE),1)
  FE_FLAGS += -DUSE_LIBARCHIVE
  TEMP_LIBS += libarchive
+ LIBS += -lz
 else
  CFLAGS += -I$(EXTLIBS_DIR)/miniz
 endif
