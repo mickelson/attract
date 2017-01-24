@@ -27,9 +27,7 @@ class UserConfig </ help="History.dat viewer for the Attract-Mode frontend" /> {
 //
 // Load our history.dat file utilities
 //
-local my_dir = fe.script_dir;
-dofile( my_dir + "file_util.nut" );
-
+fe.load_module( "history" );
 fe.load_module( "submenu" );
 local config=fe.get_config();
 
