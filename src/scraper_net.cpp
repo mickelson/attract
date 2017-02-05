@@ -195,15 +195,14 @@ bool FeSettings::mamedb_scraper( FeImporterContext &c )
 	if ( !c.emulator.is_mame() || !m_scrape_mamedb || ( !m_scrape_snaps && !m_scrape_marquees ))
 		return true;
 
-	std::cout << " - scraping mamedb.com..." << std::endl;
-
 	//
 	// Build a map for looking up parents
 	//
 	ParentMapType parent_map;
 	build_parent_map( parent_map, c.romlist, false );
 
-	const char *MAMEDB = "http://mamedb.com";
+	const char *MAMEDB = "http://mamedb.blu-ferret.co.uk";
+	std::cout << " - scraping " << MAMEDB << "..." << std::endl;
 
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
 	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
