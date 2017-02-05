@@ -1285,7 +1285,7 @@ bool FeSettings::set_display( int index )
 	get_path( Layout, old_path, old_file );
 
 	if ( index < 0 )
-		m_current_search_index = m_current_display;
+		m_current_search_index = find_idx_in_vec( m_current_display, m_display_menu );
 
 	m_current_display = index;
 
