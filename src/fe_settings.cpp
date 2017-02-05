@@ -30,6 +30,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <stdlib.h>
+#include <cctype>
 
 #include <SFML/System/Clock.hpp>
 #include <SFML/Config.hpp>
@@ -2533,6 +2534,8 @@ const std::string FeSettings::get_info( int index ) const
 	case ScrapeWheels:
 	case ScrapeFanArt:
 	case ScrapeVids:
+	case ScrapeMameDB:
+	case ScrapeOverview:
 #ifdef SFML_SYSTEM_WINDOWS
 	case HideConsole:
 #endif
