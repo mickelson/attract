@@ -636,8 +636,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 
 			// do the mame-specific scrapers first, followed
 			// by the more general thegamesdb scraper.
-			mameps_scraper( ctx );
-			mamedb_scraper( ctx );
+			general_mame_scraper( ctx );
 			thegamesdb_scraper( ctx );
 
 			std::cout << "*** Scraping done." << std::endl;
@@ -818,7 +817,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	// by the more general thegamesdb scraper.
 	// These return false if the user cancels...
 	//
-	if ( mameps_scraper( ctx ) && mamedb_scraper( ctx ) )
+	if ( general_mame_scraper( ctx ) )
 	{
 		ctx.progress_past = ctx.progress_past + ctx.progress_range;
 		thegamesdb_scraper( ctx );

@@ -165,7 +165,6 @@ Scrape Game Logos (Wheel Art);搜刮LOGO (Wheel Art)
 Scrape Marquees;搜刮跑马灯（Marquees）
 Scrape Snaps;搜刮快照（Snaps）
 Scrape Videos (MAME only);搜刮 Videos (MAME only)
-Scrape mamedb.com (MAME only);搜刮 mamedb.com（仅 MAME）
 Scraper;搜刮器
 Scraping Artwork: $1%;正在搜刮 $1% 插图
 Screen Saver;屏保
@@ -237,6 +236,7 @@ Page Up;向上翻页
 Preserve Aspect Ratio;以当前游戏为背景
 RGB Movie;RGB模式（RGB Movie）
 Right(Next Display);→（下一界面）
+Scrape mamedb.com (MAME only);搜刮 mamedb.com（仅 MAME）
 Up(Previous Game);↑（上一游戏）
 XML Mode;XML 模式
 cn;中文 (Chinese)
@@ -351,7 +351,7 @@ _help_emu_info_source;Use "listxml" for mame -listxml output, "listsoftware" for
 _help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
 _help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple extensions can be entered if separated by a semicolon.  Specify "<DIR>" as an entry if games are stored in separate subdirectories
 _help_emu_rompath;The path to the roms for this emulator.  Multiple paths can be entered if separated by a semicolon.
-_help_emu_scrape_artwork;Scrape missing artwork images for this emulator from TheGamesDB.net and mamedb.com
+_help_emu_scrape_artwork;Scrape missing artwork images for this emulator from the net
 _help_emu_sel;Configure emulator
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_emu_system;The system identifier(s) for this emulator.  Multiple values can be entered if separated by a semicolon
@@ -396,7 +396,6 @@ _help_rule_target;The game information attribute that you wish to filter based o
 _help_rule_value;The regular expression value to filter to.  For example, if the filter target is "Year" and comparison is "equals", a value of "1984" will match the year of 1984, "198." will match any year in the 80s, and "(198.)|(199.)" will match any year in the 80s or 90s
 _help_scrape_fanart;Set whether game fanart should be downloaded when scraping
 _help_scrape_flyers;Set whether game flyers and box covers should be downloaded when scraping
-_help_scrape_mamedb;Set whether mame snaps and marquees should be scraped from mamedb.com
 _help_scrape_marquees;Set whether game marquees and banners should be downloaded when scraping
 _help_scrape_snaps;Set whether game snapshots should be downloaded when scraping
 _help_scrape_vids;Set whether game videos should be downloaded when scraping

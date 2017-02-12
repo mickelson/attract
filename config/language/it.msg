@@ -182,7 +182,6 @@ Scrape Game Logos (Wheel Art);Recupera i logo
 Scrape Marquees;Recupera i marquee
 Scrape Snaps;Recupera le snap
 Scrape Videos (MAME only);Scarica video (solo per MAME)
-Scrape mamedb.com (MAME only);Utilizza mamedb.com (solo per MAME)
 Scraper;Recupera immagini in rete
 Scraping Artwork: $1%;Sto recuperando le immagini: $1%
 Screen Saver;Salvaschermo
@@ -356,7 +355,6 @@ _help_rule_target;L'attributo del gioco sul quale basare il filtro
 _help_rule_value;Espressione regolare con la quale filtrare. Per esempio, se l'obbiettivo del filtro è "Anno" e la comparazione è "Uguale", un valore di "1984" restituirà tutti i giochi prodotti nel 1984, mentre "198." restituirà tutti i giochi prodotti negli anni '80
 _help_scrape_fanart;Stabilisce se le fanart devono essere recuperate dalla rete
 _help_scrape_flyers;Stabilisce se i flyers e le copertine delle confezioni devono essere recuperate dalla rete
-_help_scrape_mamedb;Stabilisce se utilizzare il sito mamedb.com per recuperare snapshot e marquee dei giochi MAME
 _help_scrape_marquees;Stabilisce se i marquee devono essere recuperati dalla rete
 _help_scrape_snaps;Stabilisce se gli snapshot devono essere recuperati dalla rete
 _help_scrape_vids;Stabilisce se i video devono essere recuperati dalla rete
@@ -399,6 +397,7 @@ Page Down;Pagina precedente
 Page Up;Pagina seguente
 Preserve Aspect Ratio;Rispetta le proporzioni
 Right (Next Display); Destra (Tema successivo)
+Scrape mamedb.com (MAME only);Utilizza mamedb.com (solo per MAME)
 Scraped $1 artwork file(s);Immagini recuperate: $1
 Up (Previous Game); Su (Gioco precedente)
 XML Mode;Modo XML
@@ -409,6 +408,7 @@ it;Italiano
 _help_autolaunch_last_game;Esegui automaticamente l'ultimo titolo giocato
 _help_control_page_down;Configura i controlli che muovono la selezione una pagina in basso
 _help_control_page_up;Configura i controlli che muovono la selezione una pagina in alto
+_help_scrape_mamedb;Stabilisce se utilizzare il sito mamedb.com per recuperare snapshot e marquee dei giochi MAME
 
 #@DONE_TRANSLATED
 #

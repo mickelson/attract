@@ -267,7 +267,6 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_scrape_wheels( true ),
 	m_scrape_fanart( false ),
 	m_scrape_vids( false ),
-	m_scrape_mamedb( true ),
 	m_scrape_overview( true ),
 #ifdef SFML_SYSTEM_WINDOWS
 	m_hide_console( false ),
@@ -432,7 +431,6 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_wheels",
 	"scrape_fanart",
 	"scrape_videos",
-	"scrape_mamedb",
 	"scrape_overview",
 #ifdef SFML_SYSTEM_WINDOWS
 	"hide_console",
@@ -535,6 +533,10 @@ int FeSettings::process_setting( const std::string &setting,
 			return m_current_config_object->process_setting( setting, value, fn );
 		else
 		{
+			// <=2.2.1 there was a "scrape_mamedb" option that has been removed.  Suppress error
+			if ( setting.compare( "scrape_mamedb" ) == 0 )
+				return 0;
+
 			// For backwards compatability, as of 1.5 "lists_menu_exit" became "displays_menu_exit"
 			if ( setting.compare( "lists_menu_exit" ) == 0 )
 			{
@@ -2534,7 +2536,6 @@ const std::string FeSettings::get_info( int index ) const
 	case ScrapeWheels:
 	case ScrapeFanArt:
 	case ScrapeVids:
-	case ScrapeMameDB:
 	case ScrapeOverview:
 #ifdef SFML_SYSTEM_WINDOWS
 	case HideConsole:
@@ -2591,8 +2592,6 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_scrape_fanart;
 	case ScrapeVids:
 		return m_scrape_vids;
-	case ScrapeMameDB:
-		return m_scrape_mamedb;
 	case ScrapeOverview:
 		return m_scrape_overview;
 #ifdef SFML_SYSTEM_WINDOWS
@@ -2768,10 +2767,6 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ScrapeVids:
 		m_scrape_vids = config_str_to_bool( value );
-		break;
-
-	case ScrapeMameDB:
-		m_scrape_mamedb = config_str_to_bool( value );
 		break;
 
 	case ScrapeOverview:

@@ -31,6 +31,7 @@
 #include <fstream>
 #include <list>
 #include <map>
+#include <cstring>
 
 #ifndef NO_NET
 #include "fe_net.hpp"
@@ -139,22 +140,21 @@ bool process_q_simple( FeNetQueue &q,
 
 }; // end namespace
 
-bool FeSettings::mameps_scraper( FeImporterContext &c )
+bool FeSettings::simple_scraper( FeImporterContext &c,
+		const char *host,
+		const char *pre_req,
+		const char *post_req,
+		const char *art_label,
+		bool is_vid )
 {
 #ifndef NO_NET
-	if ( !c.emulator.is_mame() || !m_scrape_vids )
-		return true;
-
-	std::cout << " - scraping www.progettosnaps.net..." << std::endl;
-
 	//
 	// Build a map for looking up parents
 	//
 	ParentMapType parent_map;
 	build_parent_map( parent_map, c.romlist, false );
 
-	const char *MAMEPS = "http://www.progettosnaps.net";
-	const char *REQ = "/videosnaps/mp4/";
+	std::cout << " - Scraping " << host << " [" << art_label << "]" << std::endl;
 
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
 	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
@@ -162,6 +162,8 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 
 	FeNetQueue q;
 	int taskc( 0 );
+
+	bool is_snap = ( strcmp( art_label, "snap" ) == 0 );
 
 	for ( FeRomInfoListType::iterator itr=c.romlist.begin(); itr!=c.romlist.end(); ++itr )
 	{
@@ -173,12 +175,24 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 		if ( has_same_name_as_parent( *itr, parent_map ) )
 			continue;
 
-		if ( m_scrape_vids && !has_video_artwork( *itr, "snap" ) )
+		bool do_scrape = false;
+		if ( !is_snap )
+			do_scrape = !has_artwork( *itr, art_label );
+		else if ( is_vid ) // vid snap
+			do_scrape = !has_video_artwork( *itr, art_label );
+		else // image snap
+			do_scrape = !has_image_artwork( *itr, art_label );
+
+		if ( do_scrape )
 		{
-			const char *SNAP = "snap/";
-			std::string fname = base_path + SNAP + (*itr).get_info( FeRomInfo::Romname );
-			confirm_directory( base_path, SNAP );
-			q.add_file_task( MAMEPS, REQ + (*itr).get_info( FeRomInfo::Romname ) +".mp4", fname );
+			const std::string &rname = (*itr).get_info( FeRomInfo::Romname );
+			std::string fname = base_path + art_label + "/" + rname;
+
+			std::string al_sub = art_label;
+			al_sub += "/";
+			confirm_directory( base_path, al_sub );
+
+			q.add_file_task( host, pre_req + rname + post_req, fname );
 			taskc++;
 		}
 	}
@@ -189,61 +203,70 @@ bool FeSettings::mameps_scraper( FeImporterContext &c )
 #endif
 }
 
-bool FeSettings::mamedb_scraper( FeImporterContext &c )
+bool FeSettings::general_mame_scraper( FeImporterContext &c )
 {
-#ifndef NO_NET
-	if ( !c.emulator.is_mame() || !m_scrape_mamedb || ( !m_scrape_snaps && !m_scrape_marquees ))
+	if ( !c.emulator.is_mame() )
 		return true;
 
-	//
-	// Build a map for looking up parents
-	//
-	ParentMapType parent_map;
-	build_parent_map( parent_map, c.romlist, false );
-
 	const char *MAMEDB = "http://mamedb.blu-ferret.co.uk";
-	std::cout << " - scraping " << MAMEDB << "..." << std::endl;
+	const char *ADB = "http://adb.arcadeitalia.net";
+	const char *PNG = ".png";
 
-	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
-	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
-	base_path += emu_name + "/";
-
-	FeNetQueue q;
-	int taskc( 0 );
-
-	for ( FeRomInfoListType::iterator itr=c.romlist.begin(); itr!=c.romlist.end(); ++itr )
+	if ( m_scrape_marquees )
 	{
-		// ugh, this must be set for has_artwork() to correctly function
-		(*itr).set_info( FeRomInfo::Emulator, emu_name );
+		if ( !simple_scraper( c, MAMEDB,
+				"/marquees/",
+				PNG,
+				"marquee" ) )
+			return false;
 
-		// Don't scrape for a clone if its parent has the same name
-		//
-		if ( has_same_name_as_parent( *itr, parent_map ) )
-			continue;
-
-		if ( m_scrape_marquees && !has_artwork( *itr, "marquee" ) )
-		{
-			const char *MARQUEE = "marquee/";
-			std::string fname = base_path + MARQUEE + (*itr).get_info( FeRomInfo::Romname );
-			confirm_directory( base_path, MARQUEE );
-			q.add_file_task( MAMEDB, "marquees/" + (*itr).get_info( FeRomInfo::Romname ) +".png", fname );
-			taskc++;
-		}
-
-		if ( m_scrape_snaps && !has_image_artwork( *itr, "snap" ) )
-		{
-			const char *SNAP = "snap/";
-			std::string fname = base_path + SNAP + (*itr).get_info( FeRomInfo::Romname );
-			confirm_directory( base_path, SNAP );
-			q.add_file_task( MAMEDB, SNAP + (*itr).get_info( FeRomInfo::Romname ) +".png", fname );
-			taskc++;
-		}
+		if ( !simple_scraper( c, ADB,
+				"/media/mame.current/marquees/",
+				PNG,
+				"marquee" ) )
+			return false;
 	}
 
-	return process_q_simple( q, c, taskc );
-#else
+	if ( m_scrape_snaps )
+	{
+		if ( !simple_scraper( c, MAMEDB,
+				"/snap/",
+				PNG,
+				"snap" ) )
+			return false;
+
+		if ( !simple_scraper( c, ADB,
+				"/media/mame.current/ingames/",
+				PNG,
+				"snap" ) )
+			return false;
+	}
+
+	if ( m_scrape_flyers )
+		if ( !simple_scraper( c, ADB,
+				"/media/mame.current/flyers/",
+				PNG,
+				"flyer" ) )
+			return false;
+
+	if ( m_scrape_wheels )
+		if ( !simple_scraper( c, ADB,
+				"/media/mame.current/decals/",
+				PNG,
+				"wheel" ) )
+			return false;
+
+
+	if ( m_scrape_vids )
+		if ( !simple_scraper( c,
+				"http://www.progettosnaps.net",
+				"/videosnaps/mp4/",
+				".mp4",
+				"snap",
+				true ) )
+			return false;
+
 	return true;
-#endif
 }
 
 #ifndef NO_NET

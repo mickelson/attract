@@ -126,7 +126,6 @@ public:
 		ScrapeWheels,
 		ScrapeFanArt,
 		ScrapeVids,
-		ScrapeMameDB,
 		ScrapeOverview,
 #ifdef SFML_SYSTEM_WINDOWS
 		HideConsole,
@@ -202,7 +201,6 @@ private:
 	bool m_scrape_wheels;
 	bool m_scrape_fanart;
 	bool m_scrape_vids;
-	bool m_scrape_mamedb;
 	bool m_scrape_overview;
 #ifdef SFML_SYSTEM_WINDOWS
 	bool m_hide_console;
@@ -233,8 +231,8 @@ private:
 	std::string get_played_display_string( int filter_index, int rom_index );
 
 
-	bool mameps_scraper( FeImporterContext & );
-	bool mamedb_scraper( FeImporterContext & );
+	bool simple_scraper( FeImporterContext &, const char *, const char *, const char *, const char *, bool = false );
+	bool general_mame_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
 	void apply_xml_import( FeImporterContext &, bool );
 
