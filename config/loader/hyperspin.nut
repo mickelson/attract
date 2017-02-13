@@ -502,6 +502,8 @@ function load( ttype, match_map, hs_sys_dir )
 			local type = "";
 			local start = "";
 			local vid_below=false;
+			local overlayoffsetx = 0;
+			local overlayoffsety = 0;
 
 			foreach ( k,v in c.attr )
 			{
@@ -516,6 +518,8 @@ function load( ttype, match_map, hs_sys_dir )
 //				case "delay": d=v.tofloat(); break;
 				case "type": type = v; break;
 				case "start": start = v; break;
+				case "overlayoffsetx": overlayoffsetx=v.tointeger(); break;
+				case "overlayoffsety": overlayoffsety=v.tointeger(); break;
 				case "overlaybelow":
 					if ( v == "true" )
 						vid_below = true;
@@ -544,8 +548,8 @@ function load( ttype, match_map, hs_sys_dir )
 
 				obj2 = ::hs_ent["video_overlay"].obj;
 				obj2.file_name = af2;
-				obj2.x        = x - obj2.texture_width/2;
-				obj2.y        = y - obj2.texture_height/2;
+				obj2.x        = x - obj2.texture_width/2 + overlayoffsetx;
+				obj2.y        = y - obj2.texture_height/2 + overlayoffsety;
 				obj2.width    = obj2.texture_width;
 				obj2.height   = obj2.texture_height;
 				obj2.rotation = obj.rotation;
