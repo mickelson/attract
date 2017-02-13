@@ -815,7 +815,7 @@ int main(int argc, char *argv[])
 			redraw=false;
 		}
 		else
-			sf::sleep( sf::milliseconds( 30 ) );
+			sf::sleep( sf::milliseconds( 1 ) );
 
 		soundsys.tick();
 	}
