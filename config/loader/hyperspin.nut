@@ -111,10 +111,10 @@ for ( local i=0; i< fe.displays.len(); i++ )
 // Zorder (?) To be confirmed:
 //
 // - background
-// - art2
 // - art1
 // - video 
 // - video_overlay
+// - art2
 // - art3
 // - art4
 //
@@ -124,26 +124,26 @@ for ( local i=0; i< fe.displays.len(); i++ )
 		zorder = 0
 	};
 
-::hs_ent.artwork2 <- {
-		dir = "Images/Artwork2/"
-		obj = fe.add_image( "" )
-		zorder = 1
-	};
-
 ::hs_ent.artwork1 <- {
 		dir = "Images/Artwork1/"
 		obj = fe.add_image( "" )
-		zorder = 2
+		zorder = 1
 	};
 
 ::hs_ent.video <- {
 		dir = "Video/"
 		obj = fe.add_image( "" )
-		zorder = 3
+		zorder = 2
 	};
 
 ::hs_ent.video_overlay <- {
 		dir = ""
+		obj = fe.add_image( "" )
+		zorder = 3
+	};
+
+::hs_ent.artwork2 <- {
+		dir = "Images/Artwork2/"
 		obj = fe.add_image( "" )
 		zorder = 4
 	};
@@ -472,6 +472,8 @@ function load( ttype, match_map, hs_sys_dir )
 		video		= false
 	};
 
+	local below=false;
+
 	foreach ( c in current_theme_root.children )
 	{
 		if ( ::hs_ent.rawin( c.tag ) )
@@ -520,6 +522,10 @@ function load( ttype, match_map, hs_sys_dir )
 				case "start": start = v; break;
 				case "overlayoffsetx": overlayoffsetx=v.tointeger(); break;
 				case "overlayoffsety": overlayoffsety=v.tointeger(); break;
+				case "below":
+				if ( v == "true" )
+					below = true;
+					break;
 				case "overlaybelow":
 					if ( v == "true" )
 						vid_below = true;
@@ -725,6 +731,18 @@ function load( ttype, match_map, hs_sys_dir )
 	{
 		if ( !v )
 			::hs_ent[k].obj.file_name = "";
+	}
+
+	//below seems to swap zorder of video + overlay with artwork 1
+	//
+	if ( below )
+	{
+		if ( found_tags["artwork1"] )
+			//  we only need to update artwork1 zorder to "3" zorder of 
+			//  the artworks with lower zorder seem to change
+			//  automatically, verified with print statements
+			//
+			::hs_ent["artwork1"].obj.zorder = 3;
 	}
 
 	return call_into_transition;
