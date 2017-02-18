@@ -99,7 +99,9 @@ public:
 	enum VideoDecoder
 	{
 		software,        // software (default)
-		mmal,            // MMAL accelerated mpeg4, h264, mpeg2 and vc1 (Rasberry Pi only)
+		mmal,            // Rasberry Pi only - mpeg2/4   vc1 h264
+		cuvid,           // NVIDEA only      - mpeg1/2/4 vc1 h264 mjpeg vp8/9
+		qsv,             // INTEL  only      - mpeg2     vc1 h264 h265
 		LAST_DECODER
 	};
 

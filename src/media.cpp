@@ -1362,46 +1362,56 @@ const char *FeMedia::get_metadata( const char *tag )
 	return ( entry ? entry->value : "" );
 }
 
-#ifdef USE_GLES
-//
-// Raspberry Pi MMAL-specific code
-//
 namespace
 {
-	struct mm_struct
+	struct hw_struct
 	{
-		int id;
+		FeMedia::VideoDecoder fe_id;
+		int av_id;
 		const char *tag;
 		AVCodec *codec;
 	};
 
-	static mm_struct mm[] = {
-		{ AV_CODEC_ID_MPEG4,      "mpeg4_mmal", NULL },
-		{ AV_CODEC_ID_H264,       "h264_mmal",  NULL },
-		{ AV_CODEC_ID_MPEG2VIDEO, "mpeg2_mmal", NULL },
-		{ AV_CODEC_ID_VC1,        "vc1_mmal",   NULL },
-		{ AV_CODEC_ID_NONE,       NULL,         NULL }
+	static hw_struct hw[] = {
+#ifdef USE_GLES
+		// Raspberry Pi only MMAL decoders
+		{ FeMedia::mmal,  AV_CODEC_ID_MPEG4,      "mpeg4_mmal", NULL },
+		{ FeMedia::mmal,  AV_CODEC_ID_H264,       "h264_mmal",  NULL },
+		{ FeMedia::mmal,  AV_CODEC_ID_MPEG2VIDEO, "mpeg2_mmal", NULL },
+		{ FeMedia::mmal,  AV_CODEC_ID_VC1,        "vc1_mmal",   NULL },
+#else
+		// NVIDEA CUVID
+		{ FeMedia::cuvid, AV_CODEC_ID_MPEG4,      "mpeg4_cuvid", NULL },
+		{ FeMedia::cuvid, AV_CODEC_ID_H264,       "h264_cuvid",  NULL },
+		{ FeMedia::cuvid, AV_CODEC_ID_MPEG2VIDEO, "mpeg2_cuvid", NULL },
+		{ FeMedia::cuvid, AV_CODEC_ID_VC1,        "vc1_cuvid",   NULL },
+		{ FeMedia::cuvid, AV_CODEC_ID_MPEG1VIDEO, "mpeg1_cuvid", NULL },
+
+		// Intel Quick Sync
+		{ FeMedia::qsv, AV_CODEC_ID_H264,       "h264_qsv",  NULL },
+		{ FeMedia::qsv, AV_CODEC_ID_MPEG2VIDEO, "mpeg2_qsv", NULL },
+		{ FeMedia::qsv, AV_CODEC_ID_VC1,        "vc1_qsv",   NULL },
+		{ FeMedia::qsv, AV_CODEC_ID_H265,       "h265_qsv",  NULL },
+#endif
+		{ FeMedia::LAST_DECODER, AV_CODEC_ID_NONE,    NULL,          NULL }
 	};
-	static bool mm_init=false;
+	static bool hw_init=false;
 
 	void ensure_init()
 	{
-		if ( !mm_init )
+		if ( !hw_init )
 		{
 			int i=0;
-			while ( mm[i].id != AV_CODEC_ID_NONE )
+			while ( hw[i].av_id != AV_CODEC_ID_NONE )
 			{
-				mm[i].codec = avcodec_find_decoder_by_name( mm[i].tag );
+				hw[i].codec = avcodec_find_decoder_by_name( hw[i].tag );
 				i++;
 			}
 
-			mm_init = true;
+			hw_init = true;
 		}
 	}
-
-
 };
-#endif
 
 FeMedia::VideoDecoder FeMedia::g_decoder=FeMedia::software;
 
@@ -1411,6 +1421,8 @@ const char *FeMedia::get_decoder_label( VideoDecoder d )
 	{
 		"software",
 		"mmal",
+		"cuvid",
+		"qsv",
 		NULL
 	};
 
@@ -1419,30 +1431,20 @@ const char *FeMedia::get_decoder_label( VideoDecoder d )
 
 bool FeMedia::get_decoder_available( VideoDecoder d )
 {
-	switch ( d )
-	{
-	case software:
+	if ( d == software )
 		return true;
 
-	case mmal:
-#if defined(USE_GLES)
-		ensure_init();
+	ensure_init();
 
-		{
-			int i=0;
-			while ( mm[i].id != AV_CODEC_ID_NONE )
-			{
-				if ( mm[i].codec )
-					return true;
-				i++;
-			}
-		}
-#endif
-		return false;
+	int i=0;
+	while ( hw[i].av_id != AV_CODEC_ID_NONE )
+	{
+		if (( hw[i].codec ) && ( hw[i].fe_id == d ))
+			return true;
 
-	default:
-		return false;
+		i++;
 	}
+	return false;
 }
 
 FeMedia::VideoDecoder FeMedia::get_current_decoder()
@@ -1470,19 +1472,16 @@ void FeMedia::set_current_decoder_by_label( const std::string &l )
 //
 void FeMedia::try_hw_accel( AVCodec *&dec )
 {
-#if defined( USE_GLES )
-
-	if ( g_decoder != mmal )
-		return;
-
 	ensure_init();
 
 	int i=0;
-	while ( mm[i].id != AV_CODEC_ID_NONE )
+	while ( hw[i].av_id != AV_CODEC_ID_NONE )
 	{
-		if (( mm[i].id == dec->id ) && mm[i].codec )
+		if (( hw[i].fe_id == g_decoder )
+				&& ( hw[i].av_id == dec->id )
+				&& hw[i].codec )
 		{
-			dec = mm[i].codec;
+			dec = hw[i].codec;
 #ifdef FE_DEBUG
 			std::cout << "Using hardware accelerated video decoder: "
 				<< dec->long_name << std::endl;
@@ -1491,5 +1490,4 @@ void FeMedia::try_hw_accel( AVCodec *&dec )
 		}
 		i++;
 	}
-#endif
 }
