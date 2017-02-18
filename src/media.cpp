@@ -504,19 +504,12 @@ void FeVideoImp::preload()
 
 void FeVideoImp::video_thread()
 {
-#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 45, 0 ))
-	const unsigned int MAX_QUEUE( 4 ), MIN_QUEUE( 0 );
-#else
-	const unsigned int MAX_QUEUE( 1 ), MIN_QUEUE( 0 );
-#endif
-
-	bool exhaust_queue( false );
 	sf::Time max_sleep = time_base / (sf::Int64)2;
 
 	int qscore( 100 ), qadjust( 10 ); // quality scoring
 	int displayed( 0 ), discarded( 0 ), qscore_accum( 0 );
 
-	std::queue<AVFrame *> frame_queue;
+	AVFrame *detached_frame = NULL;
 
 	if ((!sws_ctx) || (!rgba_buffer[0]))
 	{
@@ -530,13 +523,12 @@ void FeVideoImp::video_thread()
 		bool discard_frames = false;
 
 		//
-		// First, display queued frames if they are coming up
+		// First, display queued frame
 		//
-		if (( frame_queue.size() > MIN_QUEUE )
-			|| ( exhaust_queue && !frame_queue.empty() ))
+		if ( detached_frame )
 		{
-			sf::Time wait_time = (sf::Int64)frame_queue.front()->pts * time_base
-										- m_parent->get_video_time();
+			sf::Time wait_time = (sf::Int64)detached_frame->pts * time_base
+					- m_parent->get_video_time();
 
 			if ( wait_time < max_sleep )
 			{
@@ -570,13 +562,12 @@ void FeVideoImp::video_thread()
 					}
 				}
 
-				AVFrame *detached_frame = frame_queue.front();
-				frame_queue.pop();
-
 				qscore_accum += qscore;
 				if ( discard_frames )
 				{
 					free_frame( detached_frame );
+					detached_frame = NULL;
+
 					discarded++;
 					continue;
 				}
@@ -591,6 +582,7 @@ void FeVideoImp::video_thread()
 				display_frame = rgba_buffer[0];
 
 				free_frame( detached_frame );
+				detached_frame = NULL;
 
 				do_process = false;
 			}
@@ -602,7 +594,7 @@ void FeVideoImp::video_thread()
 
 		if ( do_process )
 		{
-			if ( frame_queue.size() < MAX_QUEUE )
+			if ( !detached_frame )
 			{
 				//
 				// get next packet
@@ -612,10 +604,8 @@ void FeVideoImp::video_thread()
 				{
 					if ( !m_parent->end_of_file() )
 						m_parent->read_packet();
-					else if ( frame_queue.empty() )
-						goto the_end;
 					else
-						exhaust_queue=true;
+						goto the_end;
 				}
 				else
 				{
@@ -631,7 +621,7 @@ void FeVideoImp::video_thread()
 #endif
 
 					int len = avcodec_decode_video2( codec_ctx, raw_frame,
-											&got_frame, packet );
+							&got_frame, packet );
 					if ( len < 0 )
 						std::cerr << "Error decoding video" << std::endl;
 
@@ -642,7 +632,7 @@ void FeVideoImp::video_thread()
 						if ( raw_frame->pts == AV_NOPTS_VALUE )
 							raw_frame->pts = packet->dts;
 
-						frame_queue.push( raw_frame );
+						detached_frame = raw_frame;
 					}
 					else
 						free_frame( raw_frame );
@@ -685,14 +675,8 @@ the_end:
 			display_frame=NULL;
 	}
 
-	while ( !frame_queue.empty() )
-	{
-		AVFrame *f=frame_queue.front();
-		frame_queue.pop();
-
-		if (f)
-			free_frame( f );
-	}
+	if ( detached_frame )
+		free_frame( detached_frame );
 
 #ifdef FE_DEBUG
 
