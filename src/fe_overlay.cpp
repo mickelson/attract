@@ -908,11 +908,40 @@ bool FeOverlay::config_dialog()
 
 bool FeOverlay::edit_game_dialog()
 {
-	FeEditGameMenu m;
 	bool settings_changed=false;
 
-	if ( display_config_dialog( &m, settings_changed ) < 0 )
-		m_wnd.close();
+	if ( m_feSettings.get_current_display_index() < 0 )
+	{
+		//
+		// If invoked when showing the "displays menu", edit the
+		// display that is currently selected
+		//
+		int index = m_feSettings.display_menu_get_current_selection_as_absolute_display_index();
+
+		if ( index >= 0 )
+		{
+			FeDisplayEditMenu m;
+			m.set_display( m_feSettings.get_display( index ), index );
+
+			if ( display_config_dialog( &m, settings_changed ) < 0 )
+				m_wnd.close();
+			else
+			{
+				// Save the updated settings to disk
+				m_feSettings.save();
+
+				// This forces the display to reinitialize with the updated settings
+				m_feSettings.set_display( m_feSettings.get_current_display_index() );
+			}
+		}
+	}
+	else
+	{
+		FeEditGameMenu m;
+
+		if ( display_config_dialog( &m, settings_changed ) < 0 )
+			m_wnd.close();
+	}
 
 	// TODO: should only return true when setting_changed is true or when user deleted
 	// the rom completely

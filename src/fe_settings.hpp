@@ -485,6 +485,8 @@ public:
 		std::vector<int> &indices,
 		int &current_idx ) const;
 
+	int display_menu_get_current_selection_as_absolute_display_index();
+
 	FeDisplayInfo *get_display( int index );
 	FeDisplayInfo *create_display( const std::string &n );
 	void delete_display( int index );

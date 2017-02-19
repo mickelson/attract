@@ -572,6 +572,8 @@ void FeSettings::init_display()
 		m_rl.init_as_empty_list();
 		FeRomInfoListType &l = m_rl.get_list();
 
+		construct_display_maps();
+
 		for ( unsigned int i=0; i<m_display_menu.size(); i++ )
 		{
 			FeDisplayInfo *p = &(m_displays[m_display_menu[i]]);
@@ -605,7 +607,6 @@ void FeSettings::init_display()
 		set_search_rule( "" );
 		m_current_search_index = temp_idx;
 
-		construct_display_maps();
 		return;
 	}
 
@@ -1279,6 +1280,16 @@ bool FeSettings::config_file_exists() const
 	config_file += FE_CFG_FILE;
 
 	return file_exists( config_file );
+}
+
+int FeSettings::display_menu_get_current_selection_as_absolute_display_index()
+{
+	ASSERT( m_current_display < 0 );
+
+	if (( m_current_search_index < 0 ) || ( m_current_search_index >= (int)m_display_menu.size() ))
+		return -1;
+
+	return m_display_menu[ m_current_search_index ];
 }
 
 // return true if layout needs to be reloaded as a result
