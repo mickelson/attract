@@ -37,6 +37,17 @@
 #include <Audio/AudioDevice.hpp>
 #endif
 
+#ifdef SFML_SYSTEM_WINDOWS
+#include <windows.h>
+
+extern "C"
+{
+// Request more powerful GPU (Nvidea,AMD)
+__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+#endif
+
 void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font,
