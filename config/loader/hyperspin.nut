@@ -181,6 +181,21 @@ for ( local i=0; i< fe.displays.len(); i++ )
 // Functions definitions
 //
 /////////////////////////////////////////////////////////
+function string_replace( string, original, replacement )
+{
+	local result = string;
+	local position = 0;
+
+	position = result.find( original );
+	while ( position != null )
+	{
+		result = result.slice( 0, position) + replacement + result.slice(position + original.len() );
+		position = result.find( original );
+	}
+
+	return result;
+}
+
 function strip_ext( name )
 {
 	local s = split( name, "." );
@@ -452,6 +467,13 @@ function load( ttype, match_map, hs_sys_dir )
 		local raw_xml = "";
 		while ( !f.eos() )
 			raw_xml = raw_xml + f.read_line();
+
+		//fix common error in a lot of themes with wrong end tags
+		raw_xml = string_replace( raw_xml, "start=\"none\"/>rest=", "start=\"none\"rest=" );
+		raw_xml = string_replace( raw_xml, "start=\"left\"/>rest=", "start=\"left\"rest=" );
+		raw_xml = string_replace( raw_xml, "start=\"top\"/>rest=", "start=\"top\"rest=" );
+		raw_xml = string_replace( raw_xml, "start=\"bottom\"/>rest=", "start=\"bottom\"rest=" );
+		raw_xml = string_replace( raw_xml, "start=\"right\"/>rest=", "start=\"right\"rest=" );
 
 		// root tag = "Theme"
 		local xml_root = null;
