@@ -59,6 +59,9 @@ class UserConfig </ help="Hyperspin Layout: " + fe.script_dir + ::file_to_load /
 
    </ label="Animation Speed", help="Set animation speed", order=7, options="default,2X,4X" />
    speed="4X";
+
+   </ label="Fix SWF positioning", help="Try to fix flash swf artwork files positions", order=8, options="yes,no" />
+   fix_swf_positions="yes";
 };
 
 local my_config = fe.get_config();
@@ -195,6 +198,16 @@ function strip_ext( name )
 
 		return retval;
 	}
+}
+
+function ext( name )
+{
+	local s = split( name, "." );
+
+	if ( s.len() <= 1 )
+		return "";
+	else
+		return s[s.len()-1];
 }
 
 //
@@ -544,6 +557,31 @@ function load( ttype, match_map, hs_sys_dir )
 			obj.width    = w;
 			obj.height   = h;
 			obj.rotation = r;
+
+			//fixes for wrong positions for SWF files
+			if ( my_config["fix_swf_positions"] == "yes" && ext( obj.file_name ).tolower() == "swf")
+			{
+				//beast busters - bombjack - gladiator
+				if (x > fe.layout.width || y > fe.layout.height)
+				{
+					obj.y = 0;
+					obj.x = 0;
+				}
+
+				//most others
+				if (obj.width == fe.layout.width)
+				{
+					if (obj.x < 0)
+						obj.x = 0;
+				}
+
+				//most others
+				if (obj.height == fe.layout.height)
+				{
+					if (obj.y < 0)
+						obj.y = 0;
+				}
+			}
 
 			if ( c.tag == "video" )
 			{
