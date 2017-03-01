@@ -92,8 +92,9 @@ typedef void (*launch_callback_fn)( void * );
 //		"joy_thresh" - joystick threshold, only used if exit_hotkey is mapped to
 //					a joystick
 //		"launch_cb" = callback function to call after program launched
-//		"launch_opaque" - opaque ptr to pass to the launch callback function.  run_program()
-//					doesn't care what this is.
+//		"wait_cb" = callback function to call repeatedly while waiting for program return [windows only]
+//		"launch_opaque" - opaque ptr to pass to the launch callback (and wait callback) function.
+//					run_program() doesn't care what this is.
 //
 //	Returns true if program ran successfully
 //
@@ -106,6 +107,7 @@ bool run_program( const std::string &prog,
 	const std::string &exit_hotkey="",
 	int joy_thresh=0,
 	launch_callback_fn launch_cb= NULL,
+	launch_callback_fn wait_cb= NULL,
 	void *launch_opaque=NULL );
 
 //

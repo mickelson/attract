@@ -725,6 +725,7 @@ bool run_program( const std::string &prog,
 	const std::string &exit_hotkey,
 	int joy_thresh,
 	launch_callback_fn launch_cb,
+	launch_callback_fn wait_cb,
 	void *launch_opaque )
 {
 	const int POLL_FOR_EXIT_MS=50;
@@ -847,12 +848,9 @@ bool run_program( const std::string &prog,
 			//
 			// See: https://blogs.msdn.microsoft.com/oldnewthing/20050217-00/?p=36423
 			//
-			// we have a message - peek and dispatch it
-			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
+			if ( wait_cb )
+				wait_cb( launch_opaque );
+
 			break;
 
 		case WAIT_TIMEOUT:

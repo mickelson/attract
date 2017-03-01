@@ -134,7 +134,7 @@ void FeWindow::onCreate()
 	if (( m_fes.get_window_mode() != FeSettings::Fullscreen )
 		&& (( GetWindowLong( hw, GWL_STYLE ) & WS_POPUP ) != 0 ))
 	{
-		SetWindowLong( hw, GWL_STYLE,
+		SetWindowLongPtr( hw, GWL_STYLE,
 			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
 
 		// resize the window off screen 1 pixel in each direction so we don't see the window border
@@ -152,7 +152,7 @@ void FeWindow::onCreate()
 	setSize( sf::Vector2u( width, height ) );
 
 	ShowWindow(hw, SW_SHOW);
-	SetFocus( hw );
+	SetForegroundWindow( hw );
 
 #elif defined(USE_XLIB)
 	//
@@ -228,6 +228,7 @@ void FeWindow::initial_create()
 	// Only mess with the mouse position if mouse moves mapped
 	if ( m_fes.test_mouse_reset( 0, 0 ) )
 		sf::Mouse::setPosition( sf::Vector2i( wsize.x / 2, wsize.y / 2 ), *this );
+
 }
 
 void launch_callback( void *o )
@@ -245,6 +246,24 @@ void launch_callback( void *o )
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
 	}
 #endif
+}
+
+void wait_callback( void *o )
+{
+	FeWindow *win = (FeWindow *)o;
+
+	if ( win->isOpen() )
+	{
+		sf::Event ev;
+		while ( win->pollEvent( ev ) )
+		{
+			if ( ev.type == sf::Event::Closed )
+				return;
+		}
+
+		win->clear();
+		win->display();
+	}
 }
 
 bool FeWindow::run()
@@ -276,7 +295,7 @@ bool FeWindow::run()
 	// for focus to return to Attract-Mode if this value is set greater than 0
 	//
 	int min_run;
-	m_fes.run( min_run, launch_callback, this );
+	m_fes.run( min_run, launch_callback, wait_callback, this );
 
 	if ( min_run > 0 )
 	{

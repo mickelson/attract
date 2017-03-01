@@ -1846,7 +1846,10 @@ void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 	internal_gather_config_files( ll, "", FE_SOUND_SUBDIR );
 }
 
-void FeSettings::run( int &minimum_run_seconds, launch_callback_fn launch_cb, void *launch_opaque )
+void FeSettings::run( int &minimum_run_seconds,
+	launch_callback_fn launch_cb,
+	launch_callback_fn wait_cb,
+	void *launch_opaque )
 {
 	minimum_run_seconds=0;
 	int filter_index = get_current_filter_index();
@@ -2039,6 +2042,7 @@ void FeSettings::run( int &minimum_run_seconds, launch_callback_fn launch_cb, vo
 		exit_hotkey,
 		m_joy_thresh,
 		launch_cb,
+		wait_cb,
 		launch_opaque );
 
 	if ( m_track_usage )
