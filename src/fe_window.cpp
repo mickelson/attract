@@ -234,16 +234,22 @@ void FeWindow::initial_create()
 void launch_callback( void *o )
 {
 #if defined(SFML_SYSTEM_LINUX)
-	//
-	// On Linux, fullscreen mode is confirmed to block the emulator
-	// from running...  So we close our main window each time we run
-	// an emulator and then recreate it (!) when the emulator is done.
-	//
 	FeWindow *win = (FeWindow *)o;
 	if ( win->m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
+#if defined(USE_XLIB)
+		//
+		// On X11 Linux, fullscreen mode is confirmed to block the emulator
+		// from running on some systems...  So we wait 1 second and if we still
+		// have focus then we close our main window now (and then recreate it (!)
+		// when the emulator is done).
+		//
 		sf::sleep( sf::milliseconds( 1000 ) );
+		if ( win->hasFocus() )
+			win->close();
+#else
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
+#endif
 	}
 #endif
 }
@@ -328,12 +334,19 @@ bool FeWindow::run()
 #if defined(SFML_SYSTEM_LINUX)
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
+#if defined(USE_XLIB)
 		//
-		// On linux fullscreen mode we hide our window after launching the program.  Simply showing
-		// the window again doesn't work right (focus doesn't come back), so we close the window
-		// and recreate it completely
+		// On X11 Linux fullscreen mode we might have forcibly closed our window after launching the
+		// emulator. Recreate it now if we did.
 		//
-		initial_create();
+		// Note that simply hiding and then showing the window again doesn't work right... focus
+		// doesn't come back
+		//
+		if ( !isOpen() )
+			initial_create();
+#else
+		initial_create(); // On raspberry pi, we have forcibly closed the window, so recreate it now
+#endif
 	}
 #elif defined(SFML_SYSTEM_MACOS)
 	osx_take_focus();
