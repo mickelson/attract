@@ -31,6 +31,9 @@
 #include <cassert>
 #endif
 
+#define FE_VERSION_INT( a, b, c ) ((a)<<16 | (b)<<8 | (c))
+#define SFML_VERSION_INT FE_VERSION_INT( SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH )
+
 extern const char *FE_WHITESPACE;
 
 //

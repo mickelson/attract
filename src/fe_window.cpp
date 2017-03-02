@@ -245,8 +245,15 @@ void launch_callback( void *o )
 		// when the emulator is done).
 		//
 		sf::sleep( sf::milliseconds( 1000 ) );
+
+ // hasFocus() is only available as of SFML 2.2.
+ #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
 		if ( win->hasFocus() )
 			win->close();
+ #else
+		win->close();
+ #endif
+
 #else
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
 #endif
