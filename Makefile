@@ -435,7 +435,6 @@ ifneq ($(FE_DEBUG),1)
 endif
 
 .PHONY: clean
-
 .PHONY: install
 
 $(OBJ_DIR):
@@ -677,10 +676,9 @@ $(DATA_PATH):
 	$(MD) -p $(DESTDIR)$@
 
 install: $(EXE) $(DATA_PATH)
-	install -D -t $(DESTDIR)$(bindir) $(EXE)
+	install -D $(EXE) $(DESTDIR)$(bindir)/$(EXE)
 	mkdir -p $(DESTDIR)$(DATA_PATH)
 	cp -r config/* $(DESTDIR)$(DATA_PATH)
-
 
 smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
