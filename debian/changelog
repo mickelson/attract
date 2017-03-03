@@ -1,3 +1,7 @@
+attract (2.2.1-2) unstable; urgency=low
+
+  * Install appdata file.
+
 attract (2.2.1-1) unstable; urgency=low
 
   * Version 2.2.1 package.
