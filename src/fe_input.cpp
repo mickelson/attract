@@ -281,12 +281,12 @@ FeInputSingle::FeInputSingle( const sf::Event &e, const sf::IntRect &mc_rect, co
 				m_type = Mouse;
 				m_code = MouseUp;
 			}
-			else if ( e.mouseMove.x > mc_rect.left + mc_rect.width )
+			else if ( e.mouseMove.x >= mc_rect.left + mc_rect.width )
 			{
 				m_type = Mouse;
 				m_code = MouseRight;
 			}
-			else if ( e.mouseMove.y > mc_rect.top + mc_rect.height )
+			else if ( e.mouseMove.y >= mc_rect.top + mc_rect.height )
 			{
 				m_type = Mouse;
 				m_code = MouseDown;
