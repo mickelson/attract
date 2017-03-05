@@ -80,7 +80,6 @@ const char *FE_ART_EXTENSIONS[]		=
 	".png",
 	".jpg",
 	".jpeg",
-	".gif",
 	".bmp",
 	".tga",
 	NULL
