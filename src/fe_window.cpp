@@ -100,6 +100,25 @@ FeWindow::FeWindow( FeSettings &fes )
 void FeWindow::onCreate()
 {
 #ifdef SFML_SYSTEM_WINDOWS
+	//
+	// Windows Notes:
+	//
+	// Out present strategy with Windows is to stick with the WS_POPUP window style for our
+	// window.  SFML seems to always create windows with this style
+	//
+	// In previous FE versions, the WS_POPUP style was causing grief switching to MAME.
+	// It also looked clunky/flickery when transitioning between frontend and emulator.
+	// More recent tests suggest these WS_POPUP problems have gone away (fingers crossed)
+	//
+	// With Windows 10 v1607, it seems that the WS_POPUP style is required in order for a
+	// window to be drawn over the taskbar.
+	//
+	// Windows API call to undo the WS_POPUP Style.  Seems to require a ShowWindow() call
+	// afterwards to take effect:
+	//
+	//		SetWindowLongPtr( getSystemHandle(), GWL_STYLE,
+	//			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
+	//
 	int left, top, width, height;
 	if (( m_fes.get_info_bool( FeSettings::MultiMon ) )
 		&& ( !is_windowed_mode( m_fes.get_window_mode() ) ))
@@ -117,26 +136,8 @@ void FeWindow::onCreate()
 		height = getSize().y;
 	}
 
-	sf::WindowHandle hw = getSystemHandle();
-
-	//
-	// The "WS_POPUP" style can cause grief switching to MAME.  It also looks clunky/flickery
-	// when transitioning between frontend and emulator.
-	//
-	// With Windows 10 v1607, it seems that the "WS_POPUP" style is required in order for a
-	// window to be drawn over the taskbar.
-	//
-	// So we keep WS_POPUP for "Fullscreen Mode", because the user wants to force full screen
-	// with that setting.
-	//
-	// In "Fill screen" and "Window" modes, we use the WS_BORDER style for smoother transitions.
-	//
-	if (( m_fes.get_window_mode() != FeSettings::Fullscreen )
-		&& (( GetWindowLong( hw, GWL_STYLE ) & WS_POPUP ) != 0 ))
+	if ( m_fes.get_window_mode() == FeSettings::Default ) // "fill screen" mode
 	{
-		SetWindowLongPtr( hw, GWL_STYLE,
-			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
-
 		// resize the window off screen 1 pixel in each direction so we don't see the window border
 		left -= 1;
 		top -= 1;
@@ -144,15 +145,9 @@ void FeWindow::onCreate()
 		height += 2;
 	}
 
-	SetWindowPos( hw,
-		m_fes.get_window_mode() == FeSettings::Fullscreen ? HWND_BOTTOM : HWND_TOP,
-		left, top, width, height, SWP_FRAMECHANGED);
-
-	// As of 2.1, SFML caches the window size. We call setSize below to update SFML appropriately
+	// As of 2.1, SFML caches the window size internally
+	setPosition( sf::Vector2i( left, top ) );
 	setSize( sf::Vector2u( width, height ) );
-
-	ShowWindow(hw, SW_SHOW);
-	SetForegroundWindow( hw );
 
 #elif defined(USE_XLIB)
 	//
@@ -220,6 +215,10 @@ void FeWindow::initial_create()
 		osx_hide_menu_bar();
 		setPosition( sf::Vector2i( 0, 0 ) );
 	}
+#endif
+
+#ifdef SFML_SYSTEM_WINDOWS
+	SetForegroundWindow( getSystemHandle() );
 #endif
 
 	sf::Vector2u wsize = getSize();
