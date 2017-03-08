@@ -786,11 +786,7 @@ bool FeVM::on_new_layout()
 		.Prop( _SC("list_limit"), &FeFilter::get_list_limit )
 	);
 
-	fe.Bind( _SC("Monitor"), Class <FeMonitor, NoConstructor>()
-		.Prop( _SC("num"), &FeMonitor::get_num )
-		.Prop( _SC("width"), &FeMonitor::get_width )
-		.Prop( _SC("height"), &FeMonitor::get_height )
-
+	fe.Bind( _SC("PresentableParent"), Class <FePresentableParent, NoConstructor>()
 		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int, int, int)>(_SC("add_image"), &FePresentableParent::add_image)
 		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int)>(_SC("add_image"), &FePresentableParent::add_image)
 		.Overload<FeImage * (FePresentableParent::*)(const char *)>(_SC("add_image"), &FePresentableParent::add_image)
@@ -801,6 +797,13 @@ bool FeVM::on_new_layout()
 		.Func( _SC("add_text"), &FePresentableParent::add_text )
 		.Func( _SC("add_listbox"), &FePresentableParent::add_listbox )
 		.Func( _SC("add_surface"), &FePresentableParent::add_surface )
+	);
+
+	fe.Bind( _SC("Monitor"),
+		DerivedClass<FeMonitor, FePresentableParent, NoConstructor>()
+		.Prop( _SC("num"), &FeMonitor::get_num )
+		.Prop( _SC("width"), &FeMonitor::get_width )
+		.Prop( _SC("height"), &FeMonitor::get_height )
 	);
 
 	//
