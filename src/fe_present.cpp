@@ -924,6 +924,14 @@ void FePresent::on_end_navigation()
 	on_transition( EndNavigation, 0 );
 }
 
+void FePresent::redraw_surfaces()
+{
+	std::vector<FeBaseTextureContainer *>::iterator itc;
+
+	for ( itc=m_texturePool.begin(); itc != m_texturePool.end(); ++itc )
+		(*itc)->on_redraw_surfaces();
+}
+
 // return false if the into should be cancelled
 bool FePresent::load_intro()
 {

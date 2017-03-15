@@ -169,6 +169,11 @@ bool FeBaseTextureContainer::fix_masked_image()
 	return false;
 }
 
+bool FeBaseTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
+{
+	return false;
+}
+
 FeTextureContainer *FeBaseTextureContainer::get_derived_texture_container()
 {
 	return NULL;
@@ -192,6 +197,10 @@ void FeBaseTextureContainer::notify_texture_change()
 }
 
 void FeBaseTextureContainer::release_audio( bool )
+{
+}
+
+void FeBaseTextureContainer::on_redraw_surfaces()
 {
 }
 
@@ -986,7 +995,7 @@ void FeSurfaceTextureContainer::on_new_list( FeSettings *s, bool )
 		(*itr)->on_new_list( s );
 }
 
-bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
+void FeSurfaceTextureContainer::on_redraw_surfaces()
 {
 	//
 	// Draw the surface's draw list to the render texture
@@ -1000,7 +1009,6 @@ bool FeSurfaceTextureContainer::tick( FeSettings *feSettings, bool play_movies, 
 	}
 
 	m_texture.display();
-	return false;
 }
 
 void FeSurfaceTextureContainer::set_smooth( bool s )

@@ -199,6 +199,7 @@ public:
 
 	void update_to_new_list( int var=0, bool new_layout=false );
 	void on_end_navigation();
+	void redraw_surfaces();
 
 	bool tick(); // run vm on_tick and update videos.  return true if redraw required
 	bool video_tick(); // update videos only. return true if redraw required

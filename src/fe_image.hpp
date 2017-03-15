@@ -56,7 +56,8 @@ public:
 
 	virtual void on_new_list( FeSettings *, bool new_display )=0;
 
-	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )=0; // returns true if redraw required
+	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
+
 	virtual void set_play_state( bool play );
 	virtual bool get_play_state() const;
 	virtual void set_vol( float vol );
@@ -89,6 +90,7 @@ public:
 	void register_image( FeImage * );
 
 	virtual void release_audio( bool );
+	virtual void on_redraw_surfaces();
 
 protected:
 	FeBaseTextureContainer();
@@ -201,7 +203,7 @@ public:
 	void on_end_navigation( FeSettings *feSettings );
 	void on_new_list( FeSettings *, bool );
 
-	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
+	void on_redraw_surfaces();
 
 	void set_smooth( bool );
 	bool get_smooth() const;

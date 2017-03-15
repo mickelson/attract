@@ -819,6 +819,8 @@ int main(int argc, char *argv[])
 
 		if ( redraw )
 		{
+			feVM.redraw_surfaces();
+
 			// begin drawing
 			window.clear();
 			window.draw( feVM );
