@@ -268,7 +268,7 @@ void FeTextPrimative::set_positions() const
 		textSize.height *= m_texts[i].getScale().y;
 
 		textPos.y = rectPos.y
-				+ floorf( spacing * i
+				+ ceilf( spacing * i
 				+ ( rectSize.height - ( spacing * m_texts.size() )) / 2);
 
 		// set x position
