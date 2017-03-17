@@ -29,7 +29,7 @@ FeTextPrimative::FeTextPrimative( )
 	m_align( Centre ),
 	m_first_line( -1 ),
 	m_needs_pos_set( false ),
-    m_no_margin( 0 )
+	m_no_margin( 0 )
 {
 	setColor( sf::Color::White );
 	setBgColor( sf::Color::Transparent );
@@ -45,7 +45,7 @@ FeTextPrimative::FeTextPrimative(
 	m_align( align ),
 	m_first_line( -1 ),
 	m_needs_pos_set( false ),
-    m_no_margin( 0 )
+	m_no_margin( 0 )
 {
 	if ( font )
 		setFont( *font );
@@ -61,7 +61,7 @@ FeTextPrimative::FeTextPrimative( const FeTextPrimative &c )
 	m_align( c.m_align ),
 	m_first_line( c.m_first_line ),
 	m_needs_pos_set( c.m_needs_pos_set ),
-    m_no_margin( c.m_no_margin )
+	m_no_margin( c.m_no_margin )
 {
 }
 
