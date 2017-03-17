@@ -22,12 +22,14 @@
 
 #include "tp.hpp"
 #include <iostream>
+#include <cmath>
 
 FeTextPrimative::FeTextPrimative( )
 	: m_texts( 1, sf::Text() ),
 	m_align( Centre ),
 	m_first_line( -1 ),
-	m_needs_pos_set( false )
+	m_needs_pos_set( false ),
+    m_no_margin( 0 )
 {
 	setColor( sf::Color::White );
 	setBgColor( sf::Color::Transparent );
@@ -42,7 +44,8 @@ FeTextPrimative::FeTextPrimative(
 	: m_texts( 1, sf::Text() ),
 	m_align( align ),
 	m_first_line( -1 ),
-	m_needs_pos_set( false )
+	m_needs_pos_set( false ),
+    m_no_margin( 0 )
 {
 	if ( font )
 		setFont( *font );
@@ -57,7 +60,8 @@ FeTextPrimative::FeTextPrimative( const FeTextPrimative &c )
 	m_texts( c.m_texts ),
 	m_align( c.m_align ),
 	m_first_line( c.m_first_line ),
-	m_needs_pos_set( c.m_needs_pos_set )
+	m_needs_pos_set( c.m_needs_pos_set ),
+    m_no_margin( c.m_no_margin )
 {
 }
 
@@ -264,14 +268,15 @@ void FeTextPrimative::set_positions() const
 		textSize.height *= m_texts[i].getScale().y;
 
 		textPos.y = rectPos.y
-				+ spacing * i
-				+ ( rectSize.height - ( spacing * m_texts.size() )) / 2;
+				+ floorf( spacing * i
+				+ ( rectSize.height - ( spacing * m_texts.size() )) / 2);
 
 		// set x position
 		switch ( m_align )
 		{
 		case Left:
-			textPos.x = rectPos.x + spacing/2;
+			if( m_no_margin ) textPos.x = rectPos.x;
+			else textPos.x = rectPos.x + ( spacing/2 );
 			break;
 
 		case Centre:
@@ -279,7 +284,8 @@ void FeTextPrimative::set_positions() const
 			break;
 
 		case Right:
-			textPos.x = rectPos.x + rectSize.width - textSize.width - spacing/2;
+			if( m_no_margin ) textPos.x = rectPos.x + rectSize.width - textSize.width;
+			else textPos.x = rectPos.x + rectSize.width - textSize.width - ( spacing/2 );
 			break;
 		}
 
@@ -407,6 +413,16 @@ void FeTextPrimative::setFirstLineHint( int line )
 void FeTextPrimative::setWordWrap( bool wrap )
 {
 	m_first_line = wrap ? 0 : -1;
+}
+
+void FeTextPrimative::setNoMargin( bool margin )
+{
+	m_no_margin = margin;
+}
+
+bool FeTextPrimative::getNoMargin()
+{
+	return m_no_margin;
 }
 
 void FeTextPrimative::setTextScale( const sf::Vector2f &s )
