@@ -261,7 +261,7 @@ void FeTextPrimative::set_positions() const
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 	{
 		sf::Vector2f textPos;
-
+		
 		// we need to account for the scaling that we have applied to our text...
 		sf::FloatRect textSize = m_texts[i].getLocalBounds();
 		textSize.width *= m_texts[i].getScale().x;
@@ -276,16 +276,16 @@ void FeTextPrimative::set_positions() const
 		{
 		case Left:
 			if( m_no_margin ) textPos.x = rectPos.x;
-			else textPos.x = rectPos.x + ( spacing/2 );
+			else textPos.x = rectPos.x + floorf( spacing/2 );
 			break;
 
 		case Centre:
-			textPos.x = rectPos.x + ( (rectSize.width - textSize.width) / 2 );
+			textPos.x = rectPos.x + floorf( (rectSize.width - textSize.width) / 2 );
 			break;
 
 		case Right:
 			if( m_no_margin ) textPos.x = rectPos.x + rectSize.width - textSize.width;
-			else textPos.x = rectPos.x + rectSize.width - textSize.width - ( spacing/2 );
+			else textPos.x = rectPos.x + rectSize.width - textSize.width - floorf( spacing/2 );
 			break;
 		}
 
