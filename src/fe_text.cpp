@@ -36,8 +36,7 @@ FeText::FeText( FePresentableParent &p, const std::string &str,
 	m_user_charsize( -1 ),
 	m_size( w, h ),
 	m_position( x, y ),
-	m_scale_factor( 1.0 ),
-	m_no_margin( 0 )
+	m_scale_factor( 1.0 )
 {
 }
 

@@ -1589,6 +1589,8 @@ Properties:
    * `msg_width` - Get the width of the text message, in layout coordinates.
    * `font` - Get/set the name of the font used for this text.  Default is
      the layout font name.
+   * nomargin - Get/set whether margin spacing should be added to sides of
+     the text (boolean).  Default value is `false`.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
    * `zorder` - Get/set the Text's order in the applicable draw list.  When

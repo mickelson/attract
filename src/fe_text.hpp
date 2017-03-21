@@ -111,7 +111,6 @@ private:
 	sf::Vector2f m_size;		// unscaled size
 	sf::Vector2f m_position;	// unscaled position
 	float m_scale_factor;
-    bool m_no_margin;
 };
 
 #endif
