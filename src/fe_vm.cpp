@@ -672,6 +672,7 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("first_line_hint"), &FeText::get_first_line_hint, &FeText::set_first_line_hint )
 		.Prop(_SC("msg_width"), &FeText::get_actual_width )
 		.Prop(_SC("font"), &FeText::get_font, &FeText::set_font )
+		.Prop(_SC("nomargin"), &FeText::get_no_margin, &FeText::set_no_margin )
 		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
 

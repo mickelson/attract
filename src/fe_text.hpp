@@ -66,6 +66,9 @@ public:
 	void set_word_wrap( bool );
 	bool get_word_wrap();
 
+	void set_no_margin( bool );
+	bool get_no_margin();
+
 	void set_first_line_hint( int l );
 	int get_first_line_hint();
 
@@ -108,6 +111,7 @@ private:
 	sf::Vector2f m_size;		// unscaled size
 	sf::Vector2f m_position;	// unscaled position
 	float m_scale_factor;
+    bool m_no_margin;
 };
 
 #endif

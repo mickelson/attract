@@ -36,7 +36,8 @@ FeText::FeText( FePresentableParent &p, const std::string &str,
 	m_user_charsize( -1 ),
 	m_size( w, h ),
 	m_position( x, y ),
-	m_scale_factor( 1.0 )
+	m_scale_factor( 1.0 ),
+	m_no_margin( 0 )
 {
 }
 
@@ -173,6 +174,17 @@ void FeText::set_word_wrap( bool w )
 bool FeText::get_word_wrap()
 {
 	return ( m_draw_text.getFirstLineHint() >= 0 );
+}
+
+void FeText::set_no_margin( bool m )
+{
+	m_draw_text.setNoMargin( m );
+	FePresent::script_do_update( this );
+}
+
+bool FeText::get_no_margin()
+{
+	return m_draw_text.getNoMargin();
 }
 
 void FeText::set_first_line_hint( int l )
