@@ -28,8 +28,8 @@ FeTextPrimative::FeTextPrimative( )
 	: m_texts( 1, sf::Text() ),
 	m_align( Centre ),
 	m_first_line( -1 ),
-	m_needs_pos_set( false ),
-	m_no_margin( 0 )
+	m_no_margin( false ),
+	m_needs_pos_set( false )
 {
 	setColor( sf::Color::White );
 	setBgColor( sf::Color::Transparent );
@@ -44,8 +44,8 @@ FeTextPrimative::FeTextPrimative(
 	: m_texts( 1, sf::Text() ),
 	m_align( align ),
 	m_first_line( -1 ),
-	m_needs_pos_set( false ),
-	m_no_margin( 0 )
+	m_no_margin( false ),
+	m_needs_pos_set( false )
 {
 	if ( font )
 		setFont( *font );
@@ -60,8 +60,8 @@ FeTextPrimative::FeTextPrimative( const FeTextPrimative &c )
 	m_texts( c.m_texts ),
 	m_align( c.m_align ),
 	m_first_line( c.m_first_line ),
-	m_needs_pos_set( c.m_needs_pos_set ),
-	m_no_margin( c.m_no_margin )
+	m_no_margin( c.m_no_margin ),
+	m_needs_pos_set( c.m_needs_pos_set )
 {
 }
 
@@ -261,7 +261,7 @@ void FeTextPrimative::set_positions() const
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 	{
 		sf::Vector2f textPos;
-		
+
 		// we need to account for the scaling that we have applied to our text...
 		sf::FloatRect textSize = m_texts[i].getLocalBounds();
 		textSize.width *= m_texts[i].getScale().x;
