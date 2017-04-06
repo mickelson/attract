@@ -451,10 +451,15 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
+			// Only play new sounds if we aren't in the process of launching
+			// a game
+			//
+			if ( !launch_game )
+				soundsys.sound_event( c );
+
 			//
 			// Default command handling
 			//
-			soundsys.sound_event( c );
 			if ( feVM.handle_event( c ) )
 				redraw = true;
 			else
