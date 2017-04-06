@@ -344,7 +344,10 @@ int main(int argc, char *argv[])
 				guard_axis = -1;
 			}
 
-			if ( c == FeInputMap::LAST_COMMAND )
+			// Nothing further to do if there is no command or if we are in the process
+			// of launching a game already
+			//
+			if (( c == FeInputMap::LAST_COMMAND ) || ( launch_game ))
 				continue;
 
 			//
@@ -451,15 +454,10 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
-			// Only play new sounds if we aren't in the process of launching
-			// a game
-			//
-			if ( !launch_game )
-				soundsys.sound_event( c );
-
 			//
 			// Default command handling
 			//
+			soundsys.sound_event( c );
 			if ( feVM.handle_event( c ) )
 				redraw = true;
 			else
