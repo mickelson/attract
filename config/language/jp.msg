@@ -398,3 +398,4 @@ _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_scrape_vids;Set whether game videos should be downloaded when scraping
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI; if started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
