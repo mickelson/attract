@@ -40,6 +40,7 @@
 
 #include <SFML/Config.hpp>
 #include <SFML/System/Sleep.hpp>
+#include <SFML/System/Clock.hpp>
 
 #ifdef USE_LIBARCHIVE
 #include <zlib.h>
@@ -939,7 +940,11 @@ bool run_program( const std::string &prog,
 				if ( callback( buffer, opaque ) == false )
 				{
 					// User cancelled
-					kill( pid, SIGTERM );
+					kill( pid, SIGKILL );
+
+					int status;
+					waitpid( pid, &status, 0 );
+
 					block=false;
 					break;
 				}
@@ -975,7 +980,37 @@ bool run_program( const std::string &prog,
 						//
 						sf::sleep( sf::milliseconds( 100 ) );
 						if ( kill( pid, 0 ) == 0 )
+						{
+							std::cout << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
 							kill( pid, SIGTERM );
+
+
+							//
+							// Give the process TERM_TIMEOUT ms to respond to sig term
+							//
+							const int TERM_TIMEOUT = 1500;
+							sf::Clock term_clock;
+
+							while (( term_clock.getElapsedTime().asMilliseconds() < TERM_TIMEOUT )
+								&& ( waitpid( pid, &status, WNOHANG ) == 0 ))
+							{
+								sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
+							}
+
+							//
+							// Do the more abrupt SIGKILL if process is still running at this point
+							//
+							if ( kill( pid, 0 ) == 0 )
+							{
+								std::cout << " - Timeout on SIGTERM after " << TERM_TIMEOUT
+									<< " ms, sending SIGKILL signal to process " << pid << std::endl;
+
+								kill( pid, SIGKILL );
+							}
+
+							// reap
+							waitpid( pid, &status, 0 );
+						}
 
 						break; // leave do/while loop
 					}
