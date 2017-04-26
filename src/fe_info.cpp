@@ -687,13 +687,13 @@ int FeDisplayInfo::process_state( const std::string &state_string )
 		// If there are filters we get a current rom for each filter
 		size_t sub_pos=0;
 		int findex=0;
-		do
+		while (( sub_pos < val.size() ) && ( findex < (int)m_filters.size() ))
 		{
 			std::string sub_val;
 			token_helper( val, sub_pos, sub_val, "," );
 			m_filters[findex].set_rom_index( as_int( sub_val ) );
 			findex++;
-		} while ( sub_pos < val.size() );
+		}
 	}
 
 	if ( pos >= state_string.size() )
@@ -707,6 +707,11 @@ int FeDisplayInfo::process_state( const std::string &state_string )
 
 	token_helper( state_string, pos, val );
 	m_filter_index = as_int( val );
+
+	if ( m_filter_index >= (int)m_filters.size() )
+		m_filter_index = m_filters.size() - 1;
+	if ( m_filter_index < 0 )
+		m_filter_index = 0;
 
 	return 0;
 }
