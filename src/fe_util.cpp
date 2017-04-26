@@ -242,6 +242,10 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 	if (( retval.size() >= 5 ) && ( retval.compare( 0, 5, "$HOME" ) == 0 ))
 		retval.replace( 0, 5, get_home_dir() );
 
+	// substitute program dir for leading $PROGDIR
+	if (( retval.size() >= 8 ) && ( retval.compare( 0, 8, "$PROGDIR" ) == 0 ))
+		retval.replace( 0, 8, get_program_path() );
+
 	if (( add_trailing_slash )
 #ifdef SFML_SYSTEM_WINDOWS
 			&& (retval[retval.size()-1] != '\\')
@@ -250,6 +254,21 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 		retval += '/';
 
 	return retval;
+}
+
+std::string get_program_path()
+{
+	std::string path;
+#ifdef SFML_SYSTEM_WINDOWS
+	char result[ MAX_PATH ];
+	path = std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+#else
+	char result[ PATH_MAX ];
+	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+	path = std::string( result, (count > 0) ? count : 0 );
+#endif
+	size_t found = path.find_last_of("/\\");
+	return( path.substr(0, found) );
 }
 
 std::string absolute_path( const std::string &path )

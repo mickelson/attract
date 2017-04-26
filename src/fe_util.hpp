@@ -131,6 +131,9 @@ bool is_relative_path( const std::string &file );
 std::string clean_path( const std::string &path,
 	bool add_trailing_slash = false );
 
+// get program path (NOT the working directory)
+std::string get_program_path();
+
 // return path as an absolute path
 std::string absolute_path( const std::string &path );
 

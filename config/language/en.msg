@@ -78,7 +78,7 @@ _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_add;Add a new emulator
 _help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn], [workdir], [nothing]
 _help_emu_delete;Delete the entry for this emulator
-_help_emu_executable;The full path and name of the emulator executable. $HOME gets replaced with the user's home dir
+_help_emu_executable;The full path and name of the emulator executable. Possible variables: $HOME = User's home dir; $PROGDIR = Attract-Mode program dir; Windows OS additionally have %SYSTEMROOT% and %PROGRAMFILES% matching system environment variables.
 _help_emu_exit_hotkey;Set a global hotkey to exit the emulator.  Attract-Mode will terminate the emulator process if this hotkey gets pressed
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
 _help_emu_import_extras;Path to any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories), nplayers.ini (for number of players) and mame.xml.  Multiple file paths can be entered if separated by a semicolon
