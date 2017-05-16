@@ -1876,6 +1876,13 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Video Decoder", vid_dec, "_help_video_decoder" );
 	ctx.back_opt().append_vlist( decoders );
 
+#ifdef SFML_SYSTEM_WINDOWS    
+	ctx.add_optl( Opt::LIST, "Hide Console",
+		ctx.fe_settings.get_hide_console() ? bool_opts[0] : bool_opts[1],
+		"_help_hide_console" );
+	ctx.back_opt().append_vlist( bool_opts );
+#endif
+
 	FeBaseConfigMenu::get_options( ctx );
 }
 
@@ -1918,6 +1925,11 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
 			ctx.opt_list[12].get_value() );
+
+#ifdef SFML_SYSTEM_WINDOWS   
+	ctx.fe_settings.set_info( FeSettings::HideConsole,
+			ctx.opt_list[13].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+#endif
 
 	return true;
 }

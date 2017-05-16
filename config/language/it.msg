@@ -369,6 +369,7 @@ _help_track_usage;Configura se Attract-Mode deve gestire le statistiche di utili
 _help_video_decoder;Configura il decoder da utilizzare per riprodurre i video (nel caso siano disponibili più decoder)
 _help_volume;I valori consentiti per il volume vanno da 0 (silenzio) a 100 (massimo)
 _help_window_mode;Configura se il frontend deve lavorare a tutto schermo o essere eseguito in una finestra
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI; if started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
 #

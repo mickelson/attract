@@ -145,6 +145,7 @@ _help_track_usage;Configure whether Attract-Mode should track usage (played time
 _help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)
 _help_volume;Valid volume settings are from 0 (mute) to 100 
 _help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI; if started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
 #
