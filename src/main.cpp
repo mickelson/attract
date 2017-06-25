@@ -206,6 +206,7 @@ int main(int argc, char *argv[])
 		else if (( launch_game )
 			&& ( !soundsys.is_sound_event_playing( FeInputMap::Select ) ))
 		{
+			feSettings.save_state();
 			const std::string &emu_name = feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator );
 			if ( emu_name.compare( 0, 1, "@" ) == 0 )
 			{
