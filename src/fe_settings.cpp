@@ -407,6 +407,7 @@ const char *FeSettings::configSettingStrings[] =
 {
 	"language",
 	"exit_command",
+	"exit_message",
 	"default_font",
 	"font_path",
 	"screen_saver_timeout",
@@ -588,7 +589,7 @@ void FeSettings::init_display()
 		if ( m_displays_menu_exit )
 		{
 			std::string exit_str;
-			get_resource( "Exit Attract-Mode", exit_str );
+			get_exit_message( exit_str );
 
 			FeRomInfo rom( exit_str );
 			rom.set_info( FeRomInfo::Title, exit_str );
@@ -2082,6 +2083,23 @@ int FeSettings::exit_command() const
 	return r;
 }
 
+void FeSettings::get_exit_message( std::string &exit_message ) const
+{
+	if ( m_exit_message.empty() )
+		get_resource( "Exit Attract-Mode", exit_message );
+	else
+		exit_message = m_exit_message;
+}
+
+void FeSettings::get_exit_question( std::string &exit_question ) const
+{
+	// Question string is never empty; check message.
+	if ( m_exit_message.empty() )
+		get_resource( "Exit Attract-Mode?", exit_question );
+	else
+		exit_question = m_exit_question;
+}
+
 void FeSettings::do_text_substitutions( std::string &str, int filter_offset, int index_offset )
 {
 	int filter_index = get_filter_index_from_offset( filter_offset );
@@ -2507,6 +2525,8 @@ const std::string FeSettings::get_info( int index ) const
 		return m_language;
 	case ExitCommand:
 		return m_exit_command;
+	case ExitMessage:
+		return m_exit_message;
 	case DefaultFont:
 		return m_default_font;
 	case FontPath:
@@ -2628,6 +2648,11 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ExitCommand:
 		m_exit_command = value;
+		break;
+
+	case ExitMessage:
+		m_exit_message = value;
+		m_exit_question = value + "?";
 		break;
 
 	case DefaultFont:

@@ -1843,7 +1843,10 @@ bool FeOverlay::common_exit()
 		return true;
 	}
 
-	int retval = confirm_dialog( "Exit Attract-Mode?", "", FeInputMap::Exit );
+	std::string exit_msg;
+	m_feSettings.get_exit_question( exit_msg );
+
+	int retval = confirm_dialog( exit_msg, "", FeInputMap::Exit );
 
 	//
 	// retval is 0 if the user confirmed exit.

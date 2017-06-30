@@ -103,6 +103,7 @@ public:
 	{
 		Language=0,
 		ExitCommand,
+		ExitMessage,
 		DefaultFont,
 		FontPath,
 		ScreenSaverTimeout,
@@ -150,6 +151,8 @@ private:
 	std::string m_config_path;
 	std::string m_default_font;
 	std::string m_exit_command;
+	std::string m_exit_message;
+	std::string m_exit_question;
 	std::string m_language;
 	std::string m_current_search_str;
 
@@ -316,6 +319,8 @@ public:
 		void *launch_opaque ); // run current selection
 
 	int exit_command() const; // run configured exit command (if any)
+	void get_exit_message( std::string &exit_message ) const;
+	void get_exit_question( std::string &exit_question ) const;
 
 	void toggle_layout();
 	void set_current_layout_file( const std::string &layout_file );
