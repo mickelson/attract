@@ -102,6 +102,8 @@ bool correct_buff_for_format( char *&buff, int &size,
 std::string get_crc( const std::string &full_path,
 	const std::vector<std::string> &exts )
 {
+	const int MAX_CRC_FILE_SIZE = 10485760; // don't do CRC checks on files more than 10 meg
+
 	if ( is_supported_archive( full_path ) )
 	{
 		std::vector<std::string> contents;
@@ -125,10 +127,15 @@ std::string get_crc( const std::string &full_path,
 				char *buff = zs.getData();
 				int size = zs.getSize();
 
+				if ( size > MAX_CRC_FILE_SIZE )
+					return "";
+
 				correct_buff_for_format( buff, size, *itr );
 				return get_crc32( buff, size );
 			}
 		}
+
+		return "";
 	}
 
 	std::ifstream myfile( full_path.c_str(),
@@ -141,13 +148,23 @@ std::string get_crc( const std::string &full_path,
 	int size = myfile.tellg();
 	myfile.seekg(0, myfile.beg);
 
-	char buff[ size ];
-	char *buff_ptr = (char *)buff;
-	myfile.read( buff, size );
+	if ( size > MAX_CRC_FILE_SIZE )
+	{
+		myfile.close();
+		return "";
+	}
+
+	char *buff_ptr = new char[size];
+
+	myfile.read( buff_ptr, size );
 	myfile.close();
 
 	correct_buff_for_format( buff_ptr, size, full_path );
-	return get_crc32( buff_ptr, size );
+	std::string retval = get_crc32( buff_ptr, size );
+
+	delete [] buff_ptr;
+
+	return retval;
 }
 
 } // end namespace
@@ -382,6 +399,11 @@ void FeListXMLParser::start_element(
 				else if (( strcmp( attribute[i], "buttons" ) == 0 )
 						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
 					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
+
+				// Older MAME XML included control as an attribute of the input tag:
+				else if (( strcmp( attribute[i], "control" ) == 0 )
+						&& (*m_itr).get_info( FeRomInfo::Control ).empty() )
+					(*m_itr).set_info( FeRomInfo::Control, attribute[i+1] );
 			}
 		}
 		else if ( strcmp( element, "display" ) == 0 )
