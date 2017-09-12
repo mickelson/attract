@@ -2029,6 +2029,7 @@ void FeSettings::run( int &minimum_run_seconds,
 		exit_hotkey.clear();
 	}
 #endif
+	save_state();
 
 	sf::Clock play_timer;
 	run_program(
