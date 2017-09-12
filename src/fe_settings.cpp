@@ -677,6 +677,13 @@ void FeSettings::construct_display_maps()
 void FeSettings::save_state()
 {
 	int display_idx = m_current_display;
+
+	// If we have a display stack we save the entry at the bottom of the stack as the
+	// 'current' display
+	//
+	if ( !m_display_stack.empty() )
+		display_idx = m_display_stack.front();
+
 	if ( display_idx < 0 )
 		display_idx = m_current_search_index;
 
@@ -1291,14 +1298,35 @@ int FeSettings::display_menu_get_current_selection_as_absolute_display_index()
 	return m_display_menu[ m_current_search_index ];
 }
 
-// return true if layout needs to be reloaded as a result
-bool FeSettings::set_display( int index )
+bool FeSettings::set_display( int index, bool stack_previous )
 {
 	std::string old_path, old_file;
 	get_path( Layout, old_path, old_file );
 
-	if ( index < 0 )
-		m_current_search_index = find_idx_in_vec( m_current_display, m_display_menu );
+	if ( stack_previous )
+	{
+		if ( index == -1 )
+		{
+			if ( !m_display_stack.empty() )
+			{
+				index = m_display_stack.back();
+				m_display_stack.pop_back();
+			}
+			else
+				index = m_current_display;
+		}
+		else if (( m_current_display != index ) && ( m_current_display >= 0 ))
+			m_display_stack.push_back( m_current_display );
+
+	}
+	else
+	{
+		if ( index < 0 )
+			m_current_search_index = find_idx_in_vec( m_current_display, m_display_menu );
+
+		// If not stacking, clear the existing back stack (if any)
+		m_display_stack.clear();
+	}
 
 	m_current_display = index;
 
@@ -1310,6 +1338,7 @@ bool FeSettings::set_display( int index )
 
 	return (( old_path.compare( new_path ) != 0 )
 		|| ( old_file.compare( new_file ) != 0 ));
+
 }
 
 // return true if layout needs to be reloaded as a result

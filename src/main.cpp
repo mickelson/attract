@@ -236,11 +236,11 @@ int main(int argc, char *argv[])
 
 					if ( index < 0 )
 					{
-						std::cerr << "Error resolving shortcut, Display `" << name << "' not found.";
+						std::cerr << "Error resolving shortcut, Display `" << name << "' not found." << std::endl;
 					}
 					else
 					{
-						if ( feSettings.set_display( index ) )
+						if ( feSettings.set_display( index, true ) )
 							feVM.load_layout();
 						else
 							feVM.update_to_new_list( 0, true );
@@ -395,17 +395,37 @@ int main(int argc, char *argv[])
 				}
 
 				//
-				// If FE is configured to show displays menu on startup, then the "Back" UI
-				// button goes back to that menu accordingly...
+				// Handle special case Back UI button behaviour
 				//
-				if (( c == FeInputMap::Back )
-					&& ( feSettings.get_startup_mode() == FeSettings::ShowDisplaysMenu )
-					&& ( feSettings.get_present_state() == FeSettings::Layout_Showing )
-					&& ( feSettings.get_current_display_index() >= 0 ))
+				if ( c == FeInputMap::Back )
 				{
-					FeVM::cb_signal( "displays_menu" );
-					redraw=true;
-					continue;
+					//
+					// If a display shortcut was used previously, then the "Back" UI
+					// button goes back to the previous display accordingly...
+					//
+					if ( feSettings.back_displays_available() )
+					{
+						if ( feSettings.set_display( -1, true ) )
+							feVM.load_layout();
+						else
+							feVM.update_to_new_list( 0, true );
+
+						redraw=true;
+						continue;
+					}
+
+					//
+					// If FE is configured to show displays menu on startup, then the "Back" UI
+					// button goes back to that menu accordingly...
+					//
+					if (( feSettings.get_startup_mode() == FeSettings::ShowDisplaysMenu )
+						&& ( feSettings.get_present_state() == FeSettings::Layout_Showing )
+						&& ( feSettings.get_current_display_index() >= 0 ))
+					{
+						FeVM::cb_signal( "displays_menu" );
+						redraw=true;
+						continue;
+					}
 				}
 
 				c = feSettings.get_default_command( c );
@@ -531,6 +551,7 @@ int main(int argc, char *argv[])
 							//
 							feSettings.set_display(-1);
 							feVM.load_layout( true );
+
 							redraw=true;
 							break;
 						}
@@ -579,6 +600,7 @@ int main(int argc, char *argv[])
 								else
 									feVM.update_to_new_list( 0, true );
 							}
+
 							redraw=true;
 						}
 					}

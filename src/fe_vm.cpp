@@ -854,7 +854,8 @@ bool FeVM::on_new_layout()
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 	fe.Func<Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
-	fe.Func<void (*)(int)>(_SC("set_display"), &FeVM::cb_set_display);
+	fe.Overload<void (*)(int, bool)>(_SC("set_display"), &FeVM::cb_set_display);
+	fe.Overload<void (*)(int)>(_SC("set_display"), &FeVM::cb_set_display);
 
 	//
 	// Define variables that get exposed to Squirrel
@@ -2197,7 +2198,7 @@ void FeVM::cb_signal( const char *sig )
 	}
 }
 
-void FeVM::cb_set_display( int idx )
+void FeVM::cb_set_display( int idx, bool stack_previous )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
@@ -2208,8 +2209,13 @@ void FeVM::cb_set_display( int idx )
 	if ( idx < 0 )
 		idx = 0;
 
-	fes->set_display( idx );
+	fes->set_display( idx, stack_previous );
 	fev->m_posted_commands.push( FeInputMap::Reload );
+}
+
+void FeVM::cb_set_display( int idx )
+{
+	cb_set_display( idx, false );
 }
 
 void FeVM::init_with_default_layout()

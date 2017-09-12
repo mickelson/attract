@@ -835,6 +835,7 @@ Return Value:
 <a name="set_display" />
 #### `fe.set_display()` ####
 
+    fe.set_display( index, stack_previous )
     fe.set_display( index )
 
 Change to the display at the specified index.  This should align with the
@@ -847,6 +848,9 @@ Parameters:
    * index - The index of the display to change to.  This should correspond to
    the index in the fe.displays array of the intended new display.  The index for
    the current display is stored in `fe.list.display_index`.
+   * stack_previous - [boolean] if set to `true`, the new display is stacked on
+   the current one, so that when the user selects the "Back" UI button the frontend
+   will navigate back to the earlier display.  Default value is `false`.
 
 
 Return Value:
