@@ -937,10 +937,24 @@ bool FeOverlay::edit_game_dialog()
 	}
 	else
 	{
-		FeEditGameMenu m;
+		const std::string &emu_name = m_feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator );
 
-		if ( display_config_dialog( &m, settings_changed ) < 0 )
-			m_wnd.close();
+		if ( emu_name.compare( 0, 1, "@" ) == 0 )
+		{
+			// Show shortcut dialog if this is a shortcut...
+			//
+			FeEditShortcutMenu m;
+
+			if ( display_config_dialog( &m, settings_changed ) < 0 )
+				m_wnd.close();
+		}
+		else
+		{
+			FeEditGameMenu m;
+
+			if ( display_config_dialog( &m, settings_changed ) < 0 )
+				m_wnd.close();
+		}
 	}
 
 	// TODO: should only return true when setting_changed is true or when user deleted

@@ -369,7 +369,6 @@ _help_track_usage;Configura se Attract-Mode deve gestire le statistiche di utili
 _help_video_decoder;Configura il decoder da utilizzare per riprodurre i video (nel caso siano disponibili più decoder)
 _help_volume;I valori consentiti per il volume vanno da 0 (silenzio) a 100 (massimo)
 _help_window_mode;Configura se il frontend deve lavorare a tutto schermo o essere eseguito in una finestra
-_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI; if started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
 #
@@ -415,3 +414,12 @@ _help_scrape_mamedb;Stabilisce se utilizzare il sito mamedb.com per recuperare s
 #
 # Strings still needing translation
 #
+Artwork Name;Artwork Name
+Delete shortcut '$1'?;Delete shortcut '$1'?
+Delete this Shortcut;Delete this Shortcut
+Edit Shortcut;Edit Shortcut
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
+_help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
+_help_shortcut_delete;Delete this shortcut from the Romlist
+_help_shortcut_label_edit;Edit this shortcut's label
+_help_shortcut_target_edit;Edit this shortcut's target

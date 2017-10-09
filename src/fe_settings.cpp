@@ -580,7 +580,6 @@ void FeSettings::init_display()
 			FeRomInfo rom( p->get_info( FeDisplayInfo::Name ) );
 			rom.set_info( FeRomInfo::Title, p->get_info( FeDisplayInfo::Name ) );
 			rom.set_info( FeRomInfo::Emulator, "@" );
-			rom.set_info( FeRomInfo::AltRomname, p->get_info( FeDisplayInfo::Romlist ) );
 
 			l.push_back( rom );
 		}
@@ -3588,14 +3587,23 @@ bool FeSettings::get_best_artwork_file(
 	else
 		scrape_art = art_name;
 
+	const std::string &romname = rom.get_info( FeRomInfo::Romname );
 	std::string emu_name = rom.get_info( FeRomInfo::Emulator );
+
 	if ( emu_name.compare( 0, 1, "@" ) == 0 )
 	{
 		// If emu_name starts with "@", this is a display menu or signal option.
-		// Check for the emulator stored in altromname to try and get a sensible artwork
-		// in this circumstance
 		//
-		emu_name = rom.get_info( FeRomInfo::AltRomname );
+		// Check for the emulator associated with the display named in the romname
+		// field, to try and get a sensible artwork in this circumstance
+		//
+		int temp_d = get_display_index_from_name( romname );
+
+		if ( temp_d < 0 ) // if no match, fall back to the current display
+			temp_d = get_current_display_index();
+
+		if ( temp_d >= 0 )
+			emu_name = get_display( temp_d )->get_info( FeDisplayInfo::Romlist );
 
 		std::string add_path = get_config_dir() + FE_MENU_ART_SUBDIR + scrape_art + "/";
 		if ( directory_exists( add_path ) )
@@ -3637,7 +3645,6 @@ bool FeSettings::get_best_artwork_file(
 
 	if ( !art_paths.empty() )
 	{
-		const std::string &romname = rom.get_info( FeRomInfo::Romname );
 		const std::string &altname = rom.get_info( FeRomInfo::AltRomname );
 		const std::string &cloneof = rom.get_info( FeRomInfo::Cloneof );
 

@@ -479,5 +479,19 @@ public:
 	bool save( FeConfigContext &ctx );
 };
 
+class FeEditShortcutMenu : public FeBaseConfigMenu
+{
+private:
+	FeRomInfo m_rom_original;
+	bool m_update_rl;
+
+public:
+	void get_options( FeConfigContext &ctx );
+	bool on_option_select( FeConfigContext &ctx,
+		FeBaseConfigMenu *& submenu );
+
+	bool save( FeConfigContext &ctx );
+};
+
 
 #endif

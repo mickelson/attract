@@ -2463,3 +2463,129 @@ bool FeEditGameMenu::save( FeConfigContext &ctx )
 
 	return true;
 }
+
+void FeEditShortcutMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Edit Shortcut" );
+
+	/////////////////////////////////////////////////////////////////////
+	//
+	// Something is a shortcut if the romlist "Emulator" field starts with a "@" character
+	//
+	// Relevant fields:
+	//
+	// Title      = Shortcut description
+	// Emulator   = "@"               (Display shortcut)
+	//            = "@<signal_name>"  (Command shortcut)
+	// Romname    = shortcut target   (Display shortcut only)
+	// AltRomname = optional artwork label
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	int filter_idx = ctx.fe_settings.get_filter_index_from_offset( 0 );
+	int rom_idx = ctx.fe_settings.get_rom_index( filter_idx, 0 );
+
+	FeRomInfo *rom = ctx.fe_settings.get_rom_absolute( filter_idx, rom_idx );
+	if ( rom )
+		m_rom_original = *rom;
+
+	std::string command;
+	std::string temp = m_rom_original.get_info( FeRomInfo::Emulator );
+	if ( temp.size() > 1 )
+		command = temp.substr( 1 );
+
+	ctx.add_optl( Opt::EDIT, "Title",
+		m_rom_original.get_info( FeRomInfo::Title ),
+		"_help_shortcut_label_edit" );
+
+	std::vector<std::string> option_list;
+	if ( command.empty() )
+	{
+		ctx.add_optl( Opt::LIST, "Target",
+			m_rom_original.get_info( FeRomInfo::Romname ),
+			"_help_shortcut_target_edit" );
+
+		int display_count = ctx.fe_settings.displays_count();
+		for ( int i=0; i< display_count; i++ )
+			option_list.push_back( ctx.fe_settings.get_display( i )->get_info( FeDisplayInfo::Name ) );
+	}
+	else
+	{
+		ctx.add_optl( Opt::LIST, "Target",
+			command,
+			"_help_shortcut_target_edit" );
+
+		int i=0;
+		while ( FeInputMap::commandStrings[i] )
+		{
+			option_list.push_back( FeInputMap::commandStrings[i] );
+			i++;
+		}
+	}
+
+	ctx.back_opt().append_vlist( option_list );
+
+	ctx.add_optl( Opt::EDIT, "Artwork Name",
+		m_rom_original.get_info( FeRomInfo::AltRomname ),
+		"_help_shortcut_artwork_name_edit" );
+
+	ctx.add_optl( Opt::EXIT, "Delete this Shortcut", "", "_help_shortcut_delete" );
+	ctx.back_opt().opaque = 1;
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeEditShortcutMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+{
+	if ( ctx.curr_opt().opaque == 1 )
+	{
+		if ( ctx.confirm_dialog( "Delete shortcut '$1'?", ctx.opt_list[0].get_value() ) )
+		{
+			ctx.fe_settings.update_romlist_after_edit( m_rom_original, m_rom_original, true );
+			return true;
+		}
+		return false;
+	}
+
+	m_update_rl = true;
+	return true;
+}
+
+bool FeEditShortcutMenu::save( FeConfigContext &ctx )
+{
+	if ( m_update_rl )
+	{
+		FeRomInfo replacement = m_rom_original;
+
+		std::string command;
+		std::string temp = m_rom_original.get_info( FeRomInfo::Emulator );
+		if ( temp.size() > 1 )
+			command = temp.substr( 1 );
+
+		// Update working romlist with the info provided by the user
+		//
+		replacement.set_info( FeRomInfo::Title, ctx.opt_list[0].get_value() );
+		replacement.set_info( FeRomInfo::Romname, ctx.opt_list[1].get_value() );
+
+		if ( command.empty() )
+		{
+			// Display shortcut
+			replacement.set_info( FeRomInfo::Emulator, "@" );
+		}
+		else
+		{
+			// Command/signal shortcut - set emulator field to "@<command>"
+			std::string new_emu = "@";
+			new_emu += ctx.opt_list[1].get_value();
+			replacement.set_info( FeRomInfo::Emulator, new_emu );
+		}
+
+		replacement.set_info( FeRomInfo::AltRomname, ctx.opt_list[2].get_value() );
+
+		// Resave the romlist file that our romlist was loaded from
+		//
+		ctx.fe_settings.update_romlist_after_edit( m_rom_original, replacement );
+	}
+
+	return true;
+}

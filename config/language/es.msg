@@ -323,6 +323,7 @@ _help_autolaunch_last_game;Lanza automaticamente el útlito juego jugado en el i
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
+Artwork Name;Artwork Name
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
@@ -334,9 +335,12 @@ Custom Executable;Custom Executable
 Default;Default
 Default Action;Default Action
 Delete game '$1'?;Delete game '$1'?
+Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Game;Delete this Game
+Delete this Shortcut;Delete this Shortcut
 Display Name;Display Name
 Edit Game;Edit Game
+Edit Shortcut;Edit Shortcut
 Enable Multiple Monitors;Enable Multiple Monitors
 Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
@@ -392,9 +396,13 @@ _help_game_edit;Edit this game information
 _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_input_default_action;Set the default behaviour for this control
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
+_help_shortcut_delete;Delete this shortcut from the Romlist
+_help_shortcut_label_edit;Edit this shortcut's label
+_help_shortcut_target_edit;Edit this shortcut's target
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)
-_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI; if started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
