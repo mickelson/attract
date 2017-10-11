@@ -25,6 +25,7 @@ Artwork Label;Artwork Label
 Artwork Name;Artwork Name
 Artwork Path;Artwork Path
 Back;Back
+Blank Game;Blank Game
 Buttons;Buttons
 Category;Category
 CloneOf;CloneOf
@@ -99,6 +100,7 @@ Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
 Executable;Executable
+Exit;Exit
 Exit Attract-Mode;Exit Attract-Mode
 Exit Attract-Mode?;Exit Attract-Mode?
 Exit Command;Exit Command
@@ -124,6 +126,10 @@ Generating Rom List: $1%;Generating Rom List: $1%
 Global Filter;Global Filter
 Hide Brackets in Game Title;Hide Brackets in Game Title
 Info Source/Scraper;Info Source/Scraper
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
 Joystick Threshold;Joystick Threshold
 Jump to Next Display;Jump to Next Display

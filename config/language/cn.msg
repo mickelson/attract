@@ -82,6 +82,7 @@ Enter Filter Name;进入排序名称
 Exception;其他 Exception
 Exception Edit;其他编辑 Exception Edit
 Executable;执行
+Exit;退出 (Yes/No)
 Exit Attract-Mode;退出ATTRACT-MODE
 Exit Attract-Mode?;退出ATTRACT-MODE吗?
 Exit Command;退出指令
@@ -224,7 +225,6 @@ Configure available emulators;可用模拟器
 Configure filter rule;设置分类规则
 Delete this filter;删除分类
 Down(Next Game);↓（下一游戏）
-Exit;退出 (Yes/No)
 Exit menu;退出菜单
 Image Collage;拼图式静态画面
 Launch Last Game on Startup;启动时载入最后一次运行的游戏
@@ -254,6 +254,7 @@ kr;한글 (Korean)
 #
 Add tag: '$1';Add tag: '$1'
 Artwork Name;Artwork Name
+Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Layout;Configure Layout
@@ -270,6 +271,10 @@ Edit Game;Edit Game
 Edit Shortcut;Edit Shortcut
 Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Overview;Overview
 Remove tag: '$1';Remove tag: '$1'
 Window (No Border);Window (No Border)

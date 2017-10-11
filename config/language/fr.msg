@@ -73,6 +73,7 @@ Enter Display Name;Entrer le nom de la liste
 Enter Emulator Name;Nom de l'émulateur?
 Enter Filter Name;Entrer le nom du filtre
 Executable;Exécutable
+Exit;Sortie (Confirmer)
 Exit Attract-Mode;Quitter Attract-Mode
 Exit Attract-Mode?;Quitter Attract-Mode?
 Exit Command;Commande de sortie
@@ -302,7 +303,6 @@ Ambient Sounds;Son d'ambiance
 Configure available emulators;Configurer les émulateurs disponibles
 Configure filter rule;Configuration de la règle de filtrage
 Delete this filter;Supprimer ce filtre
-Exit;Sortie (Confirmer)
 Exit menu;Quitter le menu
 Generate Collection/Romlist;Générer la liste de ROM
 Launch Last Game on Startup;Lancer le dernier jeu au démarrage
@@ -328,6 +328,7 @@ Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
 Artwork Name;Artwork Name
+Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
@@ -352,6 +353,10 @@ Exception;Exception
 Exception Edit;Exception Edit
 Extra;Extra
 FileIsAvailable;FileIsAvailable
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
 Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt

@@ -203,6 +203,18 @@ bool FeRomInfo::operator==( const FeRomInfo &o ) const
 				&& ( m_info[Emulator].compare( o.m_info[Emulator] ) == 0 ));
 }
 
+bool FeRomInfo::full_comparison( const FeRomInfo &o ) const
+{
+	// everything from Favourite on is not loaded from the romlist
+	for ( int i=0; i<Favourite; i++ )
+	{
+		if ( m_info[i].compare( o.m_info[i] ) != 0 )
+			return false;
+	}
+
+	return true;
+}
+
 const char *FeRule::filterCompStrings[] =
 {
 	"equals",

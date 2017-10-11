@@ -472,6 +472,8 @@ private:
 	bool m_update_extras;
 
 public:
+	FeEditGameMenu();
+
 	void get_options( FeConfigContext &ctx );
 	bool on_option_select( FeConfigContext &ctx,
 		FeBaseConfigMenu *& submenu );
@@ -486,6 +488,8 @@ private:
 	bool m_update_rl;
 
 public:
+	FeEditShortcutMenu();
+
 	void get_options( FeConfigContext &ctx );
 	bool on_option_select( FeConfigContext &ctx,
 		FeBaseConfigMenu *& submenu );

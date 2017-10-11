@@ -27,6 +27,7 @@
 #include <map>
 #include <vector>
 
+extern const char *FE_STAT_FILE_EXTENSION;
 extern const char FE_TAGS_SEP;
 struct SQRex;
 
@@ -91,7 +92,8 @@ public:
 	// convenience method to copy info attribute at idx from src
 	void copy_info( const FeRomInfo &src, Index idx );
 
-	bool operator==( const FeRomInfo & ) const;
+	bool operator==( const FeRomInfo & ) const;      // compares romname and emulator only
+	bool full_comparison( const FeRomInfo & ) const; // copares all fields that get loaded from the romlist file
 
 private:
 	std::string get_info_escaped( int ) const;

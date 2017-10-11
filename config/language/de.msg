@@ -74,6 +74,7 @@ Enter Display Name;Bezeichnung des Bildschrim eingeben
 Enter Emulator Name;Name des Emulators eingeben
 Enter Filter Name;Bezeichnung des Filters eingeben
 Executable;Ausführbare Datei
+Exit;Beenden (Bestätigen)
 Exit Attract-Mode;Attract-Mode beenden
 Exit Attract-Mode?;Attract-Mode beenden?
 Exit Command;Kommando zum Beenden
@@ -302,7 +303,6 @@ Basic Movie;Basis Video
 Configure available emulators;Verfügbare Emulatoren konfigurieren
 Configure filter rule;Filterregel konfigurieren
 Delete this filter;Diesen Filter löschen
-Exit;Beenden (Bestätigen)
 Image collage;Bilder Collage
 Launch Last Game on Startup;Letztes Spiel beim Starten ausführen
 Movie collage;Video Collage
@@ -323,6 +323,7 @@ Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
 Artwork Name;Artwork Name
+Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
@@ -347,6 +348,10 @@ Exception;Exception
 Exception Edit;Exception Edit
 Extra;Extra
 FileIsAvailable;FileIsAvailable
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
 Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt

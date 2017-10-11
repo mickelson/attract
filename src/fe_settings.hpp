@@ -465,10 +465,11 @@ public:
 	// Save an updated rom in the current romlist file (used with "Edit Game" command)
 	// original is assumed to be the currently selected rom
 	//
+	enum UpdateType { UpdateEntry, EraseEntry, InsertEntry };
 	void update_romlist_after_edit(
 		const FeRomInfo &original,		// original rom values
 		const FeRomInfo &replacement,		// new rom values
-		bool erase=false );			// if true, erase original instead
+		UpdateType erase=UpdateEntry );
 
 	void update_stats( int count_incr, int time_incr );
 

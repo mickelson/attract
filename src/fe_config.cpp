@@ -2285,6 +2285,13 @@ bool FeConfigMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
+FeEditGameMenu::FeEditGameMenu()
+	: m_update_rl( false ),
+	m_update_stats( false ),
+	m_update_extras( false )
+{
+}
+
 void FeEditGameMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Edit Game" );
@@ -2414,7 +2421,9 @@ bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *&
 	case 100: // Delete Game
 		if ( ctx.confirm_dialog( "Delete game '$1'?", ctx.opt_list[1].get_value() ) )
 		{
-			ctx.fe_settings.update_romlist_after_edit( m_rom_original, m_rom_original, true );
+			ctx.fe_settings.update_romlist_after_edit( m_rom_original,
+				m_rom_original,
+				FeSettings::EraseEntry );
 			return true;
 		}
 		return false;
@@ -2464,6 +2473,11 @@ bool FeEditGameMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
+FeEditShortcutMenu::FeEditShortcutMenu()
+	: m_update_rl( false )
+{
+}
+
 void FeEditShortcutMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Edit Shortcut" );
@@ -2511,16 +2525,21 @@ void FeEditShortcutMenu::get_options( FeConfigContext &ctx )
 	}
 	else
 	{
-		ctx.add_optl( Opt::LIST, "Target",
-			command,
-			"_help_shortcut_target_edit" );
-
+		std::string val = command;
 		int i=0;
-		while ( FeInputMap::commandStrings[i] )
+		while ( FeInputMap::commandDispStrings[i] )
 		{
-			option_list.push_back( FeInputMap::commandStrings[i] );
+
+			if ( command.compare( FeInputMap::commandStrings[i] ) == 0 )
+				val = FeInputMap::commandDispStrings[i];
+
+			option_list.push_back( FeInputMap::commandDispStrings[i] );
 			i++;
 		}
+
+		ctx.add_optl( Opt::LIST, "Target",
+			val,
+			"_help_shortcut_target_edit" );
 	}
 
 	ctx.back_opt().append_vlist( option_list );
@@ -2541,7 +2560,11 @@ bool FeEditShortcutMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMen
 	{
 		if ( ctx.confirm_dialog( "Delete shortcut '$1'?", ctx.opt_list[0].get_value() ) )
 		{
-			ctx.fe_settings.update_romlist_after_edit( m_rom_original, m_rom_original, true );
+			ctx.fe_settings.update_romlist_after_edit( m_rom_original,
+				m_rom_original,
+				FeSettings::EraseEntry );
+
+			m_update_rl = false;
 			return true;
 		}
 		return false;
@@ -2565,18 +2588,23 @@ bool FeEditShortcutMenu::save( FeConfigContext &ctx )
 		// Update working romlist with the info provided by the user
 		//
 		replacement.set_info( FeRomInfo::Title, ctx.opt_list[0].get_value() );
-		replacement.set_info( FeRomInfo::Romname, ctx.opt_list[1].get_value() );
 
 		if ( command.empty() )
 		{
 			// Display shortcut
+			replacement.set_info( FeRomInfo::Romname, ctx.opt_list[1].get_value() );
 			replacement.set_info( FeRomInfo::Emulator, "@" );
 		}
 		else
 		{
+			std::string new_command = FeInputMap::commandStrings[ ctx.opt_list[1].get_vindex() ];
+
+			replacement.set_info( FeRomInfo::Romname, new_command );
+
 			// Command/signal shortcut - set emulator field to "@<command>"
 			std::string new_emu = "@";
-			new_emu += ctx.opt_list[1].get_value();
+			new_emu += new_command;
+
 			replacement.set_info( FeRomInfo::Emulator, new_emu );
 		}
 

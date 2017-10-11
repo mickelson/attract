@@ -97,6 +97,7 @@ Enter new tag name;Inserisci il nome dell'etichetta
 Exception;Eccezione
 Exception Edit;Modifica l'eccezione
 Executable;Eseguibile
+Exit;Uscita (Conferma)
 Exit Attract-Mode;Esci da Attract-Mode
 Exit Attract-Mode?;Uscire da Attract-Mode?
 Exit Command;Comando per uscire
@@ -386,7 +387,6 @@ Custom 2;Personalizzato 2
 Delete this filter;Cancella questo filtro
 Down (Next Game); Giù (Gioco successivo)
 Edit Control;Modifica controllo
-Exit;Uscita (Conferma)
 Image collage;Collezione di immagini
 Launch Last Game on Startup;Esegui l'ultimo gioco alla partenza
 Left (Previous Display); Sinistra (Tema precedente)
@@ -415,9 +415,14 @@ _help_scrape_mamedb;Stabilisce se utilizzare il sito mamedb.com per recuperare s
 # Strings still needing translation
 #
 Artwork Name;Artwork Name
+Blank Game;Blank Game
 Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Shortcut;Delete this Shortcut
 Edit Shortcut;Edit Shortcut
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 _help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
 _help_shortcut_delete;Delete this shortcut from the Romlist

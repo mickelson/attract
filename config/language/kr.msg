@@ -73,6 +73,7 @@ Enter Display Name;새 목록의 이름을 입력하여 주십시오
 Enter Emulator Name;에뮬레이터의 이름을 입력해주십시오
 Enter Filter Name;필터 이름을 입력하여 주십시오
 Executable;실행 파일
+Exit;종료 (Yes/No 확인)
 Exit Attract-Mode;프로그램 종료
 Exit Attract-Mode?;종료하시겠습니까?
 Exit Command;종료 명령어
@@ -293,7 +294,6 @@ Ambient Sounds;배경 음악 파일
 Configure available emulators;기존 에뮬레이터 편집
 Configure filter rule;필터 내용 수정
 Delete this filter;본 필터 삭제
-Exit;종료 (Yes/No 확인)
 Exit menu;나가기
 Launch Last Game on Startup;기동시 직전 게임 자동 재시작
 Page Down;페이지 아래로
@@ -318,6 +318,7 @@ Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
 Artwork Name;Artwork Name
+Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
@@ -340,6 +341,10 @@ Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
 Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt

@@ -147,6 +147,7 @@ public:
 		PrevLetter,
 		NextLetter,
 		Intro,
+		InsertGame,
 		EditGame,
 		Custom1,
 		Custom2,

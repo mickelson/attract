@@ -3767,34 +3767,39 @@ bool FeSettings::get_best_dynamic_image_file(
 void FeSettings::update_romlist_after_edit(
 	const FeRomInfo &original,
 	const FeRomInfo &replacement,
-	bool erase_it )
+	UpdateType u_type )
 {
 	if ( m_current_display < 0 )
 		return;
 
 	//
-	// Update the in memory romlist now
+	// Update the in-memory romlist now
 	//
 	FeRomInfoListType &rl = m_rl.get_list();
 
 	for ( FeRomInfoListType::iterator it = rl.begin(); it != rl.end(); )
 	{
-		if ( (*it) == original )
+		if ( (*it).full_comparison( original ) )
 		{
-			if ( erase_it )
+			if ( u_type == EraseEntry )
 				it = rl.erase( it );
-			else
+			else if ( u_type == InsertEntry )
+				it = rl.insert( it, replacement );
+			else // UpdateEntry
 			{
 				(*it) = replacement;
 				++it;
 			}
+
+			break;
 		}
 		else
 			++it;
 	}
 
 	// RomInfo operator== compares romname and emulator
-	if (!( original == replacement ))
+	if ( ( u_type == EraseEntry )
+			|| (( u_type == UpdateEntry ) && !( original == replacement )) )
 		m_rl.mark_favs_and_tags_changed();
 
 	m_rl.create_filters( m_displays[m_current_display] );
@@ -3831,6 +3836,11 @@ void FeSettings::update_romlist_after_edit(
 
 	bool found=false;
 
+	//
+	// Track whether another rom with the same romname and emulator exists in the romlist.
+	//
+	bool found_similar=false;
+
 	std::ifstream infile( in_path.c_str() );
 	if ( !infile.is_open() )
 		return;
@@ -3845,18 +3855,25 @@ void FeSettings::update_romlist_after_edit(
 			FeRomInfo next_rom( setting );
 			next_rom.process_setting( setting, value, "" );
 
-			// It is possible to have multiple entries that match the original.
-			// For now we just blindly update them all.
-			//
-			if ( next_rom == original )
+			if ( !found && ( next_rom.full_comparison( original ) ) )
 			{
-				if ( !erase_it )
+				if ( u_type == UpdateEntry )
 					temp_list.push_back( replacement );
+				else if ( u_type == InsertEntry )
+				{
+					temp_list.push_back( replacement );
+					temp_list.push_back( next_rom );
+				}
 
 				found=true;
 			}
 			else
+			{
+				if ( !found_similar && ( next_rom == original ) )
+					found_similar = true;
+
 				temp_list.push_back( next_rom );
+			}
 		}
 	}
 
@@ -3865,7 +3882,7 @@ void FeSettings::update_romlist_after_edit(
 	// If we didn't find the original, add this as a new rom at the end
 	// This way if the user edits on an empty list, they can create a first entry
 	//
-	if ( !found )
+	if ((( u_type == UpdateEntry ) || ( u_type == InsertEntry )) &&  !found )
 		temp_list.push_back( replacement );
 
 	//
@@ -3889,5 +3906,20 @@ void FeSettings::update_romlist_after_edit(
                         outfile << (*itl).as_output() << std::endl;
 
                 outfile.close();
+	}
+
+	// Clean up stats if the last entry for a game is deleted
+	//
+	if (( u_type == EraseEntry ) && !found_similar )
+	{
+		// stats
+		std::string path = m_config_path + FE_STATS_SUBDIR;
+		confirm_directory( path, romlist_name );
+
+		path += romlist_name + "/";
+		path += original.get_info( FeRomInfo::Romname );
+		path += FE_STAT_FILE_EXTENSION;
+
+		delete_file( path );
 	}
 }

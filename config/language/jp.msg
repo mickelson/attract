@@ -73,6 +73,7 @@ Enter Display Name;新しいディスプレイの名前を入力して下さい
 Enter Emulator Name;エミュレータの名前を入力して下さい
 Enter Filter Name;フィルターの名前を入れて下さい
 Executable;実行ファイル
+Exit;終了 (Yes/No 確認)
 Exit Attract-Mode;プログラムを終了
 Exit Attract-Mode?;終了しますか?
 Exit Command;終了コマンド
@@ -293,7 +294,6 @@ Ambient Sounds;BGMファイル
 Configure available emulators;エミュレータの設定
 Configure filter rule;フィルターのルールー編集
 Delete this filter;このフィルターを削除
-Exit;終了 (Yes/No 確認)
 Exit menu;出る
 Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
 Page Down;1画面下
@@ -318,6 +318,7 @@ Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
 Artwork Name;Artwork Name
+Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
 Configure Intro;Configure Intro
@@ -340,6 +341,10 @@ Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
 Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt

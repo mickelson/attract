@@ -533,6 +533,90 @@ int main(int argc, char *argv[])
 					config_mode = true;
 					break;
 
+				case FeInputMap::InsertGame:
+					{
+						std::vector< std::string > options;
+						std::string temp;
+
+						// 0
+						feSettings.get_resource(  "Insert Game Entry", temp );
+						options.push_back( temp );
+
+						// 1
+						feSettings.get_resource(  "Insert Display Shortcut", temp );
+						options.push_back( temp );
+
+						// 2
+						feSettings.get_resource(  "Insert Command Shortcut", temp );
+						options.push_back( temp );
+
+						feSettings.get_resource(  "Insert Menu Entry", temp );
+
+						int sel = feOverlay.common_list_dialog(
+							temp, options, 0, 0 );
+
+						std::string emu_name;
+						std::string def_name;
+
+						switch ( sel )
+						{
+						case 0:
+							{
+								std::vector<std::string> tl;
+								feSettings.get_list_of_emulators( tl );
+								if ( !tl.empty() )
+									emu_name = tl[0];
+
+								feSettings.get_resource( "Blank Game", def_name );
+							}
+							break;
+
+						case 1:
+							{
+								emu_name = "@";
+								feSettings.get_resource( "Display Shortcut", def_name );
+
+								if ( feSettings.displays_count() > 0 )
+									def_name = feSettings.get_display( 0 )
+										->get_info( FeDisplayInfo::Name );
+							}
+							break;
+
+						case 2:
+							emu_name = "@exit";
+							feSettings.get_resource( "Exit", def_name );
+							break;
+
+						default:
+							break;
+						};
+
+						FeRomInfo new_entry( def_name );
+						new_entry.set_info( FeRomInfo::Title, def_name );
+						new_entry.set_info( FeRomInfo::Emulator, emu_name );
+
+						int f_idx = feSettings.get_current_filter_index();
+
+						FeRomInfo *r = feSettings.get_rom_absolute(
+							f_idx, feSettings.get_rom_index( f_idx, 0 ) );
+
+						if ( r )
+						{
+							feSettings.update_romlist_after_edit( *r,
+								new_entry,
+								FeSettings::InsertEntry );
+
+							// initial update shows new entry behind config
+							// dialog
+							feVM.update_to_new_list();
+
+							if ( feOverlay.edit_game_dialog() )
+								feVM.update_to_new_list();
+						}
+						redraw=true;
+					}
+					break;
+
 				case FeInputMap::EditGame:
 					if ( feOverlay.edit_game_dialog() )
 						feVM.update_to_new_list();
