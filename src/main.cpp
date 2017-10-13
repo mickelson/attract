@@ -185,6 +185,8 @@ int main(int argc, char *argv[])
 				feSettings.set_display(
 					feSettings.get_current_display_index() );
 
+				feSettings.on_joystick_connect(); // update joystick mappings
+
 				soundsys.stop();
 				soundsys.update_volumes();
 				soundsys.play_ambient();
@@ -326,6 +328,11 @@ int main(int argc, char *argv[])
 						guard_joyid = ev.joystickMove.joystickId;
 						guard_axis = ev.joystickMove.axis;
 					}
+					break;
+
+				case sf::Event::JoystickConnected:
+				case sf::Event::JoystickDisconnected:
+					feSettings.on_joystick_connect();
 					break;
 
 				case sf::Event::Count:

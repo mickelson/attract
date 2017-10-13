@@ -427,9 +427,10 @@ bool FeEmulatorEditMenu::on_option_select(
 
 	case 100: // Hotkey input
 		{
-			std::string res;
+			FeInputMapEntry ent;
 			FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
-			ctx.input_map_dialog( "Press Exit Hotkey", res, conflict );
+			ctx.input_map_dialog( "Press Exit Hotkey", ent, conflict );
+			std::string res = ent.as_string();
 
 			bool save=false;
 			if ( o.get_value().compare( res ) != 0 )
@@ -1414,9 +1415,10 @@ bool FeInputEditMenu::on_option_select(
 
 	case 1:
 		{
-			std::string res;
+			FeInputMapEntry ent;
 			FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
-			ctx.input_map_dialog( "Press Input", res, conflict );
+			ctx.input_map_dialog( "Press Input", ent, conflict );
+			std::string res = ent.as_string();
 
 			if ( res.empty() )
 				return true;
@@ -1434,6 +1436,34 @@ bool FeInputEditMenu::on_option_select(
 
 			if ( save )
 			{
+				for ( std::vector<FeInputSingle>::iterator itr = ent.inputs.begin();
+					itr != ent.inputs.end(); ++itr )
+				{
+					if ( (*itr).get_type() >= FeInputSingle::Joystick0 )
+					{
+						int id = (*itr).get_type() - FeInputSingle::Joystick0;
+						std::string name = (*itr).get_joy_name();
+
+						std::vector < std::pair < int, std::string > >::iterator itj;
+						std::vector < std::pair < int, std::string > > &jc
+							= ctx.fe_settings.get_joy_config();
+
+						int joystick_is_mapped = name.empty();
+						for ( itj = jc.begin(); itj != jc.end(); ++itj )
+						{
+							if ( (*itj).first == id )
+							{
+								joystick_is_mapped = true;
+								break;
+							}
+						}
+
+						// add a mapping to the appropriate joystick name if not mapped already
+						if ( !joystick_is_mapped )
+							jc.push_back( std::pair< int, std::string >( id, name ) );
+					}
+				}
+
 				m_mapping->input_list.push_back( res );
 				ctx.save_req = true;
 			}
@@ -1475,6 +1505,85 @@ bool FeInputEditMenu::save( FeConfigContext &ctx )
 void FeInputEditMenu::set_mapping( FeMapping *mapping )
 {
 	m_mapping = mapping;
+}
+
+void FeInputJoysticksMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Configure / Joystick Mapping" );
+
+
+	std::vector < std::string > values;
+	std::set < std::string > values_set;
+
+	std::string default_str;
+	ctx.fe_settings.get_resource( "Default", default_str );
+	values.push_back( default_str ); // we assume this is the first entry in the vector
+
+	//
+	// sf::Joystick::getIdentification() only available if SFML version is >= 2.2
+	//
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+	for ( size_t i=0; i < sf::Joystick::Count; i++ )
+	{
+		if ( sf::Joystick::isConnected( i ) )
+		{
+			std::string temp = sf::Joystick::getIdentification( i ).name.toAnsiString();
+
+			if ( values_set.find( temp ) == values_set.end() )
+			{
+				values_set.insert( temp );
+				values.push_back( temp );
+			}
+		}
+	}
+#endif
+
+	std::vector < std::pair < int, std::string > >::iterator itr;
+	std::vector < std::pair < int, std::string > > &joy_config = ctx.fe_settings.get_joy_config();
+
+	for ( itr=joy_config.begin(); itr!=joy_config.end(); ++itr )
+	{
+		if ( values_set.find( (*itr).second ) == values_set.end() )
+		{
+			values_set.insert( (*itr).second );
+			values.push_back( (*itr).second );
+		}
+	}
+
+	for ( int i=0; i < sf::Joystick::Count; i++ )
+	{
+		std::string name;
+		std::string value = default_str;
+		ctx.fe_settings.get_resource( "Joystick $1", as_str( (int)i ), name );
+
+		for ( itr=joy_config.begin(); itr!=joy_config.end(); ++itr )
+		{
+			if ( (*itr).first == i )
+				value = (*itr).second;
+		}
+
+		ctx.add_optl( Opt::LIST, name, value, "_help_joystick_map" );
+		ctx.back_opt().append_vlist( values );
+	}
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeInputJoysticksMenu::save( FeConfigContext &ctx )
+{
+	std::vector < std::pair < int, std::string > > &joy_config = ctx.fe_settings.get_joy_config();
+
+	joy_config.clear();
+
+	for ( size_t i=0; i < sf::Joystick::Count; i++ )
+	{
+		if ( ctx.opt_list[ i].get_vindex() != 0 ) // we don't record anything if "Default" is selected for a slot
+			joy_config.push_back( std::pair < int, std::string >( i, ctx.opt_list[i].get_value() ) );
+	}
+
+	ctx.save_req = true; // because FeInputSelMenu saves before calling us, we need to flag that a save is now
+				// required again
+	return true;
 }
 
 void FeInputSelMenu::get_options( FeConfigContext &ctx )
@@ -1543,6 +1652,9 @@ void FeInputSelMenu::get_options( FeConfigContext &ctx )
 	ctx.back_opt().append_vlist( thresh );
 	ctx.back_opt().opaque = 1;
 
+	ctx.add_optl( Opt::SUBMENU, "Joystick Mappings", "", "_help_joystick_map" );
+	ctx.back_opt().opaque = 2;
+
 	FeBaseConfigMenu::get_options( ctx );
 }
 
@@ -1550,11 +1662,11 @@ bool FeInputSelMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.set_info(
 			FeSettings::JoystickThreshold,
-			ctx.opt_list[ ctx.opt_list.size() - 3 ].get_value() );
+			ctx.opt_list[ ctx.opt_list.size() - 4 ].get_value() );
 
 	ctx.fe_settings.set_info(
 			FeSettings::MouseThreshold,
-			ctx.opt_list[ ctx.opt_list.size() - 2 ].get_value() );
+			ctx.opt_list[ ctx.opt_list.size() - 3 ].get_value() );
 
 	return true;
 }
@@ -1576,6 +1688,18 @@ bool FeInputSelMenu::on_option_select(
 
 		m_edit_menu.set_mapping( &(m_mappings[ ctx.curr_sel ]) );
 		submenu = &m_edit_menu;
+	}
+	else if ( o.opaque == 2 )
+	{
+		// save now if needed so that the updated mouse and joystick
+		// threshold values are used for any further mapping
+		if ( ctx.save_req )
+		{
+			save( ctx );
+			ctx.save_req = false;
+		}
+
+		submenu = &m_joysticks_menu;
 	}
 
 	return true;
@@ -1947,9 +2071,10 @@ bool FeScriptConfigMenu::on_option_select(
 
 	if ( o.opaque == 1 )
 	{
-		std::string res;
 		FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
-		ctx.input_map_dialog( "Press Input", res, conflict );
+		FeInputMapEntry ent;
+		ctx.input_map_dialog( "Press Input", ent, conflict );
+		std::string res = ent.as_string();
 
 		if (( conflict == FeInputMap::Exit )
 			|| ( conflict == FeInputMap::ExitToDesktop ))

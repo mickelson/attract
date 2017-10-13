@@ -86,6 +86,8 @@ public:
 	// Works for joystick axes
 	int get_current_pos() const;
 
+	std::string get_joy_name() const; // return the system name for this joystick
+
 	bool operator==(const FeInputSingle &) const;
 	bool operator!=(const FeInputSingle &) const;
 
@@ -191,6 +193,10 @@ public:
 	//
 	void initialize_mappings();
 
+	// fix mappings when joystick connected/disconnected
+	void on_joystick_connect();
+	std::vector < std::pair < int, std::string > > &get_joy_config() { return m_joy_config; };
+
 	void get_mappings( std::vector< FeMapping > &mappings ) const;
 	void set_mapping( const FeMapping &mapping );
 
@@ -233,6 +239,9 @@ private:
 
 	// Used to track the keys that are currently "down" and of interest
 	mutable std::set< FeInputSingle > m_tracked_keys;
+
+	// Config for mapping joysticks by name to specific id #s
+	std::vector< std::pair< int, std::string > > m_joy_config;
 
 	int m_mmove_count; // counter of whether mouse moves are mapped
 };

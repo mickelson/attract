@@ -32,6 +32,102 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/System/Vector2.hpp>
 
+namespace
+{
+	static std::vector< int > g_joyfemap( sf::Joystick::Count, 0 );
+
+	int joymap2feid( int raw_id )
+	{
+		return g_joyfemap[ raw_id ];
+	}
+
+	int joymap2raw( int config_id )
+	{
+		for ( size_t i=0; i<sf::Joystick::Count; i++ )
+		{
+			if ( g_joyfemap[i] == config_id )
+				return i;
+		}
+
+		return 0;
+	}
+
+	void joy_raw_map_init( const std::vector < std::pair < int, std::string > > &joy_config )
+	{
+//
+// sf::Joystick::getIdentification() only available if SFML version is >= 2.2
+//
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+
+		size_t i=0;
+		std::vector < std::pair < int, std::string > >::iterator itr;
+		std::vector < std::pair < int, std::string  > > wl = joy_config;
+		bool mapped[ sf::Joystick::Count ];
+
+		// clear map structure
+		for ( i=0; i< sf::Joystick::Count; i++ )
+		{
+			g_joyfemap[i] = sf::Joystick::Count-1;
+			mapped[i] = false;
+		}
+
+		// initialize structure telling us whether a slot is already mapped by the user
+		for ( itr = wl.begin(); itr != wl.end(); ++itr )
+			mapped[ (*itr).first ] = true;
+
+		sf::Joystick::update();
+
+		// update the map structure using supplied joy_config
+		//
+		for ( i=0; i< sf::Joystick::Count; i++ )
+		{
+			if ( sf::Joystick::isConnected( i ) )
+			{
+				std::string name = sf::Joystick::getIdentification( i ).name.toAnsiString();
+
+				for ( itr = wl.begin(); itr != wl.end(); ++itr )
+				{
+					if ( name.compare( (*itr).second ) == 0 )
+					{
+						g_joyfemap[i] = (*itr).first;
+						wl.erase( itr );
+						break;
+					}
+				}
+			}
+		}
+
+		// Put any remaining unmapped joysticks in the lowest available "Default" slot
+		for ( i=0; i< sf::Joystick::Count; i++ )
+		{
+			if (( g_joyfemap[i] == sf::Joystick::Count-1 ) && ( sf::Joystick::isConnected( i ) ))
+			{
+				for ( size_t j=0; j< sf::Joystick::Count; j++ )
+				{
+					if ( !mapped[j] )
+					{
+						g_joyfemap[i] = j;
+						mapped[j] = true;
+						break;
+					}
+				}
+			}
+		}
+#else // sfml < 2.2
+		for ( size_t i=0; i< sf::Joystick::Count; i++ )
+			g_joy_femap[i] = i;
+#endif
+
+#ifdef FE_DEBUG
+		std::cout << "Joysticks after mapping: " << std::endl;
+		for ( i=0; i<sf::Joystick::Count; i++ )
+			std::cout << "ID: " << i << " => Joy" << g_joyfemap[i] << "("
+				<< sf::Joystick::getIdentification(i).name.toAnsiString()
+				<< ")" << std::endl;
+#endif
+	}
+};
+
 // Needs to stay aligned with sf::Keyboard
 //
 const char *FeInputSingle::keyStrings[] =
@@ -205,7 +301,7 @@ FeInputSingle::FeInputSingle( const sf::Event &e, const sf::IntRect &mc_rect, co
 			break;
 
 		case sf::Event::JoystickButtonPressed:
-			m_type = (Type)(Joystick0 + e.joystickButton.joystickId);
+			m_type = (Type)(Joystick0 + joymap2feid( e.joystickButton.joystickId ));
 			m_code = JoyButton0 + e.joystickButton.button;
 			break;
 
@@ -266,7 +362,7 @@ FeInputSingle::FeInputSingle( const sf::Event &e, const sf::IntRect &mc_rect, co
 						return;
 				}
 
-				m_type = (Type)(Joystick0 + e.joystickMove.joystickId);
+				m_type = (Type)(Joystick0 + joymap2feid( e.joystickMove.joystickId ) );
 			}
 			break;
 
@@ -458,7 +554,7 @@ bool FeInputSingle::get_current_state( int joy_thresh ) const
 	{
 		sf::Joystick::update();
 
-		int id = m_type - Joystick0;
+		int id = joymap2raw( m_type - Joystick0 );
 
 		if ( m_code < JoyButton0 )
 		{
@@ -503,7 +599,7 @@ int FeInputSingle::get_current_pos() const
 		sf::Joystick::update();
 
 		int temp = 0;
-		int id = m_type - Joystick0;
+		int id = joymap2raw( m_type - Joystick0 );
 
 		switch ( m_code )
 		{
@@ -530,6 +626,20 @@ int FeInputSingle::get_current_pos() const
 	}
 
 	return 0;
+}
+
+std::string FeInputSingle::get_joy_name() const
+{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+	if ( m_type >= Joystick0 )
+	{
+		int raw_id = joymap2raw( m_type - Joystick0 );
+
+		if ( sf::Joystick::isConnected( raw_id ) )
+			return sf::Joystick::getIdentification( raw_id ).name.toAnsiString();
+	}
+#endif
+	return "";
 }
 
 bool FeInputSingle::operator==( const FeInputSingle &o ) const
@@ -862,6 +972,13 @@ void FeInputMap::initialize_mappings()
 
 	for ( itm = m_single_map.begin(); itm != m_single_map.end(); ++itm )
 		std::sort( (*itm).second.begin(), (*itm).second.end(), my_sort_fn );
+
+	joy_raw_map_init( m_joy_config );
+}
+
+void FeInputMap::on_joystick_connect()
+{
+	joy_raw_map_init( m_joy_config );
 }
 
 FeInputMap::Command FeInputMap::get_command_from_tracked_keys( const int joy_thresh ) const
@@ -1152,6 +1269,26 @@ int FeInputMap::process_setting( const std::string &setting,
 		m_defaults[fc]=tc;
 		return 0;
 	}
+	else if ( setting.compare( "map" ) == 0 )
+	{
+		size_t pos=0;
+		std::string joy_num;
+
+		token_helper( value, pos, joy_num, FE_WHITESPACE );
+
+		if ( joy_num.compare( 0, 3, "Joy" ) == 0 )
+		{
+			int num = as_int( value.substr( 3 ) );
+
+			std::string joy_name;
+			token_helper( value, pos, joy_name );
+
+			if (( num >= 0 ) && ( num <= sf::Joystick::Count ))
+				m_joy_config.push_back( std::pair<int, std::string>( num, joy_name ) );
+		}
+
+		return 0;
+	}
 
 	Command cmd = string_to_command( setting );
 	if ( cmd == LAST_COMMAND )
@@ -1191,6 +1328,12 @@ void FeInputMap::save( std::ofstream &f ) const
 		std::string def_str = ( m_defaults[i] == LAST_COMMAND ) ? "" : commandStrings[ m_defaults[i] ];
 		f << '\t' << std::setw(20) << std::left << "default "
 			<< commandStrings[ i ] << '\t' << def_str << std::endl;
+	}
+
+	for ( size_t i=0; i < m_joy_config.size(); i++ )
+	{
+		f << '\t' << std::setw(20) << std::left << "map "
+			<< "Joy" << m_joy_config[i].first << '\t' << m_joy_config[i].second << std::endl;
 	}
 }
 

@@ -326,6 +326,7 @@ Artwork Name;Artwork Name
 Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
 Confirm Exit;Confirm Exit
@@ -353,6 +354,8 @@ Insert Display Shortcut;Insert Display Shortcut
 Insert Game Entry;Insert Game Entry
 Insert Menu Entry;Insert Menu Entry
 Intro;Intro
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
 Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
@@ -402,6 +405,7 @@ _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_input_default_action;Set the default behaviour for this control
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut

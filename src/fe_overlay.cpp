@@ -52,7 +52,7 @@ public:
 		const std::string &aux );
 
 	void input_map_dialog( const std::string &m,
-		std::string &ms,
+		FeInputMapEntry &res,
 		FeInputMap::Command &conflict );
 
 	void tags_dialog();
@@ -89,12 +89,12 @@ void FeConfigContextImp::splash_message(
 }
 
 void FeConfigContextImp::input_map_dialog( const std::string &m,
-		std::string &ms,
+		FeInputMapEntry &res,
 		FeInputMap::Command &conflict )
 {
 	std::string t;
 	fe_settings.get_resource( m, t );
-	m_feo.input_map_dialog( t, ms, conflict );
+	m_feo.input_map_dialog( t, res, conflict );
 }
 
 void FeConfigContextImp::tags_dialog()
@@ -762,7 +762,7 @@ bool FeOverlay::edit_dialog(
 
 void FeOverlay::input_map_dialog(
 			const std::string &msg_str,
-			std::string &map_str,
+			FeInputMapEntry &res,
 			FeInputMap::Command &conflict )
 {
 	sf::Vector2i s;
@@ -875,7 +875,7 @@ void FeOverlay::input_map_dialog(
 
 		if ( done )
 		{
-			map_str = entry.as_string();
+			res = entry;
 			conflict = m_feSettings.input_conflict_check( entry );
 			return;
 		}
@@ -1145,7 +1145,9 @@ int FeOverlay::display_config_dialog(
 					bool test( false );
 					int sm_ret = display_config_dialog( sm, test );
 					if ( sm_ret < 0 )
+					{
 						return sm_ret;
+					}
 
 					if ( test )
 						ctx.save_req = true;

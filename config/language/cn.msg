@@ -257,6 +257,7 @@ Artwork Name;Artwork Name
 Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Layout;Configure Layout
 Confirm Exit;Confirm Exit
 Create new tag;Create new tag
@@ -275,6 +276,8 @@ Insert Command Shortcut;Insert Command Shortcut
 Insert Display Shortcut;Insert Display Shortcut
 Insert Game Entry;Insert Game Entry
 Insert Menu Entry;Insert Menu Entry
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
 Overview;Overview
 Remove tag: '$1';Remove tag: '$1'
 Window (No Border);Window (No Border)
@@ -391,6 +394,7 @@ _help_input_add;Add a new input mapping for this control
 _help_input_default_action;Set the default behaviour for this control
 _help_input_delete;Remove this input mapping
 _help_intro;Configure intro
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_joystick_threshold;The threshold for registering joystick moves, from 1 to 100 (100=least sensitive)
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_misc;Configure miscellaneous settings

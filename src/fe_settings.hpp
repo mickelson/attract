@@ -269,6 +269,9 @@ public:
 	void get_input_mappings( std::vector < FeMapping > &l ) const { m_inputmap.get_mappings( l ); };
 	void set_input_mapping( FeMapping &m ) { m_inputmap.set_mapping( m ); };
 
+	void on_joystick_connect() { m_inputmap.on_joystick_connect(); };
+	std::vector < std::pair< int, std::string > > &get_joy_config() { return m_inputmap.get_joy_config(); };
+
 	void set_volume( FeSoundInfo::SoundType, const std::string & );
 	int get_set_volume( FeSoundInfo::SoundType ) const;
 	int get_play_volume( FeSoundInfo::SoundType ) const;

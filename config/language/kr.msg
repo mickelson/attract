@@ -321,6 +321,7 @@ Artwork Name;Artwork Name
 Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
 Confirm Exit;Confirm Exit
@@ -346,6 +347,8 @@ Insert Display Shortcut;Insert Display Shortcut
 Insert Game Entry;Insert Game Entry
 Insert Menu Entry;Insert Menu Entry
 Intro;Intro
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
 Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
@@ -404,6 +407,7 @@ _help_hide_console;Hide console on startup. Note that this only works if startin
 _help_input_action;
 _help_input_default_action;Set the default behaviour for this control
 _help_intro;Configure intro
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_scrape_vids;Set whether game videos should be downloaded when scraping
 _help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut

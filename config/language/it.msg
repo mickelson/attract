@@ -416,6 +416,7 @@ _help_scrape_mamedb;Stabilisce se utilizzare il sito mamedb.com per recuperare s
 #
 Artwork Name;Artwork Name
 Blank Game;Blank Game
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Shortcut;Delete this Shortcut
 Edit Shortcut;Edit Shortcut
@@ -423,7 +424,10 @@ Insert Command Shortcut;Insert Command Shortcut
 Insert Display Shortcut;Insert Display Shortcut
 Insert Game Entry;Insert Game Entry
 Insert Menu Entry;Insert Menu Entry
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
 _help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
 _help_shortcut_delete;Delete this shortcut from the Romlist
 _help_shortcut_label_edit;Edit this shortcut's label

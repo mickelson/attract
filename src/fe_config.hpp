@@ -149,7 +149,7 @@ public:
 		const std::string &aux )=0;
 
 	virtual void input_map_dialog( const std::string &msg,
-		std::string &map_str,
+		FeInputMapEntry &res,
 		FeInputMap::Command &conflict )=0;
 
 	virtual void tags_dialog()=0;
@@ -383,11 +383,18 @@ public:
 	void set_mapping( FeMapping * );
 };
 
+class FeInputJoysticksMenu : public FeBaseConfigMenu
+{
+	void get_options( FeConfigContext &ctx );
+	bool save( FeConfigContext &ctx );
+};
+
 class FeInputSelMenu : public FeBaseConfigMenu
 {
 private:
 	std::vector<FeMapping> m_mappings;
 	FeInputEditMenu m_edit_menu;
+	FeInputJoysticksMenu m_joysticks_menu;
 
 public:
 	void get_options( FeConfigContext &ctx );
