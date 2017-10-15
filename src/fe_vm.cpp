@@ -1431,11 +1431,56 @@ public:
 
 			fe.SetInstance( _SC("overlay"), fe_vm );
 
+			fe.Bind( _SC("Display"), Sqrat::Class <FeDisplayInfo, Sqrat::NoConstructor>()
+				.Prop( _SC("name"), &FeDisplayInfo::get_name )
+				.Prop( _SC("layout"), &FeDisplayInfo::get_layout )
+				.Prop( _SC("romlist"), &FeDisplayInfo::get_romlist_name )
+				.Prop( _SC("in_cycle"), &FeDisplayInfo::show_in_cycle )
+				.Prop( _SC("in_menu"), &FeDisplayInfo::show_in_menu )
+			);
+
+			fe.Bind( _SC("Filter"), Sqrat::Class <FeFilter, Sqrat::NoConstructor>()
+				.Prop( _SC("name"), &FeFilter::get_name )
+				.Prop( _SC("index"), &FeFilter::get_rom_index )
+				.Prop( _SC("size"), &FeFilter::get_size )
+				.Prop( _SC("sort_by"), &FeFilter::get_sort_by )
+				.Prop( _SC("reverse_order"), &FeFilter::get_reverse_order )
+				.Prop( _SC("list_limit"), &FeFilter::get_list_limit )
+			);
+
 			fe.Bind( _SC("Monitor"), Sqrat::Class <FeMonitor, Sqrat::NoConstructor>()
 				.Prop( _SC("num"), &FeMonitor::get_num )
 				.Prop( _SC("width"), &FeMonitor::get_width )
 				.Prop( _SC("height"), &FeMonitor::get_height )
 			);
+
+			//
+			// fe.displays
+			//
+			Sqrat::Table dtab;  // hack Table to Array because creating the Array straight up doesn't work
+			fe.Bind( _SC("displays"), dtab );
+			Sqrat::Array darray( dtab.GetObject() );
+
+			int display_count = fe_vm->m_feSettings->displays_count();
+			for ( int i=0; i< display_count; i++ )
+				darray.SetInstance( darray.GetSize(),
+					fe_vm->m_feSettings->get_display( i ) );
+
+			//
+			// fe.filters
+			//
+			FeDisplayInfo *di = fe_vm->m_feSettings->get_display(
+				fe_vm->m_feSettings->get_current_display_index() );
+
+			Sqrat::Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
+			fe.Bind( _SC("filters"), ftab );
+			Sqrat::Array farray( ftab.GetObject() );
+
+			if ( di )
+			{
+				for ( int i=0; i < di->get_filter_count(); i++ )
+					farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+			}
 
 			// hack Table to Array because creating the Array straight up doesn't work
 			Sqrat::Table mtab;
