@@ -403,14 +403,14 @@ _help_game_edit;게임의 정보를 편집합니다
 _help_game_overview;게임의 설명을 편집합니다
 _help_generator_build;선택한 에뮬레이터를 포함한 롬 목록을 생성합니다
 _help_generator_opt;생성된 목록에 포함할 에뮬레이터를 선택합니다
-_help_hide_console;콘솔 창을 숨깁니다. 이 몹션은 프로그램을 윈도우 GUI상에서 실행할 때에만 적용됩니다. 이미 띄워진 촌솔 창에서 실행하는 경우 (배치 파일에서 실행하는 경우) Attract-Mode 프로세스는 해당 창에 달라붙을 것입니다.
+_help_hide_console;콘솔 창을 숨깁니다. 이 옵션은 프로그램을 윈도우 GUI상에서 실행할 때에만 적용됩니다. 이미 띄워진 콘솔 창에서 실행하는 경우 (예: 배치 파일에서 실행하는 경우) Attract-Mode 프로세스는 해당 창에 달라붙을 것입니다.
 _help_input_default_action;이 키의 기본 행동을 설정합니다
 _help_intro;인트로 영상을 설정합니다
 _help_multiple_monitors;여러 모니터를 사용할 지 여부를 설정합니다
 _help_scrape_mamedb;MAME snap과 marquee를 mamedb.com에서 가져올 지 여부를 설정합니다
 _help_multiple_monitors;다중 모니터 환경을 사용합니다
 _help_scrape_vids;게임 영상을 가져올 지 여부를 설정합니다
-_help_shortcut_artwork_name_edit;이 바로가기에 연결될 아트워크를 설정합니다. 파로가기를 표시할 때 이 이름으로 된 아트워크를 찾을 것입니다
+_help_shortcut_artwork_name_edit;이 바로가기에 연결될 아트워크를 설정합니다. 바로가기를 표시할 때 이 이름으로 된 아트워크를 찾을 것입니다
 _help_shortcut_delete;롬 목록에서 이 바로가기를 제거합니다
 _help_shortcut_label_edit;이 바로가기의 이름을 설정합니다
 _help_shortcut_target_edit;이 바로가기의 목적지를 설정합니다
