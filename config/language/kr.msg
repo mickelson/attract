@@ -335,7 +335,7 @@ Delete shortcut '$1'?;'$1' 바로가기를 삭제하겠습니까?
 Delete this Game;게임 삭제
 Delete this Shortcut;바로가기 삭제
 Edit Game;게임 편집
-Edit Shortcut;바로가지 편집
+Edit Shortcut;바로가기 편집
 Empty;(없음)
 Enable Multiple Monitors;다중 모니터 사용
 Enter Romlist Name;새 롬 목록 이름을 입력하십시오
@@ -406,9 +406,8 @@ _help_generator_opt;생성된 목록에 포함할 에뮬레이터를 선택합�
 _help_hide_console;콘솔 창을 숨깁니다. 이 옵션은 프로그램을 윈도우 GUI상에서 실행할 때에만 적용됩니다. 이미 띄워진 콘솔 창에서 실행하는 경우 (예: 배치 파일에서 실행하는 경우) Attract-Mode 프로세스는 해당 창에 달라붙을 것입니다.
 _help_input_default_action;이 키의 기본 행동을 설정합니다
 _help_intro;인트로 영상을 설정합니다
-_help_multiple_monitors;여러 모니터를 사용할 지 여부를 설정합니다
 _help_scrape_mamedb;MAME snap과 marquee를 mamedb.com에서 가져올 지 여부를 설정합니다
-_help_multiple_monitors;다중 모니터 환경을 사용합니다
+_help_multiple_monitors;다중 모니터 환경을 사용할 지 여부를 설정합니다
 _help_scrape_vids;게임 영상을 가져올 지 여부를 설정합니다
 _help_shortcut_artwork_name_edit;이 바로가기에 연결될 아트워크를 설정합니다. 바로가기를 표시할 때 이 이름으로 된 아트워크를 찾을 것입니다
 _help_shortcut_delete;롬 목록에서 이 바로가기를 제거합니다
