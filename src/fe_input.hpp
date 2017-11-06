@@ -259,7 +259,7 @@ public:
 	std::string as_string() const;
 	bool has_mouse_move() const;
 
-	std::vector < FeInputSingle > inputs;
+	std::set < FeInputSingle > inputs;
 	FeInputMap::Command command;
 };
 

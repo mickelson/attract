@@ -840,7 +840,7 @@ void FeOverlay::input_map_dialog(
 
 					bool dup=false;
 
-					std::vector< FeInputSingle >::iterator it;
+					std::set< FeInputSingle >::iterator it;
 					for ( it = entry.inputs.begin(); it != entry.inputs.end(); ++it )
 					{
 						if ( (*it) == single )
@@ -852,7 +852,7 @@ void FeOverlay::input_map_dialog(
 
 					if ( !dup )
 					{
-						entry.inputs.push_back( single );
+						entry.inputs.insert( single );
 						timeout.restart();
 					}
 

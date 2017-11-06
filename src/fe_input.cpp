@@ -660,7 +660,7 @@ FeInputMapEntry::FeInputMapEntry()
 FeInputMapEntry::FeInputMapEntry( FeInputSingle::Type t, int code, FeInputMap::Command c )
 	: command( c )
 {
-	inputs.push_back( FeInputSingle( t, code ) );
+	inputs.insert( FeInputSingle( t, code ) );
 }
 
 FeInputMapEntry::FeInputMapEntry( const std::string &s, FeInputMap::Command c )
@@ -673,7 +673,7 @@ FeInputMapEntry::FeInputMapEntry( const std::string &s, FeInputMap::Command c )
 		std::string tok;
 		token_helper( s, pos, tok, "+" );
 		if ( !tok.empty() )
-			inputs.push_back( FeInputSingle( tok ) );
+			inputs.insert( FeInputSingle( tok ) );
 
 	} while ( pos < s.size() );
 }
@@ -683,7 +683,7 @@ bool FeInputMapEntry::get_current_state( int joy_thresh, const FeInputSingle &tr
 	if ( inputs.empty() )
 		return false;
 
-	for ( std::vector < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
+	for ( std::set < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
 	{
 		if (( (*it) != trigger ) && ( !(*it).get_current_state( joy_thresh ) ))
 			return false;
@@ -696,7 +696,7 @@ std::string FeInputMapEntry::as_string() const
 {
 	std::string retval;
 
-	for ( std::vector < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
+	for ( std::set < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
 	{
 		if ( !retval.empty() )
 			retval += "+";
@@ -709,7 +709,7 @@ std::string FeInputMapEntry::as_string() const
 
 bool FeInputMapEntry::has_mouse_move() const
 {
-	for ( std::vector < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
+	for ( std::set < FeInputSingle >::const_iterator it=inputs.begin(); it != inputs.end(); ++it )
 	{
 		if ( (*it).is_mouse_move() )
 			return true;
@@ -956,7 +956,7 @@ void FeInputMap::initialize_mappings()
 
 	for ( std::vector < FeInputMapEntry >::iterator ite=m_inputs.begin(); ite != m_inputs.end(); ++ite )
 	{
-		for ( std::vector < FeInputSingle >::iterator its=(*ite).inputs.begin(); its != (*ite).inputs.end(); ++its )
+		for ( std::set < FeInputSingle >::iterator its=(*ite).inputs.begin(); its != (*ite).inputs.end(); ++its )
 		{
 			itm = m_single_map.find( *its );
 			if ( itm != m_single_map.end() )
@@ -1006,7 +1006,7 @@ FeInputMap::Command FeInputMap::get_command_from_tracked_keys( const int joy_thr
 		{
 			bool found=true;
 
-			for ( std::vector< FeInputSingle >::const_iterator its = (*itv)->inputs.begin();
+			for ( std::set< FeInputSingle >::const_iterator its = (*itv)->inputs.begin();
 					its != (*itv)->inputs.end(); ++its )
 			{
 				if ( m_tracked_keys.find( *its ) == m_tracked_keys.end() )
@@ -1128,21 +1128,16 @@ FeInputMap::Command FeInputMap::input_conflict_check( const FeInputMapEntry &e )
 	if ( e.inputs.empty() )
 		return FeInputMap::LAST_COMMAND;
 
-	std::set< FeInputSingle > my_set;
-
-	std::vector< FeInputSingle >::const_iterator it;
-	for ( it=e.inputs.begin(); it!=e.inputs.end(); ++it )
-		my_set.insert( *it );
-
 	std::vector< FeInputMapEntry >::iterator ite;
 	for ( ite=m_inputs.begin(); ite!=m_inputs.end(); ++ite )
 	{
 		if ( (*ite).inputs.size() == e.inputs.size() )
 		{
 			bool match=true;
+			std::set< FeInputSingle >::iterator it;
 			for ( it=(*ite).inputs.begin(); it!=(*ite).inputs.end(); ++it )
 			{
-				if ( my_set.find( (*it) ) == my_set.end() )
+				if ( e.inputs.find( (*it) ) == e.inputs.end() )
 				{
 					match=false;
 					break;
@@ -1211,25 +1206,37 @@ void FeInputMap::set_mapping( const FeMapping &mapping )
 	if ( cmd == LAST_COMMAND )
 		return;
 
-	//
-	// Erase existing mappings to this command
-	//
+	std::vector< std::string >::const_iterator iti;
+
 	for ( int i=m_inputs.size()-1; i>=0; i-- )
 	{
+		// Erase existing mappings to this command
+		//
 		if ( m_inputs[i].command == cmd )
 		{
 			if ( m_inputs[i].has_mouse_move() )
 				m_mmove_count--;
 
 			m_inputs.erase( m_inputs.begin() + i );
+			continue;
+		}
+
+		// Erase conflicting inputs
+		//
+		std::string temp_str = m_inputs[i].as_string();
+		for ( iti = mapping.input_list.begin(); iti != mapping.input_list.end(); ++iti )
+		{
+			if ( (*iti).compare( temp_str ) == 0 )
+			{
+				m_inputs.erase( m_inputs.begin() + i );
+				continue;
+			}
 		}
 	}
 
 	//
 	// Now update our map with the inputs from this mapping
 	//
-	std::vector< std::string >::const_iterator iti;
-
 	for ( iti=mapping.input_list.begin();
 			iti!=mapping.input_list.end(); ++iti )
 	{
