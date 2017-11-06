@@ -468,7 +468,9 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 	std::string path;
 	m_feSettings->get_path( FeSettings::Current, path );
 
-	std::string s1 = clean_path( shader1 );
+	std::string s1;
+	if ( shader1 )
+		s1 = clean_path( shader1 );
 
 	m_scriptShaders.push_back( new FeShader() );
 	FeShader *sh = m_scriptShaders.back();
@@ -500,7 +502,10 @@ FeShader *FePresent::add_shader( FeShader::Type type, const char *shader1, const
 			else
 			{
 				std::string path2 = path;
-				std::string s2 = clean_path( shader2 );
+				std::string s2;
+				if ( shader2 )
+					s2 = clean_path( shader2 );
+
 				if ( !is_relative_path( s2 ) )
 					path2.clear();
 
