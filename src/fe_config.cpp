@@ -1436,34 +1436,6 @@ bool FeInputEditMenu::on_option_select(
 
 			if ( save )
 			{
-				for ( std::vector<FeInputSingle>::iterator itr = ent.inputs.begin();
-					itr != ent.inputs.end(); ++itr )
-				{
-					if ( (*itr).get_type() >= FeInputSingle::Joystick0 )
-					{
-						int id = (*itr).get_type() - FeInputSingle::Joystick0;
-						std::string name = (*itr).get_joy_name();
-
-						std::vector < std::pair < int, std::string > >::iterator itj;
-						std::vector < std::pair < int, std::string > > &jc
-							= ctx.fe_settings.get_joy_config();
-
-						int joystick_is_mapped = name.empty();
-						for ( itj = jc.begin(); itj != jc.end(); ++itj )
-						{
-							if ( (*itj).first == id )
-							{
-								joystick_is_mapped = true;
-								break;
-							}
-						}
-
-						// add a mapping to the appropriate joystick name if not mapped already
-						if ( !joystick_is_mapped )
-							jc.push_back( std::pair< int, std::string >( id, name ) );
-					}
-				}
-
 				m_mapping->input_list.push_back( res );
 				ctx.save_req = true;
 			}
