@@ -2588,7 +2588,7 @@ const std::string FeSettings::get_info( int index ) const
 #ifdef NO_MOVIE
 		return "software";
 #else
-		return FeMedia::get_decoder_label( FeMedia::get_current_decoder() );
+		return FeMedia::get_current_decoder();
 #endif
 
 	case MenuPrompt:
@@ -2823,7 +2823,7 @@ bool FeSettings::set_info( int index, const std::string &value )
 #endif
 	case VideoDecoder:
 #ifndef NO_MOVIE
-		FeMedia::set_current_decoder_by_label( value );
+		FeMedia::set_current_decoder( value );
 #endif
 		break;
 

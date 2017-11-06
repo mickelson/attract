@@ -1986,17 +1986,10 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	vid_dec = "software";
 	decoders.push_back( vid_dec );
 #else
-	vid_dec = FeMedia::get_decoder_label( FeMedia::get_current_decoder() );
-
-	FeMedia::VideoDecoder d=FeMedia::software;
-	while ( d != FeMedia::LAST_DECODER )
-	{
-		if ( FeMedia::get_decoder_available( d ) )
-			decoders.push_back( FeMedia::get_decoder_label( d ) );
-
-		d = (FeMedia::VideoDecoder)(d+1);
-	}
+	vid_dec = FeMedia::get_current_decoder();
+	FeMedia::get_decoder_list( decoders );
 #endif
+
 	ctx.add_optl( Opt::LIST, "Video Decoder", vid_dec, "_help_video_decoder" );
 	ctx.back_opt().append_vlist( decoders );
 

@@ -43,6 +43,9 @@
 #
 # Uncomment the next line to disable SWF support (i.e. no game_swf)
 #NO_SWF=1
+#
+# Uncomment the next line to enable VAAPI decoding on Linux (req FFmpeg >= 3.4)
+#FE_HWACCEL_VAAPI=1
 ###############################
 
 #FE_DEBUG=1
@@ -311,6 +314,10 @@ ifeq ($(USE_XLIB),1)
   LIBS += -lXinerama
  endif
 
+endif
+
+ifeq ($(FE_HWACCEL_VAAPI),1)
+ FE_FLAGS += -DFE_HWACCEL_VAAPI
 endif
 
 ifeq ($(USE_FONTCONFIG),1)

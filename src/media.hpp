@@ -24,12 +24,14 @@
 #define MEDIA_HPP
 
 #include <Audio/SoundStream.hpp>
+#include <vector>
 #include <string>
 
 class FeMediaImp;
 class FeAudioImp;
 class FeVideoImp;
 struct AVCodec;
+struct AVCodecContext;
 
 namespace sf
 {
@@ -94,22 +96,12 @@ public:
 	static bool is_supported_media_file( const std::string &filename );
 
 	//
+	static void get_decoder_list( std::vector < std::string > &l );
+
 	// get/set video decoder to be used (if available)
 	//
-	enum VideoDecoder
-	{
-		software,        // software (default)
-		mmal,            // Rasberry Pi only - mpeg2/4   vc1 h264
-		cuvid,           // NVIDEA only      - mpeg1/2/4 vc1 h264 mjpeg vp8/9
-		qsv,             // INTEL  only      - mpeg2     vc1 h264 h265
-		LAST_DECODER
-	};
-
-	static const char *get_decoder_label( VideoDecoder d );
-	static bool get_decoder_available( VideoDecoder d );
-
-	static VideoDecoder get_current_decoder();
-	static void set_current_decoder_by_label( const std::string & );
+	static std::string get_current_decoder();
+	static void set_current_decoder( const std::string & );
 
 protected:
 	// overrides from base class
@@ -121,13 +113,13 @@ protected:
 	bool end_of_file();
 
 	bool internal_open( sf::Texture *outt );
-	void try_hw_accel( AVCodec *&dec );
+	void try_hw_accel( AVCodecContext *& ctx, AVCodec *&dec );
 
 private:
 	FeMediaImp *m_imp;
 	FeAudioImp *m_audio;
 	FeVideoImp *m_video;
-	static VideoDecoder g_decoder;
+	static std::string g_decoder;
 
 	FeMedia( const FeMedia & );
 	FeMedia &operator=( const FeMedia & );

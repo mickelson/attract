@@ -33,6 +33,12 @@ extern "C"
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
 
+#define FE_HWACCEL (LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( 55, 78, 100 ))
+
+#if FE_HWACCEL
+#include <libavutil/hwcontext.h>
+#endif
+
 #if USE_SWRESAMPLE
  #include <libswresample/swresample.h>
  #include <libavutil/opt.h>
@@ -174,6 +180,11 @@ private:
 	FeMedia *m_parent;
 	sf::Uint8 *rgba_buffer[4];
 	int rgba_linesize[4];
+
+#if FE_HWACCEL
+	AVPixelFormat hwaccel_output_format;
+	bool hw_retrieve_data( AVFrame *f );
+#endif
 
 public:
 	bool run_video_thread;
@@ -354,6 +365,9 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 		m_parent( p ),
 		rgba_buffer(),
 		rgba_linesize(),
+#if FE_HWACCEL
+		hwaccel_output_format( AV_PIX_FMT_NONE ),
+#endif
 		run_video_thread( false ),
 		display_texture( NULL ),
 		sws_ctx( NULL ),
@@ -374,6 +388,65 @@ FeVideoImp::~FeVideoImp()
 	if (sws_ctx)
 		sws_freeContext(sws_ctx);
 }
+
+#if FE_HWACCEL
+
+enum AVPixelFormat hw_get_output_format( AVBufferRef *hw_frames_ctx )
+{
+	enum AVPixelFormat retval = AV_PIX_FMT_NONE;
+
+	enum AVPixelFormat *p=NULL;
+	int e = av_hwframe_transfer_get_formats(
+			hw_frames_ctx,
+			AV_HWFRAME_TRANSFER_DIRECTION_FROM,
+			&p, 0 );
+
+	if ( e < 0 )
+		std::cerr << "Error getting supported hardware formats." << std::endl;
+	else
+		retval = *p;
+
+	av_free( p );
+
+	return retval;
+}
+
+bool FeVideoImp::hw_retrieve_data( AVFrame *f )
+{
+	if ( f->format == AV_PIX_FMT_NONE )
+		return false;
+
+	if ( !(av_pix_fmt_desc_get( (AVPixelFormat)f->format )->flags & AV_PIX_FMT_FLAG_HWACCEL) )
+		return false;
+
+	AVFrame *sw_frame = av_frame_alloc();
+	if ( hwaccel_output_format == AV_PIX_FMT_NONE )
+	{
+		hwaccel_output_format = hw_get_output_format( codec_ctx->hw_frames_ctx );
+#ifdef FE_DEBUG
+		std::cout << "HWAccel output pixel format: "
+			<< av_pix_fmt_desc_get( hwaccel_output_format )->name << std::endl;
+#endif
+	}
+
+	sw_frame->format = hwaccel_output_format;
+
+	int err = av_hwframe_transfer_data( sw_frame, f, 0 );
+	if ( err < 0 )
+		std::cerr << "Error transferring hardware frame data." << std::endl;
+
+	err = av_frame_copy_props( sw_frame, f );
+	if ( err < 0 )
+		std::cerr << "Error copying hardware frame properties." << std::endl;
+
+	av_frame_unref( f );
+	av_frame_move_ref( f, sw_frame );
+	av_frame_free( &sw_frame );
+
+	return true;
+}
+
+#endif
 
 void FeVideoImp::play()
 {
@@ -473,8 +546,15 @@ void FeVideoImp::preload()
 				if ( (codec_ctx->width & 0x7) || (codec_ctx->height & 0x7) )
 					sws_flags |= SWS_ACCURATE_RND;
 
+				enum AVPixelFormat pfmt = codec_ctx->pix_fmt;
+
+#if FE_HWACCEL
+				if ( hw_retrieve_data( raw_frame ) )
+					pfmt = hwaccel_output_format;
+#endif
+
 				sws_ctx = sws_getCachedContext( NULL,
-					codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
+					codec_ctx->width, codec_ctx->height, pfmt,
 					disptex_width, disptex_height, AV_PIX_FMT_RGBA,
 					sws_flags, NULL, NULL, NULL );
 
@@ -571,6 +651,10 @@ void FeVideoImp::video_thread()
 					discarded++;
 					continue;
 				}
+
+#if FE_HWACCEL
+				hw_retrieve_data( detached_frame );
+#endif
 
 				sf::Lock l( image_swap_mutex );
 				displayed++;
@@ -982,13 +1066,13 @@ bool FeMedia::internal_open( sf::Texture *outt )
 		}
 		else
 		{
-			try_hw_accel( dec );
-
 			AVCodecContext *codec_ctx = m_imp->m_format_ctx->streams[stream_id]->codec;
 			codec_ctx->workaround_bugs = FF_BUG_AUTODETECT;
 
 			// Note also: http://trac.ffmpeg.org/ticket/4404
 			codec_ctx->thread_count=1;
+
+			try_hw_accel( codec_ctx, dec );
 
 			if ( avcodec_open2( codec_ctx, dec, NULL ) < 0 )
 			{
@@ -1346,132 +1430,98 @@ const char *FeMedia::get_metadata( const char *tag )
 	return ( entry ? entry->value : "" );
 }
 
-namespace
-{
-	struct hw_struct
-	{
-		FeMedia::VideoDecoder fe_id;
-		int av_id;
-		const char *tag;
-		AVCodec *codec;
-	};
+std::string FeMedia::g_decoder;
 
-	static hw_struct hw[] = {
-#ifdef USE_GLES
-		// Raspberry Pi only MMAL decoders
-		{ FeMedia::mmal,  AV_CODEC_ID_MPEG4,      "mpeg4_mmal", NULL },
-		{ FeMedia::mmal,  AV_CODEC_ID_H264,       "h264_mmal",  NULL },
-		{ FeMedia::mmal,  AV_CODEC_ID_MPEG2VIDEO, "mpeg2_mmal", NULL },
-		{ FeMedia::mmal,  AV_CODEC_ID_VC1,        "vc1_mmal",   NULL },
-#else
-		// NVIDEA CUVID
-		{ FeMedia::cuvid, AV_CODEC_ID_MPEG4,      "mpeg4_cuvid", NULL },
-		{ FeMedia::cuvid, AV_CODEC_ID_H264,       "h264_cuvid",  NULL },
-		{ FeMedia::cuvid, AV_CODEC_ID_MPEG2VIDEO, "mpeg2_cuvid", NULL },
-		{ FeMedia::cuvid, AV_CODEC_ID_VC1,        "vc1_cuvid",   NULL },
-		{ FeMedia::cuvid, AV_CODEC_ID_MPEG1VIDEO, "mpeg1_cuvid", NULL },
+#if FE_HWACCEL
 
-		// Intel Quick Sync
-		{ FeMedia::qsv, AV_CODEC_ID_H264,       "h264_qsv",  NULL },
-		{ FeMedia::qsv, AV_CODEC_ID_MPEG2VIDEO, "mpeg2_qsv", NULL },
-		{ FeMedia::qsv, AV_CODEC_ID_VC1,        "vc1_qsv",   NULL },
-		{ FeMedia::qsv, AV_CODEC_ID_H265,       "h265_qsv",  NULL },
+#ifdef SFML_SYSTEM_WINDOWS
+#define FE_HWACCEL_DXVA2
+#include "media_dxva2.cpp"
 #endif
-		{ FeMedia::LAST_DECODER, AV_CODEC_ID_NONE,    NULL,          NULL }
-	};
-	static bool hw_init=false;
 
-	void ensure_init()
-	{
-		if ( !hw_init )
-		{
-			int i=0;
-			while ( hw[i].av_id != AV_CODEC_ID_NONE )
-			{
-				hw[i].codec = avcodec_find_decoder_by_name( hw[i].tag );
-				i++;
-			}
+#ifdef FE_HWACCEL_VAAPI
+#include "media_vaapi.cpp"
+#endif
 
-			hw_init = true;
-		}
-	}
-};
+#endif // if FE_HWACCEL
 
-FeMedia::VideoDecoder FeMedia::g_decoder=FeMedia::software;
-
-const char *FeMedia::get_decoder_label( VideoDecoder d )
+void FeMedia::get_decoder_list( std::vector< std::string > &l )
 {
-	const char *label[] =
-	{
-		"software",
-		"mmal",
-		"cuvid",
-		"qsv",
-		NULL
-	};
+	l.clear();
 
-	return label[d];
+	l.push_back( "software" );
+
+#ifdef USE_GLES
+	//
+	// Raspberry Pi specific - check for mmal
+	//
+	if ( avcodec_find_decoder_by_name( "mpeg4_mmal" ) )
+		l.push_back( "mmal" );
+#endif
+
+#ifdef FE_HWACCEL_DXVA2
+	if ( av_hwdevice_find_type_by_name( "dxva2" ) != AV_HWDEVICE_TYPE_NONE )
+		l.push_back( "dxva2" );
+#endif
+
+#ifdef FE_HWACCEL_VAAPI
+	if ( av_hwdevice_find_type_by_name( "vaapi" ) != AV_HWDEVICE_TYPE_NONE )
+		l.push_back( "vaapi" );
+#endif
 }
 
-bool FeMedia::get_decoder_available( VideoDecoder d )
-{
-	if ( d == software )
-		return true;
-
-	ensure_init();
-
-	int i=0;
-	while ( hw[i].av_id != AV_CODEC_ID_NONE )
-	{
-		if (( hw[i].codec ) && ( hw[i].fe_id == d ))
-			return true;
-
-		i++;
-	}
-	return false;
-}
-
-FeMedia::VideoDecoder FeMedia::get_current_decoder()
+std::string FeMedia::get_current_decoder()
 {
 	return g_decoder;
 }
 
-void FeMedia::set_current_decoder_by_label( const std::string &l )
+void FeMedia::set_current_decoder( const std::string &l )
 {
-	FeMedia::VideoDecoder d=software;
-	while ( d != LAST_DECODER )
-	{
-		if ( l.compare( get_decoder_label( d ) ) == 0 )
-		{
-			g_decoder=d;
-			break;
-		}
-
-		d=(VideoDecoder)(d+1);
-	}
+	g_decoder = l;
 }
 
 //
 // Try to use a hardware accelerated decoder where readily available...
 //
-void FeMedia::try_hw_accel( AVCodec *&dec )
+void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 {
-	ensure_init();
+	if ( g_decoder.empty() || ( g_decoder.compare( "software" ) == 0 ))
+		return;
 
-	int i=0;
-	while ( hw[i].av_id != AV_CODEC_ID_NONE )
+#ifdef USE_GLES
+	if ( g_decoder.compare( "mmal" ) == 0 )
 	{
-		if (( hw[i].fe_id == g_decoder )
-				&& ( hw[i].av_id == dec->id )
-				&& hw[i].codec )
+		switch( dec->id )
 		{
-			dec = hw[i].codec;
-#ifdef FE_DEBUG
-			std::cout << "Using hardware accelerated video decoder: "
-				<< dec->long_name << std::endl;
-#endif
+		case AV_CODEC_ID_MPEG4:
+			dec = avcodec_find_decoder_by_name( "mpeg4_mmal" );
+			return;
+
+		case AV_CODEC_ID_H264:
+			dec = avcodec_find_decoder_by_name( "h264_mmal" );
+			return;
+
+		case AV_CODEC_ID_MPEG2VIDEO:
+			dec = avcodec_find_decoder_by_name( "mpeg2_mmal" );
+			return;
+
+		case AV_CODEC_ID_VC1:
+			dec = avcodec_find_decoder_by_name( "vc1_mmal" );
+			return;
+
+		default:
 			break;
-		}
-		i++;
+		};
 	}
+#endif
+
+#ifdef FE_HWACCEL_DXVA2
+	if ( g_decoder.compare( "dxva2" ) == 0 )
+		codec_ctx->get_format = get_format_dxva2;
+#endif
+
+#ifdef FE_HWACCEL_VAAPI
+	if ( g_decoder.compare( "vaapi" ) == 0 )
+		codec_ctx->get_format = get_format_vaapi;
+#endif
 }
