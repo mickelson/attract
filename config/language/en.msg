@@ -163,6 +163,6 @@ es;Español
 fr;Français
 it;Italiano
 jp;日本語 (Japanese)
-kr;한글 (Korean)
+kr;한국어 (Korean)
 
 #@DONE_TRANSLATED
