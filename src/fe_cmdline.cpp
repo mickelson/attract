@@ -219,8 +219,8 @@ void process_args( int argc, char *argv[],
 #ifdef USE_XINERAMA
 				<< " +Xinerama"
 #endif
-#ifdef FE_RPI
-				<< " +RPi"
+#ifdef USE_GLES
+				<< " +GLES"
 #endif
 #ifndef NO_SWF
 				<< " +SWF"

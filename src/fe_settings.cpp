@@ -2048,7 +2048,7 @@ void FeSettings::run( int &minimum_run_seconds,
 
 	std::string exit_hotkey = emu->get_info( FeEmulatorInfo::Exit_hotkey );
 
-#if defined(SFML_SYSTEM_LINUX) && !defined(FE_RPI)
+#if defined(SFML_SYSTEM_LINUX) && defined(USE_XLIB)
 	if ( !exit_hotkey.empty() && ( m_window_mode == Fullscreen ))
 	{
 		std::cout << " ! NOTE: The 'Exit Hotkey' setting is not supported when running Attract-Mode in 'Fullscreen Mode' on Linux."

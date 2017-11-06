@@ -175,13 +175,7 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
    _OBJ += fe_util_osx.o
    LIBS += -framework Cocoa -framework Carbon -framework IOKit
   else
-   #
-   # Test for Raspberry Pi
-   #
-   ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
-    FE_RPI=1
-    USE_GLES=1
-   else
+   ifneq ($(USE_GLES),1)
     #
     # Test for Xlib and Xinerama...
     #
@@ -296,13 +290,15 @@ else
  CFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
 
-ifeq ($(FE_RPI),1)
- FE_FLAGS += -DFE_RPI
- CFLAGS += -I/opt/vc/include -L/opt/vc/lib
-endif
-
 ifeq ($(USE_GLES),1)
  FE_FLAGS += -DUSE_GLES
+
+ #
+ # Hack for Raspberry Pi includes...
+ #
+ ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
+  CFLAGS += -I/opt/vc/include -L/opt/vc/lib
+ endif
 endif
 
 ifeq ($(USE_XLIB),1)
