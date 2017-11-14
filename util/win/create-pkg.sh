@@ -82,4 +82,20 @@ pushd "${APP}" >/dev/null
 zip -r ../attract-${VERSION}-win64.zip *
 popd >/dev/null
 
+# 32-bit console
+make -C .. clean
+eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} WINDOWS_CONSOLE=1 TOOLCHAIN=i686-w64-mingw32.static $@
+mv ../attract.exe "${APP}"/attract.exe
+pushd "${APP}" >/dev/null
+zip -r ../attract-${VERSION}-win32-console.zip *
+popd >/dev/null
+
+# 64-bit console
+make -C .. clean
+eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} WINDOWS_CONSOLE=1 TOOLCHAIN=x86_64-w64-mingw32.static $@
+mv ../attract.exe "${APP}"/attract.exe
+pushd "${APP}" >/dev/null
+zip -r ../attract-${VERSION}-win64-console.zip *
+popd >/dev/null
+
 mv "${SCRATCH}"/*.zip ..

@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	FeWindow window( feSettings );
 	window.initial_create();
 
-#ifdef SFML_SYSTEM_WINDOWS
+#ifdef WINDOWS_CONSOLE
 	if ( feSettings.get_hide_console() )
 		hide_console();
 #endif

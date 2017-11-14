@@ -801,7 +801,7 @@ bool run_program( const std::string &prog,
 		NULL,
 		NULL,
 		( NULL == callback ) ? FALSE : TRUE,
-		0,
+		CREATE_NO_WINDOW,
 		NULL,
 		NULL, // use current directory (set above) as working directory for the process
 		&si,

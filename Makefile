@@ -41,6 +41,12 @@
 # Uncomment next line for Windows static cross-compile build (mxe)
 #WINDOWS_STATIC=1
 #
+# By default, Attract-Mode on Windows is built as a GUI application, which
+# does not allow for command line interactions at the Windows console.
+# Uncomment the next line to build a console version of Attract-Mode
+# instead (Windows only)
+#WINDOWS_CONSOLE=1
+#
 # Uncomment the next line to disable SWF support (i.e. no game_swf)
 #NO_SWF=1
 #
@@ -253,7 +259,13 @@ endif
 ifeq ($(FE_WINDOWS_COMPILE),1)
  _DEP += attract.rc
  _OBJ += attract.res
- CFLAGS += -mconsole
+ ifeq ($(WINDOWS_CONSOLE),1)
+  CFLAGS += -mconsole
+  FE_FLAGS += -DWINDOWS_CONSOLE
+ else
+  CFLAGS += -Wl,--subsystem,windows
+ endif
+
  EXE_EXT = .exe
 else
  CFLAGS += -DDATA_PATH=\"$(DATA_PATH)\"
