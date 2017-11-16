@@ -24,6 +24,7 @@
 #define FE_BASE_HPP
 
 #include <string>
+#include <ostream>
 
 extern const char *FE_NAME;
 extern const char *FE_COPYRIGHT;
@@ -35,6 +36,19 @@ extern const char *FE_DEFAULT_ARTWORK;
 extern const char *FE_EMULATOR_SUBDIR;
 extern const char *FE_EMULATOR_FILE_EXTENSION;
 extern const char *FE_EMULATOR_DEFAULT;
+
+enum FeLogLevel
+{
+	FeLog_Silent,
+	FeLog_Info,
+	FeLog_Debug
+};
+
+std::ostream &FeLog();
+std::ostream &FeDebug();
+void fe_set_log_file( const std::string & );
+void fe_set_log_level( enum FeLogLevel );
+void fe_print_version();
 
 class FeBaseConfigurable
 {

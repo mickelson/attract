@@ -39,7 +39,7 @@ enum AVPixelFormat get_format_vaapi( AVCodecContext *codec_ctx, const enum AVPix
 
 			if ( ret < 0 )
 			{
-				std::cerr << "Error creating vaapi hardware device context" << std::endl;
+				FeLog() << "Error creating vaapi hardware device context" << std::endl;
 				continue;
 			}
 
@@ -68,7 +68,7 @@ enum AVPixelFormat get_format_vaapi( AVCodecContext *codec_ctx, const enum AVPix
 
 			if ( ret < 0 )
 			{
-				std::cerr << "Error initializing vaapi hardware frame context" << std::endl;
+				FeLog() << "Error initializing vaapi hardware frame context" << std::endl;
 				av_buffer_unref( &device_ctx );
 				av_buffer_unref( &frames_ctx );
 				continue;

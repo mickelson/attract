@@ -118,13 +118,11 @@ namespace
 			g_joy_femap[i] = i;
 #endif
 
-#ifdef FE_DEBUG
-		std::cout << "Joysticks after mapping: " << std::endl;
+		FeDebug() << "Joysticks after mapping: " << std::endl;
 		for ( i=0; i<sf::Joystick::Count; i++ )
-			std::cout << "ID: " << i << " => Joy" << g_joyfemap[i] << "("
+			FeDebug() << "ID: " << i << " => Joy" << g_joyfemap[i] << "("
 				<< sf::Joystick::getIdentification(i).name.toAnsiString()
 				<< ")" << std::endl;
-#endif
 	}
 };
 
@@ -1307,7 +1305,7 @@ int FeInputMap::process_setting( const std::string &setting,
 	FeInputMapEntry new_entry( value, cmd );
 	if ( new_entry.inputs.empty() )
 	{
-		std::cout << "Unrecognized input type: " << value << " in file: " << fn << std::endl;
+		FeLog() << "Unrecognized input type: " << value << " in file: " << fn << std::endl;
 		return 1;
 	}
 

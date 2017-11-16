@@ -22,6 +22,7 @@
 
 #include "zip.hpp"
 #include "fe_util.hpp"
+#include "fe_base.hpp"
 #include <iostream>
 #include <cstring>
 #include <SFML/System/Mutex.hpp>
@@ -168,7 +169,7 @@ bool fe_zip_open_to_buff(
 
 	if ( r != ARCHIVE_OK )
 	{
-		std::cerr << "Error opening archive: "
+		FeLog() << "Error opening archive: "
 			<< arch << std::endl;
 		archive_read_free( a );
 		return false;
@@ -207,7 +208,7 @@ bool fe_zip_get_dir(
 
 	if ( r != ARCHIVE_OK )
 	{
-		std::cerr << "Error opening archive: "
+		FeLog() << "Error opening archive: "
 			<< archive << std::endl;
 		archive_read_free( a );
 		return false;
@@ -238,7 +239,7 @@ bool fe_zip_open_to_buff(
 
 	if ( !mz_zip_reader_init_file( &zip, archive, 0 ) )
 	{
-		std::cerr << "Error initializing zip.  zip: "
+		FeLog() << "Error initializing zip.  zip: "
 			<< archive << std::endl;
 		return false;
 	}
@@ -247,8 +248,6 @@ bool fe_zip_open_to_buff(
 		filename, NULL, 0 );
 	if ( index < 0 )
 	{
-		std::cerr << "Error locating file. zip: "
-			<< archive << ", file: " << filename << std::endl;
 		mz_zip_reader_end( &zip );
 		return false;
 	}
@@ -256,7 +255,7 @@ bool fe_zip_open_to_buff(
 	mz_zip_archive_file_stat file_stat;
 	if ( !mz_zip_reader_file_stat(&zip, index, &file_stat) )
 	{
-		std::cerr << "Error reading filestats. zip: "
+		FeLog() << "Error reading filestats. zip: "
 			<< archive << ", file: " << filename << std::endl;
 		mz_zip_reader_end( &zip );
 		return false;
@@ -267,7 +266,7 @@ bool fe_zip_open_to_buff(
 	if ( !mz_zip_reader_extract_to_mem( &zip,
 		index, &(buff[0]), buff.size(), 0 ) )
 	{
-		std::cerr << "Error extracting to buffer. zip: "
+		FeLog() << "Error extracting to buffer. zip: "
 			<< archive << ", file: " << filename << std::endl;
 		mz_zip_reader_end( &zip );
 		return false;
@@ -290,7 +289,7 @@ bool fe_zip_get_dir(
 
 	if ( !mz_zip_reader_init_file( &zip, archive, 0 ) )
 	{
-		std::cerr << "Error initializing zip: "
+		FeLog() << "Error initializing zip: "
 			<< archive << std::endl;
 		return false;
 	}

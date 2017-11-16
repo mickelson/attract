@@ -1022,7 +1022,7 @@ void FePresent::load_layout( bool initial_load )
 
 	if ( empty_layout )
 	{
-		std::cout << " - Layout is empty, initializing with the default layout settings" << std::endl;
+		FeLog() << " - Layout is empty, initializing with the default layout settings" << std::endl;
 		init_with_default_layout();
 	}
 

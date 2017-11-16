@@ -58,10 +58,13 @@ namespace
 	//
 	void printFunc(HSQUIRRELVM v, const SQChar *s, ...)
 	{
+		char buff[2048];
 		va_list vl;
 		va_start(vl, s);
-		vprintf(s, vl);
+		vsnprintf( buff, 2048, s, vl);
 		va_end(vl);
+
+		FeLog() << buff;
 	}
 
 	bool my_callback( const char *buffer, void *opaque )
@@ -77,7 +80,7 @@ namespace
 		}
 		catch( Sqrat::Exception e )
 		{
-			std::cout << "Script Error: " << e.Message() << std::endl;
+			FeLog() << "Script Error: " << e.Message() << std::endl;
 		}
 
 		return false;
@@ -142,7 +145,7 @@ namespace
 		catch(Sqrat:: Exception e )
 		{
 			if ( !silent )
-				std::cerr << "Script Error in " << path_to_run
+				FeLog() << "Script Error in " << path_to_run
 					<< " - " << e.Message() << std::endl;
 		}
 		return true;
@@ -954,7 +957,7 @@ bool FeVM::on_new_layout()
 			m_feSettings->get_current_display_index() );
 
 		if ( di )
-			std::cerr << " ! Error opening layout: "
+			FeLog() << " ! Error opening layout: "
 				<< di->get_info( FeDisplayInfo::Layout ) << std::endl;
 	}
 	else if ( !run_script( path, filename ) )
@@ -962,7 +965,7 @@ bool FeVM::on_new_layout()
 		if ( ps == FeSettings::Intro_Showing )
 			return false; // silent fail if intro is not found
 		else
-			std::cerr << " ! Script file not found: " << path
+			FeLog() << " ! Script file not found: " << path
 				<< " (" << filename << ")" << std::endl;
 	}
 
@@ -1000,7 +1003,7 @@ bool FeVM::on_new_layout()
 
 	if ( !skip_layout && ( ps == FeSettings::Layout_Showing ))
 	{
-		std::cout << " - Loaded layout: " << rep_path
+		FeLog() << " - Loaded layout: " << rep_path
 			<< " (" << filename << ")" << std::endl;
 	}
 
@@ -1038,7 +1041,7 @@ bool FeVM::process_console_input()
 	}
 	catch( Sqrat::Exception e )
 	{
-		std::cerr << "Error: " << script << " - " << e.Message() << std::endl;
+		FeLog() << "Error: " << script << " - " << e.Message() << std::endl;
 	}
 
 	return retval;
@@ -1066,7 +1069,7 @@ bool FeVM::on_tick()
 		}
 		catch( Exception &e )
 		{
-			std::cout << "Script Error in tick function: " << (*itr).m_fn << " - "
+			FeLog() << "Script Error in tick function: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
 
 			// Knock out this entry.   If it causes a script error, we don't
@@ -1090,9 +1093,7 @@ void FeVM::on_transition(
 {
 	using namespace Sqrat;
 
-#ifdef FE_DEBUG
-	std::cout << "[Transition] type=" << transitionTypeStrings[t] << ", var=" << var << std::endl;
-#endif // FE_DEBUG
+	FeDebug() << "[Transition] type=" << transitionTypeStrings[t] << ", var=" << var << std::endl;
 
 	sf::Clock ttimer;
 
@@ -1132,7 +1133,7 @@ void FeVM::on_transition(
 			}
 			catch( Exception &e )
 			{
-				std::cout << "Script Error in transition function: " << (*itr)->m_fn
+				FeLog() << "Script Error in transition function: " << (*itr)->m_fn
 						<< " - " << e.Message() << std::endl;
 			}
 
@@ -1197,7 +1198,7 @@ bool FeVM::script_handle_event( FeInputMap::Command c )
 		}
 		catch( Exception &e )
 		{
-			std::cout << "Script Error in signal handler: " << (*itr).m_fn << " - "
+			FeLog() << "Script Error in signal handler: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
 		}
 	}
@@ -1358,7 +1359,7 @@ void FePresent::script_process_magic_strings( std::string &str,
 		}
 		catch( Sqrat::Exception &e )
 		{
-			std::cout << "Script Error in magic string function: "
+			FeLog() << "Script Error in magic string function: "
 				<< magic << " - "
 				<< e.Message() << std::endl;
 		}
@@ -1550,7 +1551,7 @@ void FeVM::script_run_config_function(
 		catch( Sqrat::Exception &e )
 		{
 			return_message = "Script error";
-			std::cout << "Script Error in " << script_file
+			FeLog() << "Script Error in " << script_file
 				<< " - " << e.Message() << std::endl;
 		}
 
@@ -1560,7 +1561,7 @@ void FeVM::script_run_config_function(
 	else
 	{
 		return_message = "Script error: Function not found";
-		std::cout << "Script Error in " << script_file
+		FeLog() << "Script Error in " << script_file
 			<< " - Function not found: " << func_name << std::endl;
 	}
 
@@ -1965,7 +1966,7 @@ void FeVM::do_nut( const char *script_file )
 
 	if ( !internal_do_nut( path, script_file ) )
 	{
-		std::cerr << "Error, file not found: " << path
+		FeLog() << "Error, file not found: " << path
 			<< " (" << script_file << ")" << std::endl;
 	}
 }
@@ -2033,7 +2034,7 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 	{
 		// the better thing to do would be to raise a squirrel error here
 		//
-		std::cerr << "game_info(): index out of range" << std::endl;
+		FeLog() << "game_info(): index out of range" << std::endl;
 		return "";
 	}
 	else if ( index == FeRomInfo::LAST_INDEX )
@@ -2237,7 +2238,7 @@ void FeVM::cb_signal( const char *sig )
 		break;
 
 	default:
-		std::cerr << "Error, unrecognized signal: " << sig << std::endl;
+		FeLog() << "Error, unrecognized signal: " << sig << std::endl;
 		break;
 
 	}

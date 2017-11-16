@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-17 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -51,35 +51,54 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font,
-			bool &process_console );
+			bool &process_console,
+			std::string &log_file,
+			FeLogLevel &log_level );
 
 int main(int argc, char *argv[])
 {
-	std::string config_path, cmdln_font;
+	std::string config_path, cmdln_font, log_file;
 	bool launch_game = false;
 	bool process_console = false;
+	FeLogLevel log_level = FeLog_Info;
 
-	process_args( argc, argv, config_path, cmdln_font, process_console );
+	process_args( argc, argv, config_path, cmdln_font, process_console, log_file, log_level );
+
+	FeSettings feSettings( config_path, cmdln_font );
+
+	//
+	// Setup logging
+	//
+#if defined(SFML_SYSTEM_WINDOWS) && !defined(WINDOWS_CONSOLE)
+	if ( log_file.empty() ) // on windows non-console version, write log to "last_run.log" by default
+	{
+		log_file = feSettings.get_config_dir();
+		log_file += "last_run.log";
+	}
+#endif
+	//
+	// If a log file was supplied at the command line, write to that log file
+	// If no file is supplied, logging is to stdout
+	//
+	if ( !log_file.empty() )
+		fe_set_log_file( clean_path( log_file ) );
+
+	// The following call also initializes the log callback for ffmpeg and gameswf
+	//
+	fe_set_log_level( log_level );
 
 	//
 	// Run the front-end
 	//
-	std::cout << "Starting " << FE_NAME << " " << FE_VERSION
-			<< " (" << get_OS_string() << ")";
-
-	if ( process_console )
-		std::cout << ", Script Console Enabled";
-
-	std::cout << std::endl;
-
-	FeSettings feSettings( config_path, cmdln_font );
+	fe_print_version();
+	FeLog() << std::endl;
 
 	feSettings.load();
 
 	std::string def_font_path, def_font_file;
 	if ( feSettings.get_font_file( def_font_path, def_font_file ) == false )
 	{
-		std::cerr << "Error, could not find default font."  << std::endl;
+		FeLog() << "Error, could not find default font."  << std::endl;
 		return 1;
 	}
 
@@ -238,7 +257,7 @@ int main(int argc, char *argv[])
 
 					if ( index < 0 )
 					{
-						std::cerr << "Error resolving shortcut, Display `" << name << "' not found." << std::endl;
+						FeLog() << "Error resolving shortcut, Display `" << name << "' not found." << std::endl;
 					}
 					else
 					{
@@ -397,6 +416,9 @@ int main(int argc, char *argv[])
 				//
 				if ( feVM.script_handle_event( c ) )
 				{
+					FeDebug() << "Command intercepted by script handler: "
+						<< FeInputMap::commandStrings[c] << std::endl;
+
 					redraw=true;
 					continue;
 				}
@@ -448,6 +470,9 @@ int main(int argc, char *argv[])
 			//
 			if ( feVM.script_handle_event( c ) )
 			{
+				FeDebug() << "Command intercepted by script handler: "
+					<< FeInputMap::commandStrings[c] << std::endl;
+
 				redraw=true;
 				continue;
 			}
@@ -484,6 +509,8 @@ int main(int argc, char *argv[])
 			//
 			// Default command handling
 			//
+			FeDebug() << "Handling command: " << FeInputMap::commandStrings[c] << std::endl;
+
 			soundsys.sound_event( c );
 			if ( feVM.handle_event( c ) )
 				redraw = true;
@@ -960,5 +987,6 @@ int main(int argc, char *argv[])
 	soundsys.stop();
 	feSettings.save_state();
 
+	FeDebug() << "Attract-Mode ended normally" << std::endl;
 	return 0;
 }

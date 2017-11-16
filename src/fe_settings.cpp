@@ -312,13 +312,13 @@ void FeSettings::load()
 
 	if (( FE_DATA_PATH != NULL ) && ( !directory_exists( FE_DATA_PATH ) ))
 	{
-		std::cerr << "Warning: Attract-Mode was compiled to look for its default configuration files in: "
+		FeLog() << "Warning: Attract-Mode was compiled to look for its default configuration files in: "
 			<< FE_DATA_PATH << ", which is not available." << std::endl;
 	}
 
 	if ( load_from_file( filename ) == false )
 	{
-		std::cout << "Config file not found: " << filename << ", performing initial setup." << std::endl;
+		FeLog() << "Config file not found: " << filename << ", performing initial setup." << std::endl;
 
 		//
 		// If there is no config file, then we do some initial setting up of the FE here, prompt
@@ -347,7 +347,7 @@ void FeSettings::load()
 				//
 				if ( !file_exists( to ) )
 				{
-					std::cout << "Copying: '" << from << "' to '" << to_path << "'" << std::endl;
+					FeLog() << "Copying: '" << from << "' to '" << to_path << "'" << std::endl;
 
 					std::ifstream src( from.c_str() );
 					std::ofstream dst( to.c_str() );
@@ -358,7 +358,7 @@ void FeSettings::load()
 	}
 	else
 	{
-		std::cout << "Config: " << filename << std::endl;
+		FeLog() << "Config: " << filename << std::endl;
 
 		if ( m_language.empty() )
 			m_language = "en";
@@ -619,7 +619,7 @@ void FeSettings::init_display()
 		return;
 	}
 
-	std::cout << std::endl << "*** Initializing display: '" << get_current_display_title() << "'" << std::endl;
+	FeLog() << std::endl << "*** Initializing display: '" << get_current_display_title() << "'" << std::endl;
 
 	std::string stat_path;
 	if ( m_track_usage )
@@ -647,7 +647,7 @@ void FeSettings::init_display()
 				user_path,
 				stat_path,
 				m_displays[m_current_display] ) == false )
-		std::cerr << "Error opening romlist: " << romlist_name << std::endl;
+		FeLog() << "Error opening romlist: " << romlist_name << std::endl;
 
 	//
 	// Construct our display index views here, for lack of a better spot
@@ -1064,7 +1064,7 @@ bool FeSettings::get_path(
 		}
 		else
 		{
-			std::cerr << "Error loading screensaver: " << FE_SCREENSAVER_FILE
+			FeLog() << "Error loading screensaver: " << FE_SCREENSAVER_FILE
 					<< std::endl;
 			return false;
 		}
@@ -1518,7 +1518,7 @@ bool FeSettings::load_game_extras(
 			}
 
 			if ( game_extra_strings[i] == NULL )
-				std::cerr << " ! Unrecognized game setting: " << s << " " << v << std::endl;
+				FeLog() << " ! Unrecognized game setting: " << s << " " << v << std::endl;
 		}
 	}
 
@@ -1850,7 +1850,7 @@ bool FeSettings::get_sound_file( FeInputMap::Command c, std::string &s, bool ful
 		{
 			if ( !internal_resolve_config_file( m_config_path, s, FE_SOUND_SUBDIR, filename ) )
 			{
-				std::cerr << "Sound file not found: " << filename << std::endl;
+				FeLog() << "Sound file not found: " << filename << std::endl;
 				return false;
 			}
 		}
@@ -2002,7 +2002,7 @@ void FeSettings::run( int &minimum_run_seconds,
 
 		romfilename = rom_path + rom_name + extension;
 
-		std::cerr << "Warning: could not locate rom.  Best guess: "
+		FeLog() << "Warning: could not locate rom.  Best guess: "
 				<< romfilename << std::endl;
 	}
 
@@ -2042,16 +2042,16 @@ void FeSettings::run( int &minimum_run_seconds,
 	}
 
 	if ( !work_dir.empty() )
-		std::cout << " - Working directory: " << work_dir << std::endl;
+		FeLog() << " - Working directory: " << work_dir << std::endl;
 
-	std::cout << "*** Running: " << command << " " << args << std::endl;
+	FeLog() << "*** Running: " << command << " " << args << std::endl;
 
 	std::string exit_hotkey = emu->get_info( FeEmulatorInfo::Exit_hotkey );
 
 #if defined(SFML_SYSTEM_LINUX) && defined(USE_XLIB)
 	if ( !exit_hotkey.empty() && ( m_window_mode == Fullscreen ))
 	{
-		std::cout << " ! NOTE: The 'Exit Hotkey' setting is not supported when running Attract-Mode in 'Fullscreen Mode' on Linux."
+		FeLog() << " ! NOTE: The 'Exit Hotkey' setting is not supported when running Attract-Mode in 'Fullscreen Mode' on Linux."
 			<< "  Configured exit hotkey of '" << exit_hotkey << "' is being ignored." << std::endl;
 
 		exit_hotkey.clear();
@@ -3010,9 +3010,7 @@ void FeSettings::save() const
 	std::string filename( m_config_path );
 	filename += FE_CFG_FILE;
 
-#ifdef FE_DEBUG
-   std::cout << "Writing config to: " << filename << std::endl;
-#endif
+	FeLog() << "Writing config to: " << filename << std::endl;
 
 	std::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
@@ -3223,7 +3221,7 @@ void FeSettings::get_plugin_full_path(
 	}
 
 
-	std::cerr << "Plugin file not found: " << label << std::endl;
+	FeLog() << "Plugin file not found: " << label << std::endl;
 }
 
 void FeSettings::get_plugin_full_path( int id,
@@ -3244,7 +3242,7 @@ void FeSettings::internal_load_language( const std::string &lang )
 	if ( internal_resolve_config_file( m_config_path, fname, FE_LANGUAGE_SUBDIR, lang + FE_LANGUAGE_FILE_EXTENSION ) )
 		m_resourcemap.load_from_file( fname, ";" );
 	else
-		std::cerr << "Error loading language resource file: " << lang << std::endl;
+		FeLog() << "Error loading language resource file: " << lang << std::endl;
 }
 
 void FeSettings::set_language( const std::string &s )

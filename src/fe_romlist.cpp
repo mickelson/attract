@@ -48,7 +48,7 @@ void FeRomListSorter::init_title_rex( const std::string &re_mask )
 		(const SQChar *)re_mask.c_str(), &err );
 
 	if ( !m_rex )
-		std::cout << "Error compiling regular expression \""
+		FeLog() << "Error compiling regular expression \""
 			<< re_mask << "\": " << err << std::endl;
 }
 
@@ -363,7 +363,7 @@ bool FeRomList::load_romlist( const std::string &path,
 			(*it).load_stats( stat_path );
 	}
 
-	std::cout << " - Loaded master romlist '" << m_romlist_name
+	FeLog() << " - Loaded master romlist '" << m_romlist_name
 			<< "' in " << load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << m_list.size() << " entries kept, " << m_global_filtered_out_count
 			<< " discarded)" << std::endl;
@@ -448,7 +448,7 @@ void FeRomList::create_filters(
 		}
 	}
 
-	std::cout << " - Constructed " << filters_count << " filters in "
+	FeLog() << " - Constructed " << filters_count << " filters in "
 			<< load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << filters_count * m_list.size() << " comparisons)" << std::endl;
 }

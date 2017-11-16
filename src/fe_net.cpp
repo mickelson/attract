@@ -21,6 +21,7 @@
  */
 
 #include "fe_net.hpp"
+#include "fe_base.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -83,7 +84,7 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 		std::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
 		if ( !outfile.is_open() )
 		{
-			std::cerr << " ! Unable to open file for writing: "
+			FeLog() << " ! Unable to open file for writing: "
 				<< m_filename << std::endl;
 			return false;
 		}
@@ -221,7 +222,7 @@ void FeNetWorker::work_process()
 		if (( status != sf::Http::Response::Ok )
 			&& ( status != sf::Http::Response::NotFound ))
 		{
-			std::cerr << " ! Error processing request. Status code: "
+			FeLog() << " ! Error processing request. Status code: "
 				<< status << " (" << err_req << ")" << std::endl;
 		}
 

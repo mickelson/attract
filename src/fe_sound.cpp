@@ -142,7 +142,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 #ifndef NO_MOVIE
 		if ( !m_sound.openFromArchive( path, fn ) )
 		{
-			std::cout << "Error loading sound file from archive: "
+			FeLog() << "Error loading sound file from archive: "
 				<< path << " (" << fn << ")" << std::endl;
 			m_file_name = "";
 			return;
@@ -152,7 +152,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 
 		if ( !m_zip.open( fn ) )
 		{
-			std::cout << "Error loading sound file from archive: "
+			FeLog() << "Error loading sound file from archive: "
 				<< path << " (" << fn << ")" << std::endl;
 			m_file_name = "";
 			return;
@@ -160,7 +160,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 
 		if ( !m_sound.openFromStream( m_zip ) )
 		{
-			std::cout << "Error loading sound file: " << fn
+			FeLog() << "Error loading sound file: " << fn
 				<< std::endl;
 			m_file_name = "";
 			return;
@@ -174,7 +174,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 		std::string file_to_load = path + fn;
 		if ( !m_sound.openFromFile( file_to_load ) )
 		{
-			std::cout << "Error loading sound file: " << file_to_load << std::endl;
+			FeLog() << "Error loading sound file: " << file_to_load << std::endl;
 			m_file_name = "";
 			return;
 		}

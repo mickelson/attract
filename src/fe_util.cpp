@@ -821,7 +821,7 @@ bool run_program( const std::string &prog,
 
 	if ( ret == false )
 	{
-		std::cerr << "Error executing command: '" << comstr << "'" << std::endl;
+		FeLog() << "Error executing command: '" << comstr << "'" << std::endl;
 		return false;
 	}
 
@@ -885,7 +885,7 @@ bool run_program( const std::string &prog,
 			break;
 
 		default:
-			std::cerr << "Unexpected failure waiting on process" << std::endl;
+			FeLog() << "Unexpected failure waiting on process" << std::endl;
 			keep_wait=false;
 			break;
 		}
@@ -915,13 +915,13 @@ bool run_program( const std::string &prog,
 
 	int mypipe[2] = { 0, 0 }; // mypipe[0] = read end, mypipe[1] = write end
 	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
-		std::cerr << "Error, pipe() failed" << std::endl;
+		FeLog() << "Error, pipe() failed" << std::endl;
 
 	pid_t pid = fork();
 	switch (pid)
 	{
 	case -1:
-		std::cerr << "Error, fork() failed" << std::endl;
+		FeLog() << "Error, fork() failed" << std::endl;
 		if ( mypipe[0] )
 		{
 			close( mypipe[0] );
@@ -937,12 +937,12 @@ bool run_program( const std::string &prog,
 		}
 
 		if ( !work_dir.empty() && ( chdir( work_dir.c_str() ) != 0 ) )
-			std::cerr << "Warning, chdir(" << work_dir << ") failed.";
+			FeLog() << "Warning, chdir(" << work_dir << ") failed.";
 
 		execvp( prog.c_str(), arg_list );
 
 		// execvp doesn't return unless there is an error.
-		std::cerr << "Error executing: " << prog << " " << args << std::endl;
+		FeLog() << "Error executing: " << prog << " " << args << std::endl;
 		_exit(127);
 
 	default: // parent process
@@ -1000,7 +1000,7 @@ bool run_program( const std::string &prog,
 						sf::sleep( sf::milliseconds( 100 ) );
 						if ( kill( pid, 0 ) == 0 )
 						{
-							std::cout << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
+							FeLog() << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
 							kill( pid, SIGTERM );
 
 
@@ -1021,7 +1021,7 @@ bool run_program( const std::string &prog,
 							//
 							if ( kill( pid, 0 ) == 0 )
 							{
-								std::cout << " - Timeout on SIGTERM after " << TERM_TIMEOUT
+								FeLog() << " - Timeout on SIGTERM after " << TERM_TIMEOUT
 									<< " ms, sending SIGKILL signal to process " << pid << std::endl;
 
 								kill( pid, SIGKILL );
@@ -1038,7 +1038,7 @@ bool run_program( const std::string &prog,
 				else
 				{
 					if ( w < 0 )
-						std::cerr << " ! error returned by wait_pid(): "
+						FeLog() << " ! error returned by wait_pid(): "
 							<< strerror( errno ) << std::endl;
 
 					break; // leave do/while loop

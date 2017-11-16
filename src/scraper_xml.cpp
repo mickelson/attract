@@ -195,17 +195,17 @@ void romlist_console_report( FeRomInfoListType &rl )
 	FeRomInfoListType::iterator itr;
 	for ( itr=rl.begin(); itr!=rl.end(); ++itr )
 	{
-		std::cout << " > " << std::left << std::setw( 25 )
+		FeLog() << " > " << std::left << std::setw( 25 )
 			<< truncate( *itr, FeRomInfo::Romname, 25 ) << " ==> "
 			<< std::setw( 25 )
 			<< truncate( *itr, FeRomInfo::Title, 25 );
 
 		if ( (*itr).get_info( FeRomInfo::BuildScore ).empty() )
-			std::cout << std::endl;
+			FeLog() << std::endl;
 		else
-			std::cout << " [" << std::right << std::setw( 3 )
-			<< (*itr).get_info( FeRomInfo::BuildScore ) << "]"
-			<< std::endl;
+			FeLog() << " [" << std::right << std::setw( 3 )
+				<< (*itr).get_info( FeRomInfo::BuildScore ) << "]"
+				<< std::endl;
 	}
 }
 
@@ -253,8 +253,8 @@ bool my_parse_callback( const char *buff, void *opaque )
 	if ( XML_Parse( ds->parser, buff,
 			strlen(buff), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml output:"
-					<< buff << std::endl;
+		FeLog() << "Error parsing xml output:"
+			<< buff << std::endl;
 	}
 	else
 		ds->parsed_xml = true;
@@ -629,15 +629,15 @@ void FeListXMLParser::post_parse()
 
 	if ( !m_discarded.empty() )
 	{
-		std::cout << " - Discarded " << m_discarded.size()
+		FeLog() << " - Discarded " << m_discarded.size()
 				<< " entries based on xml info: ";
 		std::vector<FeRomInfoListType::iterator>::iterator itr;
 		for ( itr = m_discarded.begin(); itr != m_discarded.end(); ++itr )
 		{
-			std::cout << (*(*itr)).get_info( FeRomInfo::Romname ) << " ";
+			FeLog() << (*(*itr)).get_info( FeRomInfo::Romname ) << " ";
 			m_ctx.romlist.erase( (*itr) );
 		}
-		std::cout << std::endl;
+		FeLog() << std::endl;
 	}
 }
 
@@ -680,7 +680,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 	std::ifstream myfile( filename.c_str() );
 	if ( !myfile.is_open() )
 	{
-		std::cerr << "Error opening file: " << filename << std::endl;
+		FeLog() << "Error opening file: " << filename << std::endl;
 		return false;
 	}
 
@@ -698,7 +698,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 		if ( XML_Parse( parser, line.c_str(),
 				line.size(), XML_FALSE ) == XML_STATUS_ERROR )
 		{
-			std::cout << "Error parsing xml:"
+			FeLog() << "Error parsing xml:"
 				<< line << std::endl;
 			ret_val = false;
 			break;
@@ -984,16 +984,16 @@ bool FeListSoftwareParser::parse( const std::string &prog,
 		}
 	}
 
-	std::cout << " * Calculated CRCs for " << m_crc_map.size() << " files in "
+	FeLog() << " * Calculated CRCs for " << m_crc_map.size() << " files in "
 		<< my_timer.getElapsedTime().asMilliseconds() << "ms." << std::endl;
 
 	if ( system_name.empty() )
 	{
-		std::cerr << " * Error: No system identifier found that is recognized by -listxml" << std::endl;
+		FeLog() << " * Error: No system identifier found that is recognized by -listxml" << std::endl;
 		return false;
 	}
 
-	std::cout << " - Obtaining -listsoftware info ["
+	FeLog() << " - Obtaining -listsoftware info ["
 		<< system_name << "]" << std::endl;
 
 	// Now get the individual game -listsoftware settings
@@ -1002,7 +1002,7 @@ bool FeListSoftwareParser::parse( const std::string &prog,
 
 	if ( !retval )
 	{
-		std::cout << " * Error: No XML output found, command: " << prog << " "
+		FeLog() << " * Error: No XML output found, command: " << prog << " "
 					<< system_name + " -listsoftware" << std::endl;
 	}
 
@@ -1064,7 +1064,7 @@ bool FeGameDBPlatformListParser::parse( const std::string &data )
 	if ( XML_Parse( parser, data.c_str(),
 			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml." << std::endl;
+		FeLog() << "Error parsing xml." << std::endl;
 		ret_val = false;
 	}
 
@@ -1160,7 +1160,7 @@ bool FeGameDBPlatformParser::parse( const std::string &data )
 	if ( XML_Parse( parser, data.c_str(),
 			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml." << std::endl;
+		FeLog() << "Error parsing xml." << std::endl;
 		ret_val = false;
 	}
 
@@ -1444,7 +1444,7 @@ bool FeGameDBParser::parse( const std::string &data )
 	if ( XML_Parse( parser, data.c_str(),
 			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml." << std::endl;
+		FeLog() << "Error parsing xml." << std::endl;
 		ret_val = false;
 	}
 

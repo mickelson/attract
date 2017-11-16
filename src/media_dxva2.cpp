@@ -38,7 +38,7 @@ enum AVPixelFormat get_format_dxva2( AVCodecContext *codec_ctx, const enum AVPix
 
 			if ( ret < 0 )
 			{
-				std::cerr << "Error creating dxva2 hardware device context" << std::endl;
+				FeLog() << "Error creating dxva2 hardware device context" << std::endl;
 				continue;
 			}
 
@@ -71,7 +71,7 @@ enum AVPixelFormat get_format_dxva2( AVCodecContext *codec_ctx, const enum AVPix
 
 			if ( ret < 0 )
 			{
-				std::cerr << "Error initializing dxva2 hardware frame context" << std::endl;
+				FeLog() << "Error initializing dxva2 hardware frame context" << std::endl;
 				av_buffer_unref( &device_ctx );
 				av_buffer_unref( &frames_ctx );
 				continue;

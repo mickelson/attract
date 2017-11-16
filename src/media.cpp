@@ -22,6 +22,7 @@
 
 #include "media.hpp"
 #include "zip.hpp"
+#include "fe_base.hpp"
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
 
@@ -74,11 +75,7 @@ extern "C"
 
 void print_ffmpeg_version_info()
 {
-	std::cout << "Using "
-		<< (( LIBAVCODEC_VERSION_MICRO >= 100 ) ? "FFmpeg" : "Libav" )
-		<< " for Audio and Video." << std::endl
-
-		<< "avcodec " << LIBAVCODEC_VERSION_MAJOR
+	FeLog() << "avcodec " << LIBAVCODEC_VERSION_MAJOR
 		<< '.' << LIBAVCODEC_VERSION_MINOR
 		<< '.' << LIBAVCODEC_VERSION_MICRO
 
@@ -91,11 +88,11 @@ void print_ffmpeg_version_info()
 		<< '.' << LIBSWSCALE_VERSION_MICRO;
 
 #ifdef DO_RESAMPLE
-	std::cout << RESAMPLE_LIB_STR << RESAMPLE_VERSION_MAJOR
+	FeLog() << RESAMPLE_LIB_STR << RESAMPLE_VERSION_MAJOR
 		<< '.' << RESAMPLE_VERSION_MINOR
 		<< '.' << RESAMPLE_VERSION_MICRO;
 #endif
-	std::cout << std::endl;
+	FeLog() << std::endl;
 }
 
 #define MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
@@ -402,7 +399,7 @@ enum AVPixelFormat hw_get_output_format( AVBufferRef *hw_frames_ctx )
 			&p, 0 );
 
 	if ( e < 0 )
-		std::cerr << "Error getting supported hardware formats." << std::endl;
+		FeLog() << "Error getting supported hardware formats." << std::endl;
 	else
 		retval = *p;
 
@@ -423,21 +420,20 @@ bool FeVideoImp::hw_retrieve_data( AVFrame *f )
 	if ( hwaccel_output_format == AV_PIX_FMT_NONE )
 	{
 		hwaccel_output_format = hw_get_output_format( codec_ctx->hw_frames_ctx );
-#ifdef FE_DEBUG
-		std::cout << "HWAccel output pixel format: "
+
+		FeDebug() << "HWAccel output pixel format: "
 			<< av_pix_fmt_desc_get( hwaccel_output_format )->name << std::endl;
-#endif
 	}
 
 	sw_frame->format = hwaccel_output_format;
 
 	int err = av_hwframe_transfer_data( sw_frame, f, 0 );
 	if ( err < 0 )
-		std::cerr << "Error transferring hardware frame data." << std::endl;
+		FeLog() << "Error transferring hardware frame data." << std::endl;
 
 	err = av_frame_copy_props( sw_frame, f );
 	if ( err < 0 )
-		std::cerr << "Error copying hardware frame properties." << std::endl;
+		FeLog() << "Error copying hardware frame properties." << std::endl;
 
 	av_frame_unref( f );
 	av_frame_move_ref( f, sw_frame );
@@ -503,7 +499,7 @@ void FeVideoImp::preload()
 				AV_PIX_FMT_RGBA, 1);
 		if (ret < 0)
 		{
-			std::cerr << "Error allocating image during preload" << std::endl;
+			FeLog() << "Error allocating image during preload" << std::endl;
 			return;
 		}
 	}
@@ -537,7 +533,7 @@ void FeVideoImp::preload()
 
 			if ( len < 0 )
 			{
-				std::cerr << "Error decoding video" << std::endl;
+				FeLog() << "Error decoding video" << std::endl;
 				keep_going=false;
 			}
 
@@ -560,7 +556,7 @@ void FeVideoImp::preload()
 
 				if ( !sws_ctx )
 				{
-					std::cerr << "Error allocating SwsContext during preload" << std::endl;
+					FeLog() << "Error allocating SwsContext during preload" << std::endl;
 					free_frame( raw_frame );
 					free_packet( packet );
 					return;
@@ -593,7 +589,7 @@ void FeVideoImp::video_thread()
 
 	if ((!sws_ctx) || (!rgba_buffer[0]))
 	{
-		std::cerr << "Error initializing video thread" << std::endl;
+		FeLog() << "Error initializing video thread" << std::endl;
 		goto the_end;
 	}
 
@@ -707,7 +703,7 @@ void FeVideoImp::video_thread()
 					int len = avcodec_decode_video2( codec_ctx, raw_frame,
 							&got_frame, packet );
 					if ( len < 0 )
-						std::cerr << "Error decoding video" << std::endl;
+						FeLog() << "Error decoding video" << std::endl;
 
 					if ( got_frame )
 					{
@@ -762,18 +758,15 @@ the_end:
 	if ( detached_frame )
 		free_frame( detached_frame );
 
-#ifdef FE_DEBUG
-
 	int total_shown = displayed + discarded;
 	int average = ( total_shown == 0 ) ? qscore_accum : ( qscore_accum / total_shown );
 
-	std::cout << "End Video Thread - " << m_parent->m_imp->m_format_ctx->filename << std::endl
+	FeDebug() << "End Video Thread - " << m_parent->m_imp->m_format_ctx->filename << std::endl
 				<< " - bit_rate=" << codec_ctx->bit_rate
 				<< ", width=" << codec_ctx->width << ", height=" << codec_ctx->height << std::endl
 				<< " - displayed=" << displayed << ", discarded=" << discarded << std::endl
 				<< " - average qscore=" << average
 				<< std::endl;
-#endif
 }
 
 FeMedia::FeMedia( Type t )
@@ -799,11 +792,6 @@ void FeMedia::init_av()
 	{
 		avcodec_register_all();
 		av_register_all();
-
-#ifndef FE_DEBUG
-		av_log_set_level(AV_LOG_FATAL);
-#endif
-
 		do_init=false;
 	}
 }
@@ -914,7 +902,7 @@ bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
 
 	if ( avformat_open_input( &(m_imp->m_format_ctx), name.c_str(), NULL, NULL ) < 0 )
 	{
-		std::cerr << "Error opening input file: " << name << std::endl;
+		FeLog() << "Error opening input file: " << name << std::endl;
 		return false;
 	}
 
@@ -964,8 +952,18 @@ bool FeMedia::openFromArchive( const std::string &archive,
 	FeZipStream *z = new FeZipStream( archive );
 	if ( !z->open( name ) )
 	{
-		delete z;
-		return false;
+		// Error opening specified filename. Try to correct
+		// in case filname is in a subdir of the archive
+		std::string temp;
+		if ( get_archive_filename_with_base( temp, archive, name ) )
+		{
+			z->open( temp );
+		}
+		else
+		{
+			delete z;
+			return false;
+		}
 	}
 
 	m_imp->m_format_ctx = avformat_alloc_context();
@@ -986,7 +984,7 @@ bool FeMedia::openFromArchive( const std::string &archive,
 
 	if ( avformat_open_input( &(m_imp->m_format_ctx), name.c_str(), NULL, NULL ) < 0 )
 	{
-		std::cerr << "Error opening input file: " << name << std::endl;
+		FeLog() << "Error opening input file: " << name << std::endl;
 		return false;
 	}
 
@@ -997,7 +995,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 {
 	if ( avformat_find_stream_info( m_imp->m_format_ctx, NULL ) < 0 )
 	{
-		std::cerr << "Error finding stream information in input file: "
+		FeLog() << "Error finding stream information in input file: "
 					<< m_imp->m_format_ctx->filename << std::endl;
 		return false;
 	}
@@ -1016,7 +1014,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 
 			if ( avcodec_open2( codec_ctx, dec, NULL ) < 0 )
 			{
-				std::cerr << "Could not open audio decoder for file: "
+				FeLog() << "Could not open audio decoder for file: "
 						<< m_imp->m_format_ctx->filename << std::endl;
 			}
 			else
@@ -1044,7 +1042,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 #ifndef DO_RESAMPLE
 				if ( codec_ctx->sample_fmt != AV_SAMPLE_FMT_S16 )
 				{
-					std::cerr << "Warning: Attract-Mode was compiled without an audio resampler (libswresample or libavresample)." << std::endl
+					FeLog() << "Warning: Attract-Mode was compiled without an audio resampler (libswresample or libavresample)." << std::endl
 						<< "The audio format in " << m_imp->m_format_ctx->filename << " appears to need resampling.  It will likely sound like garbage." << std::endl;
 				}
 #endif
@@ -1061,7 +1059,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 
 		if ( stream_id < 0 )
 		{
-			std::cout << "No video stream found, file: "
+			FeLog() << "No video stream found, file: "
 				<< m_imp->m_format_ctx->filename << std::endl;
 		}
 		else
@@ -1076,7 +1074,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 
 			if ( avcodec_open2( codec_ctx, dec, NULL ) < 0 )
 			{
-				std::cerr << "Could not open video decoder for file: "
+				FeLog() << "Could not open video decoder for file: "
 					<< m_imp->m_format_ctx->filename << std::endl;
 			}
 			else
@@ -1209,7 +1207,7 @@ bool FeMedia::onGetData( Chunk &data )
 						(m_audio->buffer + offset),
 						&bsize, packet) < 0 )
 			{
-				std::cerr << "Error decoding audio." << std::endl;
+				FeLog() << "Error decoding audio." << std::endl;
 				FeBaseStream::free_packet( packet );
 				return false;
 			}
@@ -1235,11 +1233,9 @@ bool FeMedia::onGetData( Chunk &data )
 		int len = avcodec_decode_audio4( m_audio->codec_ctx, frame, &got_frame, packet );
 		if ( len < 0 )
 		{
-#ifdef FE_DEBUG
 			char buff[256];
 			av_strerror( len, buff, 256 );
-			std::cerr << "Error decoding audio: " << buff << std::endl;
-#endif
+			FeDebug() << "Error decoding audio: " << buff << std::endl;
 		}
 
 		if ( got_frame )
@@ -1271,7 +1267,7 @@ bool FeMedia::onGetData( Chunk &data )
 					m_audio->resample_ctx = resample_alloc();
 					if ( !m_audio->resample_ctx )
 					{
-						std::cerr << "Error allocating audio format converter." << std::endl;
+						FeLog() << "Error allocating audio format converter." << std::endl;
 						FeBaseStream::free_packet( packet );
 						FeBaseStream::free_frame( frame );
 						return false;
@@ -1291,16 +1287,15 @@ bool FeMedia::onGetData( Chunk &data )
 					av_opt_set_int( m_audio->resample_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0 );
 					av_opt_set_int( m_audio->resample_ctx, "out_sample_rate", frame->sample_rate, 0 );
 
-#ifdef FE_DEBUG
-					std::cout << "Initializing resampler: in_sample_fmt="
+					FeDebug() << "Initializing resampler: in_sample_fmt="
 						<< av_get_sample_fmt_name( (AVSampleFormat)frame->format )
 						<< ", in_sample_rate=" << frame->sample_rate
 						<< ", out_sample_fmt=" << av_get_sample_fmt_name( AV_SAMPLE_FMT_S16 )
 						<< ", out_sample_rate=" << frame->sample_rate << std::endl;
-#endif
+
 					if ( resample_init( m_audio->resample_ctx ) < 0 )
 					{
-						std::cerr << "Error initializing audio format converter, input format="
+						FeLog() << "Error initializing audio format converter, input format="
 							<< av_get_sample_fmt_name( (AVSampleFormat)frame->format )
 							<< ", input sample rate=" << frame->sample_rate << std::endl;
 						FeBaseStream::free_packet( packet );
@@ -1340,7 +1335,7 @@ bool FeMedia::onGetData( Chunk &data )
 #endif
 					if ( out_samples < 0 )
 					{
-						std::cerr << "Error performing audio conversion." << std::endl;
+						FeLog() << "Error performing audio conversion." << std::endl;
 						FeBaseStream::free_packet( packet );
 						FeBaseStream::free_frame( frame );
 						break;

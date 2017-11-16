@@ -151,7 +151,7 @@ void FeRomInfo::update_stats( const std::string &path, int count_incr, int playe
 
 	if ( !myfile.is_open() )
 	{
-		std::cerr << "Error writing stat file: " << filename << std::endl;
+		FeLog() << "Error writing stat file: " << filename << std::endl;
 		return;
 	}
 
@@ -284,7 +284,7 @@ void FeRule::init()
 		(const SQChar *)m_filter_what.c_str(), &err );
 
 	if ( !m_rex )
-		std::cout << "Error compiling regular expression \""
+		FeLog() << "Error compiling regular expression \""
 			<< m_filter_what << "\": " << err << std::endl;
 }
 
@@ -1087,9 +1087,7 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 
 void FeEmulatorInfo::save( const std::string &filename ) const
 {
-#ifdef FE_DEBUG
-	std::cout << "Writing emulator config to: " << filename << std::endl;
-#endif
+	FeLog() << "Writing emulator config to: " << filename << std::endl;
 
 	std::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )

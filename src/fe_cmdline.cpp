@@ -29,7 +29,9 @@
 void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font,
-			bool &process_console )
+			bool &process_console,
+			std::string &log_file,
+			FeLogLevel &log_level )
 {
 	//
 	// Deal with command line arguments
@@ -54,7 +56,7 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cerr << "Error, no config directory specified with --config option." << std::endl;
+				FeLog() << "Error, no config directory specified with --config option." << std::endl;
 				exit(1);
 			}
 		}
@@ -69,9 +71,57 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cerr << "Error, no font name specified with --font option." << std::endl;
+				FeLog() << "Error, no font name specified with --font option." << std::endl;
 				exit(1);
 			}
+		}
+		else if ( strcmp( argv[next_arg], "--logfile" ) == 0 )
+		{
+			next_arg++;
+			if ( next_arg < argc )
+			{
+				log_file = argv[next_arg];
+				next_arg++;
+			}
+			else
+			{
+				FeLog() << "Error, no log file specified with --log option." << std::endl;
+				exit(1);
+			}
+		}
+		else if ( strcmp( argv[next_arg], "--loglevel" ) == 0 )
+		{
+			next_arg++;
+			if ( next_arg < argc )
+			{
+				if ( strcmp( argv[next_arg], "silent" ) == 0 )
+				{
+					log_level = FeLog_Silent;
+					next_arg++;
+				}
+				else if ( strcmp( argv[next_arg], "info" ) == 0 )
+				{
+					log_level = FeLog_Info;
+					next_arg++;
+				}
+				else if ( strcmp( argv[next_arg], "debug" ) == 0 )
+				{
+					log_level = FeLog_Debug;
+					next_arg++;
+				}
+				else
+				{
+					FeLog() << "Unreconized loglevel: " << argv[next_arg] << std::endl;
+					exit( 1 );
+				}
+			}
+			else
+			{
+				FeLog() << "Error, no log level specified with --loglevel option." << std::endl;
+				exit(1);
+			}
+
+			next_arg++;
 		}
 		else if (( strcmp( argv[next_arg], "-b" ) == 0 )
 				|| ( strcmp( argv[next_arg], "--build-romlist" ) == 0 ))
@@ -89,7 +139,7 @@ void process_args( int argc, char *argv[],
 
 			if ( next_arg == first_cmd_arg )
 			{
-				std::cerr << "Error, no target emulators specified with --build-romlist option."
+				FeLog() << "Error, no target emulators specified with --build-romlist option."
 							<<  std::endl;
 				exit(1);
 			}
@@ -108,7 +158,7 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cerr << "Error, no filename specified with --import-romlist option." << std::endl;
+				FeLog() << "Error, no filename specified with --import-romlist option." << std::endl;
 				exit(1);
 			}
 
@@ -131,7 +181,7 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cerr << "Error, no output filename specified with --output option." << std::endl;
+				FeLog() << "Error, no output filename specified with --output option." << std::endl;
 				exit(1);
 			}
 		}
@@ -157,7 +207,7 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cerr << "Error, no rule specified with --filter option." << std::endl;
+				FeLog() << "Error, no rule specified with --filter option." << std::endl;
 				exit(1);
 			}
 
@@ -180,7 +230,7 @@ void process_args( int argc, char *argv[],
 			}
 			else
 			{
-				std::cerr << "Error, no exception specified with --exception option." << std::endl;
+				FeLog() << "Error, no exception specified with --exception option." << std::endl;
 				exit(1);
 			}
 
@@ -202,7 +252,7 @@ void process_args( int argc, char *argv[],
 
 			if ( next_arg == first_cmd_arg )
 			{
-				std::cerr << "Error, no target emulators specified with --scrape-art option."
+				FeLog() << "Error, no target emulators specified with --scrape-art option."
 							<<  std::endl;
 				exit(1);
 			}
@@ -210,37 +260,13 @@ void process_args( int argc, char *argv[],
 		else if (( strcmp( argv[next_arg], "-v" ) == 0 )
 				|| ( strcmp( argv[next_arg], "--version" ) == 0 ))
 		{
-			std::cout << FE_NAME << " " << FE_VERSION << " ("
-				<< get_OS_string()
-				<< ", SFML " << SFML_VERSION_MAJOR << '.' << SFML_VERSION_MINOR
-#ifdef USE_FONTCONFIG
-				<< " +FontConfig"
-#endif
-#ifdef USE_XINERAMA
-				<< " +Xinerama"
-#endif
-#ifdef USE_GLES
-				<< " +GLES"
-#endif
-#ifndef NO_SWF
-				<< " +SWF"
-#endif
-#ifdef USE_LIBARCHIVE
-				<< " +7z"
-#endif
-				<< ") " << std::endl << std::endl;
-
-#ifdef NO_MOVIE
-			std::cout << "No Video, using SFML for Audio." << std::endl;
-#else
-			print_ffmpeg_version_info();
-#endif
-			std::cout << std::endl;
+			fe_print_version();
+			FeLog() << std::endl;
 
 			if ( sf::Shader::isAvailable() )
-				std::cout << "Shaders are available." << std::endl;
+				FeLog() << "Shaders are available." << std::endl;
 			else
-				std::cout << "Shaders are not available." << std::endl;
+				FeLog() << "Shaders are not available." << std::endl;
 
 			exit(0);
 		}
@@ -257,12 +283,12 @@ void process_args( int argc, char *argv[],
 			if (( strcmp( argv[next_arg], "-h" ) != 0 )
 				&& ( strcmp( argv[next_arg], "--help" ) != 0 ))
 			{
-				std::cerr << "Unrecognized command line option: "
+				FeLog() << "Unrecognized command line option: "
 					<< argv[next_arg] <<  std::endl;
 				retval=0;
 			}
 
-			std::cout << FE_COPYRIGHT << std::endl
+			FeLog() << FE_COPYRIGHT << std::endl
 				<< "Usage: " << argv[0] << " [option...]" << std::endl << std::endl
 				<< "ROMLIST IMPORT/BUILD OPTIONS:" << std::endl
 				<< "  -b, --build-romlist <emu> [emu(s)...]" << std::endl
@@ -291,6 +317,10 @@ void process_args( int argc, char *argv[],
 				<< "     Specify the configuration to use" << std::endl
 				<< "  -f, --font <font_name>" << std::endl
 				<< "     Specify the default font to use" << std::endl
+				<< "  --logfile <log_file>" << std::endl
+				<< "     Write log info to the specified file" << std::endl
+				<< "  --loglevel (silent,info,debug)" << std::endl
+				<< "     Set logging level" << std::endl
 #ifndef SFML_SYSTEM_WINDOWS
 				<< "  --console" << std::endl
 				<< "     Enable script console" << std::endl

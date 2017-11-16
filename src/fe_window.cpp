@@ -189,7 +189,7 @@ void FeWindow::initial_create()
 
 #ifdef USE_XINERAMA
 	if ( m_fes.get_info_bool( FeSettings::MultiMon ) && ( win_mode != FeSettings::Default ))
-		std::cout << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
+		FeLog() << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
 #endif
 
 	// Create window
