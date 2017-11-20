@@ -48,7 +48,7 @@ Attract-Mode is a graphical frontend for command line emulators such as MAME, ME
 <h4>Open Source, Cross Platform</h4>
 <ul>
 <li>Licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.
-<li>Runs on Windows, OS X and Linux (including <a href="https://github.com/mickelson/attract/wiki/Compiling-on-the-Raspberry-Pi-%28Raspbian-Jessie%29">Raspberry Pi</a>, <a href="http://forum.attractmode.org/index.php?topic=523.0">Odroid</a>).  It might work on FreeBSD and Android too, although no one we know has ever tried...
+<li>Runs on Windows, OS X and Linux (including <a href="https://github.com/mickelson/attract/wiki/Compiling-on-the-Raspberry-Pi-%28Raspbian-Jessie%29">Raspberry Pi</a>, <a href="http://forum.attractmode.org/index.php?topic=523.0">Odroid</a>).
 </ul>
 
 <h4>Easy Configuration</h4>
@@ -67,6 +67,7 @@ Attract-Mode is a graphical frontend for command line emulators such as MAME, ME
 <li>GLSL shader (vertex and fragment) support.</li>
 <li>Configurable screensaver and intro.</li>
 <li>Display layouts/skins from other frontends (Hyperspin, <a href="http://malafe.net">MaLa</a>, MameWah).</li>
+<li>Hardware accelerated video decoding (mmal on Raspberry Pi, dxva2 on Windows, vaapi on Linux)</li>
 </ul>
 
 <h4>Arcade Customizable</h4>
@@ -88,20 +89,22 @@ Attract-Mode is a graphical frontend for command line emulators such as MAME, ME
 <li>Automatically generate game lists from directory contents.</li>
 <li>Import game information from MAME/MESS -listxml and -listsoftware commands.</li>
 <li>Import game lists from Hyperspin and Mamewah/Wahcade!.</li>
-<li>Scrape missing game information and artworks from <a href="http://thegamesdb.net">thegamesdb.net</a>, <a href="http://mamedb.com">mamedb.com</a> and <a href="http://www.progettosnaps.net/">progretto-snaps.net</a>.</li>
+<li>Scrape missing game information and artworks from <a href="http://thegamesdb.net">thegamesdb.net</a>, <a href="http://mamedb.blu-ferret.co.uk">mamedb.blu-ferret.co.uk</a>, <a href="http://www.progettosnaps.net/">progretto-snaps.net</a> and <a href="http://adb.arcadeitalia.net">adb.arcadeitalia.net</a>.</li>
 <li>Catver.ini, <a href="http://nplayers.arcadebelgium.be/">nplayers.ini</a> and <a href="http://www.arcade-history.com/index.php?page=download">history.dat</a> file support.</li>
 <li>Track game usage statistics (times played, total time played).</li>
 <li>Steam support.</li>
 </ul>
 
 <ul>
-<li>Available localizations: English, French, German, Italian, Japanese, Korean, Spanish.</li>
+<li>Available localizations: Chinese, English, French, German, Italian, Japanese, Korean, Spanish.</li>
 </ul>
-<h4>Version 2.1 Documentation:</h4>
+        <h2><a name="docs" class="anchor" href="#docs"><span class="octicon octicon-link"></span></a>Documentation & Tools</h2>
 <ul>
-<li><a href="https://github.com/mickelson/attract/blob/v2.1.0/Readme.md">Readme.md</a></li>
-<li><a href="https://github.com/mickelson/attract/blob/v2.1.0/Compile.md">Compile.md</a></li>
-<li><a href="https://github.com/mickelson/attract/blob/v2.1.0/Layouts.md">Layouts.md</a></li>
+<li><a href="https://github.com/mickelson/attract/blob/v2.3.0/Readme.md">Attract-Mode Readme</a></li>
+<li><a href="https://github.com/mickelson/attract/blob/v2.3.0/Compile.md">Compile instructions</a></li>
+<li><a href="https://github.com/mickelson/attract/blob/v2.3.0/Layouts.md">Layouts manual</a></li>
+<li><a href="https://github.com/mickelson/attract/wiki">Project Wiki</a></li>
+<li><a href="http://goodiesfor.me/attractmode/builder/">Online Layout Editor</a> (<a href="http://forum.attractmode.org/index.php?topic=1697.0">forum thread</a>)</li>
 </ul>
 
 	<p>
@@ -114,7 +117,7 @@ Attract-Mode is a graphical frontend for command line emulators such as MAME, ME
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-      <p>Copyright &copy; 2013 <a href="mailto:andrew@attractmode.org">Andrew Mickelson</a>.  Published with <a href="http://pages.github.com">GitHub Pages</a>.</p>
+      <p>Copyright &copy; 2013-2017 <a href="mailto:andrew@attractmode.org">Andrew Mickelson</a>.  Published with <a href="http://pages.github.com">GitHub Pages</a>.</p>
       </footer>
     </div>
   </body>
