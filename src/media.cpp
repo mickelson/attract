@@ -970,11 +970,11 @@ bool FeMedia::openFromArchive( const std::string &archive,
 
 	size_t avio_ctx_buffer_size = 4096;
 	uint8_t *avio_ctx_buffer = (uint8_t *)av_malloc( avio_ctx_buffer_size
-			+ FF_INPUT_BUFFER_PADDING_SIZE );
+			+ AV_INPUT_BUFFER_PADDING_SIZE );
 
 	memset( avio_ctx_buffer + avio_ctx_buffer_size,
 		0,
-		FF_INPUT_BUFFER_PADDING_SIZE );
+		AV_INPUT_BUFFER_PADDING_SIZE );
 
 	m_imp->m_io_ctx = avio_alloc_context( avio_ctx_buffer,
 		avio_ctx_buffer_size, 0, z, &fe_zip_read,
@@ -1030,7 +1030,7 @@ bool FeMedia::internal_open( sf::Texture *outt )
 				//
 				m_audio->buffer = (sf::Int16 *)av_malloc(
 					MAX_AUDIO_FRAME_SIZE
-					+ FF_INPUT_BUFFER_PADDING_SIZE
+					+ AV_INPUT_BUFFER_PADDING_SIZE
 					+ codec_ctx->sample_rate );
 
 				sf::SoundStream::initialize(
