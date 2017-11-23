@@ -94,7 +94,7 @@ bool process_q_simple( FeNetQueue &q,
 	// Process the output queue from our worker threads
 	//
 	std::string aux;
-	while ( !( q.input_done() && q.output_done() ) )
+	while ( !q.all_done() )
 	{
 		int id;
 		std::string result;
@@ -594,7 +594,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	//
 	// Process the output queue from our worker threads
 	//
-	while ( !( q.input_done() && q.output_done() ) )
+	while ( !q.all_done() )
 	{
 		int id;
 		std::string result;
