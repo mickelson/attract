@@ -62,6 +62,7 @@ namespace {
 #endif
 	enum FeLogLevel g_log_level=FeLog_Info;
 
+#ifndef NO_MOVIE
 	void ffmpeg_log_callback( void *ptr, int level, const char *fmt, va_list vargs )
 	{
 		if ( level <= av_log_get_level() )
@@ -71,6 +72,7 @@ namespace {
 			FeLog() << "FFmpeg: " << buff;
 		}
 	}
+#endif
 
 	void gs_log_callback( bool error, const char *message )
 	{
