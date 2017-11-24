@@ -242,7 +242,8 @@ ifneq ($(NO_SWF),1)
   ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
    ifeq ($(USE_GLES),1)
-    LIBS += -ldl -lGLESv1_CM
+    GLES_LIB ?= -lGLESv1_CM
+    LIBS += -ldl $(GLES_LIB)
    else
     LIBS += -ldl -lGL
    endif
@@ -308,8 +309,15 @@ ifeq ($(USE_GLES),1)
  #
  # Hack for Raspberry Pi includes...
  #
- ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
-  CFLAGS += -I/opt/vc/include -L/opt/vc/lib
+ifneq ($(USE_VC4),1)
+  ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
+   CFLAGS += -I/opt/vc/include -L/opt/vc/lib
+   ifneq ("$(wildcard /opt/vc/lib/libbrcmGLESv2.so)","")
+    GLES_LIB := -lbrcmGLESv2
+   else
+    GLES_LIB := -lGLESv2
+   endif
+  endif
  endif
 endif
 
