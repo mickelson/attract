@@ -113,10 +113,6 @@ namespace
 				}
 			}
 		}
-#else // sfml < 2.2
-		for ( size_t i=0; i< sf::Joystick::Count; i++ )
-			g_joy_femap[i] = i;
-#endif
 
 		FeDebug() << "Joysticks after mapping: " << std::endl;
 		for ( i=0; i<sf::Joystick::Count; i++ )
@@ -124,6 +120,11 @@ namespace
 				<< sf::Joystick::getIdentification(i).name.toAnsiString()
 				<< ")" << std::endl;
 	}
+#else // sfml < 2.2
+		for ( size_t i=0; i< sf::Joystick::Count; i++ )
+			g_joyfemap[i] = i;
+#endif
+
 };
 
 // Needs to stay aligned with sf::Keyboard
