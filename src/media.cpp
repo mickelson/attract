@@ -73,6 +73,14 @@ extern "C"
 #include <queue>
 #include <iostream>
 
+//
+// As of Nov, 2017 RetroPie's default version of avcodec is old enough
+// that it doesn't define AV_INPUT_PADDING_SIZE
+//
+#ifndef AV_INPUT_BUFFER_PADDING_SIZE
+#define AV_INPUT_BUFFER_PADDING_SIZE FF_INPUT_BUFFER_PADDING_SIZE
+#endif
+
 void print_ffmpeg_version_info()
 {
 	FeLog() << "avcodec " << LIBAVCODEC_VERSION_MAJOR
