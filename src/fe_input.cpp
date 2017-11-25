@@ -119,12 +119,11 @@ namespace
 			FeDebug() << "ID: " << i << " => Joy" << g_joyfemap[i] << "("
 				<< sf::Joystick::getIdentification(i).name.toAnsiString()
 				<< ")" << std::endl;
-	}
 #else // sfml < 2.2
 		for ( size_t i=0; i< sf::Joystick::Count; i++ )
 			g_joyfemap[i] = i;
 #endif
-
+	}
 };
 
 // Needs to stay aligned with sf::Keyboard
