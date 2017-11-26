@@ -319,6 +319,9 @@ bool FeWindow::run()
 		// Wait for focus to return
 		//
 		bool done_wait=false;
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+		done_wait = hasFocus();
+#endif
 		while ( !done_wait && isOpen() )
 		{
 			sf::Event ev;
