@@ -40,13 +40,19 @@ public:
 		Unsupported=-1,
 		Keyboard=0,
 		Mouse=1,
-		Joystick0=2 // up to sf::Joystick::Count joysticks supported starting from Joystick0
+		Touch=2,
+		Joystick0=3 // up to sf::Joystick::Count joysticks supported starting from Joystick0
 	};
 
 	enum MouseCode
 	{
 		MouseUp, MouseDown, MouseLeft, MouseRight,
 		MouseWheelUp, MouseWheelDown, MouseBLeft, MouseBRight, MouseBMiddle, MouseBX1, MouseBX2
+	};
+
+	enum TouchCode
+	{
+		SwipeUp, SwipeDown, SwipeLeft, SwipeRight, Tap
 	};
 
 	enum JoyCode
@@ -93,6 +99,7 @@ public:
 
 private:
 	static const char *mouseStrings[];
+	static const char *touchStrings[];
 	static const char *joyStrings[];
 
 	Type m_type;

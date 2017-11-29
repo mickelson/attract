@@ -32,8 +32,19 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/System/Vector2.hpp>
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 )) // touch support sfml >= 2.2
+#include <SFML/Window/Touch.hpp>
+#endif
+
 namespace
 {
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 )) // touch support sfml >= 2.2
+	// globals to track when last touch event "began"
+	//
+	sf::Event g_last_touch;
+	bool g_touch_moved=false;
+#endif
+
 	static std::vector< int > g_joyfemap( sf::Joystick::Count, 0 );
 
 	int joymap2feid( int raw_id )
@@ -250,6 +261,16 @@ const char *FeInputSingle::mouseStrings[] =
 	NULL
 };
 
+const char *FeInputSingle::touchStrings[] =
+{
+	"Up",
+	"Down",
+	"Left",
+	"Right",
+	"Tap",
+	NULL
+};
+
 const char *FeInputSingle::joyStrings[] =
 {
 	"Zpos",
@@ -410,6 +431,54 @@ FeInputSingle::FeInputSingle( const sf::Event &e, const sf::IntRect &mc_rect, co
 			m_type = Mouse;
 			break;
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 )) // touch support sfml >= 2.2
+		case sf::Event::TouchMoved:
+			{
+				const int THRESH = 100;
+				int diff_x = e.touch.x - g_last_touch.touch.x;
+				int diff_y = e.touch.y - g_last_touch.touch.y;
+
+				if ( abs( diff_y ) > THRESH )
+				{
+					if ( diff_y < 0 )
+						m_code = SwipeUp;
+					else
+						m_code = SwipeDown;
+
+					m_type = Touch;
+
+					g_touch_moved = true;
+					g_last_touch = e;
+				}
+				else if ( abs( diff_x ) > THRESH )
+				{
+					if ( diff_x < 0 )
+						m_code = SwipeRight;
+					else
+						m_code = SwipeLeft;
+
+					m_type = Touch;
+
+					g_touch_moved = true;
+					g_last_touch = e;
+				}
+			}
+			break;
+
+		case sf::Event::TouchBegan:
+			g_touch_moved = false;
+			g_last_touch = e;
+			break;
+
+		case sf::Event::TouchEnded:
+			if ( !g_touch_moved )
+			{
+				m_code = Tap;
+				m_type = Touch;
+			}
+			break;
+#endif
+
 		default:
 			break;
 	}
@@ -436,6 +505,21 @@ FeInputSingle::FeInputSingle( const std::string &str )
 		while ( mouseStrings[i] != NULL )
 		{
 			if ( val.compare( mouseStrings[i] ) == 0 )
+			{
+				m_code = i;
+				break;
+			}
+			i++;
+		}
+	}
+	else if ( val.compare( "Touch" ) == 0 )
+	{
+		m_type = Touch;
+
+		token_helper( str, pos, val, FE_WHITESPACE );
+		while ( touchStrings[i] != NULL )
+		{
+			if ( val.compare( touchStrings[i] ) == 0 )
 			{
 				m_code = i;
 				break;
@@ -496,6 +580,11 @@ std::string FeInputSingle::as_string() const
 		temp = "Mouse ";
 		temp += mouseStrings[ m_code ];
 	}
+	else if ( m_type == Touch )
+	{
+		temp = "Touch ";
+		temp += touchStrings[ m_code ];
+	}
 	else if ( m_type >= Joystick0 )
 	{
 		temp = "Joy";
@@ -548,6 +637,10 @@ bool FeInputSingle::get_current_state( int joy_thresh ) const
 		default: return false; // mouse moves and wheels are not supported
 		}
 	}
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 )) // touch support sfml >= 2.2
+	else if ( m_type == Touch )
+		return sf::Touch::isDown( 0 );
+#endif
 	else // Joysticks
 	{
 		sf::Joystick::update();
@@ -890,9 +983,9 @@ void FeInputMap::initialize_mappings()
 	}
 
 	//
-	// Now ensure that the various 'UI' commands are mapped
+	// Now ensure that the various 'UI' commands and 'Select' are mapped
 	//
-	std::vector < bool > ui_mapped( (int)Select, false );
+	std::vector < bool > ui_mapped( (int)Select+1, false );
 
 	std::vector< FeInputMapEntry >::iterator it;
 	for ( it = m_inputs.begin(); it != m_inputs.end(); ++it )
@@ -932,6 +1025,15 @@ void FeInputMap::initialize_mappings()
 			{ FeInputSingle::Keyboard,    sf::Keyboard::Return,        Select },
 			{ FeInputSingle::Keyboard,    sf::Keyboard::LControl,      Select },
 			{ FeInputSingle::Joystick0,   FeInputSingle::JoyButton0,   Select },
+
+#ifdef SFML_SYSTEM_ANDROID
+			{ FeInputSingle::Touch,       FeInputSingle::SwipeUp,      Up },
+			{ FeInputSingle::Touch,       FeInputSingle::SwipeDown,    Down },
+			{ FeInputSingle::Touch,       FeInputSingle::SwipeLeft,    Left },
+			{ FeInputSingle::Touch,       FeInputSingle::SwipeRight,   Right },
+			{ FeInputSingle::Touch,       FeInputSingle::Tap,          Select },
+#endif
+
 			{ FeInputSingle::Unsupported, sf::Keyboard::Unknown,     LAST_COMMAND }	// keep as last
 		};
 
@@ -1079,6 +1181,20 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 		}
 		break;
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 )) // touch support sfml >= 2.2
+	case sf::Event::TouchEnded:
+		{
+			m_tracked_keys.insert( index );
+			FeInputMap::Command temp = get_command_from_tracked_keys( joy_thresh );
+			if ( temp != LAST_COMMAND )
+				return temp;
+
+			m_tracked_keys.erase( index );
+			return LAST_COMMAND;
+		}
+		break;
+#endif
+
 	default:
 		break;
 	}
@@ -1102,8 +1218,8 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 	{
 		FeInputMap::Command c = (*itv)->command;
 
-		if (( is_repeatable_command(c) || (is_ui_command(c) && ( c != Back )) )
-				&& ( (*itv)->inputs.size() == 1 ) )
+		if (( is_repeatable_command(c) || (is_ui_command(c) && ( c != Back )))
+			&& ( (*itv)->inputs.size() == 1 ) )
 		{
 			m_tracked_keys.insert( index );
 
