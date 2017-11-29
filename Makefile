@@ -109,6 +109,7 @@ FE_FLAGS=
 
 _DEP =\
 	fe_base.hpp \
+	fe_file.hpp \
 	fe_util.hpp \
 	fe_util_sq.hpp \
 	fe_info.hpp \
@@ -133,6 +134,7 @@ _DEP =\
 
 _OBJ =\
 	fe_base.o \
+	fe_file.o \
 	fe_util.o \
 	fe_util_sq.o \
 	fe_cmdline.o \

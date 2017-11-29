@@ -25,6 +25,7 @@
 #include "fe_settings.hpp"
 #include "fe_shader.hpp"
 #include "fe_present.hpp"
+#include "fe_file.hpp"
 #include "zip.hpp"
 
 #ifndef NO_MOVIE
@@ -431,7 +432,9 @@ bool FeTextureContainer::try_to_load(
 			return true;
 
 		clear();
-		if ( m_texture.loadFromFile( loaded_name ) )
+
+		FeFileInputStream filestream( loaded_name );
+		if ( m_texture.loadFromStream( filestream ) )
 		{
 			m_file_name = loaded_name;
 			return true;

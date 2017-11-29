@@ -26,6 +26,7 @@
 #include "fe_text.hpp"
 #include "fe_listbox.hpp"
 #include "fe_input.hpp"
+#include "fe_file.hpp"
 #include "zip.hpp"
 
 #include <iostream>
@@ -65,32 +66,41 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 #endif
 
 FeFontContainer::FeFontContainer()
-	: m_zs( NULL )
+	: m_stream( NULL )
 {
 }
 
 FeFontContainer::~FeFontContainer()
 {
-	if ( m_zs )
-		delete m_zs;
+	if ( m_stream )
+		delete m_stream;
 }
 
 void FeFontContainer::set_font( const std::string &p, const std::string &n )
 {
 	m_name = n;
 
+	if ( m_stream )
+	{
+		delete m_stream;
+		m_stream = NULL;
+	}
+
 	if ( is_supported_archive( p ) )
 	{
-		if ( m_zs )
-			delete m_zs;
+		FeZipStream *zs = new FeZipStream( p );
+		zs->open( n );
+		m_stream = zs;
 
-		m_zs = new FeZipStream( p );
-		m_zs->open( n );
-
-		m_font.loadFromStream( *m_zs );
+		if ( !m_font.loadFromStream( *m_stream ) )
+			FeLog() << "Error loading font: " << p << "[" << n << "]" << std::endl;
 	}
 	else
-		m_font.loadFromFile( p + n );
+	{
+		m_stream = new FeFileInputStream( p + n );
+		if ( !m_font.loadFromStream( *m_stream ) )
+			FeLog() << "Error loading font from file: " << p + n << std::endl;
+	}
 }
 
 FeMonitor::FeMonitor( int n, int w, int h )

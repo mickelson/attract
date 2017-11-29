@@ -24,6 +24,7 @@
 #include "fe_settings.hpp"
 #include "fe_present.hpp"
 #include "fe_util.hpp"
+#include "fe_file.hpp"
 #include "zip.hpp"
 #include <iostream>
 #include <cstring>
@@ -109,15 +110,22 @@ void FeSoundSystem::release_audio( bool state )
 }
 
 FeSound::FeSound( bool loop )
+	: m_stream( NULL ),
 #ifdef NO_MOVIE
-	: m_sound(),
+	m_sound(),
 #else
-	: m_sound( FeMedia::Audio ),
+	m_sound( FeMedia::Audio ),
 #endif
 	m_play_state( false )
 {
 	// default to no looping for script sounds
 	m_sound.setLoop( loop );
+}
+
+FeSound::~FeSound()
+{
+	if ( m_stream )
+		delete m_stream;
 }
 
 void FeSound::release_audio( bool state )
@@ -137,6 +145,12 @@ void FeSound::tick()
 
 void FeSound::load( const std::string &path, const std::string &fn )
 {
+	if ( m_stream )
+	{
+		delete m_stream;
+		m_stream = NULL;
+	}
+
 	if ( is_supported_archive( path ) )
 	{
 #ifndef NO_MOVIE
@@ -148,9 +162,10 @@ void FeSound::load( const std::string &path, const std::string &fn )
 			return;
 		}
 #else
-		m_zip.setArchive( path );
+		FeZipStream *zip = new FeZipStream( path );
+		m_stream = zip;
 
-		if ( !m_zip.open( fn ) )
+		if ( !zip->open( fn ) )
 		{
 			FeLog() << "Error loading sound file from archive: "
 				<< path << " (" << fn << ")" << std::endl;
@@ -158,7 +173,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 			return;
 		}
 
-		if ( !m_sound.openFromStream( m_zip ) )
+		if ( !m_sound.openFromStream( *m_stream ) )
 		{
 			FeLog() << "Error loading sound file: " << fn
 				<< std::endl;
@@ -172,12 +187,25 @@ void FeSound::load( const std::string &path, const std::string &fn )
 	else
 	{
 		std::string file_to_load = path + fn;
+
+#ifndef NO_MOVIE
 		if ( !m_sound.openFromFile( file_to_load ) )
 		{
 			FeLog() << "Error loading sound file: " << file_to_load << std::endl;
 			m_file_name = "";
 			return;
 		}
+#else
+		FeFileInputStream *fs = new FeFileInputStream( file_to_load );
+		m_stream = fs;
+
+		if ( !m_sound.openFromStream( *m_stream ) )
+		{
+			FeLog() << "Error loading sound file: " << file_to_load << std::endl;
+			m_file_name = "";
+			return;
+		}
+#endif
 
 		m_file_name = file_to_load;
 	}
