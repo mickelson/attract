@@ -43,14 +43,13 @@
 #include "media.hpp" // for FeMedia::is_supported_media(), get/set_current_decoder()
 #endif
 
-#ifdef SFML_SYSTEM_WINDOWS
+#if defined(SFML_SYSTEM_WINDOWS)
 
 const char *FE_DEFAULT_CFG_PATH		= "./";
 const char *FE_DEFAULT_FONT			= "arial";
 const char *FE_DEFAULT_FONT_PATHS[]	= { "%SYSTEMROOT%/Fonts/", NULL };
 
-#else
-#ifdef SFML_SYSTEM_MACOS
+#elif defined(SFML_SYSTEM_MACOS)
 
 const char *FE_DEFAULT_CFG_PATH		= "$HOME/.attract/";
 const char *FE_DEFAULT_FONT			= "Arial";
@@ -58,6 +57,18 @@ const char *FE_DEFAULT_FONT_PATHS[]	=
 {
 	"/Library/Fonts/",
 	"$HOME/Library/Fonts/",
+	NULL
+};
+
+#elif defined(SFML_SYSTEM_ANDROID)
+
+#include "fe_util_android.hpp"
+
+const char *FE_DEFAULT_CFG_PATH		= "$HOME/";
+const char *FE_DEFAULT_FONT			= "DroidSans.ttf";
+const char *FE_DEFAULT_FONT_PATHS[]	=
+{
+	"/system/fonts/",
 	NULL
 };
 
@@ -72,7 +83,6 @@ const char *FE_DEFAULT_FONT_PATHS[]	=
 	NULL
 };
 
-#endif
 #endif
 
 const char *FE_ART_EXTENSIONS[]		=
@@ -319,6 +329,9 @@ void FeSettings::load()
 	if ( load_from_file( filename ) == false )
 	{
 		FeLog() << "Config file not found: " << filename << ", performing initial setup." << std::endl;
+#ifdef SFML_SYSTEM_ANDROID
+		android_copy_assets();
+#endif
 
 		//
 		// If there is no config file, then we do some initial setting up of the FE here, prompt

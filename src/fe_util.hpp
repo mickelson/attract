@@ -197,6 +197,8 @@ std::string get_available_filename(
 // Create "base" directory if it doesn't exist
 // Create "sub" folder in "base" if it doesn't already exist
 //
+// returns true if directory created
+//
 bool confirm_directory( const std::string &base, const std::string &sub );
 
 //

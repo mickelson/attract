@@ -63,6 +63,10 @@
 #include "fe_util_osx.hpp"
 #endif
 
+#ifdef SFML_SYSTEM_ANDROID
+#include "fe_util_android.hpp"
+#endif
+
 #ifdef USE_XLIB
 #include <X11/Xlib.h>
  #ifdef USE_XINERAMA
@@ -79,7 +83,7 @@ namespace {
 			s += c;
 	}
 
-#ifdef SFML_SYSTEM_WINDOWS
+#if defined(SFML_SYSTEM_WINDOWS)
 
 	std::string get_home_dir()
 	{
@@ -90,7 +94,7 @@ namespace {
 		return retval;
 	}
 
-#else
+#elif !defined(SFML_SYSTEM_ANDROID)
 
 	std::string get_home_dir()
 	{
@@ -673,21 +677,29 @@ void delete_file( const std::string &file )
 
 bool confirm_directory( const std::string &base, const std::string &sub )
 {
+	bool retval=false;
+
 	if ( !directory_exists( base ) )
+	{
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( base.c_str() );
 #else
 		mkdir( base.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
+		retval=true;
+	}
 
 	if ( (!sub.empty()) && (!directory_exists( base + sub )) )
+	{
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( (base + sub).c_str() );
 #else
 		mkdir( (base + sub).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
+		retval=true;
+	}
 
-	return true;
+	return retval;
 }
 
 std::string as_str( int i )

@@ -1,4 +1,4 @@
-#@한국어 (Korean);win_font=ARIALUNI,DOTUM,MALGUN;mac_font=AppleSDGothicNeo;linux_font=UnDotum
+#@한국어 (Korean);win_font=ARIALUNI,DOTUM,MALGUN;mac_font=AppleSDGothicNeo;linux_font=UnDotum,NotoSansCJK-Regular
 #
 #
 # Interface strings

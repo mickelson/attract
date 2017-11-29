@@ -1,4 +1,4 @@
-#@日本語 (Japanese);win_font=YuGothR,ARIALUNI,MSMINCHO;mac_font=Osaka;linux_font=TakaoGothic,TakaoPGothic
+#@日本語 (Japanese);win_font=YuGothR,ARIALUNI,MSMINCHO;mac_font=Osaka;linux_font=TakaoGothic,TakaoPGothic,NotoSansCJK-Regular
 #
 # Interface strings
 #

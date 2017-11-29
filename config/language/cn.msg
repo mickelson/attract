@@ -1,4 +1,4 @@
-#@中文 (Chinese);win_font=MSYH,YuGothR,MALGUN,ARIALUNI,MSMINCHO;mac_font=AppleLiSung;linux_font=UMing
+#@中文 (Chinese);win_font=MSYH,YuGothR,MALGUN,ARIALUNI,MSMINCHO;mac_font=AppleLiSung;linux_font=UMing,NotoSansCJK-Regular
 #
 # Interface strings
 #
