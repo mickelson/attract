@@ -82,7 +82,7 @@ inline int64	i64abs(int64 i) { if (i < 0) return -i; else return i; }
 inline int	iabs(int i) { if (i < 0) return -i; else return i; }
 inline int	imax(int a, int b) { if (a < b) return b; else return a; }
 inline int	imin(int a, int b) { if (a < b) return a; else return b; }
-#ifndef _GLIBCXX_USE_C99_MATH_TR1
+#if __cplusplus <= 199711L
 inline float	fmin(float a, float b) { if (a < b) return a; else return b; }
 inline float	fmax(float a, float b) { if (a < b) return b; else return a; }
 #endif
@@ -101,7 +101,7 @@ inline float	fclamp(float f, float xmin, float xmax) {
 inline float flerp(float a, float b, float f) { return (b - a) * f + a; }
 
 const float LN_2 = 0.693147180559945f;
-#ifndef _GLIBCXX_USE_C99_MATH_TR1
+#if __cplusplus <= 199711L
 inline float	log2(float f) { return logf(f) / LN_2; }
 #endif
 
