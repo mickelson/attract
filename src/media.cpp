@@ -1446,6 +1446,10 @@ std::string FeMedia::g_decoder;
 #include "media_vaapi.cpp"
 #endif
 
+#ifdef FE_HWACCEL_VDPAU
+#include "media_vdpau.cpp"
+#endif
+
 #endif // if FE_HWACCEL
 
 void FeMedia::get_decoder_list( std::vector< std::string > &l )
@@ -1470,6 +1474,11 @@ void FeMedia::get_decoder_list( std::vector< std::string > &l )
 #ifdef FE_HWACCEL_VAAPI
 	if ( av_hwdevice_find_type_by_name( "vaapi" ) != AV_HWDEVICE_TYPE_NONE )
 		l.push_back( "vaapi" );
+#endif
+
+#ifdef FE_HWACCEL_VDPAU
+	if ( av_hwdevice_find_type_by_name( "vdpau" ) != AV_HWDEVICE_TYPE_NONE )
+		l.push_back( "vdpau" );
 #endif
 }
 
@@ -1526,5 +1535,10 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 #ifdef FE_HWACCEL_VAAPI
 	if ( g_decoder.compare( "vaapi" ) == 0 )
 		codec_ctx->get_format = get_format_vaapi;
+#endif
+
+#ifdef FE_HWACCEL_VDPAU
+	if ( g_decoder.compare( "vdpau" ) == 0 )
+		codec_ctx->get_format = get_format_vdpau;
 #endif
 }

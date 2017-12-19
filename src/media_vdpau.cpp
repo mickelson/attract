@@ -20,20 +20,20 @@
  *
  */
 
-enum AVPixelFormat get_format_vaapi( AVCodecContext *codec_ctx, const enum AVPixelFormat *pix_fmts )
+enum AVPixelFormat get_format_vdpau( AVCodecContext *codec_ctx, const enum AVPixelFormat *pix_fmts )
 {
 	const enum AVPixelFormat *p;
 	enum AVPixelFormat last = AV_PIX_FMT_NONE;
 
 	for ( p = pix_fmts; *p != -1; p++ )
 	{
-		if ( *p == AV_PIX_FMT_VAAPI )
+		if ( *p == AV_PIX_FMT_VDPAU )
 		{
 			AVBufferRef *device_ctx=NULL;
 
 			int ret = av_hwdevice_ctx_create(
 				&device_ctx,
-				AV_HWDEVICE_TYPE_VAAPI,
+				AV_HWDEVICE_TYPE_VDPAU,
 				NULL,
 				NULL,
 				0 );
@@ -55,8 +55,9 @@ enum AVPixelFormat get_format_vaapi( AVCodecContext *codec_ctx, const enum AVPix
 			AVHWFramesContext *fc = (AVHWFramesContext *)frames_ctx->data;
 
 			fc->pool = NULL;
-			fc->format = AV_PIX_FMT_VAAPI;
+			fc->format = AV_PIX_FMT_VDPAU;
 			fc->sw_format = AV_PIX_FMT_YUV420P;
+
 			fc->initial_pool_size = 10;
 
 			float aspect_ratio = 1.0;
