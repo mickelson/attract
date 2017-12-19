@@ -1192,10 +1192,10 @@ namespace gameswf
 		}
 
 		rect r;		// intersection
-		r.m_x_min = fmax(this_bound.m_x_min, ch_bound.m_x_min);
-		r.m_y_min = fmax(this_bound.m_y_min, ch_bound.m_y_min);
-		r.m_x_max = fmin(this_bound.m_x_max, ch_bound.m_x_max);
-		r.m_y_max = fmin(this_bound.m_y_max, ch_bound.m_y_max);
+		r.m_x_min = my_fmax(this_bound.m_x_min, ch_bound.m_x_min);
+		r.m_y_min = my_fmax(this_bound.m_y_min, ch_bound.m_y_min);
+		r.m_x_max = my_fmin(this_bound.m_x_max, ch_bound.m_x_max);
+		r.m_y_max = my_fmin(this_bound.m_y_max, ch_bound.m_y_max);
 		r.twips_to_pixels();
 
 		if (r.m_x_min < r.m_x_max && r.m_y_min < r.m_y_max)

@@ -82,11 +82,8 @@ inline int64	i64abs(int64 i) { if (i < 0) return -i; else return i; }
 inline int	iabs(int i) { if (i < 0) return -i; else return i; }
 inline int	imax(int a, int b) { if (a < b) return b; else return a; }
 inline int	imin(int a, int b) { if (a < b) return a; else return b; }
-#if __cplusplus <= 199711L
-inline float	fmin(float a, float b) { if (a < b) return a; else return b; }
-inline float	fmax(float a, float b) { if (a < b) return b; else return a; }
-#endif
-
+inline float	my_fmin(float a, float b) { if (a < b) return a; else return b; }
+inline float	my_fmax(float a, float b) { if (a < b) return b; else return a; }
 
 inline int	iclamp(int i, int min, int max) {
 	assert( min <= max );
@@ -101,9 +98,7 @@ inline float	fclamp(float f, float xmin, float xmax) {
 inline float flerp(float a, float b, float f) { return (b - a) * f + a; }
 
 const float LN_2 = 0.693147180559945f;
-#if __cplusplus <= 199711L
-inline float	log2(float f) { return logf(f) / LN_2; }
-#endif
+inline float	my_log2(float f) { return logf(f) / LN_2; }
 
 inline int	fchop( float f ) { return (int) f; }	// replace w/ inline asm if desired
 inline int	frnd(float f) { return fchop(f + 0.5f); }	// replace with inline asm if desired
