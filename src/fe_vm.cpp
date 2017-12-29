@@ -557,6 +557,14 @@ bool FeVM::on_new_layout()
 			.Const( "Filters", FeInputMap::FiltersMenu )
 			.Const( "Tags", FeInputMap::ToggleTags )
                         )
+		.Enum( _SC("PathTest"), Enumeration()
+			.Const( "IsFileOrDirectory", IsFileOrDirectory )
+			.Const( "IsFile", IsFile )
+			.Const( "IsDirectory", IsDirectory )
+			.Const( "IsRelativePath", IsRelativePath )
+			.Const( "IsSupportedArchive", IsSupportedArchive )
+			.Const( "IsSupportedMedia", IsSupportedMedia )
+			)
 		;
 
 	Enumeration info;
@@ -855,6 +863,7 @@ bool FeVM::on_new_layout()
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FeVM::cb_plugin_command_bg);
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
+	fe.Func<bool (*)(const char *, int)>(_SC("path_test"), &FeVM::cb_path_test);
 	fe.Func<Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
 	fe.Overload<void (*)(int, bool)>(_SC("set_display"), &FeVM::cb_set_display);
@@ -1400,7 +1409,14 @@ public:
 			sqstd_register_mathlib( m_vm );
 			sqstd_register_stringlib( m_vm );
 			sqstd_register_systemlib( m_vm );
-//			sqstd_seterrorhandlers( m_vm ); // don't set this on purpose
+
+#ifdef FE_DEBUG
+			// We purposefully do not set this in release builds, because we
+			// use this FeConfigVM to run scripts in config mode and often that means
+			// they crash and burn, and we don't want to be displaying the error messages
+			// for that.
+			sqstd_seterrorhandlers( m_vm );
+#endif
 
 			fe_register_global_func( m_vm, zip_extract_file, "zip_extract_file" );
 			fe_register_global_func( m_vm, zip_get_dir, "zip_get_dir" );
@@ -1412,7 +1428,15 @@ public:
 			.Const( _SC("FeVersion"), FE_VERSION)
 			.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
 			.Const( _SC("OS"), get_OS_string() )
-			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() );
+			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
+			.Enum( _SC("PathTest"), Sqrat::Enumeration()
+				.Const( "IsFile", FeVM::IsFile )
+				.Const( "IsDirectory", FeVM::IsDirectory )
+				.Const( "IsFileOrDirectory", FeVM::IsFileOrDirectory )
+				.Const( "IsRelativePath", FeVM::IsRelativePath )
+				.Const( "IsSupportedArchive", FeVM::IsSupportedArchive )
+				.Const( "IsSupportedMedia", FeVM::IsSupportedMedia )
+			);
 
 		Sqrat::ConstTable().Const( _SC("FeConfigDirectory"), fe_vm->m_feSettings->get_config_dir().c_str() );
 
@@ -1497,6 +1521,7 @@ public:
 			fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
 			fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
 			fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
+			fe.Func<bool (*)(const char *, int)>(_SC("path_test"), &FeVM::cb_path_test);
 		}
 
 		Sqrat::RootTable().Bind( _SC("fe"),  fe );
@@ -2021,6 +2046,40 @@ const char *FeVM::cb_path_expand( const char *path )
 
 		internal_str = absolute_path( clean_path( path ) );
 		return internal_str.c_str();
+}
+
+bool FeVM::cb_path_test( const char *path, int flag )
+{
+	std::string p( path );
+
+	switch ( flag )
+	{
+	case IsFileOrDirectory:
+		return file_exists( p );
+
+	case IsFile:
+		return ( file_exists( p ) && !directory_exists( p ) );
+
+	case IsDirectory:
+		return directory_exists( p );
+
+	case IsRelativePath:
+		return is_relative_path( p );
+
+	case IsSupportedArchive:
+		return is_supported_archive( p );
+
+	case IsSupportedMedia:
+#ifndef NO_MOVIE
+		return FeMedia::is_supported_media_file( p );
+#else
+		return ( tail_compare( p, FE_ART_EXTENSIONS ) );
+#endif
+
+	default:
+		FeLog() << "Error, unrecognized path_test flag: " << flag << std::endl;
+		return false;
+	}
 }
 
 const char *FeVM::cb_game_info( int index, int offset, int filter_offset )

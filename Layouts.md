@@ -35,6 +35,7 @@ Contents
       * [`fe.plugin_command()`](#plugin_command)
       * [`fe.plugin_command_bg()`](#plugin_command_bg)
       * [`fe.path_expand()`](#path_expand)
+      * [`fe.path_test()`](#path_test)
       * [`fe.get_config()`](#get_config)
    * [Objects and Variables](#objects)
       * [`fe.ambient_sound`](#ambient_sound)
@@ -1024,6 +1025,29 @@ Parameters:
 Return Value:
 
    * The expansion of path.
+
+
+<a name="path_test" />
+#### `fe.path_test()` ####
+
+    fe.path_test( path, flag )
+
+Check whether the specified path has the status indicated by `flag`.
+
+Parameters:
+
+   * path - the path to test.
+   * flag - What to test for.  Can be one of the following values:
+      - `PathTest.IsFileOrDirectory`
+      - `PathTest.IsFile`
+      - `PathTest.IsDirectory`
+      - `PathTest.IsRelativePath`
+      - `PathTest.IsSupportedArchive`
+      - `PathTest.IsSupportedMedia`
+
+Return Value:
+
+   * (boolean) result.
 
 
 <a name="get_config" />

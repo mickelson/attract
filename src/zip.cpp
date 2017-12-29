@@ -326,16 +326,7 @@ const char *FE_ARCHIVE_EXT[] =
 
 bool is_supported_archive( const std::string &fname )
 {
-	int i=0;
-	while ( FE_ARCHIVE_EXT[i] != NULL )
-	{
-		if ( tail_compare( fname, FE_ARCHIVE_EXT[i] ) )
-			return true;
-
-		i++;
-	}
-
-	return false;
+	return tail_compare( fname, FE_ARCHIVE_EXT );
 }
 
 void *zip_stream_alloc_cb( size_t s )
@@ -453,19 +444,7 @@ void gather_archive_filenames_with_base(
 				in_list.push_back( *itr );
 			else
 			{
-				bool match_ext=false;
-				int i=0;
-				while ( exts[i] != 0 )
-				{
-					if ( tail_compare( *itr, exts[i] ) )
-					{
-						match_ext = true;
-						break;
-					}
-					i++;
-				}
-
-				if ( match_ext )
+				if ( tail_compare( *itr, exts ) )
 					in_list.push_back( *itr );
 				else
 					out_list.push_back( *itr );

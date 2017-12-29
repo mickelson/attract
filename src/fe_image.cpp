@@ -855,19 +855,7 @@ void FeTextureContainer::load_from_archive( const char *a, const char *n )
 	else if ( is_relative_path( filename ) )
 		path = FePresent::script_get_base_path();
 
-	bool is_image=false;
-
-	int i=0;
-	while ( FE_ART_EXTENSIONS[i] )
-	{
-		if ( tail_compare( filename, FE_ART_EXTENSIONS[i] ) )
-		{
-			is_image=true;
-			break;
-		}
-		i++;
-	}
-
+	bool is_image=tail_compare( filename, FE_ART_EXTENSIONS );
 	try_to_load( path, filename, is_image );
 	notify_texture_change();
 }

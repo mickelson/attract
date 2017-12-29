@@ -67,6 +67,10 @@ bool tail_compare(
 	const std::string &filename,
 	const std::vector<std::string> &ext_list );
 
+bool tail_compare(
+	const std::string &filename,
+	const char **ext_list );
+
 //
 // Case insensitive compare of one and two
 // returns 0 if equal

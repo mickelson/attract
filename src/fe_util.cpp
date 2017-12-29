@@ -155,7 +155,22 @@ bool tail_compare(
 				(*itr).c_str(),
 				(*itr).size() ) )
 			return true;
+	}
 
+	return false;
+}
+
+bool tail_compare(
+	const std::string &filename,
+	const char **ext_list )
+{
+	for ( int i=0; ext_list[i] != NULL; i++ )
+	{
+		if ( c_tail_compare( filename.c_str(),
+				filename.size(),
+				ext_list[i],
+				strlen( ext_list[i] ) ) )
+			return true;
 	}
 
 	return false;
