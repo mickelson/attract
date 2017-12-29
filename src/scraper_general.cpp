@@ -38,6 +38,10 @@ namespace {
 
 void build_basic_romlist( FeImporterContext &c )
 {
+	// don't scan rompath for scummvm, we get the available games from 'scummvm -t'
+	if ( c.emulator.get_info_source() == FeEmulatorInfo::Scummvm )
+		return;
+
 	std::vector<std::string> names;
 	std::vector<std::string> paths;
 	c.emulator.gather_rom_names( names, paths );
@@ -300,34 +304,10 @@ bool scummvm_cb( const char *buff, void *opaque )
 	return true;
 }
 
-void scummvm_target( const std::string &base_command,
-	const std::string &params,
-	const std::string &work_dir,
-	std::map< std::string, std::string, myclasscmp > &my_map )
-{
-	std::string output;
-	run_program( base_command, params, work_dir, scummvm_cb, &output );
-
-	size_t pos( 0 );
-	while ( pos < output.size() )
-	{
-		std::string line;
-		token_helper( output, pos, line, "\n" );
-
-		std::string shortn;
-		std::string longn;
-		size_t pos2( 0 );
-		token_helper( line, pos2, shortn, " " );
-		token_helper( line, pos2, longn, "\n" );
-
-		my_map[ shortn ] = name_with_brackets_stripped( longn );
-	}
-}
-
 //
-// Map scummvm gameids -> full name using -z and -t output.
+// Add to the romlist based on 'scummvm -t' output.
 //
-bool scummvm_lookup( FeImporterContext &c )
+bool scummvm_build( FeImporterContext &c )
 {
 	std::string base_command = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Executable ) );
@@ -335,18 +315,31 @@ bool scummvm_lookup( FeImporterContext &c )
 	std::string work_dir = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Working_dir ), true );
 
-	std::map< std::string, std::string, myclasscmp > my_map;
+	std::string output;
+	run_program( base_command, "-t", work_dir, scummvm_cb, &output );
 
-	scummvm_target( base_command, "-z", work_dir, my_map );
-	scummvm_target( base_command, "-t", work_dir, my_map );
-
-	for ( FeRomInfoListType::iterator itr = c.romlist.begin(); itr != c.romlist.end(); ++itr )
+	size_t pos( 0 );
+	int line_count=0;
+	while ( pos < output.size() )
 	{
-		std::map< std::string, std::string >::iterator itm;
-		itm = my_map.find( (*itr).get_info( FeRomInfo::Romname ) );
-		if ( itm != my_map.end() )
-			(*itr).set_info( FeRomInfo::Title, (*itm).second );
+		std::string line;
+		token_helper( output, pos, line, "\n" );
+		line_count++;
+
+		std::string shortn;
+		std::string longn;
+		size_t pos2( 0 );
+		token_helper( line, pos2, shortn, " " );
+		token_helper( line, pos2, longn, "\n" );
+
+		if ( line_count > 2 )
+		{
+			FeRomInfo new_rom( shortn );
+			new_rom.set_info( FeRomInfo::Title, longn );
+			c.romlist.push_back( new_rom );
+		}
 	}
+
 	return true;
 }
 
@@ -476,7 +469,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 		break;
 
 	case FeEmulatorInfo::Scummvm:
-		scummvm_lookup( c );
+		scummvm_build( c );
 		if ( include_gdb )
 			thegamesdb_scraper( c );
 		break;
