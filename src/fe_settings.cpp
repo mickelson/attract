@@ -2061,15 +2061,6 @@ void FeSettings::run( int &nbm_wait,
 
 	std::string exit_hotkey = emu->get_info( FeEmulatorInfo::Exit_hotkey );
 
-#if defined(SFML_SYSTEM_LINUX) && defined(USE_XLIB)
-	if ( !exit_hotkey.empty() && ( m_window_mode == Fullscreen ))
-	{
-		FeLog() << " ! NOTE: The 'Exit Hotkey' setting is not supported when running Attract-Mode in 'Fullscreen Mode' on Linux."
-			<< "  Configured exit hotkey of '" << exit_hotkey << "' is being ignored." << std::endl;
-
-		exit_hotkey.clear();
-	}
-#endif
 	save_state();
 
 	run_program(
@@ -2081,7 +2072,7 @@ void FeSettings::run( int &nbm_wait,
 		( nbm_wait <= 0 ), // don't block if nbm_wait > 0
 		exit_hotkey,
 		m_joy_thresh,
-		launch_cb,
+		(( nbm_wait <= 0 ) ? launch_cb : NULL ),
 		wait_cb,
 		launch_opaque );
 }
@@ -2108,6 +2099,10 @@ void FeSettings::update_stats( int play_count, int play_time )
 	confirm_directory( path, rl_name );
 
 	path += rl_name + "/";
+
+	FeDebug() << "Updating stats: increment play count by " << play_count
+		<< " and play time by " << play_time << " seconds." << std::endl;
+
 	rom->update_stats( path, play_count, play_time );
 }
 

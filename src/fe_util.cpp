@@ -964,7 +964,7 @@ bool run_program( const std::string &prog,
 		}
 
 		if ( !work_dir.empty() && ( chdir( work_dir.c_str() ) != 0 ) )
-			FeLog() << "Warning, chdir(" << work_dir << ") failed.";
+			FeLog() << "Warning, chdir(" << work_dir << ") failed." << std::endl;
 
 		execvp( prog.c_str(), arg_list );
 

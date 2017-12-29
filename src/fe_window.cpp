@@ -193,6 +193,8 @@ void FeWindow::initial_create()
 #endif
 
 	// Create window
+	FeDebug() << "Creating Attract-Mode window" << std::endl;
+
 	create(
 		sf::VideoMode::getDesktopMode(),
 		"Attract-Mode",
@@ -248,12 +250,17 @@ void launch_callback( void *o )
  // hasFocus() is only available as of SFML 2.2.
  #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
 		if ( win->hasFocus() )
+		{
+			FeDebug() << "Attract-Mode window still has focus, closing now" << std::endl;
 			win->close();
+		}
  #else
+		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close();
  #endif
 
 #else
+		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
 #endif
 	}
@@ -432,6 +439,8 @@ bool FeWindow::run()
 		if ( ev.type == sf::Event::Closed )
 			return false;
 	}
+
+	FeDebug() << "Resuming frontend after game launch" << std::endl;
 
 	return true;
 }
