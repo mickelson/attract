@@ -106,7 +106,6 @@ Layout Options;Opciones de temas
 Left;Izquierda
 List Limit;Límite de lista
 Manufacturer;Fabricante
-Minimum Run Time;Tiempo mínimo de ejecución
 Mouse Threshold;Umbral del ratón
 Movie Volume;Volumen de videos
 Name;Nombre
@@ -246,7 +245,7 @@ _help_emu_exit_hotkey;Configura una tecla global para salir del emulador. Attrac
 _help_emu_gen_romlist;Genera una lista de roms buscando en las rutas de roms configuradas con las extensiones configuradas, incorporando XML e importando información adicional a la lista generada (si está disponible)
 _help_emu_import_extras;Ruta de cualquier archivo adicional que neceiste ser leido cuando se genera la lista de roms para este emulador.  Los archivos soportados son: catver.ini (para categorias de juegos) y nplayers.ini (para el número de jugadores). Es posible ingresar multiples rutas separadas por punto y coma.
 _help_emu_info_source;Use "listxml" si el emulador prove la salida de mame -listxml, "listsoftware" para la salida de mame/mess -listsoftware, "thegamesdb.net" para extraer información desde thegamesdb.net, o "steam" para leer desde una instalación de steam.  "listsoftware" y "thegamesdb.net" también requieren que sea configurado un identificador de sistema reconocible por esas fuentes
-_help_emu_minimum_run_time;Configura un tiempo mínimo de ejecución (en segundos).  Attract-Mode esperará después de ejecutar este emulador hasta que haya transcurrido el tiempo mínimo de ejecución y pasará a ejecución de fondo. Esto necesita ser configurado por Steam para funcionar correctamente en Windows. Configure esto en 0 a menos que sepa que lo necesita
+_help_emu_nb_mode_wait;Configura un tiempo mínimo de ejecución (en segundos).  Attract-Mode esperará después de ejecutar este emulador hasta que haya transcurrido el tiempo mínimo de ejecución y pasará a ejecución de fondo. Esto necesita ser configurado por Steam para funcionar correctamente en Windows. Configure esto en 0 a menos que sepa que lo necesita
 _help_emu_romext;Extensión(es) para este emulador (por ej. .zip). Es posible ingresar multiples extensiones separadas por punto y coma. Especificar "<DIR>" como entrada si los juegos se encuientran en subdirectorios separados
 _help_emu_rompath;Ruta a las roms para este emulador.  Es posible ingresar multiples rutas separadas por punto y coma.
 _help_emu_scrape_artwork;Scrape missing artwork images for this emulator from TheGamesDB.net and mamedb.com
@@ -307,6 +306,7 @@ Custom 2;Personalizado 2
 Delete this filter;Borrar este filtro
 Image collage;Collage de imágenes
 Launch Last Game on Startup;Lanzar último juego en el inicio
+Minimum Run Time;Tiempo mínimo de ejecución
 Movie collage;Collage de video
 Overlay Artwork;superposición de artworks
 Preserve Aspect Ratio;Preservar relación de aspecto
@@ -361,6 +361,7 @@ Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?

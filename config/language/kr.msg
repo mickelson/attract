@@ -1,6 +1,5 @@
 #@한국어 (Korean);win_font=ARIALUNI,DOTUM,MALGUN;mac_font=AppleSDGothicNeo;linux_font=UnDotum,NotoSansCJK-Regular
 #
-#
 # Interface strings
 #
 $1 Rule(s);$1 규칙
@@ -147,7 +146,6 @@ List Limit;목록 크기 제한
 Manufacturer;제작사(Manufacturer)
 Menu Prompt;화면에 표시할 메뉴 이름
 Menu Style / Layout;메뉴 스타일 / 레이아웃
-Minimum Run Time;최소 실행 시간
 Mouse Threshold;마우스 민감도
 Movie Volume;동영상 음량
 Name;이름
@@ -320,7 +318,7 @@ _help_emu_exit_hotkey;해당 에뮬레이터를 종료할 전역 핫키를 지�
 _help_emu_gen_romlist;지정된 롬 파일 경로와 XML 옵션, 추가 파일 (catver.ini 등) 을 이용하여 롬 목록을 생성합니다.
 _help_emu_import_extras;롬 파일 목록 생성시에 추가로 활용할 파일을 지정합니다. 장르 (catver.ini) 나 게임 플레이 인원 (nplayers.ini) 정보를 담은 파일을 지정할 수 있습니다.
 _help_emu_info_source;mess : MAME 방식의 -listxml, mess : MESS 방식의 -listsoftware, thegamesdb.net : 해당 사이트에서 정보를 취득할 경우, steam : 스팀 사이트에서 정보를 취득할 경우. mess, thegamesdb.net 의 경우 식별자가 해당 방식에 맞게 설정되어 있어야 합니다.
-_help_emu_minimum_run_time; 최소 실행 시간을 초 단위로 지정합니다. 게임 실행 시 적어도 해당 시간 만큼이 지난 후 이 프로그램으로 제어가 돌아가게 됩니다. 보통은 0 으로 설정하면 되지만, 스팀 게임은 적절한 값을 설정해주어야 합니다.
+_help_emu_nb_mode_wait; 최소 실행 시간을 초 단위로 지정합니다. 게임 실행 시 적어도 해당 시간 만큼이 지난 후 이 프로그램으로 제어가 돌아가게 됩니다. 보통은 0 으로 설정하면 되지만, 스팀 게임은 적절한 값을 설정해주어야 합니다.
 _help_emu_romext;롬 파일들의 확장자 (.zip 등) 을 지정합니다. 세미콜론을 사용해 여러 개를 지정할 수 있습니다.
 _help_emu_rompath;에뮬레이터의 롬 파일들이 위치한 경로를 지정합니다. 세미콜론을 사용해 여러 개를 지정할 수 있습니다.
 _help_emu_scrape_artwork;TheGamesDB.net 및 mamedb.com 에서 게임 관련 데이터를 다운로드 합니다.
@@ -398,6 +396,7 @@ Configure filter rule;필터 내용 수정
 Delete this filter;필터 삭제
 Exit menu;나가기
 Launch Last Game on Startup;기동시 직전 게임 자동 재시작
+Minimum Run Time;최소 실행 시간
 Page Down;페이지 아래로
 Page Up;페이지 위로
 XML Mode;XML 모드
@@ -416,5 +415,6 @@ _help_scrape_mamedb;MAME snap과 marquee를 mamedb.com에서 가져올 지 여�
 #
 # Strings still needing translation
 #
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 _help_input_action;
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)

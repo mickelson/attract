@@ -837,7 +837,7 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"system",
 	"info_source",
 	"import_extras",
-	"minimum_run_time",
+	"nb_mode_wait",
 	"exit_hotkey",
 	NULL
 };
@@ -853,7 +853,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"System Identifier",
 	"Info Source/Scraper",
 	"Additional Import File(s)",
-	"Minimum Run Time",
+	"Non-Blocking Mode Wait",
 	"Exit Hotkey",
 	NULL
 };
@@ -872,14 +872,14 @@ const char *FeEmulatorInfo::infoSourceStrings[] =
 
 FeEmulatorInfo::FeEmulatorInfo()
 	: m_info_source( None ),
-	m_min_run( 0 )
+	m_nbm_wait( 0 )
 {
 }
 
 FeEmulatorInfo::FeEmulatorInfo( const std::string &n )
 	: m_name( n ),
 	m_info_source( None ),
-	m_min_run( 0 )
+	m_nbm_wait( 0 )
 {
 }
 
@@ -905,8 +905,8 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 		return infoSourceStrings[m_info_source];
 	case Import_extras:
 		return vector_to_string( m_import_extras );
-	case Minimum_run_time:
-		return as_str( m_min_run );
+	case NBM_wait:
+		return as_str( m_nbm_wait );
 	case Exit_hotkey:
 		return m_exit_hotkey;
 	default:
@@ -964,8 +964,8 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 		m_import_extras.clear();
 		string_to_vector( s, m_import_extras );
 		break;
-	case Minimum_run_time:
-		m_min_run = as_int( s );
+	case NBM_wait:
+		m_nbm_wait = as_int( s );
 		break;
 	case Exit_hotkey:
 		m_exit_hotkey = s; break;
@@ -1068,6 +1068,14 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 		}
 	}
 
+	// Backwards compatability
+	//
+	if ( setting.compare( "minimum_run_time" ) == 0 ) // "nb_mode_wait" was "minimum_run_time" (<= v2.2)
+	{
+		set_info( NBM_wait, value );
+		return 0;
+	}
+
 	if ( setting.compare( stokens[0] ) == 0 ) // artwork
 	{
 		size_t pos=0;
@@ -1104,8 +1112,8 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 		//
 		for ( int i=1; i < LAST_INDEX; i++ )
 		{
-			// don't output minimum run time if it is zero
-			if (( i == Minimum_run_time ) && ( m_min_run == 0 ))
+			// don't output nbm_wait if it is zero
+			if (( i == NBM_wait ) && ( m_nbm_wait == 0 ))
 				continue;
 
 			string val = get_info( (Index) i );

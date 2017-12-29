@@ -120,7 +120,6 @@ List Limit;列表大小限制
 Manufacturer;制造商
 Menu Prompt;标题
 Menu Style / Layout;主题
-Minimum Run Time;最小运行时间
 Mouse Threshold;鼠标的阈值
 Movie Volume;视频音量
 Name;名称
@@ -229,6 +228,7 @@ Exit menu;退出菜单
 Image Collage;拼图式静态画面
 Launch Last Game on Startup;启动时载入最后一次运行的游戏
 Left(Previous Display);←（上一界面）
+Minimum Run Time;最小运行时间
 Movie Collage;拼图式动态画面
 Overlay Artwork;悬浮的插图
 Page Down;向下翻页
@@ -278,6 +278,7 @@ Insert Game Entry;Insert Game Entry
 Insert Menu Entry;Insert Menu Entry
 Joystick $1;Joystick $1
 Joystick Mappings;Joystick Mappings
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Remove tag: '$1';Remove tag: '$1'
 Window (No Border);Window (No Border)
@@ -360,7 +361,7 @@ _help_emu_exit_hotkey;Set a global hotkey to exit the emulator.  Attract-Mode wi
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
 _help_emu_import_extras;Path to any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories), nplayers.ini (for number of players) and mame.xml.  Multiple file paths can be entered if separated by a semicolon
 _help_emu_info_source;Use "listxml" for mame -listxml output, "listsoftware" for mame/mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, "steam" to read from a steam installation, or "scummvm" if the emulator is scummvm.  "listsoftware" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
-_help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
+_help_emu_nb_mode_wait;If this is non-zero, the emulator will be run in 'non-blocking mode'.  The frontend will wait up to this number of seconds to lose focus to the emulator's window, and will wake up again when focus returns to the frontend's window.  This is necessary for launching programs like Steam correctly.  Should be 0 unless you know you need it
 _help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple extensions can be entered if separated by a semicolon.  Specify "<DIR>" as an entry if games are stored in separate subdirectories
 _help_emu_rompath;The path to the roms for this emulator.  Multiple paths can be entered if separated by a semicolon.
 _help_emu_scrape_artwork;Scrape missing artwork images for this emulator from the net

@@ -107,7 +107,6 @@ Layout Options;レイアウト別設定
 Left;270°
 List Limit;リストのサイズ限度
 Manufacturer;発売元(Manufacturer)
-Minimum Run Time;最小実行時間
 Mouse Threshold;マウスの感度
 Movie Volume;ムービーボリューム
 Name;名前
@@ -240,7 +239,7 @@ _help_emu_exit_hotkey;このエミュレータを終了するグローバルホ�
 _help_emu_gen_romlist;指定されたRomファイルの位置, XML モード, 追加ファイル (catver.ini 等) を使ってRomファイルリストを作成します
 _help_emu_import_extras;Romファイルリストの作成時に追加で使うファイルを指定します. ジャンル (catver.ini), またはプレイ人数 (nplayers.ini) などを使えます
 _help_emu_info_source;mess : MAME タイプの -listxml, mess : MESS タイプの -listsoftware, thegamesdb.net : このサイトを使う, steam : steamサイトを使う. mess, thegamesdb.net の場合IDを正しく設定する必要があります.
-_help_emu_minimum_run_time; 最小の実行時間を秒単位で設定します. 普通は0で構わないですが,一部のゲーム(steam等)には適当に設定する必要があります
+_help_emu_nb_mode_wait; 最小の実行時間を秒単位で設定します. 普通は0で構わないですが,一部のゲーム(steam等)には適当に設定する必要があります
 _help_emu_romext;Romファイルの拡張子(.zip 等)を指定します. セミコロン(
 _help_emu_rompath;エミュレータのRomファイルの位置を指定します
 _help_emu_scrape_artwork;TheGamesDB.net または mamedb.com からゲームの情報をダウンロードします
@@ -296,6 +295,7 @@ Configure filter rule;フィルターのルールー編集
 Delete this filter;このフィルターを削除
 Exit menu;出る
 Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
+Minimum Run Time;最小実行時間
 Page Down;1画面下
 Page Up;1画面上
 XML Mode;XML モード
@@ -354,6 +354,7 @@ Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
 Next Page;Next Page
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Play Sound;Play Sound
 Previous Game;Previous Game

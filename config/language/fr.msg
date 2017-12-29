@@ -105,7 +105,6 @@ Layout Options;Options du Layout
 Left;Gauche
 List Limit;taille maximum de la liste
 Manufacturer;Fabriquant
-Minimum Run Time;Temps minimum fonctionnement 
 Mouse Threshold;Seuil de la souris
 Movie Volume;Volume des vidéos
 Name;Nom
@@ -246,7 +245,7 @@ _help_emu_exit_hotkey;Définit un raccourci clavier pour sortir de l'émulateur.
 _help_emu_gen_romlist;Génére une liste de ROM en cherchant dans le chemin des ROM avec l'extension choisie, incorporant l'XML et les fichiers additionnels d'information dans la liste générée (si disponible)
 _help_emu_import_extras;Fichiers additionels nécessitant d'être lus lors de la génération de la liste de ROM pour cet émulateur. Fichiers supportés: catver.ini (catégories) et nplayers.ini (nombre de joueur). Plusieurs fichiers peuvent être saisis si séparés par un point-virgule
 _help_emu_info_source;Saisir "listxml" si cet émulateur propose un fichier de type mame -listxml, "listsoftware" pour les fichiers du type mame/mess -listsoftware, "thegamesdb.net" pour extraire les informations du site thegamesdb.net, ou "steam" pour les lires depuis une installation de steam. Les sources "listsoftware" et "thegamesdb.net" nécessitent que des identifiants systèmes spécifiques soient configurés pour fonctionner correctement
-_help_emu_minimum_run_time;Définit un temps minimum de fonctionnement (en secondes). Attract-Mode va attendre, après avoir lancé l'émulateur, que ce temps minimum se soit écoulé avant de re-basculer au premier plan. Ceci est nécessaire pour que Steam fonctionne correctement sous Windows. Saisir 0 si vous n'en avez pas besoin
+_help_emu_nb_mode_wait;Définit un temps minimum de fonctionnement (en secondes). Attract-Mode va attendre, après avoir lancé l'émulateur, que ce temps minimum se soit écoulé avant de re-basculer au premier plan. Ceci est nécessaire pour que Steam fonctionne correctement sous Windows. Saisir 0 si vous n'en avez pas besoin
 _help_emu_romext;Extension des ROM pour cet émulateur (ex .zip).  Possibilité d'utiliser des extensions multiples séparées par un point-virgule
 _help_emu_rompath;Chemin des ROM pour cet émulateur
 _help_emu_scrape_artwork;Aspirer les artworks manquants pour cet émulateur sur TheGamesDB.net et mamedb.com
@@ -308,6 +307,7 @@ Generate Collection/Romlist;Générer la liste de ROM
 Launch Last Game on Startup;Lancer le dernier jeu au démarrage
 Lists;Listes
 Lists Menu;Menu des listes
+Minimum Run Time;Temps minimum fonctionnement 
 Next List;Liste suivante
 Previous List;Liste précédent
 XML Mode;Mode XML
@@ -365,6 +365,7 @@ Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Play Sound;Play Sound
 Previous Game;Previous Game

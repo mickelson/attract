@@ -1886,12 +1886,12 @@ void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 	internal_gather_config_files( ll, "", FE_SOUND_SUBDIR );
 }
 
-void FeSettings::run( int &minimum_run_seconds,
+void FeSettings::run( int &nbm_wait,
 	launch_callback_fn launch_cb,
 	launch_callback_fn wait_cb,
 	void *launch_opaque )
 {
-	minimum_run_seconds=0;
+	nbm_wait=0;
 	int filter_index = get_current_filter_index();
 
 	if ( get_filter_size( filter_index ) < 1 )
@@ -1909,7 +1909,7 @@ void FeSettings::run( int &minimum_run_seconds,
 		return;
 
 	const std::string &rom_name = rom->get_info( FeRomInfo::Romname );
-	minimum_run_seconds = as_int( emu->get_info( FeEmulatorInfo::Minimum_run_time ) );
+	nbm_wait = as_int( emu->get_info( FeEmulatorInfo::NBM_wait ) );
 
 	m_last_launch_display = get_current_display_index();
 	m_last_launch_filter = filter_index;
@@ -2072,22 +2072,18 @@ void FeSettings::run( int &minimum_run_seconds,
 #endif
 	save_state();
 
-	sf::Clock play_timer;
 	run_program(
 		command,
 		args,
 		work_dir,
 		NULL,
 		NULL,
-		true,
+		( nbm_wait <= 0 ), // don't block if nbm_wait > 0
 		exit_hotkey,
 		m_joy_thresh,
 		launch_cb,
 		wait_cb,
 		launch_opaque );
-
-	if ( m_track_usage )
-		update_stats( 1, play_timer.getElapsedTime().asSeconds() );
 }
 
 void FeSettings::update_stats( int play_count, int play_time )

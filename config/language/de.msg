@@ -106,7 +106,6 @@ Layout Options;Themen Optionen
 Left;Links
 List Limit;Limit für die Liste 
 Manufacturer;Hersteller
-Minimum Run Time;Minimale Laufzeit
 Mouse Threshold;Schwellwert Maus
 Movie Volume;Film-Lautstärke
 Name;Name
@@ -246,7 +245,7 @@ _help_emu_exit_hotkey;Definiere einen globalen Hotkey, um den Emulator zu verlas
 _help_emu_gen_romlist;Generiere eine Romliste, indem der eingestellte ROM-Pfad nach ROMs mit der definierten Endung durchsucht wird. Falls verfügbar, werden XML-Informationen und zusätzliche Import-Dateien mit einbezogen.
 _help_emu_import_extras;Pfad zu beliebigen zusätzlichen Dateien welche gelesen werden müssen wenn eine Romliste für diesen Emulator generiert wird. Unterstützte Dateien sind: catver.ini (für Spiele Kategorien) und nplayers.ini (für Anzahl an Spielern).  Mehrere Dateipfade können durch Semikolon getrennt werden.
 _help_emu_info_source;Verwende "listxml" falls der Emulator mame -listxml Ausgabe bereitstellt, "listsoftware" für mame/mess -listsoftware Ausgabe, "thegamesdb.net" um Daten von thegamesdb.net zu scrapen, oder "steam" um von einer Steam-Installation zu lesen. "listsoftware" und "thegamesdb.net" benötigen zusätzlich die Konfiguration einer System-Kennung welche von diesen Ressourcen erkannt wird
-_help_emu_minimum_run_time;Definiere eine minimale Laufzeit (in Sekunden).  Attract-Mode wird nach dem Lauf dieses Emulators warten bis die minimale Zeit verstrichen ist und es zum Vordergund-Fenster wird. Dies wird speziell benötigt, um Steam korrekt unter Windows auszuführen. Lass es auf 0 stehen, ausser du weisst, dass du es benötigst
+_help_emu_nb_mode_wait;Definiere eine minimale Laufzeit (in Sekunden).  Attract-Mode wird nach dem Lauf dieses Emulators warten bis die minimale Zeit verstrichen ist und es zum Vordergund-Fenster wird. Dies wird speziell benötigt, um Steam korrekt unter Windows auszuführen. Lass es auf 0 stehen, ausser du weisst, dass du es benötigst
 _help_emu_romext;Die ROM Dateiendung(en) für diesen Emulator (z.B. .zip). Mehrere Endungen können durch Semikolon getrennt werden. Gib "<DIR>" als Eintrag an, falls die Spiele in separaten Unterverzeichnissen gespeichert sind
 _help_emu_rompath;Der Pfad zu den ROMs für diesen Emulator. Mehrere Pfade können durch Semikolon getrennt werden.
 _help_emu_scrape_artwork;Scrape fehlende Bilddateien für diesen Emulator von TheGamesDB.net und mamedb.com
@@ -305,6 +304,7 @@ Configure filter rule;Filterregel konfigurieren
 Delete this filter;Diesen Filter löschen
 Image collage;Bilder Collage
 Launch Last Game on Startup;Letztes Spiel beim Starten ausführen
+Minimum Run Time;Minimale Laufzeit
 Movie collage;Video Collage
 Overlay Artwork;Bilddatei als Overlay
 Preserve Aspect Ratio;Seitenverhältnis beibehalten
@@ -360,6 +360,7 @@ Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?

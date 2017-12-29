@@ -289,7 +289,7 @@ public:
 		System,
 		Info_source,
 		Import_extras,
-		Minimum_run_time,
+		NBM_wait,	// non-blocking mode wait time (in seconds)
 		Exit_hotkey,
 		LAST_INDEX
 	};
@@ -371,7 +371,7 @@ private:
 	std::vector<std::string> m_import_extras;
 
 	InfoSource m_info_source;
-	int m_min_run;
+	int m_nbm_wait;
 
 	//
 	// Considered using a std::multimap here but C++98 doesn't guarantee the
