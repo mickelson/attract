@@ -50,6 +50,7 @@ const char *FE_DIR_TOKEN				= "<DIR>";
 const char *FE_DEFAULT_ARTWORK		= "snap";
 
 const char *FE_EMULATOR_SUBDIR		= "emulators/";
+const char *FE_EMULATOR_TEMPLATES_SUBDIR	= "emulators/templates/";
 const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
 

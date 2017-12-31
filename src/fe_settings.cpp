@@ -2376,9 +2376,9 @@ FeEmulatorInfo *FeSettings::get_emulator( const std::string &n )
 	return m_rl.get_emulator( n );
 }
 
-FeEmulatorInfo *FeSettings::create_emulator( const std::string &n )
+FeEmulatorInfo *FeSettings::create_emulator( const std::string &n, const std::string &t )
 {
-	return m_rl.create_emulator( n );
+	return m_rl.create_emulator( n, t );
 }
 
 void FeSettings::delete_emulator( const std::string &n )
@@ -2386,10 +2386,14 @@ void FeSettings::delete_emulator( const std::string &n )
 	m_rl.delete_emulator( n );
 }
 
-void FeSettings::get_list_of_emulators( std::vector<std::string> &emu_list )
+void FeSettings::get_list_of_emulators( std::vector<std::string> &emu_list, bool get_templates )
 {
 	std::string path = get_config_dir();
-	path += FE_EMULATOR_SUBDIR;
+
+	if ( get_templates )
+		path += FE_EMULATOR_TEMPLATES_SUBDIR;
+	else
+		path += FE_EMULATOR_SUBDIR;
 
 	get_basename_from_extension(
 		emu_list,

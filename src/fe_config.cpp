@@ -229,7 +229,7 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 	if ( m_emulator )
 	{
-		// Don't allow editting of the name. User can set it when adding new
+		// Don't allow editing of the name. User can set it when adding new
 		//
 		ctx.add_optl( Opt::INFO, "Emulator Name",
 				m_emulator->get_info( FeEmulatorInfo::Name ) );
@@ -422,6 +422,8 @@ bool FeEmulatorEditMenu::on_option_select(
 
 			ctx.fe_settings.delete_emulator(
 					m_emulator->get_info(FeEmulatorInfo::Name) );
+
+			m_emulator = NULL;
 		}
 		break;
 
@@ -702,7 +704,23 @@ bool FeEmulatorSelMenu::on_option_select(
 		if ( !ctx.edit_dialog( "Enter Emulator Name", res ) || res.empty() )
 			return false;
 
-		e = ctx.fe_settings.create_emulator( res );
+		std::vector<std::string> t_list;
+		ctx.fe_settings.get_list_of_emulators( t_list, true );
+
+		std::string et;
+		if ( t_list.size() > 0 )
+		{
+			std::string default_str;
+			ctx.fe_settings.get_resource( "Default", default_str );
+
+			t_list.insert( t_list.begin(), default_str );
+			int sel = ctx.option_dialog( "Select template to use for emulator settings", t_list, 0 );
+
+			if ( sel > 0 )
+				et = t_list[ sel ];
+		}
+
+		e = ctx.fe_settings.create_emulator( res, et );
 		flag = true;
 	}
 	else if ( o.opaque == 2 )

@@ -144,6 +144,10 @@ public:
 	virtual bool confirm_dialog( const std::string &msg,
 		const std::string &rep="" )=0;
 
+	virtual int option_dialog( const std::string &title,
+		const std::vector < std::string > &options,
+		int default_sel=0 )=0;
+
 	virtual void splash_message( const std::string &msg,
 		const std::string &rep,
 		const std::string &aux )=0;

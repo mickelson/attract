@@ -47,6 +47,10 @@ public:
 	bool confirm_dialog( const std::string &m,
 		const std::string &rep );
 
+        int option_dialog( const std::string &title,
+                const std::vector < std::string > &options,
+                int default_sel=0 );
+
 	void splash_message( const std::string &msg,
 		const std::string &rep,
 		const std::string &aux );
@@ -75,9 +79,16 @@ bool FeConfigContextImp::edit_dialog( const std::string &m, std::string &t )
 }
 
 bool FeConfigContextImp::confirm_dialog( const std::string &msg,
-						const std::string &rep )
+	const std::string &rep )
 {
 	return !m_feo.confirm_dialog( msg, rep );
+}
+
+int FeConfigContextImp::option_dialog( const std::string &title,
+	const std::vector < std::string > &options,
+	int default_sel )
+{
+	return m_feo.common_list_dialog( title, options, default_sel, default_sel );
 }
 
 void FeConfigContextImp::splash_message(

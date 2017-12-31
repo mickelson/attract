@@ -281,6 +281,7 @@ Joystick Mappings;Joystick Mappings
 Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Remove tag: '$1';Remove tag: '$1'
+Select template to use for emulator settings;Select template to use for emulator settings
 Window (No Border);Window (No Border)
 Working Directory;Working Directory
 multi;multi

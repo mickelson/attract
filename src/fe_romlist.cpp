@@ -728,10 +728,10 @@ void FeRomList::get_file_availability()
 
 // NOTE: this function is implemented in fe_settings.cpp
 bool internal_resolve_config_file(
-						const std::string &config_path,
-						std::string &result,
-						const char *subdir,
-						const std::string &name  );
+	const std::string &config_path,
+	std::string &result,
+	const char *subdir,
+	const std::string &name  );
 
 
 FeEmulatorInfo *FeRomList::get_emulator( const std::string & emu )
@@ -765,7 +765,7 @@ FeEmulatorInfo *FeRomList::get_emulator( const std::string & emu )
 	return NULL;
 }
 
-FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu )
+FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu, const std::string &emu_template )
 {
 	// If an emulator with the given name already exists we return it
 	//
@@ -779,9 +779,20 @@ FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu )
 	FeEmulatorInfo new_emu( emu );
 
 	std::string defaults_file;
-	if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
+	if ( !emu_template.empty() )
 	{
-		new_emu.load_from_file( defaults_file );
+		defaults_file = m_config_path;
+		defaults_file += FE_EMULATOR_TEMPLATES_SUBDIR;
+		defaults_file += emu_template;
+		defaults_file += FE_EMULATOR_FILE_EXTENSION;
+
+		if ( !new_emu.load_from_file( defaults_file ) )
+			FeLog() << "Unable to open file: " << defaults_file << std::endl;
+	}
+	else if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
+	{
+		if ( !new_emu.load_from_file( defaults_file ) )
+			FeLog() << "Unable to open file: " << defaults_file << std::endl;
 
 		//
 		// Find and replace the [emulator] token, replace with the specified
@@ -822,6 +833,7 @@ void FeRomList::delete_emulator( const std::string & emu )
 	path += emu;
 	path += FE_EMULATOR_FILE_EXTENSION;
 
+	FeLog() << "Deleting emulator: " << path << std::endl;
 	delete_file( path );
 
 	//

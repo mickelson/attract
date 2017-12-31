@@ -199,6 +199,7 @@ Screen Saver;Screen Saver
 Screen Saver Timeout;Screen Saver Timeout
 Screenshot;Screenshot
 Select;Select
+Select template to use for emulator settings;Select template to use for emulator settings
 Show in Cycle;Show in Cycle
 Show in Menu;Show in Menu
 Show Displays Menu;Show Displays Menu

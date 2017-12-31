@@ -496,10 +496,10 @@ public:
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 
 	FeEmulatorInfo *get_emulator( const std::string & );
-	FeEmulatorInfo *create_emulator( const std::string & );
+	FeEmulatorInfo *create_emulator( const std::string &, const std::string & );
 	void delete_emulator( const std::string & );
 
-	void get_list_of_emulators( std::vector<std::string> &emu_list );
+	void get_list_of_emulators( std::vector<std::string> &emu_list, bool get_templates=false );
 
 	//
 	// Functions used for configuration

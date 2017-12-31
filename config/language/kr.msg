@@ -416,5 +416,6 @@ _help_scrape_mamedb;MAME snap과 marquee를 mamedb.com에서 가져올 지 여�
 # Strings still needing translation
 #
 Non-Blocking Mode Wait;Non-Blocking Mode Wait
+Select template to use for emulator settings;Select template to use for emulator settings
 _help_input_action;
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)

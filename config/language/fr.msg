@@ -372,6 +372,7 @@ Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove tag: '$1';Remove tag: '$1'
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Select template to use for emulator settings;Select template to use for emulator settings
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
