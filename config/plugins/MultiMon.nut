@@ -11,11 +11,12 @@ class UserConfig </ help="This plugin provides basic multi-monitor support" />
 local tagOrder = 1;
 for ( local i=1; i<fe.monitors.len(); i++ )
 {
-	local tag="mon" + (fe.monitors[i].num+1);
+	local monDisplayNum = (fe.monitors[i].num+1);
+	local tag="mon" + monDisplayNum;
 	UserConfig[tag+"_art"] <- "marquee";
 	UserConfig.setattributes(tag+"_art",
 		{
-			label="Monitor " + fe.monitors[i].num + ": Artwork",
+			label="Monitor " + monDisplayNum + ": Artwork",
 			help="The artwork to display on this monitor",
 			options="marquee,wheel,snap,flyer,fanart,none",
 			order=tagOrder++
@@ -24,7 +25,7 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 	UserConfig[tag+"_preserve_aspect_ratio"] <- "Yes";
 	UserConfig.setattributes(tag+"_preserve_aspect_ratio",
 		{
-			label="Monitor " + fe.monitors[i].num
+			label="Monitor " + monDisplayNum
 				+ ": Preserve Aspect Ratio",
 			help="Preserve the artwork aspect ratio?",
 			options="Yes,No",
@@ -34,8 +35,7 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 	UserConfig[tag+"_x"] <- 0;
 	UserConfig.setattributes(tag+"_x",
 		{
-			label="Monitor " + fe.monitors[i].num
-				+ ": X",
+			label="Monitor " + monDisplayNum + ": X",
 			help="X coordinate of the top of the artwork",
 			order=tagOrder++
 		} );
@@ -43,8 +43,7 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 	UserConfig[tag+"_y"] <- 0;
 	UserConfig.setattributes(tag+"_y",
 		{
-			label="Monitor " + fe.monitors[i].num
-				+ ": Y",
+			label="Monitor " + monDisplayNum + ": Y",
 			help="Y coordinate of the top of the artwork",
 			order=tagOrder++
 		} );
@@ -52,8 +51,7 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 	UserConfig[tag+"_width"] <- fe.monitors[i].width;
 	UserConfig.setattributes(tag+"_width",
 		{
-			label="Monitor " + fe.monitors[i].num
-				+ ": Width",
+			label="Monitor " + monDisplayNum + ": Width",
 			help="Width of the artwork",
 			order=tagOrder++
 		} );
@@ -61,8 +59,7 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 	UserConfig[tag+"_height"] <- fe.monitors[i].height;
 	UserConfig.setattributes(tag+"_height",
 		{
-			label="Monitor " + fe.monitors[i].num
-				+ ": Height",
+			label="Monitor " + monDisplayNum + ": Height",
 			help="Height of the artwork",
 			order=tagOrder++
 		} );
