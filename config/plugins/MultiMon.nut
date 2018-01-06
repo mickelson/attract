@@ -81,37 +81,23 @@ class MultiMon
 
 	function onTransition( ttype, var, transition_time )
 	{
+		// Initialize on StartLayout
+		if ((_initialized == false) && (ttype == Transition.StartLayout))
+		{
+			return initializeArtwork();
+		}
+
 		// If we're transitioning to game, make sure any artwork that's mid-fade completes.
 		if ((_initialized == true) && (ttype == Transition.ToGame))
 		{
-			local redraw = false;
-
-			foreach(fadeArt in _list)
-			{
-				if ( fadeArt._in_fade )
-				{
-					fadeArt.flip();
-					// We need to redraw 2 frames because drawing appears to be double-buffered.
-					_redraw_frames=2;
-				}
-			}
-
-			if (_redraw_frames > 0)
-			{
-				_redraw_frames--;
-				redraw = true;
-			}
-
-			// This tells Attract Mode to immediately refresh the screen if we return true.
-			return redraw;
+			return transitionToGame();
 		}
 
-		// We'll initialize on StartLayout
-		if (ttype != Transition.StartLayout)
-		{
-			return false;
-		}
+		return false;
+	}
 
+	function initializeArtwork()
+	{
 		// If we're already initialized, return.
 		if (_initialized == true)
 		{
@@ -186,6 +172,31 @@ class MultiMon
 			fe.add_ticks_callback( this, "on_tick" );
 
 		return false;
+	}
+
+	function transitionToGame()
+	{
+		local redraw = false;
+
+		// If we're transitioning to game, make sure any artwork that's mid-fade completes.
+		foreach(fadeArt in _list)
+		{
+			if ( fadeArt._in_fade )
+			{
+				fadeArt.flip();
+				// We need to redraw 2 frames because drawing appears to be double-buffered.
+				_redraw_frames=2;
+			}
+		}
+
+		if (_redraw_frames > 0)
+		{
+			_redraw_frames--;
+			redraw = true;
+		}
+
+		// This tells Attract Mode to immediately refresh the screen if we return true.
+		return redraw;
 	}
 
 	function on_tick( ttime )
