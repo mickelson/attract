@@ -273,7 +273,6 @@ void wait_callback( void *o )
 				return;
 		}
 
-		win->clear();
 		win->display();
 	}
 }
