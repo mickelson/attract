@@ -155,6 +155,7 @@ std::string get_crc( const std::string &full_path,
 	}
 
 	char *buff_ptr = new char[size];
+	char *orig_buff_ptr = buff_ptr;
 
 	myfile.read( buff_ptr, size );
 	myfile.close();
@@ -162,7 +163,7 @@ std::string get_crc( const std::string &full_path,
 	correct_buff_for_format( buff_ptr, size, full_path );
 	std::string retval = get_crc32( buff_ptr, size );
 
-	delete [] buff_ptr;
+	delete [] orig_buff_ptr;
 
 	return retval;
 }
