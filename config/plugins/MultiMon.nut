@@ -8,6 +8,7 @@ class UserConfig </ help="This plugin provides basic multi-monitor support" />
 }
 
 // Add UserConfig entries for each extra monitor
+local tagOrder = 1;
 for ( local i=1; i<fe.monitors.len(); i++ )
 {
 	local tag="mon" + (fe.monitors[i].num+1);
@@ -17,7 +18,7 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 			label="Monitor " + fe.monitors[i].num + ": Artwork",
 			help="The artwork to display on this monitor",
 			options="marquee,wheel,snap,flyer,fanart,none",
-			order=i*2
+			order=tagOrder++
 		} );
 	
 	UserConfig[tag+"_preserve_aspect_ratio"] <- "Yes";
@@ -27,7 +28,43 @@ for ( local i=1; i<fe.monitors.len(); i++ )
 				+ ": Preserve Aspect Ratio",
 			help="Preserve the artwork aspect ratio?",
 			options="Yes,No",
-			order=i*2+1
+			order=tagOrder++
+		} );
+
+	UserConfig[tag+"_x"] <- 0;
+	UserConfig.setattributes(tag+"_x",
+		{
+			label="Monitor " + fe.monitors[i].num
+				+ ": X",
+			help="X coordinate of the top of the artwork",
+			order=tagOrder++
+		} );
+
+	UserConfig[tag+"_y"] <- 0;
+	UserConfig.setattributes(tag+"_y",
+		{
+			label="Monitor " + fe.monitors[i].num
+				+ ": Y",
+			help="Y coordinate of the top of the artwork",
+			order=tagOrder++
+		} );
+
+	UserConfig[tag+"_width"] <- fe.monitors[i].width;
+	UserConfig.setattributes(tag+"_width",
+		{
+			label="Monitor " + fe.monitors[i].num
+				+ ": Width",
+			help="Width of the artwork",
+			order=tagOrder++
+		} );
+
+	UserConfig[tag+"_height"] <- fe.monitors[i].height;
+	UserConfig.setattributes(tag+"_height",
+		{
+			label="Monitor " + fe.monitors[i].num
+				+ ": Height",
+			help="Height of the artwork",
+			order=tagOrder++
 		} );
 }
 
@@ -41,6 +78,51 @@ class MultiMon
 
 	constructor()
 	{
+       ::fe.add_transition_callback( this, "onTransition" );
+	}
+
+
+	function onTransition( ttype, var, transition_time )
+	{
+		// If we're transitioning to game, make sure any artwork that's mid-fade completes.
+		if ((_initialized == true) && (ttype == Transition.ToGame))
+		{
+			local redraw = false;
+
+			foreach(fadeArt in _list)
+			{
+				if ( fadeArt._in_fade )
+				{
+					fadeArt.flip();
+					// We need to redraw 2 frames because drawing appears to be double-buffered.
+					_redraw_frames=2;
+				}
+			}
+
+			if (_redraw_frames > 0)
+			{
+				_redraw_frames--;
+				redraw = true;
+			}
+
+			// This tells Attract Mode to immediately refresh the screen if we return true.
+			return redraw;
+		}
+
+		// We'll initialize on StartLayout
+		if (ttype != Transition.StartLayout)
+		{
+			return false;
+		}
+
+		// If we're already initialized, return.
+		if (_initialized == true)
+		{
+			return false;
+		}
+
+		_initialized = true;
+
 		for ( local i=1; i<fe.monitors.len(); i++ )
 		{
 			print( " + MultiMon Plug-in: Using Monitor #"
@@ -49,6 +131,10 @@ class MultiMon
 				+ "x" + fe.monitors[i].height + ")\n" );
 
 			local tag = "mon"+(fe.monitors[i].num+1);
+
+			local mon = fe.monitors[i];
+
+			mon.add_image("", 0, 0, 100, 100);
 
 			// Force the whole screen to black in case there
 			// is spillover from the main screen's layout
@@ -62,13 +148,30 @@ class MultiMon
 
 			if ( my_config[tag+"_art"] == "none" )
 				continue;
+	
+			// Support configurable artwork sizes
+			local left = 0;
+			local top = 0;
+			local width = fe.monitors[i].width;
+			local height = fe.monitors[i].height;
+
+			if ( (tag+"_x") in my_config)
+				left = my_config[tag+"_x"].tointeger();
+			if ( (tag+"_y") in my_config)
+				top = my_config[tag+"_y"].tointeger();
+			if ( (tag+"_height") in my_config)
+				height = my_config[tag+"_height"].tointeger();
+			if ( (tag+"_width") in my_config)
+				width = my_config[tag+"_width"].tointeger();
+				
+			print("+ MultiMon Plug-in: Calling FadeArt: " + my_config[tag+"_art"] + "," + left + "," + top + "," + width + "," + height + "," + fe.monitors[i] + "\n");
 
 			local n = FadeArt(
 				my_config[tag+"_art"],
-				0,
-				0,
-				fe.monitors[i].width,
-				fe.monitors[i].height,
+				left,
+				top,
+				width,
+				height,
 				fe.monitors[i] );
 
 			n.video_flags = Vid.NoAudio;
@@ -84,6 +187,8 @@ class MultiMon
 
 		if (( _list.len() > 0 ) && ScreenSaverActive )
 			fe.add_ticks_callback( this, "on_tick" );
+
+		return false;
 	}
 
 	function on_tick( ttime )
@@ -98,7 +203,9 @@ class MultiMon
 	}
 
 	_list=[];
+	_initialized = false;
 	_last_trigger=0;
+	_redraw_frames = 0;
 }
 
 fe.plugin["MultiMon"] <- MultiMon();
