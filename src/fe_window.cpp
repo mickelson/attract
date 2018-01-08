@@ -272,8 +272,6 @@ void wait_callback( void *o )
 			if ( ev.type == sf::Event::Closed )
 				return;
 		}
-
-		win->display();
 	}
 }
 
