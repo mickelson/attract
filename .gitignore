@@ -4,6 +4,7 @@
 obj
 core
 *.dll
+*.exe
 /*.cfg
 /*.am
 *.layout
