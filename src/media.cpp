@@ -118,7 +118,6 @@ public:
 	AVFormatContext *m_format_ctx;
 	AVIOContext *m_io_ctx;
 	sf::Mutex m_read_mutex;
-	bool m_loop;
 	bool m_read_eof;
 };
 
@@ -222,7 +221,6 @@ FeMediaImp::FeMediaImp( FeMedia::Type t )
 	: m_type( t ),
 	m_format_ctx( NULL ),
 	m_io_ctx( NULL ),
-	m_loop( true ),
 	m_read_eof( false )
 {
 }
@@ -879,16 +877,6 @@ bool FeMedia::is_playing()
 	return ((m_audio) && (sf::SoundStream::getStatus() == sf::SoundStream::Playing));
 }
 
-void FeMedia::setLoop( bool l )
-{
-	m_imp->m_loop=l;
-}
-
-bool FeMedia::getLoop() const
-{
-	return m_imp->m_loop;
-}
-
 void FeMedia::setVolume(float volume)
 {
 	if ( m_audio )
@@ -1164,14 +1152,6 @@ bool FeMedia::tick()
 			m_video->display_frame = NULL;
 			return true;
 		}
-	}
-
-	// restart if we are looping and done
-	//
-	if ( (m_imp->m_loop) && (!is_playing()) )
-	{
-		stop();
-		play();
 	}
 
 	return false;
