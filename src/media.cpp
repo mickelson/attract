@@ -874,7 +874,7 @@ void FeMedia::close()
 bool FeMedia::is_playing()
 {
 	if ((m_video) && (!m_video->at_end))
-		return true;
+		return (m_video->run_video_thread);
 
 	return ((m_audio) && (sf::SoundStream::getStatus() == sf::SoundStream::Playing));
 }

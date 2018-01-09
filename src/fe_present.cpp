@@ -1065,7 +1065,7 @@ bool FePresent::video_tick()
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 			itm != m_texturePool.end(); ++itm )
 	{
-		if ( (*itm)->tick( m_feSettings, m_playMovies, true ) )
+		if ( (*itm)->tick( m_feSettings, m_playMovies ) )
 			ret_val=true;
 	}
 

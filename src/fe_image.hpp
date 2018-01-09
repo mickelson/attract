@@ -56,7 +56,7 @@ public:
 
 	virtual void on_new_list( FeSettings *, bool new_display )=0;
 
-	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
+	virtual bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
 
 	virtual void set_play_state( bool play );
 	virtual bool get_play_state() const;
@@ -124,7 +124,7 @@ public:
 	void on_end_navigation( FeSettings *feSettings );
 	void on_new_list( FeSettings *, bool );
 
-	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
+	bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
 	void set_play_state( bool play );
 	bool get_play_state() const;
 	void set_vol( float vol );
