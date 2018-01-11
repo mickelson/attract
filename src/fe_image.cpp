@@ -25,6 +25,7 @@
 #include "fe_settings.hpp"
 #include "fe_shader.hpp"
 #include "fe_present.hpp"
+#include "fe_file.hpp"
 #include "zip.hpp"
 
 #ifndef NO_MOVIE
@@ -313,7 +314,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 
 	if ( !res )
 	{
-		std::cout << "ERROR loading video: "
+		FeLog() << "ERROR loading video: "
 			<< loaded_name << std::endl;
 
 		delete m_movie;
@@ -361,7 +362,7 @@ bool FeTextureContainer::try_to_load(
 
 			if (!m_swf->open_from_archive( path, filename ))
 			{
-				std::cout << " ! ERROR loading SWF from archive: "
+				FeLog() << " ! ERROR loading SWF from archive: "
 					<< path << " (" << filename << ")" << std::endl;
 
 				delete m_swf;
@@ -378,7 +379,7 @@ bool FeTextureContainer::try_to_load(
 			m_swf = new FeSwf();
 			if (!m_swf->open_from_file( loaded_name ))
 			{
-				std::cout << " ! ERROR loading SWF: "
+				FeLog() << " ! ERROR loading SWF: "
 					<< loaded_name << std::endl;
 
 				delete m_swf;
@@ -431,7 +432,9 @@ bool FeTextureContainer::try_to_load(
 			return true;
 
 		clear();
-		if ( m_texture.loadFromFile( loaded_name ) )
+
+		FeFileInputStream filestream( loaded_name );
+		if ( m_texture.loadFromStream( filestream ) )
 		{
 			m_file_name = loaded_name;
 			return true;
@@ -493,7 +496,8 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 				&& ( m_current_filter_index == filter_index ))
 	{
 #ifdef FE_DEBUG
-		std::cout << "Optimization: " << m_file_name << " not loaded." << std::endl;
+		FeDebug() << "Texture internal update optimization: " << m_file_name
+			<< " not reloaded." << std::endl;
 #endif
 		return;
 	}
@@ -851,19 +855,7 @@ void FeTextureContainer::load_from_archive( const char *a, const char *n )
 	else if ( is_relative_path( filename ) )
 		path = FePresent::script_get_base_path();
 
-	bool is_image=false;
-
-	int i=0;
-	while ( FE_ART_EXTENSIONS[i] )
-	{
-		if ( tail_compare( filename, FE_ART_EXTENSIONS[i] ) )
-		{
-			is_image=true;
-			break;
-		}
-		i++;
-	}
-
+	bool is_image=tail_compare( filename, FE_ART_EXTENSIONS );
 	try_to_load( path, filename, is_image );
 	notify_texture_change();
 }
