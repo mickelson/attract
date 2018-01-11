@@ -720,7 +720,10 @@ void FeTextureContainer::set_play_state( bool play )
 			if ( play )
 				m_movie->play();
 			else
+			{
 				m_movie->stop();
+				m_movie_status = 0;
+			}
 		}
 		else if ( m_movie_status >= 0 )
 		{
