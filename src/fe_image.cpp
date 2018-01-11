@@ -170,7 +170,7 @@ bool FeBaseTextureContainer::fix_masked_image()
 	return false;
 }
 
-bool FeBaseTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
+bool FeBaseTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
 	return false;
 }
@@ -650,7 +650,7 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 	notify_texture_change();
 }
 
-bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
+bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
 #ifndef NO_SWF
 	if (( play_movies ) && ( m_swf ))
@@ -661,12 +661,11 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok
 
 #ifndef NO_MOVIE
 	if (( play_movies )
+		&& ( m_movie )
 		&& ( !(m_video_flags & VF_DisableVideo) )
-		&& ( m_movie ))
+		&& ( m_movie_status > 0 ))
 	{
-		if (( m_movie_status > 0 )
-			&& ( m_movie_status < PLAY_COUNT )
-			&& ( ok_to_start ))
+		if ( m_movie_status < PLAY_COUNT )
 		{
 			//
 			// We skip the first few "ticks" after the movie
@@ -677,7 +676,7 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok
 			m_movie_status++;
 			return false;
 		}
-		else if (( m_movie_status == PLAY_COUNT ) && ( ok_to_start ))
+		else if ( m_movie_status == PLAY_COUNT )
 		{
 			m_movie_status++;
 
@@ -689,9 +688,18 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok
 			else
 				m_movie->setVolume(feSettings->get_play_volume( FeSoundInfo::Movie ) );
 
-			m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
 			m_movie->play();
 		}
+
+		// restart looped video
+		if ( !(m_video_flags & VF_NoLoop) && !m_movie->is_playing() )
+		{
+			m_movie->stop();
+			m_movie->play();
+
+			FeDebug() << "Restarted looped video" << std::endl;
+		}
+
 		return m_movie->tick();
 	}
 #endif
@@ -704,12 +712,17 @@ void FeTextureContainer::set_play_state( bool play )
 #ifndef NO_MOVIE
 	if (m_movie)
 	{
-		if ( m_movie_status >= PLAY_COUNT )
+		if ( play == get_play_state() )
+			return;
+
+		if ( m_movie_status > PLAY_COUNT )
 		{
 			if ( play )
 				m_movie->play();
 			else
 				m_movie->stop();
+				m_movie_status = 0;
+				return;
 		}
 		else if ( m_movie_status >= 0 )
 		{
@@ -735,7 +748,7 @@ bool FeTextureContainer::get_play_state() const
 #ifndef NO_MOVIE
 	if ( m_movie )
 	{
-		if ( m_movie_status >= PLAY_COUNT )
+		if ( m_movie_status > PLAY_COUNT )
 			return m_movie->is_playing();
 		else
 			// if status > 0, we are in the process of starting to play
@@ -793,8 +806,6 @@ void FeTextureContainer::set_video_flags( FeVideoFlags f )
 #ifndef NO_MOVIE
 	if ( m_movie )
 	{
-		m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
-
 		if (m_video_flags & VF_NoAudio)
 			m_movie->setVolume( 0.f );
 		else
