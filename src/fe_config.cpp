@@ -229,7 +229,7 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 	if ( m_emulator )
 	{
-		// Don't allow editting of the name. User can set it when adding new
+		// Don't allow editing of the name. User can set it when adding new
 		//
 		ctx.add_optl( Opt::INFO, "Emulator Name",
 				m_emulator->get_info( FeEmulatorInfo::Name ) );
@@ -422,14 +422,17 @@ bool FeEmulatorEditMenu::on_option_select(
 
 			ctx.fe_settings.delete_emulator(
 					m_emulator->get_info(FeEmulatorInfo::Name) );
+
+			m_emulator = NULL;
 		}
 		break;
 
 	case 100: // Hotkey input
 		{
-			std::string res;
+			FeInputMapEntry ent;
 			FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
-			ctx.input_map_dialog( "Press Exit Hotkey", res, conflict );
+			ctx.input_map_dialog( "Press Exit Hotkey", ent, conflict );
+			std::string res = ent.as_string();
 
 			bool save=false;
 			if ( o.get_value().compare( res ) != 0 )
@@ -701,7 +704,23 @@ bool FeEmulatorSelMenu::on_option_select(
 		if ( !ctx.edit_dialog( "Enter Emulator Name", res ) || res.empty() )
 			return false;
 
-		e = ctx.fe_settings.create_emulator( res );
+		std::vector<std::string> t_list;
+		ctx.fe_settings.get_list_of_emulators( t_list, true );
+
+		std::string et;
+		if ( t_list.size() > 0 )
+		{
+			std::string default_str;
+			ctx.fe_settings.get_resource( "Default", default_str );
+
+			t_list.insert( t_list.begin(), default_str );
+			int sel = ctx.option_dialog( "Select template to use for emulator settings", t_list, 0 );
+
+			if ( sel > 0 )
+				et = t_list[ sel ];
+		}
+
+		e = ctx.fe_settings.create_emulator( res, et );
 		flag = true;
 	}
 	else if ( o.opaque == 2 )
@@ -1414,9 +1433,10 @@ bool FeInputEditMenu::on_option_select(
 
 	case 1:
 		{
-			std::string res;
+			FeInputMapEntry ent;
 			FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
-			ctx.input_map_dialog( "Press Input", res, conflict );
+			ctx.input_map_dialog( "Press Input", ent, conflict );
+			std::string res = ent.as_string();
 
 			if ( res.empty() )
 				return true;
@@ -1475,6 +1495,85 @@ bool FeInputEditMenu::save( FeConfigContext &ctx )
 void FeInputEditMenu::set_mapping( FeMapping *mapping )
 {
 	m_mapping = mapping;
+}
+
+void FeInputJoysticksMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Configure / Joystick Mapping" );
+
+
+	std::vector < std::string > values;
+	std::set < std::string > values_set;
+
+	std::string default_str;
+	ctx.fe_settings.get_resource( "Default", default_str );
+	values.push_back( default_str ); // we assume this is the first entry in the vector
+
+	//
+	// sf::Joystick::getIdentification() only available if SFML version is >= 2.2
+	//
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+	for ( size_t i=0; i < sf::Joystick::Count; i++ )
+	{
+		if ( sf::Joystick::isConnected( i ) )
+		{
+			std::string temp = sf::Joystick::getIdentification( i ).name.toAnsiString();
+
+			if ( values_set.find( temp ) == values_set.end() )
+			{
+				values_set.insert( temp );
+				values.push_back( temp );
+			}
+		}
+	}
+#endif
+
+	std::vector < std::pair < int, std::string > >::iterator itr;
+	std::vector < std::pair < int, std::string > > &joy_config = ctx.fe_settings.get_joy_config();
+
+	for ( itr=joy_config.begin(); itr!=joy_config.end(); ++itr )
+	{
+		if ( values_set.find( (*itr).second ) == values_set.end() )
+		{
+			values_set.insert( (*itr).second );
+			values.push_back( (*itr).second );
+		}
+	}
+
+	for ( int i=0; i < sf::Joystick::Count; i++ )
+	{
+		std::string name;
+		std::string value = default_str;
+		ctx.fe_settings.get_resource( "Joystick $1", as_str( (int)i ), name );
+
+		for ( itr=joy_config.begin(); itr!=joy_config.end(); ++itr )
+		{
+			if ( (*itr).first == i )
+				value = (*itr).second;
+		}
+
+		ctx.add_optl( Opt::LIST, name, value, "_help_joystick_map" );
+		ctx.back_opt().append_vlist( values );
+	}
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeInputJoysticksMenu::save( FeConfigContext &ctx )
+{
+	std::vector < std::pair < int, std::string > > &joy_config = ctx.fe_settings.get_joy_config();
+
+	joy_config.clear();
+
+	for ( size_t i=0; i < sf::Joystick::Count; i++ )
+	{
+		if ( ctx.opt_list[ i].get_vindex() != 0 ) // we don't record anything if "Default" is selected for a slot
+			joy_config.push_back( std::pair < int, std::string >( i, ctx.opt_list[i].get_value() ) );
+	}
+
+	ctx.save_req = true; // because FeInputSelMenu saves before calling us, we need to flag that a save is now
+				// required again
+	return true;
 }
 
 void FeInputSelMenu::get_options( FeConfigContext &ctx )
@@ -1543,6 +1642,9 @@ void FeInputSelMenu::get_options( FeConfigContext &ctx )
 	ctx.back_opt().append_vlist( thresh );
 	ctx.back_opt().opaque = 1;
 
+	ctx.add_optl( Opt::SUBMENU, "Joystick Mappings", "", "_help_joystick_map" );
+	ctx.back_opt().opaque = 2;
+
 	FeBaseConfigMenu::get_options( ctx );
 }
 
@@ -1550,11 +1652,11 @@ bool FeInputSelMenu::save( FeConfigContext &ctx )
 {
 	ctx.fe_settings.set_info(
 			FeSettings::JoystickThreshold,
-			ctx.opt_list[ ctx.opt_list.size() - 3 ].get_value() );
+			ctx.opt_list[ ctx.opt_list.size() - 4 ].get_value() );
 
 	ctx.fe_settings.set_info(
 			FeSettings::MouseThreshold,
-			ctx.opt_list[ ctx.opt_list.size() - 2 ].get_value() );
+			ctx.opt_list[ ctx.opt_list.size() - 3 ].get_value() );
 
 	return true;
 }
@@ -1576,6 +1678,18 @@ bool FeInputSelMenu::on_option_select(
 
 		m_edit_menu.set_mapping( &(m_mappings[ ctx.curr_sel ]) );
 		submenu = &m_edit_menu;
+	}
+	else if ( o.opaque == 2 )
+	{
+		// save now if needed so that the updated mouse and joystick
+		// threshold values are used for any further mapping
+		if ( ctx.save_req )
+		{
+			save( ctx );
+			ctx.save_req = false;
+		}
+
+		submenu = &m_joysticks_menu;
 	}
 
 	return true;
@@ -1862,19 +1976,19 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	vid_dec = "software";
 	decoders.push_back( vid_dec );
 #else
-	vid_dec = FeMedia::get_decoder_label( FeMedia::get_current_decoder() );
-
-	FeMedia::VideoDecoder d=FeMedia::software;
-	while ( d != FeMedia::LAST_DECODER )
-	{
-		if ( FeMedia::get_decoder_available( d ) )
-			decoders.push_back( FeMedia::get_decoder_label( d ) );
-
-		d = (FeMedia::VideoDecoder)(d+1);
-	}
+	vid_dec = FeMedia::get_current_decoder();
+	FeMedia::get_decoder_list( decoders );
 #endif
+
 	ctx.add_optl( Opt::LIST, "Video Decoder", vid_dec, "_help_video_decoder" );
 	ctx.back_opt().append_vlist( decoders );
+
+#ifdef SFML_SYSTEM_WINDOWS    
+	ctx.add_optl( Opt::LIST, "Hide Console",
+		ctx.fe_settings.get_hide_console() ? bool_opts[0] : bool_opts[1],
+		"_help_hide_console" );
+	ctx.back_opt().append_vlist( bool_opts );
+#endif
 
 	FeBaseConfigMenu::get_options( ctx );
 }
@@ -1919,6 +2033,11 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
 			ctx.opt_list[12].get_value() );
 
+#ifdef SFML_SYSTEM_WINDOWS   
+	ctx.fe_settings.set_info( FeSettings::HideConsole,
+			ctx.opt_list[13].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+#endif
+
 	return true;
 }
 
@@ -1935,9 +2054,10 @@ bool FeScriptConfigMenu::on_option_select(
 
 	if ( o.opaque == 1 )
 	{
-		std::string res;
 		FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
-		ctx.input_map_dialog( "Press Input", res, conflict );
+		FeInputMapEntry ent;
+		ctx.input_map_dialog( "Press Input", ent, conflict );
+		std::string res = ent.as_string();
 
 		if (( conflict == FeInputMap::Exit )
 			|| ( conflict == FeInputMap::ExitToDesktop ))
@@ -2273,6 +2393,13 @@ bool FeConfigMenu::save( FeConfigContext &ctx )
 	return true;
 }
 
+FeEditGameMenu::FeEditGameMenu()
+	: m_update_rl( false ),
+	m_update_stats( false ),
+	m_update_extras( false )
+{
+}
+
 void FeEditGameMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Edit Game" );
@@ -2402,7 +2529,9 @@ bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *&
 	case 100: // Delete Game
 		if ( ctx.confirm_dialog( "Delete game '$1'?", ctx.opt_list[1].get_value() ) )
 		{
-			ctx.fe_settings.update_romlist_after_edit( m_rom_original, m_rom_original, true );
+			ctx.fe_settings.update_romlist_after_edit( m_rom_original,
+				m_rom_original,
+				FeSettings::EraseEntry );
 			return true;
 		}
 		return false;
@@ -2447,6 +2576,151 @@ bool FeEditGameMenu::save( FeConfigContext &ctx )
 		ctx.fe_settings.set_game_extra( FeSettings::Executable, ctx.opt_list[border+1].get_value() );
 		ctx.fe_settings.set_game_extra( FeSettings::Arguments, ctx.opt_list[border+2].get_value() );
 		ctx.fe_settings.save_game_extras();
+	}
+
+	return true;
+}
+
+FeEditShortcutMenu::FeEditShortcutMenu()
+	: m_update_rl( false )
+{
+}
+
+void FeEditShortcutMenu::get_options( FeConfigContext &ctx )
+{
+	ctx.set_style( FeConfigContext::EditList, "Edit Shortcut" );
+
+	/////////////////////////////////////////////////////////////////////
+	//
+	// Something is a shortcut if the romlist "Emulator" field starts with a "@" character
+	//
+	// Relevant fields:
+	//
+	// Title      = Shortcut description
+	// Emulator   = "@"               (Display shortcut)
+	//            = "@<signal_name>"  (Command shortcut)
+	// Romname    = shortcut target   (Display shortcut only)
+	// AltRomname = optional artwork label
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	int filter_idx = ctx.fe_settings.get_filter_index_from_offset( 0 );
+	int rom_idx = ctx.fe_settings.get_rom_index( filter_idx, 0 );
+
+	FeRomInfo *rom = ctx.fe_settings.get_rom_absolute( filter_idx, rom_idx );
+	if ( rom )
+		m_rom_original = *rom;
+
+	std::string command;
+	std::string temp = m_rom_original.get_info( FeRomInfo::Emulator );
+	if ( temp.size() > 1 )
+		command = temp.substr( 1 );
+
+	ctx.add_optl( Opt::EDIT, "Title",
+		m_rom_original.get_info( FeRomInfo::Title ),
+		"_help_shortcut_label_edit" );
+
+	std::vector<std::string> option_list;
+	if ( command.empty() )
+	{
+		ctx.add_optl( Opt::LIST, "Target",
+			m_rom_original.get_info( FeRomInfo::Romname ),
+			"_help_shortcut_target_edit" );
+
+		int display_count = ctx.fe_settings.displays_count();
+		for ( int i=0; i< display_count; i++ )
+			option_list.push_back( ctx.fe_settings.get_display( i )->get_info( FeDisplayInfo::Name ) );
+	}
+	else
+	{
+		std::string val = command;
+		int i=0;
+		while ( FeInputMap::commandDispStrings[i] )
+		{
+
+			if ( command.compare( FeInputMap::commandStrings[i] ) == 0 )
+				val = FeInputMap::commandDispStrings[i];
+
+			option_list.push_back( FeInputMap::commandDispStrings[i] );
+			i++;
+		}
+
+		ctx.add_optl( Opt::LIST, "Target",
+			val,
+			"_help_shortcut_target_edit" );
+	}
+
+	ctx.back_opt().append_vlist( option_list );
+
+	ctx.add_optl( Opt::EDIT, "Artwork Name",
+		m_rom_original.get_info( FeRomInfo::AltRomname ),
+		"_help_shortcut_artwork_name_edit" );
+
+	ctx.add_optl( Opt::EXIT, "Delete this Shortcut", "", "_help_shortcut_delete" );
+	ctx.back_opt().opaque = 1;
+
+	FeBaseConfigMenu::get_options( ctx );
+}
+
+bool FeEditShortcutMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *& submenu )
+{
+	if ( ctx.curr_opt().opaque == 1 )
+	{
+		if ( ctx.confirm_dialog( "Delete shortcut '$1'?", ctx.opt_list[0].get_value() ) )
+		{
+			ctx.fe_settings.update_romlist_after_edit( m_rom_original,
+				m_rom_original,
+				FeSettings::EraseEntry );
+
+			m_update_rl = false;
+			return true;
+		}
+		return false;
+	}
+
+	m_update_rl = true;
+	return true;
+}
+
+bool FeEditShortcutMenu::save( FeConfigContext &ctx )
+{
+	if ( m_update_rl )
+	{
+		FeRomInfo replacement = m_rom_original;
+
+		std::string command;
+		std::string temp = m_rom_original.get_info( FeRomInfo::Emulator );
+		if ( temp.size() > 1 )
+			command = temp.substr( 1 );
+
+		// Update working romlist with the info provided by the user
+		//
+		replacement.set_info( FeRomInfo::Title, ctx.opt_list[0].get_value() );
+
+		if ( command.empty() )
+		{
+			// Display shortcut
+			replacement.set_info( FeRomInfo::Romname, ctx.opt_list[1].get_value() );
+			replacement.set_info( FeRomInfo::Emulator, "@" );
+		}
+		else
+		{
+			std::string new_command = FeInputMap::commandStrings[ ctx.opt_list[1].get_vindex() ];
+
+			replacement.set_info( FeRomInfo::Romname, new_command );
+
+			// Command/signal shortcut - set emulator field to "@<command>"
+			std::string new_emu = "@";
+			new_emu += new_command;
+
+			replacement.set_info( FeRomInfo::Emulator, new_emu );
+		}
+
+		replacement.set_info( FeRomInfo::AltRomname, ctx.opt_list[2].get_value() );
+
+		// Resave the romlist file that our romlist was loaded from
+		//
+		ctx.fe_settings.update_romlist_after_edit( m_rom_original, replacement );
 	}
 
 	return true;

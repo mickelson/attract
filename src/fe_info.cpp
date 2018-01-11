@@ -151,7 +151,7 @@ void FeRomInfo::update_stats( const std::string &path, int count_incr, int playe
 
 	if ( !myfile.is_open() )
 	{
-		std::cerr << "Error writing stat file: " << filename << std::endl;
+		FeLog() << "Error writing stat file: " << filename << std::endl;
 		return;
 	}
 
@@ -201,6 +201,18 @@ bool FeRomInfo::operator==( const FeRomInfo &o ) const
 {
 	return (( m_info[Romname].compare( o.m_info[Romname] ) == 0 )
 				&& ( m_info[Emulator].compare( o.m_info[Emulator] ) == 0 ));
+}
+
+bool FeRomInfo::full_comparison( const FeRomInfo &o ) const
+{
+	// everything from Favourite on is not loaded from the romlist
+	for ( int i=0; i<Favourite; i++ )
+	{
+		if ( m_info[i].compare( o.m_info[i] ) != 0 )
+			return false;
+	}
+
+	return true;
 }
 
 const char *FeRule::filterCompStrings[] =
@@ -272,7 +284,7 @@ void FeRule::init()
 		(const SQChar *)m_filter_what.c_str(), &err );
 
 	if ( !m_rex )
-		std::cout << "Error compiling regular expression \""
+		FeLog() << "Error compiling regular expression \""
 			<< m_filter_what << "\": " << err << std::endl;
 }
 
@@ -687,13 +699,13 @@ int FeDisplayInfo::process_state( const std::string &state_string )
 		// If there are filters we get a current rom for each filter
 		size_t sub_pos=0;
 		int findex=0;
-		do
+		while (( sub_pos < val.size() ) && ( findex < (int)m_filters.size() ))
 		{
 			std::string sub_val;
 			token_helper( val, sub_pos, sub_val, "," );
 			m_filters[findex].set_rom_index( as_int( sub_val ) );
 			findex++;
-		} while ( sub_pos < val.size() );
+		}
 	}
 
 	if ( pos >= state_string.size() )
@@ -707,6 +719,11 @@ int FeDisplayInfo::process_state( const std::string &state_string )
 
 	token_helper( state_string, pos, val );
 	m_filter_index = as_int( val );
+
+	if ( m_filter_index >= (int)m_filters.size() )
+		m_filter_index = m_filters.size() - 1;
+	if ( m_filter_index < 0 )
+		m_filter_index = 0;
 
 	return 0;
 }
@@ -820,7 +837,7 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"system",
 	"info_source",
 	"import_extras",
-	"minimum_run_time",
+	"nb_mode_wait",
 	"exit_hotkey",
 	NULL
 };
@@ -836,7 +853,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"System Identifier",
 	"Info Source/Scraper",
 	"Additional Import File(s)",
-	"Minimum Run Time",
+	"Non-Blocking Mode Wait",
 	"Exit Hotkey",
 	NULL
 };
@@ -855,14 +872,14 @@ const char *FeEmulatorInfo::infoSourceStrings[] =
 
 FeEmulatorInfo::FeEmulatorInfo()
 	: m_info_source( None ),
-	m_min_run( 0 )
+	m_nbm_wait( 0 )
 {
 }
 
 FeEmulatorInfo::FeEmulatorInfo( const std::string &n )
 	: m_name( n ),
 	m_info_source( None ),
-	m_min_run( 0 )
+	m_nbm_wait( 0 )
 {
 }
 
@@ -888,8 +905,8 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 		return infoSourceStrings[m_info_source];
 	case Import_extras:
 		return vector_to_string( m_import_extras );
-	case Minimum_run_time:
-		return as_str( m_min_run );
+	case NBM_wait:
+		return as_str( m_nbm_wait );
 	case Exit_hotkey:
 		return m_exit_hotkey;
 	default:
@@ -947,8 +964,8 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 		m_import_extras.clear();
 		string_to_vector( s, m_import_extras );
 		break;
-	case Minimum_run_time:
-		m_min_run = as_int( s );
+	case NBM_wait:
+		m_nbm_wait = as_int( s );
 		break;
 	case Exit_hotkey:
 		m_exit_hotkey = s; break;
@@ -1051,6 +1068,14 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 		}
 	}
 
+	// Backwards compatability
+	//
+	if ( setting.compare( "minimum_run_time" ) == 0 ) // "nb_mode_wait" was "minimum_run_time" (<= v2.2)
+	{
+		set_info( NBM_wait, value );
+		return 0;
+	}
+
 	if ( setting.compare( stokens[0] ) == 0 ) // artwork
 	{
 		size_t pos=0;
@@ -1070,9 +1095,7 @@ int FeEmulatorInfo::process_setting( const std::string &setting,
 
 void FeEmulatorInfo::save( const std::string &filename ) const
 {
-#ifdef FE_DEBUG
-	std::cout << "Writing emulator config to: " << filename << std::endl;
-#endif
+	FeLog() << "Writing emulator config to: " << filename << std::endl;
 
 	std::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
@@ -1089,8 +1112,8 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 		//
 		for ( int i=1; i < LAST_INDEX; i++ )
 		{
-			// don't output minimum run time if it is zero
-			if (( i == Minimum_run_time ) && ( m_min_run == 0 ))
+			// don't output nbm_wait if it is zero
+			if (( i == NBM_wait ) && ( m_nbm_wait == 0 ))
 				continue;
 
 			string val = get_info( (Index) i );

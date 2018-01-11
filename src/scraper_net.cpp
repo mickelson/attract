@@ -94,7 +94,7 @@ bool process_q_simple( FeNetQueue &q,
 	// Process the output queue from our worker threads
 	//
 	std::string aux;
-	while ( !( q.input_done() && q.output_done() ) )
+	while ( !q.all_done() )
 	{
 		int id;
 		std::string result;
@@ -105,7 +105,7 @@ bool process_q_simple( FeNetQueue &q,
 			{
 				if ( id == -1 )
 				{
-					std::cout << " + Downloaded: " << result << std::endl;
+					FeLog() << " + Downloaded: " << result << std::endl;
 					c.download_count++;
 
 					// find second last forward slash in filename
@@ -154,7 +154,7 @@ bool FeSettings::simple_scraper( FeImporterContext &c,
 	ParentMapType parent_map;
 	build_parent_map( parent_map, c.romlist, false );
 
-	std::cout << " - Scraping " << host << " [" << art_label << "]" << std::endl;
+	FeLog() << " - Scraping " << host << " [" << art_label << "]" << std::endl;
 
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
 	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
@@ -306,7 +306,7 @@ bool get_system_list( FeImporterContext &c,
 		fes.get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
 			as_str( status ), c.user_message );
 
-		std::cerr << " ! " << c.user_message << " (" << err_req << ")" << std::endl;
+		FeLog() << " ! " << c.user_message << " (" << err_req << ")" << std::endl;
 		return false;
 	}
 
@@ -366,7 +366,7 @@ bool get_system_list( FeImporterContext &c,
 			fes.get_resource( "Error: None of the configured system identifier(s) are recognized by thegamesdb.net.",
 				c.user_message );
 
-			std::cerr << " ! " << c.user_message << std::endl;
+			FeLog() << " ! " << c.user_message << std::endl;
 			return false;
 		}
 	}
@@ -463,7 +463,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	std::vector<std::string> system_list;
 	std::vector<int> system_ids;
 
-	std::cout << " - scraping thegamesdb.net..." << std::endl;
+	FeLog() << " - scraping thegamesdb.net..." << std::endl;
 
 	//
 	// Get a list of valid platforms
@@ -495,7 +495,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			q.do_next_task( status, err_req );
 			if ( status != sf::Http::Response::Ok )
 			{
-				std::cout << " * Unable to get platform information. Status code: "
+				FeLog() << " * Unable to get platform information. Status code: "
 					<< status << " (" << err_req << ")" << std::endl;
 				continue;
 			}
@@ -594,7 +594,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 	//
 	// Process the output queue from our worker threads
 	//
-	while ( !( q.input_done() && q.output_done() ) )
+	while ( !q.all_done() )
 	{
 		int id;
 		std::string result;
@@ -605,7 +605,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			{
 				if (( id == FeNetTask::FileTask ) || ( id == FeNetTask::SpecialFileTask ))
 				{
-					std::cout << " + Downloaded: " << result << std::endl;
+					FeLog() << " + Downloaded: " << result << std::endl;
 					c.download_count++;
 
 					// find second last forward slash in filename
@@ -692,7 +692,7 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			q.do_next_task( status, err_req );
 			if ( status != sf::Http::Response::Ok )
 			{
-				std::cout << " * Error processing request. Status code: "
+				FeLog() << " * Error processing request. Status code: "
 					<< status << " (" << err_req << ")" << std::endl;
 			}
 		}

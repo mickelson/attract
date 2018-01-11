@@ -189,10 +189,12 @@ void FeWindow::initial_create()
 
 #ifdef USE_XINERAMA
 	if ( m_fes.get_info_bool( FeSettings::MultiMon ) && ( win_mode != FeSettings::Default ))
-		std::cout << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
+		FeLog() << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
 #endif
 
 	// Create window
+	FeDebug() << "Creating Attract-Mode window" << std::endl;
+
 	create(
 		sf::VideoMode::getDesktopMode(),
 		"Attract-Mode",
@@ -248,12 +250,17 @@ void launch_callback( void *o )
  // hasFocus() is only available as of SFML 2.2.
  #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
 		if ( win->hasFocus() )
+		{
+			FeDebug() << "Attract-Mode window still has focus, closing now" << std::endl;
 			win->close();
+		}
  #else
+		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close();
  #endif
 
 #else
+		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
 #endif
 	}
@@ -300,25 +307,33 @@ bool FeWindow::run()
 
 	sf::Clock timer;
 
-	//
-	// For Steam support (at least on Windows) we have a "minimum run"
-	// value that can be set per emulator.  run() below sets this value.
-	// and we wait at least this amount of time (in seconds) and then wait
-	// for focus to return to Attract-Mode if this value is set greater than 0
-	//
-	int min_run;
-	m_fes.run( min_run, launch_callback, wait_callback, this );
+	int nbm_wait; // non-blocking mode wait time (in seconds)
+	m_fes.run( nbm_wait, launch_callback, wait_callback, this );
 
-	if ( min_run > 0 )
+	//
+	// If nbm_wait > 0, then m_fes.run() above is non-blocking and instead
+	// we wait at most nbm_wait seconds for Attract-Mode to lose focus to
+	// the launched program.
+	//
+	// The frontend will start up again within the nbm_wait time if focus is
+	// lost and returned to it for at least MAX_WAIT_ON_REGAIN_FOCUS ms.
+	//
+	// This mode is unfortunate and flakey, but necessary to support some
+	// programs (such as steam)
+	//
+	const int MAX_WAIT_ON_REGAIN_FOCUS=4000;
+
+	if ( nbm_wait > 0 )
 	{
-		sf::Time elapsed = timer.getElapsedTime();
-		if ( elapsed < sf::seconds( min_run ) )
-			sf::sleep( sf::seconds( min_run ) - elapsed );
+		FeDebug() << "Non-Blocking Wait Mode: nb_mode_wait=" << nbm_wait << " seconds, waiting..." << std::endl;
+		bool done_wait=false, has_focus=false, in_pad=false, focus_lost=false;
 
-		//
-		// Wait for focus to return
-		//
-		bool done_wait=false;
+		sf::Clock pad_timer;
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+		has_focus = hasFocus();
+#endif
+
 		while ( !done_wait && isOpen() )
 		{
 			sf::Event ev;
@@ -326,16 +341,69 @@ bool FeWindow::run()
 			{
 				if ( ev.type == sf::Event::GainedFocus )
 				{
-					done_wait=true;
-					break;
+					if ( !has_focus )
+						FeDebug() << "Gained focus at "
+							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+
+					has_focus = true;
+				}
+				else if ( ev.type == sf::Event::LostFocus )
+				{
+					if ( has_focus )
+						FeDebug() << "Lost focus at "
+							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+
+					has_focus = false;
+					focus_lost = true;
 				}
 				else if ( ev.type == sf::Event::Closed )
 					return false;
 			}
 
-			sf::sleep( sf::milliseconds( 250 ) );
+			bool in_nbm_wait = ( timer.getElapsedTime() < sf::seconds( nbm_wait ) );
+
+			if ( !focus_lost && !in_nbm_wait )
+			{
+				FeDebug() << "Focus not lost, nbm_wait reached.  Stopped waiting at "
+					<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+
+				done_wait = true;
+			}
+
+			if ( has_focus )
+			{
+				if ( !in_nbm_wait )
+				{
+						FeDebug() << "Focus regained. Stopped waiting at "
+							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+
+						done_wait=true;
+				}
+				else if ( !in_pad )
+				{
+					pad_timer.restart();
+					in_pad = true;
+				}
+				else
+				{
+					if (in_nbm_wait && focus_lost && (pad_timer.getElapsedTime() > sf::milliseconds( MAX_WAIT_ON_REGAIN_FOCUS )))
+					{
+						FeDebug() << "Focus regained for MAX_WAIT_ON_REGAIN_FOCUS (" << MAX_WAIT_ON_REGAIN_FOCUS << "ms).  Stopped waiting at "
+							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+						done_wait=true;
+					}
+				}
+			}
+			else
+				in_pad = false;
+
+			if ( !done_wait )
+				sf::sleep( sf::milliseconds( 25 ) );
 		}
 	}
+
+	if ( m_fes.get_info_bool( FeSettings::TrackUsage ) )
+		m_fes.update_stats( 1, timer.getElapsedTime().asSeconds() );
 
 #if defined(SFML_SYSTEM_LINUX)
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
@@ -371,6 +439,8 @@ bool FeWindow::run()
 		if ( ev.type == sf::Event::Closed )
 			return false;
 	}
+
+	FeDebug() << "Resuming frontend after game launch" << std::endl;
 
 	return true;
 }

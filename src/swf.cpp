@@ -33,14 +33,6 @@
 #include "gameswf/gameswf_freetype.h"
 #endif
 
-#ifdef FE_RPI
-#define USE_GLES 1
-#endif
-
-#ifdef SFML_SYSTEM_ANDROID
-#define USE_GLES 1
-#endif
-
 #ifdef USE_GLES
 #include <GLES/gl.h>
 #include <GLES/glext.h>

@@ -62,6 +62,9 @@ class UserConfig </ help="Hyperspin Layout: " + fe.script_dir + ::file_to_load /
 
    </ label="Fix SWF positioning", help="Try to fix flash swf artwork files positions", order=8, options="yes,no" />
    fix_swf_positions="yes";
+
+   </ label="Wheel Hide Time", help="The time (in milliseconds) that it takes for the wheel to fade.  Set to 0 for no fade", order=9 />
+   wheel_fade_ms="1000";
 };
 
 local my_config = fe.get_config();
@@ -870,7 +873,8 @@ function load_override_transition( sys_d, match_map )
 // animate module's transition handling
 //
 local call_animate=false;
-local w_alpha = 1000;
+local w_alpha_clock = 0;
+local w_alpha_triggered = 0;
 
 fe.add_transition_callback( "hs_transition" );
 function hs_transition( ttype, var, ttime )
@@ -912,7 +916,7 @@ function hs_transition( ttype, var, ttime )
 		break;
 
 	case Transition.ToNewSelection:
-        w_alpha = 1000;
+		w_alpha_triggered = w_alpha_clock;
 		if ( override_lag_ms <=  0 )
 			break;
 
@@ -1047,11 +1051,17 @@ local wheel_r = [  30,  25,  20,  15,  10,   5,   0, -10, -15, -20, -25, -30, ];
 //
 // Wheel alpha
 //
-fe.add_ticks_callback( "hs_wheel_alpha" );
+local wheel_fade_ms = 0;
+try { wheel_fade_ms = my_config["wheel_fade_ms"].tointeger(); } catch ( e ) { }
+
+if ( wheel_fade_ms > 0 )
+	fe.add_ticks_callback( "hs_wheel_alpha" );
+
 function hs_wheel_alpha( ttime )
 {
-    if (w_alpha > 0) {
-        w_alpha = w_alpha - 10;
+	w_alpha_clock = ttime;
+
+	local w_alpha = wheel_fade_ms - ( w_alpha_clock - w_alpha_triggered );
         if (w_alpha < 0) {
             w_alpha = 0;
         }
@@ -1068,7 +1078,6 @@ if (w_alpha >= 255) {
 }
             }
         }
-    }
 }
 
 class WheelEntry extends ConveyorSlot

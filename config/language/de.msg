@@ -74,6 +74,7 @@ Enter Display Name;Bezeichnung des Bildschrim eingeben
 Enter Emulator Name;Name des Emulators eingeben
 Enter Filter Name;Bezeichnung des Filters eingeben
 Executable;Ausführbare Datei
+Exit;Beenden (Bestätigen)
 Exit Attract-Mode;Attract-Mode beenden
 Exit Attract-Mode?;Attract-Mode beenden?
 Exit Command;Kommando zum Beenden
@@ -105,7 +106,6 @@ Layout Options;Themen Optionen
 Left;Links
 List Limit;Limit für die Liste 
 Manufacturer;Hersteller
-Minimum Run Time;Minimale Laufzeit
 Mouse Threshold;Schwellwert Maus
 Movie Volume;Film-Lautstärke
 Name;Name
@@ -245,7 +245,7 @@ _help_emu_exit_hotkey;Definiere einen globalen Hotkey, um den Emulator zu verlas
 _help_emu_gen_romlist;Generiere eine Romliste, indem der eingestellte ROM-Pfad nach ROMs mit der definierten Endung durchsucht wird. Falls verfügbar, werden XML-Informationen und zusätzliche Import-Dateien mit einbezogen.
 _help_emu_import_extras;Pfad zu beliebigen zusätzlichen Dateien welche gelesen werden müssen wenn eine Romliste für diesen Emulator generiert wird. Unterstützte Dateien sind: catver.ini (für Spiele Kategorien) und nplayers.ini (für Anzahl an Spielern).  Mehrere Dateipfade können durch Semikolon getrennt werden.
 _help_emu_info_source;Verwende "listxml" falls der Emulator mame -listxml Ausgabe bereitstellt, "listsoftware" für mame/mess -listsoftware Ausgabe, "thegamesdb.net" um Daten von thegamesdb.net zu scrapen, oder "steam" um von einer Steam-Installation zu lesen. "listsoftware" und "thegamesdb.net" benötigen zusätzlich die Konfiguration einer System-Kennung welche von diesen Ressourcen erkannt wird
-_help_emu_minimum_run_time;Definiere eine minimale Laufzeit (in Sekunden).  Attract-Mode wird nach dem Lauf dieses Emulators warten bis die minimale Zeit verstrichen ist und es zum Vordergund-Fenster wird. Dies wird speziell benötigt, um Steam korrekt unter Windows auszuführen. Lass es auf 0 stehen, ausser du weisst, dass du es benötigst
+_help_emu_nb_mode_wait;Definiere eine minimale Laufzeit (in Sekunden).  Attract-Mode wird nach dem Lauf dieses Emulators warten bis die minimale Zeit verstrichen ist und es zum Vordergund-Fenster wird. Dies wird speziell benötigt, um Steam korrekt unter Windows auszuführen. Lass es auf 0 stehen, ausser du weisst, dass du es benötigst
 _help_emu_romext;Die ROM Dateiendung(en) für diesen Emulator (z.B. .zip). Mehrere Endungen können durch Semikolon getrennt werden. Gib "<DIR>" als Eintrag an, falls die Spiele in separaten Unterverzeichnissen gespeichert sind
 _help_emu_rompath;Der Pfad zu den ROMs für diesen Emulator. Mehrere Pfade können durch Semikolon getrennt werden.
 _help_emu_scrape_artwork;Scrape fehlende Bilddateien für diesen Emulator von TheGamesDB.net und mamedb.com
@@ -302,9 +302,9 @@ Basic Movie;Basis Video
 Configure available emulators;Verfügbare Emulatoren konfigurieren
 Configure filter rule;Filterregel konfigurieren
 Delete this filter;Diesen Filter löschen
-Exit;Beenden (Bestätigen)
 Image collage;Bilder Collage
 Launch Last Game on Startup;Letztes Spiel beim Starten ausführen
+Minimum Run Time;Minimale Laufzeit
 Movie collage;Video Collage
 Overlay Artwork;Bilddatei als Overlay
 Preserve Aspect Ratio;Seitenverhältnis beibehalten
@@ -322,8 +322,11 @@ _help_autolaunch_last_game;Beim Hochfahren automatisch das zuletzt gespielte Spi
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
+Artwork Name;Artwork Name
+Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
 Confirm Exit;Confirm Exit
@@ -333,9 +336,12 @@ Custom Executable;Custom Executable
 Default;Default
 Default Action;Default Action
 Delete game '$1'?;Delete game '$1'?
+Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Game;Delete this Game
+Delete this Shortcut;Delete this Shortcut
 Display Name;Display Name
 Edit Game;Edit Game
+Edit Shortcut;Edit Shortcut
 Enable Multiple Monitors;Enable Multiple Monitors
 Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
@@ -343,17 +349,25 @@ Exception;Exception
 Exception Edit;Exception Edit
 Extra;Extra
 FileIsAvailable;FileIsAvailable
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
 Launch Last Game;Launch Last Game
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove tag: '$1';Remove tag: '$1'
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Select template to use for emulator settings;Select template to use for emulator settings
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
@@ -391,8 +405,14 @@ _help_game_edit;Edit this game information
 _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_input_default_action;Set the default behaviour for this control
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
+_help_shortcut_delete;Delete this shortcut from the Romlist
+_help_shortcut_label_edit;Edit this shortcut's label
+_help_shortcut_target_edit;Edit this shortcut's target
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)

@@ -1,3 +1,9 @@
+attract (2.3.0-1) unstable; urgency=low
+
+  * Version 2.3 package.
+
+ -- Andrew Mickelson <andrew@attractmode.org>  Sat, 18 Nov 2017 22:33:19 -0800
+
 attract (2.2.1-2) unstable; urgency=low
 
   * Install appdata file.

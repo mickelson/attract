@@ -67,6 +67,10 @@ bool tail_compare(
 	const std::string &filename,
 	const std::vector<std::string> &ext_list );
 
+bool tail_compare(
+	const std::string &filename,
+	const char **ext_list );
+
 //
 // Case insensitive compare of one and two
 // returns 0 if equal
@@ -131,6 +135,9 @@ bool is_relative_path( const std::string &file );
 std::string clean_path( const std::string &path,
 	bool add_trailing_slash = false );
 
+// get program path (NOT the working directory)
+std::string get_program_path();
+
 // return path as an absolute path
 std::string absolute_path( const std::string &path );
 
@@ -193,6 +200,8 @@ std::string get_available_filename(
 //
 // Create "base" directory if it doesn't exist
 // Create "sub" folder in "base" if it doesn't already exist
+//
+// returns true if directory created
 //
 bool confirm_directory( const std::string &base, const std::string &sub );
 

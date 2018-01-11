@@ -28,6 +28,7 @@
 #include "fe_romlist.hpp"
 #include "fe_input.hpp"
 #include "fe_util.hpp"
+#include <deque>
 
 extern const char *FE_ART_EXTENSIONS[];
 
@@ -165,6 +166,8 @@ private:
 	std::vector<int> m_display_cycle; // display indices to show in cycle
 	std::vector<int> m_display_menu; // display indices to show in menu
 	std::map<GameExtra,std::string> m_game_extras; // "extra" rom settings for the current rom
+	std::deque<int> m_display_stack; // stack for displays to navigate to when "back" button pressed (and
+					// display shortcuts are used)
 	FeRomList m_rl;
 
 	FeInputMap m_inputmap;
@@ -266,6 +269,9 @@ public:
 	void get_input_mappings( std::vector < FeMapping > &l ) const { m_inputmap.get_mappings( l ); };
 	void set_input_mapping( FeMapping &m ) { m_inputmap.set_mapping( m ); };
 
+	void on_joystick_connect() { m_inputmap.on_joystick_connect(); };
+	std::vector < std::pair< int, std::string > > &get_joy_config() { return m_inputmap.get_joy_config(); };
+
 	void set_volume( FeSoundInfo::SoundType, const std::string & );
 	int get_set_volume( FeSoundInfo::SoundType ) const;
 	int get_play_volume( FeSoundInfo::SoundType ) const;
@@ -278,10 +284,27 @@ public:
 	void step_current_selection( int step );
 	void set_current_selection( int filter_index, int rom_index ); // use rom_index<0 to only change the filter
 
-	// Switches the display
-	// returns true if the display change results in a new layout, false otherwise
+	//////////////////////
 	//
-	bool set_display( int index );
+	// Set the "display" that will be shown to the one at the specified index
+	//
+	//////////////////////
+	//
+	// index=-1, stack_previous=false is a special case, used to show the "displays menu"
+	// when a custom layout is being used
+	//
+	// If "stack_previous" is true, the currently shown display is added to the display
+	// stack (so that if the user presses the back button later the fe will navigate back
+	// to the earlier display).  If index is -1 when stack_previous is true, then the
+	// display will be moved to the display at the top of the display stack (if there is one)
+	//
+	// Returns true if the display change results in a new layout, false otherwise
+	//
+	bool set_display( int index, bool stack_previous=false );
+
+	// Return true if there are displays available to navigate back to on a "back" button press
+	//
+	bool back_displays_available() { return !m_display_stack.empty(); };
 
 	int get_current_display_index() const;
 	int get_display_index_from_name( const std::string &name ) const;
@@ -310,7 +333,7 @@ public:
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
-	void run( int &minimum_run_seconds,
+	void run( int &nbm_wait,
 		launch_callback_fn launch_cb,
 		launch_callback_fn wait_cb,
 		void *launch_opaque ); // run current selection
@@ -445,10 +468,11 @@ public:
 	// Save an updated rom in the current romlist file (used with "Edit Game" command)
 	// original is assumed to be the currently selected rom
 	//
+	enum UpdateType { UpdateEntry, EraseEntry, InsertEntry };
 	void update_romlist_after_edit(
 		const FeRomInfo &original,		// original rom values
 		const FeRomInfo &replacement,		// new rom values
-		bool erase=false );			// if true, erase original instead
+		UpdateType erase=UpdateEntry );
 
 	void update_stats( int count_incr, int time_incr );
 
@@ -472,10 +496,10 @@ public:
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 
 	FeEmulatorInfo *get_emulator( const std::string & );
-	FeEmulatorInfo *create_emulator( const std::string & );
+	FeEmulatorInfo *create_emulator( const std::string &, const std::string & );
 	void delete_emulator( const std::string & );
 
-	void get_list_of_emulators( std::vector<std::string> &emu_list );
+	void get_list_of_emulators( std::vector<std::string> &emu_list, bool get_templates=false );
 
 	//
 	// Functions used for configuration

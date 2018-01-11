@@ -45,7 +45,8 @@ distributions.  Other distributions should have similar packages available.
            sudo make install
 
    This will copy the "attract" executable to `/usr/local/bin/` and default
-   data to `/usr/local/share/attract/`
+   data to `/usr/local/share/attract/`.  Note: if you are building the OpenGL
+   ES version you need to include the `USE_GLES=1` parameter here as well.
 
    For a single user install on Linux or FreeBSD, you can complete this step
    by copying the contents of the "config" directory from the Attract-Mode

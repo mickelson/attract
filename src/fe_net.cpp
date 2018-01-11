@@ -21,6 +21,7 @@
  */
 
 #include "fe_net.hpp"
+#include "fe_base.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -83,7 +84,7 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 		std::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
 		if ( !outfile.is_open() )
 		{
-			std::cerr << " ! Unable to open file for writing: "
+			FeLog() << " ! Unable to open file for writing: "
 				<< m_filename << std::endl;
 			return false;
 		}
@@ -180,10 +181,10 @@ bool FeNetQueue::pop_completed_task( int &id,
 	return false;
 }
 
-bool FeNetQueue::input_done()
+bool FeNetQueue::all_done()
 {
 	sf::Lock l( m_mutex );
-	return m_in_queue.empty();
+	return ( m_in_queue.empty() && m_out_queue.empty() && ( m_in_flight == 0 ) );
 }
 
 bool FeNetQueue::output_done()
@@ -208,11 +209,8 @@ FeNetWorker::~FeNetWorker()
 
 void FeNetWorker::work_process()
 {
-	while ( m_proceed )
+	while ( m_proceed && !m_queue.all_done() )
 	{
-		if ( m_queue.input_done() && m_queue.output_done() )
-			break;
-
 		sf::Http::Response::Status status;
 		std::string err_req;
 
@@ -221,7 +219,7 @@ void FeNetWorker::work_process()
 		if (( status != sf::Http::Response::Ok )
 			&& ( status != sf::Http::Response::NotFound ))
 		{
-			std::cerr << " ! Error processing request. Status code: "
+			FeLog() << " ! Error processing request. Status code: "
 				<< status << " (" << err_req << ")" << std::endl;
 		}
 

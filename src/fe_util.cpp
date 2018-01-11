@@ -40,6 +40,7 @@
 
 #include <SFML/Config.hpp>
 #include <SFML/System/Sleep.hpp>
+#include <SFML/System/Clock.hpp>
 
 #ifdef USE_LIBARCHIVE
 #include <zlib.h>
@@ -62,6 +63,10 @@
 #include "fe_util_osx.hpp"
 #endif
 
+#ifdef SFML_SYSTEM_ANDROID
+#include "fe_util_android.hpp"
+#endif
+
 #ifdef USE_XLIB
 #include <X11/Xlib.h>
  #ifdef USE_XINERAMA
@@ -78,7 +83,7 @@ namespace {
 			s += c;
 	}
 
-#ifdef SFML_SYSTEM_WINDOWS
+#if defined(SFML_SYSTEM_WINDOWS)
 
 	std::string get_home_dir()
 	{
@@ -89,7 +94,7 @@ namespace {
 		return retval;
 	}
 
-#else
+#elif !defined(SFML_SYSTEM_ANDROID)
 
 	std::string get_home_dir()
 	{
@@ -150,7 +155,22 @@ bool tail_compare(
 				(*itr).c_str(),
 				(*itr).size() ) )
 			return true;
+	}
 
+	return false;
+}
+
+bool tail_compare(
+	const std::string &filename,
+	const char **ext_list )
+{
+	for ( int i=0; ext_list[i] != NULL; i++ )
+	{
+		if ( c_tail_compare( filename.c_str(),
+				filename.size(),
+				ext_list[i],
+				strlen( ext_list[i] ) ) )
+			return true;
 	}
 
 	return false;
@@ -241,6 +261,10 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 	if (( retval.size() >= 5 ) && ( retval.compare( 0, 5, "$HOME" ) == 0 ))
 		retval.replace( 0, 5, get_home_dir() );
 
+	// substitute program dir for leading $PROGDIR
+	if (( retval.size() >= 8 ) && ( retval.compare( 0, 8, "$PROGDIR" ) == 0 ))
+		retval.replace( 0, 8, get_program_path() );
+
 	if (( add_trailing_slash )
 #ifdef SFML_SYSTEM_WINDOWS
 			&& (retval[retval.size()-1] != '\\')
@@ -249,6 +273,21 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 		retval += '/';
 
 	return retval;
+}
+
+std::string get_program_path()
+{
+	std::string path;
+#ifdef SFML_SYSTEM_WINDOWS
+	char result[ MAX_PATH ];
+	path = std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+#else
+	char result[ PATH_MAX ];
+	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+	path = std::string( result, (count > 0) ? count : 0 );
+#endif
+	size_t found = path.find_last_of("/\\");
+	return( path.substr(0, found) );
 }
 
 std::string absolute_path( const std::string &path )
@@ -653,21 +692,29 @@ void delete_file( const std::string &file )
 
 bool confirm_directory( const std::string &base, const std::string &sub )
 {
+	bool retval=false;
+
 	if ( !directory_exists( base ) )
+	{
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( base.c_str() );
 #else
 		mkdir( base.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
+		retval=true;
+	}
 
 	if ( (!sub.empty()) && (!directory_exists( base + sub )) )
+	{
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( (base + sub).c_str() );
 #else
 		mkdir( (base + sub).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
+		retval=true;
+	}
 
-	return true;
+	return retval;
 }
 
 std::string as_str( int i )
@@ -781,7 +828,7 @@ bool run_program( const std::string &prog,
 		NULL,
 		NULL,
 		( NULL == callback ) ? FALSE : TRUE,
-		0,
+		CREATE_NO_WINDOW,
 		NULL,
 		NULL, // use current directory (set above) as working directory for the process
 		&si,
@@ -801,7 +848,7 @@ bool run_program( const std::string &prog,
 
 	if ( ret == false )
 	{
-		std::cerr << "Error executing command: '" << comstr << "'" << std::endl;
+		FeLog() << "Error executing command: '" << comstr << "'" << std::endl;
 		return false;
 	}
 
@@ -865,7 +912,7 @@ bool run_program( const std::string &prog,
 			break;
 
 		default:
-			std::cerr << "Unexpected failure waiting on process" << std::endl;
+			FeLog() << "Unexpected failure waiting on process" << std::endl;
 			keep_wait=false;
 			break;
 		}
@@ -895,13 +942,13 @@ bool run_program( const std::string &prog,
 
 	int mypipe[2] = { 0, 0 }; // mypipe[0] = read end, mypipe[1] = write end
 	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
-		std::cerr << "Error, pipe() failed" << std::endl;
+		FeLog() << "Error, pipe() failed" << std::endl;
 
 	pid_t pid = fork();
 	switch (pid)
 	{
 	case -1:
-		std::cerr << "Error, fork() failed" << std::endl;
+		FeLog() << "Error, fork() failed" << std::endl;
 		if ( mypipe[0] )
 		{
 			close( mypipe[0] );
@@ -917,12 +964,12 @@ bool run_program( const std::string &prog,
 		}
 
 		if ( !work_dir.empty() && ( chdir( work_dir.c_str() ) != 0 ) )
-			std::cerr << "Warning, chdir(" << work_dir << ") failed.";
+			FeLog() << "Warning, chdir(" << work_dir << ") failed." << std::endl;
 
 		execvp( prog.c_str(), arg_list );
 
 		// execvp doesn't return unless there is an error.
-		std::cerr << "Error executing: " << prog << " " << args << std::endl;
+		FeLog() << "Error executing: " << prog << " " << args << std::endl;
 		_exit(127);
 
 	default: // parent process
@@ -939,7 +986,11 @@ bool run_program( const std::string &prog,
 				if ( callback( buffer, opaque ) == false )
 				{
 					// User cancelled
-					kill( pid, SIGTERM );
+					kill( pid, SIGKILL );
+
+					int status;
+					waitpid( pid, &status, 0 );
+
 					block=false;
 					break;
 				}
@@ -975,7 +1026,37 @@ bool run_program( const std::string &prog,
 						//
 						sf::sleep( sf::milliseconds( 100 ) );
 						if ( kill( pid, 0 ) == 0 )
+						{
+							FeLog() << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
 							kill( pid, SIGTERM );
+
+
+							//
+							// Give the process TERM_TIMEOUT ms to respond to sig term
+							//
+							const int TERM_TIMEOUT = 1500;
+							sf::Clock term_clock;
+
+							while (( term_clock.getElapsedTime().asMilliseconds() < TERM_TIMEOUT )
+								&& ( waitpid( pid, &status, WNOHANG ) == 0 ))
+							{
+								sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
+							}
+
+							//
+							// Do the more abrupt SIGKILL if process is still running at this point
+							//
+							if ( kill( pid, 0 ) == 0 )
+							{
+								FeLog() << " - Timeout on SIGTERM after " << TERM_TIMEOUT
+									<< " ms, sending SIGKILL signal to process " << pid << std::endl;
+
+								kill( pid, SIGKILL );
+							}
+
+							// reap
+							waitpid( pid, &status, 0 );
+						}
 
 						break; // leave do/while loop
 					}
@@ -984,7 +1065,7 @@ bool run_program( const std::string &prog,
 				else
 				{
 					if ( w < 0 )
-						std::cerr << " ! error returned by wait_pid(): "
+						FeLog() << " ! error returned by wait_pid(): "
 							<< strerror( errno ) << std::endl;
 
 					break; // leave do/while loop

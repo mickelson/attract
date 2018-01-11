@@ -1,4 +1,4 @@
-#@中文 (Chinese);win_font=MSYH,YuGothR,MALGUN,ARIALUNI,MSMINCHO;mac_font=AppleLiSung;linux_font=UMing
+#@中文 (Chinese);win_font=MSYH,YuGothR,MALGUN,ARIALUNI,MSMINCHO;mac_font=AppleLiSung;linux_font=UMing,NotoSansCJK-Regular
 #
 # Interface strings
 #
@@ -82,6 +82,7 @@ Enter Filter Name;进入排序名称
 Exception;其他 Exception
 Exception Edit;其他编辑 Exception Edit
 Executable;执行
+Exit;退出 (Yes/No)
 Exit Attract-Mode;退出ATTRACT-MODE
 Exit Attract-Mode?;退出ATTRACT-MODE吗?
 Exit Command;退出指令
@@ -119,7 +120,6 @@ List Limit;列表大小限制
 Manufacturer;制造商
 Menu Prompt;标题
 Menu Style / Layout;主题
-Minimum Run Time;最小运行时间
 Mouse Threshold;鼠标的阈值
 Movie Volume;视频音量
 Name;名称
@@ -224,11 +224,11 @@ Configure available emulators;可用模拟器
 Configure filter rule;设置分类规则
 Delete this filter;删除分类
 Down(Next Game);↓（下一游戏）
-Exit;退出 (Yes/No)
 Exit menu;退出菜单
 Image Collage;拼图式静态画面
 Launch Last Game on Startup;启动时载入最后一次运行的游戏
 Left(Previous Display);←（上一界面）
+Minimum Run Time;最小运行时间
 Movie Collage;拼图式动态画面
 Overlay Artwork;悬浮的插图
 Page Down;向下翻页
@@ -253,8 +253,11 @@ kr;한글 (Korean)
 # Strings still needing translation
 #
 Add tag: '$1';Add tag: '$1'
+Artwork Name;Artwork Name
+Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Layout;Configure Layout
 Confirm Exit;Confirm Exit
 Create new tag;Create new tag
@@ -262,12 +265,23 @@ Custom Arguments;Custom Arguments
 Custom Executable;Custom Executable
 Default;Default
 Delete game '$1'?;Delete game '$1'?
+Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Game;Delete this Game
+Delete this Shortcut;Delete this Shortcut
 Edit Game;Edit Game
+Edit Shortcut;Edit Shortcut
 Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Remove tag: '$1';Remove tag: '$1'
+Select template to use for emulator settings;Select template to use for emulator settings
 Window (No Border);Window (No Border)
 Working Directory;Working Directory
 multi;multi
@@ -343,12 +357,12 @@ _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_add;Add a new emulator
 _help_emu_args;The command line arguments for this emulator.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn], [workdir], [nothing]
 _help_emu_delete;Delete the entry for this emulator
-_help_emu_executable;The full path and name of the emulator executable. $HOME gets replaced with the user's home dir
+_help_emu_executable;The full path and name of the emulator executable. Possible variables: $HOME = User's home dir, $PROGDIR = Attract-Mode program dir. Windows OS additionally has %SYSTEMROOT% and %PROGRAMFILES% matching system environment variables.
 _help_emu_exit_hotkey;Set a global hotkey to exit the emulator.  Attract-Mode will terminate the emulator process if this hotkey gets pressed
 _help_emu_gen_romlist;Generate a romlist by searching the configured rom path for roms with the configured extension, incorporating XML and additional import file information into the generated list (if available)
 _help_emu_import_extras;Path to any additional files that need to be read when generating a romlist for this emulator.  Supported files are: catver.ini (for game categories), nplayers.ini (for number of players) and mame.xml.  Multiple file paths can be entered if separated by a semicolon
 _help_emu_info_source;Use "listxml" for mame -listxml output, "listsoftware" for mame/mess -listsoftware output, "thegamesdb.net" to scrape data from thegamesdb.net, "steam" to read from a steam installation, or "scummvm" if the emulator is scummvm.  "listsoftware" and "thegamesdb.net" also require that a System Identifier recognized by those sources be configured
-_help_emu_minimum_run_time;Set a minimum run time (in seconds).  Attract-Mode will wait after running this emulator until the minimum time has expired and it becomes the foreground window.  This needs to be set for Steam to work correctly on Windows.  Set this to 0 unless you know you need it
+_help_emu_nb_mode_wait;If this is non-zero, the emulator will be run in 'non-blocking mode'.  The frontend will wait up to this number of seconds to lose focus to the emulator's window, and will wake up again when focus returns to the frontend's window.  This is necessary for launching programs like Steam correctly.  Should be 0 unless you know you need it
 _help_emu_romext;The rom extension(s) for this emulator (i.e. .zip).  Multiple extensions can be entered if separated by a semicolon.  Specify "<DIR>" as an entry if games are stored in separate subdirectories
 _help_emu_rompath;The path to the roms for this emulator.  Multiple paths can be entered if separated by a semicolon.
 _help_emu_scrape_artwork;Scrape missing artwork images for this emulator from the net
@@ -376,11 +390,13 @@ _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_hide_brackets;Hide text in brackets when showing game titles
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_input_action;
 _help_input_add;Add a new input mapping for this control
 _help_input_default_action;Set the default behaviour for this control
 _help_input_delete;Remove this input mapping
 _help_intro;Configure intro
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_joystick_threshold;The threshold for registering joystick moves, from 1 to 100 (100=least sensitive)
 _help_language;Select the language to use in Attract-Mode's user interface
 _help_misc;Configure miscellaneous settings
@@ -403,6 +419,10 @@ _help_scrape_wheels;Set whether game logos should be downloaded when scraping
 _help_scraper;Configure artwork scraper settings
 _help_screen_saver;Configure screen saver
 _help_screen_saver_timeout;The amount of time in seconds to wait before switching to the screen saver.  0 to disable
+_help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
+_help_shortcut_delete;Delete this shortcut from the Romlist
+_help_shortcut_label_edit;Edit this shortcut's label
+_help_shortcut_target_edit;Edit this shortcut's target
 _help_sound;Configure sound volumes, sound event mappings and the ambient soundtrack
 _help_sound_sel;Assign a sound to this event/action
 _help_startup_mode;Set what should happen when Attract-Mode first starts up

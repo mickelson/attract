@@ -144,12 +144,16 @@ public:
 	virtual bool confirm_dialog( const std::string &msg,
 		const std::string &rep="" )=0;
 
+	virtual int option_dialog( const std::string &title,
+		const std::vector < std::string > &options,
+		int default_sel=0 )=0;
+
 	virtual void splash_message( const std::string &msg,
 		const std::string &rep,
 		const std::string &aux )=0;
 
 	virtual void input_map_dialog( const std::string &msg,
-		std::string &map_str,
+		FeInputMapEntry &res,
 		FeInputMap::Command &conflict )=0;
 
 	virtual void tags_dialog()=0;
@@ -383,11 +387,18 @@ public:
 	void set_mapping( FeMapping * );
 };
 
+class FeInputJoysticksMenu : public FeBaseConfigMenu
+{
+	void get_options( FeConfigContext &ctx );
+	bool save( FeConfigContext &ctx );
+};
+
 class FeInputSelMenu : public FeBaseConfigMenu
 {
 private:
 	std::vector<FeMapping> m_mappings;
 	FeInputEditMenu m_edit_menu;
+	FeInputJoysticksMenu m_joysticks_menu;
 
 public:
 	void get_options( FeConfigContext &ctx );
@@ -472,6 +483,24 @@ private:
 	bool m_update_extras;
 
 public:
+	FeEditGameMenu();
+
+	void get_options( FeConfigContext &ctx );
+	bool on_option_select( FeConfigContext &ctx,
+		FeBaseConfigMenu *& submenu );
+
+	bool save( FeConfigContext &ctx );
+};
+
+class FeEditShortcutMenu : public FeBaseConfigMenu
+{
+private:
+	FeRomInfo m_rom_original;
+	bool m_update_rl;
+
+public:
+	FeEditShortcutMenu();
+
 	void get_options( FeConfigContext &ctx );
 	bool on_option_select( FeConfigContext &ctx,
 		FeBaseConfigMenu *& submenu );

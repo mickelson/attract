@@ -132,7 +132,7 @@ public:
 	void get_file_availability();
 
 	FeEmulatorInfo *get_emulator( const std::string & );
-	FeEmulatorInfo *create_emulator( const std::string & );
+	FeEmulatorInfo *create_emulator( const std::string &, const std::string & );
 	void delete_emulator( const std::string & );
 	void clear_emulators() { m_emulators.clear(); }
 };

@@ -27,9 +27,9 @@ line as follows:
 
 		attract --config /my/config/location
 
-	In the (hopefully unlikely) event that Attract-Mode has difficulty
-finding a display font to use on your system, you can specify one at the
-command line as follows:
+In the (hopefully unlikely) event that Attract-Mode has difficulty finding a
+display font to use on your system, you can specify one at the command line as
+follows:
 
 		attract --font <font_name>
 
@@ -253,6 +253,15 @@ overwrite any existing Attract-Mode romlist with the specified name.
 For a full description of the command lines options available, run:
 
 `attract --help`
+
+Attract-Mode by default will print log messages to the console window (stdout).
+To suppress these messages, run with the following command line:
+
+`attract --loglevel silent`
+
+Alternatively, more verbose debug log messages can be enabled by running:
+
+`attract --loglevel debug`
 
 [Compile.md]: Compile.md
 [Layouts.md]: Layouts.md

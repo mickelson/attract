@@ -27,6 +27,7 @@
 #include <map>
 #include <vector>
 
+extern const char *FE_STAT_FILE_EXTENSION;
 extern const char FE_TAGS_SEP;
 struct SQRex;
 
@@ -91,7 +92,8 @@ public:
 	// convenience method to copy info attribute at idx from src
 	void copy_info( const FeRomInfo &src, Index idx );
 
-	bool operator==( const FeRomInfo & ) const;
+	bool operator==( const FeRomInfo & ) const;      // compares romname and emulator only
+	bool full_comparison( const FeRomInfo & ) const; // copares all fields that get loaded from the romlist file
 
 private:
 	std::string get_info_escaped( int ) const;
@@ -287,7 +289,7 @@ public:
 		System,
 		Info_source,
 		Import_extras,
-		Minimum_run_time,
+		NBM_wait,	// non-blocking mode wait time (in seconds)
 		Exit_hotkey,
 		LAST_INDEX
 	};
@@ -369,7 +371,7 @@ private:
 	std::vector<std::string> m_import_extras;
 
 	InfoSource m_info_source;
-	int m_min_run;
+	int m_nbm_wait;
 
 	//
 	// Considered using a std::multimap here but C++98 doesn't guarantee the

@@ -47,12 +47,16 @@ public:
 	bool confirm_dialog( const std::string &m,
 		const std::string &rep );
 
+        int option_dialog( const std::string &title,
+                const std::vector < std::string > &options,
+                int default_sel=0 );
+
 	void splash_message( const std::string &msg,
 		const std::string &rep,
 		const std::string &aux );
 
 	void input_map_dialog( const std::string &m,
-		std::string &ms,
+		FeInputMapEntry &res,
 		FeInputMap::Command &conflict );
 
 	void tags_dialog();
@@ -75,9 +79,16 @@ bool FeConfigContextImp::edit_dialog( const std::string &m, std::string &t )
 }
 
 bool FeConfigContextImp::confirm_dialog( const std::string &msg,
-						const std::string &rep )
+	const std::string &rep )
 {
 	return !m_feo.confirm_dialog( msg, rep );
+}
+
+int FeConfigContextImp::option_dialog( const std::string &title,
+	const std::vector < std::string > &options,
+	int default_sel )
+{
+	return m_feo.common_list_dialog( title, options, default_sel, default_sel );
 }
 
 void FeConfigContextImp::splash_message(
@@ -89,12 +100,12 @@ void FeConfigContextImp::splash_message(
 }
 
 void FeConfigContextImp::input_map_dialog( const std::string &m,
-		std::string &ms,
+		FeInputMapEntry &res,
 		FeInputMap::Command &conflict )
 {
 	std::string t;
 	fe_settings.get_resource( m, t );
-	m_feo.input_map_dialog( t, ms, conflict );
+	m_feo.input_map_dialog( t, res, conflict );
 }
 
 void FeConfigContextImp::tags_dialog()
@@ -762,7 +773,7 @@ bool FeOverlay::edit_dialog(
 
 void FeOverlay::input_map_dialog(
 			const std::string &msg_str,
-			std::string &map_str,
+			FeInputMapEntry &res,
 			FeInputMap::Command &conflict )
 {
 	sf::Vector2i s;
@@ -840,7 +851,7 @@ void FeOverlay::input_map_dialog(
 
 					bool dup=false;
 
-					std::vector< FeInputSingle >::iterator it;
+					std::set< FeInputSingle >::iterator it;
 					for ( it = entry.inputs.begin(); it != entry.inputs.end(); ++it )
 					{
 						if ( (*it) == single )
@@ -852,7 +863,7 @@ void FeOverlay::input_map_dialog(
 
 					if ( !dup )
 					{
-						entry.inputs.push_back( single );
+						entry.inputs.insert( single );
 						timeout.restart();
 					}
 
@@ -875,7 +886,7 @@ void FeOverlay::input_map_dialog(
 
 		if ( done )
 		{
-			map_str = entry.as_string();
+			res = entry;
 			conflict = m_feSettings.input_conflict_check( entry );
 			return;
 		}
@@ -937,10 +948,24 @@ bool FeOverlay::edit_game_dialog()
 	}
 	else
 	{
-		FeEditGameMenu m;
+		const std::string &emu_name = m_feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator );
 
-		if ( display_config_dialog( &m, settings_changed ) < 0 )
-			m_wnd.close();
+		if ( emu_name.compare( 0, 1, "@" ) == 0 )
+		{
+			// Show shortcut dialog if this is a shortcut...
+			//
+			FeEditShortcutMenu m;
+
+			if ( display_config_dialog( &m, settings_changed ) < 0 )
+				m_wnd.close();
+		}
+		else
+		{
+			FeEditGameMenu m;
+
+			if ( display_config_dialog( &m, settings_changed ) < 0 )
+				m_wnd.close();
+		}
 	}
 
 	// TODO: should only return true when setting_changed is true or when user deleted
@@ -1131,7 +1156,9 @@ int FeOverlay::display_config_dialog(
 					bool test( false );
 					int sm_ret = display_config_dialog( sm, test );
 					if ( sm_ret < 0 )
+					{
 						return sm_ret;
+					}
 
 					if ( test )
 						ctx.save_req = true;
