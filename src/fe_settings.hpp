@@ -536,6 +536,8 @@ public:
 	const std::string &get_language() const { return m_language; }
 	void get_languages_list( std::vector < FeLanguage > &ll ) const;
 
+	bool get_emulator_setup_script( std::string &path, std::string &file );
+
 	// Utility function to get a list of layout*.nut files from the specified path...
 	static void get_layout_file_basenames_from_path(
 		const std::string &path,

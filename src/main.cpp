@@ -141,7 +141,17 @@ int main(int argc, char *argv[])
 		// Font may change depending on the language selected
 		feSettings.get_font_file( def_font_path, def_font_file );
 		def_font.set_font( def_font_path, def_font_file );
+
+		FeLog() << "Performing some initial configuration" << std::endl;
+
+#ifdef SFML_SYSTEM_ANDROID
+		android_copy_assets();
+#endif
+		feVM.setup_emulator_configs();
+
+		FeLog() << "Done initial configuration" << std::endl;
 	}
+
 
 	soundsys.sound_event( FeInputMap::EventStartup );
 

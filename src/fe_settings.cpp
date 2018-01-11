@@ -117,6 +117,7 @@ const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";
 const char *FE_PLUGIN_FILE				= "plugin.nut";
 const char *FE_LOADER_FILE				= "loader.nut";
+const char *FE_EMULATOR_INIT_FILE			= "init.nut";
 const char *FE_INTRO_FILE				= "intro.nut";
 const char *FE_LAYOUT_FILE_BASE		= "layout";
 const char *FE_LAYOUT_FILE_EXTENSION	= ".nut";
@@ -136,6 +137,7 @@ const char *FE_LOADER_SUBDIR			= "loader/";
 const char *FE_INTRO_SUBDIR			= "intro/";
 const char *FE_SCRAPER_SUBDIR			= "scraper/";
 const char *FE_MENU_ART_SUBDIR		= "menu-art/";
+const char *FE_EMULATOR_SCRIPT_SUBDIR		= "emulators/script/";
 const char *FE_LIST_DEFAULT			= "default-display.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
 const char *FE_CFG_YES_STR				= "yes";
@@ -301,6 +303,8 @@ FeSettings::FeSettings( const std::string &config_path,
 		m_config_path += '/';
 
 	m_default_font = cmdln_font;
+
+std::cout << " * " << m_config_path << std::endl;
 }
 
 void FeSettings::clear()
@@ -328,46 +332,7 @@ void FeSettings::load()
 
 	if ( load_from_file( filename ) == false )
 	{
-		FeLog() << "Config file not found: " << filename << ", performing initial setup." << std::endl;
-#ifdef SFML_SYSTEM_ANDROID
-		android_copy_assets();
-#endif
-
-		//
-		// If there is no config file, then we do some initial setting up of the FE here, prompt
-		// the user to select a language and then launch straight into configuration mode.
-		//
-		// Setup step: if there is a Data directory, then copy the default emulator configurations provided
-		// in that directory over to the user's configuration directory.
-		//
-		if (( FE_DATA_PATH != NULL ) && ( directory_exists( FE_DATA_PATH ) ))
-		{
-			confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
-
-			std::string from_path( FE_DATA_PATH ), to_path( m_config_path );
-			from_path += FE_EMULATOR_SUBDIR;
-			to_path += FE_EMULATOR_SUBDIR;
-
-			std::vector<std::string> ll;
-			get_basename_from_extension( ll, from_path, FE_EMULATOR_FILE_EXTENSION, false );
-
-			for( std::vector<std::string>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
-			{
-				std::string from = from_path + (*itr);
-				std::string to = to_path + (*itr);
-
-				// Only copy if the destination file does not exist already
-				//
-				if ( !file_exists( to ) )
-				{
-					FeLog() << "Copying: '" << from << "' to '" << to_path << "'" << std::endl;
-
-					std::ifstream src( from.c_str() );
-					std::ofstream dst( to.c_str() );
-					dst << src.rdbuf();
-				}
-			}
-		}
+		FeLog() << "Config file not found: " << filename << std::endl;
 	}
 	else
 	{
@@ -3928,4 +3893,26 @@ void FeSettings::update_romlist_after_edit(
 
 		delete_file( path );
 	}
+}
+
+bool FeSettings::get_emulator_setup_script( std::string &path, std::string &file )
+{
+	confirm_directory( m_config_path, FE_EMULATOR_SUBDIR );
+	confirm_directory( m_config_path, FE_EMULATOR_TEMPLATES_SUBDIR );
+
+	std::string temp;
+	if ( !internal_resolve_config_file( m_config_path,
+			temp, FE_EMULATOR_SCRIPT_SUBDIR, FE_EMULATOR_INIT_FILE ) )
+	{
+		FeLog() << "Unable to open emulator init script: "  << FE_EMULATOR_INIT_FILE << std::endl;
+		return false;
+	}
+
+	size_t len = temp.find_last_of( "/\\" );
+	ASSERT( len != std::string::npos );
+
+	path = temp.substr( 0, len + 1 );
+	file = FE_EMULATOR_INIT_FILE;
+
+	return true;
 }

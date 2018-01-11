@@ -984,7 +984,11 @@ Parameters:
         {
         }
 
-     If provided, this function will be called with each output line in `op`.
+     If provided, this function will get called repeatedely with chunks of the
+     command output in `op`.  NOTE: `op` is not necessarily aligned with the
+     start and the end of the lines of output from the command.  In any one
+     call `op` may contain data from multiple lines and that may begin or end
+     in the middle of a line.
 
 Return Value:
 
@@ -1016,7 +1020,8 @@ Return Value:
 Expand the given path name.  A leading `~` or `$HOME` token will be become
 the user's home directory.  On Windows systems, a leading `%SYSTEMROOT%`
 token will become the path to the Windows directory and a leading
-`%PROGRAMFILES%` will become the path to the "Program Files" directory.
+`%PROGRAMFILES%` or `%PROGRAMFILESx86%` will become the path to the
+applicable Windows "Program Files" directory.
 
 Parameters:
 

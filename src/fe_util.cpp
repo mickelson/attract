@@ -235,22 +235,31 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 		return retval;
 
 #ifdef SFML_SYSTEM_WINDOWS
-	// substitute systemroot leading %SYSTEMROOT%
-	if (( retval.size() >= 12 )
-		&& ( retval.compare( 0, 12, "%SYSTEMROOT%" ) == 0 ))
+	struct subs_struct
 	{
-		std::string sysroot;
-		str_from_c( sysroot, getenv( "SystemRoot" ) );
-		retval.replace( 0, 12, sysroot );
-	}
-	else if (( retval.size() >= 14 )
-		&& ( retval.compare( 0, 14, "%PROGRAMFILES%" ) == 0 ))
+		const char *comp;
+		const char *env;
+	} subs[] =
 	{
-		std::string pf;
-		str_from_c( pf, getenv( "ProgramFiles" ) );
-		retval.replace( 0, 14, pf );
-	}
+		{ "%SYSTEMROOT%", "SystemRoot" },
+		{ "%PROGRAMFILES%", "ProgramFiles" },
+		{ "%PROGRAMFILESx86%", "ProgramFiles(x86)" },
+		{ "%APPDATA%", "APPDATA" },
+		{ "%SYSTEMDRIVE%", "SystemDrive" },
+		{ NULL, NULL }
+	};
 
+	for ( int i=0; subs[i].comp != NULL; i++ )
+	{
+		int l = strlen( subs[i].comp );
+		if (( retval.size() >= l ) && ( retval.compare( 0, l, subs[i].comp ) == 0 ))
+		{
+			std::string temp;
+			str_from_c( temp, getenv( subs[i].env ) );
+			retval.replace( 0, l, temp );
+			break;
+		}
+	}
 #endif
 
 	// substitute home dir for leading ~
@@ -854,7 +863,7 @@ bool run_program( const std::string &prog,
 
 	if (( NULL != callback ) && ( block ))
 	{
-		const int BUFF_SIZE = 2048;
+		const int BUFF_SIZE = 20480;
 		char buffer[ BUFF_SIZE+1 ];
 		buffer[BUFF_SIZE]=0;
 		DWORD bytes_read;
@@ -979,9 +988,10 @@ bool run_program( const std::string &prog,
 			FILE *fp = fdopen( mypipe[0], "r" );
 			close( mypipe[1] );
 
-			char buffer[ 1024 ];
+			const int BUFF_SIZE = 2048;
+			char buffer[ BUFF_SIZE ];
 
-			while( fgets( buffer, 1024, fp ) != NULL )
+			while( fgets( buffer, BUFF_SIZE, fp ) != NULL )
 			{
 				if ( callback( buffer, opaque ) == false )
 				{

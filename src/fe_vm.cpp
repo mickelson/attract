@@ -1730,6 +1730,38 @@ void FeVM::script_get_config_options(
 	}
 }
 
+void FeVM::setup_emulator_configs()
+{
+	std::string path, fname;
+	if ( !m_feSettings->get_emulator_setup_script( path, fname ) )
+		return;
+
+	FeScriptConfigurable ignored;
+	FeConfigVM config_vm( ignored, path, fname );
+
+/*
+	Sqrat::Object etg = Sqrat::RootTable().GetSlot( "emulators_to_generate" );
+	if ( !etg.IsNull() )
+	{
+		Sqrat::Array obj( etg );
+
+		std::vector < std::string > emus_to_generate;
+
+		Sqrat::Object::iterator it;
+		while ( etg.Next( it ) )
+		{
+			std::string value;
+			fe_get_object_string( Sqrat::DefaultVM::Get(), it.getValue(), value );
+			emus_to_generate.push_back( value );
+		}
+
+		//
+		// TODO: Do something with the emulators_to_generate array set by the script
+		//
+	}
+*/
+}
+
 FeImage* FeVM::cb_add_image(const char *n, int x, int y, int w, int h )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
