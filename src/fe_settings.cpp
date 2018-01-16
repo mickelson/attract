@@ -303,8 +303,6 @@ FeSettings::FeSettings( const std::string &config_path,
 		m_config_path += '/';
 
 	m_default_font = cmdln_font;
-
-std::cout << " * " << m_config_path << std::endl;
 }
 
 void FeSettings::clear()
