@@ -24,6 +24,7 @@ Ambient Volume;Ambient Volume
 Artwork Label;Artwork Label
 Artwork Name;Artwork Name
 Artwork Path;Artwork Path
+Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
 Back;Back
 Blank Game;Blank Game
 Buttons;Buttons

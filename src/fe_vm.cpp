@@ -140,7 +140,9 @@ namespace
 				sc.CompileFile( path_to_run );
 			}
 
+			FeDebug() << "Running script: " << path_to_run << std::endl;
 			sc.Run();
+			FeDebug() << "Done script: " << path_to_run << std::endl;
 		}
 		catch(Sqrat:: Exception e )
 		{
@@ -1541,6 +1543,7 @@ public:
 
 			fe.SetValue( _SC("loader_dir"), path );
 		}
+
 		run_script( path, file, true );
 	};
 
@@ -1730,36 +1733,110 @@ void FeVM::script_get_config_options(
 	}
 }
 
-void FeVM::setup_emulator_configs()
+namespace
+{
+	struct generate_ui_info_struct
+	{
+		FeOverlay *ov;
+		std::string emu;
+	};
+
+	bool generate_ui_update( void *d, int i, const std::string &aux )
+	{
+		generate_ui_info_struct *gi = (generate_ui_info_struct *)d;
+
+		std::string msg = gi->emu;
+		msg += " ";
+		msg += as_str( i );
+
+		gi->ov->splash_message( "Generating Rom List: $1%", msg, aux );
+		return !gi->ov->check_for_cancel();
+	}
+};
+
+bool FeVM::setup_wizard()
 {
 	std::string path, fname;
 	if ( !m_feSettings->get_emulator_setup_script( path, fname ) )
-		return;
+	{
+		FeLog() << "Unable to get emulator setup script. path=" << path
+			<< ", filaname=" << fname << std::endl;
+		return false;
+	}
 
 	FeScriptConfigurable ignored;
 	FeConfigVM config_vm( ignored, path, fname );
 
-/*
 	Sqrat::Object etg = Sqrat::RootTable().GetSlot( "emulators_to_generate" );
-	if ( !etg.IsNull() )
+	if ( etg.IsNull() )
 	{
-		Sqrat::Array obj( etg );
-
-		std::vector < std::string > emus_to_generate;
-
-		Sqrat::Object::iterator it;
-		while ( etg.Next( it ) )
-		{
-			std::string value;
-			fe_get_object_string( Sqrat::DefaultVM::Get(), it.getValue(), value );
-			emus_to_generate.push_back( value );
-		}
-
-		//
-		// TODO: Do something with the emulators_to_generate array set by the script
-		//
+		FeDebug() << "Unable to get 'emulators_to_generate' from setup script" << fname << std::endl;
+		return false;
 	}
-*/
+
+	Sqrat::Array obj( etg );
+
+	std::vector < std::string > emus_to_import;
+
+	Sqrat::Object::iterator it;
+	while ( etg.Next( it ) )
+	{
+		std::string value;
+		fe_get_object_string( Sqrat::DefaultVM::Get(), it.getValue(), value );
+		emus_to_import.push_back( value );
+	}
+
+	if ( emus_to_import.empty() )
+		return false;
+
+	if ( m_overlay->confirm_dialog(
+		"Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?" ) )
+	{
+		return false;
+	}
+
+	std::string read_base = m_feSettings->get_config_dir();
+	read_base += FE_EMULATOR_TEMPLATES_SUBDIR;
+
+	std::string write_base = m_feSettings->get_config_dir();
+	write_base += FE_EMULATOR_SUBDIR;
+
+	for ( std::vector<std::string>::iterator itr= emus_to_import.begin(); itr != emus_to_import.end(); ++itr )
+	{
+		// Overwrite emulator config file with template which has just been generated
+		//
+		FeEmulatorInfo emu( *itr );
+		std::string fname = (*itr);
+		fname += FE_EMULATOR_FILE_EXTENSION;
+
+		emu.load_from_file( read_base + fname );
+		emu.save( write_base + fname );
+
+		// Build romlist
+		//
+		std::vector<std::string> emu_list( 1, (*itr) );
+		std::string ignored;
+
+		struct generate_ui_info_struct gi;
+		gi.ov = m_overlay;
+		gi.emu = emu_list[0];
+
+		m_feSettings->build_romlist( emu_list,
+			emu_list[0], generate_ui_update, &gi, ignored );
+
+		// Create Display
+		//
+		if ( !m_feSettings->check_romlist_configured( emu_list[0] ) )
+		{
+			FeDisplayInfo *new_disp = m_feSettings->create_display( emu_list[0] );
+			new_disp->set_info( FeDisplayInfo::Romlist, emu_list[ 0 ] );
+		}
+	}
+
+	m_feSettings->save();
+	m_feSettings->set_display( 0 );
+
+	return true;
 }
 
 FeImage* FeVM::cb_add_image(const char *n, int x, int y, int w, int h )

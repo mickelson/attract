@@ -415,6 +415,7 @@ _help_scrape_mamedb;Stabilisce se utilizzare il sito mamedb.com per recuperare s
 # Strings still needing translation
 #
 Artwork Name;Artwork Name
+Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
 Blank Game;Blank Game
 Configure / Joystick Mapping;Configure / Joystick Mapping
 Delete shortcut '$1'?;Delete shortcut '$1'?

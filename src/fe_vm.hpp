@@ -120,9 +120,10 @@ public:
 	bool poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui );
 	void clear(); // override of base class clear()
 
-	// run .attract/emulators/template/setup.nut to generate default emulator
-	// configs
-	void setup_emulator_configs();
+	// runs .attract/emulators/template/setup.nut to generate default emulator
+	// configs and detect emulators.  Prompts user to automaticallly import emulators
+	//
+	bool setup_wizard();
 
 	// Scripting functionality
 	//
