@@ -237,7 +237,7 @@ private:
 	bool simple_scraper( FeImporterContext &, const char *, const char *, const char *, const char *, bool = false );
 	bool general_mame_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
-	void apply_xml_import( FeImporterContext &, bool );
+	bool apply_xml_import( FeImporterContext & );
 
 	bool load_game_extras(
 		const std::string &romlist_name,
@@ -490,9 +490,11 @@ public:
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,
 	// overwriting any previous list of this name.
 	//
+	// Returns false if cancelled by the user
+	//
 	typedef bool (*UiUpdate) ( void *, int, const std::string & );
 	bool build_romlist( const std::vector < std::string > &emu_name, const std::string &out_filename,
-		UiUpdate, void *, std::string & );
+		UiUpdate, void *, std::string &, bool use_net=true );
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 
 	FeEmulatorInfo *get_emulator( const std::string & );

@@ -80,6 +80,7 @@ public:
 	FeXMLParser::UiUpdate uiupdate;
 	void *uiupdatedata;
 	bool full;
+	bool use_net;
 	int progress_past;
 	int progress_range;
 	int download_count;
@@ -87,7 +88,7 @@ public:
 	std::string out_name;
 };
 
-class FeListXMLParser : private FeXMLParser
+class FeListXMLParser : public FeXMLParser
 {
 public:
 	FeListXMLParser( FeImporterContext &ctx );
@@ -116,7 +117,7 @@ private:
 	void end_element( const char * );
 };
 
-class FeListSoftwareParser : private FeXMLParser
+class FeListSoftwareParser : public FeXMLParser
 {
 public:
 	FeListSoftwareParser( FeImporterContext &ctx );

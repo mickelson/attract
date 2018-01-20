@@ -1789,8 +1789,10 @@ bool FeVM::setup_wizard()
 	if ( emus_to_import.empty() )
 		return false;
 
+	// return 0 if user confirms import
 	if ( m_overlay->confirm_dialog(
-		"Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?" ) )
+		"Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?",
+		"", true ) != 0 ) // default to "yes"
 	{
 		return false;
 	}
@@ -1801,7 +1803,9 @@ bool FeVM::setup_wizard()
 	std::string write_base = m_feSettings->get_config_dir();
 	write_base += FE_EMULATOR_SUBDIR;
 
-	for ( std::vector<std::string>::iterator itr= emus_to_import.begin(); itr != emus_to_import.end(); ++itr )
+	bool cancelled=false;
+	for ( std::vector<std::string>::iterator itr = emus_to_import.begin();
+		!cancelled && (itr != emus_to_import.end()); ++itr )
 	{
 		// Overwrite emulator config file with template which has just been generated
 		//
@@ -1821,8 +1825,11 @@ bool FeVM::setup_wizard()
 		gi.ov = m_overlay;
 		gi.emu = emu_list[0];
 
-		m_feSettings->build_romlist( emu_list,
-			emu_list[0], generate_ui_update, &gi, ignored );
+		//
+		// Note: We purposefully disable scraping from the network at startup,
+		//
+		cancelled = !m_feSettings->build_romlist( emu_list,
+				emu_list[0], generate_ui_update, &gi, ignored, false );
 
 		// Create Display
 		//

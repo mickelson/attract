@@ -120,7 +120,6 @@ return [
 			"rompath": "",
 			"system" : "PC",
 			"source" : "scummvm",
-			"hotkey" : "Escape",
 
 			"Windows"  : {
 				"path"    : "%PROGRAMFILESx86%/ScummVM/",

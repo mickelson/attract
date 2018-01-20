@@ -301,6 +301,7 @@ FeImporterContext::FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType
 	uiupdate( NULL ),
 	uiupdatedata( NULL ),
 	full( false ),
+	use_net( true ),
 	progress_past( 0 ),
 	progress_range( 100 ),
 	download_count( 0 )
@@ -691,7 +692,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 	XML_SetCharacterDataHandler( parser, exp_handle_data );
 	bool ret_val = true;
 
-	while ( myfile.good() )
+	while ( myfile.good() && m_continue_parse )
 	{
 		std::string line;
 		getline( myfile, line );

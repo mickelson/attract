@@ -284,7 +284,7 @@ void FeOverlay::splash_message( const std::string &msg,
 
 int FeOverlay::confirm_dialog( const std::string &msg,
 	const std::string &rep,
-	FeInputMap::Command extra_exit )
+	bool default_yes )
 {
 	std::string msg_str;
 	m_feSettings.get_resource( msg, rep, msg_str );
@@ -293,7 +293,7 @@ int FeOverlay::confirm_dialog( const std::string &msg,
 	m_feSettings.get_resource( "Yes", list[0] );
 	m_feSettings.get_resource( "No", list[1] );
 
-	return common_basic_dialog( msg_str, list, 1, 1, extra_exit );
+	return common_basic_dialog( msg_str, list, (default_yes ? 0 : 1), 1, FeInputMap::Exit );
 }
 
 int FeOverlay::common_list_dialog(
@@ -1870,7 +1870,7 @@ bool FeOverlay::common_exit()
 		return true;
 	}
 
-	int retval = confirm_dialog( "Exit Attract-Mode?", "", FeInputMap::Exit );
+	int retval = confirm_dialog( "Exit Attract-Mode?", "" );
 
 	//
 	// retval is 0 if the user confirmed exit.
