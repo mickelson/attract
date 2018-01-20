@@ -267,7 +267,11 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_confirm_exit( true ),
 	m_track_usage( true ),
 	m_multimon( true ),
+#ifdef SFML_SYSTEM_LINUX
+	m_window_mode( Fullscreen ),
+#else
 	m_window_mode( Default ),
+#endif
 	m_smooth_images( true ),
 	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_accel_selection( true ),
