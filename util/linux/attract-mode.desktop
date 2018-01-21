@@ -1,9 +1,9 @@
 [Desktop Entry]
-Version=1.0
+Version=2.3.0
 Name=Attract-Mode
 Comment=Emulator Frontend
 Exec=attract
 Terminal=false
 Type=Application
 Categories=Game;Emulator;
-Icon=attract-mode
+Icon=/usr/share/icons/hicolor/512x512/apps/attract-mode.png
