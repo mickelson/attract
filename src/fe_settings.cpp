@@ -62,8 +62,6 @@ const char *FE_DEFAULT_FONT_PATHS[]	=
 
 #elif defined(SFML_SYSTEM_ANDROID)
 
-#include "fe_util_android.hpp"
-
 const char *FE_DEFAULT_CFG_PATH		= "$HOME/";
 const char *FE_DEFAULT_FONT			= "DroidSans.ttf";
 const char *FE_DEFAULT_FONT_PATHS[]	=

@@ -2409,11 +2409,37 @@ void FeEditGameMenu::get_options( FeConfigContext &ctx )
 		int type = Opt::EDIT;
 		std::vector<std::string> ol;
 
+		std::string setting = ctx.fe_settings.get_rom_info( 0, 0, (FeRomInfo::Index)i );
+
 		switch ( i )
 		{
 		case FeRomInfo::Emulator:
 			ctx.fe_settings.get_list_of_emulators( ol );
 			type = Opt::LIST;
+
+			//
+			// If we have no emulator set, then set one now if possible.  Use an emulator
+			// name that matches the romlist name (if possible), otherwise default to first
+			// emulator available
+			//
+			if ( setting.empty() && !ol.empty() )
+			{
+				setting = ol[0];
+
+				int idx = ctx.fe_settings.get_current_display_index();
+				if ( idx >= 0 )
+				{
+					FeDisplayInfo *d = ctx.fe_settings.get_display( idx );
+					for ( std::vector<std::string>::iterator itr=ol.begin(); itr != ol.end(); ++itr )
+					{
+						if ( (*itr).compare( d->get_romlist_name() ) == 0 )
+						{
+							setting = (*itr);
+							break;
+						}
+					}
+				}
+			}
 			break;
 
 		case FeRomInfo::Rotation:

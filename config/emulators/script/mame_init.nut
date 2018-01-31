@@ -190,7 +190,7 @@ class VersionParser
 		if ( my_OS == "Windows" )
 			fe.plugin_command( p + e, "-help", this, "parse_cb" );
 		else
-			fe.plugin_command( "timeout", "1s " + p + e + " -help", this, "parse_cb" );
+			fe.plugin_command( "timeout", "3s " + p + e + " -help", this, "parse_cb" );
 	}
 
 	function parse_cb( op )

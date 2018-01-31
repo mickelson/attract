@@ -37,6 +37,10 @@
 #include <Audio/AudioDevice.hpp>
 #endif
 
+#ifdef SFML_SYSTEM_ANDROID
+#include "fe_util_android.hpp"
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 #include <windows.h>
 
@@ -132,6 +136,9 @@ int main(int argc, char *argv[])
 
 	if ( feSettings.get_language().empty() )
 	{
+#ifdef SFML_SYSTEM_ANDROID
+		android_copy_assets();
+#endif
 		// If our language isn't set at this point, we want to prompt the user for the language
 		// they wish to use
 		//
@@ -145,9 +152,6 @@ int main(int argc, char *argv[])
 		if ( !exit_selected )
 		{
 			FeLog() << "Performing some initial configuration" << std::endl;
-#ifdef SFML_SYSTEM_ANDROID
-			android_copy_assets();
-#endif
 			feVM.setup_wizard();
 			FeLog() << "Done initial configuration" << std::endl;
 		}
@@ -641,22 +645,24 @@ int main(int argc, char *argv[])
 
 						int f_idx = feSettings.get_current_filter_index();
 
+						FeRomInfo dummy;
 						FeRomInfo *r = feSettings.get_rom_absolute(
 							f_idx, feSettings.get_rom_index( f_idx, 0 ) );
 
-						if ( r )
-						{
-							feSettings.update_romlist_after_edit( *r,
-								new_entry,
-								FeSettings::InsertEntry );
+						if ( !r )
+							r = &dummy;
 
-							// initial update shows new entry behind config
-							// dialog
+						feSettings.update_romlist_after_edit( *r,
+							new_entry,
+							FeSettings::InsertEntry );
+
+						// initial update shows new entry behind config
+						// dialog
+						feVM.update_to_new_list();
+
+						if ( feOverlay.edit_game_dialog() )
 							feVM.update_to_new_list();
 
-							if ( feOverlay.edit_game_dialog() )
-								feVM.update_to_new_list();
-						}
 						redraw=true;
 					}
 					break;

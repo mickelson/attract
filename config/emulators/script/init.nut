@@ -209,11 +209,13 @@ function generate_emulator_config( emu )
 			"/usr/local/bin",
 			"$HOME/" + emu["name"],
 			"./" + emu["name"],
+			"../" + emu["name"],
 			],
 
 		"Windows" : [
 			"$HOME/" + emu["name"] + "/",
 			"./" + emu["name"] + "/",
+			"../" + emu["name"] + "/",
 			],
 	};
 
