@@ -408,44 +408,26 @@ void FeListXMLParser::start_element(
 					(*m_itr).set_info( FeRomInfo::Control, attribute[i+1] );
 			}
 		}
-		else if ( strcmp( element, "display" ) == 0 )
-		{
-			for ( int i=0; attribute[i]; i+=2 )
-			{
-				if ( strcmp( attribute[i], "rotate" ) == 0 )
-					(*m_itr).set_info( FeRomInfo::Rotation, attribute[i+1] );
-				else if ( strcmp( attribute[i], "type" ) == 0 )
-					(*m_itr).set_info( FeRomInfo::DisplayType, attribute[i+1] );
-			}
-			m_displays++;
-		}
-		else if ( strcmp( element, "driver" ) == 0 )
-		{
-			for ( int i=0; attribute[i]; i+=2 )
-			{
-				if ( strcmp( attribute[i], "status" ) == 0 )
-				{
-					(*m_itr).set_info( FeRomInfo::Status, attribute[i+1] );
-					break;
-				}
-			}
-		}
 		else if ( strcmp( element, "control" ) == 0 )
-		{
+		{			
 			std::string type, ways, old_type;
-
+			
 			old_type = (*m_itr).get_info( FeRomInfo::Control );
 			if ( !old_type.empty() )
 				old_type += ",";
-
+			
 			for ( int i=0; attribute[i]; i+=2 )
 			{
 				if ( strcmp( attribute[i], "type" ) == 0 )
 					type = attribute[i+1];
 				else if ( strcmp( attribute[i], "ways" ) == 0 )
 					ways = attribute[i+1];
+				
+				if (( strcmp( attribute[i], "buttons" ) == 0 )
+						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
+					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
 			}
-
+			
 			struct my_map_struct { const char *in; const char *out; };
 			my_map_struct my_map[] =
 			{
@@ -453,7 +435,7 @@ void FeListXMLParser::start_element(
 				{ "doublejoy", "double joystick" },
 				{ NULL, NULL }
 			};
-
+			
 			if ( type.compare( "joy" ) == 0 )
 			{
 				// construct the joystick name
@@ -478,6 +460,28 @@ void FeListXMLParser::start_element(
 				}
 			}
 			(*m_itr).set_info( FeRomInfo::Control, old_type + type );
+		}
+		else if ( strcmp( element, "display" ) == 0 )
+		{
+			for ( int i=0; attribute[i]; i+=2 )
+			{
+				if ( strcmp( attribute[i], "rotate" ) == 0 )
+					(*m_itr).set_info( FeRomInfo::Rotation, attribute[i+1] );
+				else if ( strcmp( attribute[i], "type" ) == 0 )
+					(*m_itr).set_info( FeRomInfo::DisplayType, attribute[i+1] );
+			}
+			m_displays++;
+		}
+		else if ( strcmp( element, "driver" ) == 0 )
+		{
+			for ( int i=0; attribute[i]; i+=2 )
+			{
+				if ( strcmp( attribute[i], "status" ) == 0 )
+				{
+					(*m_itr).set_info( FeRomInfo::Status, attribute[i+1] );
+					break;
+				}
+			}
 		}
 		else if ( strcmp( element, "disk" ) == 0 )
 		{
