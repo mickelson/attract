@@ -141,14 +141,14 @@ Windows (native compile):
 
 2. Launch the MSYS2 shell and update the system:
 
-           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime`
+           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime
 
 3. Close MSYS2 Shell,  run it again and run the following command:
 
            pacman -Syu
 
 4. Install required packaged. (optionally use the mingw-w64-i686-toolchain
-   instead for 32-bit windows architectures):
+   instead for 32-bit windows architectures), install "all" (by default) :
 
            pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg mingw64/mingw-w64-x86_64-libarchive
 
