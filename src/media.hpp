@@ -83,6 +83,9 @@ public:
 	bool is_playing();
 	bool is_multiframe() const;
 
+	void set_mipmaps( bool );
+	bool get_mipmaps() const;
+
 	sf::Time get_video_time();
 	sf::Time get_duration() const;
 
@@ -119,6 +122,7 @@ private:
 	FeAudioImp *m_audio;
 	FeVideoImp *m_video;
 	static std::string g_decoder;
+	bool m_mipmaps;
 
 	FeMedia( const FeMedia & );
 	FeMedia &operator=( const FeMedia & );
