@@ -421,6 +421,7 @@ bool FeTextureContainer::try_to_load(
 
 		if ( m_texture.loadFromStream( zs ) )
 		{
+			m_texture.generateMipmap();
 			m_file_name = loaded_name;
 			return true;
 		}
@@ -436,6 +437,7 @@ bool FeTextureContainer::try_to_load(
 		FeFileInputStream filestream( loaded_name );
 		if ( m_texture.loadFromStream( filestream ) )
 		{
+			m_texture.generateMipmap();
 			m_file_name = loaded_name;
 			return true;
 		}
