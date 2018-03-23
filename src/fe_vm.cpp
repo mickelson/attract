@@ -30,6 +30,7 @@
 #include "fe_config.hpp"
 #include "fe_overlay.hpp"
 #include "fe_window.hpp"
+#include "fe_blend.hpp"
 
 #include "fe_util.hpp"
 #include "fe_util_sq.hpp"
@@ -567,6 +568,15 @@ bool FeVM::on_new_layout()
 			.Const( "IsSupportedArchive", IsSupportedArchive )
 			.Const( "IsSupportedMedia", IsSupportedMedia )
 			)
+		.Enum( _SC("BlendMode"), Enumeration()
+			.Const( _SC("Alpha"), FeBlend::Alpha )
+			.Const( _SC("Add"), FeBlend::Add )
+			.Const( _SC("Screen"), FeBlend::Screen )
+			.Const( _SC("Multiply"), FeBlend::Multiply )
+			.Const( _SC("Overlay"), FeBlend::Overlay )
+			.Const( _SC("Premultiplied"), FeBlend::Premultiplied )
+			.Const( _SC("None"), FeBlend::None )
+			)
 		;
 
 	Enumeration info;
@@ -650,6 +660,7 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
 		.Prop(_SC("trigger"), &FeImage::getTrigger, &FeImage::setTrigger )
 		.Prop(_SC("smooth"), &FeImage::get_smooth, &FeImage::set_smooth )
+		.Prop( _SC("blend_mode"), &FeImage::get_blend_mode, &FeImage::set_blend_mode )
 		.Func( _SC("swap"), &FeImage::transition_swap )
 		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
 		.Func( _SC("rawset_filter_offset"), &FeImage::rawset_filter_offset )

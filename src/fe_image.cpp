@@ -26,6 +26,7 @@
 #include "fe_shader.hpp"
 #include "fe_present.hpp"
 #include "fe_file.hpp"
+#include "fe_blend.hpp"
 #include "zip.hpp"
 
 #ifndef NO_MOVIE
@@ -1037,6 +1038,7 @@ FeImage::FeImage( FePresentableParent &p,
 	m_pos( x, y ),
 	m_size( w, h ),
 	m_origin( 0.f, 0.f ),
+	m_blend_mode( FeBlend::Alpha ),
 	m_preserve_aspect_ratio( false )
 {
 	ASSERT( m_tex );
@@ -1123,6 +1125,8 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 		if ( sh )
 			states.shader = sh;
 	}
+
+	states.blendMode = FeBlend::get_blend_mode( m_blend_mode );
 
 	target.draw( m_sprite, states );
 }
@@ -1498,6 +1502,16 @@ void FeImage::set_smooth( bool s )
 bool FeImage::get_smooth() const
 {
 	return m_tex->get_smooth();
+}
+
+int FeImage::get_blend_mode() const
+{
+	return (FeBlend::Mode)m_blend_mode;
+}
+ 
+void FeImage::set_blend_mode( int b )
+{
+	m_blend_mode = (FeBlend::Mode)b;
 }
 
 FeImage *FeImage::add_image(const char *n, int x, int y, int w, int h)
