@@ -1149,6 +1149,7 @@ bool FeMedia::tick()
 		if ( m_video->display_frame )
 		{
 			m_video->display_texture->update( m_video->display_frame );
+			if( m_mipmap ) m_video->display_texture->generateMipmap();
 			m_video->display_frame = NULL;
 			return true;
 		}
@@ -1521,4 +1522,14 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 	if ( g_decoder.compare( "vdpau" ) == 0 )
 		codec_ctx->get_format = get_format_vdpau;
 #endif
+}
+
+void FeMedia::set_mipmap( bool m )
+{
+	m_mipmap = m;
+}
+
+bool FeMedia::get_mipmap() const
+{
+	return m_mipmap;
 }
