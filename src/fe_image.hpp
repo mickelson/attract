@@ -26,6 +26,7 @@
 #include <SFML/Graphics.hpp>
 #include "sprite.hpp"
 #include "fe_presentable.hpp"
+#include "fe_blend.hpp"
 
 class FeSettings;
 class FeMedia;
@@ -311,6 +312,9 @@ public:
 	void set_smooth( bool );
 	bool get_smooth() const;
 
+	int get_blend_mode() const;
+	void set_blend_mode( int b );
+
 	//
 	// Callback functions for use with surface objects
 	//
@@ -324,6 +328,9 @@ public:
 	FeText *add_text(const char *,int, int, int, int);
 	FeListBox *add_listbox(int, int, int, int);
 	FeImage *add_surface(int, int);
+
+private:
+	FeBlend::Mode m_blend_mode;
 };
 
 #endif

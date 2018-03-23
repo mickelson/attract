@@ -27,6 +27,7 @@
 #include "fe_listbox.hpp"
 #include "fe_input.hpp"
 #include "fe_file.hpp"
+#include "fe_blend.hpp"
 #include "zip.hpp"
 
 #include <iostream>
@@ -408,6 +409,7 @@ FeImage *FePresent::add_surface( int w, int h, FePresentableParent &p )
 	//
 	FeImage *new_image = new FeImage( p, new_surface, 0, 0, w, h );
 	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
+	new_image->set_blend_mode( FeBlend::Premultiplied );
 
 	new_image->texture_changed();
 
