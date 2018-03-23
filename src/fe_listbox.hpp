@@ -105,6 +105,7 @@ public:
 	int get_bgb();
 	int get_bga();
 	int get_charsize();
+	float get_spacing();
 	int get_rows();
 	int get_style();
 	int get_align();
@@ -114,6 +115,7 @@ public:
 	void set_bga(int a);
 	void set_bg_rgb( int, int, int );
 	void set_charsize(int s);
+	void set_spacing(float s);
 	void set_rows(int r);
 	void set_style(int s);
 	void set_align(int a);

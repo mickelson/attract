@@ -439,6 +439,11 @@ int FeListBox::get_charsize()
 	return m_userCharSize;
 }
 
+float FeListBox::get_spacing()
+{
+	return m_base_text.getCharacterSpacing();
+}
+
 int FeListBox::get_rows()
 {
 	return m_rows;
@@ -513,6 +518,12 @@ void FeListBox::set_charsize(int s)
 	//
 	if ( m_scripted )
 		FePresent::script_do_update( this );
+}
+
+void FeListBox::set_spacing(float s)
+{
+	m_base_text.setCharacterSpacing(s);
+	FePresent::script_do_update( this );
 }
 
 void FeListBox::set_rows(int r)
