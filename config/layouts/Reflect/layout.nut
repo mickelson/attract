@@ -2,7 +2,11 @@
 // Attract-Mode Front-End - "Reflect" sample layout
 //
 class UserConfig {
-	</ label="Colour Scheme", help="Select the menu colour scheme.", options="Blue,Green,Red,Yellow,Purple,Brown,Grey" />
+	// Note the per_display="true" below means that this parameter has to be configured by the user for each
+	// display where this layout gets used.  If this isn't set then the layout parameter is the same across
+	// all displays that use this layout
+	//
+	</ label="Colour Scheme", help="Select the menu colour scheme.", options="Blue,Green,Red,Yellow,Purple,Brown,Grey", per_display="yes" />
 	colour="Blue";
 };
 

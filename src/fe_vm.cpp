@@ -1683,6 +1683,7 @@ void FeVM::script_get_config_options(
 				if ( !otmp.empty() )
 					order = as_int( otmp );
 
+				std::multimap<int,FeMenuOpt>::iterator it;
 				if ( !options.empty() )
 				{
 					std::vector<std::string> options_list;
@@ -1694,36 +1695,50 @@ void FeVM::script_get_config_options(
 						options_list.push_back( temp );
 					} while ( pos < options.size() );
 
-					std::multimap<int,FeMenuOpt>::iterator it = my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
+					it = my_opts.insert( std::pair <int, FeMenuOpt>(
+						order,
+						FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
 
 					(*it).second.append_vlist( options_list );
 				}
 				else if ( config_str_to_bool( is_input ) )
 				{
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
 				}
 				else if ( config_str_to_bool( is_func ) )
 				{
 					FeMenuOpt temp_opt(Opt::SUBMENU, label, "", help, 2, key );
 					temp_opt.opaque_str = value;
 
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								temp_opt ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							temp_opt ) );
 				}
 				else
 				{
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
+				}
+
+				// Nice and hacky, we put an "%" at start of opaque_str if this is a "per display"
+				// option.  fe_config picks this up and deals with it accordingly
+				//
+				std::string per_display_str;
+				fe_get_attribute_string(
+					config_vm.get_vm(),
+					uConfig.GetObject(), key, "per_display", per_display_str );
+
+				if ( config_str_to_bool( per_display_str ) )
+				{
+					std::string temp = (*it).second.opaque_str;
+					(*it).second.opaque_str = "%";
+					(*it).second.opaque_str += temp;
 				}
 			}
 

@@ -1048,8 +1048,7 @@ void FeFilterEditMenu::set_filter_index( FeDisplayInfo *d, int i )
 }
 
 FeDisplayEditMenu::FeDisplayEditMenu()
-	: m_display( NULL ),
-	m_index( 0 )
+	: m_index( -1 )
 {
 }
 
@@ -1057,20 +1056,21 @@ void FeDisplayEditMenu::get_options( FeConfigContext &ctx )
 {
 	ctx.set_style( FeConfigContext::EditList, "Display Edit" );
 
-	if ( m_display )
+	FeDisplayInfo *display = ctx.fe_settings.get_display( m_index );
+	if ( display )
 	{
 		ctx.add_optl( Opt::EDIT, "Name",
-				m_display->get_info( FeDisplayInfo::Name ), "_help_display_name" );
+				display->get_info( FeDisplayInfo::Name ), "_help_display_name" );
 
 		ctx.add_optl( Opt::LIST, "Layout",
-				m_display->get_info( FeDisplayInfo::Layout ), "_help_display_layout" );
+				display->get_info( FeDisplayInfo::Layout ), "_help_display_layout" );
 
 		std::vector<std::string> layouts;
 		ctx.fe_settings.get_layouts_list( layouts );
 		ctx.back_opt().append_vlist( layouts );
 
 		ctx.add_optl( Opt::LIST, "Collection/Rom List",
-				m_display->get_info( FeDisplayInfo::Romlist ), "_help_display_romlist" );
+				display->get_info( FeDisplayInfo::Romlist ), "_help_display_romlist" );
 
 		std::vector<std::string> romlists;
 		ctx.fe_settings.get_romlists_list( romlists );
@@ -1081,17 +1081,17 @@ void FeDisplayEditMenu::get_options( FeConfigContext &ctx )
 		ctx.fe_settings.get_resource( "No", bool_opts[1] );
 
 		ctx.add_optl( Opt::LIST, "Show in Cycle",
-			m_display->show_in_cycle() ? bool_opts[0] : bool_opts[1],
+			display->show_in_cycle() ? bool_opts[0] : bool_opts[1],
 			"_help_display_in_cycle" );
 
 		ctx.back_opt().append_vlist( bool_opts );
 
 		ctx.add_optl( Opt::LIST, "Show in Menu",
-			m_display->show_in_menu() ? bool_opts[0] : bool_opts[1],
+			display->show_in_menu() ? bool_opts[0] : bool_opts[1],
 			"_help_display_in_menu" );
 		ctx.back_opt().append_vlist( bool_opts );
 
-		FeFilter *f = m_display->get_filter( -1 );
+		FeFilter *f = display->get_filter( -1 );
 
 		std::string filter_desc;
 		if ( f->get_rule_count() < 1 )
@@ -1104,7 +1104,7 @@ void FeDisplayEditMenu::get_options( FeConfigContext &ctx )
 		ctx.back_opt().opaque = 9;
 
 		std::vector<std::string> filters;
-		m_display->get_filters_list( filters );
+		display->get_filters_list( filters );
 		int i=0;
 
 		for ( std::vector<std::string>::iterator itr=filters.begin();
@@ -1134,7 +1134,8 @@ bool FeDisplayEditMenu::on_option_select(
 {
 	FeMenuOpt &o = ctx.curr_opt();
 
-	if ( !m_display )
+	FeDisplayInfo *display = ctx.fe_settings.get_display( m_index );
+	if ( !display )
 		return true;
 
 	if (( o.opaque >= 100 ) || ( o.opaque == 1 ) | ( o.opaque == 9 ))
@@ -1148,9 +1149,9 @@ bool FeDisplayEditMenu::on_option_select(
 			if ( !ctx.edit_dialog( "Enter Filter Name", res ) || res.empty() )
 				return false;		// if they don't enter a name then cancel
 
-			ctx.fe_settings.create_filter( *m_display, res );
+			ctx.fe_settings.create_filter( *display, res );
 
-			f_index = m_display->get_filter_count() - 1;
+			f_index = display->get_filter_count() - 1;
 			ctx.save_req=true;
 		}
 		else if ( o.opaque == 9 )
@@ -1158,24 +1159,25 @@ bool FeDisplayEditMenu::on_option_select(
 		else
 			f_index = o.opaque - 100;
 
-		m_filter_menu.set_filter_index( m_display, f_index );
+		m_filter_menu.set_filter_index( display, f_index );
 		submenu=&m_filter_menu;
 	}
 	else if ( o.opaque == 2 )
 	{
 		// Layout Options
 		FeLayoutInfo &cfg = ctx.fe_settings.get_layout_config( ctx.opt_list[1].get_value() );
-		m_layout_menu.set_layout( &cfg );
+		m_layout_menu.set_layout( &cfg,
+			&display->get_layout_per_display_params() );
+
 		submenu=&m_layout_menu;
 	}
 	else if ( o.opaque == 3 )
 	{
 		// "Delete this Display"
-		if ( ctx.confirm_dialog( "Delete display '$1'?", m_display->get_info( FeDisplayInfo::Name ) ) == false )
+		if ( ctx.confirm_dialog( "Delete display '$1'?", display->get_info( FeDisplayInfo::Name ) ) == false )
 			return false;
 
 		ctx.fe_settings.delete_display( m_index );
-		m_display=NULL;
 		ctx.save_req=true;
 	}
 
@@ -1184,30 +1186,30 @@ bool FeDisplayEditMenu::on_option_select(
 
 bool FeDisplayEditMenu::save( FeConfigContext &ctx )
 {
-	if ( m_display )
+	FeDisplayInfo *display = ctx.fe_settings.get_display( m_index );
+	if ( display )
 	{
 		for ( int i=0; i< FeDisplayInfo::LAST_INDEX; i++ )
 		{
 			if (( i == FeDisplayInfo::InCycle )
 				|| ( i == FeDisplayInfo::InMenu ))
 			{
-				m_display->set_info( i,
+				display->set_info( i,
 					ctx.opt_list[i].get_vindex() == 0
 						? FE_CFG_YES_STR : FE_CFG_NO_STR );
 			}
 			else
-				m_display->set_info( i, ctx.opt_list[i].get_value() );
+				display->set_info( i, ctx.opt_list[i].get_value() );
 		}
 
-		m_display->set_current_layout_file( "" );
+		display->set_current_layout_file( "" );
 	}
 
 	return true;
 }
 
-void FeDisplayEditMenu::set_display( FeDisplayInfo *d, int index )
+void FeDisplayEditMenu::set_display_index( int index )
 {
-	m_display=d;
 	m_index=index;
 }
 
@@ -1257,7 +1259,7 @@ bool FeDisplayMenuEditMenu::on_option_select(
 	if (( o.opaque == 1 ) && ( ctx.opt_list[1].get_vindex() != 0 ))
 	{
 		FeLayoutInfo &cfg = ctx.fe_settings.get_layout_config( ctx.opt_list[1].get_value() );
-		m_layout_menu.set_layout( &cfg );
+		m_layout_menu.set_layout( &cfg, &ctx.fe_settings.get_display_menu_per_display_params() );
 		submenu=&m_layout_menu;
 	}
 
@@ -1310,9 +1312,6 @@ bool FeDisplaySelMenu::on_option_select(
 	if ( o.opaque < 0 )
 		return true;
 
-	FeDisplayInfo *d( NULL );
-	int index(0);
-
 	if ( o.opaque == 99999 )
 	{
 		submenu = &m_menu_menu;
@@ -1326,18 +1325,15 @@ bool FeDisplaySelMenu::on_option_select(
 			return false;		// if they don't enter a name then cancel
 
 		ctx.save_req=true;
-		d = ctx.fe_settings.create_display( res );
-		index = ctx.fe_settings.displays_count() - 1;
+
+		ctx.fe_settings.create_display( res );
+		m_edit_menu.set_display_index(
+			ctx.fe_settings.displays_count() - 1 );
+		submenu = &m_edit_menu;
 	}
 	else
 	{
-		d = ctx.fe_settings.get_display( o.opaque );
-		index = o.opaque;
-	}
-
-	if ( d )
-	{
-		m_edit_menu.set_display( d, index );
+		m_edit_menu.set_display_index( o.opaque );
 		submenu = &m_edit_menu;
 	}
 
@@ -2043,7 +2039,9 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 
 FeScriptConfigMenu::FeScriptConfigMenu()
 	: m_state( FeSettings::Layout_Showing ),
-	m_script_id( -1 )
+	m_script_id( -1 ),
+	m_configurable( NULL ),
+	m_per_display( NULL )
 {
 }
 
@@ -2092,11 +2090,30 @@ bool FeScriptConfigMenu::save_helper( FeConfigContext &ctx )
 {
 	m_configurable->clear_params();
 
+	if ( m_per_display )
+		m_per_display->clear_params();
+
 	for ( unsigned int i=0; i < ctx.opt_list.size(); i++ )
 	{
-		m_configurable->set_param(
-			ctx.opt_list[i].opaque_str,
-			ctx.opt_list[i].get_value() );
+		std::string &os = ctx.opt_list[i].opaque_str;
+
+		//
+		// grep for 'hacky' in src/fe_vm.cpp to find the other end of this...
+		// FeVM::script_get_config_options() inserts a '%' character at the start
+		// of opaque_str if this one is a "per_display" option.  So we deal with
+		// that now by stripping the % character out and storing this to the per
+		// display parameters instead of the general per layout parameters
+		//
+		if ( m_per_display && !os.empty() && ( os[0] == '%' ) )
+		{
+			m_per_display->set_param( os.substr( 1 ),
+				ctx.opt_list[i].get_value() );
+		}
+		else
+		{
+			m_configurable->set_param( os,
+				ctx.opt_list[i].get_value() );
+		}
 	}
 
 	return true;
@@ -2239,11 +2256,20 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 			m_file_name += FE_LAYOUT_FILE_EXTENSION;
 		}
 
-		m_configurable = m_layout;
+		m_configurable = m_layout;     // parent member
+		m_per_display = m_per_display; // parent member
+
+		// create a copy of m_layout and merge in any per display settings
+		// so that appropriate config options are available to the script
+		// when run in FeVM::script_Get_config_options() below
+		//
+		FeLayoutInfo temp_layout( *m_layout );
+		if ( m_per_display )
+			temp_layout.merge_params( *m_per_display );
 
 		std::string gen_help;
-		FeVM::script_get_config_options( ctx, gen_help, *m_layout,
-				m_file_path, m_file_name );
+		FeVM::script_get_config_options( ctx, gen_help, temp_layout,
+			m_file_path, m_file_name );
 
 		if ( !gen_help.empty() )
 			ctx.opt_list[0].help_msg = gen_help;
@@ -2259,9 +2285,10 @@ bool FeLayoutEditMenu::save( FeConfigContext &ctx )
 	return FeScriptConfigMenu::save_helper( ctx );
 }
 
-void FeLayoutEditMenu::set_layout( FeLayoutInfo *layout )
+void FeLayoutEditMenu::set_layout( FeLayoutInfo *layout, FeScriptConfigurable *per_display_params )
 {
 	m_layout = layout;
+	m_per_display = per_display_params;
 }
 
 void FeIntroEditMenu::get_options( FeConfigContext &ctx )

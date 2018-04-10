@@ -932,7 +932,7 @@ bool FeOverlay::edit_game_dialog()
 		if ( index >= 0 )
 		{
 			FeDisplayEditMenu m;
-			m.set_display( m_feSettings.get_display( index ), index );
+			m.set_display_index( index );
 
 			if ( display_config_dialog( &m, settings_changed ) < 0 )
 				m_wnd.close();

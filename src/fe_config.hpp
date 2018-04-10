@@ -202,11 +202,12 @@ protected:
 
 	bool save_helper( FeConfigContext &ctx );
 
-	FeScriptConfigurable *m_configurable;
-	std::string m_file_path;
-	std::string m_file_name;
 	FeSettings::FePresentState m_state;
 	int m_script_id;
+	FeScriptConfigurable *m_configurable;
+	FeScriptConfigurable *m_per_display;
+	std::string m_file_path;
+	std::string m_file_name;
 };
 
 class FeLayoutEditMenu : public FeScriptConfigMenu
@@ -219,7 +220,7 @@ public:
 	void get_options( FeConfigContext &ctx );
 
 	bool save( FeConfigContext &ctx );
-	void set_layout( FeLayoutInfo *layout );
+	void set_layout( FeLayoutInfo *layout, FeScriptConfigurable *per_display );
 };
 
 class FeIntroEditMenu : public FeScriptConfigMenu
@@ -335,7 +336,6 @@ class FeDisplayEditMenu : public FeBaseConfigMenu
 private:
 	FeFilterEditMenu m_filter_menu;
 	FeLayoutEditMenu m_layout_menu;
-	FeDisplayInfo *m_display;
 	int m_index; // the index for m_display in FeSettings' master list
 
 public:
@@ -345,7 +345,7 @@ public:
 	bool on_option_select( FeConfigContext &ctx,
 		FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
-	void set_display( FeDisplayInfo *d, int index );
+	void set_display_index( int index );
 };
 
 class FeDisplayMenuEditMenu : public FeBaseConfigMenu
