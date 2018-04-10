@@ -1466,6 +1466,15 @@ Properties:
      `Transition.EndNavigation`.  Default value is `Transition.ToNewSelection`.
    * `smooth` - Get/set whether the image is to be smoothed.  Default value can
      be configured in attract.cfg
+   * `blend_mode` - Get/set the blend mode for this image.  Can have one of the
+     following values:
+      - `BlendMode.Alpha`
+      - `BlendMode.Add`
+      - `BlendMode.Screen`
+      - `BlendMode.Multiply`
+      - `BlendMode.Overlay`
+      - `BlendMode.Premultiplied`
+      - `BlendMode.None`
    * `zorder` - Get/set the Image's order in the applicable draw list.  When
      objects overlap, the one with the higher zorder will be drawn on top.
 
