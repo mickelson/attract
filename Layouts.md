@@ -1475,6 +1475,11 @@ Properties:
       - `BlendMode.Overlay`
       - `BlendMode.Premultiplied`
       - `BlendMode.None`
+   * `mipmap` - Get/set the automatic generation of mipmap for the image/artwork/video.
+     Setting this to `true` greatly improves the quality of scaled down images.
+     The default value is `false`.  It's advised to force anisotropic filtering in
+     the display driver settings if the Image with auto generated mipmap is scaled
+     by the ratio that is not isotropic.
    * `zorder` - Get/set the Image's order in the applicable draw list.  When
      objects overlap, the one with the higher zorder will be drawn on top.
 
@@ -1631,7 +1636,7 @@ Properties:
    * `msg_width` - Get the width of the text message, in layout coordinates.
    * `font` - Get/set the name of the font used for this text.  Default is
      the layout font name.
-   * nomargin - Get/set whether margin spacing should be added to sides of
+   * `nomargin` - Get/set whether margin spacing should be added to sides of
      the text (boolean).  Default value is `false`.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
