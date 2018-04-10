@@ -145,6 +145,15 @@ int FeBaseTextureContainer::get_trigger() const
 	return ToNewSelection;
 }
 
+void FeBaseTextureContainer::set_mipmap( bool m )
+{
+}
+
+bool FeBaseTextureContainer::get_mipmap() const
+{
+	return false;
+}
+
 void FeBaseTextureContainer::transition_swap( FeBaseTextureContainer *o )
 {
 	//
@@ -227,6 +236,7 @@ FeTextureContainer::FeTextureContainer(
 	m_movie( NULL ),
 	m_swf( NULL ),
 	m_movie_status( -1 ),
+	m_mipmap( false ),
 	m_video_flags( VF_Normal )
 {
 	if ( is_artwork )
@@ -422,6 +432,9 @@ bool FeTextureContainer::try_to_load(
 
 		if ( m_texture.loadFromStream( zs ) )
 		{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			if ( m_mipmap ) m_texture.generateMipmap();
+#endif
 			m_file_name = loaded_name;
 			return true;
 		}
@@ -437,6 +450,9 @@ bool FeTextureContainer::try_to_load(
 		FeFileInputStream filestream( loaded_name );
 		if ( m_texture.loadFromStream( filestream ) )
 		{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			if ( m_mipmap ) m_texture.generateMipmap();
+#endif
 			m_file_name = loaded_name;
 			return true;
 		}
@@ -701,7 +717,13 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 			FeDebug() << "Restarted looped video" << std::endl;
 		}
 
-		return m_movie->tick();
+		if ( m_movie->tick() )
+		{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			if ( m_mipmap ) m_texture.generateMipmap();
+#endif
+			return true;
+		}
 	}
 #endif
 
@@ -950,6 +972,19 @@ bool FeTextureContainer::get_smooth() const
 	return m_texture.isSmooth();
 }
 
+void FeTextureContainer::set_mipmap( bool m )
+{
+	m_mipmap = m;
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+	if ( m_mipmap && !m_movie) m_texture.generateMipmap();;
+#endif
+}
+
+bool FeTextureContainer::get_mipmap() const
+{
+	return m_mipmap;
+}
+
 void FeTextureContainer::release_audio( bool state )
 {
 #ifndef NO_MOVIE
@@ -1024,6 +1059,15 @@ void FeSurfaceTextureContainer::set_smooth( bool s )
 bool FeSurfaceTextureContainer::get_smooth() const
 {
 	return m_texture.isSmooth();
+}
+
+void FeSurfaceTextureContainer::set_mipmap( bool m )
+{
+}
+
+bool FeSurfaceTextureContainer::get_mipmap() const
+{
+	return false;
 }
 
 FePresentableParent *FeSurfaceTextureContainer::get_presentable_parent()
@@ -1480,6 +1524,16 @@ void FeImage::set_subimg_height( int h )
 void FeImage::set_preserve_aspect_ratio( bool p )
 {
 	m_preserve_aspect_ratio = p;
+}
+
+void FeImage::set_mipmap( bool m )
+{
+	m_tex->set_mipmap( m );
+}
+
+bool FeImage::get_mipmap() const
+{
+	return m_tex->get_mipmap();
 }
 
 void FeImage::transition_swap( FeImage *o )
