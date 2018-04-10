@@ -1,5 +1,5 @@
 attract /usr/games
-config/* /usr/share/attract
 util/linux/attract-mode.png /usr/share/icons/hicolor/512x512/apps
 util/linux/attract-mode.desktop /usr/share/applications
 util/linux/attract-mode.appdata.xml /usr/share/appdata
+config/* /usr/share/attract
