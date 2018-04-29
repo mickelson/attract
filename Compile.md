@@ -19,7 +19,7 @@ distributions.  Other distributions should have similar packages available.
       - FreeType 2 [libfreetype6-dev]
       - The following FFmpeg libraries (required for videos): 
           * avformat [libavformat-dev],
-          * avcodec [libavcoded-dev], 
+          * avcodec [libavcodec-dev], 
           * swscale [libswscale-dev], 
           * avutil [libavutil-dev],
           * swresample [libswresample-dev] or avresample [libavresample-dev].
@@ -147,7 +147,7 @@ Windows (native compile):
 
 2. Launch the MSYS2 shell and update the system:
 
-           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime`
+           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime
 
 3. Close MSYS2 Shell,  run it again and run the following command:
 
