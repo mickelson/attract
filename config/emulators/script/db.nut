@@ -37,7 +37,7 @@ return [
 			"name"   : "dolphin-emu",
 			"args"   : "-b -e \"[romfilename]\"",
 			"exts"   : ".dol;.elf;.iso;.gcm;.wad;.wbfs;.gbz;.ciso",
-			"system" : "Nintendo Wii/Game Cube",
+			"system" : "Nintendo Wii",
 			"source" : "thegamesdb.net",
 
 			"Windows"  : {
