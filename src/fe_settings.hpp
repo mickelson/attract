@@ -551,7 +551,7 @@ public:
 
 inline bool is_windowed_mode( int m )
 {
-	return (( m == FeSettings::Window ) || ( m == FeSettings::WindowNoBorder ));
+	return ( m == FeSettings::Window );
 }
 
 //
