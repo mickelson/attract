@@ -409,7 +409,8 @@ FeImage *FePresent::add_surface( int w, int h, FePresentableParent &p )
 	//
 	FeImage *new_image = new FeImage( p, new_surface, 0, 0, w, h );
 	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
-	new_image->set_blend_mode( FeBlend::Premultiplied );
+	if ( sf::Shader::isAvailable() )
+		new_image->set_blend_mode( FeBlend::Premultiplied );
 
 	new_image->texture_changed();
 
