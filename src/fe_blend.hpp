@@ -34,13 +34,13 @@ class FeBlend
 public:
 	enum Mode
 	{ 
-	    Alpha,
-	    Add,
-	    Screen,
-	    Multiply,
-	    Overlay,
-	    Premultiplied,
-	    None
+		Alpha,
+		Add,
+		Screen,
+		Multiply,
+		Overlay,
+		Premultiplied,
+		None
 	}; 
 
 	FeBlend();
