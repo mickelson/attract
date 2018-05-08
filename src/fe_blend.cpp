@@ -40,6 +40,8 @@ sf::BlendMode FeBlend::get_blend_mode( int blend_mode )
 			return sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcAlpha);
 		case FeBlend::None:
 			return sf::BlendNone;
+		default:
+			return sf::BlendAlpha;
 	}
 }
 
@@ -52,15 +54,15 @@ void FeBlend::load_default_shaders()
 	// silently fail if shaders aren't available
 	if ( sf::Shader::isAvailable() )
 	{
-		FeBlend::default_shader_multiplied.loadFromMemory( DEFAULT_SHADER_GLSL_MULTIPLIED, sf::Shader::Fragment );
-		FeBlend::default_shader_overlay.loadFromMemory( DEFAULT_SHADER_GLSL_OVERLAY, sf::Shader::Fragment );
-		FeBlend::default_shader_premultiplied.loadFromMemory( DEFAULT_SHADER_GLSL_PREMULTIPLIED, sf::Shader::Fragment );
+		default_shader_multiplied.loadFromMemory( DEFAULT_SHADER_GLSL_MULTIPLIED, sf::Shader::Fragment );
+		default_shader_overlay.loadFromMemory( DEFAULT_SHADER_GLSL_OVERLAY, sf::Shader::Fragment );
+		default_shader_premultiplied.loadFromMemory( DEFAULT_SHADER_GLSL_PREMULTIPLIED, sf::Shader::Fragment );
 	}
 }
 
 sf::Shader* FeBlend::get_default_shader( int blend_mode )
 {
-	switch( (FeBlend::Mode)blend_mode )
+	switch( blend_mode )
 	{
 		case FeBlend::Alpha:
 		case FeBlend::Add:
@@ -73,24 +75,26 @@ sf::Shader* FeBlend::get_default_shader( int blend_mode )
 			return &default_shader_overlay;
 		case FeBlend::Premultiplied:
 			return &default_shader_premultiplied;
+		default:
+			return NULL;
 	}
 }
 
-const char *DEFAULT_SHADER_GLSL_MULTIPLIED = \
+const char *FeBlend::DEFAULT_SHADER_GLSL_MULTIPLIED = \
 	"uniform sampler2D texture;" \
 	"void main(){" \
 	"vec4 pixel = texture2D(texture, gl_TexCoord[0].xy);" \
 	"gl_FragColor = gl_Color * pixel;" \
 	"gl_FragColor.xyz *= gl_FragColor.w;}";
 
-const char *DEFAULT_SHADER_GLSL_OVERLAY = \
+const char *FeBlend::DEFAULT_SHADER_GLSL_OVERLAY = \
 	"uniform sampler2D texture;" \
 	"void main(){" \
 	"vec4 pixel = texture2D(texture, gl_TexCoord[0].xy);" \
 	"gl_FragColor = gl_Color * pixel;" \
 	"gl_FragColor = mix(vec4(0.5,0.5,0.5,1.0), gl_FragColor, gl_FragColor.w);}";
 
-const char *DEFAULT_SHADER_GLSL_PREMULTIPLIED = \
+const char *FeBlend::DEFAULT_SHADER_GLSL_PREMULTIPLIED = \
 	"uniform sampler2D texture;" \
 	"void main(){" \
 	"vec4 pixel = texture2D(texture, gl_TexCoord[0].xy);" \
