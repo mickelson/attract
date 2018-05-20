@@ -222,8 +222,9 @@ void FeWindow::initial_create()
 #ifdef SFML_SYSTEM_WINDOWS
 	// Fill Screen mode has an offset so the top row and the left column of the window is not visible.
 	// We call setView to compensate this -1,-1 offset of the window.
-	// In any other mode this line has no visual effect.
-	setView(sf::View(sf::FloatRect(getPosition().x, getPosition().y, getSize().x, getSize().y)));
+	if ( win_mode == FeSettings::Default )
+		setView(sf::View(sf::FloatRect(getPosition().x, getPosition().y, getSize().x, getSize().y)));
+
 	SetForegroundWindow( getSystemHandle() );
 #endif
 
