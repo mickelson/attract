@@ -58,7 +58,7 @@ enum AVPixelFormat get_format_vdpau( AVCodecContext *codec_ctx, const enum AVPix
 			fc->format = AV_PIX_FMT_VDPAU;
 			fc->sw_format = AV_PIX_FMT_YUV420P;
 
-			fc->initial_pool_size = 10;
+			fc->initial_pool_size = 2;
 
 			float aspect_ratio = 1.0;
 			if ( codec_ctx->sample_aspect_ratio.num != 0 )

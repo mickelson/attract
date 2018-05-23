@@ -57,7 +57,7 @@ enum AVPixelFormat get_format_vaapi( AVCodecContext *codec_ctx, const enum AVPix
 			fc->pool = NULL;
 			fc->format = AV_PIX_FMT_VAAPI;
 			fc->sw_format = AV_PIX_FMT_YUV420P;
-			fc->initial_pool_size = 10;
+			fc->initial_pool_size = 2;
 
 			float aspect_ratio = 1.0;
 			if ( codec_ctx->sample_aspect_ratio.num != 0 )
@@ -78,6 +78,7 @@ enum AVPixelFormat get_format_vaapi( AVCodecContext *codec_ctx, const enum AVPix
 
 			av_buffer_unref( &device_ctx );
 			codec_ctx->hw_frames_ctx = frames_ctx;
+			FeDebug() << "Setting vaapi hardware device context" << std::endl;
 			return *p;
 		}
 
