@@ -3,27 +3,33 @@ Compiling Attract-Mode
 
 Build instructions are set out by operating system below:
 
-Linux, FreeBSD:
----------------
+Linux, FreeBSD, Ubuntu:
+----------------------
 
 These instructions assume that you have the GNU C/C++ compilers and basic
 build utilities (make, pkg-config, ar) on your system.  This means the
 "build-essential" and "pkg-config" packages on Debian or Ubuntu-based
 distributions.  Other distributions should have similar packages available.
 
-1. Install the following *development* libraries on your system:
+1. Install the following *development* libraries on your system [use sudo apt-get install xxx, where xxx should be replaced by the library name between brackets, eg. sudo apt-get install libsfml-dev]:
    * Required:
-      - SFML SDK version 2.x (<http://sfml-dev.org>)
-      - OpenAL
-      - zlib
-      - FreeType 2
-      - The following FFmpeg libraries (required for videos): avformat,
-      avcodec, swscale, avutil and either swresample or avresample.
-      - OpenGL and GLU (or OpenGLES for GLES version)
+      - SFML SDK version 2.x (<http://sfml-dev.org>) [libsfml-dev]
+      - OpenAL [libopenal-dev]
+      - Zlib [zlib1g-dev]
+      - FreeType 2 [libfreetype6-dev]
+      - The following FFmpeg libraries (required for videos): 
+          * avformat [libavformat-dev],
+          * avcodec [libavcodec-dev], 
+          * swscale [libswscale-dev], 
+          * avutil [libavutil-dev],
+          * swresample [libswresample-dev] or avresample [libavresample-dev].
+      - OpenGL and GLU (or OpenGLES for GLES version) [freeglut3-dev]
+      - JPEG library [libjpeg-dev]
+      - Make [make] and Package Config [pkg-config]
    * Optional:
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
-      - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
+      - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support). [libarchive-dev]
 
 2. Extract the Attract-Mode source to your system.
 
