@@ -200,7 +200,7 @@ protected:
 	bool on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu );
 
-	bool save_helper( FeConfigContext &ctx );
+	bool save_helper( FeConfigContext &ctx, int first_idx=0 );
 
 	FeSettings::FePresentState m_state;
 	int m_script_id;
@@ -214,13 +214,14 @@ class FeLayoutEditMenu : public FeScriptConfigMenu
 {
 private:
 	FeLayoutInfo *m_layout;
+	FeDisplayInfo *m_display;
 
 public:
 	FeLayoutEditMenu();
 	void get_options( FeConfigContext &ctx );
 
 	bool save( FeConfigContext &ctx );
-	void set_layout( FeLayoutInfo *layout, FeScriptConfigurable *per_display );
+	void set_layout( FeLayoutInfo *layout, FeScriptConfigurable *per_display, FeDisplayInfo *display );
 };
 
 class FeIntroEditMenu : public FeScriptConfigMenu

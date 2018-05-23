@@ -1167,7 +1167,7 @@ bool FeDisplayEditMenu::on_option_select(
 		// Layout Options
 		FeLayoutInfo &cfg = ctx.fe_settings.get_layout_config( ctx.opt_list[1].get_value() );
 		m_layout_menu.set_layout( &cfg,
-			&display->get_layout_per_display_params() );
+			&display->get_layout_per_display_params(), display );
 
 		submenu=&m_layout_menu;
 	}
@@ -1201,8 +1201,6 @@ bool FeDisplayEditMenu::save( FeConfigContext &ctx )
 			else
 				display->set_info( i, ctx.opt_list[i].get_value() );
 		}
-
-		display->set_current_layout_file( "" );
 	}
 
 	return true;
@@ -1259,7 +1257,7 @@ bool FeDisplayMenuEditMenu::on_option_select(
 	if (( o.opaque == 1 ) && ( ctx.opt_list[1].get_vindex() != 0 ))
 	{
 		FeLayoutInfo &cfg = ctx.fe_settings.get_layout_config( ctx.opt_list[1].get_value() );
-		m_layout_menu.set_layout( &cfg, &ctx.fe_settings.get_display_menu_per_display_params() );
+		m_layout_menu.set_layout( &cfg, &ctx.fe_settings.get_display_menu_per_display_params(), NULL );
 		submenu=&m_layout_menu;
 	}
 
@@ -2057,10 +2055,11 @@ bool FeScriptConfigMenu::on_option_select(
 		ctx.input_map_dialog( "Press Input", ent, conflict );
 		std::string res = ent.as_string();
 
-		if (( conflict == FeInputMap::Exit )
+		if ((conflict == FeInputMap::Back )
+			|| ( conflict == FeInputMap::Exit )
 			|| ( conflict == FeInputMap::ExitToDesktop ))
 		{
-			// Clear the mapping if the user pushed an exit button
+			// Clear the mapping if the user pushed the back button
 			res.clear();
 		}
 
@@ -2086,14 +2085,14 @@ bool FeScriptConfigMenu::on_option_select(
 	return true;
 }
 
-bool FeScriptConfigMenu::save_helper( FeConfigContext &ctx )
+bool FeScriptConfigMenu::save_helper( FeConfigContext &ctx, int first_idx )
 {
 	m_configurable->clear_params();
 
 	if ( m_per_display )
 		m_per_display->clear_params();
 
-	for ( unsigned int i=0; i < ctx.opt_list.size(); i++ )
+	for ( unsigned int i=first_idx; i < ctx.opt_list.size(); i++ )
 	{
 		std::string &os = ctx.opt_list[i].opaque_str;
 
@@ -2168,7 +2167,7 @@ bool FePluginEditMenu::save( FeConfigContext &ctx )
 	m_plugin->set_enabled(
 		ctx.opt_list[1].get_vindex() == 0 ? true : false );
 
-	return FeScriptConfigMenu::save_helper( ctx );
+	return FeScriptConfigMenu::save_helper( ctx, 2 );
 }
 
 void FePluginEditMenu::set_plugin( FePlugInfo *plugin, int index )
@@ -2225,7 +2224,8 @@ bool FePluginSelMenu::on_option_select(
 }
 
 FeLayoutEditMenu::FeLayoutEditMenu()
-	: m_layout( NULL )
+	: m_layout( NULL ),
+	m_display( NULL )
 {
 }
 
@@ -2240,11 +2240,11 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 
 		ctx.fe_settings.get_layout_dir( name, m_file_path );
 
-		std::vector< std::string > temp_list;
+		std::vector< std::string > file_list;
 		FeSettings::get_layout_file_basenames_from_path(
-					m_file_path, temp_list );
+					m_file_path, file_list );
 
-		if ( temp_list.empty() )
+		if ( file_list.empty() )
 		{
 			// set an empty m_file_name if this is a layout that gets loaded
 			// by the loader script...
@@ -2252,8 +2252,23 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 		}
 		else
 		{
+			// User config params are always loaded from layout.nut
+			//
 			m_file_name = FE_LAYOUT_FILE_BASE;
 			m_file_name += FE_LAYOUT_FILE_EXTENSION;
+
+			if (( m_display ) && ( file_list.size() > 1 ))
+			{
+				// Since there are multiple layout files available, add a config
+				// option allowing the user to select which one to use.
+				std::string lf = m_display->get_current_layout_file();
+				if ( lf.empty() )
+					lf = FE_LAYOUT_FILE_BASE;
+
+				ctx.add_optl( Opt::LIST, "Layout File", lf, "_help_layout_file" );
+				ctx.back_opt().append_vlist( file_list );
+				ctx.back_opt().opaque = 500;
+			}
 		}
 
 		m_configurable = m_layout;     // parent member
@@ -2282,13 +2297,23 @@ bool FeLayoutEditMenu::save( FeConfigContext &ctx )
 	if ( m_layout == NULL )
 		return false;
 
-	return FeScriptConfigMenu::save_helper( ctx );
+	int first_idx = 1;
+	if ( m_display && ( ctx.opt_list.size() > 2 ) && ( ctx.opt_list[1].opaque == 500 ))
+	{
+		first_idx = 2;
+		m_display->set_current_layout_file( ctx.opt_list[1].get_value() );
+	}
+
+	return FeScriptConfigMenu::save_helper( ctx, first_idx );
 }
 
-void FeLayoutEditMenu::set_layout( FeLayoutInfo *layout, FeScriptConfigurable *per_display_params )
+void FeLayoutEditMenu::set_layout( FeLayoutInfo *layout,
+	FeScriptConfigurable *per_display_params,
+	FeDisplayInfo *display )
 {
 	m_layout = layout;
 	m_per_display = per_display_params;
+	m_display = display;
 }
 
 void FeIntroEditMenu::get_options( FeConfigContext &ctx )
@@ -2348,7 +2373,7 @@ bool FeSaverEditMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::ScreenSaverTimeout,
 			ctx.opt_list[0].get_value() );
 
-	return FeScriptConfigMenu::save_helper( ctx );
+	return FeScriptConfigMenu::save_helper( ctx, 1 );
 }
 
 void FeConfigMenu::get_options( FeConfigContext &ctx )
