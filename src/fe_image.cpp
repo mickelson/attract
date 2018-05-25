@@ -309,6 +309,10 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return true;
 
 		clear();
+
+		if ( !file_exists( path ) )
+			return false;
+
 		m_movie = new FeMedia( FeMedia::AudioVideo );
 		res = m_movie->openFromArchive( path, filename, &m_texture );
 	}
@@ -319,6 +323,10 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return true;
 
 		clear();
+
+		if ( !file_exists( loaded_name ) )
+			return false;
+
 		m_movie = new FeMedia( FeMedia::AudioVideo );
 		res = m_movie->openFromFile( loaded_name, &m_texture );
 	}
@@ -369,6 +377,11 @@ bool FeTextureContainer::try_to_load(
 			if ( loaded_name.compare( m_file_name ) == 0 )
 				return true;
 
+			clear();
+
+			if ( !file_exists( path ) )
+				return false;
+
 			m_swf = new FeSwf();
 
 			if (!m_swf->open_from_archive( path, filename ))
@@ -386,6 +399,11 @@ bool FeTextureContainer::try_to_load(
 			loaded_name = path + filename;
 			if ( loaded_name.compare( m_file_name ) == 0 )
 				return true;
+
+			clear();
+
+			if ( !file_exists( loaded_name ) )
+				return false;
 
 			m_swf = new FeSwf();
 			if (!m_swf->open_from_file( loaded_name ))
@@ -416,6 +434,10 @@ bool FeTextureContainer::try_to_load(
 			return true;
 
 		clear();
+
+		if ( !file_exists( path ) )
+			return false;
+
 		FeZipStream zs( path );
 		if ( !zs.open( filename ) )
 		{
@@ -446,6 +468,9 @@ bool FeTextureContainer::try_to_load(
 			return true;
 
 		clear();
+
+		if ( !file_exists( loaded_name ) )
+			return false;
 
 		FeFileInputStream filestream( loaded_name );
 		if ( m_texture.loadFromStream( filestream ) )
@@ -1097,6 +1122,7 @@ FeImage::FeImage( FeImage *o )
 	m_pos( o->m_pos ),
 	m_size( o->m_size ),
 	m_origin( o->m_origin ),
+	m_blend_mode( o->m_blend_mode ),
 	m_preserve_aspect_ratio( o->m_preserve_aspect_ratio )
 {
 	m_tex->register_image( this );
