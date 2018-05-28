@@ -106,6 +106,7 @@ public:
 	int get_bga();
 	int get_charsize();
 	int get_rows();
+	int get_list_size();
 	int get_style();
 	int get_align();
 	void set_bgr(int r);

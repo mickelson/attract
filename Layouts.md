@@ -1709,6 +1709,10 @@ Properties:
    * `selbg_alpha` - Get/set alpha level for selection background. Range is
      [0 ... 255].  Default value is 255.
    * `rows` - Get/set the number of listbox rows.  Default value is 11.
+   * `list_size` - Get the size of the list shown by listbox.
+     When listbox is assigned as an overlay custom control this property
+     will return the number of options available in the overlay dialog.
+     This property is updated during `Transition.ShowOverlay`
    * `charsize` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on the value of `height`/`rows`.
      Default value is -1.
