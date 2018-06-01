@@ -24,6 +24,11 @@ distributions.  Other distributions should have similar packages available.
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
       - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
+      
+For Ubuntu, run :
+
+           apt install build-essential pkg-config libsfml-dev libopenal-dev zlib1g-dev libfreetype6-dev libavformat-dev libavcodec-dev libswscale-dev libavutil-dev libswresample-dev freeglut3-dev libjpeg-dev libarchive-dev
+
 
 2. Extract the Attract-Mode source to your system.
 
