@@ -270,27 +270,25 @@ void FeTextPrimative::set_positions() const
 		textSize.width *= m_texts[i].getScale().x;
 		textSize.height *= m_texts[i].getScale().y;
 
-		textPos.y = rectPos.y
-				+ ceilf( spacing * i
-				+ ( rectSize.height - ( spacing * m_texts.size() )) / 2);
+		// set position x
+		if (m_align & Left)
+			if( m_no_margin ) textPos.x = rectPos.x; 
+			else textPos.x = rectPos.x + floorf( spacing / 2.0 );
+		else if (m_align & Right)
+			if( m_no_margin ) textPos.x = rectPos.x + rectSize.width - textSize.width; 
+			else textPos.x = rectPos.x + rectSize.width - textSize.width - floorf( spacing / 2.0 );
+		else
+			textPos.x = rectPos.x + floorf( (rectSize.width - textSize.width) / 2.0 );
 
-		// set x position
-		switch ( m_align )
-		{
-		case Left:
-			if( m_no_margin ) textPos.x = rectPos.x;
-			else textPos.x = rectPos.x + floorf( spacing/2 );
-			break;
-
-		case Centre:
-			textPos.x = rectPos.x + floorf( (rectSize.width - textSize.width) / 2 );
-			break;
-
-		case Right:
-			if( m_no_margin ) textPos.x = rectPos.x + rectSize.width - textSize.width;
-			else textPos.x = rectPos.x + rectSize.width - textSize.width - floorf( spacing/2 );
-			break;
-		}
+		// set position y
+		if( m_align & Top)
+			if( m_no_margin ) textPos.y = rectPos.y + floorf( spacing ) * i - ceilf( spacing / 5.0 );
+			else textPos.y = rectPos.y + ceilf( spacing * i ) + ceilf( spacing / 4.0 );
+		else if(m_align & Bottom)
+			if( m_no_margin ) textPos.y = rectPos.y + ceilf( spacing ) * i + rectSize.height - ( spacing * m_texts.size() ) + floorf( spacing / 5.0 );
+			else textPos.y = rectPos.y + ceilf( spacing ) * i + rectSize.height - ( spacing * m_texts.size() ) - floorf( spacing / 5.0 );
+		else
+			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.height - ( spacing * m_texts.size() ) ) / 2.0 );
 
 		sf::Transform trans;
 		trans.rotate( m_bgRect.getRotation(), rectPos.x, rectPos.y );

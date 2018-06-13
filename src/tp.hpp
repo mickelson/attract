@@ -30,9 +30,11 @@ class FeTextPrimative : public sf::Drawable
 {
 public:
 	enum Alignment {
-		Left=0,
-		Centre,
-		Right
+		Left=1,
+		Centre=2,
+		Right=4,
+		Top=8,
+		Bottom=16
 	};
 
 	FeTextPrimative();

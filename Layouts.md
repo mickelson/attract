@@ -1632,6 +1632,12 @@ Properties:
       - `Align.Centre` (default)
       - `Align.Left`
       - `Align.Right`
+      - `Align.TopCentre`
+      - `Align.TopLeft`
+      - `Align.TopRight`
+      - `Align.BottomCentre`
+      - `Align.BottomLeft`
+      - `Align.BottomRight`
    * `word_wrap` - Get/set whether word wrapping is enabled in this text
      (boolean).  Default is `false`.
    * `msg_width` - Get the width of the text message, in layout coordinates.
