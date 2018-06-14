@@ -252,11 +252,15 @@ sf::Vector2f FeTextPrimative::setString(
 
 void FeTextPrimative::set_positions() const
 {
-	int spacing = getCharacterSize() * m_texts[0].getScale().y;
+	int charSize = getCharacterSize() * m_texts[0].getScale().y;
 
 	const sf::Font *font = getFont();
+	sf::Glyph glyph = font->getGlyph( L'X', charSize, false );
+	int glyphSize = glyph.bounds.height;
+	int spacing = charSize;
 	if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
 		spacing = font->getLineSpacing( spacing );
+	int margin = floorf( spacing / 2.0 );
 
 	sf::Vector2f rectPos = m_bgRect.getPosition();
 	sf::FloatRect rectSize = m_bgRect.getLocalBounds();
@@ -271,24 +275,30 @@ void FeTextPrimative::set_positions() const
 		textSize.height *= m_texts[i].getScale().y;
 
 		// set position x
-		if (m_align & Left)
-			if( m_no_margin ) textPos.x = rectPos.x; 
-			else textPos.x = rectPos.x + floorf( spacing / 2.0 );
-		else if (m_align & Right)
-			if( m_no_margin ) textPos.x = rectPos.x + rectSize.width - textSize.width; 
-			else textPos.x = rectPos.x + rectSize.width - textSize.width - floorf( spacing / 2.0 );
+		if ( m_align & Left )
+			textPos.x = rectPos.x;
+		else if ( m_align & Right )
+			textPos.x = rectPos.x + floorf( rectSize.width - textSize.width );
 		else
-			textPos.x = rectPos.x + floorf( (rectSize.width - textSize.width) / 2.0 );
+			textPos.x = rectPos.x + floorf( ( rectSize.width - textSize.width ) / 2.0 );
 
 		// set position y
-		if( m_align & Top)
-			if( m_no_margin ) textPos.y = rectPos.y + floorf( spacing ) * i - ceilf( spacing / 5.0 );
-			else textPos.y = rectPos.y + ceilf( spacing * i ) + ceilf( spacing / 4.0 );
-		else if(m_align & Bottom)
-			if( m_no_margin ) textPos.y = rectPos.y + ceilf( spacing ) * i + rectSize.height - ( spacing * m_texts.size() ) + floorf( spacing / 5.0 );
-			else textPos.y = rectPos.y + ceilf( spacing ) * i + rectSize.height - ( spacing * m_texts.size() ) - floorf( spacing / 5.0 );
+		if( m_align & Top )
+			textPos.y = rectPos.y + floorf( spacing * (int)i ) - charSize + glyphSize;
+		else if( m_align & Bottom )
+			textPos.y = rectPos.y + ( spacing * (int)i ) + floorf(rectSize.height) - spacing * ( m_texts.size() - 1 ) - charSize;
+		else if( m_align & Middle )
+			textPos.y = rectPos.y + ceilf( (( spacing * (int)i - charSize ) * 2.0 - spacing * ( m_texts.size() - 1 ) + glyphSize + rectSize.height ) / 2.0 );
 		else
-			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.height - ( spacing * m_texts.size() ) ) / 2.0 );
+			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height - ( spacing * m_texts.size() )) / 2.0 );
+
+		if( !m_no_margin )
+		{
+			if( m_align & Top ) textPos.y += margin;
+			if( m_align & Bottom ) textPos.y -= margin;
+			if( m_align & Left ) textPos.x += margin;
+			if( m_align & Right ) textPos.x -= margin;
+		}
 
 		sf::Transform trans;
 		trans.rotate( m_bgRect.getRotation(), rectPos.x, rectPos.y );

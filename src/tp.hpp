@@ -34,7 +34,8 @@ public:
 		Centre=2,
 		Right=4,
 		Top=8,
-		Bottom=16
+		Bottom=16,
+		Middle=32
 	};
 
 	FeTextPrimative();
