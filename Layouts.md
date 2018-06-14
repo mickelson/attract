@@ -1640,7 +1640,7 @@ Properties:
       - `Align.BottomRight`
       - `Align.MiddleCentre`
       - `Align.MiddleLeft`
-      - `Align.MiddleRight`
+      - `Align.MiddleRight`  
      The last 3 alignment modes have the same function as the first 3,
      but they are more accurate. The first 3 modes are preserved for compatibility.
    * `word_wrap` - Get/set whether word wrapping is enabled in this text
