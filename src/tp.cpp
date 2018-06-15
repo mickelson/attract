@@ -235,11 +235,15 @@ sf::Vector2f FeTextPrimative::setString(
 		//
 		// Now create the wrapped lines
 		//
-		m_texts[0].setString( t.substr( fc_list[first_fc], len_list[first_fc] ) );
+		// We trim the trailing spaces for new text alignment modes and
+		// preserve them for the old modes for compatibility
+		bool trim = ( ( m_align & ( Top | Bottom | Middle ) ) != 0 );
+
+		m_texts[0].setString( t.substr( fc_list[first_fc], len_list[first_fc] - trim ) );
 		for ( i = first_fc + 1; i < (int)fc_list.size(); i++ )
 		{
 			m_texts.push_back( m_texts[0] );
-			m_texts.back().setString( t.substr( fc_list[i], len_list[i] ) );
+			m_texts.back().setString( t.substr( fc_list[i], len_list[i] - trim ) );
 		}
 	}
 	else
@@ -253,11 +257,9 @@ sf::Vector2f FeTextPrimative::setString(
 void FeTextPrimative::set_positions() const
 {
 	int charSize = getCharacterSize() * m_texts[0].getScale().y;
-
-	const sf::Font *font = getFont();
-	sf::Glyph glyph = font->getGlyph( L'X', charSize, false );
-	int glyphSize = glyph.bounds.height;
 	int spacing = charSize;
+	
+	const sf::Font *font = getFont();
 	if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
 		spacing = font->getLineSpacing( spacing );
 	int margin = floorf( spacing / 2.0 );
@@ -279,16 +281,19 @@ void FeTextPrimative::set_positions() const
 			textPos.x = rectPos.x;
 		else if ( m_align & Right )
 			textPos.x = rectPos.x + floorf( rectSize.width - textSize.width );
-		else
+		else if ( m_align & Centre )
 			textPos.x = rectPos.x + floorf( ( rectSize.width - textSize.width ) / 2.0 );
+
+		if( m_align & ( Top | Bottom | Middle ) )
+			textPos.x -= textSize.left;
 
 		// set position y
 		if( m_align & Top )
-			textPos.y = rectPos.y + floorf( spacing * (int)i ) - charSize + glyphSize;
+			textPos.y = rectPos.y + spacing * (int)i - textSize.top;
 		else if( m_align & Bottom )
-			textPos.y = rectPos.y + ( spacing * (int)i ) + floorf(rectSize.height) - spacing * ( m_texts.size() - 1 ) - charSize;
+			textPos.y = rectPos.y + floorf( rectSize.height ) - charSize - spacing * ( m_texts.size() - (int)i - 1 );
 		else if( m_align & Middle )
-			textPos.y = rectPos.y + ceilf( (( spacing * (int)i - charSize ) * 2.0 - spacing * ( m_texts.size() - 1 ) + glyphSize + rectSize.height ) / 2.0 );
+			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height - textSize.top - charSize - spacing * ( m_texts.size() - 1 )) / 2.0 );
 		else
 			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height - ( spacing * m_texts.size() )) / 2.0 );
 
