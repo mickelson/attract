@@ -98,6 +98,9 @@ public:
 	void on_new_selection( FeSettings * );
 	void set_scale_factor( float, float );
 
+	void set_no_margin( bool );
+	bool get_no_margin();
+
 	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
 
 	int get_bgr();

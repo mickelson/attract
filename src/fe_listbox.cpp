@@ -469,6 +469,17 @@ int FeListBox::get_align()
 	return (int)m_base_text.getAlignment();
 }
 
+void FeListBox::set_no_margin( bool m )
+{
+	m_base_text.setNoMargin( m );
+	FePresent::script_do_update( this );
+}
+
+bool FeListBox::get_no_margin()
+{
+	return m_base_text.getNoMargin();
+}
+
 void FeListBox::setBgColor( const sf::Color &c )
 {
 	m_base_text.setBgColor(c);
