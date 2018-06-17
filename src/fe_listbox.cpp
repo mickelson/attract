@@ -439,6 +439,11 @@ int FeListBox::get_charsize()
 	return m_userCharSize;
 }
 
+int FeListBox::get_glyph_size()
+{
+	return m_base_text.getGlyphSize();
+}
+
 float FeListBox::get_spacing()
 {
 	return m_base_text.getCharacterSpacing();

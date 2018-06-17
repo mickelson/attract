@@ -238,6 +238,11 @@ int FeText::get_charsize()
 	return m_draw_text.getCharacterSize();
 }
 
+int FeText::get_glyph_size()
+{
+	return m_draw_text.getGlyphSize();
+}
+
 float FeText::get_spacing()
 {
 	return m_draw_text.getCharacterSpacing();

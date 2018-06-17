@@ -105,6 +105,7 @@ public:
 	int get_bgb();
 	int get_bga();
 	int get_charsize();
+	int get_glyph_size();
 	float get_spacing();
 	int get_rows();
 	int get_list_size();

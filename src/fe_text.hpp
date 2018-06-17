@@ -82,6 +82,7 @@ public:
 	int get_bgb();
 	int get_bga();
 	int get_charsize();
+	int get_glyph_size();
 	float get_spacing();
 	int get_style();
 	int get_align();

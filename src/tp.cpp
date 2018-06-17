@@ -258,7 +258,8 @@ void FeTextPrimative::set_positions() const
 {
 	int charSize = getCharacterSize() * m_texts[0].getScale().y;
 	int spacing = charSize;
-	
+	int glyphSize = getGlyphSize();
+
 	const sf::Font *font = getFont();
 	if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
 		spacing = font->getLineSpacing( spacing );
@@ -289,11 +290,11 @@ void FeTextPrimative::set_positions() const
 
 		// set position y
 		if( m_align & Top )
-			textPos.y = rectPos.y + spacing * (int)i - textSize.top;
+			textPos.y = rectPos.y + spacing * (int)i - charSize + glyphSize;
 		else if( m_align & Bottom )
 			textPos.y = rectPos.y + floorf( rectSize.height ) - charSize - spacing * ( m_texts.size() - (int)i - 1 );
 		else if( m_align & Middle )
-			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height - textSize.top - charSize - spacing * ( m_texts.size() - 1 )) / 2.0 );
+			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height + glyphSize - charSize * 2 - spacing * ( m_texts.size() - 1 )) / 2.0 );
 		else
 			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height - ( spacing * m_texts.size() )) / 2.0 );
 
@@ -354,6 +355,13 @@ void FeTextPrimative::setCharacterSize( unsigned int size )
 unsigned int FeTextPrimative::getCharacterSize() const
 {
 	return m_texts[0].getCharacterSize();
+}
+
+unsigned int FeTextPrimative::getGlyphSize() const
+{
+	const sf::Font *font = getFont();
+	sf::Glyph glyph = font->getGlyph( L'X', m_texts[0].getCharacterSize(), false );
+	return glyph.bounds.height;
 }
 
 void FeTextPrimative::setCharacterSpacing( float factor )

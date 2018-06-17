@@ -85,6 +85,7 @@ public:
 	const sf::Color &getColor() const;
 	const sf::Color &getBgColor() const;
 	unsigned int getCharacterSize() const;
+	unsigned int getGlyphSize() const;
 	float getCharacterSpacing() const;
 	Alignment getAlignment() const;
 	const sf::Vector2f &getPosition() const;
