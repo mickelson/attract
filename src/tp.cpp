@@ -102,9 +102,19 @@ void FeTextPrimative::fit_string(
 
 	const sf::Font *font = getFont();
 	unsigned int charsize = getCharacterSize();
+	unsigned int spacing = charsize;
 	float width = m_bgRect.getLocalBounds().width / m_texts[0].getScale().x;
 
 	int running_total( charsize * 2 ); // measure of line's pixel width
+
+	if ( m_align & ( Top | Bottom | Middle ))
+	{
+		running_total = -font->getGlyph( s[position], charsize, false ).bounds.left;
+		if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
+			spacing = font->getLineSpacing( spacing );
+		if ( !m_no_margin )
+			width -= floorf( spacing );
+	}
 
 	// start from "position", "i" measures to right, "j" to the left
 	int i( position );
@@ -131,7 +141,7 @@ void FeTextPrimative::fit_string(
 				// If we encounter a newline character, we break the
 				// string there
 				//
-				len = i - j + 1;
+				len = i - j;
 				first_char = j;
 				return;
 			}
@@ -153,10 +163,22 @@ void FeTextPrimative::fit_string(
 	// If we are word wrapping and found a space, then break at the space.
 	// Otherwise, fit as much on this line as we can
 	//
-	if ( ( m_first_line >= 0 ) && found_space && ( i != (int)s.size() ))
-		len = last_space - j + 1;
+	if (( m_first_line >= 0 ) && found_space )
+		len = last_space - j;
+	else if ( m_align & ( Top | Bottom | Middle ))
+		len = i - j - 1;
 	else
 		len = i - j + 1;
+
+	// Trimming the trailing spaces in non word wrapped lines
+	//
+	if ( m_first_line < 0 )
+		if ( m_align & ( Top | Bottom | Middle ))
+		{
+			if ( s[i - 2] == L' ' ) len--;
+		}
+		else
+			if ( s[i - 0] == L' ' ) len--;
 }
 
 void FeTextPrimative::setString( const std::string &t )
@@ -166,7 +188,15 @@ void FeTextPrimative::setString( const std::string &t )
 	//	Need to convert to UTF-32 before giving string to SFML
 	//
 	std::basic_string<sf::Uint32> tmp;
-	sf::Utf8::toUtf32( t.begin(), t.end(), std::back_inserter( tmp ) );
+	sf::Utf8::toUtf32( t.begin(), t.end(), std::back_inserter( tmp ));
+
+	// We need to add one trailing space to the string
+	// for the word wrap function to work properly
+	// with the new align modes
+	//
+	if (( m_first_line >= 0 ) || m_align & ( Top | Bottom | Middle ))
+	 	std::fill_n( back_inserter( tmp ), 1, L' ' );
+
 	setString( tmp );
 }
 
@@ -206,24 +236,29 @@ sf::Vector2f FeTextPrimative::setString(
 			spacing = font->getLineSpacing( spacing );
 
 		sf::FloatRect rectSize = m_bgRect.getLocalBounds();
-		int line_count = std::max( 1, (int)(rectSize.height / spacing) );
+		int line_count = std::max( 1, (int)( rectSize.height / spacing ));
 
 		//
 		// Calculate the wrapped lines
 		//
-		position += len;
+		position += len + 1;
 		int i=0;
 		int actual_first_line=0;
-		while (( position < (int)t.size() - 1 ) && ( i < line_count + m_first_line ))
+		while (( position < (int)t.size() - 1 ) && ( i < line_count + m_first_line - 1 ))
 		{
 			if ( i >= line_count )
 				actual_first_line++;
 
 			fit_string( t, position, first_char, len );
 
-			fc_list.push_back( first_char );
-			len_list.push_back( len );
-			position += len;
+			// Skip lines that contain only the space character
+			//
+			if ( t[first_char] != L' ' && len > 1 )
+			{
+				fc_list.push_back( first_char );
+				len_list.push_back( len );
+			}
+			position += len + 1;
 			i++;
 		}
 
@@ -235,20 +270,17 @@ sf::Vector2f FeTextPrimative::setString(
 		//
 		// Now create the wrapped lines
 		//
-		// We trim the trailing spaces for new text alignment modes and
-		// preserve them for the old modes for compatibility
-		bool trim = ( ( m_align & ( Top | Bottom | Middle ) ) != 0 );
-
-		m_texts[0].setString( t.substr( fc_list[first_fc], len_list[first_fc] - trim ) );
+		m_texts[0].setString( t.substr( fc_list[0], std::max( 1, len_list[0] )));
 		for ( i = first_fc + 1; i < (int)fc_list.size(); i++ )
 		{
 			m_texts.push_back( m_texts[0] );
-			m_texts.back().setString( t.substr( fc_list[i], len_list[i] - trim ) );
+			m_texts.back().setString( t.substr( fc_list[i], std::max( 0, len_list[i] )));
 		}
 	}
-	else
+	else {
 		// create the no-wrap or single non-clipped line
-		m_texts[0].setString( t.substr( fc_list.front(), len_list.front() ) );
+		m_texts[0].setString( t.substr( fc_list.front(), std::max( 1, len_list.front() )));
+	}
 
 	set_positions(); // we need to set the positions now for findCharacterPos() to work below
 	return m_texts[0].findCharacterPos( disp_cpos );
@@ -258,7 +290,7 @@ void FeTextPrimative::set_positions() const
 {
 	int charSize = getCharacterSize() * m_texts[0].getScale().y;
 	int spacing = charSize;
-	int glyphSize = getGlyphSize();
+	int glyphSize = getGlyphSize() * m_texts[0].getScale().y;
 
 	const sf::Font *font = getFont();
 	if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
@@ -276,12 +308,13 @@ void FeTextPrimative::set_positions() const
 		sf::FloatRect textSize = m_texts[i].getLocalBounds();
 		textSize.width *= m_texts[i].getScale().x;
 		textSize.height *= m_texts[i].getScale().y;
+		textSize.left *= m_texts[i].getScale().x;
 
 		// set position x
 		if ( m_align & Left )
 			textPos.x = rectPos.x;
 		else if ( m_align & Right )
-			textPos.x = rectPos.x + floorf( rectSize.width - textSize.width );
+			textPos.x = rectPos.x + floorf( rectSize.width ) - textSize.width;
 		else if ( m_align & Centre )
 			textPos.x = rectPos.x + floorf( ( rectSize.width - textSize.width ) / 2.0 );
 
