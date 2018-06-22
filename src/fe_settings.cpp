@@ -249,6 +249,8 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_inputmap(),
 	m_saver_params( FeLayoutInfo::ScreenSaver ),
 	m_intro_params( FeLayoutInfo::Intro ),
+	m_current_layout_params( FeLayoutInfo::Layout ),
+	m_display_menu_per_display_params( FeLayoutInfo::Menu ),
 	m_current_display( -1 ),
 	m_current_config_object( NULL ),
 	m_ssaver_time( 600 ),
@@ -428,6 +430,7 @@ const char *FeSettings::otherSettingStrings[] =
 	FeLayoutInfo::indexStrings[0], // "saver_config"
 	FeLayoutInfo::indexStrings[1], // "layout_config"
 	FeLayoutInfo::indexStrings[2], // "intro_config"
+	FeLayoutInfo::indexStrings[3], // "menu_config"
 	NULL
 };
 
@@ -477,6 +480,8 @@ int FeSettings::process_setting( const std::string &setting,
 	}
 	else if ( setting.compare( otherSettingStrings[7] ) == 0 ) // intro_config
 		m_current_config_object = &m_intro_params;
+	else if ( setting.compare( otherSettingStrings[8] ) == 0 ) // menu_config
+		m_current_config_object = &m_display_menu_per_display_params;
 	else if ( setting.compare( configSettingStrings[DefaultFont] ) == 0 ) // default_font
 	{
 		// Special case for the default font, we don't want to set it here
@@ -583,6 +588,11 @@ void FeSettings::init_display()
 		set_search_rule( "" );
 		m_current_search_index = temp_idx;
 
+		// Setup m_current_layout_params with all the parameters for our current layout, including
+		// the 'per_display' layout parameters that are stored separately but that get merged in here
+		//
+		m_current_layout_params = get_layout_config( m_menu_layout );
+		m_current_layout_params.merge_params( m_display_menu_per_display_params );
 		return;
 	}
 
@@ -626,6 +636,15 @@ void FeSettings::init_display()
 				stat_path,
 				m_displays[m_current_display] ) == false )
 		FeLog() << "Error opening romlist: " << romlist_name << std::endl;
+
+	// Setup m_current_layout_params with all the parameters for our current layout, including
+	// the 'per_display' layout parameters that are stored separately but that get merged in here
+	//
+	m_current_layout_params = get_layout_config(
+		m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ) );
+
+	m_current_layout_params.merge_params(
+		m_displays[ m_current_display ].get_layout_per_display_params() );
 
 	//
 	// Construct our display index views here, for lack of a better spot
@@ -1232,23 +1251,13 @@ FeLayoutInfo &FeSettings::get_current_config( FePathType t )
 	switch ( tt )
 	{
 	case Intro:
-			return m_intro_params;
+		return m_intro_params;
 	case ScreenSaver:
-			return m_saver_params;
+		return m_saver_params;
 	case Loader:
 	case Layout:
 	default:
-		if ( m_current_display < 0 )
-		{
-			// showing the "Displays Menu"
-			return get_layout_config( m_menu_layout );
-		}
-		else
-		{
-			return get_layout_config(
-				m_displays[ m_current_display ].get_info(
-					FeDisplayInfo::Layout ) );
-		}
+		return m_current_layout_params;
 	}
 }
 
@@ -1278,7 +1287,9 @@ int FeSettings::display_menu_get_current_selection_as_absolute_display_index()
 bool FeSettings::set_display( int index, bool stack_previous )
 {
 	std::string old_path, old_file;
+
 	get_path( Layout, old_path, old_file );
+	FeLayoutInfo old_config = get_current_config( Layout );
 
 	if ( stack_previous )
 	{
@@ -1313,9 +1324,14 @@ bool FeSettings::set_display( int index, bool stack_previous )
 	std::string new_path, new_file;
 	get_path( Layout, new_path, new_file );
 
+	//
+	// returning true triggers a full reload of the layout. We do this only if the
+	// layout file has changed or if the layout parameters have changed (which can happen
+	// if the layout contains 'per_display' parameters
+	//
 	return (( old_path.compare( new_path ) != 0 )
-		|| ( old_file.compare( new_file ) != 0 ));
-
+		|| ( old_file.compare( new_file ) != 0 )
+		|| ( old_config != get_current_config( Layout ) ));
 }
 
 // return true if layout needs to be reloaded as a result
@@ -3020,6 +3036,7 @@ void FeSettings::save() const
 		}
 
 		m_intro_params.save( outfile );
+		m_display_menu_per_display_params.save( outfile );
 
 		std::vector<std::string> plugin_files;
 		get_available_plugins( plugin_files );

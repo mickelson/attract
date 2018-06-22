@@ -22,23 +22,23 @@
 
 extern "C"
 {
-#include <libavutil/hwcontext_dxva2.h>
+#include <libavutil/hwcontext_d3d11va.h>
 }
 
-enum AVPixelFormat get_format_dxva2( AVCodecContext *codec_ctx, const enum AVPixelFormat *pix_fmts )
+enum AVPixelFormat get_format_d3d11( AVCodecContext *codec_ctx, const enum AVPixelFormat *pix_fmts )
 {
 	const enum AVPixelFormat *p;
 
 	for ( p = pix_fmts; *p != -1; p++ )
 	{
-		if ( *p == AV_PIX_FMT_DXVA2_VLD )
+		if ( *p == AV_PIX_FMT_D3D11 )
 		{
 			AVBufferRef *device_ctx=NULL;
-			int ret = av_hwdevice_ctx_create( &device_ctx, AV_HWDEVICE_TYPE_DXVA2, "", NULL, 0 );
+			int ret = av_hwdevice_ctx_create( &device_ctx, AV_HWDEVICE_TYPE_D3D11VA, "", NULL, 0 );
 
 			if ( ret < 0 )
 			{
-				FeLog() << "Error creating dxva2 hardware device context" << std::endl;
+				FeLog() << "Error creating d3d11va hardware device context" << std::endl;
 				continue;
 			}
 
@@ -51,14 +51,15 @@ enum AVPixelFormat get_format_dxva2( AVCodecContext *codec_ctx, const enum AVPix
 			}
 
 			AVHWFramesContext *fc = (AVHWFramesContext *)frames_ctx->data;
-			AVDXVA2FramesContext *f_hwc = (AVDXVA2FramesContext *)fc->hwctx;
+			AVD3D11VAFramesContext *f_hwc = (AVD3D11VAFramesContext *)fc->hwctx;
 
 			fc->pool = NULL;
-			fc->format = AV_PIX_FMT_DXVA2_VLD;
+			fc->format = AV_PIX_FMT_D3D11;
 			fc->sw_format = AV_PIX_FMT_NV12;
 			fc->initial_pool_size = 2;
 
-			f_hwc->surface_type = DXVA2_VideoDecoderRenderTarget;
+			f_hwc->texture = NULL;
+			f_hwc->BindFlags = D3D11_BIND_DECODER;
 
 			float aspect_ratio = 1.0;
 			if ( codec_ctx->sample_aspect_ratio.num != 0 )
@@ -71,7 +72,7 @@ enum AVPixelFormat get_format_dxva2( AVCodecContext *codec_ctx, const enum AVPix
 
 			if ( ret < 0 )
 			{
-				FeLog() << "Error initializing dxva2 hardware frame context" << std::endl;
+				FeLog() << "Error initializing d3d11va hardware frame context" << std::endl;
 				av_buffer_unref( &device_ctx );
 				av_buffer_unref( &frames_ctx );
 				continue;

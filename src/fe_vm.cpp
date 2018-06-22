@@ -30,6 +30,7 @@
 #include "fe_config.hpp"
 #include "fe_overlay.hpp"
 #include "fe_window.hpp"
+#include "fe_blend.hpp"
 
 #include "fe_util.hpp"
 #include "fe_util_sq.hpp"
@@ -567,6 +568,15 @@ bool FeVM::on_new_layout()
 			.Const( "IsSupportedArchive", IsSupportedArchive )
 			.Const( "IsSupportedMedia", IsSupportedMedia )
 			)
+		.Enum( _SC("BlendMode"), Enumeration()
+			.Const( _SC("Alpha"), FeBlend::Alpha )
+			.Const( _SC("Add"), FeBlend::Add )
+			.Const( _SC("Screen"), FeBlend::Screen )
+			.Const( _SC("Multiply"), FeBlend::Multiply )
+			.Const( _SC("Overlay"), FeBlend::Overlay )
+			.Const( _SC("Premultiplied"), FeBlend::Premultiplied )
+			.Const( _SC("None"), FeBlend::None )
+			)
 		;
 
 	Enumeration info;
@@ -650,6 +660,8 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
 		.Prop(_SC("trigger"), &FeImage::getTrigger, &FeImage::setTrigger )
 		.Prop(_SC("smooth"), &FeImage::get_smooth, &FeImage::set_smooth )
+		.Prop( _SC("blend_mode"), &FeImage::get_blend_mode, &FeImage::set_blend_mode )
+		.Prop(_SC("mipmap"), &FeImage::get_mipmap, &FeImage::set_mipmap )
 		.Func( _SC("swap"), &FeImage::transition_swap )
 		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
 		.Func( _SC("rawset_filter_offset"), &FeImage::rawset_filter_offset )
@@ -1683,6 +1695,7 @@ void FeVM::script_get_config_options(
 				if ( !otmp.empty() )
 					order = as_int( otmp );
 
+				std::multimap<int,FeMenuOpt>::iterator it;
 				if ( !options.empty() )
 				{
 					std::vector<std::string> options_list;
@@ -1694,36 +1707,50 @@ void FeVM::script_get_config_options(
 						options_list.push_back( temp );
 					} while ( pos < options.size() );
 
-					std::multimap<int,FeMenuOpt>::iterator it = my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
+					it = my_opts.insert( std::pair <int, FeMenuOpt>(
+						order,
+						FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
 
 					(*it).second.append_vlist( options_list );
 				}
 				else if ( config_str_to_bool( is_input ) )
 				{
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
 				}
 				else if ( config_str_to_bool( is_func ) )
 				{
 					FeMenuOpt temp_opt(Opt::SUBMENU, label, "", help, 2, key );
 					temp_opt.opaque_str = value;
 
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								temp_opt ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							temp_opt ) );
 				}
 				else
 				{
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
+				}
+
+				// Nice and hacky, we put an "%" at start of opaque_str if this is a "per display"
+				// option.  fe_config picks this up and deals with it accordingly
+				//
+				std::string per_display_str;
+				fe_get_attribute_string(
+					config_vm.get_vm(),
+					uConfig.GetObject(), key, "per_display", per_display_str );
+
+				if ( config_str_to_bool( per_display_str ) )
+				{
+					std::string temp = (*it).second.opaque_str;
+					(*it).second.opaque_str = "%";
+					(*it).second.opaque_str += temp;
 				}
 			}
 

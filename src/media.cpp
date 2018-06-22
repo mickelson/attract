@@ -1420,6 +1420,9 @@ std::string FeMedia::g_decoder;
 #ifdef SFML_SYSTEM_WINDOWS
 #define FE_HWACCEL_DXVA2
 #include "media_dxva2.cpp"
+
+#define FE_HWACCEL_D3D11VA
+#include "media_d3d11.cpp"
 #endif
 
 #ifdef FE_HWACCEL_VAAPI
@@ -1449,6 +1452,11 @@ void FeMedia::get_decoder_list( std::vector< std::string > &l )
 #ifdef FE_HWACCEL_DXVA2
 	if ( av_hwdevice_find_type_by_name( "dxva2" ) != AV_HWDEVICE_TYPE_NONE )
 		l.push_back( "dxva2" );
+#endif
+
+#ifdef FE_HWACCEL_D3D11VA
+	if ( av_hwdevice_find_type_by_name( "d3d11va" ) != AV_HWDEVICE_TYPE_NONE )
+		l.push_back( "d3d11" );
 #endif
 
 #ifdef FE_HWACCEL_VAAPI
@@ -1510,6 +1518,11 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 #ifdef FE_HWACCEL_DXVA2
 	if ( g_decoder.compare( "dxva2" ) == 0 )
 		codec_ctx->get_format = get_format_dxva2;
+#endif
+
+#ifdef FE_HWACCEL_D3D11VA
+	if ( g_decoder.compare( "d3d11" ) == 0 )
+		codec_ctx->get_format = get_format_d3d11;
 #endif
 
 #ifdef FE_HWACCEL_VAAPI

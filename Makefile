@@ -132,6 +132,7 @@ _DEP =\
 	fe_text.hpp \
 	fe_listbox.hpp \
 	fe_vm.hpp \
+	fe_blend.hpp \
 	zip.hpp
 
 _OBJ =\
@@ -160,6 +161,7 @@ _OBJ =\
 	fe_text.o \
 	fe_listbox.o \
 	fe_vm.o \
+	fe_blend.o \
 	zip.o \
 	main.o
 

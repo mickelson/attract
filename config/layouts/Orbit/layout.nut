@@ -12,7 +12,11 @@
 //
 ///////////////////////////////////////////////////
 class UserConfig {
-	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel", order=1 />
+	// Note the per_display="true" below means that this parameter has to be configured by the user for each
+	// display where this layout gets used.  If this isn't set then the layout parameter is the same across
+	// all displays that use this layout
+	//
+	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel", order=1, per_display="true" />
 	orbit_art="marquee";
 
 	</ label="Bloom Effect", help="Enable Bloom Effect (requires shader support)", options="Yes,No", order=2 />

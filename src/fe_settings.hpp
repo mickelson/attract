@@ -175,6 +175,8 @@ private:
 	FeResourceMap m_resourcemap;
 	FeLayoutInfo m_saver_params;
 	FeLayoutInfo m_intro_params;
+	FeLayoutInfo m_current_layout_params; // copy of current layout params (w/ per display params as well)
+	FeLayoutInfo m_display_menu_per_display_params; // stores only the 'per_display' params for the display menu
 	sf::IntRect m_mousecap_rect;
 
 	int m_current_display; // -1 if we are currently showing the 'displays menu' w/ custom layout
@@ -399,6 +401,7 @@ public:
 	bool get_layout_dir( const std::string &layout_name, std::string &layout_dir ) const;
 	void get_layouts_list( std::vector<std::string> &layouts ) const;
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
+	FeScriptConfigurable &get_display_menu_per_display_params() { return m_display_menu_per_display_params; };
 
 	bool get_best_artwork_file(
 		const FeRomInfo &rom,

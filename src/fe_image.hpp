@@ -26,6 +26,7 @@
 #include <SFML/Graphics.hpp>
 #include "sprite.hpp"
 #include "fe_presentable.hpp"
+#include "fe_blend.hpp"
 
 class FeSettings;
 class FeMedia;
@@ -82,6 +83,9 @@ public:
 
 	virtual void set_smooth( bool )=0;
 	virtual bool get_smooth() const=0;
+
+	virtual void set_mipmap( bool )=0;
+	virtual bool get_mipmap() const=0;
 
 	// function for use with surface objects
 	//
@@ -153,6 +157,9 @@ public:
 
 	void release_audio( bool );
 
+	void set_mipmap( bool );
+	bool get_mipmap() const;
+
 protected:
 	FeTextureContainer *get_derived_texture_container();
 
@@ -188,6 +195,7 @@ private:
 	FeSwf *m_swf;
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
 	FeVideoFlags m_video_flags;
+	bool m_mipmap;
 };
 
 class FeSurfaceTextureContainer : public FeBaseTextureContainer, public FePresentableParent
@@ -207,6 +215,9 @@ public:
 
 	void set_smooth( bool );
 	bool get_smooth() const;
+
+	void set_mipmap( bool );
+	bool get_mipmap() const;
 
 	FePresentableParent *get_presentable_parent();
 
@@ -290,6 +301,7 @@ public:
 	int get_subimg_width() const;
 	int get_subimg_height() const;
 	bool get_preserve_aspect_ratio() const;
+	bool get_mipmap() const;
 
 	void set_origin_x( float x );
 	void set_origin_y( float y );
@@ -302,6 +314,7 @@ public:
 	void set_subimg_width( int w );
 	void set_subimg_height( int h );
 	void set_preserve_aspect_ratio( bool p );
+	void set_mipmap( bool m );
 	void transition_swap( FeImage * );
 
 	void rawset_index_offset( int io );
@@ -310,6 +323,9 @@ public:
 
 	void set_smooth( bool );
 	bool get_smooth() const;
+
+	int get_blend_mode() const;
+	void set_blend_mode( int b );
 
 	//
 	// Callback functions for use with surface objects
@@ -324,6 +340,9 @@ public:
 	FeText *add_text(const char *,int, int, int, int);
 	FeListBox *add_listbox(int, int, int, int);
 	FeImage *add_surface(int, int);
+
+private:
+	FeBlend::Mode m_blend_mode;
 };
 
 #endif
