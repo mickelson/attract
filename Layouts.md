@@ -1620,6 +1620,7 @@ Properties:
      255].  Default value is 0 (transparent).
    * `charsize` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on `height`.  Default value is -1.
+   * `spacing` - Get/set the spacing factor between letters.  Default value is 1.0
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)
@@ -1712,6 +1713,7 @@ Properties:
    * `charsize` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on the value of `height`/`rows`.
      Default value is -1.
+   * `spacing` - Get/set the spacing factor between letters.  Default value is 1.0
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)

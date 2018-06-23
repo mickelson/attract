@@ -340,6 +340,19 @@ unsigned int FeTextPrimative::getCharacterSize() const
 	return m_texts[0].getCharacterSize();
 }
 
+void FeTextPrimative::setCharacterSpacing( float factor )
+{
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+		m_texts[i].setLetterSpacing( factor );
+
+	m_needs_pos_set = true;
+}
+
+float FeTextPrimative::getCharacterSpacing() const
+{
+	return m_texts[0].getLetterSpacing();
+}
+
 const sf::Vector2f &FeTextPrimative::getPosition() const
 {
 	return m_bgRect.getPosition();
