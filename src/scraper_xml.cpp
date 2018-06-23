@@ -444,6 +444,10 @@ void FeListXMLParser::start_element(
 					type = attribute[i+1];
 				else if ( strcmp( attribute[i], "ways" ) == 0 )
 					ways = attribute[i+1];
+
+				if (( strcmp( attribute[i], "buttons" ) == 0 )
+						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
+					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
 			}
 
 			struct my_map_struct { const char *in; const char *out; };
