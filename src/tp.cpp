@@ -24,6 +24,9 @@
 #include <iostream>
 #include <cmath>
 
+// included for SFML_VERSION_INT macros
+#include "fe_util.hpp"
+
 FeTextPrimative::FeTextPrimative( )
 	: m_texts( 1, sf::Text() ),
 	m_align( Centre ),
@@ -338,6 +341,27 @@ void FeTextPrimative::setCharacterSize( unsigned int size )
 unsigned int FeTextPrimative::getCharacterSize() const
 {
 	return m_texts[0].getCharacterSize();
+}
+
+void FeTextPrimative::setCharacterSpacing( float factor )
+{
+// setLetterSpacing() only available as of SFML 2.5
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 5, 0 ))
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+		m_texts[i].setLetterSpacing( factor );
+
+	m_needs_pos_set = true;
+#endif
+}
+
+float FeTextPrimative::getCharacterSpacing() const
+{
+// getLetterSpacing() only available as of SFML 2.5
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 5, 0 ))
+	return m_texts[0].getLetterSpacing();
+#else
+	return 1.f;
+#endif
 }
 
 const sf::Vector2f &FeTextPrimative::getPosition() const

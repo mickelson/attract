@@ -62,6 +62,7 @@ public:
 
 	void setFont( const sf::Font & );
 	void setCharacterSize( unsigned int );
+	void setCharacterSpacing( float );
 	void setAlignment( Alignment );
 	void setPosition( int x, int y ) {return setPosition(sf::Vector2f(x,y));};
 	void setPosition( const sf::Vector2f & );
@@ -81,6 +82,7 @@ public:
 	const sf::Color &getColor() const;
 	const sf::Color &getBgColor() const;
 	unsigned int getCharacterSize() const;
+	float getCharacterSpacing() const;
 	Alignment getAlignment() const;
 	const sf::Vector2f &getPosition() const;
 	const sf::Vector2f &getSize() const;

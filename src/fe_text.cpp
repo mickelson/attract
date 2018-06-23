@@ -238,6 +238,11 @@ int FeText::get_charsize()
 	return m_draw_text.getCharacterSize();
 }
 
+float FeText::get_spacing()
+{
+	return m_draw_text.getCharacterSpacing();
+}
+
 int FeText::get_style()
 {
 	return m_draw_text.getStyle();
@@ -302,6 +307,12 @@ void FeText::set_bg_rgb(int r, int g, int b )
 void FeText::set_charsize(int s)
 {
 	m_user_charsize = s;
+	FePresent::script_do_update( this );
+}
+
+void FeText::set_spacing(float s)
+{
+	m_draw_text.setCharacterSpacing(s);
 	FePresent::script_do_update( this );
 }
 
