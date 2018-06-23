@@ -29,6 +29,7 @@
 #include "fe_text.hpp"
 #include "fe_window.hpp"
 #include "fe_vm.hpp"
+#include "fe_blend.hpp"
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
@@ -120,6 +121,8 @@ int main(int argc, char *argv[])
 	soundsys.update_volumes();
 	soundsys.play_ambient();
 
+	FeBlend::load_default_shaders();
+	
 	FeWindow window( feSettings );
 	window.initial_create();
 
@@ -781,13 +784,19 @@ int main(int argc, char *argv[])
 									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ) ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
+								{
+									feSettings.update_filters(); // run filters sorting after modifying favourite
 									feVM.update_to_new_list( 0, true ); // our current display might have changed, so update
+								}
 							}
 						}
 						else
 						{
 							if ( feSettings.set_current_fav( new_state ) )
+							{
+								feSettings.update_filters(); // run filters sorting after modifying favourite
 								feVM.update_to_new_list( 0, true ); // our current display might have changed, so update
+							}
 						}
 						redraw = true;
 					}
@@ -796,6 +805,11 @@ int main(int argc, char *argv[])
 				case FeInputMap::ToggleTags:
 					if ( feOverlay.tags_dialog() < 0 )
 						exit_selected = true;
+					else
+					{
+						feSettings.update_filters(); // run filters sorting after modifying tags
+						feVM.update_to_new_list( 0, true );
+					}
 
 					redraw = true;
 					break;

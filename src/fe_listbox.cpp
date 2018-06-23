@@ -449,6 +449,11 @@ int FeListBox::get_rows()
 	return m_rows;
 }
 
+int FeListBox::get_list_size()
+{
+	return m_displayList.size();
+}
+
 int FeListBox::get_style()
 {
 	return m_base_text.getStyle();

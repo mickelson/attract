@@ -346,19 +346,6 @@ void FeSettings::load()
 		load_language = m_language;
 	}
 
-	load_state();
-	init_display();
-
-	// Make sure we have some keyboard mappings
-	//
-	m_inputmap.initialize_mappings();
-
-	// If we haven't got our font yet from the config file
-	// or command line then set to the default value now
-	//
-	if ( m_default_font.empty() )
-		m_default_font = FE_DEFAULT_FONT;
-
 	// Load language strings now.
 	//
 	// If we didn't find a config file, then we leave m_language empty but load the english language strings
@@ -376,6 +363,19 @@ void FeSettings::load()
 	std::string rex_str;
 	get_resource( "_sort_regexp", rex_str );
 	FeRomListSorter::init_title_rex( rex_str );
+
+	load_state();
+	init_display();
+
+	// Make sure we have some keyboard mappings
+	//
+	m_inputmap.initialize_mappings();
+
+	// If we haven't got our font yet from the config file
+	// or command line then set to the default value now
+	//
+	if ( m_default_font.empty() )
+		m_default_font = FE_DEFAULT_FONT;
 
 	// If no menu prompt is configured, default to calling it "Displays Menu" (in current language)
 	//
@@ -3933,3 +3933,10 @@ bool FeSettings::get_emulator_setup_script( std::string &path, std::string &file
 
 	return true;
 }
+
+void FeSettings::update_filters()
+{
+	m_rl.create_filters( m_displays[m_current_display] );
+}
+
+
