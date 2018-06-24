@@ -106,6 +106,7 @@ void FeTextPrimative::fit_string(
 	float width = m_bgRect.getLocalBounds().width / m_texts[0].getScale().x;
 
 	int running_total( charsize * 2 ); // measure of line's pixel width
+	int running_width( 0 );
 
 	if ( m_align & ( Top | Bottom | Middle ))
 	{
@@ -123,12 +124,14 @@ void FeTextPrimative::fit_string(
 
 	bool found_space( false );
 
-	while (( running_total < width )
+	while (( running_width <= width )
 			&& (( i < (int)s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
 	{
 		if ( i < (int)s.size() )
 		{
+			running_total += font->getKerning( s[std::max(0, i - 1)], s[i], charsize );
 			sf::Glyph g = font->getGlyph( s[i], charsize, false );
+			running_width = std::max( running_width, (int)( running_total + g.bounds.left + g.bounds.width ));
 			running_total += g.advance;
 
 			if ( s[i] == L' ' )
@@ -149,9 +152,11 @@ void FeTextPrimative::fit_string(
 			i++;
 		}
 
-		if (( m_first_line < 0 ) && ( j > 0 ) && ( running_total < width ))
+		if (( m_first_line < 0 ) && ( j > 0 ) && ( running_width <= width ))
 		{
+			running_total += font->getKerning( s[std::max( 0, i - 1 )], s[i], charsize );
 			sf::Glyph g = font->getGlyph( s[j], charsize, false );
+			running_width = std::max( running_width, (int)( running_total + g.bounds.left + g.bounds.width ));
 			running_total += g.advance;
 			j--;
 		}
