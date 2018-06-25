@@ -57,6 +57,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <errno.h>
+#include <wordexp.h>
 #endif
 
 #ifdef SFML_SYSTEM_MACOS
@@ -786,10 +787,6 @@ bool run_program( const std::string &prog,
 {
 	const int POLL_FOR_EXIT_MS=50;
 
-	std::string comstr( prog );
-	comstr += " ";
-	comstr += args;
-
 	std::string work_dir = cwork_dir;
 	if ( work_dir.empty() )
 	{
@@ -823,6 +820,10 @@ bool run_program( const std::string &prog,
 		si.hStdOutput = child_output_write;
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
+
+	std::string comstr( prog );
+	comstr += " ";
+	comstr += args;
 
 	LPSTR cmdline = new char[ comstr.length() + 1 ];
 	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
@@ -931,23 +932,7 @@ bool run_program( const std::string &prog,
 	CloseHandle( pi.hThread );
 
 #else
-
-	std::vector < std::string > string_list;
-	size_t pos=0;
-
-	while ( pos < args.size() )
-	{
-		std::string val;
-		token_helper( args, pos, val, FE_WHITESPACE );
-		string_list.push_back( val );
-	}
-
-	char *arg_list[string_list.size() + 2];
-	arg_list[0] = (char *)prog.c_str();
-	for ( unsigned int i=0; i < string_list.size(); i++ )
-		arg_list[i+1] = (char *)string_list[i].c_str();
-
-	arg_list[string_list.size() + 1] = NULL;
+	wordexp_t we;
 
 	int mypipe[2] = { 0, 0 }; // mypipe[0] = read end, mypipe[1] = write end
 	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
@@ -975,10 +960,26 @@ bool run_program( const std::string &prog,
 		if ( !work_dir.empty() && ( chdir( work_dir.c_str() ) != 0 ) )
 			FeLog() << "Warning, chdir(" << work_dir << ") failed." << std::endl;
 
-		execvp( prog.c_str(), arg_list );
+		wordexp( prog.c_str(), &we, 0 );
+
+		// according to the manual page, we.we_wordv is always null terminated, so we can feed it
+		// right into execvp
+		if ( wordexp( args.c_str(), &we, WRDE_APPEND ) != 0 )
+			FeLog() << "Parameter word expansion failed. [" << args << "]." << std::endl;
+
+		// Provide some debugging output for what we are doing
+		FeDebug() << "execvp(): file='" << prog.c_str() << "', argv=";
+		for ( int r=0; we.we_wordv[r]; r++ )
+			FeDebug() << "[" << we.we_wordv[r] << "]";
+		FeDebug() << std::endl;
+
+		execvp( prog.c_str(), we.we_wordv );
 
 		// execvp doesn't return unless there is an error.
 		FeLog() << "Error executing: " << prog << " " << args << std::endl;
+
+		wordfree( &we );
+
 		_exit(127);
 
 	default: // parent process
