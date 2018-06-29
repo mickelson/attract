@@ -115,18 +115,18 @@ private:
 	//
 	// Determines how to fit the given string "s" into the text space
 	// parameters:
-	//		[in] s 			- string to be displayed
-	//		[in] position	- If WordWrap is true, this is the first position in
-	//							"s" that can be displayed.  If WordWrap is false, this
-	//							is the location of the cursor in "s".
+	//		[in] s 				- string to be displayed
+	//		[out] position		- If WordWrap is true, this is the first position in
+	//							  "s" that can be displayed.  If WordWrap is false, this
+	//							  is the location of the cursor in "s".
 	//		[out] first_char	- position of the first character to display
-	//		[out] len			- len of substring in s to display
+	//		[out] last_char		- position of the last character to display
 	//
 	void fit_string(
 			const std::basic_string<sf::Uint32> &s,
-			int position,
+			int &position,
 			int &first_char,
-			int &len );
+			int &last_char );
 
 	void set_positions() const;
 
