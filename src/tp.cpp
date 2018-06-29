@@ -21,7 +21,6 @@
  */
 
 #include "tp.hpp"
-#include "fe_base.hpp"
 #include <iostream>
 #include <cmath>
 
@@ -41,10 +40,10 @@ FeTextPrimative::FeTextPrimative( )
 
 FeTextPrimative::FeTextPrimative(
 			const sf::Font *font,
-         const sf::Color &colour,
-         const sf::Color &bgcolour,
-         unsigned int charactersize,
-         Alignment align )
+			const sf::Color &colour,
+			const sf::Color &bgcolour,
+			unsigned int charactersize,
+			Alignment align )
 	: m_texts( 1, sf::Text() ),
 	m_align( align ),
 	m_first_line( -1 ),
@@ -183,7 +182,7 @@ void FeTextPrimative::setString( const std::string &t )
 	// with the new align modes
 	//
 	if (( m_first_line >= 0 ) || m_align & ( Top | Bottom | Middle ))
-	 	std::fill_n( back_inserter( tmp ), 1, L' ' );
+		std::fill_n( back_inserter( tmp ), 1, L' ' );
 
 	setString( tmp );
 }
