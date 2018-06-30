@@ -236,8 +236,8 @@ FeTextureContainer::FeTextureContainer(
 	m_movie( NULL ),
 	m_swf( NULL ),
 	m_movie_status( -1 ),
-	m_mipmap( false ),
-	m_video_flags( VF_Normal )
+	m_video_flags( VF_Normal ),
+	m_mipmap( false )
 {
 	if ( is_artwork )
 	{
@@ -1195,6 +1195,8 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 		if ( sh )
 			states.shader = sh;
 	}
+	else
+		states.shader = FeBlend::get_default_shader( m_blend_mode );
 
 	states.blendMode = FeBlend::get_blend_mode( m_blend_mode );
 

@@ -29,6 +29,7 @@
 #include "fe_text.hpp"
 #include "fe_window.hpp"
 #include "fe_vm.hpp"
+#include "fe_blend.hpp"
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
@@ -120,6 +121,8 @@ int main(int argc, char *argv[])
 	soundsys.update_volumes();
 	soundsys.play_ambient();
 
+	FeBlend::load_default_shaders();
+	
 	FeWindow window( feSettings );
 	window.initial_create();
 

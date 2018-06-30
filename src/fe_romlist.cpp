@@ -372,6 +372,59 @@ bool FeRomList::load_romlist( const std::string &path,
 	return retval;
 }
 
+void FeRomList::build_single_filter_list( FeFilter *f,
+	std::vector< FeRomInfo *> &result )
+{
+	if ( f )
+	{
+		if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
+			result.reserve( f->get_size() );
+
+		if ( f->test_for_target( FeRomInfo::FileIsAvailable ) )
+			get_file_availability();
+
+		f->init();
+		for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			if ( f->apply_filter( *itr ) )
+				result.push_back( &( *itr ) );
+	}
+	else // no filter situation, so we just add the entire list...
+	{
+		result.reserve( m_list.size() );
+		for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			result.push_back( &( *itr ) );
+	}
+
+	if ( f )
+	{
+		// track the size of the filtered list in our filter info object
+		f->set_size( result.size() );
+
+		//
+		// Sort and/or prune now if configured for this filter
+		//
+		FeRomInfo::Index sort_by=f->get_sort_by();
+		bool rev = f->get_reverse_order();
+		int list_limit = f->get_list_limit();
+
+		if ( sort_by != FeRomInfo::LAST_INDEX )
+		{
+			std::stable_sort( result.begin(), result.end(),
+				FeRomListSorter2( sort_by, rev ) );
+		}
+		else if ( rev != false )
+			std::reverse( result.begin(), result.end() );
+
+		if (( list_limit != 0 ) && ( (int)result.size() > abs( list_limit ) ))
+		{
+			if ( list_limit > 0 )
+				result.erase( result.begin() + list_limit, result.end() );
+			else
+				result.erase( result.begin(), result.end() + list_limit );
+		}
+	}
+}
+
 void FeRomList::create_filters(
 	FeDisplayInfo &display )
 {
@@ -396,56 +449,8 @@ void FeRomList::create_filters(
 	{
 		m_filtered_list.push_back( std::vector< FeRomInfo *>()  );
 
-		FeFilter *f = display.get_filter( i );
-		if ( f )
-		{
-			if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
-				m_filtered_list[i].reserve( f->get_size() );
-
-			if ( f->test_for_target( FeRomInfo::FileIsAvailable ) )
-				get_file_availability();
-
-			f->init();
-			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
-				if ( f->apply_filter( *itr ) )
-					m_filtered_list[i].push_back( &( *itr ) );
-		}
-		else // no filter situation, so we just add the entire list...
-		{
-			m_filtered_list[i].reserve( m_list.size() );
-			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
-				m_filtered_list[i].push_back( &( *itr ) );
-		}
-
-		if ( f )
-		{
-			// track the size of the filtered list in our filter info object
-			f->set_size( m_filtered_list[i].size() );
-
-			//
-			// Sort and/or prune now if configured for this filter
-			//
-			FeRomInfo::Index sort_by=f->get_sort_by();
-			bool rev = f->get_reverse_order();
-			int list_limit = f->get_list_limit();
-
-			if ( sort_by != FeRomInfo::LAST_INDEX )
-			{
-				std::stable_sort( m_filtered_list[i].begin(),
-						m_filtered_list[i].end(),
-						FeRomListSorter2( sort_by, rev ) );
-			}
-			else if ( rev != false )
-				std::reverse( m_filtered_list[i].begin(), m_filtered_list[i].end() );
-
-			if (( list_limit != 0 ) && ( (int)m_filtered_list[i].size() > abs( list_limit ) ))
-			{
-				if ( list_limit > 0 )
-					m_filtered_list[i].erase( m_filtered_list[i].begin() + list_limit, m_filtered_list[i].end() );
-				else
-					m_filtered_list[i].erase( m_filtered_list[i].begin(), m_filtered_list[i].end() + list_limit );
-			}
-		}
+		build_single_filter_list( display.get_filter( i ),
+			m_filtered_list[i] );
 	}
 
 	FeLog() << " - Constructed " << filters_count << " filters in "
@@ -678,13 +683,8 @@ bool FeRomList::fix_filters( FeDisplayInfo &display, FeRomInfo::Index target )
 		if ( f->test_for_target( target ) )
 		{
 			m_filtered_list[i].clear();
+			build_single_filter_list( f, m_filtered_list[i] );
 			retval = true;
-
-			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
-			{
-				if ( f->apply_filter( *itr ) )
-					m_filtered_list[i].push_back( &( *itr ) );
-			}
 		}
 	}
 
