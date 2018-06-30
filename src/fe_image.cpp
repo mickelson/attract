@@ -236,8 +236,8 @@ FeTextureContainer::FeTextureContainer(
 	m_movie( NULL ),
 	m_swf( NULL ),
 	m_movie_status( -1 ),
-	m_mipmap( false ),
-	m_video_flags( VF_Normal )
+	m_video_flags( VF_Normal ),
+	m_mipmap( false )
 {
 	if ( is_artwork )
 	{
@@ -1196,10 +1196,7 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 			states.shader = sh;
 	}
 	else
-	{	
-		if ( sf::Shader::isAvailable() )
-			states.shader = FeBlend::get_default_shader( m_blend_mode );
-	}
+		states.shader = FeBlend::get_default_shader( m_blend_mode );
 
 	states.blendMode = FeBlend::get_blend_mode( m_blend_mode );
 
@@ -1596,8 +1593,7 @@ int FeImage::get_blend_mode() const
  
 void FeImage::set_blend_mode( int b )
 {
-	if ( sf::Shader::isAvailable() )
-		m_blend_mode = (FeBlend::Mode)b;
+	m_blend_mode = (FeBlend::Mode)b;
 }
 
 FeImage *FeImage::add_image(const char *n, int x, int y, int w, int h)

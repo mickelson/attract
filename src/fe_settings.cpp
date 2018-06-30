@@ -3933,10 +3933,3 @@ bool FeSettings::get_emulator_setup_script( std::string &path, std::string &file
 
 	return true;
 }
-
-void FeSettings::update_filters()
-{
-	m_rl.create_filters( m_displays[m_current_display] );
-}
-
-

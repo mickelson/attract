@@ -286,7 +286,7 @@ void wait_callback( void *o )
 		}
 		// Clear the frame buffer so there is no stale frame flashing on game launch/exit 
 		// Don't clear if Multimonitor is enabled and window mode is set to Fill Screen 
-		if( !win->m_fes.get_info_bool( FeSettings::MultiMon ) || win->m_fes.get_window_mode() != FeSettings::Default ) 
+		if( !win->m_fes.get_info_bool( FeSettings::MultiMon ) || ( win->m_fes.get_window_mode() != FeSettings::Default ) )
 		{ 
 			win->clear();   
 			win->display();  

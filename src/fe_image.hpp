@@ -233,6 +233,7 @@ protected:
 	sf::Vector2f m_pos;
 	sf::Vector2f m_size;
 	sf::Vector2f m_origin;
+	FeBlend::Mode m_blend_mode;
 	bool m_preserve_aspect_ratio;
 
 	void scale();
@@ -340,9 +341,6 @@ public:
 	FeText *add_text(const char *,int, int, int, int);
 	FeListBox *add_listbox(int, int, int, int);
 	FeImage *add_surface(int, int);
-
-private:
-	FeBlend::Mode m_blend_mode;
 };
 
 #endif

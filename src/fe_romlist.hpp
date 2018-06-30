@@ -86,6 +86,10 @@ private:
 	FeRomList( const FeRomList & );
 	FeRomList &operator=( const FeRomList & );
 
+	// helper function for building a single filter's list.  Used by create_filters() and fix_filters()
+	//
+	void build_single_filter_list( FeFilter *f, std::vector< FeRomInfo *> &result );
+
 	// Fixes m_filtered_list as needed using the filters in the given "display", with the
 	// assumption that the specified "target" attribute for all games might have been changed
 	//

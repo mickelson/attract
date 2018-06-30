@@ -543,8 +543,6 @@ public:
 
 	bool get_emulator_setup_script( std::string &path, std::string &file );
 
-	void update_filters();
-
 	// Utility function to get a list of layout*.nut files from the specified path...
 	static void get_layout_file_basenames_from_path(
 		const std::string &path,
@@ -553,7 +551,7 @@ public:
 
 inline bool is_windowed_mode( int m )
 {
-	return ( m == FeSettings::Window );
+	return (( m == FeSettings::Window ) || ( m == FeSettings::WindowNoBorder ));
 }
 
 //
