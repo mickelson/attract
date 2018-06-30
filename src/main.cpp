@@ -677,6 +677,13 @@ int main(int argc, char *argv[])
 					redraw=true;
 					break;
 
+				case FeInputMap::LayoutOptions:
+					if ( feOverlay.layout_options_dialog() )
+						feVM.load_layout();
+
+					redraw=true;
+					break;
+
 				case FeInputMap::DisplaysMenu:
 					{
 						if ( !feSettings.get_info( FeSettings::MenuLayout ).empty() )

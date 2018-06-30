@@ -973,6 +973,54 @@ bool FeOverlay::edit_game_dialog()
 	return true;
 }
 
+bool FeOverlay::layout_options_dialog()
+{
+	FeLayoutEditMenu m;
+
+	FeDisplayInfo *display = NULL;
+	FeScriptConfigurable *per_display = NULL;
+	FeLayoutInfo *layout = NULL;
+
+	int display_index = m_feSettings.get_current_display_index();
+
+	if ( display_index < 0 )
+	{
+		// Displays Menu
+		display = NULL;
+		per_display = &m_feSettings.get_display_menu_per_display_params();
+
+		std::string lname = m_feSettings.get_info( FeSettings::MenuLayout );
+
+		if ( lname.empty() )
+			return false;
+
+		layout = &m_feSettings.get_layout_config( lname );
+	}
+	else
+	{
+		display = m_feSettings.get_display( display_index );
+		per_display = &display->get_layout_per_display_params();
+		layout = &m_feSettings.get_layout_config( display->get_info( FeDisplayInfo::Layout ) );
+	}
+
+	m.set_layout( layout, per_display, display );
+
+	bool settings_changed=false;
+	if ( display_config_dialog( &m, settings_changed ) < 0 )
+		m_wnd.close();
+
+	if ( settings_changed )
+	{
+		// Save the updated settings to disk
+		m_feSettings.save();
+
+		// This forces the display to reinitialize with the updated settings
+		m_feSettings.set_display( m_feSettings.get_current_display_index() );
+	}
+
+	return settings_changed;
+}
+
 int FeOverlay::display_config_dialog(
 	FeBaseConfigMenu *m,
 	bool &parent_setting_changed )
