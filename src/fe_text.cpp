@@ -119,14 +119,20 @@ int FeText::getFilterOffset() const
 
 void FeText::on_new_list( FeSettings *s )
 {
-	int char_size = 8 * m_scale_factor;
-	if ( m_user_charsize > 0 )
-		char_size = m_user_charsize * m_scale_factor;
-	else if ( m_size.y > 12 )
-		char_size = ( m_size.y - 4 ) * m_scale_factor;
+	// We only update the font size and scale if the string is not empty
+	// so we do not render any unnecessary glyphs when the script updates the height of text
+	//
+	if ( m_string.size() > 0 )
+	{
+		int char_size = 8 * m_scale_factor;
+		if ( m_user_charsize > 0 )
+			char_size = m_user_charsize * m_scale_factor;
+		else if ( m_size.y > 12 )
+			char_size = ( m_size.y - 4 ) * m_scale_factor;
 
-	m_draw_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
-	m_draw_text.setCharacterSize( char_size );
+		m_draw_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
+		m_draw_text.setCharacterSize( char_size );
+	}
 	m_draw_text.setPosition( m_position );
 	m_draw_text.setSize( m_size );
 }

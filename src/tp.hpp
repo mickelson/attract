@@ -61,7 +61,7 @@ public:
 	// with // wordwrapping on)
 	//
 	sf::Vector2f setString( const std::basic_string<sf::Uint32> &t,
-					int cursor_string_pos=0 ); // no utf-8 conversion
+					int cursor_string_pos=-1 ); // no utf-8 conversion
 
 	void setFont( const sf::Font & );
 	void setCharacterSize( unsigned int );
