@@ -155,6 +155,7 @@ void FeTextPrimative::fit_string(
 				//
 				last_char = i - 1;
 				i++;
+				position = i;
 				return;
 			}
 
