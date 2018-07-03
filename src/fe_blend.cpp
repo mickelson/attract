@@ -21,38 +21,33 @@
  */
 
 #include "fe_blend.hpp"
+#include "fe_util.hpp" // for FE_VERSION_INT macro
 
 sf::BlendMode FeBlend::get_blend_mode( int blend_mode )
 {
-	sf::BlendMode retval;
-
 	switch( blend_mode )
 	{
 		case FeBlend::Add:
-			retval = sf::BlendAdd;
-			break;
+			return sf::BlendAdd;
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
 		case FeBlend::Screen:
-			retval = sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcColor);
-			break;
+			return sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcColor);
 		case FeBlend::Multiply:
-			retval = sf::BlendMode(sf::BlendMode::DstColor, sf::BlendMode::OneMinusSrcAlpha);
-			break;
+			return sf::BlendMode(sf::BlendMode::DstColor, sf::BlendMode::OneMinusSrcAlpha);
 		case FeBlend::Overlay:
-			retval = sf::BlendMode(sf::BlendMode::DstColor, sf::BlendMode::SrcColor);
-			break;
+			return sf::BlendMode(sf::BlendMode::DstColor, sf::BlendMode::SrcColor);
 		case FeBlend::Premultiplied:
-			retval = sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcAlpha);
-			break;
+			return sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcAlpha);
+#endif
+
 		case FeBlend::None:
-			retval = sf::BlendNone;
-			break;
+			return sf::BlendNone;
+
 		case FeBlend::Alpha:
 		default:
-			retval = sf::BlendAlpha;
-			break;
+			return sf::BlendAlpha;
 	}
-
-	return retval;
 }
 
 sf::Shader FeBlend::default_shader_multiplied;
