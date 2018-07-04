@@ -98,9 +98,9 @@ void FeTextPrimative::fit_string(
 	// There is a special case where we edit the string in UI
 	// We do not cut the trailing space in this situation
 	//
-	bool cut_space( true );
+	bool edit_mode( false );
 	if (( position >= 0 ) && ( m_first_line < 0 ))
-		cut_space = false;
+		edit_mode = true;
 
 	if ( position < 0 )
 		position = 0;
@@ -116,12 +116,11 @@ void FeTextPrimative::fit_string(
 	unsigned int spacing = charsize;
 	float width = m_bgRect.getLocalBounds().width / m_texts[0].getScale().x;
 
-	int running_total( charsize * 2 );
+	int running_total( 0 );
 	int running_width( 0 );
 	int kerning( 0 );
 
 	const sf::Glyph *g = &font->getGlyph( s[i], charsize, false );
-	running_total = -g->bounds.left;
 
 	if ( font->getLineSpacing( spacing ) > spacing )
 		spacing = font->getLineSpacing( spacing );
@@ -129,12 +128,15 @@ void FeTextPrimative::fit_string(
 	if ( !m_no_margin )
 		width -= floorf( spacing );
 
+	if ( !edit_mode )
+		running_total = -g->bounds.left;
+
 	// We need to adjust the width to make sure that at least one character is displayed per line
 	width = std::max( width, g->bounds.width );
 
-	while (( running_width <= width ) && (( i < (int)s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
+	while (( running_width <= width ) && (( i < s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
 	{
-		if ( i < (int)s.size() )
+		if ( i < s.size() )
 		{
 			if ( i > first_char )
 			{
@@ -164,16 +166,12 @@ void FeTextPrimative::fit_string(
 
 		if (( m_first_line < 0 ) && ( j > 0 ) && ( running_width <= width ))
 		{
-			if ( j < first_char )
-			{
-				kerning = font->getKerning( s[std::max( 0, j - 2 )], s[j - 1], charsize );
-				running_total += kerning;
-			}
-
-			g = &font->getGlyph( s[j - 1], charsize, false );
+			j--;
+			kerning = font->getKerning( s[j], s[std::min( j + 1, (int)s.size() - 1 )], charsize );
+			running_total += kerning;
+			g = &font->getGlyph( s[j], charsize, false );
 			running_width = std::max( running_width, (int)( running_total + g->bounds.left + g->bounds.width ));
 			running_total += g->advance;
-			j--;
 		}
 	}
 
@@ -189,14 +187,17 @@ void FeTextPrimative::fit_string(
 	}
 	else
 	{
-		if ( cut_space )
+		if ( !edit_mode )
 		{
 			i--;
 			last_char = i - 1;
 			if ( s[last_char] == L' ' ) last_char--;
 		}
 		else
+		{
+			if ( i < s.size() ) i--;
 			last_char = i - 1;
+		}
 	}
 
 	position = i;
@@ -287,7 +288,12 @@ sf::Vector2f FeTextPrimative::setString(
 	}
 
 	set_positions(); // We need to set the positions now for findCharacterPos() to work below
-	int kerning = font->getKerning( m_texts[0].getString()[std::max( 0, disp_cpos - 1 )], m_texts[0].getString()[disp_cpos], m_texts[0].getCharacterSize() ) * m_texts[0].getScale().x;
+	
+	// We apply kerning to cursor position
+	int kerning = font->getKerning( m_texts[0].getString()[std::max( 0, disp_cpos - 1 )],
+						            m_texts[0].getString()[disp_cpos],
+						            m_texts[0].getCharacterSize() ) * m_texts[0].getScale().x;
+
 	return m_texts[0].findCharacterPos( disp_cpos ) + sf::Vector2f( kerning, 0.0 );
 }
 
@@ -305,7 +311,7 @@ void FeTextPrimative::set_positions() const
 	sf::Vector2f rectPos = m_bgRect.getPosition();
 	sf::FloatRect rectSize = m_bgRect.getLocalBounds();
 
-	for ( unsigned int i=0; i < m_texts.size(); i++ )
+	for ( int i=0; i < m_texts.size(); i++ )
 	{
 		sf::Vector2f textPos;
 
@@ -328,13 +334,13 @@ void FeTextPrimative::set_positions() const
 
 		// set position y
 		if ( m_align & Top )
-			textPos.y = rectPos.y + ceilf( spacing * (int)i - charSize + glyphSize );
+			textPos.y = rectPos.y + ceilf( spacing * i - charSize + glyphSize );
 		else if ( m_align & Bottom )
-			textPos.y = rectPos.y + floorf( rectSize.height  - charSize - spacing * ( m_texts.size() - (int)i - 1 ));
+			textPos.y = rectPos.y + floorf( rectSize.height  - charSize - spacing * ( m_texts.size() - i - 1 ));
 		else if ( m_align & Middle )
-			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height + glyphSize - charSize * 2 - spacing * ( m_texts.size() - 1 )) / 2.0 );
+			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.height + glyphSize - charSize * 2 - spacing * ( m_texts.size() - 1 )) / 2.0 );
 		else
-			textPos.y = rectPos.y + ceilf( spacing * (int)i + ( rectSize.height - ( spacing * m_texts.size() )) / 2.0 );
+			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.height - ( spacing * m_texts.size() )) / 2.0 );
 
 		if ( !m_no_margin )
 		{
