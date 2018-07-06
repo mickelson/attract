@@ -254,6 +254,11 @@ float FeText::get_spacing()
 	return m_draw_text.getCharacterSpacing();
 }
 
+float FeText::get_line_spacing()
+{
+	return m_draw_text.getLineSpacing();
+}
+
 int FeText::get_style()
 {
 	return m_draw_text.getStyle();
@@ -324,6 +329,12 @@ void FeText::set_charsize(int s)
 void FeText::set_spacing(float s)
 {
 	m_draw_text.setCharacterSpacing(s);
+	FePresent::script_do_update( this );
+}
+
+void FeText::set_line_spacing(float s)
+{
+	m_draw_text.setLineSpacing(s);
 	FePresent::script_do_update( this );
 }
 

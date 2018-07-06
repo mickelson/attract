@@ -1622,7 +1622,10 @@ Properties:
      then Attract-Mode will autosize based on `height`.  Default value is -1.
    * `glyph_size` - Get the height in pixels of the capital letter.
      Useful if you want to set the textbox height to match the letter height.
-   * `spacing` - Get/set the spacing factor between letters.  Default value is 1.0
+   * `char_spacing` - Get/set the spacing factor between letters.  Default value is 1.0
+   * `line_spacing` - Get/set the spacing factor between lines.  Default value is 1.0  
+     At values 0.75 or lower letters start to overlap. For uppercase texts it's around 0.5  
+     It's advised to use this property with the new align modes.
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)
@@ -1731,7 +1734,7 @@ Properties:
      then Attract-Mode will autosize based on the value of `height`/`rows`.
      Default value is -1.
    * `glyph_size` - Get the height in pixels of the capital letter.
-   * `spacing` - Get/set the spacing factor between letters.  Default value is 1.0
+   * `char_spacing` - Get/set the spacing factor between letters.  Default value is 1.0
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)

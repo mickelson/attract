@@ -66,6 +66,7 @@ public:
 	void setFont( const sf::Font & );
 	void setCharacterSize( unsigned int );
 	void setCharacterSpacing( float );
+	void setLineSpacing( float );
 	void setAlignment( Alignment );
 	void setPosition( int x, int y ) {return setPosition(sf::Vector2f(x,y));};
 	void setPosition( const sf::Vector2f & );
@@ -87,6 +88,8 @@ public:
 	unsigned int getCharacterSize() const;
 	unsigned int getGlyphSize() const;
 	float getCharacterSpacing() const;
+	float getLineSpacing() const;
+	int getLineSpacingFactored( const sf::Font *, int ) const;
 	Alignment getAlignment() const;
 	const sf::Vector2f &getPosition() const;
 	const sf::Vector2f &getSize() const;
@@ -109,6 +112,7 @@ private:
 	// larger than the area available to display it.
 	int m_first_line;
 	bool m_no_margin;
+	float m_line_spacing;
 
 	mutable bool m_needs_pos_set;
 

@@ -32,6 +32,7 @@ FeTextPrimative::FeTextPrimative( )
 	m_align( Centre ),
 	m_first_line( -1 ),
 	m_no_margin( false ),
+	m_line_spacing( 1.0 ),
 	m_needs_pos_set( false )
 {
 	setColor( sf::Color::White );
@@ -48,6 +49,7 @@ FeTextPrimative::FeTextPrimative(
 	m_align( align ),
 	m_first_line( -1 ),
 	m_no_margin( false ),
+	m_line_spacing( 1.0 ),
 	m_needs_pos_set( false )
 {
 	if ( font )
@@ -64,6 +66,7 @@ FeTextPrimative::FeTextPrimative( const FeTextPrimative &c )
 	m_align( c.m_align ),
 	m_first_line( c.m_first_line ),
 	m_no_margin( c.m_no_margin ),
+	m_line_spacing( c.m_line_spacing ),
 	m_needs_pos_set( c.m_needs_pos_set )
 {
 }
@@ -134,9 +137,9 @@ void FeTextPrimative::fit_string(
 	// We need to adjust the width to make sure that at least one character is displayed per line
 	width = std::max( width, g->bounds.width );
 
-	while (( running_width <= width ) && (( i < s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
+	while (( running_width <= width ) && (( i < (int)s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
 	{
-		if ( i < s.size() )
+		if ( i < (int)s.size() )
 		{
 			if ( i > first_char )
 			{
@@ -195,7 +198,7 @@ void FeTextPrimative::fit_string(
 		}
 		else
 		{
-			if ( i < s.size() ) i--;
+			if ( i < (int)s.size() ) i--;
 			last_char = i - 1;
 		}
 	}
@@ -242,6 +245,17 @@ sf::Vector2f FeTextPrimative::setString(
 	// We cut the first line of text here
 	//
 	fit_string( t, position, first_char, last_char );
+	
+	if ( m_first_line > 0 )
+	{
+		int actual_first_line = 1;
+		while ( actual_first_line < m_first_line )
+		{
+			fit_string( t, position, first_char, last_char );
+			actual_first_line++;
+		}
+	}
+
 	m_texts[0].setString( t.substr( first_char, last_char - first_char + 1 ));
 
 	disp_cpos -= first_char;
@@ -254,23 +268,22 @@ sf::Vector2f FeTextPrimative::setString(
 		//
 		// Calculate the number of lines we can fit in our RectShape
 		//
-		float spacing = m_texts[0].getCharacterSize() * m_texts[0].getScale().y;
-		spacing = font->getLineSpacing( spacing );
-
 		sf::FloatRect rectSize = m_bgRect.getLocalBounds();
-		float glyphSize = getGlyphSize();
 
-		const int charSize = m_texts[0].getCharacterSize();
-		const sf::Glyph *glyph = &font->getGlyph( L'X', charSize, false );
-		glyphSize = glyph->bounds.height * m_texts[0].getScale().y;
+		const sf::Glyph *glyph = &font->getGlyph( L'X', m_texts[0].getCharacterSize(), false );
+		float glyphSize = glyph->bounds.height * m_texts[0].getScale().y;
+
+		int spacing = getLineSpacingFactored( font, floorf( m_texts[0].getCharacterSize() * m_texts[0].getScale().y ));
+		float default_spacing = font->getLineSpacing( m_texts[0].getCharacterSize() ) * m_texts[0].getScale().y;
 
 		int line_count = 1;
+
 		if ( m_align & ( Top | Bottom | Middle ))
 		{
 			if ( m_no_margin )
 				line_count = std::max( 1, (int)floorf(( rectSize.height + spacing - glyphSize ) / spacing ));
 			else
-				line_count = std::max( 1, (int)floorf(( rectSize.height - glyphSize ) / spacing ));
+				line_count = std::max( 1, (int)floorf(( rectSize.height + spacing - default_spacing - glyphSize ) / spacing ));
 		}
 		else
 			line_count = std::max( 1, (int)( rectSize.height / spacing ));
@@ -278,23 +291,31 @@ sf::Vector2f FeTextPrimative::setString(
 		//
 		// We break the string to lines here starting from the second line
 		//
+		int actual_line_count = 1;
 		for ( int i = 1; i < line_count; i++ )
 		{
-			if ( position >= t.size() ) break;
+			if ( position >= (int)t.size() ) break;
 			fit_string( t, position, first_char, last_char );
 			m_texts.push_back( m_texts[0] );
 			m_texts.back().setString( t.substr( first_char, last_char - first_char + 1 ));
+			actual_line_count++;
 		}
+
+		m_first_line = std::max( 0, m_first_line - line_count + actual_line_count );
 	}
 
 	set_positions(); // We need to set the positions now for findCharacterPos() to work below
-	
-	// We apply kerning to cursor position
-	int kerning = font->getKerning( m_texts[0].getString()[std::max( 0, disp_cpos - 1 )],
-						            m_texts[0].getString()[disp_cpos],
-						            m_texts[0].getCharacterSize() ) * m_texts[0].getScale().x;
 
-	return m_texts[0].findCharacterPos( disp_cpos ) + sf::Vector2f( kerning, 0.0 );
+	// We apply kerning to cursor position
+	if ( disp_cpos >= 0 )
+	{
+		int kerning = font->getKerning( m_texts[0].getString()[std::max( 0, disp_cpos - 1 )],
+							            m_texts[0].getString()[disp_cpos],
+							            m_texts[0].getCharacterSize() ) * m_texts[0].getScale().x;
+		return m_texts[0].findCharacterPos( disp_cpos ) + sf::Vector2f( kerning, 0.0 );
+	}
+	else
+		return sf::Vector2f( 0, 0 );
 }
 
 void FeTextPrimative::set_positions() const
@@ -304,14 +325,13 @@ void FeTextPrimative::set_positions() const
 	int glyphSize = getGlyphSize();
 
 	const sf::Font *font = getFont();
-	if (( font ) && ( font->getLineSpacing( spacing ) > spacing ))
-		spacing = font->getLineSpacing( spacing );
-	int margin = floorf( spacing / 2.0 );
+	int margin = floorf( font->getLineSpacing( charSize ) / 2.0 );
+	spacing = getLineSpacingFactored( font, spacing );
 
 	sf::Vector2f rectPos = m_bgRect.getPosition();
 	sf::FloatRect rectSize = m_bgRect.getLocalBounds();
 
-	for ( int i=0; i < m_texts.size(); i++ )
+	for ( int i=0; i < (int)m_texts.size(); i++ )
 	{
 		sf::Vector2f textPos;
 
@@ -428,6 +448,22 @@ float FeTextPrimative::getCharacterSpacing() const
 #else
 	return 1.f;
 #endif
+}
+
+void FeTextPrimative::setLineSpacing( float factor )
+{
+	m_line_spacing = factor;
+	m_needs_pos_set = true;
+}
+
+float FeTextPrimative::getLineSpacing() const
+{
+	return m_line_spacing;
+}
+
+int FeTextPrimative::getLineSpacingFactored( const sf::Font *font, int charsize ) const
+{
+	return std::max( 1, (int)ceilf( font->getLineSpacing( charsize ) * m_line_spacing ));
 }
 
 const sf::Vector2f &FeTextPrimative::getPosition() const

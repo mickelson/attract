@@ -84,6 +84,7 @@ public:
 	int get_charsize();
 	int get_glyph_size();
 	float get_spacing();
+	float get_line_spacing();
 	int get_style();
 	int get_align();
 	const char *get_font();
@@ -94,6 +95,7 @@ public:
 	void set_bg_rgb( int, int, int );
 	void set_charsize(int s);
 	void set_spacing(float s);
+	void set_line_spacing(float s);
 	void set_style(int s);
 	void set_align(int a);
 	void set_font(const char *f);
