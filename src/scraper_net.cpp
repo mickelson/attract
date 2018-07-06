@@ -275,7 +275,7 @@ namespace
 //
 // Functions and constants used by thegamesdb_scraper()
 //
-const char *HOSTNAME = "http://thegamesdb.net";
+const char *HOSTNAME = "http://legacy.thegamesdb.net";
 const char *PLATFORM_LIST_REQ = "api/GetPlatformsList.php";
 const char *PLAT_REQ = "api/GetPlatform.php?id=$1";
 const char *GAME_REQ = "api/GetGame.php?name=$1";
