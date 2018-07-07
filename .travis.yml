@@ -1,0 +1,24 @@
+language: c++
+sudo: false
+os:
+  - linux
+  - osx
+addons:
+  apt:
+    packages:
+      - libarchive
+      - sfml
+      - ffmpeg
+compiler:
+  - clang
+  - gcc
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update --all; fi
+install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install libarchive sfml ffmpeg; fi
+script:
+  - make -j8
