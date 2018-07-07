@@ -3593,7 +3593,7 @@ bool FeSettings::get_best_artwork_file(
 		if ( temp_d >= 0 )
 			emu_name = get_display( temp_d )->get_info( FeDisplayInfo::Romlist );
 
-		std::string add_path = get_config_dir() + FE_MENU_ART_SUBDIR + scrape_art + "/";
+		std::string add_path = get_config_dir() + FE_MENU_ART_SUBDIR + art_name + "/";
 		if ( directory_exists( add_path ) )
 			art_paths.push_back( add_path );
 
@@ -3601,7 +3601,7 @@ bool FeSettings::get_best_artwork_file(
 		{
 			add_path = FE_DATA_PATH;
 			add_path += FE_MENU_ART_SUBDIR;
-			add_path += scrape_art;
+			add_path += art_name;
 			add_path += "/";
 
 			if ( directory_exists( add_path ) )
