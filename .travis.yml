@@ -9,14 +9,13 @@ addons:
       - libopenal-dev
       - zlib1g-dev
       - libfreetype6-dev
-      - libfreeglut3-dev
       - libjpeg-dev
       - libsfml-dev
       - libavutil-dev
       - libavcodec-dev
       - libavformat-dev
       - libswscale-dev
-      - libswresample-dev
+      - libavresample-dev
       - libarchive-dev
       - libfontconfig1-dev
       - libxinerama-dev
