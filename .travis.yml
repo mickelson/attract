@@ -6,9 +6,21 @@ os:
 addons:
   apt:
     packages:
-      - libarchive
-      - sfml
-      - ffmpeg
+      - libopenal-dev
+      - zlib1g-dev
+      - libfreetype6-dev
+      - libfreeglut3-dev
+      - libjpeg-dev
+      - libsfml-dev
+      - libavutil-dev
+      - libavcodec-dev
+      - libavformat-dev
+      - libswscale-dev
+      - libswresample-dev
+      - libarchive-dev
+      - libfontconfig1-dev
+      - libxinerama-dev
+      - pkg-config
 compiler:
   - clang
   - gcc
@@ -19,6 +31,6 @@ matrix:
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update --all; fi
 install:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install libarchive sfml ffmpeg; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install pkg-config ffmpeg sfml libarchive; fi
 script:
   - make -j8
