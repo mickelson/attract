@@ -100,6 +100,8 @@ public:
 
 	void set_no_margin( bool );
 	bool get_no_margin();
+	void set_margin( int );
+	int get_margin();
 
 	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
 

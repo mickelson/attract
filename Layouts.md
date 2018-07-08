@@ -1618,7 +1618,7 @@ Properties:
      [0 ... 255].  Default value is 0.
    * `bg_alpha` - Get/set alpha level for text background. Range is [0 ...
      255].  Default value is 0 (transparent).
-   * `charsize` - Get/set the forced character size.  If this is <= 0
+   * `char_size` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on `height`.  Default value is -1.
    * `glyph_size` - Get the height in pixels of the capital letter.
      Useful if you want to set the textbox height to match the letter height.
@@ -1653,8 +1653,8 @@ Properties:
    * `msg_width` - Get the width of the text message, in layout coordinates.
    * `font` - Get/set the name of the font used for this text.  Default is
      the layout font name.
-   * `nomargin` - Get/set whether margin spacing should be added to sides of
-     the text (boolean).  Default value is `false`.
+   * `margin` - Get/set the margin spacing in pixels to sides of the text.  
+     Default value is `-1` which calcualtes the margin based on the .char_size.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
    * `zorder` - Get/set the Text's order in the applicable draw list.  When
@@ -1730,7 +1730,7 @@ Properties:
      When listbox is assigned as an overlay custom control this property
      will return the number of options available in the overlay dialog.
      This property is updated during `Transition.ShowOverlay`
-   * `charsize` - Get/set the forced character size.  If this is <= 0
+   * `char_size` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on the value of `height`/`rows`.
      Default value is -1.
    * `glyph_size` - Get the height in pixels of the capital letter.
@@ -1754,6 +1754,8 @@ Properties:
       - `Style.Underlined`
    * `font` - Get/set the name of the font used for this listbox.  Default is
      the layout font name.
+   * `margin` - Get/set the margin spacing in pixels to sides of the text.  
+     Default value is `-1` which calcualtes the margin based on the .char_size.
    * `format_string` - Get/set the format for the text to display in each list
      entry. Magic tokens can be used here, see [Magic Tokens](#magic) for more
      information.  If empty, game titles will be displayed (i.e. the same

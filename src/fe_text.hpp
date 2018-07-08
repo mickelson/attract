@@ -68,6 +68,8 @@ public:
 
 	void set_no_margin( bool );
 	bool get_no_margin();
+	void set_margin( int );
+	int get_margin();
 
 	void set_first_line_hint( int l );
 	int get_first_line_hint();

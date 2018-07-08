@@ -480,6 +480,17 @@ bool FeListBox::get_no_margin()
 	return m_base_text.getNoMargin();
 }
 
+void FeListBox::set_margin( int m )
+{
+	m_base_text.setMargin( m );
+	FePresent::script_do_update( this );
+}
+
+int FeListBox::get_margin()
+{
+	return m_base_text.getMargin();
+}
+
 void FeListBox::setBgColor( const sf::Color &c )
 {
 	m_base_text.setBgColor(c);

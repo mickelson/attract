@@ -80,6 +80,8 @@ public:
 	void setWordWrap( bool );
 	void setNoMargin( bool );
 	bool getNoMargin();
+	void setMargin( int );
+	int getMargin();
 	void setTextScale( const sf::Vector2f & );
 
 	const sf::Font *getFont() const;
@@ -111,7 +113,7 @@ private:
 	// to control scrolling text where the text set into the control is
 	// larger than the area available to display it.
 	int m_first_line;
-	bool m_no_margin;
+	int m_margin;
 	float m_line_spacing;
 
 	mutable bool m_needs_pos_set;

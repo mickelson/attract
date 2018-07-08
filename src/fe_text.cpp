@@ -192,6 +192,17 @@ bool FeText::get_no_margin()
 	return m_draw_text.getNoMargin();
 }
 
+void FeText::set_margin( int m )
+{
+	m_draw_text.setMargin( m );
+	FePresent::script_do_update( this );
+}
+
+int FeText::get_margin()
+{
+	return m_draw_text.getMargin();
+}
+
 void FeText::set_first_line_hint( int l )
 {
 	if ( l != m_draw_text.getFirstLineHint() )
