@@ -778,6 +778,40 @@ void FeSettings::load_state()
 		m_last_launch_filter = m_displays[ m_last_launch_display ].get_filter_count() - 1;
 	if ( m_last_launch_filter < 0 )
 		m_last_launch_filter = 0;
+
+	// confirm loaded state points to layout files that actually exist (and reset if it doesn't)
+	for ( std::vector<FeDisplayInfo>::iterator itr = m_displays.begin(); itr != m_displays.end(); ++itr )
+	{
+		std::string file = (*itr).get_current_layout_file();
+		if ( !file.empty() )
+		{
+			std::string path;
+			get_layout_dir( (*itr).get_info( FeDisplayInfo::Layout ), path );
+
+			std::string fn = path + file + FE_LAYOUT_FILE_EXTENSION ;
+			if ( !file_exists( fn ) )
+			{
+				FeDebug() << "Resetting saved layout file since the file does not actually exist. Display: "
+					<< (*itr).get_info( FeDisplayInfo::Name )
+					<< ", file: " << fn << :: std::endl;
+
+				(*itr).set_current_layout_file( "" );
+			}
+		}
+	}
+
+	if ( !m_menu_layout_file.empty() )
+	{
+		std::string path;
+		get_layout_dir( m_menu_layout, path );
+
+		std::string fn = path + m_menu_layout_file + FE_LAYOUT_FILE_EXTENSION ;
+		if ( !file_exists( fn ) )
+		{
+			FeDebug() << "Resetting Displays Menu layout file (file doesn't exist): " << fn << :: std::endl;
+			m_menu_layout_file = "";
+		}
+	}
 }
 
 FeInputMap::Command FeSettings::map_input( const sf::Event &e )

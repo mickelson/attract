@@ -627,6 +627,12 @@ void FeDisplayInfo::set_current_layout_file( const std::string &n )
 void FeDisplayInfo::set_info( int setting,
          const std::string &value )
 {
+	if (( setting == Layout ) && ( value.compare( m_info[ Layout ] ) != 0 ))
+	{
+		// If changing the layout, reset the layout file as well
+		m_current_layout_file = "";
+	}
+
 	m_info[ setting ] = value;
 }
 
