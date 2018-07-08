@@ -137,7 +137,7 @@ void FeTextPrimative::fit_string(
 		running_total = -g->bounds.left;
 
 	// We need to adjust the width to make sure that at least one character is displayed per line
-	width = std::max( width, g->bounds.width );
+	width = std::max( width, (float)g->bounds.width );
 
 	while (( running_width <= width ) && (( i < (int)s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
 	{
