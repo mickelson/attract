@@ -143,8 +143,7 @@ public:
 	enum GameExtra
 	{
 		Executable =0, // custom executable to override the configured emulator executable
-		Arguments,     // custom arguments to override the configured emulator arguments
-		Overview
+		Arguments      // custom arguments to override the configured emulator arguments
 	};
 
 private:
@@ -157,6 +156,9 @@ private:
 	std::string m_menu_prompt;		// 'Displays Menu" prompt
 	std::string m_menu_layout;		// 'Displays Menu' layout.  if blank, use built-in menu
 	std::string m_menu_layout_file;		// 'Displays Menu" toggled layout file
+
+	std::string m_last_game_overview_path;  // cache the last loaded game overview path
+	std::string m_last_game_overview_text;  // cache the last loaded game overview text
 
 	std::vector<std::string> m_font_paths;
 	std::vector<FeDisplayInfo> m_displays;
@@ -250,6 +252,9 @@ private:
 		const std::string &romlist_name,
 		const std::string &romname,
 		const std::map<GameExtra,std::string> &extras );
+
+	// sets path to filename for specified emu and romname.  Returns true if file exists, false otherwise
+	bool get_game_overview_filepath( const std::string &emu, const std::string &romname, std::string &path );
 
 public:
 	FeSettings( const std::string &config_dir,
@@ -488,6 +493,11 @@ public:
 	const std::string &get_game_extra( GameExtra id );
 	void set_game_extra( GameExtra id, const std::string &value );
 	void save_game_extras();
+
+	bool get_game_overview_absolute( int filter_index, int rom_index, std::string &overview );
+
+	// only overwrites an existing file if overwrite = true
+	void set_game_overview( const std::string &emu, const std::string &romname, const std::string &overview, bool overwrite );
 
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,

@@ -482,6 +482,7 @@ private:
 	bool m_update_rl;
 	bool m_update_stats;
 	bool m_update_extras;
+	bool m_update_overview;
 
 public:
 	FeEditGameMenu();

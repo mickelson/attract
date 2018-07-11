@@ -2448,7 +2448,8 @@ bool FeConfigMenu::save( FeConfigContext &ctx )
 FeEditGameMenu::FeEditGameMenu()
 	: m_update_rl( false ),
 	m_update_stats( false ),
-	m_update_extras( false )
+	m_update_extras( false ),
+	m_update_overview( false )
 {
 }
 
@@ -2542,10 +2543,14 @@ void FeEditGameMenu::get_options( FeConfigContext &ctx )
 	ctx.opt_list[ FeRomInfo::PlayedCount ].opaque = 3;
 	ctx.opt_list[ FeRomInfo::PlayedTime ].opaque = 3;
 
-	ctx.add_optl( Opt::EDIT, "Overview",
-		ctx.fe_settings.get_game_extra( FeSettings::Overview ),
-		"_help_game_overview" );
-	ctx.back_opt().opaque = 4;
+	int filter_idx = ctx.fe_settings.get_filter_index_from_offset( 0 );
+	int rom_idx = ctx.fe_settings.get_rom_index( filter_idx, 0 );
+
+	std::string ov;
+	ctx.fe_settings.get_game_overview_absolute( filter_idx, rom_idx, ov );
+
+	ctx.add_optl( Opt::EDIT, "Overview", newline_escape( ov ), "_help_game_overview" );
+	ctx.back_opt().opaque = 5;
 
 	ctx.add_optl( Opt::EDIT, "Custom Executable",
 		ctx.fe_settings.get_game_extra( FeSettings::Executable ),
@@ -2563,9 +2568,7 @@ void FeEditGameMenu::get_options( FeConfigContext &ctx )
 	m_update_stats=false;
 	m_update_rl=false;
 	m_update_extras=false;
-
-	int filter_idx = ctx.fe_settings.get_filter_index_from_offset( 0 );
-	int rom_idx = ctx.fe_settings.get_rom_index( filter_idx, 0 );
+	m_update_overview=false;
 
 	FeRomInfo *rom = ctx.fe_settings.get_rom_absolute( filter_idx, rom_idx );
 	if ( rom )
@@ -2603,6 +2606,9 @@ bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *&
 		m_update_extras = true;
 		break;
 
+	case 5: // Overview
+		m_update_overview = true;
+		break;
 
 	case 100: // Delete Game
 		if ( ctx.confirm_dialog( "Delete game '$1'?", ctx.opt_list[1].get_value() ) )
@@ -2648,9 +2654,19 @@ bool FeEditGameMenu::save( FeConfigContext &ctx )
 	if ( m_update_stats )
 		ctx.fe_settings.update_stats(0,0); // this will force a rewrite of the file
 
+	if ( m_update_overview )
+	{
+		std::string ov = ctx.opt_list[border].get_value();
+		perform_substitution( ov, "\\n", "\n" );
+
+		ctx.fe_settings.set_game_overview(
+			replacement.get_info( FeRomInfo::Emulator ),
+			replacement.get_info( FeRomInfo::Romname ),
+			ov, true ); // force overwrites
+	}
+
 	if ( m_update_extras )
 	{
-		ctx.fe_settings.set_game_extra( FeSettings::Overview, ctx.opt_list[border].get_value() );
 		ctx.fe_settings.set_game_extra( FeSettings::Executable, ctx.opt_list[border+1].get_value() );
 		ctx.fe_settings.set_game_extra( FeSettings::Arguments, ctx.opt_list[border+2].get_value() );
 		ctx.fe_settings.save_game_extras();

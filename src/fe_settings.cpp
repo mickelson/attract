@@ -123,6 +123,7 @@ const char *FE_LANGUAGE_FILE_EXTENSION = ".msg";
 const char *FE_SWF_EXT					= ".swf";
 const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_GAME_EXTRA_FILE_EXTENSION = ".cfg";
+const char *FE_GAME_OVERVIEW_FILE_EXTENSION = ".txt";
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
 const char *FE_ROMLIST_SUBDIR			= "romlists/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
@@ -135,6 +136,7 @@ const char *FE_LOADER_SUBDIR			= "loader/";
 const char *FE_INTRO_SUBDIR			= "intro/";
 const char *FE_SCRAPER_SUBDIR			= "scraper/";
 const char *FE_MENU_ART_SUBDIR		= "menu-art/";
+const char *FE_OVERVIEW_SUBDIR		= "overview/";
 const char *FE_EMULATOR_SCRIPT_SUBDIR		= "emulators/script/";
 const char *FE_LIST_DEFAULT			= "default-display.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
@@ -1470,7 +1472,6 @@ namespace {
 	const char *game_extra_strings[] = {
 		"executable",
 		"args",
-		"overview",
 		NULL
 	};
 };
@@ -1528,6 +1529,12 @@ bool FeSettings::load_game_extras(
 	if ( !in_file.is_open() )
 		return false;
 
+	// Before Attract-Mode v 2.4, Overviews were stored with game extras.
+	//
+	// There is specific code here to clean up pre 2.4 game extras data (commented)
+	// this code is intended to be removed at some point in a future version
+	bool fix_extras_now=false;
+
 	while ( in_file.good() )
 	{
 		std::string line, s, v;
@@ -1546,11 +1553,26 @@ bool FeSettings::load_game_extras(
 			}
 
 			if ( game_extra_strings[i] == NULL )
-				FeLog() << " ! Unrecognized game setting: " << s << " " << v << std::endl;
+			{
+				// pre 2.4 cleanup code, see comment above
+				if ( s.compare( "overview" ) == 0 )
+					fix_extras_now = true;
+				else
+					FeLog() << " ! Unrecognized game setting: " << s << " " << v << std::endl;
+			}
 		}
 	}
 
 	in_file.close();
+
+	FeDebug() << "Loaded game extras from: " << path << std::endl;
+
+	// pre 2.4 cleanup code, see comment above
+	// fix this game extras (removing overview entry)
+	//
+	if ( fix_extras_now )
+		save_game_extras( romlist_name, romname, extras );
+
 	return true;
 }
 
@@ -1616,6 +1638,98 @@ void FeSettings::save_game_extras( const std::string &romlist_name,
 		out_file << game_extra_strings[(int)(*it).first] << " " << (*it).second << std::endl;
 
 	out_file.close();
+
+	FeDebug() << "Wrote game extras to: " << path << std::endl;
+}
+
+bool FeSettings::get_game_overview_filepath( const std::string &emu, const std::string &romname, std::string &path )
+{
+	path = m_config_path;
+
+	confirm_directory( path, FE_SCRAPER_SUBDIR );
+	path += FE_SCRAPER_SUBDIR;
+
+	path += emu;
+	path += "/";
+
+	confirm_directory( path, FE_OVERVIEW_SUBDIR );
+	path += FE_OVERVIEW_SUBDIR;
+
+	path += romname;
+	path += FE_GAME_OVERVIEW_FILE_EXTENSION;
+
+	return file_exists( path );
+}
+
+bool FeSettings::get_game_overview_absolute( int filter_index, int rom_index, std::string &ov )
+{
+	std::string emulator = get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Emulator );
+	std::string romname = get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Romname );
+
+	if ( romname.empty() )
+		romname = emulator;
+
+	std::string path;
+	if ( !get_game_overview_filepath( emulator, romname, path ) )
+		return false;
+
+	// We keep the last loaded game overview in memory, use it now if it is a match
+	//
+	if ( path.compare( m_last_game_overview_path ) == 0 )
+	{
+		ov = m_last_game_overview_text;
+		return true;
+	}
+
+	ov.clear();
+
+	std::ifstream myfile( path.c_str() );
+	if ( !myfile.is_open() )
+		return false;
+
+	while ( myfile.good() )
+	{
+		std::string line;
+		getline( myfile, line );
+
+		ov += line;
+		ov += "\n";
+	}
+	myfile.close();
+
+	remove_trailing_spaces( ov );
+
+	m_last_game_overview_path = path;
+	m_last_game_overview_text = ov;
+
+	FeDebug() << "Loaded game overview from: " << path
+		<< " [" << emulator << "][" << romname << "]" << std::endl;
+
+	return true;
+
+}
+
+void FeSettings::set_game_overview( const std::string &emu,
+	const std::string &romname, const std::string &ov, bool overwrite )
+{
+	std::string path;
+	bool file_exists = get_game_overview_filepath( emu, romname, path );
+
+	if ( !file_exists || overwrite )
+	{
+		std::ofstream outfile( path.c_str() );
+		if ( outfile.is_open() )
+		{
+			outfile << ov << std::endl;
+			outfile.close();
+
+			m_last_game_overview_path = path;
+			m_last_game_overview_text = ov;
+
+			FeDebug() << "Wrote game overview to: " << path
+				<< " [" << emu << "][" << romname << "]" << std::endl;
+		}
+	}
 }
 
 int FeSettings::get_current_filter_index() const
@@ -2325,21 +2439,7 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 			break;
 
 		case 14: // "Overview"
-			if (( filter_index == 0 ) && ( rom_index == 0 ))
-				rep = get_game_extra( Overview );
-			else if ( m_current_display >= 0 )
-			{
-				std::map<GameExtra,std::string> extras;
-
-				load_game_extras(
-					m_displays[m_current_display].get_info( FeDisplayInfo::Romlist ),
-					get_rom_info_absolute( filter_index, rom_index, FeRomInfo::Romname ),
-					extras );
-
-				rep = extras[ Overview ];
-			}
-
-			perform_substitution( rep, "\\n", "\n" );
+			get_game_overview_absolute( filter_index, rom_index, rep );
 			break;
 
 		default:

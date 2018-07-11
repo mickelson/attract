@@ -1228,6 +1228,27 @@ std::string url_escape( const std::string &raw )
 	return escaped.str();
 }
 
+std::string newline_escape( const std::string &raw )
+{
+	std::string temp;
+	size_t pos1=0, pos=0;
+
+	while ( ( pos = raw.find( "\n", pos1 ) ) != std::string::npos )
+	{
+		temp += raw.substr( pos1, pos-pos1 );
+		temp += "\\n";
+		pos1 = pos+1;
+	}
+	temp += raw.substr( pos1 );
+
+	return temp;
+}
+
+void remove_trailing_spaces( std::string &str )
+{
+	str.erase( str.find_last_not_of( " \n\r\t" )+1 );
+}
+
 void get_url_components( const std::string &url,
 	std::string &host,
 	std::string &req )

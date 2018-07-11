@@ -2256,14 +2256,12 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 	else if ( index == FeRomInfo::LAST_INDEX+1 )
 	{
 		// Overview
-		retval.clear();
-		if (( offset == 0 ) && ( filter_offset == 0 ))
-			retval = fev->m_feSettings->get_game_extra( FeSettings::Overview ).c_str();
-		//
-		//TODO: loading overview where there is a filter or index offset is not yet implemented
-		//
+		int filter_index = fev->m_feSettings->get_filter_index_from_offset( filter_offset );
 
-		perform_substitution( retval, "\\n", "\n" );
+		fev->m_feSettings->get_game_overview_absolute( filter_index,
+			fev->m_feSettings->get_rom_index( filter_index, offset ),
+			retval );
+
 		return retval.c_str();
 	}
 

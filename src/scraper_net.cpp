@@ -659,23 +659,20 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 				}
 				else
 				{
-					std::string overview;
-					if( m_scrape_overview && gdbp.get_overview( overview ) )
-					{
-						//
-						// Save the overview now...
-						//
-						std::map<GameExtra,std::string> extras;
-						const std::string &rn = (worklist[id])->get_info( FeRomInfo::Romname );
-
-						load_game_extras( c.out_name, rn, extras );
-						extras[ Overview ] = overview;
-						save_game_extras( c.out_name, rn, extras );
-					}
-
 					aux = (worklist[id])->get_info( FeRomInfo::Title );
 					done_count+=NUM_ARTS;
 				}
+
+				std::string overview;
+				if( m_scrape_overview && gdbp.get_overview( overview ) )
+				{
+					//
+					// If we found an overview and haven't saved it yet locally, do that now...
+					//
+					const std::string &rn = (worklist[id])->get_info( FeRomInfo::Romname );
+					set_game_overview( emu_name, rn, overview, false );
+				}
+
 			}
 
 			if (( c.uiupdate ) && !worklist.empty() )

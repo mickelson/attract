@@ -1417,22 +1417,8 @@ void FeGameDBParser::set_info_val( FeRomInfo::Index i, const std::string &v )
 
 bool FeGameDBParser::get_overview( std::string &overview )
 {
-	if ( m_overview_keep.empty() )
-		return false;
-
-	//
-	// escape newlines in m_overview
-	//
-	size_t pos1=0, pos=0;
-	while ( ( pos = m_overview_keep.find( "\n", pos1 ) ) != std::string::npos )
-	{
-		overview += m_overview_keep.substr( pos1, pos-pos1 );
-		overview += "\\n";
-		pos1 = pos+1;
-	}
-	overview += m_overview_keep.substr( pos1 );
-
-	return true;
+	overview = m_overview_keep;
+	return overview.empty();
 }
 
 bool FeGameDBParser::parse( const std::string &data )
