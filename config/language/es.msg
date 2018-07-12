@@ -324,6 +324,7 @@ Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
 Artwork Name;Artwork Name
+Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
 Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
@@ -358,6 +359,7 @@ Intro;Intro
 Joystick $1;Joystick $1
 Joystick Mappings;Joystick Mappings
 Launch Last Game;Launch Last Game
+Layout File;Layout File
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
@@ -410,6 +412,7 @@ _help_hide_console;Hide console on startup. Note that this only works if startin
 _help_input_default_action;Set the default behaviour for this control
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_language;Select the language to use in Attract-Mode's user interface
+_help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
 _help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
 _help_shortcut_delete;Delete this shortcut from the Romlist

@@ -35,6 +35,7 @@ extern "C"
 #endif
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 #define FE_NAME_D			"Attract-Mode"
@@ -204,13 +205,29 @@ bool FeBaseConfigurable::load_from_file( const std::string &filename,
    if ( !myfile.is_open() )
 		return false;
 
+	const int DEBUG_MAX_LINES=200;
+	int count=0;
+
 	while ( myfile.good() )
 	{
 		std::string line, setting, value;
 		getline( myfile, line );
 
 		if ( line_to_setting_and_value( line, setting, value, sep ) )
+		{
+			if (( g_log_level == FeLog_Debug ) && ( count <= DEBUG_MAX_LINES ))
+			{
+				FeDebug() << "[" << filename <<  "] " << std::setw(15) << std::left << setting
+					<< " = " << value << std::endl;
+
+				if ( count == DEBUG_MAX_LINES )
+					FeDebug() << "[" << filename <<  "] DEBUG_MAX_LINES exceeded, truncating further debug output from this file." << std::endl;
+
+				count++;
+			}
+
 			process_setting( setting, value, filename );
+		}
 	}
 
 	myfile.close();

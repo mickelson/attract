@@ -57,6 +57,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <errno.h>
+#include <wordexp.h>
 #endif
 
 #ifdef SFML_SYSTEM_MACOS
@@ -235,22 +236,31 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 		return retval;
 
 #ifdef SFML_SYSTEM_WINDOWS
-	// substitute systemroot leading %SYSTEMROOT%
-	if (( retval.size() >= 12 )
-		&& ( retval.compare( 0, 12, "%SYSTEMROOT%" ) == 0 ))
+	struct subs_struct
 	{
-		std::string sysroot;
-		str_from_c( sysroot, getenv( "SystemRoot" ) );
-		retval.replace( 0, 12, sysroot );
-	}
-	else if (( retval.size() >= 14 )
-		&& ( retval.compare( 0, 14, "%PROGRAMFILES%" ) == 0 ))
+		const char *comp;
+		const char *env;
+	} subs[] =
 	{
-		std::string pf;
-		str_from_c( pf, getenv( "ProgramFiles" ) );
-		retval.replace( 0, 14, pf );
-	}
+		{ "%SYSTEMROOT%", "SystemRoot" },
+		{ "%PROGRAMFILES%", "ProgramFiles" },
+		{ "%PROGRAMFILESx86%", "ProgramFiles(x86)" },
+		{ "%APPDATA%", "APPDATA" },
+		{ "%SYSTEMDRIVE%", "SystemDrive" },
+		{ NULL, NULL }
+	};
 
+	for ( int i=0; subs[i].comp != NULL; i++ )
+	{
+		int l = strlen( subs[i].comp );
+		if (( retval.size() >= l ) && ( retval.compare( 0, l, subs[i].comp ) == 0 ))
+		{
+			std::string temp;
+			str_from_c( temp, getenv( subs[i].env ) );
+			retval.replace( 0, l, temp );
+			break;
+		}
+	}
 #endif
 
 	// substitute home dir for leading ~
@@ -777,10 +787,6 @@ bool run_program( const std::string &prog,
 {
 	const int POLL_FOR_EXIT_MS=50;
 
-	std::string comstr( prog );
-	comstr += " ";
-	comstr += args;
-
 	std::string work_dir = cwork_dir;
 	if ( work_dir.empty() )
 	{
@@ -814,6 +820,10 @@ bool run_program( const std::string &prog,
 		si.hStdOutput = child_output_write;
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
+
+	std::string comstr( prog );
+	comstr += " ";
+	comstr += args;
 
 	LPSTR cmdline = new char[ comstr.length() + 1 ];
 	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
@@ -854,7 +864,7 @@ bool run_program( const std::string &prog,
 
 	if (( NULL != callback ) && ( block ))
 	{
-		const int BUFF_SIZE = 2048;
+		const int BUFF_SIZE = 20480;
 		char buffer[ BUFF_SIZE+1 ];
 		buffer[BUFF_SIZE]=0;
 		DWORD bytes_read;
@@ -922,23 +932,7 @@ bool run_program( const std::string &prog,
 	CloseHandle( pi.hThread );
 
 #else
-
-	std::vector < std::string > string_list;
-	size_t pos=0;
-
-	while ( pos < args.size() )
-	{
-		std::string val;
-		token_helper( args, pos, val, FE_WHITESPACE );
-		string_list.push_back( val );
-	}
-
-	char *arg_list[string_list.size() + 2];
-	arg_list[0] = (char *)prog.c_str();
-	for ( unsigned int i=0; i < string_list.size(); i++ )
-		arg_list[i+1] = (char *)string_list[i].c_str();
-
-	arg_list[string_list.size() + 1] = NULL;
+	wordexp_t we;
 
 	int mypipe[2] = { 0, 0 }; // mypipe[0] = read end, mypipe[1] = write end
 	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
@@ -966,10 +960,26 @@ bool run_program( const std::string &prog,
 		if ( !work_dir.empty() && ( chdir( work_dir.c_str() ) != 0 ) )
 			FeLog() << "Warning, chdir(" << work_dir << ") failed." << std::endl;
 
-		execvp( prog.c_str(), arg_list );
+		wordexp( prog.c_str(), &we, 0 );
+
+		// according to the manual page, we.we_wordv is always null terminated, so we can feed it
+		// right into execvp
+		if ( wordexp( args.c_str(), &we, WRDE_APPEND ) != 0 )
+			FeLog() << "Parameter word expansion failed. [" << args << "]." << std::endl;
+
+		// Provide some debugging output for what we are doing
+		FeDebug() << "execvp(): file='" << prog.c_str() << "', argv=";
+		for ( int r=0; we.we_wordv[r]; r++ )
+			FeDebug() << "[" << we.we_wordv[r] << "]";
+		FeDebug() << std::endl;
+
+		execvp( prog.c_str(), we.we_wordv );
 
 		// execvp doesn't return unless there is an error.
 		FeLog() << "Error executing: " << prog << " " << args << std::endl;
+
+		wordfree( &we );
+
 		_exit(127);
 
 	default: // parent process
@@ -979,9 +989,10 @@ bool run_program( const std::string &prog,
 			FILE *fp = fdopen( mypipe[0], "r" );
 			close( mypipe[1] );
 
-			char buffer[ 1024 ];
+			const int BUFF_SIZE = 2048;
+			char buffer[ BUFF_SIZE ];
 
-			while( fgets( buffer, 1024, fp ) != NULL )
+			while( fgets( buffer, BUFF_SIZE, fp ) != NULL )
 			{
 				if ( callback( buffer, opaque ) == false )
 				{
@@ -1215,6 +1226,27 @@ std::string url_escape( const std::string &raw )
 	}
 
 	return escaped.str();
+}
+
+std::string newline_escape( const std::string &raw )
+{
+	std::string temp;
+	size_t pos1=0, pos=0;
+
+	while ( ( pos = raw.find( "\n", pos1 ) ) != std::string::npos )
+	{
+		temp += raw.substr( pos1, pos-pos1 );
+		temp += "\\n";
+		pos1 = pos+1;
+	}
+	temp += raw.substr( pos1 );
+
+	return temp;
+}
+
+void remove_trailing_spaces( std::string &str )
+{
+	str.erase( str.find_last_not_of( " \n\r\t" )+1 );
 }
 
 void get_url_components( const std::string &url,

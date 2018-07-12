@@ -1,0 +1,35 @@
+language: c++
+sudo: false
+os:
+  - linux
+  - osx
+addons:
+  apt:
+    packages:
+      - libopenal-dev
+      - zlib1g-dev
+      - libfreetype6-dev
+      - libjpeg-dev
+      - libsfml-dev
+      - libavutil-dev
+      - libavcodec-dev
+      - libavformat-dev
+      - libswscale-dev
+      - libavresample-dev
+      - libarchive-dev
+      - libfontconfig1-dev
+      - libxinerama-dev
+      - pkg-config
+compiler:
+  - clang
+  - gcc
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update --all; fi
+install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install pkg-config ffmpeg sfml libarchive; fi
+script:
+  - make -j8

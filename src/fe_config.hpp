@@ -200,26 +200,28 @@ protected:
 	bool on_option_select(
 		FeConfigContext &ctx, FeBaseConfigMenu *& submenu );
 
-	bool save_helper( FeConfigContext &ctx );
+	bool save_helper( FeConfigContext &ctx, int first_idx=0 );
 
-	FeScriptConfigurable *m_configurable;
-	std::string m_file_path;
-	std::string m_file_name;
 	FeSettings::FePresentState m_state;
 	int m_script_id;
+	FeScriptConfigurable *m_configurable;
+	FeScriptConfigurable *m_per_display;
+	std::string m_file_path;
+	std::string m_file_name;
 };
 
 class FeLayoutEditMenu : public FeScriptConfigMenu
 {
 private:
 	FeLayoutInfo *m_layout;
+	FeDisplayInfo *m_display;
 
 public:
 	FeLayoutEditMenu();
 	void get_options( FeConfigContext &ctx );
 
 	bool save( FeConfigContext &ctx );
-	void set_layout( FeLayoutInfo *layout );
+	void set_layout( FeLayoutInfo *layout, FeScriptConfigurable *per_display, FeDisplayInfo *display );
 };
 
 class FeIntroEditMenu : public FeScriptConfigMenu
@@ -335,7 +337,6 @@ class FeDisplayEditMenu : public FeBaseConfigMenu
 private:
 	FeFilterEditMenu m_filter_menu;
 	FeLayoutEditMenu m_layout_menu;
-	FeDisplayInfo *m_display;
 	int m_index; // the index for m_display in FeSettings' master list
 
 public:
@@ -345,7 +346,7 @@ public:
 	bool on_option_select( FeConfigContext &ctx,
 		FeBaseConfigMenu *& submenu );
 	bool save( FeConfigContext &ctx );
-	void set_display( FeDisplayInfo *d, int index );
+	void set_display_index( int index );
 };
 
 class FeDisplayMenuEditMenu : public FeBaseConfigMenu
@@ -481,6 +482,7 @@ private:
 	bool m_update_rl;
 	bool m_update_stats;
 	bool m_update_extras;
+	bool m_update_overview;
 
 public:
 	FeEditGameMenu();

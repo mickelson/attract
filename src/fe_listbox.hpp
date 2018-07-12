@@ -98,6 +98,11 @@ public:
 	void on_new_selection( FeSettings * );
 	void set_scale_factor( float, float );
 
+	void set_no_margin( bool );
+	bool get_no_margin();
+	void set_margin( int );
+	int get_margin();
+
 	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
 
 	int get_bgr();
@@ -105,7 +110,10 @@ public:
 	int get_bgb();
 	int get_bga();
 	int get_charsize();
+	int get_glyph_size();
+	float get_spacing();
 	int get_rows();
+	int get_list_size();
 	int get_style();
 	int get_align();
 	void set_bgr(int r);
@@ -114,6 +122,7 @@ public:
 	void set_bga(int a);
 	void set_bg_rgb( int, int, int );
 	void set_charsize(int s);
+	void set_spacing(float s);
 	void set_rows(int r);
 	void set_style(int s);
 	void set_align(int a);

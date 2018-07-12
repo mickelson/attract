@@ -143,8 +143,7 @@ public:
 	enum GameExtra
 	{
 		Executable =0, // custom executable to override the configured emulator executable
-		Arguments,     // custom arguments to override the configured emulator arguments
-		Overview
+		Arguments      // custom arguments to override the configured emulator arguments
 	};
 
 private:
@@ -157,6 +156,9 @@ private:
 	std::string m_menu_prompt;		// 'Displays Menu" prompt
 	std::string m_menu_layout;		// 'Displays Menu' layout.  if blank, use built-in menu
 	std::string m_menu_layout_file;		// 'Displays Menu" toggled layout file
+
+	std::string m_last_game_overview_path;  // cache the last loaded game overview path
+	std::string m_last_game_overview_text;  // cache the last loaded game overview text
 
 	std::vector<std::string> m_font_paths;
 	std::vector<FeDisplayInfo> m_displays;
@@ -175,6 +177,8 @@ private:
 	FeResourceMap m_resourcemap;
 	FeLayoutInfo m_saver_params;
 	FeLayoutInfo m_intro_params;
+	FeLayoutInfo m_current_layout_params; // copy of current layout params (w/ per display params as well)
+	FeLayoutInfo m_display_menu_per_display_params; // stores only the 'per_display' params for the display menu
 	sf::IntRect m_mousecap_rect;
 
 	int m_current_display; // -1 if we are currently showing the 'displays menu' w/ custom layout
@@ -237,7 +241,7 @@ private:
 	bool simple_scraper( FeImporterContext &, const char *, const char *, const char *, const char *, bool = false );
 	bool general_mame_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
-	void apply_xml_import( FeImporterContext &, bool );
+	bool apply_xml_import( FeImporterContext & );
 
 	bool load_game_extras(
 		const std::string &romlist_name,
@@ -248,6 +252,9 @@ private:
 		const std::string &romlist_name,
 		const std::string &romname,
 		const std::map<GameExtra,std::string> &extras );
+
+	// sets path to filename for specified emu and romname.  Returns true if file exists, false otherwise
+	bool get_game_overview_filepath( const std::string &emu, const std::string &romname, std::string &path );
 
 public:
 	FeSettings( const std::string &config_dir,
@@ -399,6 +406,7 @@ public:
 	bool get_layout_dir( const std::string &layout_name, std::string &layout_dir ) const;
 	void get_layouts_list( std::vector<std::string> &layouts ) const;
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
+	FeScriptConfigurable &get_display_menu_per_display_params() { return m_display_menu_per_display_params; };
 
 	bool get_best_artwork_file(
 		const FeRomInfo &rom,
@@ -486,13 +494,20 @@ public:
 	void set_game_extra( GameExtra id, const std::string &value );
 	void save_game_extras();
 
+	bool get_game_overview_absolute( int filter_index, int rom_index, std::string &overview );
+
+	// only overwrites an existing file if overwrite = true
+	void set_game_overview( const std::string &emu, const std::string &romname, const std::string &overview, bool overwrite );
+
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,
 	// overwriting any previous list of this name.
 	//
+	// Returns false if cancelled by the user
+	//
 	typedef bool (*UiUpdate) ( void *, int, const std::string & );
 	bool build_romlist( const std::vector < std::string > &emu_name, const std::string &out_filename,
-		UiUpdate, void *, std::string & );
+		UiUpdate, void *, std::string &, bool use_net=true );
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 
 	FeEmulatorInfo *get_emulator( const std::string & );
@@ -535,6 +550,8 @@ public:
 	void set_language( const std::string &l );
 	const std::string &get_language() const { return m_language; }
 	void get_languages_list( std::vector < FeLanguage > &ll ) const;
+
+	bool get_emulator_setup_script( std::string &path, std::string &file );
 
 	// Utility function to get a list of layout*.nut files from the specified path...
 	static void get_layout_file_basenames_from_path(

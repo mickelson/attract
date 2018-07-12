@@ -158,6 +158,7 @@ public:
 		Intro,
 		InsertGame,
 		EditGame,
+		LayoutOptions,
 		Custom1,
 		Custom2,
 		Custom3,

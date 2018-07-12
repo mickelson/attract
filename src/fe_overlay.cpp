@@ -284,7 +284,7 @@ void FeOverlay::splash_message( const std::string &msg,
 
 int FeOverlay::confirm_dialog( const std::string &msg,
 	const std::string &rep,
-	FeInputMap::Command extra_exit )
+	bool default_yes )
 {
 	std::string msg_str;
 	m_feSettings.get_resource( msg, rep, msg_str );
@@ -293,7 +293,7 @@ int FeOverlay::confirm_dialog( const std::string &msg,
 	m_feSettings.get_resource( "Yes", list[0] );
 	m_feSettings.get_resource( "No", list[1] );
 
-	return common_basic_dialog( msg_str, list, 1, 1, extra_exit );
+	return common_basic_dialog( msg_str, list, (default_yes ? 0 : 1), 1, FeInputMap::Exit );
 }
 
 int FeOverlay::common_list_dialog(
@@ -932,7 +932,7 @@ bool FeOverlay::edit_game_dialog()
 		if ( index >= 0 )
 		{
 			FeDisplayEditMenu m;
-			m.set_display( m_feSettings.get_display( index ), index );
+			m.set_display_index( index );
 
 			if ( display_config_dialog( &m, settings_changed ) < 0 )
 				m_wnd.close();
@@ -971,6 +971,54 @@ bool FeOverlay::edit_game_dialog()
 	// TODO: should only return true when setting_changed is true or when user deleted
 	// the rom completely
 	return true;
+}
+
+bool FeOverlay::layout_options_dialog()
+{
+	FeLayoutEditMenu m;
+
+	FeDisplayInfo *display = NULL;
+	FeScriptConfigurable *per_display = NULL;
+	FeLayoutInfo *layout = NULL;
+
+	int display_index = m_feSettings.get_current_display_index();
+
+	if ( display_index < 0 )
+	{
+		// Displays Menu
+		display = NULL;
+		per_display = &m_feSettings.get_display_menu_per_display_params();
+
+		std::string lname = m_feSettings.get_info( FeSettings::MenuLayout );
+
+		if ( lname.empty() )
+			return false;
+
+		layout = &m_feSettings.get_layout_config( lname );
+	}
+	else
+	{
+		display = m_feSettings.get_display( display_index );
+		per_display = &display->get_layout_per_display_params();
+		layout = &m_feSettings.get_layout_config( display->get_info( FeDisplayInfo::Layout ) );
+	}
+
+	m.set_layout( layout, per_display, display );
+
+	bool settings_changed=false;
+	if ( display_config_dialog( &m, settings_changed ) < 0 )
+		m_wnd.close();
+
+	if ( settings_changed )
+	{
+		// Save the updated settings to disk
+		m_feSettings.save();
+
+		// This forces the display to reinitialize with the updated settings
+		m_feSettings.set_display( m_feSettings.get_current_display_index() );
+	}
+
+	return settings_changed;
 }
 
 int FeOverlay::display_config_dialog(
@@ -1579,16 +1627,19 @@ int get_char_idx( unsigned char c )
 bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *tp )
 {
+	sf::Clock cursor_timer;
 	const sf::Transform &t = m_fePresent.get_transform();
 
 	const sf::Font *font = tp->getFont();
-	sf::Text cursor( "_", *font, tp->getCharacterSize() );
+	sf::Text cursor( "|", *font, tp->getCharacterSize() / tp->getTextScale().x );
 	cursor.setColor( tp->getColor() );
 	cursor.setStyle( sf::Text::Bold );
 	cursor.setScale( tp->getTextScale() );
 
 	int cursor_pos=str.size();
-	cursor.setPosition( tp->setString( str, cursor_pos ) );
+	cursor.setPosition( tp->setString( str, cursor_pos ) - sf::Vector2f((
+		cursor.getLocalBounds().width + cursor.getLocalBounds().left - 2.0 ) * cursor.getScale().x,
+		cursor.getLocalBounds().top * cursor.getScale().y / 2.0 ));
 
 	bool redraw=true;
 	FeKeyRepeat key_repeat_enabler( m_wnd );
@@ -1820,28 +1871,38 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			}
 
 			if ( redraw )
-				cursor.setPosition( tp->setString( str, cursor_pos ) );
+			{
+				cursor.setPosition( tp->setString( str, cursor_pos ) - sf::Vector2f((
+					cursor.getLocalBounds().width + cursor.getLocalBounds().left - 2.0 ) * cursor.getScale().x,
+					cursor.getLocalBounds().top * cursor.getScale().y / 2.0 ));
+				cursor_timer.restart();
+			}
 		}
 
 		if ( m_fePresent.tick() )
 			redraw = true;
 
-		if ( redraw )
-		{
-			m_wnd.clear();
-			m_wnd.draw( m_fePresent, t );
+		// When left or right is hold reset the timer, so the cursor isn't blinking
+		if ( m_feSettings.get_current_state( FeInputMap::Left ) || m_feSettings.get_current_state( FeInputMap::Right ))
+			cursor_timer.restart();
 
-			for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
-					itr < d.end(); ++itr )
-				m_wnd.draw( *(*itr), t );
+		m_wnd.clear();
+		m_wnd.draw( m_fePresent, t );
 
-			m_wnd.draw( cursor, t );
-			m_wnd.display();
+		for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
+				itr < d.end(); ++itr )
+			m_wnd.draw( *(*itr), t );
 
-			redraw = false;
-		}
-		else
+		int cursor_fade = ( sin( cursor_timer.getElapsedTime().asMilliseconds() / 250.0 * M_PI ) + 1.0 ) * 255;
+		cursor.setColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
+
+		m_wnd.draw( cursor, t );
+		m_wnd.display();
+
+		if ( !redraw )
 			sf::sleep( sf::milliseconds( 30 ) );
+
+		redraw = false;
 
 		//
 		// Check if previous joystick move is now done (in which case we clear the guard)
@@ -1870,7 +1931,7 @@ bool FeOverlay::common_exit()
 		return true;
 	}
 
-	int retval = confirm_dialog( "Exit Attract-Mode?", "", FeInputMap::Exit );
+	int retval = confirm_dialog( "Exit Attract-Mode?", "" );
 
 	//
 	// retval is 0 if the user confirmed exit.

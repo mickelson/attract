@@ -27,6 +27,7 @@
 #include "fe_listbox.hpp"
 #include "fe_input.hpp"
 #include "fe_file.hpp"
+#include "fe_blend.hpp"
 #include "zip.hpp"
 
 #include <iostream>
@@ -408,6 +409,8 @@ FeImage *FePresent::add_surface( int w, int h, FePresentableParent &p )
 	//
 	FeImage *new_image = new FeImage( p, new_surface, 0, 0, w, h );
 	new_image->set_scale_factor( m_layoutScale.x, m_layoutScale.y );
+	if ( sf::Shader::isAvailable() )
+		new_image->set_blend_mode( FeBlend::Premultiplied );
 
 	new_image->texture_changed();
 
@@ -568,16 +571,22 @@ float FePresent::get_layout_scale_y() const
 
 void FePresent::set_layout_width( int w )
 {
-	m_layoutSize.x = w;
-	set_transforms();
-	flag_redraw();
+	if ( w != m_layoutSize.x )
+	{
+		m_layoutSize.x = w;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 void FePresent::set_layout_height( int h )
 {
-	m_layoutSize.y = h;
-	set_transforms();
-	flag_redraw();
+	if ( h != m_layoutSize.y )
+	{
+		m_layoutSize.y = h;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 const FeFontContainer *FePresent::get_pooled_font( const std::string &n )
@@ -643,9 +652,12 @@ const char *FePresent::get_layout_font() const
 
 void FePresent::set_base_rotation( int r )
 {
-	m_baseRotation = (FeSettings::RotationState)r;
-	set_transforms();
-	flag_redraw();
+	if ( r != m_baseRotation )
+	{
+		m_baseRotation = (FeSettings::RotationState)r;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 int FePresent::get_base_rotation() const
@@ -655,9 +667,12 @@ int FePresent::get_base_rotation() const
 
 void FePresent::set_toggle_rotation( int r )
 {
-	m_toggleRotation = (FeSettings::RotationState)r;
-	set_transforms();
-	flag_redraw();
+	if ( r != m_toggleRotation )
+	{
+		m_toggleRotation = (FeSettings::RotationState)r;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 int FePresent::get_toggle_rotation() const
@@ -1065,7 +1080,7 @@ bool FePresent::video_tick()
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 			itm != m_texturePool.end(); ++itm )
 	{
-		if ( (*itm)->tick( m_feSettings, m_playMovies, true ) )
+		if ( (*itm)->tick( m_feSettings, m_playMovies ) )
 			ret_val=true;
 	}
 

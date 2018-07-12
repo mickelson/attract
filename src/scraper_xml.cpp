@@ -155,6 +155,7 @@ std::string get_crc( const std::string &full_path,
 	}
 
 	char *buff_ptr = new char[size];
+	char *orig_buff_ptr = buff_ptr;
 
 	myfile.read( buff_ptr, size );
 	myfile.close();
@@ -162,7 +163,7 @@ std::string get_crc( const std::string &full_path,
 	correct_buff_for_format( buff_ptr, size, full_path );
 	std::string retval = get_crc32( buff_ptr, size );
 
-	delete [] buff_ptr;
+	delete [] orig_buff_ptr;
 
 	return retval;
 }
@@ -300,6 +301,7 @@ FeImporterContext::FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType
 	uiupdate( NULL ),
 	uiupdatedata( NULL ),
 	full( false ),
+	use_net( true ),
 	progress_past( 0 ),
 	progress_range( 100 ),
 	download_count( 0 )
@@ -442,6 +444,10 @@ void FeListXMLParser::start_element(
 					type = attribute[i+1];
 				else if ( strcmp( attribute[i], "ways" ) == 0 )
 					ways = attribute[i+1];
+
+				if (( strcmp( attribute[i], "buttons" ) == 0 )
+						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
+					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
 			}
 
 			struct my_map_struct { const char *in; const char *out; };
@@ -690,7 +696,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 	XML_SetCharacterDataHandler( parser, exp_handle_data );
 	bool ret_val = true;
 
-	while ( myfile.good() )
+	while ( myfile.good() && m_continue_parse )
 	{
 		std::string line;
 		getline( myfile, line );
@@ -1411,22 +1417,8 @@ void FeGameDBParser::set_info_val( FeRomInfo::Index i, const std::string &v )
 
 bool FeGameDBParser::get_overview( std::string &overview )
 {
-	if ( m_overview_keep.empty() )
-		return false;
-
-	//
-	// escape newlines in m_overview
-	//
-	size_t pos1=0, pos=0;
-	while ( ( pos = m_overview_keep.find( "\n", pos1 ) ) != std::string::npos )
-	{
-		overview += m_overview_keep.substr( pos1, pos-pos1 );
-		overview += "\\n";
-		pos1 = pos+1;
-	}
-	overview += m_overview_keep.substr( pos1 );
-
-	return true;
+	overview = m_overview_keep;
+	return overview.empty();
 }
 
 bool FeGameDBParser::parse( const std::string &data )

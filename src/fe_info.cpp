@@ -627,6 +627,12 @@ void FeDisplayInfo::set_current_layout_file( const std::string &n )
 void FeDisplayInfo::set_info( int setting,
          const std::string &value )
 {
+	if (( setting == Layout ) && ( value.compare( m_info[ Layout ] ) != 0 ))
+	{
+		// If changing the layout, reset the layout file as well
+		m_current_layout_file = "";
+	}
+
 	m_info[ setting ] = value;
 }
 
@@ -661,11 +667,15 @@ int FeDisplayInfo::process_setting( const std::string &setting,
 	}
 	else
 	{
-		if ( m_current_config_filter )
+		if ( m_layout_per_display_params.process_setting( setting, value, fn ) == 0 )
+		{
+			// nothing to do
+		}
+		else if ( m_current_config_filter )
 			m_current_config_filter->process_setting( setting, value, fn );
 		else
 		{
-			invalid_setting( fn, "list", setting, indexStrings + 1, otherStrings );
+			invalid_setting( fn, "display", setting, indexStrings + 1, otherStrings );
 			return 1;
 		}
 	}
@@ -814,6 +824,8 @@ void FeDisplayInfo::save( std::ofstream &f ) const
 	for ( std::vector<FeFilter>::const_iterator itr=m_filters.begin();
 			itr != m_filters.end(); ++itr )
 		(*itr).save( f, otherStrings[0] );
+
+	m_layout_per_display_params.save( f );
 }
 
 bool FeDisplayInfo::show_in_cycle() const
@@ -1291,6 +1303,14 @@ void FeScriptConfigurable::save( std::ofstream &f ) const
 	}
 }
 
+void FeScriptConfigurable::merge_params( const FeScriptConfigurable &o )
+{
+	std::map<std::string,std::string>::const_iterator itr;
+
+	for ( itr=o.m_params.begin(); itr!=o.m_params.end(); ++itr )
+		m_params[ (*itr).first ] = (*itr).second;
+}
+
 const char *FePlugInfo::indexStrings[] = { "enabled","param",NULL };
 
 FePlugInfo::FePlugInfo( const std::string & n )
@@ -1325,6 +1345,7 @@ const char *FeLayoutInfo::indexStrings[] = {
 	"saver_config",
 	"layout_config",
 	"intro_config",
+	"menu_config",
 	NULL
 };
 
@@ -1351,6 +1372,13 @@ void FeLayoutInfo::save( std::ofstream &f ) const
 
 		FeScriptConfigurable::save( f );
 	}
+}
+
+bool FeLayoutInfo::operator!=( const FeLayoutInfo &o )
+{
+	return (( m_name != o.m_name )
+		|| ( m_type != o.m_type )
+		|| ( m_params != o.m_params ));
 }
 
 FeResourceMap::FeResourceMap()

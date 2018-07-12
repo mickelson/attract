@@ -72,12 +72,14 @@ public:
 
 	void splash_message( const std::string &, const std::string &rep="",
 		const std::string &aux="" );
+
 	int confirm_dialog( const std::string &msg,
 		const std::string &rep="",
-		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
+		bool default_yes = false );
 
 	bool config_dialog();
 	bool edit_game_dialog();
+	bool layout_options_dialog();
 	int languages_dialog();
 	int tags_dialog();
 

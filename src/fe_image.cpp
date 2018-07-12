@@ -26,6 +26,7 @@
 #include "fe_shader.hpp"
 #include "fe_present.hpp"
 #include "fe_file.hpp"
+#include "fe_blend.hpp"
 #include "zip.hpp"
 
 #ifndef NO_MOVIE
@@ -144,6 +145,15 @@ int FeBaseTextureContainer::get_trigger() const
 	return ToNewSelection;
 }
 
+void FeBaseTextureContainer::set_mipmap( bool m )
+{
+}
+
+bool FeBaseTextureContainer::get_mipmap() const
+{
+	return false;
+}
+
 void FeBaseTextureContainer::transition_swap( FeBaseTextureContainer *o )
 {
 	//
@@ -170,7 +180,7 @@ bool FeBaseTextureContainer::fix_masked_image()
 	return false;
 }
 
-bool FeBaseTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
+bool FeBaseTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
 	return false;
 }
@@ -226,7 +236,8 @@ FeTextureContainer::FeTextureContainer(
 	m_movie( NULL ),
 	m_swf( NULL ),
 	m_movie_status( -1 ),
-	m_video_flags( VF_Normal )
+	m_video_flags( VF_Normal ),
+	m_mipmap( false )
 {
 	if ( is_artwork )
 	{
@@ -298,6 +309,10 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return true;
 
 		clear();
+
+		if ( !file_exists( path ) )
+			return false;
+
 		m_movie = new FeMedia( FeMedia::AudioVideo );
 		res = m_movie->openFromArchive( path, filename, &m_texture );
 	}
@@ -308,6 +323,10 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return true;
 
 		clear();
+
+		if ( !file_exists( loaded_name ) )
+			return false;
+
 		m_movie = new FeMedia( FeMedia::AudioVideo );
 		res = m_movie->openFromFile( loaded_name, &m_texture );
 	}
@@ -358,6 +377,11 @@ bool FeTextureContainer::try_to_load(
 			if ( loaded_name.compare( m_file_name ) == 0 )
 				return true;
 
+			clear();
+
+			if ( !file_exists( path ) )
+				return false;
+
 			m_swf = new FeSwf();
 
 			if (!m_swf->open_from_archive( path, filename ))
@@ -375,6 +399,11 @@ bool FeTextureContainer::try_to_load(
 			loaded_name = path + filename;
 			if ( loaded_name.compare( m_file_name ) == 0 )
 				return true;
+
+			clear();
+
+			if ( !file_exists( loaded_name ) )
+				return false;
 
 			m_swf = new FeSwf();
 			if (!m_swf->open_from_file( loaded_name ))
@@ -405,6 +434,10 @@ bool FeTextureContainer::try_to_load(
 			return true;
 
 		clear();
+
+		if ( !file_exists( path ) )
+			return false;
+
 		FeZipStream zs( path );
 		if ( !zs.open( filename ) )
 		{
@@ -421,6 +454,9 @@ bool FeTextureContainer::try_to_load(
 
 		if ( m_texture.loadFromStream( zs ) )
 		{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			if ( m_mipmap ) m_texture.generateMipmap();
+#endif
 			m_file_name = loaded_name;
 			return true;
 		}
@@ -433,9 +469,15 @@ bool FeTextureContainer::try_to_load(
 
 		clear();
 
+		if ( !file_exists( loaded_name ) )
+			return false;
+
 		FeFileInputStream filestream( loaded_name );
 		if ( m_texture.loadFromStream( filestream ) )
 		{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			if ( m_mipmap ) m_texture.generateMipmap();
+#endif
 			m_file_name = loaded_name;
 			return true;
 		}
@@ -650,7 +692,7 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 	notify_texture_change();
 }
 
-bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )
+bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
 #ifndef NO_SWF
 	if (( play_movies ) && ( m_swf ))
@@ -661,12 +703,11 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok
 
 #ifndef NO_MOVIE
 	if (( play_movies )
+		&& ( m_movie )
 		&& ( !(m_video_flags & VF_DisableVideo) )
-		&& ( m_movie ))
+		&& ( m_movie_status > 0 ))
 	{
-		if (( m_movie_status > 0 )
-			&& ( m_movie_status < PLAY_COUNT )
-			&& ( ok_to_start ))
+		if ( m_movie_status < PLAY_COUNT )
 		{
 			//
 			// We skip the first few "ticks" after the movie
@@ -677,7 +718,7 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok
 			m_movie_status++;
 			return false;
 		}
-		else if (( m_movie_status == PLAY_COUNT ) && ( ok_to_start ))
+		else if ( m_movie_status == PLAY_COUNT )
 		{
 			m_movie_status++;
 
@@ -689,10 +730,25 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies, bool ok
 			else
 				m_movie->setVolume(feSettings->get_play_volume( FeSoundInfo::Movie ) );
 
-			m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
 			m_movie->play();
 		}
-		return m_movie->tick();
+
+		// restart looped video
+		if ( !(m_video_flags & VF_NoLoop) && !m_movie->is_playing() )
+		{
+			m_movie->stop();
+			m_movie->play();
+
+			FeDebug() << "Restarted looped video" << std::endl;
+		}
+
+		if ( m_movie->tick() )
+		{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			if ( m_mipmap ) m_texture.generateMipmap();
+#endif
+			return true;
+		}
 	}
 #endif
 
@@ -704,12 +760,18 @@ void FeTextureContainer::set_play_state( bool play )
 #ifndef NO_MOVIE
 	if (m_movie)
 	{
-		if ( m_movie_status >= PLAY_COUNT )
+		if ( play == get_play_state() )
+			return;
+
+		if ( m_movie_status > PLAY_COUNT )
 		{
 			if ( play )
 				m_movie->play();
 			else
+			{
 				m_movie->stop();
+				m_movie_status = 0;
+			}
 		}
 		else if ( m_movie_status >= 0 )
 		{
@@ -735,7 +797,7 @@ bool FeTextureContainer::get_play_state() const
 #ifndef NO_MOVIE
 	if ( m_movie )
 	{
-		if ( m_movie_status >= PLAY_COUNT )
+		if ( m_movie_status > PLAY_COUNT )
 			return m_movie->is_playing();
 		else
 			// if status > 0, we are in the process of starting to play
@@ -793,8 +855,6 @@ void FeTextureContainer::set_video_flags( FeVideoFlags f )
 #ifndef NO_MOVIE
 	if ( m_movie )
 	{
-		m_movie->setLoop( !(m_video_flags & VF_NoLoop) );
-
 		if (m_video_flags & VF_NoAudio)
 			m_movie->setVolume( 0.f );
 		else
@@ -937,6 +997,19 @@ bool FeTextureContainer::get_smooth() const
 	return m_texture.isSmooth();
 }
 
+void FeTextureContainer::set_mipmap( bool m )
+{
+	m_mipmap = m;
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+	if ( m_mipmap && !m_movie) m_texture.generateMipmap();;
+#endif
+}
+
+bool FeTextureContainer::get_mipmap() const
+{
+	return m_mipmap;
+}
+
 void FeTextureContainer::release_audio( bool state )
 {
 #ifndef NO_MOVIE
@@ -1013,6 +1086,15 @@ bool FeSurfaceTextureContainer::get_smooth() const
 	return m_texture.isSmooth();
 }
 
+void FeSurfaceTextureContainer::set_mipmap( bool m )
+{
+}
+
+bool FeSurfaceTextureContainer::get_mipmap() const
+{
+	return false;
+}
+
 FePresentableParent *FeSurfaceTextureContainer::get_presentable_parent()
 {
 	return this;
@@ -1025,6 +1107,7 @@ FeImage::FeImage( FePresentableParent &p,
 	m_pos( x, y ),
 	m_size( w, h ),
 	m_origin( 0.f, 0.f ),
+	m_blend_mode( FeBlend::Alpha ),
 	m_preserve_aspect_ratio( false )
 {
 	ASSERT( m_tex );
@@ -1039,6 +1122,7 @@ FeImage::FeImage( FeImage *o )
 	m_pos( o->m_pos ),
 	m_size( o->m_size ),
 	m_origin( o->m_origin ),
+	m_blend_mode( o->m_blend_mode ),
 	m_preserve_aspect_ratio( o->m_preserve_aspect_ratio )
 {
 	m_tex->register_image( this );
@@ -1111,6 +1195,10 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 		if ( sh )
 			states.shader = sh;
 	}
+	else
+		states.shader = FeBlend::get_default_shader( m_blend_mode );
+
+	states.blendMode = FeBlend::get_blend_mode( m_blend_mode );
 
 	target.draw( m_sprite, states );
 }
@@ -1194,16 +1282,22 @@ const sf::Vector2f &FeImage::getSize() const
 
 void FeImage::setSize( const sf::Vector2f &s )
 {
-	m_size = s;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( s != m_size )
+	{
+		m_size = s;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::setPosition( const sf::Vector2f &p )
 {
-	m_pos = p;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( p != m_pos )
+	{
+		m_pos = p;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 float FeImage::getRotation() const
@@ -1213,9 +1307,12 @@ float FeImage::getRotation() const
 
 void FeImage::setRotation( float r )
 {
-	m_sprite.setRotation( r );
-	scale();
-	FePresent::script_flag_redraw();
+	if ( r != m_sprite.getRotation() )
+	{
+		m_sprite.setRotation( r );
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 const sf::Color &FeImage::getColor() const
@@ -1225,8 +1322,11 @@ const sf::Color &FeImage::getColor() const
 
 void FeImage::setColor( const sf::Color &c )
 {
-	m_sprite.setColor( c );
-	FePresent::script_flag_redraw();
+	if ( c != m_sprite.getColor() )
+	{
+		m_sprite.setColor( c );
+		FePresent::script_flag_redraw();
+	}
 }
 
 const sf::Vector2u FeImage::getTextureSize() const
@@ -1241,9 +1341,12 @@ const sf::IntRect &FeImage::getTextureRect() const
 
 void FeImage::setTextureRect( const sf::IntRect &r )
 {
-	m_sprite.setTextureRect( r );
-	scale();
-	FePresent::script_flag_redraw();
+	if ( r != m_sprite.getTextureRect() )
+	{
+		m_sprite.setTextureRect( r );
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 int FeImage::getVideoFlags() const
@@ -1363,39 +1466,57 @@ int FeImage::get_pinch_y() const
 
 void FeImage::set_origin_x( float x )
 {
-	m_origin.x = x;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( x != m_origin.x )
+	{
+		m_origin.x = x;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_origin_y( float y )
 {
-	m_origin.y = y;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( y != m_origin.y )
+	{
+		m_origin.y = y;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 void FeImage::set_skew_x( int x )
 {
-	m_sprite.setSkewX( x );
-	FePresent::script_flag_redraw();
+	if ( x != m_sprite.getSkewX() )
+	{
+		m_sprite.setSkewX( x );
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_skew_y( int y )
 {
-	m_sprite.setSkewY( y );
-	FePresent::script_flag_redraw();
+	if ( y != m_sprite.getSkewY() )
+	{
+		m_sprite.setSkewY( y );
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_pinch_x( int x )
 {
-	m_sprite.setPinchX( x );
-	FePresent::script_flag_redraw();
+	if ( x != m_sprite.getPinchX() )
+	{
+		m_sprite.setPinchX( x );
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_pinch_y( int y )
 {
-	m_sprite.setPinchY( y );
-	FePresent::script_flag_redraw();
+	if ( y != m_sprite.getPinchY() )
+	{
+		m_sprite.setPinchY( y );
+		FePresent::script_flag_redraw();
+	}
 }
 
 int FeImage::get_texture_width() const
@@ -1466,6 +1587,16 @@ void FeImage::set_preserve_aspect_ratio( bool p )
 	m_preserve_aspect_ratio = p;
 }
 
+void FeImage::set_mipmap( bool m )
+{
+	m_tex->set_mipmap( m );
+}
+
+bool FeImage::get_mipmap() const
+{
+	return m_tex->get_mipmap();
+}
+
 void FeImage::transition_swap( FeImage *o )
 {
 	// if we're pointing at the same texture, don't do anything
@@ -1486,6 +1617,16 @@ void FeImage::set_smooth( bool s )
 bool FeImage::get_smooth() const
 {
 	return m_tex->get_smooth();
+}
+
+int FeImage::get_blend_mode() const
+{
+	return (FeBlend::Mode)m_blend_mode;
+}
+ 
+void FeImage::set_blend_mode( int b )
+{
+	m_blend_mode = (FeBlend::Mode)b;
 }
 
 FeImage *FeImage::add_image(const char *n, int x, int y, int w, int h)

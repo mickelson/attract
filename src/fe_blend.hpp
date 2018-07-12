@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-2014 Andrew Mickelson
+ *  Copyright (C) 2013 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -20,30 +20,37 @@
  *
  */
 
-#ifndef FE_WINDOW_HPP
-#define FE_WINDOW_HPP
+#ifndef FE_BLEND_HPP
+#define FE_BLEND_HPP
 
-#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics.hpp>
 
-class FeSettings;
-
-class FeWindow : public sf::RenderWindow
+class FeBlend
 {
-	friend void launch_callback( void *o );
-	friend void wait_callback( void *o ); 
-
-protected:
-	FeSettings &m_fes;
-
-	// override from base class
-	void onCreate();
+private:
+	static const char *DEFAULT_SHADER_GLSL_MULTIPLIED;
+	static const char *DEFAULT_SHADER_GLSL_OVERLAY;
+	static const char *DEFAULT_SHADER_GLSL_PREMULTIPLIED;
 
 public:
-	FeWindow( FeSettings &fes );
+	enum Mode
+	{ 
+		Alpha,
+		Add,
+		Screen,
+		Multiply,
+		Overlay,
+		Premultiplied,
+		None
+	}; 
 
-	void initial_create();		// first time window creation
-	bool run();						// run the currently selected game (blocking). returns false if window closed in the interim
-	void on_exit();				// called before exiting frontend
+	static sf::BlendMode get_blend_mode( int blend_mode );
+	static sf::Shader* get_default_shader( int blend_mode );
+	static void load_default_shaders();
+
+	static sf::Shader default_shader_multiplied;
+	static sf::Shader default_shader_overlay;
+	static sf::Shader default_shader_premultiplied;
 };
 
 #endif

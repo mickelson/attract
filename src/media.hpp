@@ -65,6 +65,8 @@ public:
 	using sf::SoundStream::setPitch;
 	using sf::SoundStream::getPitch;
 	using sf::SoundStream::getStatus;
+	using sf::SoundStream::setLoop;
+	using sf::SoundStream::getLoop;
 	using sf::SoundSource::release_audio;
 
 	void play();
@@ -75,9 +77,6 @@ public:
 	// texture. Returns true if display refresh required.  false if no update
 	//
 	bool tick();
-
-	void setLoop( bool );
-	bool getLoop() const;
 
 	void setVolume(float volume);
 

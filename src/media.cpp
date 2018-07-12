@@ -118,7 +118,6 @@ public:
 	AVFormatContext *m_format_ctx;
 	AVIOContext *m_io_ctx;
 	sf::Mutex m_read_mutex;
-	bool m_loop;
 	bool m_read_eof;
 };
 
@@ -222,7 +221,6 @@ FeMediaImp::FeMediaImp( FeMedia::Type t )
 	: m_type( t ),
 	m_format_ctx( NULL ),
 	m_io_ctx( NULL ),
-	m_loop( true ),
 	m_read_eof( false )
 {
 }
@@ -874,19 +872,9 @@ void FeMedia::close()
 bool FeMedia::is_playing()
 {
 	if ((m_video) && (!m_video->at_end))
-		return true;
+		return (m_video->run_video_thread);
 
 	return ((m_audio) && (sf::SoundStream::getStatus() == sf::SoundStream::Playing));
-}
-
-void FeMedia::setLoop( bool l )
-{
-	m_imp->m_loop=l;
-}
-
-bool FeMedia::getLoop() const
-{
-	return m_imp->m_loop;
 }
 
 void FeMedia::setVolume(float volume)
@@ -1166,14 +1154,6 @@ bool FeMedia::tick()
 		}
 	}
 
-	// restart if we are looping and done
-	//
-	if ( (m_imp->m_loop) && (!is_playing()) )
-	{
-		stop();
-		play();
-	}
-
 	return false;
 }
 
@@ -1440,6 +1420,9 @@ std::string FeMedia::g_decoder;
 #ifdef SFML_SYSTEM_WINDOWS
 #define FE_HWACCEL_DXVA2
 #include "media_dxva2.cpp"
+
+#define FE_HWACCEL_D3D11VA
+#include "media_d3d11.cpp"
 #endif
 
 #ifdef FE_HWACCEL_VAAPI
@@ -1469,6 +1452,11 @@ void FeMedia::get_decoder_list( std::vector< std::string > &l )
 #ifdef FE_HWACCEL_DXVA2
 	if ( av_hwdevice_find_type_by_name( "dxva2" ) != AV_HWDEVICE_TYPE_NONE )
 		l.push_back( "dxva2" );
+#endif
+
+#ifdef FE_HWACCEL_D3D11VA
+	if ( av_hwdevice_find_type_by_name( "d3d11va" ) != AV_HWDEVICE_TYPE_NONE )
+		l.push_back( "d3d11" );
 #endif
 
 #ifdef FE_HWACCEL_VAAPI
@@ -1530,6 +1518,11 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 #ifdef FE_HWACCEL_DXVA2
 	if ( g_decoder.compare( "dxva2" ) == 0 )
 		codec_ctx->get_format = get_format_dxva2;
+#endif
+
+#ifdef FE_HWACCEL_D3D11VA
+	if ( g_decoder.compare( "d3d11" ) == 0 )
+		codec_ctx->get_format = get_format_d3d11;
 #endif
 
 #ifdef FE_HWACCEL_VAAPI

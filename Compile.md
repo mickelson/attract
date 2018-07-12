@@ -3,27 +3,33 @@ Compiling Attract-Mode
 
 Build instructions are set out by operating system below:
 
-Linux, FreeBSD:
----------------
+Linux, FreeBSD, Ubuntu:
+----------------------
 
 These instructions assume that you have the GNU C/C++ compilers and basic
 build utilities (make, pkg-config, ar) on your system.  This means the
 "build-essential" and "pkg-config" packages on Debian or Ubuntu-based
 distributions.  Other distributions should have similar packages available.
 
-1. Install the following *development* libraries on your system:
+1. Install the following *development* libraries on your system [use sudo apt-get install xxx, where xxx should be replaced by the library name between brackets, eg. sudo apt-get install libsfml-dev]:
    * Required:
-      - SFML SDK version 2.x (<http://sfml-dev.org>)
-      - OpenAL
-      - zlib
-      - FreeType 2
-      - The following FFmpeg libraries (required for videos): avformat,
-      avcodec, swscale, avutil and either swresample or avresample.
-      - OpenGL and GLU (or OpenGLES for GLES version)
+      - SFML SDK version 2.x (<http://sfml-dev.org>) [libsfml-dev]
+      - OpenAL [libopenal-dev]
+      - Zlib [zlib1g-dev]
+      - FreeType 2 [libfreetype6-dev]
+      - The following FFmpeg libraries (required for videos): 
+          * avformat [libavformat-dev],
+          * avcodec [libavcodec-dev], 
+          * swscale [libswscale-dev], 
+          * avutil [libavutil-dev],
+          * swresample [libswresample-dev] or avresample [libavresample-dev].
+      - OpenGL and GLU (or OpenGLES for GLES version) [freeglut3-dev]
+      - JPEG library [libjpeg-dev]
+      - Make [make] and Package Config [pkg-config]
    * Optional:
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
-      - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
+      - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support). [libarchive-dev]
 
 2. Extract the Attract-Mode source to your system.
 
@@ -141,14 +147,14 @@ Windows (native compile):
 
 2. Launch the MSYS2 shell and update the system:
 
-           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime`
+           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime
 
 3. Close MSYS2 Shell,  run it again and run the following command:
 
            pacman -Syu
 
 4. Install required packaged. (optionally use the mingw-w64-i686-toolchain
-   instead for 32-bit windows architectures):
+   instead for 32-bit windows architectures), install "all" (by default) :
 
            pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg mingw64/mingw-w64-x86_64-libarchive
 

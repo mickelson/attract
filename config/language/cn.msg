@@ -254,6 +254,7 @@ kr;한글 (Korean)
 #
 Add tag: '$1';Add tag: '$1'
 Artwork Name;Artwork Name
+Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
 Blank Game;Blank Game
 Buttons;Buttons
 Configure / Displays Menu;Configure / Displays Menu
@@ -278,6 +279,7 @@ Insert Game Entry;Insert Game Entry
 Insert Menu Entry;Insert Menu Entry
 Joystick $1;Joystick $1
 Joystick Mappings;Joystick Mappings
+Layout File;Layout File
 Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Remove tag: '$1';Remove tag: '$1'
@@ -399,6 +401,7 @@ _help_intro;Configure intro
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_joystick_threshold;The threshold for registering joystick moves, from 1 to 100 (100=least sensitive)
 _help_language;Select the language to use in Attract-Mode's user interface
+_help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
 _help_misc;Configure miscellaneous settings
 _help_mouse_threshold;The threshold for registering mouse moves, from 1 to 100 (100=least sensitive)
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode

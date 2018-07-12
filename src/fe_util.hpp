@@ -257,6 +257,9 @@ void print_ffmpeg_version_info();
 #endif
 
 std::string url_escape( const std::string &raw );
+std::string newline_escape( const std::string &raw );
+
+void remove_trailing_spaces( std::string &str );
 
 void get_url_components( const std::string &url,
 	std::string &host,

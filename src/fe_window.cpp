@@ -220,6 +220,11 @@ void FeWindow::initial_create()
 #endif
 
 #ifdef SFML_SYSTEM_WINDOWS
+	// Fill Screen mode has an offset so the top row and the left column of the window is not visible.
+	// We call setView to compensate this -1,-1 offset of the window.
+	if ( win_mode == FeSettings::Default )
+		setView(sf::View(sf::FloatRect(getPosition().x, getPosition().y, getSize().x, getSize().y)));
+
 	SetForegroundWindow( getSystemHandle() );
 #endif
 
@@ -279,9 +284,13 @@ void wait_callback( void *o )
 			if ( ev.type == sf::Event::Closed )
 				return;
 		}
-
-		win->clear();
-		win->display();
+		// Clear the frame buffer so there is no stale frame flashing on game launch/exit 
+		// Don't clear if Multimonitor is enabled and window mode is set to Fill Screen 
+		if( !win->m_fes.get_info_bool( FeSettings::MultiMon ) || ( win->m_fes.get_window_mode() != FeSettings::Default ) )
+		{ 
+			win->clear();   
+			win->display();  
+		}
 	}
 }
 
