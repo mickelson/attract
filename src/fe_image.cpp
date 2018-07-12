@@ -1282,16 +1282,22 @@ const sf::Vector2f &FeImage::getSize() const
 
 void FeImage::setSize( const sf::Vector2f &s )
 {
-	m_size = s;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( s != m_size )
+	{
+		m_size = s;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::setPosition( const sf::Vector2f &p )
 {
-	m_pos = p;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( p != m_pos )
+	{
+		m_pos = p;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 float FeImage::getRotation() const
@@ -1301,9 +1307,12 @@ float FeImage::getRotation() const
 
 void FeImage::setRotation( float r )
 {
-	m_sprite.setRotation( r );
-	scale();
-	FePresent::script_flag_redraw();
+	if ( r != m_sprite.getRotation() )
+	{
+		m_sprite.setRotation( r );
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 const sf::Color &FeImage::getColor() const
@@ -1313,8 +1322,11 @@ const sf::Color &FeImage::getColor() const
 
 void FeImage::setColor( const sf::Color &c )
 {
-	m_sprite.setColor( c );
-	FePresent::script_flag_redraw();
+	if ( c != m_sprite.getColor() )
+	{
+		m_sprite.setColor( c );
+		FePresent::script_flag_redraw();
+	}
 }
 
 const sf::Vector2u FeImage::getTextureSize() const
@@ -1329,9 +1341,12 @@ const sf::IntRect &FeImage::getTextureRect() const
 
 void FeImage::setTextureRect( const sf::IntRect &r )
 {
-	m_sprite.setTextureRect( r );
-	scale();
-	FePresent::script_flag_redraw();
+	if ( r != m_sprite.getTextureRect() )
+	{
+		m_sprite.setTextureRect( r );
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 int FeImage::getVideoFlags() const
@@ -1451,39 +1466,57 @@ int FeImage::get_pinch_y() const
 
 void FeImage::set_origin_x( float x )
 {
-	m_origin.x = x;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( x != m_origin.x )
+	{
+		m_origin.x = x;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_origin_y( float y )
 {
-	m_origin.y = y;
-	scale();
-	FePresent::script_flag_redraw();
+	if ( y != m_origin.y )
+	{
+		m_origin.y = y;
+		scale();
+		FePresent::script_flag_redraw();
+	}
 }
 void FeImage::set_skew_x( int x )
 {
-	m_sprite.setSkewX( x );
-	FePresent::script_flag_redraw();
+	if ( x != m_sprite.getSkewX() )
+	{
+		m_sprite.setSkewX( x );
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_skew_y( int y )
 {
-	m_sprite.setSkewY( y );
-	FePresent::script_flag_redraw();
+	if ( y != m_sprite.getSkewY() )
+	{
+		m_sprite.setSkewY( y );
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_pinch_x( int x )
 {
-	m_sprite.setPinchX( x );
-	FePresent::script_flag_redraw();
+	if ( x != m_sprite.getPinchX() )
+	{
+		m_sprite.setPinchX( x );
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeImage::set_pinch_y( int y )
 {
-	m_sprite.setPinchY( y );
-	FePresent::script_flag_redraw();
+	if ( y != m_sprite.getPinchY() )
+	{
+		m_sprite.setPinchY( y );
+		FePresent::script_flag_redraw();
+	}
 }
 
 int FeImage::get_texture_width() const

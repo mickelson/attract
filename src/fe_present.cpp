@@ -571,16 +571,22 @@ float FePresent::get_layout_scale_y() const
 
 void FePresent::set_layout_width( int w )
 {
-	m_layoutSize.x = w;
-	set_transforms();
-	flag_redraw();
+	if ( w != m_layoutSize.x )
+	{
+		m_layoutSize.x = w;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 void FePresent::set_layout_height( int h )
 {
-	m_layoutSize.y = h;
-	set_transforms();
-	flag_redraw();
+	if ( h != m_layoutSize.y )
+	{
+		m_layoutSize.y = h;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 const FeFontContainer *FePresent::get_pooled_font( const std::string &n )
@@ -646,9 +652,12 @@ const char *FePresent::get_layout_font() const
 
 void FePresent::set_base_rotation( int r )
 {
-	m_baseRotation = (FeSettings::RotationState)r;
-	set_transforms();
-	flag_redraw();
+	if ( r != m_baseRotation )
+	{
+		m_baseRotation = (FeSettings::RotationState)r;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 int FePresent::get_base_rotation() const
@@ -658,9 +667,12 @@ int FePresent::get_base_rotation() const
 
 void FePresent::set_toggle_rotation( int r )
 {
-	m_toggleRotation = (FeSettings::RotationState)r;
-	set_transforms();
-	flag_redraw();
+	if ( r != m_toggleRotation )
+	{
+		m_toggleRotation = (FeSettings::RotationState)r;
+		set_transforms();
+		flag_redraw();
+	}
 }
 
 int FePresent::get_toggle_rotation() const

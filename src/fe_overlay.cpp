@@ -1879,6 +1879,9 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			}
 		}
 
+		if ( m_fePresent.tick() )
+			redraw = true;
+
 		// When left or right is hold reset the timer, so the cursor isn't blinking
 		if ( m_feSettings.get_current_state( FeInputMap::Left ) || m_feSettings.get_current_state( FeInputMap::Right ))
 			cursor_timer.restart();

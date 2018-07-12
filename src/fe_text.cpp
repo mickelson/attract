@@ -80,8 +80,11 @@ void FeText::setRotation( float r )
 
 void FeText::setColor( const sf::Color &c )
 {
-	m_draw_text.setColor( c );
-	FePresent::script_flag_redraw();
+	if ( c != m_draw_text.getColor() )
+	{
+		m_draw_text.setColor( c );
+		FePresent::script_flag_redraw();
+	}
 }
 
 const sf::Color &FeText::getColor() const
@@ -288,59 +291,85 @@ const char *FeText::get_font()
 void FeText::set_bgr(int r)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.r=r;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( r != c.r )
+	{
+		c.r=r;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bgg(int g)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.g=g;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( g != c.g )
+	{
+		c.g=g;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bgb(int b)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.b=b;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( b != c.b )
+	{
+		c.b=b;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bga(int a)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.a=a;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( a != c.a )
+	{
+		c.a=a;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bg_rgb(int r, int g, int b )
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.r=r;
-	c.g=g;
-	c.b=b;
 
-	if ( c.a == 0 )
-		c.a = 255;
+	if ( ( r != c.r ) || ( g != c.g ) || ( b != c.b ) )
+	{
+		c.r=r;
+		c.g=g;
+		c.b=b;
 
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+		if ( c.a == 0 )
+			c.a = 255;
+
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_charsize(int s)
 {
-	m_user_charsize = s;
-	FePresent::script_do_update( this );
+	if ( s != m_user_charsize )
+	{
+		m_user_charsize = s;
+		FePresent::script_do_update( this );
+	}
 }
 
 void FeText::set_spacing(float s)
 {
-	m_draw_text.setCharacterSpacing(s);
-	FePresent::script_do_update( this );
+	if ( s != m_draw_text.getCharacterSpacing() )
+	{
+		m_draw_text.setCharacterSpacing(s);
+		FePresent::script_do_update( this );
+	}
 }
 
 void FeText::set_line_spacing(float s)
@@ -351,14 +380,20 @@ void FeText::set_line_spacing(float s)
 
 void FeText::set_style(int s)
 {
-	m_draw_text.setStyle(s);
-	FePresent::script_flag_redraw();
+	if ( s != m_draw_text.getStyle() )
+	{
+		m_draw_text.setStyle(s);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_align(int a)
 {
-	m_draw_text.setAlignment( (FeTextPrimative::Alignment)a);
-	FePresent::script_do_update( this );
+	if ( a != m_draw_text.getAlignment() )
+	{
+		m_draw_text.setAlignment( (FeTextPrimative::Alignment)a);
+		FePresent::script_do_update( this );
+	}
 }
 
 void FeText::set_font( const char *f )

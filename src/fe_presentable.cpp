@@ -162,8 +162,11 @@ bool FeBasePresentable::get_visible() const
 
 void FeBasePresentable::set_visible( bool v )
 {
-	m_visible = v;
-	FePresent::script_flag_redraw();
+	if ( v != m_visible )
+	{
+		m_visible = v;
+		FePresent::script_flag_redraw();
+	}
 }
 
 FeShader *FeBasePresentable::get_shader() const
