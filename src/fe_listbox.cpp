@@ -439,6 +439,11 @@ int FeListBox::get_charsize()
 	return m_userCharSize;
 }
 
+int FeListBox::get_glyph_size()
+{
+	return m_base_text.getGlyphSize();
+}
+
 float FeListBox::get_spacing()
 {
 	return m_base_text.getCharacterSpacing();
@@ -462,6 +467,28 @@ int FeListBox::get_style()
 int FeListBox::get_align()
 {
 	return (int)m_base_text.getAlignment();
+}
+
+void FeListBox::set_no_margin( bool m )
+{
+	m_base_text.setNoMargin( m );
+	FePresent::script_do_update( this );
+}
+
+bool FeListBox::get_no_margin()
+{
+	return m_base_text.getNoMargin();
+}
+
+void FeListBox::set_margin( int m )
+{
+	m_base_text.setMargin( m );
+	FePresent::script_do_update( this );
+}
+
+int FeListBox::get_margin()
+{
+	return m_base_text.getMargin();
 }
 
 void FeListBox::setBgColor( const sf::Color &c )

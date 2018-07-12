@@ -30,9 +30,12 @@ class FeTextPrimative : public sf::Drawable
 {
 public:
 	enum Alignment {
-		Left=0,
-		Centre,
-		Right
+		Left=1,
+		Centre=2,
+		Right=4,
+		Top=8,
+		Bottom=16,
+		Middle=32
 	};
 
 	FeTextPrimative();
@@ -58,11 +61,12 @@ public:
 	// with // wordwrapping on)
 	//
 	sf::Vector2f setString( const std::basic_string<sf::Uint32> &t,
-					int cursor_string_pos=0 ); // no utf-8 conversion
+					int cursor_string_pos=-1 ); // no utf-8 conversion
 
 	void setFont( const sf::Font & );
 	void setCharacterSize( unsigned int );
 	void setCharacterSpacing( float );
+	void setLineSpacing( float );
 	void setAlignment( Alignment );
 	void setPosition( int x, int y ) {return setPosition(sf::Vector2f(x,y));};
 	void setPosition( const sf::Vector2f & );
@@ -76,13 +80,18 @@ public:
 	void setWordWrap( bool );
 	void setNoMargin( bool );
 	bool getNoMargin();
+	void setMargin( int );
+	int getMargin();
 	void setTextScale( const sf::Vector2f & );
 
 	const sf::Font *getFont() const;
 	const sf::Color &getColor() const;
 	const sf::Color &getBgColor() const;
 	unsigned int getCharacterSize() const;
+	unsigned int getGlyphSize() const;
 	float getCharacterSpacing() const;
+	float getLineSpacing() const;
+	int getLineSpacingFactored( const sf::Font *, int ) const;
 	Alignment getAlignment() const;
 	const sf::Vector2f &getPosition() const;
 	const sf::Vector2f &getSize() const;
@@ -104,25 +113,26 @@ private:
 	// to control scrolling text where the text set into the control is
 	// larger than the area available to display it.
 	int m_first_line;
-	bool m_no_margin;
+	int m_margin;
+	float m_line_spacing;
 
 	mutable bool m_needs_pos_set;
 
 	//
 	// Determines how to fit the given string "s" into the text space
 	// parameters:
-	//		[in] s 			- string to be displayed
-	//		[in] position	- If WordWrap is true, this is the first position in
-	//							"s" that can be displayed.  If WordWrap is false, this
-	//							is the location of the cursor in "s".
+	//		[in] s 				- string to be displayed
+	//		[out] position		- If WordWrap is true, this is the first position in
+	//							  "s" that can be displayed.  If WordWrap is false, this
+	//							  is the location of the cursor in "s".
 	//		[out] first_char	- position of the first character to display
-	//		[out] len			- len of substring in s to display
+	//		[out] last_char		- position of the last character to display
 	//
 	void fit_string(
 			const std::basic_string<sf::Uint32> &s,
-			int position,
+			int &position,
 			int &first_char,
-			int &len );
+			int &last_char );
 
 	void set_positions() const;
 

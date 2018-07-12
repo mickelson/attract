@@ -119,14 +119,20 @@ int FeText::getFilterOffset() const
 
 void FeText::on_new_list( FeSettings *s )
 {
-	int char_size = 8 * m_scale_factor;
-	if ( m_user_charsize > 0 )
-		char_size = m_user_charsize * m_scale_factor;
-	else if ( m_size.y > 12 )
-		char_size = ( m_size.y - 4 ) * m_scale_factor;
+	// We only update the font size and scale if the string is not empty
+	// so we do not render any unnecessary glyphs when the script updates the height of text
+	//
+	if ( m_string.size() > 0 )
+	{
+		int char_size = 8 * m_scale_factor;
+		if ( m_user_charsize > 0 )
+			char_size = m_user_charsize * m_scale_factor;
+		else if ( m_size.y > 12 )
+			char_size = ( m_size.y - 4 ) * m_scale_factor;
 
-	m_draw_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
-	m_draw_text.setCharacterSize( char_size );
+		m_draw_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
+		m_draw_text.setCharacterSize( char_size );
+	}
 	m_draw_text.setPosition( m_position );
 	m_draw_text.setSize( m_size );
 }
@@ -186,6 +192,17 @@ bool FeText::get_no_margin()
 	return m_draw_text.getNoMargin();
 }
 
+void FeText::set_margin( int m )
+{
+	m_draw_text.setMargin( m );
+	FePresent::script_do_update( this );
+}
+
+int FeText::get_margin()
+{
+	return m_draw_text.getMargin();
+}
+
 void FeText::set_first_line_hint( int l )
 {
 	if ( l != m_draw_text.getFirstLineHint() )
@@ -238,9 +255,19 @@ int FeText::get_charsize()
 	return m_draw_text.getCharacterSize();
 }
 
+int FeText::get_glyph_size()
+{
+	return m_draw_text.getGlyphSize();
+}
+
 float FeText::get_spacing()
 {
 	return m_draw_text.getCharacterSpacing();
+}
+
+float FeText::get_line_spacing()
+{
+	return m_draw_text.getLineSpacing();
 }
 
 int FeText::get_style()
@@ -313,6 +340,12 @@ void FeText::set_charsize(int s)
 void FeText::set_spacing(float s)
 {
 	m_draw_text.setCharacterSpacing(s);
+	FePresent::script_do_update( this );
+}
+
+void FeText::set_line_spacing(float s)
+{
+	m_draw_text.setLineSpacing(s);
 	FePresent::script_do_update( this );
 }
 
