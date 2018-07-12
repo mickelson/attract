@@ -1466,6 +1466,9 @@ Properties:
      `Transition.EndNavigation`.  Default value is `Transition.ToNewSelection`.
    * `smooth` - Get/set whether the image is to be smoothed.  Default value can
      be configured in attract.cfg
+   * `zorder` - Get/set the Image's order in the applicable draw list.  Objects
+     with a lower zorder are drawn first, so that when objects overlap, the one
+     with the higher zorder is drawn on top.  Default value is 0.
    * `blend_mode` - Get/set the blend mode for this image.  Can have one of the
      following values:
       - `BlendMode.Alpha`
@@ -1480,8 +1483,6 @@ Properties:
      The default value is `false`.  It's advised to force anisotropic filtering in
      the display driver settings if the Image with auto generated mipmap is scaled
      by the ratio that is not isotropic.
-   * `zorder` - Get/set the Image's order in the applicable draw list.  When
-     objects overlap, the one with the higher zorder will be drawn on top.
 
 Member Functions:
 
@@ -1657,8 +1658,9 @@ Properties:
      Default value is `-1` which calcualtes the margin based on the .char_size.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
-   * `zorder` - Get/set the Text's order in the applicable draw list.  When
-     objects overlap, the one with the higher zorder will be drawn on top.
+   * `zorder` - Get/set the Text's order in the applicable draw list.  Objects
+     with a lower zorder are drawn first, so that when objects overlap, the one
+     with the higher zorder is drawn on top.  Default value is 0.
 
 Member Functions:
 
@@ -1762,8 +1764,9 @@ Properties:
      behaviour as if set to "[Title]").  Default is an empty value.
    * `shader` - Get/set the GLSL shader for this listbox. This can only be set
      to an instance of the class `fe.Shader` (see: `fe.add_shader()`).
-   * `zorder` - Get/set the Listbox's order in the applicable draw list.  When
-     objects overlap, the one with the higher zorder will be drawn on top.
+   * `zorder` - Get/set the Listbox's order in the applicable draw list.  Objects
+     with a lower zorder are drawn first, so that when objects overlap, the one
+     with the higher zorder is drawn on top.  Default value is 0.
 
 Member Functions:
 
