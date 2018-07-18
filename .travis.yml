@@ -1,8 +1,5 @@
 language: cpp
 sudo: false
-os:
-- linux
-- osx
 addons:
   apt:
     packages:
@@ -15,7 +12,6 @@ addons:
     - libavcodec-dev
     - libavformat-dev
     - libswscale-dev
-    - libavresample-dev
     - libarchive-dev
     - libfontconfig1-dev
     - libxinerama-dev
@@ -27,11 +23,26 @@ matrix:
   include:
   - os: linux
     compiler: gcc
+    addons:
+       apt:
+          packages:
+          - libavresample-dev
+  - os: linux
+    complier: clang
+    addons:
+       apt:
+          packages:
+          - libavresample-dev
+  - os: linux
+    compiler: gcc
     sudo: required
     dist: precise
-  exclude:
+    addons:
+       apt:
+          packages:
+          - libswresample-dev
   - os: osx
-    compiler: gcc
+    compiler: clang
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update --all; fi
 install:
