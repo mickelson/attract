@@ -1,3 +1,7 @@
+#define RT_MANIFEST 24  
+#define APP_MANIFEST 1 
+APP_MANIFEST RT_MANIFEST attract.exe.manifest 
+
 #define STRINGIZE_HELPER(...) #__VA_ARGS__
 #define STRINGIZE(x) STRINGIZE_HELPER(x)
 
