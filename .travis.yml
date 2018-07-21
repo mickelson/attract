@@ -19,6 +19,7 @@ addons:
     - libarchive-dev
     - libfontconfig1-dev
     - libxinerama-dev
+    - freeglut3-dev
     - pkg-config
 compiler:
 - clang
