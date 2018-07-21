@@ -24,6 +24,10 @@ compiler:
 - clang
 - gcc
 matrix:
+  include:
+  - os: linux
+    dist: xenial
+    sudo: required
   exclude:
   - os: osx
     compiler: gcc

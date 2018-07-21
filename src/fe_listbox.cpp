@@ -642,34 +642,39 @@ int FeListBox::get_sela()
 
 void FeListBox::set_selr(int r)
 {
-	m_selColour.r=r;
-	setSelColor( m_selColour );
+	sf::Color c = m_selColour;
+	c.r=r;
+	setSelColor( c );
 }
 
 void FeListBox::set_selg(int g)
 {
-	m_selColour.g=g;
-	setSelColor( m_selColour );
+	sf::Color c = m_selColour;
+	c.g=g;
+	setSelColor( c );
 }
 
 void FeListBox::set_selb(int b)
 {
-	m_selColour.b=b;
-	setSelColor( m_selColour );
+	sf::Color c = m_selColour;
+	c.b=b;
+	setSelColor( c );
 }
 
 void FeListBox::set_sela(int a)
 {
-	m_selColour.a=a;
-	setSelColor( m_selColour );
+	sf::Color c = m_selColour;
+	c.a=a;
+	setSelColor( c );
 }
 
 void FeListBox::set_sel_rgb(int r, int g, int b )
 {
-	m_selColour.r = r;
-	m_selColour.g = g;
-	m_selColour.b = b;
-	setSelColor( m_selColour );
+	sf::Color c = m_selColour;
+	c.r = r;
+	c.g = g;
+	c.b = b;
+	setSelColor( c );
 }
 
 int FeListBox::get_selbgr()
@@ -699,34 +704,39 @@ const char *FeListBox::get_font()
 
 void FeListBox::set_selbgr(int r)
 {
-	m_selBg.r=r;
-	setSelBgColor( m_selBg );
+	sf::Color c = m_selBg;
+	c.r=r;
+	setSelBgColor( c );
 }
 
 void FeListBox::set_selbgg(int g)
 {
-	m_selBg.g=g;
-	setSelBgColor( m_selBg );
+	sf::Color c = m_selBg;
+	c.g=g;
+	setSelBgColor( c );
 }
 
 void FeListBox::set_selbgb(int b)
 {
-	m_selBg.b=b;
-	setSelBgColor( m_selBg );
+	sf::Color c = m_selBg;
+	c.b=b;
+	setSelBgColor( c );
 }
 
 void FeListBox::set_selbga(int a)
 {
-	m_selBg.a=a;
-	setSelBgColor( m_selBg );
+	sf::Color c = m_selBg;
+	c.a=a;
+	setSelBgColor( c );
 }
 
 void FeListBox::set_selbg_rgb(int r, int g, int b )
 {
-	m_selBg.r = r;
-	m_selBg.g = g;
-	m_selBg.b = b;
-	setSelBgColor( m_selBg );
+	sf::Color c = m_selBg;
+	c.r = r;
+	c.g = g;
+	c.b = b;
+	setSelBgColor( c );
 }
 
 void FeListBox::set_font( const char *f )
