@@ -177,12 +177,13 @@ void FeWindow::onCreate()
 
 void FeWindow::initial_create()
 {
-	int style_map[4] =
+	int style_map[5] =
 	{
 		sf::Style::None,			// FeSettings::Default
 		sf::Style::Fullscreen,	// FeSettings::Fullscreen
 		sf::Style::Default,		// FeSettings::Window
-		sf::Style::None			// FeSettings::WindowNoBorder
+		sf::Style::None,			// FeSettings::WindowNoBorder
+		sf::Style::None				// FeSettings::BorderlessFullscreen
 	};
 
 	int win_mode = m_fes.get_window_mode();
