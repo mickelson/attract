@@ -1416,24 +1416,34 @@ const char *FeMedia::get_metadata( const char *tag )
 std::string FeMedia::g_decoder;
 
 #if FE_HWACCEL
+//
+// A list of the 'HWDEVICE' ffmpeg hwaccels that we support
+//
+enum AVHWDeviceType fe_hw_accels[] =
+{
+#ifdef FE_HWACCEL_VAAPI
+	AV_HWDEVICE_TYPE_VAAPI,
+#endif
+#ifdef FE_HWACCEL_VDPAU
+	AV_HWDEVICE_TYPE_VDPAU,
+#endif
 
 #ifdef SFML_SYSTEM_WINDOWS
-#define FE_HWACCEL_DXVA2
-#include "media_dxva2.cpp"
-
-#define FE_HWACCEL_D3D11VA
-#include "media_d3d11.cpp"
+	AV_HWDEVICE_TYPE_DXVA2,
+ #if (LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( 56, 67, 100 ))
+	AV_HWDEVICE_TYPE_D3D11VA,
+ #endif
 #endif
 
-#ifdef FE_HWACCEL_VAAPI
-#include "media_vaapi.cpp"
+#ifdef SFML_SYSTEM_MACOS
+ #if (LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( 57, 63, 100 ))
+	AV_HWDEVICE_TYPE_VIDEOTOOLBOX,
+ #endif
 #endif
 
-#ifdef FE_HWACCEL_VDPAU
-#include "media_vdpau.cpp"
+	AV_HWDEVICE_TYPE_NONE
+};
 #endif
-
-#endif // if FE_HWACCEL
 
 void FeMedia::get_decoder_list( std::vector< std::string > &l )
 {
@@ -1449,24 +1459,13 @@ void FeMedia::get_decoder_list( std::vector< std::string > &l )
 		l.push_back( "mmal" );
 #endif
 
-#ifdef FE_HWACCEL_DXVA2
-	if ( av_hwdevice_find_type_by_name( "dxva2" ) != AV_HWDEVICE_TYPE_NONE )
-		l.push_back( "dxva2" );
-#endif
-
-#ifdef FE_HWACCEL_D3D11VA
-	if ( av_hwdevice_find_type_by_name( "d3d11va" ) != AV_HWDEVICE_TYPE_NONE )
-		l.push_back( "d3d11" );
-#endif
-
-#ifdef FE_HWACCEL_VAAPI
-	if ( av_hwdevice_find_type_by_name( "vaapi" ) != AV_HWDEVICE_TYPE_NONE )
-		l.push_back( "vaapi" );
-#endif
-
-#ifdef FE_HWACCEL_VDPAU
-	if ( av_hwdevice_find_type_by_name( "vdpau" ) != AV_HWDEVICE_TYPE_NONE )
-		l.push_back( "vdpau" );
+#if FE_HWACCEL
+	for ( int i=0; fe_hw_accels[i] != AV_HWDEVICE_TYPE_NONE; i++ )
+	{
+		const char *name = av_hwdevice_get_type_name( fe_hw_accels[i] );
+		if ( name != NULL )
+			l.push_back( name );
+	}
 #endif
 }
 
@@ -1512,26 +1511,32 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 		default:
 			break;
 		};
+
+		return;
 	}
 #endif
 
-#ifdef FE_HWACCEL_DXVA2
-	if ( g_decoder.compare( "dxva2" ) == 0 )
-		codec_ctx->get_format = get_format_dxva2;
-#endif
+#if FE_HWACCEL
+	for ( int i=0; fe_hw_accels[i] != AV_HWDEVICE_TYPE_NONE; i++ )
+	{
+		if ( g_decoder.compare( av_hwdevice_get_type_name( fe_hw_accels[i] ) ) != 0 )
+			continue;
 
-#ifdef FE_HWACCEL_D3D11VA
-	if ( g_decoder.compare( "d3d11" ) == 0 )
-		codec_ctx->get_format = get_format_d3d11;
-#endif
+		AVBufferRef *device_ctx=NULL;
+		int ret = av_hwdevice_ctx_create( &device_ctx, fe_hw_accels[i], NULL, NULL, 0 );
 
-#ifdef FE_HWACCEL_VAAPI
-	if ( g_decoder.compare( "vaapi" ) == 0 )
-		codec_ctx->get_format = get_format_vaapi;
-#endif
+		if ( ret < 0 )
+		{
+			FeLog() << "error creating hw device context: "
+				<< av_hwdevice_get_type_name( fe_hw_accels[i] ) << std::endl;
+			return;
+		}
 
-#ifdef FE_HWACCEL_VDPAU
-	if ( g_decoder.compare( "vdpau" ) == 0 )
-		codec_ctx->get_format = get_format_vdpau;
+		codec_ctx->hw_device_ctx = device_ctx; // we are passing our buffer ref on device_ctx to codec_ctx here...
+		codec_ctx->hwaccel_flags = AV_HWACCEL_FLAG_IGNORE_LEVEL;
+
+		FeDebug() << "created hw device: "
+				<< av_hwdevice_get_type_name( fe_hw_accels[i] ) << std::endl;
+	}
 #endif
 }
