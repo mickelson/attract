@@ -284,12 +284,12 @@ void wait_callback( void *o )
 			if ( ev.type == sf::Event::Closed )
 				return;
 		}
-		// Clear the frame buffer so there is no stale frame flashing on game launch/exit 
-		// Don't clear if Multimonitor is enabled and window mode is set to Fill Screen 
+		// Clear the frame buffer so there is no stale frame flashing on game launch/exit
+		// Don't clear if Multimonitor is enabled and window mode is set to Fill Screen
 		if( !win->m_fes.get_info_bool( FeSettings::MultiMon ) || ( win->m_fes.get_window_mode() != FeSettings::Default ) )
-		{ 
-			win->clear();   
-			win->display();  
+		{
+			win->clear();
+			win->display();
 		}
 	}
 }
@@ -320,32 +320,33 @@ bool FeWindow::run()
 	m_fes.run( nbm_wait, launch_callback, wait_callback, this );
 
 	//
-	// If nbm_wait > 0, then m_fes.run() above is non-blocking and instead
-	// we wait at most nbm_wait seconds for Attract-Mode to lose focus to
-	// the launched program.
+	// If nbm_wait > 0, then m_fes.run() above is non-blocking and we need
+	// to wait at most nbm_wait seconds for Attract-Mode to lose focus to
+	// the launched program.  If it loses focus, we continue waiting until
+	// focus returns to Attract-Mode
 	//
-	// The frontend will start up again within the nbm_wait time if focus is
-	// lost and returned to it for at least MAX_WAIT_ON_REGAIN_FOCUS ms.
-	//
-	// This mode is unfortunate and flakey, but necessary to support some
-	// programs (such as steam)
-	//
-	const int MAX_WAIT_ON_REGAIN_FOCUS=4000;
-
 	if ( nbm_wait > 0 )
 	{
 		FeDebug() << "Non-Blocking Wait Mode: nb_mode_wait=" << nbm_wait << " seconds, waiting..." << std::endl;
-		bool done_wait=false, has_focus=false, in_pad=false, focus_lost=false;
-
-		sf::Clock pad_timer;
-
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
-		has_focus = hasFocus();
-#endif
+		bool done_wait=false, has_focus=false;
 
 		while ( !done_wait && isOpen() )
 		{
 			sf::Event ev;
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+			while (pollEvent(ev))
+			{
+				if ( ev.type == sf::Event::Closed )
+					return false;
+			}
+
+			has_focus = hasFocus();
+#else
+			//
+			// flakey pre-SFML 2.2 implementation
+			// to be removed if SFML 2.0/2.1 support is ever dropped
+			//
 			while (pollEvent(ev))
 			{
 				if ( ev.type == sf::Event::GainedFocus )
@@ -363,50 +364,21 @@ bool FeWindow::run()
 							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
 
 					has_focus = false;
-					focus_lost = true;
 				}
 				else if ( ev.type == sf::Event::Closed )
 					return false;
 			}
+#endif
 
-			bool in_nbm_wait = ( timer.getElapsedTime() < sf::seconds( nbm_wait ) );
-
-			if ( !focus_lost && !in_nbm_wait )
+			if (( timer.getElapsedTime() >= sf::seconds( nbm_wait ) )
+				&& ( has_focus ))
 			{
-				FeDebug() << "Focus not lost, nbm_wait reached.  Stopped waiting at "
-					<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+				FeDebug() << "Attract-Mode has focus, stopped non-blocking wait after "
+					<< timer.getElapsedTime().asSeconds() << "s" << std::endl;
 
 				done_wait = true;
 			}
-
-			if ( has_focus )
-			{
-				if ( !in_nbm_wait )
-				{
-						FeDebug() << "Focus regained. Stopped waiting at "
-							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
-
-						done_wait=true;
-				}
-				else if ( !in_pad )
-				{
-					pad_timer.restart();
-					in_pad = true;
-				}
-				else
-				{
-					if (in_nbm_wait && focus_lost && (pad_timer.getElapsedTime() > sf::milliseconds( MAX_WAIT_ON_REGAIN_FOCUS )))
-					{
-						FeDebug() << "Focus regained for MAX_WAIT_ON_REGAIN_FOCUS (" << MAX_WAIT_ON_REGAIN_FOCUS << "ms).  Stopped waiting at "
-							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
-						done_wait=true;
-					}
-				}
-			}
 			else
-				in_pad = false;
-
-			if ( !done_wait )
 				sf::sleep( sf::milliseconds( 25 ) );
 		}
 	}
