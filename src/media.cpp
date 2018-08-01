@@ -474,16 +474,12 @@ namespace
 	{
 		AVDiscard d = AVDISCARD_DEFAULT;
 
-		if ( qscore <= -40 )
-		{
-			if ( qscore <= -120 )
-				d = AVDISCARD_ALL;
-			else if ( qscore <= -100 )
+		// Note: we aren't ever setting AVDISCARD_ALL
+		if ( qscore <= 2 )
 				d = AVDISCARD_NONKEY;
-			else
+		else if ( qscore <= 4 )
 				d = AVDISCARD_BIDIR;
-		}
-		else if ( qscore <= 0 )
+		else if ( qscore <= 8 )
 			d = AVDISCARD_NONREF;
 
 		c->skip_loop_filter = d;
@@ -588,10 +584,13 @@ void FeVideoImp::video_thread()
 {
 	sf::Time max_sleep = time_base / (sf::Int64)2;
 
-	int qscore( 100 ), qadjust( 10 ); // quality scoring
-	int displayed( 0 ), discarded( 0 ), qscore_accum( 0 );
+	const int QMAX = 16;
+	const int QMIN = 0;
+	int qscore( 10 ); // quality scoring
+	int displayed( 0 ), qscore_accum( 0 );
 
 	AVFrame *detached_frame = NULL;
+	bool degrading = false;
 
 	if ((!sws_ctx) || (!rgba_buffer[0]))
 	{
@@ -602,8 +601,6 @@ void FeVideoImp::video_thread()
 	while ( run_video_thread )
 	{
 		bool do_process = true;
-		bool discard_frames = false;
-
 		//
 		// First, display queued frame
 		//
@@ -620,39 +617,23 @@ void FeVideoImp::video_thread()
 					// If we are falling behind, we may need to start discarding
 					// frames to catch up
 					//
-					qscore -= qadjust;
+					if ( qscore > QMIN )
+						qscore--;
+
 					set_avdiscard_from_qscore( codec_ctx, qscore );
-					discard_frames = ( codec_ctx->skip_frame == AVDISCARD_ALL );
+					degrading = true;
 				}
 				else if ( wait_time >= sf::Time::Zero )
 				{
-					if ( discard_frames )
-					{
-						//
-						// Only stop discarding frames once we have caught up and are
-						// time_base ahead of the desired presentation time
-						//
-						if ( wait_time >= time_base )
-							discard_frames = false;
-					}
-					else
-					{
-						//
-						// Otherwise, we are ahead and can sleep until presentation time
-						//
-						sf::sleep( wait_time );
-					}
+					//
+					// We are ahead and can sleep until presentation time
+					//
+					sf::sleep( wait_time );
+					degrading = false;
+
 				}
 
 				qscore_accum += qscore;
-				if ( discard_frames )
-				{
-					free_frame( detached_frame );
-					detached_frame = NULL;
-
-					discarded++;
-					continue;
-				}
 
 #if FE_HWACCEL
 				hw_retrieve_data( detached_frame );
@@ -719,6 +700,7 @@ void FeVideoImp::video_thread()
 							raw_frame->pts = packet->dts;
 
 						detached_frame = raw_frame;
+
 					}
 					else
 						free_frame( raw_frame );
@@ -726,18 +708,10 @@ void FeVideoImp::video_thread()
 					free_packet( packet );
 				}
 			}
-			else
+			else if ( !degrading )
 			{
-				// Adjust our quality scoring, increasing it if it is down
-				//
-				if (( codec_ctx->skip_frame != AVDISCARD_DEFAULT )
-						&& ( qadjust > 1 ))
-					qadjust--;
-
-				if ( qscore <= -100 ) // we stick at the lowest rate if we are actually discarding frames
-					qscore = -100;
-				else if ( qscore < 100 )
-					qscore += qadjust;
+				if ( qscore < QMAX )
+					qscore++;
 
 				set_avdiscard_from_qscore( codec_ctx, qscore );
 
@@ -764,13 +738,12 @@ the_end:
 	if ( detached_frame )
 		free_frame( detached_frame );
 
-	int total_shown = displayed + discarded;
-	int average = ( total_shown == 0 ) ? qscore_accum : ( qscore_accum / total_shown );
+	int average = ( displayed == 0 ) ? qscore_accum : ( qscore_accum / displayed );
 
 	FeDebug() << "End Video Thread - " << m_parent->m_imp->m_format_ctx->filename << std::endl
 				<< " - bit_rate=" << codec_ctx->bit_rate
 				<< ", width=" << codec_ctx->width << ", height=" << codec_ctx->height << std::endl
-				<< " - displayed=" << displayed << ", discarded=" << discarded << std::endl
+				<< " - displayed=" << displayed << std::endl
 				<< " - average qscore=" << average
 				<< std::endl;
 }
@@ -808,7 +781,6 @@ sf::Time FeMedia::get_video_time()
 	// TODO: would like to sync movie time to audio, however using
 	// getPlayingOffset() here noticably slows things down on my system.
 	//
-
 	if ( m_video )
 		return m_video->video_timer.getElapsedTime();
 	else
