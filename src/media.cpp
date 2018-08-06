@@ -592,6 +592,9 @@ void FeVideoImp::video_thread()
 	AVFrame *detached_frame = NULL;
 	bool degrading = false;
 
+	int64_t prev_pts = 0;
+	int64_t prev_duration = 0;
+
 	if ((!sws_ctx) || (!rgba_buffer[0]))
 	{
 		FeLog() << "Error initializing video thread" << std::endl;
@@ -698,6 +701,14 @@ void FeVideoImp::video_thread()
 
 						if ( raw_frame->pts == AV_NOPTS_VALUE )
 							raw_frame->pts = packet->dts;
+
+						// Correct for out of bounds pts
+						if ( raw_frame->pts < prev_pts )
+							raw_frame->pts = prev_pts + prev_duration;
+
+						// Track pts and duration if we need to correct next frame
+						prev_pts = raw_frame->pts;
+						prev_duration = raw_frame->pkt_duration;
 
 						detached_frame = raw_frame;
 
