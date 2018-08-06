@@ -93,13 +93,18 @@ void print_ffmpeg_version_info()
 
 		<< " / swscale " << LIBSWSCALE_VERSION_MAJOR
 		<< '.' << LIBSWSCALE_VERSION_MINOR
-		<< '.' << LIBSWSCALE_VERSION_MICRO;
+		<< '.' << LIBSWSCALE_VERSION_MICRO
+
+		<< " / avutil " << LIBAVUTIL_VERSION_MAJOR
+		<< '.' << LIBAVUTIL_VERSION_MINOR
+		<< '.' << LIBAVUTIL_VERSION_MICRO;
 
 #ifdef DO_RESAMPLE
 	FeLog() << RESAMPLE_LIB_STR << RESAMPLE_VERSION_MAJOR
 		<< '.' << RESAMPLE_VERSION_MINOR
 		<< '.' << RESAMPLE_VERSION_MICRO;
 #endif
+
 	FeLog() << std::endl;
 }
 
@@ -702,6 +707,8 @@ void FeVideoImp::video_thread()
 						if ( raw_frame->pts == AV_NOPTS_VALUE )
 							raw_frame->pts = packet->dts;
 
+// This only works on FFmpeg, exclude libav (it doesn't have pkt_duration
+#if (LIBAVUTIL_VERSION_MICRO >= 100 )
 						// Correct for out of bounds pts
 						if ( raw_frame->pts < prev_pts )
 							raw_frame->pts = prev_pts + prev_duration;
@@ -709,6 +716,7 @@ void FeVideoImp::video_thread()
 						// Track pts and duration if we need to correct next frame
 						prev_pts = raw_frame->pts;
 						prev_duration = raw_frame->pkt_duration;
+#endif
 
 						detached_frame = raw_frame;
 

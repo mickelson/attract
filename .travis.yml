@@ -21,6 +21,10 @@ addons:
     - libxinerama-dev
     - freeglut3-dev
     - pkg-config
+    - pkgconf
+    - fakeroot
+    - dpkg
+    - dh-make
 compiler:
 - clang
 - gcc
@@ -29,26 +33,28 @@ matrix:
   - os: linux
     dist: xenial
     sudo: required
+    env: BUILD_PKG=yes
   exclude:
   - os: osx
     compiler: gcc
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update --all; fi
 install:
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive;
-  fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive; fi
 script:
 - make -j8
 before_deploy:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then util/osx/create-pkg.sh; fi
+- if [ "$BUILD_PKG" == "yes" ]; then dpkg-buildpackage -us -uc; fi
 deploy:
   provider: releases
   api_key:
     secure: tgkToF0Ic1XxR20wbD0IGThU76lDvnERHpgSQMwiaHsOQQrUUg5cOKN74WJHXkMpIuxUOXViYAMQAqB0ll5ureV2+fQIZGu8CtL0jeDjyEbZeY+b3i8ahriuz5dtmBDCqnH3srwE1D2O5oCXe1LLV3MT7MaojaWTKbIm7w8Idm8Qpkdc44i+/5AbfMOz+DsJmhU5GHjsrCR/fq3xUTLYnuejOif5UE1XMsIam51gkog+yp9+caFNHG3UwVPTy8gCdDggDB0MR0mE/dgCP14Gqxj/7R68dC4hxf2iqnl49IUvzF6ywVBHuG94MdAp7+S4EuZSyQXM/5aTchVYVokET1RkuU/BP2ePexncJziIYisfb1jyBsr8H98+Rt99PF+tEGkR2U5+2x4i5VFNtGJrb3ev1EKNQ044zN6ZPTD2awuc/SCO5ZhphwtpJH1ng6qYvMlOp5Vw3gHZhRCgc+ez7hNaOPANXmn1FRH7n+mNHU+oJNhMqnQNt0uvB9j0DRHW4xp5yNYTOYjWZiEkYDoquUlS3lKIxWRPjNSah0QCBebGfwqzVSCeY566D2QRv76Zx/AuAgQAehD0w6vH3hcjoimS5mIWjJ+l7phJW+O8suT/Y1aS6FrKepR8OYKtLIpRBMs7ku6VOTUoqLGT53kz4PnNterEN6qj5CjDT6mVHpE=
   file_glob: true
-  file: attract-*.dmg
+  file:
+  - attract-*.dmg
+  - ../attract*.deb
   skip_cleanup: true
   on:
-    tags: true
     repo: mickelson/attract
-    condition: $TRAVIS_OS_NAME = osx
+    condition: $TRAVIS_OS_NAME = osx OR $BUILD_PKG = yes
