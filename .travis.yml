@@ -58,4 +58,4 @@ deploy:
   on:
     tags: true
     repo: mickelson/attract
-    condition: $TRAVIS_OS_NAME = osx OR $BUILD_PKG = yes
+    condition: $TRAVIS_OS_NAME = osx || $BUILD_PKG = yes
