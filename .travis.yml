@@ -56,5 +56,6 @@ deploy:
   - ../attract*.deb
   skip_cleanup: true
   on:
+    tags: true
     repo: mickelson/attract
     condition: $TRAVIS_OS_NAME = osx OR $BUILD_PKG = yes
