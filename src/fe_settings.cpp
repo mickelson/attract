@@ -268,7 +268,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_confirm_favs( true ),
 	m_confirm_exit( true ),
 	m_track_usage( true ),
-	m_multimon( true ),
+	m_multimon( false ),
 #ifdef SFML_SYSTEM_LINUX
 	m_window_mode( Fullscreen ),
 #else

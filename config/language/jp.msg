@@ -413,7 +413,7 @@ _help_input_default_action;Set the default behaviour for this control
 _help_intro;Configure intro
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
-_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode.  Setting this to 'No' may reduce screen flicker when launching games
 _help_scrape_vids;Set whether game videos should be downloaded when scraping
 _help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
 _help_shortcut_delete;Delete this shortcut from the Romlist

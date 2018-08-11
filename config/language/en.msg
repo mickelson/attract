@@ -123,7 +123,7 @@ _help_language;Select the language to use in Attract-Mode's user interface
 _help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
 _help_misc;Configure miscellaneous settings
 _help_mouse_threshold;The threshold for registering mouse moves, from 1 to 100 (100=least sensitive)
-_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode.  Setting this to 'No' may reduce screen flicker when launching games
 _help_plugin_command;The executable associated with this plug-in
 _help_plugin_enabled;Set whether this plug-in is enabled
 _help_plugin_sel;Configure plug-in
