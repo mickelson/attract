@@ -2111,6 +2111,14 @@ bool FeVM::cb_get_input_state( const char *input )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+	//
+	// Only test input when frontend has focus (this test only available as of SFML 2.2)
+	//
+	if ( !fev->m_window.hasFocus() )
+		return false;
+#endif
+
 	//
 	// First test if a command has been provided
 	//
