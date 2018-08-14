@@ -90,6 +90,12 @@ public:
 	}
 };
 
+bool is_multimon_config( FeSettings &fes )
+{
+	return (( fes.get_info_bool( FeSettings::MultiMon ) )
+		&& ( !is_windowed_mode( fes.get_window_mode() ) ));
+}
+
 const char *FeWindowPosition::FILENAME = "window.am";
 
 FeWindow::FeWindow( FeSettings &fes )
@@ -119,35 +125,17 @@ void FeWindow::onCreate()
 	//		SetWindowLongPtr( getSystemHandle(), GWL_STYLE,
 	//			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
 	//
-	int left, top, width, height;
-	if (( m_fes.get_info_bool( FeSettings::MultiMon ) )
-		&& ( !is_windowed_mode( m_fes.get_window_mode() ) ))
+	if ( is_multimon_config( m_fes ) )
 	{
-		left = GetSystemMetrics( SM_XVIRTUALSCREEN );
-		top = GetSystemMetrics( SM_YVIRTUALSCREEN );
-		width = GetSystemMetrics( SM_CXVIRTUALSCREEN );
-		height = GetSystemMetrics( SM_CYVIRTUALSCREEN );
-	}
-	else
-	{
-		left = getPosition().x;
-		top = getPosition().y;
-		width = getSize().x;
-		height = getSize().y;
-	}
+		// Note that as of 2.1, SFML caches the window size internally
+		setPosition( sf::Vector2i(
+			GetSystemMetrics( SM_XVIRTUALSCREEN ),
+			GetSystemMetrics( SM_YVIRTUALSCREEN ) ) );
 
-	if ( m_fes.get_window_mode() == FeSettings::Default ) // "fill screen" mode
-	{
-		// resize the window off screen 1 pixel in each direction so we don't see the window border
-		left -= 1;
-		top -= 1;
-		width += 2;
-		height += 2;
+		setSize( sf::Vector2u(
+			GetSystemMetrics( SM_CXVIRTUALSCREEN ),
+			GetSystemMetrics( SM_CYVIRTUALSCREEN ) ) );
 	}
-
-	// As of 2.1, SFML caches the window size internally
-	setPosition( sf::Vector2i( left, top ) );
-	setSize( sf::Vector2u( width, height ) );
 
 #elif defined(USE_XLIB)
 	//
@@ -159,9 +147,10 @@ void FeWindow::onCreate()
 	//
 	int x, y, width, height;
 	get_x11_geometry(
-		m_fes.get_info_bool( FeSettings::MultiMon ) && !is_windowed_mode( m_fes.get_window_mode() ),
+		is_multimon_config( m_fes ),
 		x, y, width, height );
 
+	// Note that as of 2.1, SFML caches the window size internally
 	setPosition( sf::Vector2i( x, y ) );
 	setSize( sf::Vector2u( width, height ) );
 
@@ -188,7 +177,7 @@ void FeWindow::initial_create()
 	int win_mode = m_fes.get_window_mode();
 
 #ifdef USE_XINERAMA
-	if ( m_fes.get_info_bool( FeSettings::MultiMon ) && ( win_mode != FeSettings::Default ))
+	if ( is_multimon_config( m_fes ) && ( win_mode != FeSettings::Default ))
 		FeLog() << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
 #endif
 
@@ -220,11 +209,6 @@ void FeWindow::initial_create()
 #endif
 
 #ifdef SFML_SYSTEM_WINDOWS
-	// Fill Screen mode has an offset so the top row and the left column of the window is not visible.
-	// We call setView to compensate this -1,-1 offset of the window.
-	if ( win_mode == FeSettings::Default )
-		setView(sf::View(sf::FloatRect(getPosition().x, getPosition().y, getSize().x, getSize().y)));
-
 	SetForegroundWindow( getSystemHandle() );
 #endif
 
@@ -286,7 +270,7 @@ void wait_callback( void *o )
 		}
 		// Clear the frame buffer so there is no stale frame flashing on game launch/exit
 		// Don't clear if Multimonitor is enabled and window mode is set to Fill Screen
-		if( !win->m_fes.get_info_bool( FeSettings::MultiMon ) || ( win->m_fes.get_window_mode() != FeSettings::Default ) )
+		if ( !is_multimon_config( win->m_fes ) )
 		{
 			win->clear();
 			win->display();
