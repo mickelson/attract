@@ -30,7 +30,7 @@ console_emu <-
 {
 	"name"   : "mame-nes",
 	"exe"    : "mame",
-	"args"   : "[system] \"[romfilename]\"",
+	"args"   : "[system] -cart \"[romfilename]\"",
 	"rompath": "$HOME/mame/roms/nes/",
 	"exts"   : ".zip;.7z",
 	"system" : "nes;Nintendo Entertainment System (NES)",
@@ -190,7 +190,7 @@ class VersionParser
 		if ( my_OS == "Windows" )
 			fe.plugin_command( p + e, "-help", this, "parse_cb" );
 		else
-			fe.plugin_command( "timeout", "3s " + p + e + " -help", this, "parse_cb" );
+			fe.plugin_command( "timeout", "8s " + p + e + " -help", this, "parse_cb" );
 	}
 
 	function parse_cb( op )
@@ -252,6 +252,7 @@ class SystemParser
 	is_system=false;
 	extensions=[];
 	fullname="";
+	media="";
 
 	constructor( p, e, n, tp )
 	{
@@ -288,6 +289,9 @@ class SystemParser
 
 		if ( temp[0] == name )
 		{
+			if ( temp[1].slice( 0, 1 ) != "(" )
+				media = temp[1];
+
 			for ( local i=3; i<temp.len(); i++ )
 				extensions.push( temp[i] );
 
@@ -405,6 +409,9 @@ if ( rp.homepath.len() > 0 )
 // Write configs for every console system found
 foreach ( s in systems )
 {
+	if ( s.media.len() > 0 )
+		console_emu["args"] <- "[system] -" + s.media + " \"[romfilename]\"";
+
 	console_emu["name"] <- "mame-" + s.name;
 	console_emu["system"] = s.name;
 
