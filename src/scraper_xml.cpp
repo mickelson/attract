@@ -131,7 +131,9 @@ std::string get_crc( const std::string &full_path,
 					return "";
 
 				correct_buff_for_format( buff, size, *itr );
-				return get_crc32( buff, size );
+				std::string retval = get_crc32( buff, size );
+				FeDebug() << "CRC: " << full_path << "=" << retval << std::endl;
+				return retval;
 			}
 		}
 
@@ -165,6 +167,7 @@ std::string get_crc( const std::string &full_path,
 
 	delete [] orig_buff_ptr;
 
+	FeDebug() << "CRC: " << full_path << "=" << retval << std::endl;
 	return retval;
 }
 

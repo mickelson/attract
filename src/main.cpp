@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 	soundsys.play_ambient();
 
 	FeBlend::load_default_shaders();
-	
+
 	FeWindow window( feSettings );
 	window.initial_create();
 
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 
 	soundsys.sound_event( FeInputMap::EventStartup );
 
-	bool redraw=true;
+	bool redraw=true, has_focus=true;
 	int guard_joyid=-1, guard_axis=-1;
 
 	// variables used to track movement when a key is held down
@@ -303,6 +303,8 @@ int main(int argc, char *argv[])
 
 				soundsys.sound_event( FeInputMap::EventGameReturn );
 				soundsys.play_ambient();
+
+				has_focus=true;
 			}
 
 			launch_game=false;
@@ -976,6 +978,22 @@ int main(int argc, char *argv[])
 				redraw=true;
 			}
 		}
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ) )
+		//
+		// Log any unexpected loss of window focus
+		//
+		if ( has_focus )
+		{
+			if ( !window.hasFocus() )
+			{
+				has_focus = false;
+				FeLog() << " ! Unexpectedly lost focus to: " << get_focus_process() << std::endl;
+			}
+		}
+		else
+			has_focus = window.hasFocus();
+#endif
 
 		if ( feVM.on_tick() )
 			redraw=true;

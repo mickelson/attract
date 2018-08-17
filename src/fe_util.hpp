@@ -279,6 +279,9 @@ bool line_to_setting_and_value( const std::string &line,
 	std::string &value,
 	const char *sep=FE_WHITESPACE );
 
+// return the name of the process that currently has window focus
+std::string get_focus_process();
+
 //
 // Non-blocking check for input on stdin
 // return true if input found, false otherwise

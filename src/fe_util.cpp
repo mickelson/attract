@@ -51,6 +51,8 @@
 #include <windows.h>
 #include <io.h>
 #include <fcntl.h>
+#include <tlhelp32.h> // for CreateToolhelp32Snapshot()
+#include <psapi.h> // for GetModuleFileNameEx()
 #else
 #include <sys/wait.h>
 #include <sys/ioctl.h>
@@ -968,10 +970,13 @@ bool run_program( const std::string &prog,
 			FeLog() << "Parameter word expansion failed. [" << args << "]." << std::endl;
 
 		// Provide some debugging output for what we are doing
-		FeDebug() << "execvp(): file='" << prog.c_str() << "', argv=";
-		for ( int r=0; we.we_wordv[r]; r++ )
-			FeDebug() << "[" << we.we_wordv[r] << "]";
-		FeDebug() << std::endl;
+		if ( callback == NULL )
+		{
+			FeDebug() << "execvp(): file='" << prog.c_str() << "', argv=";
+			for ( int r=0; we.we_wordv[r]; r++ )
+				FeDebug() << "[" << we.we_wordv[r] << "]";
+			FeDebug() << std::endl;
+		}
 
 		execvp( prog.c_str(), we.we_wordv );
 
@@ -1351,4 +1356,103 @@ bool get_console_stdin( std::string &str )
 #endif
 
 	return ( !str.empty() );
+}
+
+std::string get_focus_process()
+{
+	std::string retval( "Unknown" );
+
+#if defined( SFML_SYSTEM_WINDOWS )
+	HWND focus_wnd = GetForegroundWindow();
+	if ( !focus_wnd )
+		return "None";
+
+	DWORD focus_pid( 0 );
+	GetWindowThreadProcessId( focus_wnd, &focus_pid );
+
+	HANDLE snap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+	if ( snap == INVALID_HANDLE_VALUE )
+	{
+		FeLog() << "Could not get process snapshot." << std::endl;
+		return retval;
+	}
+
+	PROCESSENTRY32 pei;
+	pei.dwSize = sizeof( pei );
+	BOOL np = Process32First( snap, &pei );
+	while ( np )
+	{
+		if ( pei.th32ProcessID == focus_pid )
+		{
+			retval = pei.szExeFile;
+			break;
+		}
+		np = Process32Next( snap, &pei );
+	}
+
+	CloseHandle( snap );
+	retval += " (" + as_str( (int)focus_pid ) + ")";
+
+#elif defined( USE_XLIB )
+
+	::Display *xdisp = XOpenDisplay( NULL );
+	Atom atom = XInternAtom( xdisp, "_NET_WM_PID", True );
+
+	Window wnd( 0 );
+	int revert;
+	XGetInputFocus( xdisp, &wnd, &revert );
+	if ( wnd == PointerRoot )
+		return "Pointer Root";
+	else if ( wnd == None )
+		return "None";
+
+	Atom actual_type;
+	int actual_format;
+	unsigned long nitems, bytes_after;
+	unsigned char *prop = NULL;
+
+	if ( XGetWindowProperty( xdisp,
+				wnd,
+				atom,
+				0,
+				1024,
+				False,
+				AnyPropertyType,
+				&actual_type,
+				&actual_format,
+				&nitems,
+				&bytes_after,
+				&prop ) != Success )
+	{
+		FeLog() << "Could not get window property." << std::endl;
+		return retval;
+	}
+
+	if ( !prop )
+	{
+		FeLog() << "Empty window property." << std::endl;
+		return retval;
+	}
+
+	int pid = prop[1] * 256;
+	pid += prop[0];
+	XFree( prop );
+
+	// Try to get the actual name for the process id
+	//
+	// Note: this is Linux specific
+	//
+	std::string fn = "/proc/" + as_str( pid ) + "/cmdline";
+	std::ifstream myfile( fn.c_str() );
+	if ( myfile.good() )
+	{
+		getline( myfile, retval );
+		myfile.close();
+	}
+
+	retval += " (" + as_str( pid ) + ")";
+
+#endif
+
+	return retval;
 }
