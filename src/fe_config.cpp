@@ -124,7 +124,7 @@ void FeMenuOpt::append_vlist( const std::vector< std::string > &list )
 }
 
 FeConfigContext::FeConfigContext( FeSettings &f )
-	: fe_settings( f ), curr_sel( -1 ), save_req( false )
+	: fe_settings( f ), style( SelectionList ), curr_sel( -1 ), save_req( false )
 {
 }
 
@@ -511,7 +511,7 @@ private:
 public:
 	FeRLGenDefaults() {};
 
-	FeRLGenDefaults( const std::string &n, const std::vector<std::string> s )
+	FeRLGenDefaults( const std::string &n, const std::vector<std::string> &s )
 		: m_name( n )
 	{
 		for ( std::vector<std::string>::const_iterator itr=s.begin(); itr!=s.end(); ++itr )
@@ -1578,9 +1578,8 @@ void FeInputSelMenu::get_options( FeConfigContext &ctx )
 	std::vector < FeMapping >::iterator it;
 	for ( it=m_mappings.begin(); it != m_mappings.end(); ++it )
 	{
-		std::string setstr, help, orstr;
+		std::string value, orstr;
 		ctx.fe_settings.get_resource( "OR", orstr );
-		std::string value;
 		std::vector < std::string >::iterator iti;
 		for ( iti=(*it).input_list.begin(); iti != (*it).input_list.end(); ++iti )
 		{
@@ -1624,7 +1623,6 @@ void FeInputSelMenu::get_options( FeConfigContext &ctx )
 	for ( int i=0; i<19; i++ )
 		thresh[i+1] = as_str( 95 - ( i * 5 ) );
 	thresh[20]="1";
-	std::string setstr, help;
 
 	ctx.add_optl( Opt::LIST, "Joystick Threshold",
 		ctx.fe_settings.get_info( FeSettings::JoystickThreshold ), "_help_joystick_threshold" );
@@ -1696,8 +1694,6 @@ void FeSoundMenu::get_options( FeConfigContext &ctx )
 	std::vector<std::string> volumes(11);
 	for ( int i=0; i<11; i++ )
 		volumes[i] = as_str( 100 - ( i * 10 ) );
-
-	std::string setstr, help;
 
 	//
 	// Sound, Ambient and Movie Volumes
@@ -1977,7 +1973,7 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Video Decoder", vid_dec, "_help_video_decoder" );
 	ctx.back_opt().append_vlist( decoders );
 
-#ifdef SFML_SYSTEM_WINDOWS    
+#ifdef SFML_SYSTEM_WINDOWS
 	ctx.add_optl( Opt::LIST, "Hide Console",
 		ctx.fe_settings.get_hide_console() ? bool_opts[0] : bool_opts[1],
 		"_help_hide_console" );
@@ -2027,7 +2023,7 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
 			ctx.opt_list[12].get_value() );
 
-#ifdef SFML_SYSTEM_WINDOWS   
+#ifdef SFML_SYSTEM_WINDOWS
 	ctx.fe_settings.set_info( FeSettings::HideConsole,
 			ctx.opt_list[13].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 #endif
@@ -2272,7 +2268,7 @@ void FeLayoutEditMenu::get_options( FeConfigContext &ctx )
 		}
 
 		m_configurable = m_layout;     // parent member
-		m_per_display = m_per_display; // parent member
+		//m_per_display = m_per_display; // parent member
 
 		// create a copy of m_layout and merge in any per display settings
 		// so that appropriate config options are available to the script

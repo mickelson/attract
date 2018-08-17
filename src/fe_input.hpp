@@ -281,7 +281,7 @@ public:
 	std::vector< std::string > input_list;
 
 	FeMapping( FeInputMap::Command cmd );
-	bool operator< ( const FeMapping ) const;
+	bool operator< ( const FeMapping & ) const;
 };
 
 //

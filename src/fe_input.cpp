@@ -814,7 +814,7 @@ FeMapping::FeMapping( FeInputMap::Command cmd )
 {
 }
 
-bool FeMapping::operator< ( const FeMapping o ) const
+bool FeMapping::operator< ( const FeMapping &o ) const
 {
 	return ( command < o.command );
 }

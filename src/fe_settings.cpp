@@ -1115,9 +1115,6 @@ bool FeSettings::get_path(
 		}
 		else
 		{
-			if ( m_current_display < 0 )
-				return false;
-
 			if ( !get_layout_dir(
 					m_displays[ m_current_display ].get_info( FeDisplayInfo::Layout ),
 					path ) )
