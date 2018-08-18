@@ -1,7 +1,7 @@
 ##
 ##
 ##  Attract-Mode frontend
-##  Copyright (C) 2013-2016 Andrew Mickelson
+##  Copyright (C) 2013-2018 Andrew Mickelson
 ##
 ##  This file is part of Attract-Mode.
 ##
@@ -32,7 +32,7 @@
 # Uncomment next line to disable network support (i.e. no SFML Network).
 #NO_NET=1
 #
-# By default, if FontConfig gets enabled we link against the system's expat 
+# By default, if FontConfig gets enabled we link against the system's expat
 # library (because FontConfig uses expat too).  If FontConfig is not used
 # then Attract-Mode is statically linked to its own version of expat.
 # Uncomment next line to always link to Attract-Mode's version of expat.
@@ -59,7 +59,7 @@
 #FE_DEBUG=1
 #VERBOSE=1
 
-FE_VERSION=v2.4.0
+FE_VERSION=v2.4.1
 
 CC=gcc
 CXX=g++
@@ -88,7 +88,7 @@ override CC := $(TOOLCHAIN)-$(CC)
 override CXX := $(TOOLCHAIN)-$(CXX)
 override AR := $(TOOLCHAIN)-$(AR)
 endif
- 
+
 ifneq ($(origin CROSS),undefined)
 override STRIP := $(TOOLCHAIN)-$(STRIP)
 override PKG_CONFIG := $(TOOLCHAIN)-$(PKG_CONFIG)
@@ -386,7 +386,7 @@ else
   TEMP_LIBS += libavresample
   FE_FLAGS += -DUSE_AVRESAMPLE
   endif
- endif 
+ endif
 
  _DEP += media.hpp
  _OBJ += media.o
