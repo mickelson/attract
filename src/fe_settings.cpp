@@ -1714,6 +1714,15 @@ void FeSettings::set_game_overview( const std::string &emu,
 
 	if ( !file_exists || overwrite )
 	{
+		if ( ov.empty() && file_exists )
+		{
+			// delete overview file if setting overview to an empty string
+			delete_file( path );
+
+			FeDebug() << "Deleted game overview file: " << path << std::endl;
+			return;
+		}
+
 		std::ofstream outfile( path.c_str() );
 		if ( outfile.is_open() )
 		{

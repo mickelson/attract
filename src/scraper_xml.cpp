@@ -1316,7 +1316,6 @@ void FeGameDBParser::end_element( const char *element )
 			m_platform = m_current_data;
 		else if ( strcmp( element, "Overview" ) == 0 )
 			m_overview = m_current_data;
-
 		else if ( m_art )
 		{
 			if ( strcmp( element, "baseImgUrl" ) == 0 )
@@ -1421,7 +1420,12 @@ void FeGameDBParser::set_info_val( FeRomInfo::Index i, const std::string &v )
 bool FeGameDBParser::get_overview( std::string &overview )
 {
 	overview = m_overview_keep;
-	return overview.empty();
+
+	//
+	// Return true if overview is not empty
+	//
+	return (( !overview.empty() )
+		&& ( overview.find_first_not_of( " \t\r\n" ) != std::string::npos ));
 }
 
 bool FeGameDBParser::parse( const std::string &data )
