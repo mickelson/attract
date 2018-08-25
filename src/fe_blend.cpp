@@ -30,10 +30,13 @@ sf::BlendMode FeBlend::get_blend_mode( int blend_mode )
 		case FeBlend::Add:
 			return sf::BlendAdd;
 
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
 		case FeBlend::Subtract:
 			return sf::BlendMode(sf::BlendMode::SrcAlpha, sf::BlendMode::One, sf::BlendMode::ReverseSubtract,
 								 sf::BlendMode::One, sf::BlendMode::One, sf::BlendMode::ReverseSubtract);
+#endif
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
 		case FeBlend::Screen:
 			return sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcColor);
 		case FeBlend::Multiply:
