@@ -31,6 +31,9 @@ sf::BlendMode FeBlend::get_blend_mode( int blend_mode )
 			return sf::BlendAdd;
 
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+		case FeBlend::Subtract:
+			return sf::BlendMode(sf::BlendMode::SrcAlpha, sf::BlendMode::One, sf::BlendMode::ReverseSubtract,
+								 sf::BlendMode::One, sf::BlendMode::One, sf::BlendMode::ReverseSubtract);
 		case FeBlend::Screen:
 			return sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcColor);
 		case FeBlend::Multiply:
@@ -71,6 +74,7 @@ sf::Shader* FeBlend::get_default_shader( int blend_mode )
 	{
 		case FeBlend::Alpha:
 		case FeBlend::Add:
+		case FeBlend::Subtract:
 		case FeBlend::None:
 			return NULL;
 		case FeBlend::Screen:

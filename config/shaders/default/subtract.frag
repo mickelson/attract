@@ -1,4 +1,4 @@
-// Default fragment shader for MULTIPLY blend mode
+// Default fragment shader for SUBTRACT blend mode
 
 uniform sampler2D texture;
 
@@ -9,7 +9,4 @@ void main()
 
 	// multiply it by the color
 	gl_FragColor = gl_Color * pixel;
-	
-	// this must be the last line in this shader
-	gl_FragColor.xyz *= gl_FragColor.w;
 }

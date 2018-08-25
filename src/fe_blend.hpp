@@ -37,6 +37,7 @@ public:
 	{ 
 		Alpha,
 		Add,
+		Subtract,
 		Screen,
 		Multiply,
 		Overlay,
