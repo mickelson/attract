@@ -119,7 +119,7 @@ public:
 		TrackUsage,
 		MultiMon,
 		SmoothImages,
-		AccelerateSelection,
+		SelectionMaxStep,
 		SelectionSpeed,
 		ScrapeSnaps,
 		ScrapeMarquees,
@@ -200,7 +200,7 @@ private:
 	WindowType m_window_mode;
 	bool m_smooth_images;
 	FilterWrapModeType m_filter_wrap_mode;
-	bool m_accel_selection;
+	int m_selection_max_step; // max selection acceleration step.  0 to disable accel
 	int m_selection_speed;
 	bool m_scrape_snaps;
 	bool m_scrape_marquees;
@@ -363,6 +363,7 @@ public:
 	FeRomInfo *get_rom_absolute( int filter_index, int rom_index );
 
 	int selection_speed() const { return m_selection_speed; }
+	int selection_max_step() const { return m_selection_max_step; }
 
 	// get a list of available plugins
 	void get_available_plugins( std::vector < std::string > &list ) const;

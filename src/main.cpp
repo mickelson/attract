@@ -890,16 +890,29 @@ int main(int argc, char *argv[])
 						move_last_triggered = t;
 						int step = 1;
 
-						if ( feSettings.get_info_bool( FeSettings::AccelerateSelection ) )
+						int max_step = feSettings.selection_max_step();
+						if ( max_step > 1 )
 						{
-							// As the button is held down, the advancement accelerates
-							int shift = ( t / TRIG_CHANGE_MS ) - 3;
-							if ( shift < 0 )
-								shift = 0;
-							else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
-								shift = 7;
+							int s = t / TRIG_CHANGE_MS;
 
-							step = 1 << ( shift );
+							if ( s < 8 )
+								step = 1;
+							else if ( s < 15 )
+								step = 2;
+							else if ( s < 20 )
+								step = 4;
+							else if ( s < 22 )
+								step = 6;
+							else
+							{
+								int shift = s - 19;
+								if ( shift > 11 ) // sanity check - don't go above 2^11 (2048)
+									shift = 11;
+								step = 1 << ( shift );
+							}
+
+							if ( step > max_step )      // make sure we don't go over user specified max
+								step = max_step;
 						}
 
 						switch ( ms )

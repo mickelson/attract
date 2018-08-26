@@ -276,7 +276,7 @@ FeSettings::FeSettings( const std::string &config_path,
 #endif
 	m_smooth_images( true ),
 	m_filter_wrap_mode( WrapWithinDisplay ),
-	m_accel_selection( true ),
+	m_selection_max_step( 128 ),
 	m_selection_speed( 40 ),
 	m_scrape_snaps( true ),
 	m_scrape_marquees( true ),
@@ -404,7 +404,7 @@ const char *FeSettings::configSettingStrings[] =
 	"track_usage",
 	"multiple_monitors",
 	"smooth_images",
-	"accelerate_selection",
+	"selection_max_step",
 	"selection_speed_ms",
 	"scrape_snaps",
 	"scrape_marquees",
@@ -517,21 +517,17 @@ int FeSettings::process_setting( const std::string &setting,
 			return m_current_config_object->process_setting( setting, value, fn );
 		else
 		{
-			// <=2.2.1 there was a "scrape_mamedb" option that has been removed.  Suppress error
-			if ( setting.compare( "scrape_mamedb" ) == 0 )
-				return 0;
-
-			// For backwards compatability, as of 1.5 "lists_menu_exit" became "displays_menu_exit"
-			if ( setting.compare( "lists_menu_exit" ) == 0 )
-			{
-				set_info( DisplaysMenuExit, value );
-				return 0;
-			}
-			// After 1.6.2, "autolaunch_last_game" became an option for "startup_mode"
-			else if ( setting.compare( "autolaunch_last_game" ) == 0 )
+			// <=2.4.1 there was an "accelerate_selection" boolean that if false
+			// disabled the selection acceleration (the same result as setting
+			// selection_max_step = 0)
+			//
+			if ( setting.compare( "accelerate_selection" ) == 0 )
 			{
 				if ( config_str_to_bool( value ) )
-					m_startup_mode = LaunchLastGame;
+					m_selection_max_step = 128; // set to default max step
+				else
+					m_selection_max_step = 0;
+
 				return 0;
 			}
 
@@ -2689,6 +2685,8 @@ const std::string FeSettings::get_info( int index ) const
 		return windowModeTokens[ m_window_mode ];
 	case FilterWrapMode:
 		return filterWrapTokens[ m_filter_wrap_mode ];
+	case SelectionMaxStep:
+		return as_str( m_selection_max_step );
 	case SelectionSpeed:
 		return as_str( m_selection_speed );
 	case StartupMode:
@@ -2701,7 +2699,6 @@ const std::string FeSettings::get_info( int index ) const
 	case TrackUsage:
 	case MultiMon:
 	case SmoothImages:
-	case AccelerateSelection:
 	case ScrapeSnaps:
 	case ScrapeMarquees:
 	case ScrapeFlyers:
@@ -2750,8 +2747,6 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_multimon;
 	case SmoothImages:
 		return m_smooth_images;
-	case AccelerateSelection:
-		return m_accel_selection;
 	case ScrapeSnaps:
 		return m_scrape_snaps;
 	case ScrapeMarquees:
@@ -2907,8 +2902,14 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_smooth_images = config_str_to_bool( value );
 		break;
 
-	case AccelerateSelection:
-		m_accel_selection = config_str_to_bool( value );
+	case SelectionMaxStep:
+		m_selection_max_step = as_int( value );
+
+		// check for non-integer input and set to default if encountered
+		if (( m_selection_max_step == 0 ) && ( value.compare( "0" ) != 0 ))
+			m_selection_max_step = 128;
+		if ( m_selection_max_step < 0 )
+			m_selection_max_step = 0;
 		break;
 
 	case SelectionSpeed:
