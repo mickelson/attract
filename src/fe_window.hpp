@@ -30,10 +30,12 @@ class FeSettings;
 class FeWindow : public sf::RenderWindow
 {
 	friend void launch_callback( void *o );
-	friend void wait_callback( void *o ); 
+	friend void wait_callback( void *o );
 
 protected:
 	FeSettings &m_fes;
+	unsigned int m_running_pid;
+	void *m_running_wnd;
 
 	// override from base class
 	void onCreate();

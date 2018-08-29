@@ -315,6 +315,7 @@ public:
 		Import_extras,
 		NBM_wait,	// non-blocking mode wait time (in seconds)
 		Exit_hotkey,
+		Pause_hotkey,
 		LAST_INDEX
 	};
 
@@ -388,6 +389,7 @@ private:
 	std::string m_command;
 	std::string m_workdir;
 	std::string m_exit_hotkey;
+	std::string m_pause_hotkey;
 
 	std::vector<std::string> m_paths;
 	std::vector<std::string> m_extensions;

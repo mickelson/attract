@@ -80,6 +80,44 @@ int icompare( const std::string &one,
 
 typedef bool (*output_callback_fn)( const char *, void * );
 typedef void (*launch_callback_fn)( void * );
+
+// Optional settings (and return values!) that are sent to run_program() when running an emulator
+//
+class run_program_options_class
+{
+public:
+	// [in] "joy_thresh" - joystick threshold, only used if exit_hotkey or pause_hotkey
+	//                is mapped to a joystick
+	int joy_thresh;
+
+	// [in] "launch_cb" = callback function to call after program launched
+	launch_callback_fn launch_cb;
+
+	//	[in] "wait_cb" = callback function to call repeatedly while waiting for program return [windows only]
+	launch_callback_fn wait_cb;
+
+	//	[in] "launch_opaque" - opaque ptr to pass to the launch callback (and wait callback) function.
+	//                   run_program() doesn't care what this is.
+	void *launch_opaque;
+
+	// [in] "exit_hotkey" - hotkey that when pressed will force exit of program
+	//					(use empty for no hotkey checking)
+	std::string exit_hotkey;
+
+	// [in] "exit_hotkey" - hotkey that when pressed will pause the program
+	//					(use empty for no hotkey checking)
+	std::string pause_hotkey;
+
+	// [out] "running_pid" - process id of the still running process (if pause hotkey pressed)
+	// [out] "running_wnd" - window handle of the still running process (if pause hotkey pressed)
+	unsigned int running_pid;
+	void *running_wnd;
+
+	// Default constructor
+	//
+	run_program_options_class();
+};
+
 //
 // Run the specified program, blocks while program running
 //
@@ -94,14 +132,7 @@ typedef void (*launch_callback_fn)( void * );
 //					doesn't care what this is.
 //		"block" - if true, don't return until program is done execution
 //					if false, "cb" and "opaque" are ignored
-//		"exit_hotkey" - hotkey that when pressed will force exit of program
-//					(use NULL for no hotkey checking)
-//		"joy_thresh" - joystick threshold, only used if exit_hotkey is mapped to
-//					a joystick
-//		"launch_cb" = callback function to call after program launched
-//		"wait_cb" = callback function to call repeatedly while waiting for program return [windows only]
-//		"launch_opaque" - opaque ptr to pass to the launch callback (and wait callback) function.
-//					run_program() doesn't care what this is.
+//		"opt" - optional settings and return values used when launching an emulator
 //
 //	Returns true if program ran successfully
 //
@@ -111,11 +142,14 @@ bool run_program( const std::string &prog,
 	output_callback_fn cb = NULL,
 	void *opaque=NULL,
 	bool block=true,
-	const std::string &exit_hotkey="",
-	int joy_thresh=0,
-	launch_callback_fn launch_cb= NULL,
-	launch_callback_fn wait_cb= NULL,
-	void *launch_opaque=NULL );
+	run_program_options_class *opt = NULL );
+
+void resume_program(
+	unsigned int pid,
+	void *wnd,
+	run_program_options_class *opt = NULL );
+
+bool process_exists( unsigned int pid );
 
 //
 // Utility functions for file processing:
@@ -247,6 +281,9 @@ std::basic_string<sf::Uint32> clipboard_get_content();
 //
 #if defined(USE_XLIB)
 void get_x11_geometry( bool multimon, int &, int &, int &, int & );
+
+// set foreground window to the specified window.
+void set_x11_foreground_window( unsigned long w );
 #endif
 
 #ifndef NO_MOVIE

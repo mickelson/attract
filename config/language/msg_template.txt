@@ -29,6 +29,7 @@ Back;Back
 Blank Game;Blank Game
 Buttons;Buttons
 Category;Category
+Clear Hotkey?;Clear Hotkey?
 CloneOf;CloneOf
 Collection/Rom List;Collection/Rom List
 Command;Command
@@ -164,12 +165,14 @@ Non-Blocking Mode Wait;Non-Blocking Mode Wait
 OR;OR
 Overview;Overview
 Overwrite existing '$1' list?;Overwrite existing '$1' list?
+Pause Hotkey;Pause Hotkey
 Play Sound;Play Sound
 PlayedCount;PlayedCount
 PlayedTime;PlayedTime
 Players;Players
 Plug-ins;Plug-ins
 Press Input;Press Input
+Press Hotkey;Press Hotkey
 Previous Display;Previous Display
 Previous Favourite;Previous Favourite
 Previous Filter;Previous Filter

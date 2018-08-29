@@ -248,7 +248,8 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 				ctx.back_opt().append_vlist( FeEmulatorInfo::infoSourceStrings );
 			}
-			else if ( i == FeEmulatorInfo::Exit_hotkey )
+			else if (( i == FeEmulatorInfo::Exit_hotkey )
+					|| ( i == FeEmulatorInfo::Pause_hotkey ))
 			{
 				ctx.add_optl( Opt::RELOAD,
 						FeEmulatorInfo::indexDispStrings[i],
@@ -431,7 +432,7 @@ bool FeEmulatorEditMenu::on_option_select(
 		{
 			FeInputMapEntry ent;
 			FeInputMap::Command conflict( FeInputMap::LAST_COMMAND );
-			ctx.input_map_dialog( "Press Exit Hotkey", ent, conflict );
+			ctx.input_map_dialog( "Press Hotkey", ent, conflict );
 			std::string res = ent.as_string();
 
 			bool save=false;
@@ -439,7 +440,7 @@ bool FeEmulatorEditMenu::on_option_select(
 				save = true;
 			else
 			{
-				if ( ctx.confirm_dialog( "Clear Exit Hotkey?", res ))
+				if ( ctx.confirm_dialog( "Clear Hotkey?", res ))
 				{
 					res.clear();
 					save = true;
