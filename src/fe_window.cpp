@@ -367,7 +367,7 @@ bool FeWindow::run()
 		m_running_pid = opt.running_pid;
 		m_running_wnd = opt.running_wnd;
 
-#if defined(SFML_SYSTEM_LINUX)
+#if defined(USE_XLIB)
 		set_x11_foreground_window( getSystemHandle() );
 #elif defined(SFML_SYSTEM_MACOS)
 		osx_take_focus();

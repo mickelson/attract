@@ -1202,7 +1202,9 @@ void resume_program(
 	windows_wait_process( hp, (DWORD)pid, opt );
 	CloseHandle( hp );
 #else
+#if defined ( USE_XLIB )
 	set_x11_foreground_window( (unsigned long)wnd );
+#endif
 	kill( pid, SIGCONT );
 	unix_wait_process( pid, opt );
 #endif
