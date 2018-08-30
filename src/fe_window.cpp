@@ -302,6 +302,10 @@ bool FeWindow::run()
 
 	sf::Clock timer;
 
+	// We need to get this variable before calling m_fes.prep_for_launch(),
+	// which goes and resets the last launch tracking to the current selection
+	bool is_relaunch = m_fes.is_last_launch( 0, 0 );
+
 	std::string command, args, work_dir;
 	FeEmulatorInfo *emu = NULL;
 	m_fes.prep_for_launch( command, args, work_dir, emu );
@@ -323,14 +327,25 @@ bool FeWindow::run()
 	opt.wait_cb = wait_callback;
 	opt.launch_opaque = this;
 
+	bool have_paused_prog = m_running_pid && process_exists( m_running_pid );
+
 	// check if we need to resume a previously paused game
-	if ( m_running_pid && process_exists( m_running_pid ) )
+	if ( have_paused_prog && is_relaunch )
 	{
 		FeLog() << "*** Resuming previously paused program, pid: " << m_running_pid << std::endl;
 		resume_program( m_running_pid, m_running_wnd, &opt );
 	}
 	else
 	{
+		if ( have_paused_prog )
+		{
+			FeLog() << "*** Killing previously paused program, pid: " << m_running_pid << std::endl;
+			kill_program( m_running_pid );
+
+			m_running_pid = 0;
+			m_running_wnd = NULL;
+		}
+
 		if ( !work_dir.empty() )
 			FeLog() << " - Working directory: " << work_dir << std::endl;
 
@@ -480,4 +495,9 @@ void FeWindow::on_exit()
 		FeWindowPosition win_pos( getPosition(), getSize() );
 		win_pos.save( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
 	}
+}
+
+bool FeWindow::has_running_process()
+{
+	return ( m_running_pid != 0 );
 }

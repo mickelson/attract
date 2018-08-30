@@ -336,6 +336,7 @@ public:
 	const std::string &get_search_rule() const;
 
 	bool select_last_launch();
+	bool is_last_launch( int filter_offset, int index_offset );
 	int get_joy_thresh() const { return m_joy_thresh; }
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;

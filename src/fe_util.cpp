@@ -1151,11 +1151,7 @@ bool run_program( const std::string &prog,
 				if ( callback( buffer, opaque ) == false )
 				{
 					// User cancelled
-					kill( pid, SIGKILL );
-
-					int status;
-					waitpid( pid, &status, 0 );
-
+					kill_program( pid );
 					block=false;
 					break;
 				}
@@ -1209,6 +1205,24 @@ void resume_program(
 	set_x11_foreground_window( (unsigned long)wnd );
 	kill( pid, SIGCONT );
 	unix_wait_process( pid, opt );
+#endif
+}
+
+void kill_program( unsigned int pid )
+{
+#if defined( SFML_SYSTEM_WINDOWS )
+	HANDLE hp = OpenProcess( PROCESS_TERMINATE, FALSE, pid );
+
+	if ( hp )
+		TerminateProcess( hp, 0 );
+
+	CloseHandle( hp );
+#else
+	kill( pid, SIGKILL );
+
+	// reap
+	int status;
+	waitpid( pid, &status, 0 );
 #endif
 }
 

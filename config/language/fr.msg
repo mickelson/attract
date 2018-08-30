@@ -331,6 +331,7 @@ Artwork Name;Artwork Name
 Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
 Blank Game;Blank Game
 Buttons;Buttons
+Clear Hotkey?;Clear Hotkey?
 Configure / Displays Menu;Configure / Displays Menu
 Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Intro;Configure Intro
@@ -369,7 +370,9 @@ Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
 Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
+Pause Hotkey;Pause Hotkey
 Play Sound;Play Sound
+Press Hotkey;Press Hotkey
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove tag: '$1';Remove tag: '$1'
@@ -400,6 +403,7 @@ _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
 _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
+_help_emu_pause_hotkey;Set a global hotkey to pause the emulator.  When pressed, Attract-Mode will pause the emulator process and return to the frontend. The emulator process can be resumed by selecting the same game again in the frontend.
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_emu_workdir;The working directory for this emulator.  This is the directory that the frontend runs the emulator from.  Also, any relative rom paths, artwork paths, or additional import file paths are treated as being relative to this directory
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter

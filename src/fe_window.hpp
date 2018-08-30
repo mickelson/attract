@@ -46,6 +46,9 @@ public:
 	void initial_create();		// first time window creation
 	bool run();						// run the currently selected game (blocking). returns false if window closed in the interim
 	void on_exit();				// called before exiting frontend
+
+	// return true if there is another process (i.e. a paused emulator) that we are currently running
+	bool has_running_process();
 };
 
 #endif

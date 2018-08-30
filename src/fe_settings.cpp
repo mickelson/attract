@@ -1796,6 +1796,13 @@ bool FeSettings::select_last_launch()
 	return retval;
 }
 
+bool FeSettings::is_last_launch( int filter_offset, int index_offset )
+{
+	return (( m_last_launch_display == m_current_display )
+		&& ( m_last_launch_filter == get_filter_index_from_offset( filter_offset ) )
+		&& ( m_last_launch_rom == get_rom_index( m_last_launch_filter, index_offset ) ));
+}
+
 bool FeSettings::get_current_fav()
 {
 	int filter_index = get_current_filter_index();

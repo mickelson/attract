@@ -149,6 +149,8 @@ void resume_program(
 	void *wnd,
 	run_program_options_class *opt = NULL );
 
+void kill_program( unsigned int pid );
+
 bool process_exists( unsigned int pid );
 
 //
