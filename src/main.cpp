@@ -720,7 +720,7 @@ int main(int argc, char *argv[])
 							// Add an exit option at the end of the lists menu
 							//
 							std::string exit_str;
-							feSettings.get_resource( "Exit Attract-Mode", exit_str );
+							feSettings.get_exit_message( exit_str );
 							disp_names.push_back( exit_str );
 							exit_opt = disp_names.size() - 1;
 						}
