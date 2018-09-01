@@ -38,6 +38,10 @@ namespace {
 
 void build_basic_romlist( FeImporterContext &c )
 {
+	// don't scan rompath for scummvm, we get the available games from 'scummvm -t'
+	if ( c.emulator.get_info_source() == FeEmulatorInfo::Scummvm )
+		return;
+
 	std::vector<std::string> names;
 	std::vector<std::string> paths;
 	c.emulator.gather_rom_names( names, paths );
@@ -53,14 +57,14 @@ void build_basic_romlist( FeImporterContext &c )
 		c.romlist.push_back( new_rom );
 	}
 
-	std::cout << " - Found " << names.size() << " files." << std::endl;
+	FeLog() << " - Found " << names.size() << " files." << std::endl;
 }
 
 void write_romlist( const std::string &filename,
 				const FeRomInfoListType &romlist )
 {
 
-	std::cout << " + Writing " << romlist.size() << " entries to: "
+	FeLog() << " + Writing " << romlist.size() << " entries to: "
 				<< filename << std::endl;
 
 	int i=0;
@@ -176,7 +180,7 @@ void ini_import( const std::string &filename,
 		}
 	}
 
-	std::cout << "[Import " << filename << "] - found info for " << count
+	FeLog() << "[Import " << filename << "] - found info for " << count
 		<< " entries." << std::endl;
 }
 
@@ -197,7 +201,7 @@ void apply_import_extras( FeImporterContext &c, bool skip_xml )
 		{
 			if ( skip_xml )
 			{
-				std::cout << " - Skipping import_extras file: "
+				FeLog() << " - Skipping import_extras file: "
 					<< path << std::endl;
 			}
 			else
@@ -207,7 +211,7 @@ void apply_import_extras( FeImporterContext &c, bool skip_xml )
 			}
 		}
 		else
-			std::cout << " * Unsupported import_extras file: " << path << std::endl;
+			FeLog() << " * Unsupported import_extras file: " << path << std::endl;
 	}
 }
 
@@ -237,7 +241,7 @@ bool import_mamewah( const std::string &input_filename,
 	std::ifstream myfile( input_filename.c_str() );
 	if ( !myfile.is_open() )
 	{
-		std::cerr << " ! Error opening file: " << input_filename << std::endl;
+		FeLog() << " ! Error opening file: " << input_filename << std::endl;
 		return false;
 	}
 
@@ -278,7 +282,7 @@ bool import_mamewah( const std::string &input_filename,
 
 	if ( count > 1 )
 	{
-		std::cout << " * Warning: Unexpected end of file encountered: " << input_filename
+		FeLog() << " * Warning: Unexpected end of file encountered: " << input_filename
 			<< ", this probably means the import failed." << std::endl;
 	}
 
@@ -300,34 +304,10 @@ bool scummvm_cb( const char *buff, void *opaque )
 	return true;
 }
 
-void scummvm_target( const std::string &base_command,
-	const std::string &params,
-	const std::string &work_dir,
-	std::map< std::string, std::string, myclasscmp > &my_map )
-{
-	std::string output;
-	run_program( base_command, params, work_dir, scummvm_cb, &output );
-
-	size_t pos( 0 );
-	while ( pos < output.size() )
-	{
-		std::string line;
-		token_helper( output, pos, line, "\n" );
-
-		std::string shortn;
-		std::string longn;
-		size_t pos2( 0 );
-		token_helper( line, pos2, shortn, " " );
-		token_helper( line, pos2, longn, "\n" );
-
-		my_map[ shortn ] = name_with_brackets_stripped( longn );
-	}
-}
-
 //
-// Map scummvm gameids -> full name using -z and -t output.
+// Add to the romlist based on 'scummvm -t' output.
 //
-bool scummvm_lookup( FeImporterContext &c )
+bool scummvm_build( FeImporterContext &c )
 {
 	std::string base_command = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Executable ) );
@@ -335,25 +315,40 @@ bool scummvm_lookup( FeImporterContext &c )
 	std::string work_dir = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Working_dir ), true );
 
-	std::map< std::string, std::string, myclasscmp > my_map;
+	std::string output;
+	run_program( base_command, "-t", work_dir, scummvm_cb, &output );
 
-	scummvm_target( base_command, "-z", work_dir, my_map );
-	scummvm_target( base_command, "-t", work_dir, my_map );
-
-	for ( FeRomInfoListType::iterator itr = c.romlist.begin(); itr != c.romlist.end(); ++itr )
+	size_t pos( 0 );
+	int line_count=0;
+	while ( pos < output.size() )
 	{
-		std::map< std::string, std::string >::iterator itm;
-		itm = my_map.find( (*itr).get_info( FeRomInfo::Romname ) );
-		if ( itm != my_map.end() )
-			(*itr).set_info( FeRomInfo::Title, (*itm).second );
+		std::string line;
+		token_helper( output, pos, line, "\n" );
+		line_count++;
+
+		std::string shortn;
+		std::string longn;
+		size_t pos2( 0 );
+		token_helper( line, pos2, shortn, " " );
+		token_helper( line, pos2, longn, "\n" );
+
+		if ( line_count > 2 )
+		{
+			FeRomInfo new_rom( shortn );
+			new_rom.set_info( FeRomInfo::Title, longn );
+			c.romlist.push_back( new_rom );
+		}
 	}
+
 	return true;
 }
 
 }; // end namespace
 
-void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
+bool FeSettings::apply_xml_import( FeImporterContext &c )
 {
+	bool cancelled = false;
+
 	std::string base_command = clean_path( c.emulator.get_info(
 				FeEmulatorInfo::Executable ) );
 
@@ -366,11 +361,13 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 
 	case FeEmulatorInfo::Listxml:
 	{
-		std::cout << " - Obtaining -listxml info...";
+		FeLog() << " - Obtaining -listxml info...";
 		FeListXMLParser mamep( c );
 		if ( !mamep.parse_command( base_command, work_dir ) )
-			std::cerr << " ! No XML output found, command: "
+			FeLog() << " ! No XML output found, command: "
 				<< base_command << " -listxml" << std::endl;
+
+		cancelled = !mamep.get_continue_parse();
 	}
 	break;
 
@@ -380,18 +377,19 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 		const std::vector < std::string > &system_names = c.emulator.get_systems();
 		if ( system_names.empty() )
 		{
-			std::cout << " * Note: No system configured for emulator: "
+			FeLog() << " * Note: No system configured for emulator: "
 				<< c.emulator.get_info( FeEmulatorInfo::Name )
 				<< ", unable to obtain -listsoftware info."
 				<< std::endl;
-			return;
+			return true;
 		}
 
 		FeListSoftwareParser lsp( c );
 		lsp.parse( base_command, work_dir, system_names );
+		cancelled = !lsp.get_continue_parse();
 
-		if ( include_gdb && ( is == FeEmulatorInfo::Listsoftware_tgdb ) )
-			thegamesdb_scraper( c );
+		if ( !cancelled && c.use_net && ( is == FeEmulatorInfo::Listsoftware_tgdb ) )
+			cancelled = !thegamesdb_scraper( c );
 	}
 	break;
 
@@ -400,7 +398,7 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 		const std::vector<std::string> &paths = c.emulator.get_paths();
 		const std::vector<std::string> &exts = c.emulator.get_extensions();
 		if ( paths.empty() || exts.empty() )
-			return;
+			return true;
 
 		std::string path = clean_path( paths.front(), true );
 		const std::string &extension = exts.front();
@@ -462,29 +460,31 @@ void FeSettings::apply_xml_import( FeImporterContext &c, bool include_gdb )
 				ASSERT( !fields_left );
 			}
 			else
-				std::cerr << " ! Error opening file: " << fname << std::endl;
+				FeLog() << " ! Error opening file: " << fname << std::endl;
 		}
 
-		if ( include_gdb )
-			thegamesdb_scraper( c );
+		if ( c.use_net )
+			cancelled = !thegamesdb_scraper( c );
 	}
 	break;
 
 	case FeEmulatorInfo::Thegamesdb:
-		if ( include_gdb )
-			thegamesdb_scraper( c );
+		if ( c.use_net )
+			cancelled = !thegamesdb_scraper( c );
 		break;
 
 	case FeEmulatorInfo::Scummvm:
-		scummvm_lookup( c );
-		if ( include_gdb )
-			thegamesdb_scraper( c );
+		scummvm_build( c );
+		if ( c.use_net )
+			cancelled = !thegamesdb_scraper( c );
 		break;
 
 	case FeEmulatorInfo::None:
 	default:
 		break;
 	}
+
+	return !cancelled;
 }
 
 bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
@@ -501,13 +501,13 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 		if ( (*itr).task_type == FeImportTask::BuildRomlist )
 		{
 			// Build romlist task
-			std::cout << "*** Generating Collection/Rom List: "
+			FeLog() << "*** Generating Collection/Rom List: "
 				<< (*itr).emulator_name << std::endl;
 
 			FeEmulatorInfo *emu = m_rl.get_emulator( (*itr).emulator_name );
 			if ( emu == NULL )
 			{
-				std::cerr << " ! Error: Invalid --build-rom-list target: "
+				FeLog() << " ! Error: Invalid --build-rom-list target: "
 					<<  (*itr).emulator_name << std::endl;
 			}
 			else
@@ -522,7 +522,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 
 				build_basic_romlist( ctx );
 
-				apply_xml_import( ctx, true );
+				apply_xml_import( ctx );
 				apply_import_extras( ctx, emu->is_mame() );
 
 				apply_emulator_name( best_name, romlist );
@@ -532,7 +532,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 		else if ( (*itr).task_type == FeImportTask::ImportRomlist )
 		{
 			// import romlist from file task
-			std::cout << "*** Importing Collection/Rom List: "
+			FeLog() << "*** Importing Collection/Rom List: "
 				<< (*itr).file_name << std::endl;
 
 			FeRomInfoListType romlist;
@@ -586,17 +586,17 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			}
 			else
 			{
-				std::cerr << " ! Error: Unsupported --import-rom-list file: "
+				FeLog() << " ! Error: Unsupported --import-rom-list file: "
 					<<  (*itr).file_name << std::endl;
 			}
 
-			std::cout << "[Import " << (*itr).file_name << "] - Imported "
+			FeLog() << "[Import " << (*itr).file_name << "] - Imported "
 				<< romlist.size() << " entries." << std::endl;
 
 			FeEmulatorInfo *emu = m_rl.get_emulator( emu_name );
 			if ( emu == NULL )
 			{
-				std::cout << " * Warning: The emulator specified with --import-rom-list was not found: "
+				FeLog() << " * Warning: The emulator specified with --import-rom-list was not found: "
 					<<  emu_name << std::endl;
 			}
 			else
@@ -613,12 +613,14 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			if ( emu == NULL )
 				return false;
 
-			std::cout << "*** Scraping artwork for: " << (*itr).emulator_name << std::endl;
+			FeLog() << "*** Scraping artwork for: " << (*itr).emulator_name << std::endl;
 
 			FeRomInfoListType romlist;
 			std::string fn = get_config_dir() + FE_ROMLIST_SUBDIR + (*itr).emulator_name + FE_ROMLIST_FILE_EXTENSION;
 
 			FeImporterContext ctx( *emu, romlist );
+			ctx.use_net = false;
+
 			if ( file_exists( fn ) )
 			{
 				FeRomList loader( get_config_dir() );
@@ -628,7 +630,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			else
 			{
 				build_basic_romlist( ctx );
-				apply_xml_import( ctx, false );
+				apply_xml_import( ctx );
 			}
 
 			ctx.scrape_art = true;
@@ -639,7 +641,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 			general_mame_scraper( ctx );
 			thegamesdb_scraper( ctx );
 
-			std::cout << "*** Scraping done." << std::endl;
+			FeLog() << "*** Scraping done." << std::endl;
 		}
 	}
 
@@ -650,13 +652,13 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 	total_romlist.sort( FeRomListSorter() );
 
 	// strip duplicate entries
-	std::cout << " - Removing any duplicate entries..." << std::endl;
+	FeLog() << " - Removing any duplicate entries..." << std::endl;
 	total_romlist.unique();
 
 	// Apply the specified filter
 	if ( filter.get_rule_count() > 0 )
 	{
-		std::cout << " - Applying filter..." << std::endl;
+		FeLog() << " - Applying filter..." << std::endl;
 		filter.init();
 
 		FeRomInfoListType::iterator last_it=total_romlist.begin();
@@ -701,7 +703,7 @@ bool FeSettings::build_romlist( const std::vector< FeImportTask > &task_list,
 }
 
 bool FeSettings::build_romlist( const std::vector<std::string> &emu_list, const std::string &out_name,
-	UiUpdate uiu, void *uid, std::string &msg )
+	UiUpdate uiu, void *uid, std::string &msg, bool use_net )
 {
 	//
 	// Put up the "building romlist" message at 0 percent while we get going...
@@ -710,18 +712,17 @@ bool FeSettings::build_romlist( const std::vector<std::string> &emu_list, const 
 		uiu( uid, 0, "" );
 
 	FeRomInfoListType total_romlist;
-	bool retval = false;
+	bool cancelled = false;
 	std::string user_message;
 
-	for ( std::vector<std::string>::const_iterator itr = emu_list.begin(); itr != emu_list.end(); ++itr )
+	for ( std::vector<std::string>::const_iterator itr = emu_list.begin();
+		!cancelled && ( itr != emu_list.end() ); ++itr )
 	{
 		FeEmulatorInfo *emu = m_rl.get_emulator( *itr );
 		if ( emu == NULL )
 			continue;
 
-		retval = true;
-
-		std::cout << "*** Generating Collection/Rom List: "
+		FeLog() << "*** Generating Collection/Rom List: "
 			<< emu->get_info( FeEmulatorInfo::Name ) << std::endl;
 
 		FeRomInfoListType romlist;
@@ -730,9 +731,12 @@ bool FeSettings::build_romlist( const std::vector<std::string> &emu_list, const 
 		ctx.uiupdate = uiu;
 		ctx.uiupdatedata = uid;
 		ctx.out_name = out_name;
+		ctx.use_net = use_net;
 
 		build_basic_romlist( ctx );
-		apply_xml_import( ctx, true );
+		if ( !apply_xml_import( ctx ) )
+			cancelled = true;
+
 		apply_import_extras( ctx, emu->is_mame() );
 		apply_emulator_name( *itr, romlist );
 
@@ -742,13 +746,13 @@ bool FeSettings::build_romlist( const std::vector<std::string> &emu_list, const 
 			user_message = ctx.user_message;
 	}
 
-	if ( !retval )
+	if ( cancelled )
 		return false;
 
 	total_romlist.sort( FeRomListSorter() );
 
 	// strip duplicate entries
-	std::cout << " - Removing any duplicate entries..." << std::endl;
+	FeLog() << " - Removing any duplicate entries..." << std::endl;
 	total_romlist.unique();
 
 	std::string filename = get_config_dir();
@@ -769,7 +773,7 @@ bool FeSettings::build_romlist( const std::vector<std::string> &emu_list, const 
 	else
 		msg = user_message;
 
-	return true;
+	return !cancelled;
 }
 
 bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg )
@@ -784,7 +788,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	if ( uiu )
 		uiu( uid, 0, "" );
 
-	std::cout << "*** Scraping artwork for: " << emu_name << std::endl;
+	FeLog() << "*** Scraping artwork for: " << emu_name << std::endl;
 
 	FeRomInfoListType romlist;
 
@@ -793,6 +797,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	FeImporterContext ctx( *emu, romlist );
 	ctx.uiupdate = uiu;
 	ctx.uiupdatedata = uid;
+	ctx.use_net = false;
 
 	if ( file_exists( fn ) )
 	{
@@ -805,7 +810,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 		ctx.progress_range=33;
 		build_basic_romlist( ctx );
 
-		apply_xml_import( ctx, false );
+		apply_xml_import( ctx );
 		ctx.progress_past=33;
 	}
 
@@ -826,7 +831,7 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	if ( uiu )
 		uiu( uid, 100, "" );
 
-	std::cout << "*** Scraping done." << std::endl;
+	FeLog() << "*** Scraping done." << std::endl;
 
 	if ( ctx.user_message.empty() )
 		get_resource( "Scraped $1 artwork file(s)", as_str( ctx.download_count ), msg );

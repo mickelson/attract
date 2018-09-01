@@ -30,6 +30,7 @@ class FeSettings;
 class FeWindow : public sf::RenderWindow
 {
 	friend void launch_callback( void *o );
+	friend void wait_callback( void *o ); 
 
 protected:
 	FeSettings &m_fes;

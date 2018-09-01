@@ -35,6 +35,7 @@ Contents
       * [`fe.plugin_command()`](#plugin_command)
       * [`fe.plugin_command_bg()`](#plugin_command_bg)
       * [`fe.path_expand()`](#path_expand)
+      * [`fe.path_test()`](#path_test)
       * [`fe.get_config()`](#get_config)
    * [Objects and Variables](#objects)
       * [`fe.ambient_sound`](#ambient_sound)
@@ -835,6 +836,7 @@ Return Value:
 <a name="set_display" />
 #### `fe.set_display()` ####
 
+    fe.set_display( index, stack_previous )
     fe.set_display( index )
 
 Change to the display at the specified index.  This should align with the
@@ -847,6 +849,9 @@ Parameters:
    * index - The index of the display to change to.  This should correspond to
    the index in the fe.displays array of the intended new display.  The index for
    the current display is stored in `fe.list.display_index`.
+   * stack_previous - [boolean] if set to `true`, the new display is stacked on
+   the current one, so that when the user selects the "Back" UI button the frontend
+   will navigate back to the earlier display.  Default value is `false`.
 
 
 Return Value:
@@ -979,7 +984,11 @@ Parameters:
         {
         }
 
-     If provided, this function will be called with each output line in `op`.
+     If provided, this function will get called repeatedely with chunks of the
+     command output in `op`.  NOTE: `op` is not necessarily aligned with the
+     start and the end of the lines of output from the command.  In any one
+     call `op` may contain data from multiple lines and that may begin or end
+     in the middle of a line.
 
 Return Value:
 
@@ -1011,7 +1020,8 @@ Return Value:
 Expand the given path name.  A leading `~` or `$HOME` token will be become
 the user's home directory.  On Windows systems, a leading `%SYSTEMROOT%`
 token will become the path to the Windows directory and a leading
-`%PROGRAMFILES%` will become the path to the "Program Files" directory.
+`%PROGRAMFILES%` or `%PROGRAMFILESx86%` will become the path to the
+applicable Windows "Program Files" directory.
 
 Parameters:
 
@@ -1020,6 +1030,29 @@ Parameters:
 Return Value:
 
    * The expansion of path.
+
+
+<a name="path_test" />
+#### `fe.path_test()` ####
+
+    fe.path_test( path, flag )
+
+Check whether the specified path has the status indicated by `flag`.
+
+Parameters:
+
+   * path - the path to test.
+   * flag - What to test for.  Can be one of the following values:
+      - `PathTest.IsFileOrDirectory`
+      - `PathTest.IsFile`
+      - `PathTest.IsDirectory`
+      - `PathTest.IsRelativePath`
+      - `PathTest.IsSupportedArchive`
+      - `PathTest.IsSupportedMedia`
+
+Return Value:
+
+   * (boolean) result.
 
 
 <a name="get_config" />
@@ -1433,8 +1466,23 @@ Properties:
      `Transition.EndNavigation`.  Default value is `Transition.ToNewSelection`.
    * `smooth` - Get/set whether the image is to be smoothed.  Default value can
      be configured in attract.cfg
-   * `zorder` - Get/set the Image's order in the applicable draw list.  When
-     objects overlap, the one with the higher zorder will be drawn on top.
+   * `zorder` - Get/set the Image's order in the applicable draw list.  Objects
+     with a lower zorder are drawn first, so that when objects overlap, the one
+     with the higher zorder is drawn on top.  Default value is 0.
+   * `blend_mode` - Get/set the blend mode for this image.  Can have one of the
+     following values:
+      - `BlendMode.Alpha`
+      - `BlendMode.Add`
+      - `BlendMode.Screen`
+      - `BlendMode.Multiply`
+      - `BlendMode.Overlay`
+      - `BlendMode.Premultiplied`
+      - `BlendMode.None`
+   * `mipmap` - Get/set the automatic generation of mipmap for the image/artwork/video.
+     Setting this to `true` greatly improves the quality of scaled down images.
+     The default value is `false`.  It's advised to force anisotropic filtering in
+     the display driver settings if the Image with auto generated mipmap is scaled
+     by the ratio that is not isotropic.
 
 Member Functions:
 
@@ -1571,8 +1619,14 @@ Properties:
      [0 ... 255].  Default value is 0.
    * `bg_alpha` - Get/set alpha level for text background. Range is [0 ...
      255].  Default value is 0 (transparent).
-   * `charsize` - Get/set the forced character size.  If this is <= 0
+   * `char_size` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on `height`.  Default value is -1.
+   * `glyph_size` - Get the height in pixels of the capital letter.
+     Useful if you want to set the textbox height to match the letter height.
+   * `char_spacing` - Get/set the spacing factor between letters.  Default value is 1.0
+   * `line_spacing` - Get/set the spacing factor between lines.  Default value is 1.0  
+     At values 0.75 or lower letters start to overlap. For uppercase texts it's around 0.5  
+     It's advised to use this property with the new align modes.
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)
@@ -1584,17 +1638,29 @@ Properties:
       - `Align.Centre` (default)
       - `Align.Left`
       - `Align.Right`
+      - `Align.TopCentre`
+      - `Align.TopLeft`
+      - `Align.TopRight`
+      - `Align.BottomCentre`
+      - `Align.BottomLeft`
+      - `Align.BottomRight`
+      - `Align.MiddleCentre`
+      - `Align.MiddleLeft`
+      - `Align.MiddleRight`  
+     The last 3 alignment modes have the same function as the first 3,
+     but they are more accurate. The first 3 modes are preserved for compatibility.
    * `word_wrap` - Get/set whether word wrapping is enabled in this text
      (boolean).  Default is `false`.
    * `msg_width` - Get the width of the text message, in layout coordinates.
    * `font` - Get/set the name of the font used for this text.  Default is
      the layout font name.
-   * nomargin - Get/set whether margin spacing should be added to sides of
-     the text (boolean).  Default value is `false`.
+   * `margin` - Get/set the margin spacing in pixels to sides of the text.  
+     Default value is `-1` which calcualtes the margin based on the .char_size.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
-   * `zorder` - Get/set the Text's order in the applicable draw list.  When
-     objects overlap, the one with the higher zorder will be drawn on top.
+   * `zorder` - Get/set the Text's order in the applicable draw list.  Objects
+     with a lower zorder are drawn first, so that when objects overlap, the one
+     with the higher zorder is drawn on top.  Default value is 0.
 
 Member Functions:
 
@@ -1662,9 +1728,15 @@ Properties:
    * `selbg_alpha` - Get/set alpha level for selection background. Range is
      [0 ... 255].  Default value is 255.
    * `rows` - Get/set the number of listbox rows.  Default value is 11.
-   * `charsize` - Get/set the forced character size.  If this is <= 0
+   * `list_size` - Get the size of the list shown by listbox.
+     When listbox is assigned as an overlay custom control this property
+     will return the number of options available in the overlay dialog.
+     This property is updated during `Transition.ShowOverlay`
+   * `char_size` - Get/set the forced character size.  If this is <= 0
      then Attract-Mode will autosize based on the value of `height`/`rows`.
      Default value is -1.
+   * `glyph_size` - Get the height in pixels of the capital letter.
+   * `char_spacing` - Get/set the spacing factor between letters.  Default value is 1.0
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)
@@ -1684,14 +1756,17 @@ Properties:
       - `Style.Underlined`
    * `font` - Get/set the name of the font used for this listbox.  Default is
      the layout font name.
+   * `margin` - Get/set the margin spacing in pixels to sides of the text.  
+     Default value is `-1` which calcualtes the margin based on the .char_size.
    * `format_string` - Get/set the format for the text to display in each list
      entry. Magic tokens can be used here, see [Magic Tokens](#magic) for more
      information.  If empty, game titles will be displayed (i.e. the same
      behaviour as if set to "[Title]").  Default is an empty value.
    * `shader` - Get/set the GLSL shader for this listbox. This can only be set
      to an instance of the class `fe.Shader` (see: `fe.add_shader()`).
-   * `zorder` - Get/set the Listbox's order in the applicable draw list.  When
-     objects overlap, the one with the higher zorder will be drawn on top.
+   * `zorder` - Get/set the Listbox's order in the applicable draw list.  Objects
+     with a lower zorder are drawn first, so that when objects overlap, the one
+     with the higher zorder is drawn on top.  Default value is 0.
 
 Member Functions:
 

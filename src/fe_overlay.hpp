@@ -27,6 +27,7 @@
 #include "fe_present.hpp"
 
 class FeSettings;
+class FeInputMapEntry;
 class FeBaseConfigMenu;
 class FeTextPrimative;
 
@@ -54,7 +55,7 @@ private:
 		sf::Vector2f &text_scale,
 		int &char_size ) const;
 
-	void input_map_dialog( const std::string &msg_str, std::string &map_str,
+	void input_map_dialog( const std::string &msg_str, FeInputMapEntry &res,
 			FeInputMap::Command &conflict );
 	int display_config_dialog( FeBaseConfigMenu *, bool & );
 
@@ -71,12 +72,14 @@ public:
 
 	void splash_message( const std::string &, const std::string &rep="",
 		const std::string &aux="" );
+
 	int confirm_dialog( const std::string &msg,
 		const std::string &rep="",
-		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
+		bool default_yes = false );
 
 	bool config_dialog();
 	bool edit_game_dialog();
+	bool layout_options_dialog();
 	int languages_dialog();
 	int tags_dialog();
 

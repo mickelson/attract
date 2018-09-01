@@ -42,6 +42,7 @@ private:
 	FePresentableParent &m_parent;
 	FeShader *m_shader;
 	bool m_visible;
+	int m_zorder;
 
 public:
 	FeBasePresentable( FePresentableParent &p );

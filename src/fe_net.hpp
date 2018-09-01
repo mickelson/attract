@@ -107,7 +107,7 @@ public:
 	bool pop_completed_task( int &id,
 			std::string &result );
 
-	bool input_done();
+	bool all_done();
 	bool output_done();
 };
 

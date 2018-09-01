@@ -35,14 +35,19 @@
 
 class FeSettings;
 
+namespace sf
+{
+	class InputStream;
+};
+
 class FeSound
 {
 private:
 	FeSound( const FeSound & );
 	FeSound &operator=( const FeSound & );
 
+	sf::InputStream *m_stream;
 #ifdef NO_MOVIE
-	FeZipStream m_zip; // needs to be declared before sf::Music m_sound !
 	sf::Music m_sound;
 #else
 	FeMedia m_sound;
@@ -52,6 +57,7 @@ private:
 
 public:
 	FeSound( bool loop=false );
+	~FeSound();
 
 	void load( const std::string &path, const std::string &fn );
 	void tick();

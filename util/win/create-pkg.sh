@@ -70,6 +70,11 @@ LLIMIT=$(awk 'BEGIN{printf"%.1f",'${NPROC}'/2}')
 make -C .. clean
 eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} TOOLCHAIN=i686-w64-mingw32.static $@
 mv ../attract.exe "${APP}"/attract.exe
+
+make -C .. clean
+eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} WINDOWS_CONSOLE=1 TOOLCHAIN=i686-w64-mingw32.static $@
+mv ../attract.exe "${APP}"/attract-console.exe
+
 pushd "${APP}" >/dev/null
 zip -r ../attract-${VERSION}-win32.zip *
 popd >/dev/null
@@ -78,6 +83,11 @@ popd >/dev/null
 make -C .. clean
 eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} TOOLCHAIN=x86_64-w64-mingw32.static $@
 mv ../attract.exe "${APP}"/attract.exe
+
+make -C .. clean
+eval make -C .. -j${NPROC} -l${LLIMIT} ${MAKEOPTS} WINDOWS_CONSOLE=1 TOOLCHAIN=x86_64-w64-mingw32.static $@
+mv ../attract.exe "${APP}"/attract-console.exe
+
 pushd "${APP}" >/dev/null
 zip -r ../attract-${VERSION}-win64.zip *
 popd >/dev/null

@@ -1,7 +1,7 @@
 ##
 ##
 ##  Attract-Mode frontend
-##  Copyright (C) 2013-2016 Andrew Mickelson
+##  Copyright (C) 2013-2018 Andrew Mickelson
 ##
 ##  This file is part of Attract-Mode.
 ##
@@ -32,7 +32,7 @@
 # Uncomment next line to disable network support (i.e. no SFML Network).
 #NO_NET=1
 #
-# By default, if FontConfig gets enabled we link against the system's expat 
+# By default, if FontConfig gets enabled we link against the system's expat
 # library (because FontConfig uses expat too).  If FontConfig is not used
 # then Attract-Mode is statically linked to its own version of expat.
 # Uncomment next line to always link to Attract-Mode's version of expat.
@@ -41,14 +41,25 @@
 # Uncomment next line for Windows static cross-compile build (mxe)
 #WINDOWS_STATIC=1
 #
+# By default, Attract-Mode on Windows is built as a GUI application, which
+# does not allow for command line interactions at the Windows console.
+# Uncomment the next line to build a console version of Attract-Mode
+# instead (Windows only)
+#WINDOWS_CONSOLE=1
+#
 # Uncomment the next line to disable SWF support (i.e. no game_swf)
 #NO_SWF=1
+#
+# Uncomment the next line(s) as appropriate to enable hardware video
+# decoding on Linux (req FFmpeg >= 3.4)
+#FE_HWACCEL_VAAPI=1
+#FE_HWACCEL_VDPAU=1
 ###############################
 
 #FE_DEBUG=1
 #VERBOSE=1
 
-FE_VERSION=v2.2.1
+FE_VERSION=v2.4.1
 
 CC=gcc
 CXX=g++
@@ -77,7 +88,7 @@ override CC := $(TOOLCHAIN)-$(CC)
 override CXX := $(TOOLCHAIN)-$(CXX)
 override AR := $(TOOLCHAIN)-$(AR)
 endif
- 
+
 ifneq ($(origin CROSS),undefined)
 override STRIP := $(TOOLCHAIN)-$(STRIP)
 override PKG_CONFIG := $(TOOLCHAIN)-$(PKG_CONFIG)
@@ -100,6 +111,7 @@ FE_FLAGS=
 
 _DEP =\
 	fe_base.hpp \
+	fe_file.hpp \
 	fe_util.hpp \
 	fe_util_sq.hpp \
 	fe_info.hpp \
@@ -120,10 +132,12 @@ _DEP =\
 	fe_text.hpp \
 	fe_listbox.hpp \
 	fe_vm.hpp \
+	fe_blend.hpp \
 	zip.hpp
 
 _OBJ =\
 	fe_base.o \
+	fe_file.o \
 	fe_util.o \
 	fe_util_sq.o \
 	fe_cmdline.o \
@@ -147,6 +161,7 @@ _OBJ =\
 	fe_text.o \
 	fe_listbox.o \
 	fe_vm.o \
+	fe_blend.o \
 	zip.o \
 	main.o
 
@@ -172,13 +187,7 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
    _OBJ += fe_util_osx.o
    LIBS += -framework Cocoa -framework Carbon -framework IOKit
   else
-   #
-   # Test for Raspberry Pi
-   #
-   ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
-    FE_RPI=1
-    USE_GLES=1
-   else
+   ifneq ($(USE_GLES),1)
     #
     # Test for Xlib and Xinerama...
     #
@@ -239,7 +248,8 @@ ifneq ($(NO_SWF),1)
   ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
    ifeq ($(USE_GLES),1)
-    LIBS += -ldl -lGLESv1_CM
+    GLES_LIB ?= -lGLESv1_CM
+    LIBS += -ldl $(GLES_LIB)
    else
     LIBS += -ldl -lGL
    endif
@@ -256,7 +266,13 @@ endif
 ifeq ($(FE_WINDOWS_COMPILE),1)
  _DEP += attract.rc
  _OBJ += attract.res
- CFLAGS += -mconsole
+ ifeq ($(WINDOWS_CONSOLE),1)
+  CFLAGS += -mconsole
+  FE_FLAGS += -DWINDOWS_CONSOLE
+ else
+  CFLAGS += -Wl,--subsystem,windows
+ endif
+
  EXE_EXT = .exe
 else
  CFLAGS += -DDATA_PATH=\"$(DATA_PATH)\"
@@ -293,13 +309,22 @@ else
  CFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
 
-ifeq ($(FE_RPI),1)
- FE_FLAGS += -DFE_RPI
- CFLAGS += -I/opt/vc/include -L/opt/vc/lib
-endif
-
 ifeq ($(USE_GLES),1)
  FE_FLAGS += -DUSE_GLES
+
+ #
+ # Hack for Raspberry Pi includes...
+ #
+ifneq ($(USE_VC4),1)
+  ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
+   CFLAGS += -I/opt/vc/include -L/opt/vc/lib
+   ifneq ("$(wildcard /opt/vc/lib/libbrcmGLESv2.so)","")
+    GLES_LIB := -lbrcmGLESv2
+   else
+    GLES_LIB := -lGLESv2
+   endif
+  endif
+ endif
 endif
 
 ifeq ($(USE_XLIB),1)
@@ -311,6 +336,14 @@ ifeq ($(USE_XLIB),1)
   LIBS += -lXinerama
  endif
 
+endif
+
+ifeq ($(FE_HWACCEL_VAAPI),1)
+ FE_FLAGS += -DFE_HWACCEL_VAAPI
+endif
+
+ifeq ($(FE_HWACCEL_VDPAU),1)
+ FE_FLAGS += -DFE_HWACCEL_VDPAU
 endif
 
 ifeq ($(USE_FONTCONFIG),1)
@@ -353,7 +386,7 @@ else
   TEMP_LIBS += libavresample
   FE_FLAGS += -DUSE_AVRESAMPLE
   endif
- endif 
+ endif
 
  _DEP += media.hpp
  _OBJ += media.o
@@ -372,6 +405,9 @@ EXE = $(EXE_BASE)$(EXE_EXT)
 ifeq ($(BUILD_EXPAT),1)
  CFLAGS += -I$(EXTLIBS_DIR)/expat
  EXPAT = $(OBJ_DIR)/libexpat.a
+ ifneq ($(FE_WINDOWS_COMPILE),1)
+  EXPAT_FLAGS = -DXML_DEV_URANDOM -DHAVE_MEMMOVE
+ endif
 else
  LIBS += -lexpat
  EXPAT =
@@ -448,7 +484,8 @@ EXPAT_OBJ_DIR = $(OBJ_DIR)/expat
 EXPATOBJS = \
 	$(EXPAT_OBJ_DIR)/xmlparse.o \
 	$(EXPAT_OBJ_DIR)/xmlrole.o \
-	$(EXPAT_OBJ_DIR)/xmltok.o
+	$(EXPAT_OBJ_DIR)/xmltok.o \
+	$(EXPAT_OBJ_DIR)/loadlibrary.o
 
 $(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
 	$(AR_MSG)
@@ -456,7 +493,7 @@ $(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
 
 $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) -DHAVE_MEMMOVE
+	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) $(EXPAT_FLAGS)
 
 $(EXPAT_OBJ_DIR):
 	$(MD) $@

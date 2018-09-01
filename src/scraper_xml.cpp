@@ -102,6 +102,8 @@ bool correct_buff_for_format( char *&buff, int &size,
 std::string get_crc( const std::string &full_path,
 	const std::vector<std::string> &exts )
 {
+	const int MAX_CRC_FILE_SIZE = 10485760; // don't do CRC checks on files more than 10 meg
+
 	if ( is_supported_archive( full_path ) )
 	{
 		std::vector<std::string> contents;
@@ -125,10 +127,17 @@ std::string get_crc( const std::string &full_path,
 				char *buff = zs.getData();
 				int size = zs.getSize();
 
+				if ( size > MAX_CRC_FILE_SIZE )
+					return "";
+
 				correct_buff_for_format( buff, size, *itr );
-				return get_crc32( buff, size );
+				std::string retval = get_crc32( buff, size );
+				FeDebug() << "CRC: " << full_path << "=" << retval << std::endl;
+				return retval;
 			}
 		}
+
+		return "";
 	}
 
 	std::ifstream myfile( full_path.c_str(),
@@ -141,13 +150,25 @@ std::string get_crc( const std::string &full_path,
 	int size = myfile.tellg();
 	myfile.seekg(0, myfile.beg);
 
-	char buff[ size ];
-	char *buff_ptr = (char *)buff;
-	myfile.read( buff, size );
+	if ( size > MAX_CRC_FILE_SIZE )
+	{
+		myfile.close();
+		return "";
+	}
+
+	char *buff_ptr = new char[size];
+	char *orig_buff_ptr = buff_ptr;
+
+	myfile.read( buff_ptr, size );
 	myfile.close();
 
 	correct_buff_for_format( buff_ptr, size, full_path );
-	return get_crc32( buff_ptr, size );
+	std::string retval = get_crc32( buff_ptr, size );
+
+	delete [] orig_buff_ptr;
+
+	FeDebug() << "CRC: " << full_path << "=" << retval << std::endl;
+	return retval;
 }
 
 } // end namespace
@@ -178,17 +199,17 @@ void romlist_console_report( FeRomInfoListType &rl )
 	FeRomInfoListType::iterator itr;
 	for ( itr=rl.begin(); itr!=rl.end(); ++itr )
 	{
-		std::cout << " > " << std::left << std::setw( 25 )
+		FeLog() << " > " << std::left << std::setw( 25 )
 			<< truncate( *itr, FeRomInfo::Romname, 25 ) << " ==> "
 			<< std::setw( 25 )
 			<< truncate( *itr, FeRomInfo::Title, 25 );
 
 		if ( (*itr).get_info( FeRomInfo::BuildScore ).empty() )
-			std::cout << std::endl;
+			FeLog() << std::endl;
 		else
-			std::cout << " [" << std::right << std::setw( 3 )
-			<< (*itr).get_info( FeRomInfo::BuildScore ) << "]"
-			<< std::endl;
+			FeLog() << " [" << std::right << std::setw( 3 )
+				<< (*itr).get_info( FeRomInfo::BuildScore ) << "]"
+				<< std::endl;
 	}
 }
 
@@ -236,8 +257,8 @@ bool my_parse_callback( const char *buff, void *opaque )
 	if ( XML_Parse( ds->parser, buff,
 			strlen(buff), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml output:"
-					<< buff << std::endl;
+		FeLog() << "Error parsing xml output:"
+			<< buff << std::endl;
 	}
 	else
 		ds->parsed_xml = true;
@@ -283,6 +304,7 @@ FeImporterContext::FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType
 	uiupdate( NULL ),
 	uiupdatedata( NULL ),
 	full( false ),
+	use_net( true ),
 	progress_past( 0 ),
 	progress_range( 100 ),
 	download_count( 0 )
@@ -382,6 +404,11 @@ void FeListXMLParser::start_element(
 				else if (( strcmp( attribute[i], "buttons" ) == 0 )
 						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
 					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
+
+				// Older MAME XML included control as an attribute of the input tag:
+				else if (( strcmp( attribute[i], "control" ) == 0 )
+						&& (*m_itr).get_info( FeRomInfo::Control ).empty() )
+					(*m_itr).set_info( FeRomInfo::Control, attribute[i+1] );
 			}
 		}
 		else if ( strcmp( element, "display" ) == 0 )
@@ -420,6 +447,10 @@ void FeListXMLParser::start_element(
 					type = attribute[i+1];
 				else if ( strcmp( attribute[i], "ways" ) == 0 )
 					ways = attribute[i+1];
+
+				if (( strcmp( attribute[i], "buttons" ) == 0 )
+						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
+					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
 			}
 
 			struct my_map_struct { const char *in; const char *out; };
@@ -607,15 +638,15 @@ void FeListXMLParser::post_parse()
 
 	if ( !m_discarded.empty() )
 	{
-		std::cout << " - Discarded " << m_discarded.size()
+		FeLog() << " - Discarded " << m_discarded.size()
 				<< " entries based on xml info: ";
 		std::vector<FeRomInfoListType::iterator>::iterator itr;
 		for ( itr = m_discarded.begin(); itr != m_discarded.end(); ++itr )
 		{
-			std::cout << (*(*itr)).get_info( FeRomInfo::Romname ) << " ";
+			FeLog() << (*(*itr)).get_info( FeRomInfo::Romname ) << " ";
 			m_ctx.romlist.erase( (*itr) );
 		}
-		std::cout << std::endl;
+		FeLog() << std::endl;
 	}
 }
 
@@ -658,7 +689,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 	std::ifstream myfile( filename.c_str() );
 	if ( !myfile.is_open() )
 	{
-		std::cerr << "Error opening file: " << filename << std::endl;
+		FeLog() << "Error opening file: " << filename << std::endl;
 		return false;
 	}
 
@@ -668,7 +699,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 	XML_SetCharacterDataHandler( parser, exp_handle_data );
 	bool ret_val = true;
 
-	while ( myfile.good() )
+	while ( myfile.good() && m_continue_parse )
 	{
 		std::string line;
 		getline( myfile, line );
@@ -676,7 +707,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 		if ( XML_Parse( parser, line.c_str(),
 				line.size(), XML_FALSE ) == XML_STATUS_ERROR )
 		{
-			std::cout << "Error parsing xml:"
+			FeLog() << "Error parsing xml:"
 				<< line << std::endl;
 			ret_val = false;
 			break;
@@ -962,16 +993,16 @@ bool FeListSoftwareParser::parse( const std::string &prog,
 		}
 	}
 
-	std::cout << " * Calculated CRCs for " << m_crc_map.size() << " files in "
+	FeLog() << " * Calculated CRCs for " << m_crc_map.size() << " files in "
 		<< my_timer.getElapsedTime().asMilliseconds() << "ms." << std::endl;
 
 	if ( system_name.empty() )
 	{
-		std::cerr << " * Error: No system identifier found that is recognized by -listxml" << std::endl;
+		FeLog() << " * Error: No system identifier found that is recognized by -listxml" << std::endl;
 		return false;
 	}
 
-	std::cout << " - Obtaining -listsoftware info ["
+	FeLog() << " - Obtaining -listsoftware info ["
 		<< system_name << "]" << std::endl;
 
 	// Now get the individual game -listsoftware settings
@@ -980,7 +1011,7 @@ bool FeListSoftwareParser::parse( const std::string &prog,
 
 	if ( !retval )
 	{
-		std::cout << " * Error: No XML output found, command: " << prog << " "
+		FeLog() << " * Error: No XML output found, command: " << prog << " "
 					<< system_name + " -listsoftware" << std::endl;
 	}
 
@@ -1042,7 +1073,7 @@ bool FeGameDBPlatformListParser::parse( const std::string &data )
 	if ( XML_Parse( parser, data.c_str(),
 			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml." << std::endl;
+		FeLog() << "Error parsing xml." << std::endl;
 		ret_val = false;
 	}
 
@@ -1138,7 +1169,7 @@ bool FeGameDBPlatformParser::parse( const std::string &data )
 	if ( XML_Parse( parser, data.c_str(),
 			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml." << std::endl;
+		FeLog() << "Error parsing xml." << std::endl;
 		ret_val = false;
 	}
 
@@ -1285,7 +1316,6 @@ void FeGameDBParser::end_element( const char *element )
 			m_platform = m_current_data;
 		else if ( strcmp( element, "Overview" ) == 0 )
 			m_overview = m_current_data;
-
 		else if ( m_art )
 		{
 			if ( strcmp( element, "baseImgUrl" ) == 0 )
@@ -1389,22 +1419,13 @@ void FeGameDBParser::set_info_val( FeRomInfo::Index i, const std::string &v )
 
 bool FeGameDBParser::get_overview( std::string &overview )
 {
-	if ( m_overview_keep.empty() )
-		return false;
+	overview = m_overview_keep;
 
 	//
-	// escape newlines in m_overview
+	// Return true if overview is not empty
 	//
-	size_t pos1=0, pos=0;
-	while ( ( pos = m_overview_keep.find( "\n", pos1 ) ) != std::string::npos )
-	{
-		overview += m_overview_keep.substr( pos1, pos-pos1 );
-		overview += "\\n";
-		pos1 = pos+1;
-	}
-	overview += m_overview_keep.substr( pos1 );
-
-	return true;
+	return (( !overview.empty() )
+		&& ( overview.find_first_not_of( " \t\r\n" ) != std::string::npos ));
 }
 
 bool FeGameDBParser::parse( const std::string &data )
@@ -1422,7 +1443,7 @@ bool FeGameDBParser::parse( const std::string &data )
 	if ( XML_Parse( parser, data.c_str(),
 			data.size(), XML_FALSE ) == XML_STATUS_ERROR )
 	{
-		std::cout << "Error parsing xml." << std::endl;
+		FeLog() << "Error parsing xml." << std::endl;
 		ret_val = false;
 	}
 

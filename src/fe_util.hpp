@@ -67,6 +67,10 @@ bool tail_compare(
 	const std::string &filename,
 	const std::vector<std::string> &ext_list );
 
+bool tail_compare(
+	const std::string &filename,
+	const char **ext_list );
+
 //
 // Case insensitive compare of one and two
 // returns 0 if equal
@@ -197,6 +201,8 @@ std::string get_available_filename(
 // Create "base" directory if it doesn't exist
 // Create "sub" folder in "base" if it doesn't already exist
 //
+// returns true if directory created
+//
 bool confirm_directory( const std::string &base, const std::string &sub );
 
 //
@@ -251,6 +257,9 @@ void print_ffmpeg_version_info();
 #endif
 
 std::string url_escape( const std::string &raw );
+std::string newline_escape( const std::string &raw );
+
+void remove_trailing_spaces( std::string &str );
 
 void get_url_components( const std::string &url,
 	std::string &host,
@@ -269,6 +278,9 @@ bool line_to_setting_and_value( const std::string &line,
 	std::string &setting,
 	std::string &value,
 	const char *sep=FE_WHITESPACE );
+
+// return the name of the process that currently has window focus
+std::string get_focus_process();
 
 //
 // Non-blocking check for input on stdin

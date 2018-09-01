@@ -120,6 +120,11 @@ public:
 	bool poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui );
 	void clear(); // override of base class clear()
 
+	// runs .attract/emulators/template/setup.nut to generate default emulator
+	// configs and detect emulators.  Prompts user to automaticallly import emulators
+	//
+	bool setup_wizard();
+
 	// Scripting functionality
 	//
 	void vm_close();
@@ -204,6 +209,18 @@ public:
 	static bool cb_plugin_command(const char *, const char *);
 	static bool cb_plugin_command_bg(const char *, const char *);
 	static const char *cb_path_expand( const char *path );
+
+	enum PathTestType
+	{
+		IsFileOrDirectory,
+		IsFile,
+		IsDirectory,
+		IsRelativePath,
+		IsSupportedArchive,
+		IsSupportedMedia,
+	};
+	static bool cb_path_test( const char *, int );
+
 	static const char *cb_game_info( int,int,int);
 	static const char *cb_game_info(int,int);
 	static const char *cb_game_info(int);
@@ -221,6 +238,7 @@ public:
 	static const char *cb_get_art( const char *);
 	static Sqrat::Table cb_get_config();
 	static void cb_signal( const char * );
+	static void cb_set_display( int, bool );
 	static void cb_set_display( int );
 };
 

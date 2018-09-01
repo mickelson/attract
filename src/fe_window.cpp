@@ -90,6 +90,12 @@ public:
 	}
 };
 
+bool is_multimon_config( FeSettings &fes )
+{
+	return (( fes.get_info_bool( FeSettings::MultiMon ) )
+		&& ( !is_windowed_mode( fes.get_window_mode() ) ));
+}
+
 const char *FeWindowPosition::FILENAME = "window.am";
 
 FeWindow::FeWindow( FeSettings &fes )
@@ -119,35 +125,17 @@ void FeWindow::onCreate()
 	//		SetWindowLongPtr( getSystemHandle(), GWL_STYLE,
 	//			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
 	//
-	int left, top, width, height;
-	if (( m_fes.get_info_bool( FeSettings::MultiMon ) )
-		&& ( !is_windowed_mode( m_fes.get_window_mode() ) ))
+	if ( is_multimon_config( m_fes ) )
 	{
-		left = GetSystemMetrics( SM_XVIRTUALSCREEN );
-		top = GetSystemMetrics( SM_YVIRTUALSCREEN );
-		width = GetSystemMetrics( SM_CXVIRTUALSCREEN );
-		height = GetSystemMetrics( SM_CYVIRTUALSCREEN );
-	}
-	else
-	{
-		left = getPosition().x;
-		top = getPosition().y;
-		width = getSize().x;
-		height = getSize().y;
-	}
+		// Note that as of 2.1, SFML caches the window size internally
+		setPosition( sf::Vector2i(
+			GetSystemMetrics( SM_XVIRTUALSCREEN ),
+			GetSystemMetrics( SM_YVIRTUALSCREEN ) ) );
 
-	if ( m_fes.get_window_mode() == FeSettings::Default ) // "fill screen" mode
-	{
-		// resize the window off screen 1 pixel in each direction so we don't see the window border
-		left -= 1;
-		top -= 1;
-		width += 2;
-		height += 2;
+		setSize( sf::Vector2u(
+			GetSystemMetrics( SM_CXVIRTUALSCREEN ),
+			GetSystemMetrics( SM_CYVIRTUALSCREEN ) ) );
 	}
-
-	// As of 2.1, SFML caches the window size internally
-	setPosition( sf::Vector2i( left, top ) );
-	setSize( sf::Vector2u( width, height ) );
 
 #elif defined(USE_XLIB)
 	//
@@ -159,9 +147,10 @@ void FeWindow::onCreate()
 	//
 	int x, y, width, height;
 	get_x11_geometry(
-		m_fes.get_info_bool( FeSettings::MultiMon ) && !is_windowed_mode( m_fes.get_window_mode() ),
+		is_multimon_config( m_fes ),
 		x, y, width, height );
 
+	// Note that as of 2.1, SFML caches the window size internally
 	setPosition( sf::Vector2i( x, y ) );
 	setSize( sf::Vector2u( width, height ) );
 
@@ -188,11 +177,13 @@ void FeWindow::initial_create()
 	int win_mode = m_fes.get_window_mode();
 
 #ifdef USE_XINERAMA
-	if ( m_fes.get_info_bool( FeSettings::MultiMon ) && ( win_mode != FeSettings::Default ))
-		std::cout << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
+	if ( is_multimon_config( m_fes ) && ( win_mode != FeSettings::Default ))
+		FeLog() << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
 #endif
 
 	// Create window
+	FeDebug() << "Creating Attract-Mode window" << std::endl;
+
 	create(
 		sf::VideoMode::getDesktopMode(),
 		"Attract-Mode",
@@ -248,12 +239,17 @@ void launch_callback( void *o )
  // hasFocus() is only available as of SFML 2.2.
  #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
 		if ( win->hasFocus() )
+		{
+			FeDebug() << "Attract-Mode window still has focus, closing now" << std::endl;
 			win->close();
+		}
  #else
+		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close();
  #endif
 
 #else
+		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
 #endif
 	}
@@ -272,70 +268,105 @@ void wait_callback( void *o )
 			if ( ev.type == sf::Event::Closed )
 				return;
 		}
-
-		win->clear();
-		win->display();
+		// Clear the frame buffer so there is no stale frame flashing on game launch/exit
+		// Don't clear if Multimonitor is enabled and window mode is set to Fill Screen
+		if ( !is_multimon_config( win->m_fes ) )
+		{
+			win->clear();
+			win->display();
+		}
 	}
 }
 
 bool FeWindow::run()
 {
-#ifndef SFML_SYSTEM_MACOS
-	// Don't move so much to the corner on Macs due to hot corners
-	//
-	const int HIDE_OFFSET=3;
-#else
-	const int HIDE_OFFSET=1;
-#endif
-	// Move the mouse to the bottom left corner so it isn't visible
-	// when the emulator launches.
-	//
-	sf::Vector2i reset_pos = sf::Mouse::getPosition();
+	sf::Vector2i reset_pos;
 
-	sf::Vector2i hide_pos = getPosition();
-	hide_pos.x += getSize().x - HIDE_OFFSET;
-	hide_pos.y += getSize().y - HIDE_OFFSET;
+	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
+	{
+		// Move the mouse to the bottom right corner so it isn't visible
+		// when the emulator launches.
+		//
+		reset_pos = sf::Mouse::getPosition();
 
-	sf::Mouse::setPosition( hide_pos );
+		sf::Vector2i hide_pos = getPosition();
+		hide_pos.x += getSize().x - 1;
+		hide_pos.y += getSize().y - 1;
+
+		sf::Mouse::setPosition( hide_pos );
+	}
 
 	sf::Clock timer;
 
-	//
-	// For Steam support (at least on Windows) we have a "minimum run"
-	// value that can be set per emulator.  run() below sets this value.
-	// and we wait at least this amount of time (in seconds) and then wait
-	// for focus to return to Attract-Mode if this value is set greater than 0
-	//
-	int min_run;
-	m_fes.run( min_run, launch_callback, wait_callback, this );
+	int nbm_wait; // non-blocking mode wait time (in seconds)
+	m_fes.run( nbm_wait, launch_callback, wait_callback, this );
 
-	if ( min_run > 0 )
+	//
+	// If nbm_wait > 0, then m_fes.run() above is non-blocking and we need
+	// to wait at most nbm_wait seconds for Attract-Mode to lose focus to
+	// the launched program.  If it loses focus, we continue waiting until
+	// focus returns to Attract-Mode
+	//
+	if ( nbm_wait > 0 )
 	{
-		sf::Time elapsed = timer.getElapsedTime();
-		if ( elapsed < sf::seconds( min_run ) )
-			sf::sleep( sf::seconds( min_run ) - elapsed );
+		FeDebug() << "Non-Blocking Wait Mode: nb_mode_wait=" << nbm_wait << " seconds, waiting..." << std::endl;
+		bool done_wait=false, has_focus=false;
 
-		//
-		// Wait for focus to return
-		//
-		bool done_wait=false;
 		while ( !done_wait && isOpen() )
 		{
 			sf::Event ev;
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+			while (pollEvent(ev))
+			{
+				if ( ev.type == sf::Event::Closed )
+					return false;
+			}
+
+			has_focus = hasFocus();
+#else
+			//
+			// flakey pre-SFML 2.2 implementation
+			// to be removed if SFML 2.0/2.1 support is ever dropped
+			//
 			while (pollEvent(ev))
 			{
 				if ( ev.type == sf::Event::GainedFocus )
 				{
-					done_wait=true;
-					break;
+					if ( !has_focus )
+						FeDebug() << "Gained focus at "
+							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+
+					has_focus = true;
+				}
+				else if ( ev.type == sf::Event::LostFocus )
+				{
+					if ( has_focus )
+						FeDebug() << "Lost focus at "
+							<< timer.getElapsedTime().asMilliseconds() << "ms" << std::endl;
+
+					has_focus = false;
 				}
 				else if ( ev.type == sf::Event::Closed )
 					return false;
 			}
+#endif
 
-			sf::sleep( sf::milliseconds( 250 ) );
+			if (( timer.getElapsedTime() >= sf::seconds( nbm_wait ) )
+				&& ( has_focus ))
+			{
+				FeDebug() << "Attract-Mode has focus, stopped non-blocking wait after "
+					<< timer.getElapsedTime().asSeconds() << "s" << std::endl;
+
+				done_wait = true;
+			}
+			else
+				sf::sleep( sf::milliseconds( 25 ) );
 		}
 	}
+
+	if ( m_fes.get_info_bool( FeSettings::TrackUsage ) )
+		m_fes.update_stats( 1, timer.getElapsedTime().asSeconds() );
 
 #if defined(SFML_SYSTEM_LINUX)
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
@@ -360,7 +391,8 @@ bool FeWindow::run()
 	SetForegroundWindow( getSystemHandle() );
 #endif
 
-	sf::Mouse::setPosition( reset_pos );
+	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
+		sf::Mouse::setPosition( reset_pos );
 
 	// Empty the window event queue, so we don't go triggering other
 	// right away after running an emulator
@@ -371,6 +403,8 @@ bool FeWindow::run()
 		if ( ev.type == sf::Event::Closed )
 			return false;
 	}
+
+	FeDebug() << "Resuming frontend after game launch" << std::endl;
 
 	return true;
 }

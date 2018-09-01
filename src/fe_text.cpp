@@ -80,8 +80,11 @@ void FeText::setRotation( float r )
 
 void FeText::setColor( const sf::Color &c )
 {
-	m_draw_text.setColor( c );
-	FePresent::script_flag_redraw();
+	if ( c != m_draw_text.getColor() )
+	{
+		m_draw_text.setColor( c );
+		FePresent::script_flag_redraw();
+	}
 }
 
 const sf::Color &FeText::getColor() const
@@ -119,14 +122,20 @@ int FeText::getFilterOffset() const
 
 void FeText::on_new_list( FeSettings *s )
 {
-	int char_size = 8 * m_scale_factor;
-	if ( m_user_charsize > 0 )
-		char_size = m_user_charsize * m_scale_factor;
-	else if ( m_size.y > 12 )
-		char_size = ( m_size.y - 4 ) * m_scale_factor;
+	// We only update the font size and scale if the string is not empty
+	// so we do not render any unnecessary glyphs when the script updates the height of text
+	//
+	if ( m_string.size() > 0 )
+	{
+		int char_size = 8 * m_scale_factor;
+		if ( m_user_charsize > 0 )
+			char_size = m_user_charsize * m_scale_factor;
+		else if ( m_size.y > 12 )
+			char_size = ( m_size.y - 4 ) * m_scale_factor;
 
-	m_draw_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
-	m_draw_text.setCharacterSize( char_size );
+		m_draw_text.setTextScale( sf::Vector2f( 1.f / m_scale_factor, 1.f / m_scale_factor ) );
+		m_draw_text.setCharacterSize( char_size );
+	}
 	m_draw_text.setPosition( m_position );
 	m_draw_text.setSize( m_size );
 }
@@ -186,6 +195,17 @@ bool FeText::get_no_margin()
 	return m_draw_text.getNoMargin();
 }
 
+void FeText::set_margin( int m )
+{
+	m_draw_text.setMargin( m );
+	FePresent::script_do_update( this );
+}
+
+int FeText::get_margin()
+{
+	return m_draw_text.getMargin();
+}
+
 void FeText::set_first_line_hint( int l )
 {
 	if ( l != m_draw_text.getFirstLineHint() )
@@ -238,6 +258,21 @@ int FeText::get_charsize()
 	return m_draw_text.getCharacterSize();
 }
 
+int FeText::get_glyph_size()
+{
+	return m_draw_text.getGlyphSize();
+}
+
+float FeText::get_spacing()
+{
+	return m_draw_text.getCharacterSpacing();
+}
+
+float FeText::get_line_spacing()
+{
+	return m_draw_text.getLineSpacing();
+}
+
 int FeText::get_style()
 {
 	return m_draw_text.getStyle();
@@ -256,65 +291,109 @@ const char *FeText::get_font()
 void FeText::set_bgr(int r)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.r=r;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( r != c.r )
+	{
+		c.r=r;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bgg(int g)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.g=g;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( g != c.g )
+	{
+		c.g=g;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bgb(int b)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.b=b;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( b != c.b )
+	{
+		c.b=b;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bga(int a)
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.a=a;
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+
+	if ( a != c.a )
+	{
+		c.a=a;
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_bg_rgb(int r, int g, int b )
 {
 	sf::Color c=m_draw_text.getBgColor();
-	c.r=r;
-	c.g=g;
-	c.b=b;
 
-	if ( c.a == 0 )
-		c.a = 255;
+	if ( ( r != c.r ) || ( g != c.g ) || ( b != c.b ) )
+	{
+		c.r=r;
+		c.g=g;
+		c.b=b;
 
-	m_draw_text.setBgColor(c);
-	FePresent::script_flag_redraw();
+		if ( c.a == 0 )
+			c.a = 255;
+
+		m_draw_text.setBgColor(c);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_charsize(int s)
 {
-	m_user_charsize = s;
+	if ( s != m_user_charsize )
+	{
+		m_user_charsize = s;
+		FePresent::script_do_update( this );
+	}
+}
+
+void FeText::set_spacing(float s)
+{
+	if ( s != m_draw_text.getCharacterSpacing() )
+	{
+		m_draw_text.setCharacterSpacing(s);
+		FePresent::script_do_update( this );
+	}
+}
+
+void FeText::set_line_spacing(float s)
+{
+	m_draw_text.setLineSpacing(s);
 	FePresent::script_do_update( this );
 }
 
 void FeText::set_style(int s)
 {
-	m_draw_text.setStyle(s);
-	FePresent::script_flag_redraw();
+	if ( s != m_draw_text.getStyle() )
+	{
+		m_draw_text.setStyle(s);
+		FePresent::script_flag_redraw();
+	}
 }
 
 void FeText::set_align(int a)
 {
-	m_draw_text.setAlignment( (FeTextPrimative::Alignment)a);
-	FePresent::script_do_update( this );
+	if ( a != m_draw_text.getAlignment() )
+	{
+		m_draw_text.setAlignment( (FeTextPrimative::Alignment)a);
+		FePresent::script_do_update( this );
+	}
 }
 
 void FeText::set_font( const char *f )

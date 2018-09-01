@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-15 Andrew Mickelson
+ *  Copyright (C) 2013-17 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -29,12 +29,17 @@
 #include "fe_text.hpp"
 #include "fe_window.hpp"
 #include "fe_vm.hpp"
+#include "fe_blend.hpp"
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
 
 #ifndef NO_MOVIE
 #include <Audio/AudioDevice.hpp>
+#endif
+
+#ifdef SFML_SYSTEM_ANDROID
+#include "fe_util_android.hpp"
 #endif
 
 #ifdef SFML_SYSTEM_WINDOWS
@@ -51,35 +56,54 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font,
-			bool &process_console );
+			bool &process_console,
+			std::string &log_file,
+			FeLogLevel &log_level );
 
 int main(int argc, char *argv[])
 {
-	std::string config_path, cmdln_font;
+	std::string config_path, cmdln_font, log_file;
 	bool launch_game = false;
 	bool process_console = false;
+	FeLogLevel log_level = FeLog_Info;
 
-	process_args( argc, argv, config_path, cmdln_font, process_console );
+	process_args( argc, argv, config_path, cmdln_font, process_console, log_file, log_level );
+
+	FeSettings feSettings( config_path, cmdln_font );
+
+	//
+	// Setup logging
+	//
+#if defined(SFML_SYSTEM_WINDOWS) && !defined(WINDOWS_CONSOLE)
+	if ( log_file.empty() ) // on windows non-console version, write log to "last_run.log" by default
+	{
+		log_file = feSettings.get_config_dir();
+		log_file += "last_run.log";
+	}
+#endif
+	//
+	// If a log file was supplied at the command line, write to that log file
+	// If no file is supplied, logging is to stdout
+	//
+	if ( !log_file.empty() )
+		fe_set_log_file( clean_path( log_file ) );
+
+	// The following call also initializes the log callback for ffmpeg and gameswf
+	//
+	fe_set_log_level( log_level );
 
 	//
 	// Run the front-end
 	//
-	std::cout << "Starting " << FE_NAME << " " << FE_VERSION
-			<< " (" << get_OS_string() << ")";
-
-	if ( process_console )
-		std::cout << ", Script Console Enabled";
-
-	std::cout << std::endl;
-
-	FeSettings feSettings( config_path, cmdln_font );
+	fe_print_version();
+	FeLog() << std::endl;
 
 	feSettings.load();
 
 	std::string def_font_path, def_font_file;
 	if ( feSettings.get_font_file( def_font_path, def_font_file ) == false )
 	{
-		std::cerr << "Error, could not find default font."  << std::endl;
+		FeLog() << "Error, could not find default font."  << std::endl;
 		return 1;
 	}
 
@@ -97,10 +121,12 @@ int main(int argc, char *argv[])
 	soundsys.update_volumes();
 	soundsys.play_ambient();
 
+	FeBlend::load_default_shaders();
+
 	FeWindow window( feSettings );
 	window.initial_create();
 
-#ifdef SFML_SYSTEM_WINDOWS
+#ifdef WINDOWS_CONSOLE
 	if ( feSettings.get_hide_console() )
 		hide_console();
 #endif
@@ -113,6 +139,9 @@ int main(int argc, char *argv[])
 
 	if ( feSettings.get_language().empty() )
 	{
+#ifdef SFML_SYSTEM_ANDROID
+		android_copy_assets();
+#endif
 		// If our language isn't set at this point, we want to prompt the user for the language
 		// they wish to use
 		//
@@ -122,11 +151,18 @@ int main(int argc, char *argv[])
 		// Font may change depending on the language selected
 		feSettings.get_font_file( def_font_path, def_font_file );
 		def_font.set_font( def_font_path, def_font_file );
+
+		if ( !exit_selected )
+		{
+			FeLog() << "Performing some initial configuration" << std::endl;
+			feVM.setup_wizard();
+			FeLog() << "Done initial configuration" << std::endl;
+		}
 	}
 
 	soundsys.sound_event( FeInputMap::EventStartup );
 
-	bool redraw=true;
+	bool redraw=true, has_focus=true;
 	int guard_joyid=-1, guard_axis=-1;
 
 	// variables used to track movement when a key is held down
@@ -185,6 +221,8 @@ int main(int argc, char *argv[])
 				feSettings.set_display(
 					feSettings.get_current_display_index() );
 
+				feSettings.on_joystick_connect(); // update joystick mappings
+
 				soundsys.stop();
 				soundsys.update_volumes();
 				soundsys.play_ambient();
@@ -206,7 +244,6 @@ int main(int argc, char *argv[])
 		else if (( launch_game )
 			&& ( !soundsys.is_sound_event_playing( FeInputMap::Select ) ))
 		{
-			feSettings.save_state();
 			const std::string &emu_name = feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator );
 			if ( emu_name.compare( 0, 1, "@" ) == 0 )
 			{
@@ -237,11 +274,11 @@ int main(int argc, char *argv[])
 
 					if ( index < 0 )
 					{
-						std::cerr << "Error resolving shortcut, Display `" << name << "' not found.";
+						FeLog() << "Error resolving shortcut, Display `" << name << "' not found." << std::endl;
 					}
 					else
 					{
-						if ( feSettings.set_display( index ) )
+						if ( feSettings.set_display( index, true ) )
 							feVM.load_layout();
 						else
 							feVM.update_to_new_list( 0, true );
@@ -266,6 +303,8 @@ int main(int argc, char *argv[])
 
 				soundsys.sound_event( FeInputMap::EventGameReturn );
 				soundsys.play_ambient();
+
+				has_focus=true;
 			}
 
 			launch_game=false;
@@ -327,6 +366,11 @@ int main(int argc, char *argv[])
 						guard_joyid = ev.joystickMove.joystickId;
 						guard_axis = ev.joystickMove.axis;
 					}
+					break;
+
+				case sf::Event::JoystickConnected:
+				case sf::Event::JoystickDisconnected:
+					feSettings.on_joystick_connect();
 					break;
 
 				case sf::Event::Count:
@@ -391,22 +435,45 @@ int main(int argc, char *argv[])
 				//
 				if ( feVM.script_handle_event( c ) )
 				{
+					FeDebug() << "Command intercepted by script handler: "
+						<< FeInputMap::commandStrings[c] << std::endl;
+
 					redraw=true;
 					continue;
 				}
 
 				//
-				// If FE is configured to show displays menu on startup, then the "Back" UI
-				// button goes back to that menu accordingly...
+				// Handle special case Back UI button behaviour
 				//
-				if (( c == FeInputMap::Back )
-					&& ( feSettings.get_startup_mode() == FeSettings::ShowDisplaysMenu )
-					&& ( feSettings.get_present_state() == FeSettings::Layout_Showing )
-					&& ( feSettings.get_current_display_index() >= 0 ))
+				if ( c == FeInputMap::Back )
 				{
-					FeVM::cb_signal( "displays_menu" );
-					redraw=true;
-					continue;
+					//
+					// If a display shortcut was used previously, then the "Back" UI
+					// button goes back to the previous display accordingly...
+					//
+					if ( feSettings.back_displays_available() )
+					{
+						if ( feSettings.set_display( -1, true ) )
+							feVM.load_layout();
+						else
+							feVM.update_to_new_list( 0, true );
+
+						redraw=true;
+						continue;
+					}
+
+					//
+					// If FE is configured to show displays menu on startup, then the "Back" UI
+					// button goes back to that menu accordingly...
+					//
+					if (( feSettings.get_startup_mode() == FeSettings::ShowDisplaysMenu )
+						&& ( feSettings.get_present_state() == FeSettings::Layout_Showing )
+						&& ( feSettings.get_current_display_index() >= 0 ))
+					{
+						FeVM::cb_signal( "displays_menu" );
+						redraw=true;
+						continue;
+					}
 				}
 
 				c = feSettings.get_default_command( c );
@@ -422,6 +489,9 @@ int main(int argc, char *argv[])
 			//
 			if ( feVM.script_handle_event( c ) )
 			{
+				FeDebug() << "Command intercepted by script handler: "
+					<< FeInputMap::commandStrings[c] << std::endl;
+
 				redraw=true;
 				continue;
 			}
@@ -458,6 +528,8 @@ int main(int argc, char *argv[])
 			//
 			// Default command handling
 			//
+			FeDebug() << "Handling command: " << FeInputMap::commandStrings[c] << std::endl;
+
 			soundsys.sound_event( c );
 			if ( feVM.handle_event( c ) )
 				redraw = true;
@@ -514,9 +586,102 @@ int main(int argc, char *argv[])
 					config_mode = true;
 					break;
 
+				case FeInputMap::InsertGame:
+					{
+						std::vector< std::string > options;
+						std::string temp;
+
+						// 0
+						feSettings.get_resource(  "Insert Game Entry", temp );
+						options.push_back( temp );
+
+						// 1
+						feSettings.get_resource(  "Insert Display Shortcut", temp );
+						options.push_back( temp );
+
+						// 2
+						feSettings.get_resource(  "Insert Command Shortcut", temp );
+						options.push_back( temp );
+
+						feSettings.get_resource(  "Insert Menu Entry", temp );
+
+						int sel = feOverlay.common_list_dialog(
+							temp, options, 0, 0 );
+
+						std::string emu_name;
+						std::string def_name;
+
+						switch ( sel )
+						{
+						case 0:
+							{
+								std::vector<std::string> tl;
+								feSettings.get_list_of_emulators( tl );
+								if ( !tl.empty() )
+									emu_name = tl[0];
+
+								feSettings.get_resource( "Blank Game", def_name );
+							}
+							break;
+
+						case 1:
+							{
+								emu_name = "@";
+								feSettings.get_resource( "Display Shortcut", def_name );
+
+								if ( feSettings.displays_count() > 0 )
+									def_name = feSettings.get_display( 0 )
+										->get_info( FeDisplayInfo::Name );
+							}
+							break;
+
+						case 2:
+							emu_name = "@exit";
+							feSettings.get_resource( "Exit", def_name );
+							break;
+
+						default:
+							break;
+						};
+
+						FeRomInfo new_entry( def_name );
+						new_entry.set_info( FeRomInfo::Title, def_name );
+						new_entry.set_info( FeRomInfo::Emulator, emu_name );
+
+						int f_idx = feSettings.get_current_filter_index();
+
+						FeRomInfo dummy;
+						FeRomInfo *r = feSettings.get_rom_absolute(
+							f_idx, feSettings.get_rom_index( f_idx, 0 ) );
+
+						if ( !r )
+							r = &dummy;
+
+						feSettings.update_romlist_after_edit( *r,
+							new_entry,
+							FeSettings::InsertEntry );
+
+						// initial update shows new entry behind config
+						// dialog
+						feVM.update_to_new_list();
+
+						if ( feOverlay.edit_game_dialog() )
+							feVM.update_to_new_list();
+
+						redraw=true;
+					}
+					break;
+
 				case FeInputMap::EditGame:
 					if ( feOverlay.edit_game_dialog() )
 						feVM.update_to_new_list();
+
+					redraw=true;
+					break;
+
+				case FeInputMap::LayoutOptions:
+					if ( feOverlay.layout_options_dialog() )
+						feVM.load_layout();
 
 					redraw=true;
 					break;
@@ -532,6 +697,7 @@ int main(int argc, char *argv[])
 							//
 							feSettings.set_display(-1);
 							feVM.load_layout( true );
+
 							redraw=true;
 							break;
 						}
@@ -580,6 +746,7 @@ int main(int argc, char *argv[])
 								else
 									feVM.update_to_new_list( 0, true );
 							}
+
 							redraw=true;
 						}
 					}
@@ -723,16 +890,29 @@ int main(int argc, char *argv[])
 						move_last_triggered = t;
 						int step = 1;
 
-						if ( feSettings.get_info_bool( FeSettings::AccelerateSelection ) )
+						int max_step = feSettings.selection_max_step();
+						if ( max_step > 1 )
 						{
-							// As the button is held down, the advancement accelerates
-							int shift = ( t / TRIG_CHANGE_MS ) - 3;
-							if ( shift < 0 )
-								shift = 0;
-							else if ( shift > 7 ) // don't go above a maximum advance of 2^7 (128)
-								shift = 7;
+							int s = t / TRIG_CHANGE_MS;
 
-							step = 1 << ( shift );
+							if ( s < 8 )
+								step = 1;
+							else if ( s < 15 )
+								step = 2;
+							else if ( s < 20 )
+								step = 4;
+							else if ( s < 22 )
+								step = 6;
+							else
+							{
+								int shift = s - 19;
+								if ( shift > 11 ) // sanity check - don't go above 2^11 (2048)
+									shift = 11;
+								step = 1 << ( shift );
+							}
+
+							if ( step > max_step )      // make sure we don't go over user specified max
+								step = max_step;
 						}
 
 						switch ( ms )
@@ -812,6 +992,22 @@ int main(int argc, char *argv[])
 			}
 		}
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ) )
+		//
+		// Log any unexpected loss of window focus
+		//
+		if ( has_focus )
+		{
+			if ( !window.hasFocus() )
+			{
+				has_focus = false;
+				FeLog() << " ! Unexpectedly lost focus to: " << get_focus_process() << std::endl;
+			}
+		}
+		else
+			has_focus = window.hasFocus();
+#endif
+
 		if ( feVM.on_tick() )
 			redraw=true;
 
@@ -832,7 +1028,7 @@ int main(int argc, char *argv[])
 			redraw=false;
 		}
 		else
-			sf::sleep( sf::milliseconds( 1 ) );
+			sf::sleep( sf::milliseconds( 15 ) );
 
 		soundsys.tick();
 	}
@@ -848,5 +1044,6 @@ int main(int argc, char *argv[])
 	soundsys.stop();
 	feSettings.save_state();
 
+	FeDebug() << "Attract-Mode ended normally" << std::endl;
 	return 0;
 }

@@ -231,11 +231,10 @@ namespace gameswf
 	const char* get_gameswf_version()
 	{
 #ifdef WIN32
-	static tu_string s_gameswf_version("WIN "__DATE__" "__TIME__);
+	static tu_string s_gameswf_version("WIN " __DATE__ " " __TIME__);
 #else
-	static tu_string s_gameswf_version("LINUX "__DATE__" "__TIME__);
+	static tu_string s_gameswf_version("LINUX " __DATE__ " " __TIME__);
 #endif
-		
 		return s_gameswf_version.c_str();
 	}
 

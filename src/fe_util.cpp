@@ -51,16 +51,23 @@
 #include <windows.h>
 #include <io.h>
 #include <fcntl.h>
+#include <tlhelp32.h> // for CreateToolhelp32Snapshot()
+#include <psapi.h> // for GetModuleFileNameEx()
 #else
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <pwd.h>
 #include <signal.h>
 #include <errno.h>
+#include <wordexp.h>
 #endif
 
 #ifdef SFML_SYSTEM_MACOS
 #include "fe_util_osx.hpp"
+#endif
+
+#ifdef SFML_SYSTEM_ANDROID
+#include "fe_util_android.hpp"
 #endif
 
 #ifdef USE_XLIB
@@ -79,7 +86,7 @@ namespace {
 			s += c;
 	}
 
-#ifdef SFML_SYSTEM_WINDOWS
+#if defined(SFML_SYSTEM_WINDOWS)
 
 	std::string get_home_dir()
 	{
@@ -90,7 +97,7 @@ namespace {
 		return retval;
 	}
 
-#else
+#elif !defined(SFML_SYSTEM_ANDROID)
 
 	std::string get_home_dir()
 	{
@@ -151,7 +158,22 @@ bool tail_compare(
 				(*itr).c_str(),
 				(*itr).size() ) )
 			return true;
+	}
 
+	return false;
+}
+
+bool tail_compare(
+	const std::string &filename,
+	const char **ext_list )
+{
+	for ( int i=0; ext_list[i] != NULL; i++ )
+	{
+		if ( c_tail_compare( filename.c_str(),
+				filename.size(),
+				ext_list[i],
+				strlen( ext_list[i] ) ) )
+			return true;
 	}
 
 	return false;
@@ -216,22 +238,31 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 		return retval;
 
 #ifdef SFML_SYSTEM_WINDOWS
-	// substitute systemroot leading %SYSTEMROOT%
-	if (( retval.size() >= 12 )
-		&& ( retval.compare( 0, 12, "%SYSTEMROOT%" ) == 0 ))
+	struct subs_struct
 	{
-		std::string sysroot;
-		str_from_c( sysroot, getenv( "SystemRoot" ) );
-		retval.replace( 0, 12, sysroot );
-	}
-	else if (( retval.size() >= 14 )
-		&& ( retval.compare( 0, 14, "%PROGRAMFILES%" ) == 0 ))
+		const char *comp;
+		const char *env;
+	} subs[] =
 	{
-		std::string pf;
-		str_from_c( pf, getenv( "ProgramFiles" ) );
-		retval.replace( 0, 14, pf );
-	}
+		{ "%SYSTEMROOT%", "SystemRoot" },
+		{ "%PROGRAMFILES%", "ProgramFiles" },
+		{ "%PROGRAMFILESx86%", "ProgramFiles(x86)" },
+		{ "%APPDATA%", "APPDATA" },
+		{ "%SYSTEMDRIVE%", "SystemDrive" },
+		{ NULL, NULL }
+	};
 
+	for ( int i=0; subs[i].comp != NULL; i++ )
+	{
+		int l = strlen( subs[i].comp );
+		if (( retval.size() >= l ) && ( retval.compare( 0, l, subs[i].comp ) == 0 ))
+		{
+			std::string temp;
+			str_from_c( temp, getenv( subs[i].env ) );
+			retval.replace( 0, l, temp );
+			break;
+		}
+	}
 #endif
 
 	// substitute home dir for leading ~
@@ -673,21 +704,29 @@ void delete_file( const std::string &file )
 
 bool confirm_directory( const std::string &base, const std::string &sub )
 {
+	bool retval=false;
+
 	if ( !directory_exists( base ) )
+	{
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( base.c_str() );
 #else
 		mkdir( base.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
+		retval=true;
+	}
 
 	if ( (!sub.empty()) && (!directory_exists( base + sub )) )
+	{
 #ifdef SFML_SYSTEM_WINDOWS
 		mkdir( (base + sub).c_str() );
 #else
 		mkdir( (base + sub).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
+		retval=true;
+	}
 
-	return true;
+	return retval;
 }
 
 std::string as_str( int i )
@@ -750,10 +789,6 @@ bool run_program( const std::string &prog,
 {
 	const int POLL_FOR_EXIT_MS=50;
 
-	std::string comstr( prog );
-	comstr += " ";
-	comstr += args;
-
 	std::string work_dir = cwork_dir;
 	if ( work_dir.empty() )
 	{
@@ -788,6 +823,10 @@ bool run_program( const std::string &prog,
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
 
+	std::string comstr( prog );
+	comstr += " ";
+	comstr += args;
+
 	LPSTR cmdline = new char[ comstr.length() + 1 ];
 	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
@@ -801,7 +840,7 @@ bool run_program( const std::string &prog,
 		NULL,
 		NULL,
 		( NULL == callback ) ? FALSE : TRUE,
-		0,
+		CREATE_NO_WINDOW,
 		NULL,
 		NULL, // use current directory (set above) as working directory for the process
 		&si,
@@ -821,13 +860,13 @@ bool run_program( const std::string &prog,
 
 	if ( ret == false )
 	{
-		std::cerr << "Error executing command: '" << comstr << "'" << std::endl;
+		FeLog() << "Error executing command: '" << comstr << "'" << std::endl;
 		return false;
 	}
 
 	if (( NULL != callback ) && ( block ))
 	{
-		const int BUFF_SIZE = 2048;
+		const int BUFF_SIZE = 20480;
 		char buffer[ BUFF_SIZE+1 ];
 		buffer[BUFF_SIZE]=0;
 		DWORD bytes_read;
@@ -885,7 +924,7 @@ bool run_program( const std::string &prog,
 			break;
 
 		default:
-			std::cerr << "Unexpected failure waiting on process" << std::endl;
+			FeLog() << "Unexpected failure waiting on process" << std::endl;
 			keep_wait=false;
 			break;
 		}
@@ -895,33 +934,17 @@ bool run_program( const std::string &prog,
 	CloseHandle( pi.hThread );
 
 #else
-
-	std::vector < std::string > string_list;
-	size_t pos=0;
-
-	while ( pos < args.size() )
-	{
-		std::string val;
-		token_helper( args, pos, val, FE_WHITESPACE );
-		string_list.push_back( val );
-	}
-
-	char *arg_list[string_list.size() + 2];
-	arg_list[0] = (char *)prog.c_str();
-	for ( unsigned int i=0; i < string_list.size(); i++ )
-		arg_list[i+1] = (char *)string_list[i].c_str();
-
-	arg_list[string_list.size() + 1] = NULL;
+	wordexp_t we;
 
 	int mypipe[2] = { 0, 0 }; // mypipe[0] = read end, mypipe[1] = write end
 	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
-		std::cerr << "Error, pipe() failed" << std::endl;
+		FeLog() << "Error, pipe() failed" << std::endl;
 
 	pid_t pid = fork();
 	switch (pid)
 	{
 	case -1:
-		std::cerr << "Error, fork() failed" << std::endl;
+		FeLog() << "Error, fork() failed" << std::endl;
 		if ( mypipe[0] )
 		{
 			close( mypipe[0] );
@@ -937,12 +960,31 @@ bool run_program( const std::string &prog,
 		}
 
 		if ( !work_dir.empty() && ( chdir( work_dir.c_str() ) != 0 ) )
-			std::cerr << "Warning, chdir(" << work_dir << ") failed.";
+			FeLog() << "Warning, chdir(" << work_dir << ") failed." << std::endl;
 
-		execvp( prog.c_str(), arg_list );
+		wordexp( prog.c_str(), &we, 0 );
+
+		// according to the manual page, we.we_wordv is always null terminated, so we can feed it
+		// right into execvp
+		if ( wordexp( args.c_str(), &we, WRDE_APPEND ) != 0 )
+			FeLog() << "Parameter word expansion failed. [" << args << "]." << std::endl;
+
+		// Provide some debugging output for what we are doing
+		if ( callback == NULL )
+		{
+			FeDebug() << "execvp(): file='" << prog.c_str() << "', argv=";
+			for ( int r=0; we.we_wordv[r]; r++ )
+				FeDebug() << "[" << we.we_wordv[r] << "]";
+			FeDebug() << std::endl;
+		}
+
+		execvp( prog.c_str(), we.we_wordv );
 
 		// execvp doesn't return unless there is an error.
-		std::cerr << "Error executing: " << prog << " " << args << std::endl;
+		FeLog() << "Error executing: " << prog << " " << args << std::endl;
+
+		wordfree( &we );
+
 		_exit(127);
 
 	default: // parent process
@@ -952,9 +994,10 @@ bool run_program( const std::string &prog,
 			FILE *fp = fdopen( mypipe[0], "r" );
 			close( mypipe[1] );
 
-			char buffer[ 1024 ];
+			const int BUFF_SIZE = 2048;
+			char buffer[ BUFF_SIZE ];
 
-			while( fgets( buffer, 1024, fp ) != NULL )
+			while( fgets( buffer, BUFF_SIZE, fp ) != NULL )
 			{
 				if ( callback( buffer, opaque ) == false )
 				{
@@ -1000,7 +1043,7 @@ bool run_program( const std::string &prog,
 						sf::sleep( sf::milliseconds( 100 ) );
 						if ( kill( pid, 0 ) == 0 )
 						{
-							std::cout << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
+							FeLog() << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
 							kill( pid, SIGTERM );
 
 
@@ -1021,7 +1064,7 @@ bool run_program( const std::string &prog,
 							//
 							if ( kill( pid, 0 ) == 0 )
 							{
-								std::cout << " - Timeout on SIGTERM after " << TERM_TIMEOUT
+								FeLog() << " - Timeout on SIGTERM after " << TERM_TIMEOUT
 									<< " ms, sending SIGKILL signal to process " << pid << std::endl;
 
 								kill( pid, SIGKILL );
@@ -1038,7 +1081,7 @@ bool run_program( const std::string &prog,
 				else
 				{
 					if ( w < 0 )
-						std::cerr << " ! error returned by wait_pid(): "
+						FeLog() << " ! error returned by wait_pid(): "
 							<< strerror( errno ) << std::endl;
 
 					break; // leave do/while loop
@@ -1190,6 +1233,27 @@ std::string url_escape( const std::string &raw )
 	return escaped.str();
 }
 
+std::string newline_escape( const std::string &raw )
+{
+	std::string temp;
+	size_t pos1=0, pos=0;
+
+	while ( ( pos = raw.find( "\n", pos1 ) ) != std::string::npos )
+	{
+		temp += raw.substr( pos1, pos-pos1 );
+		temp += "\\n";
+		pos1 = pos+1;
+	}
+	temp += raw.substr( pos1 );
+
+	return temp;
+}
+
+void remove_trailing_spaces( std::string &str )
+{
+	str.erase( str.find_last_not_of( " \n\r\t" )+1 );
+}
+
 void get_url_components( const std::string &url,
 	std::string &host,
 	std::string &req )
@@ -1292,4 +1356,103 @@ bool get_console_stdin( std::string &str )
 #endif
 
 	return ( !str.empty() );
+}
+
+std::string get_focus_process()
+{
+	std::string retval( "Unknown" );
+
+#if defined( SFML_SYSTEM_WINDOWS )
+	HWND focus_wnd = GetForegroundWindow();
+	if ( !focus_wnd )
+		return "None";
+
+	DWORD focus_pid( 0 );
+	GetWindowThreadProcessId( focus_wnd, &focus_pid );
+
+	HANDLE snap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+	if ( snap == INVALID_HANDLE_VALUE )
+	{
+		FeLog() << "Could not get process snapshot." << std::endl;
+		return retval;
+	}
+
+	PROCESSENTRY32 pei;
+	pei.dwSize = sizeof( pei );
+	BOOL np = Process32First( snap, &pei );
+	while ( np )
+	{
+		if ( pei.th32ProcessID == focus_pid )
+		{
+			retval = pei.szExeFile;
+			break;
+		}
+		np = Process32Next( snap, &pei );
+	}
+
+	CloseHandle( snap );
+	retval += " (" + as_str( (int)focus_pid ) + ")";
+
+#elif defined( USE_XLIB )
+
+	::Display *xdisp = XOpenDisplay( NULL );
+	Atom atom = XInternAtom( xdisp, "_NET_WM_PID", True );
+
+	Window wnd( 0 );
+	int revert;
+	XGetInputFocus( xdisp, &wnd, &revert );
+	if ( wnd == PointerRoot )
+		return "Pointer Root";
+	else if ( wnd == None )
+		return "None";
+
+	Atom actual_type;
+	int actual_format;
+	unsigned long nitems, bytes_after;
+	unsigned char *prop = NULL;
+
+	if ( XGetWindowProperty( xdisp,
+				wnd,
+				atom,
+				0,
+				1024,
+				False,
+				AnyPropertyType,
+				&actual_type,
+				&actual_format,
+				&nitems,
+				&bytes_after,
+				&prop ) != Success )
+	{
+		FeLog() << "Could not get window property." << std::endl;
+		return retval;
+	}
+
+	if ( !prop )
+	{
+		FeLog() << "Empty window property." << std::endl;
+		return retval;
+	}
+
+	int pid = prop[1] * 256;
+	pid += prop[0];
+	XFree( prop );
+
+	// Try to get the actual name for the process id
+	//
+	// Note: this is Linux specific
+	//
+	std::string fn = "/proc/" + as_str( pid ) + "/cmdline";
+	std::ifstream myfile( fn.c_str() );
+	if ( myfile.good() )
+	{
+		getline( myfile, retval );
+		myfile.close();
+	}
+
+	retval += " (" + as_str( pid ) + ")";
+
+#endif
+
+	return retval;
 }

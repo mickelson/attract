@@ -62,6 +62,9 @@ class UserConfig </ help="Hyperspin Layout: " + fe.script_dir + ::file_to_load /
 
    </ label="Fix SWF positioning", help="Try to fix flash swf artwork files positions", order=8, options="yes,no" />
    fix_swf_positions="yes";
+
+   </ label="Wheel Hide Time", help="The time (in milliseconds) that it takes for the wheel to fade.  Set to 0 for no fade", order=9 />
+   wheel_fade_ms="1000";
 };
 
 local my_config = fe.get_config();
@@ -115,53 +118,64 @@ for ( local i=0; i< fe.displays.len(); i++ )
 //
 // - background
 // - art1
+// - (video_overlay if overlaybelow=true)
 // - video 
 // - video_overlay
+// - (art1 if below=true)
 // - art2
 // - art3
 // - art4
+// - (wheel)
+// - (prompts)
+// - override transitions
 //
 ::hs_ent.background <- {
 		dir = "Images/Backgrounds/"
 		obj = fe.add_image( "" )
-		zorder = 0
+		zorder = -10
 	};
 
 ::hs_ent.artwork1 <- {
 		dir = "Images/Artwork1/"
 		obj = fe.add_image( "" )
-		zorder = 1
+		zorder = -9
 	};
+
+// zorder -8 - hs_ent.video_overlay zorder goes here if overlaybelow=true
 
 ::hs_ent.video <- {
 		dir = "Video/"
 		obj = fe.add_image( "" )
-		zorder = 2
+		zorder = -7
 	};
 
 ::hs_ent.video_overlay <- {
 		dir = ""
 		obj = fe.add_image( "" )
-		zorder = 3
+		zorder = -6
 	};
+
+// zorder -5 - hs_ent.artwork1 zorder goes here if below=true
 
 ::hs_ent.artwork2 <- {
 		dir = "Images/Artwork2/"
 		obj = fe.add_image( "" )
-		zorder = 4
+		zorder = -4
 	};
 
 ::hs_ent.artwork3 <- {
 		dir = "Images/Artwork3/"
 		obj = fe.add_image( "" )
-		zorder = 5
+		zorder = -3
 	};
 
 ::hs_ent.artwork4 <- {
 		dir = "Images/Artwork4/"
 		obj = fe.add_image( "" )
-		zorder = 6
+		zorder = -2
 	};
+
+// wheel and prompts zorder is at 0
 
 ::hs_ent.override_transition <- {
 		dir = "Video/Override Transitions/"
@@ -516,7 +530,7 @@ function load( ttype, match_map, hs_sys_dir )
 			local d=0.0;
 			local type = "";
 			local start = "";
-			local vid_below=false;
+			local overlay_below=false;
 			local overlayoffsetx = 0;
 			local overlayoffsety = 0;
 
@@ -541,7 +555,7 @@ function load( ttype, match_map, hs_sys_dir )
 					break;
 				case "overlaybelow":
 					if ( v == "true" )
-						vid_below = true;
+						overlay_below = true;
 					break;
 				case "forceaspect":
 					if (( c.tag == "video" ) && ( v == "both" ))
@@ -598,8 +612,8 @@ function load( ttype, match_map, hs_sys_dir )
 				obj2.height   = obj2.texture_height;
 				obj2.rotation = obj.rotation;
 
-				if ( vid_below )
-					obj2.zorder = obj.zorder-1;
+				if ( overlay_below )
+					obj2.zorder = ::hs_ent["video"].zorder-1;
 			}
 
 			if ( r != 0 )
@@ -773,15 +787,8 @@ function load( ttype, match_map, hs_sys_dir )
 
 	//below seems to swap zorder of video + overlay with artwork 1
 	//
-	if ( below )
-	{
-		if ( found_tags["artwork1"] )
-			//  we only need to update artwork1 zorder to "3" zorder of 
-			//  the artworks with lower zorder seem to change
-			//  automatically, verified with print statements
-			//
-			::hs_ent["artwork1"].obj.zorder = 3;
-	}
+	if ( below && found_tags["artwork1"] )
+		::hs_ent["artwork1"].obj.zorder = ::hs_ent["video_overlay"].zorder + 1;
 
 	return call_into_transition;
 }
@@ -870,7 +877,8 @@ function load_override_transition( sys_d, match_map )
 // animate module's transition handling
 //
 local call_animate=false;
-local w_alpha = 1000;
+local w_alpha_clock = 0;
+local w_alpha_triggered = 0;
 
 fe.add_transition_callback( "hs_transition" );
 function hs_transition( ttype, var, ttime )
@@ -912,7 +920,7 @@ function hs_transition( ttype, var, ttime )
 		break;
 
 	case Transition.ToNewSelection:
-        w_alpha = 1000;
+		w_alpha_triggered = w_alpha_clock;
 		if ( override_lag_ms <=  0 )
 			break;
 
@@ -1047,11 +1055,17 @@ local wheel_r = [  30,  25,  20,  15,  10,   5,   0, -10, -15, -20, -25, -30, ];
 //
 // Wheel alpha
 //
-fe.add_ticks_callback( "hs_wheel_alpha" );
+local wheel_fade_ms = 0;
+try { wheel_fade_ms = my_config["wheel_fade_ms"].tointeger(); } catch ( e ) { }
+
+if ( wheel_fade_ms > 0 )
+	fe.add_ticks_callback( "hs_wheel_alpha" );
+
 function hs_wheel_alpha( ttime )
 {
-    if (w_alpha > 0) {
-        w_alpha = w_alpha - 10;
+	w_alpha_clock = ttime;
+
+	local w_alpha = wheel_fade_ms - ( w_alpha_clock - w_alpha_triggered );
         if (w_alpha < 0) {
             w_alpha = 0;
         }
@@ -1068,7 +1082,6 @@ if (w_alpha >= 255) {
 }
             }
         }
-    }
 }
 
 class WheelEntry extends ConveyorSlot

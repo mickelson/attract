@@ -421,7 +421,7 @@ namespace gameswf
 		// Recompute pixel scale.
 		float	scale_x = m_viewport_width / TWIPS_TO_PIXELS(m_def->m_frame_size.width());
 		float	scale_y = m_viewport_height / TWIPS_TO_PIXELS(m_def->m_frame_size.height());
-		m_pixel_scale = fmax(scale_x, scale_y);
+		m_pixel_scale = my_fmax(scale_x, scale_y);
 	}
 
 

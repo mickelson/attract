@@ -27,6 +27,7 @@
 #include <map>
 #include <vector>
 
+extern const char *FE_STAT_FILE_EXTENSION;
 extern const char FE_TAGS_SEP;
 struct SQRex;
 
@@ -91,7 +92,8 @@ public:
 	// convenience method to copy info attribute at idx from src
 	void copy_info( const FeRomInfo &src, Index idx );
 
-	bool operator==( const FeRomInfo & ) const;
+	bool operator==( const FeRomInfo & ) const;      // compares romname and emulator only
+	bool full_comparison( const FeRomInfo & ) const; // copares all fields that get loaded from the romlist file
 
 private:
 	std::string get_info_escaped( int ) const;
@@ -203,6 +205,27 @@ private:
 	bool m_reverse_order;
 };
 
+class FeScriptConfigurable : public FeBaseConfigurable
+{
+public:
+	bool get_param( const std::string &label, std::string &v ) const;
+	void set_param( const std::string &label, const std::string &v );
+	void get_param_labels( std::vector<std::string> &labels ) const;
+	void clear_params() { m_params.clear(); };
+
+	int process_setting( const std::string &setting,
+		const std::string &value,
+		const std::string &filename );
+
+	void save( std::ofstream & ) const;
+
+	void merge_params( const FeScriptConfigurable &o );
+
+protected:
+	static const char *indexString;
+	std::map<std::string,std::string> m_params;
+};
+
 //
 // Class for storing information regarding a specific Attract-Mode display
 //
@@ -258,12 +281,15 @@ public:
 	bool show_in_cycle() const;
 	bool show_in_menu() const;
 
+	FeScriptConfigurable &get_layout_per_display_params() { return m_layout_per_display_params; };
+
 private:
 	std::string m_info[LAST_INDEX];
 	std::string m_current_layout_file;
 	int m_rom_index; // only used if there are no filters on this display
 	int m_filter_index;
 	FeFilter *m_current_config_filter;
+	FeScriptConfigurable m_layout_per_display_params; // used to store "per display" layout parameters
 
 	std::vector< FeFilter > m_filters;
 	FeFilter m_global_filter;
@@ -287,7 +313,7 @@ public:
 		System,
 		Info_source,
 		Import_extras,
-		Minimum_run_time,
+		NBM_wait,	// non-blocking mode wait time (in seconds)
 		Exit_hotkey,
 		LAST_INDEX
 	};
@@ -369,7 +395,7 @@ private:
 	std::vector<std::string> m_import_extras;
 
 	InfoSource m_info_source;
-	int m_min_run;
+	int m_nbm_wait;
 
 	//
 	// Considered using a std::multimap here but C++98 doesn't guarantee the
@@ -377,25 +403,6 @@ private:
 	// we can maintain the precedence ordering of our artwork paths...
 	//
 	std::map<std::string, std::vector<std::string> > m_artwork;
-};
-
-class FeScriptConfigurable : public FeBaseConfigurable
-{
-public:
-	bool get_param( const std::string &label, std::string &v ) const;
-	void set_param( const std::string &label, const std::string &v );
-	void get_param_labels( std::vector<std::string> &labels ) const;
-	void clear_params() { m_params.clear(); };
-
-	int process_setting( const std::string &setting,
-		const std::string &value,
-		const std::string &filename );
-
-	void save( std::ofstream & ) const;
-
-protected:
-	static const char *indexString;
-	std::map<std::string,std::string> m_params;
 };
 
 //
@@ -430,13 +437,16 @@ class FeLayoutInfo : public FeScriptConfigurable
 {
 public:
 	static const char *indexStrings[];
-	enum Type { ScreenSaver=0, Layout, Intro };
+	enum Type { ScreenSaver=0, Layout, Intro, Menu };
 
 	FeLayoutInfo( Type t );
 	FeLayoutInfo( const std::string &name ); // type=Layout
+
 	const std::string &get_name() const { return m_name; };
 
 	void save( std::ofstream & ) const;
+
+	bool operator!=( const FeLayoutInfo & );
 
 private:
 	std::string m_name;

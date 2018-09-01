@@ -97,6 +97,7 @@ Enter new tag name;Inserisci il nome dell'etichetta
 Exception;Eccezione
 Exception Edit;Modifica l'eccezione
 Executable;Eseguibile
+Exit;Uscita (Conferma)
 Exit Attract-Mode;Esci da Attract-Mode
 Exit Attract-Mode?;Uscire da Attract-Mode?
 Exit Command;Comando per uscire
@@ -134,7 +135,6 @@ List Limit;Límite della lista
 Manufacturer;Produttore
 Menu Prompt;Titolo del menù
 Menu Style / Layout;Tema del menù
-Minimum Run Time;Tempo minimo di esecuzione
 Mouse Threshold;Soglia del mouse
 Movie Volume;Volume dei video
 Name;Nome
@@ -307,7 +307,7 @@ _help_emu_exit_hotkey;Configura una hotkey per uscire dall'emulatore. Attract-Mo
 _help_emu_gen_romlist;Genera la lista di ROM cercando all'interno dei percorsi indicati file con le estensioni specificate, incorporando anche le informazioni recuperate dai file aggiuntivi quando disponibili
 _help_emu_import_extras;Percorso per ogni file aggiuntivo che deve essere letto quando viene generata una lista di ROM per questo emulatore. I file supportati sono: catver.ini (per le categorie dei giochi), nplayers.ini (per il numero dei giocatori) e mame.xml. Possono essere specificate più directory separandole con il punto e virgola.
 _help_emu_info_source;Usare "listxml" se l'emulatore restituisce un output compatibile MAME -listxml, "listsoftware" per le liste software compatibili mame/mess -listsoftware, "thegamesdb.net" per recuperare le informazioni da thegamesdb.net, o "steam" per leggere da una installazione Steam, o "scummvm" se l'emulatore è ScummVM.  "listsoftware" e "thegamesdb.net" richiedono che venga configurato un identificatore di sistema riconosciuto da queste sorgenti.
-_help_emu_minimum_run_time;Configura un tempo mínimo di esecuzione (in secondi).  Attract-Mode aspetterà dopo aver eseguito l'emulatore finché è scaduto il tempo minimo, dopodiché passerà in primo piano. Questo deve essere impostato con Steam per funzionare correttamente su Windows. Impostare questo valore a 0 a meno che non si sappia quello che si fa.
+_help_emu_nb_mode_wait;Configura un tempo mínimo di esecuzione (in secondi).  Attract-Mode aspetterà dopo aver eseguito l'emulatore finché è scaduto il tempo minimo, dopodiché passerà in primo piano. Questo deve essere impostato con Steam per funzionare correttamente su Windows. Impostare questo valore a 0 a meno che non si sappia quello che si fa.
 _help_emu_romext;Estensioni dei file ROM per questo emulatore (per es. .zip) Più estensioni possono essere inserite utilizzando il punto e virgola. Specificare "<DIR>" come valore se i giochi sono memorizzati in sottodirectory separate.
 _help_emu_rompath;Percorsi per le ROM di questo emulatore. Possono essere specificate più directory separandole con il punto e virgola.
 _help_emu_scrape_artwork;Recupera le immagini mancanti per questo emulatore dai siti specializzati
@@ -369,7 +369,6 @@ _help_track_usage;Configura se Attract-Mode deve gestire le statistiche di utili
 _help_video_decoder;Configura il decoder da utilizzare per riprodurre i video (nel caso siano disponibili più decoder)
 _help_volume;I valori consentiti per il volume vanno da 0 (silenzio) a 100 (massimo)
 _help_window_mode;Configura se il frontend deve lavorare a tutto schermo o essere eseguito in una finestra
-_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI; if started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
 #
@@ -387,10 +386,10 @@ Custom 2;Personalizzato 2
 Delete this filter;Cancella questo filtro
 Down (Next Game); Giù (Gioco successivo)
 Edit Control;Modifica controllo
-Exit;Uscita (Conferma)
 Image collage;Collezione di immagini
 Launch Last Game on Startup;Esegui l'ultimo gioco alla partenza
 Left (Previous Display); Sinistra (Tema precedente)
+Minimum Run Time;Tempo minimo di esecuzione
 Minutes;minuti
 Movie collage;Collezione di video
 Overlay Artwork;Overlay artwork
@@ -415,3 +414,26 @@ _help_scrape_mamedb;Stabilisce se utilizzare il sito mamedb.com per recuperare s
 #
 # Strings still needing translation
 #
+Artwork Name;Artwork Name
+Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
+Blank Game;Blank Game
+Configure / Joystick Mapping;Configure / Joystick Mapping
+Delete shortcut '$1'?;Delete shortcut '$1'?
+Delete this Shortcut;Delete this Shortcut
+Edit Shortcut;Edit Shortcut
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
+Layout File;Layout File
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
+Select template to use for emulator settings;Select template to use for emulator settings
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
+_help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
+_help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
+_help_shortcut_delete;Delete this shortcut from the Romlist
+_help_shortcut_label_edit;Edit this shortcut's label
+_help_shortcut_target_edit;Edit this shortcut's target

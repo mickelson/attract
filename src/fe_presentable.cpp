@@ -26,7 +26,8 @@
 FeBasePresentable::FeBasePresentable( FePresentableParent &p )
 	: m_parent( p ),
 	m_shader( NULL ),
-	m_visible( true )
+	m_visible( true ),
+	m_zorder( 0 )
 {
 }
 
@@ -162,8 +163,11 @@ bool FeBasePresentable::get_visible() const
 
 void FeBasePresentable::set_visible( bool v )
 {
-	m_visible = v;
-	FePresent::script_flag_redraw();
+	if ( v != m_visible )
+	{
+		m_visible = v;
+		FePresent::script_flag_redraw();
+	}
 }
 
 FeShader *FeBasePresentable::get_shader() const
@@ -189,33 +193,26 @@ void FeBasePresentable::script_set_shader( FeShader *sh )
 
 int FeBasePresentable::get_zorder()
 {
-	for ( size_t i=0; i< m_parent.elements.size(); i++ )
-	{
-		if ( this == m_parent.elements[i] )
-			return i;
-	}
-
-	return -1;
+	return m_zorder;
 }
+
+namespace
+{
+	bool zcompare( FeBasePresentable *one, FeBasePresentable *two )
+	{
+		return ( one->get_zorder() < two->get_zorder() );
+	}
+};
 
 void FeBasePresentable::set_zorder( int pos )
 {
-	if ( pos >= (int)m_parent.elements.size() )
-		pos = m_parent.elements.size()-1;
-	if ( pos < 0 )
-		pos = 0;
+	if ( pos == m_zorder )
+		return;
 
-	int old = get_zorder();
-	if (( old >= 0 ) && ( old != pos ))
-	{
-		FeBasePresentable *temp = m_parent.elements[old];
-		m_parent.elements.erase( m_parent.elements.begin() + old );
+	m_zorder = pos;
 
-		m_parent.elements.insert( m_parent.elements.begin() + pos,
-			temp );
-
-		FePresent::script_flag_redraw();
-	}
+	std::stable_sort( m_parent.elements.begin(), m_parent.elements.end(), zcompare );
+	FePresent::script_flag_redraw();
 }
 
 FeImage *FePresentableParent::add_image(const char *n, int x, int y, int w, int h)
