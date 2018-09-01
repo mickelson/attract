@@ -121,6 +121,7 @@ public:
 		SmoothImages,
 		SelectionMaxStep,
 		SelectionSpeed,
+		MoveMouseOnLaunch,
 		ScrapeSnaps,
 		ScrapeMarquees,
 		ScrapeFlyers,
@@ -202,6 +203,7 @@ private:
 	FilterWrapModeType m_filter_wrap_mode;
 	int m_selection_max_step; // max selection acceleration step.  0 to disable accel
 	int m_selection_speed;
+	bool m_move_mouse_on_launch; // configure whether mouse gets moved to bottom right corner on launch
 	bool m_scrape_snaps;
 	bool m_scrape_marquees;
 	bool m_scrape_flyers;
