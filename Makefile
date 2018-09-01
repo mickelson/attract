@@ -405,6 +405,9 @@ EXE = $(EXE_BASE)$(EXE_EXT)
 ifeq ($(BUILD_EXPAT),1)
  CFLAGS += -I$(EXTLIBS_DIR)/expat
  EXPAT = $(OBJ_DIR)/libexpat.a
+ ifneq ($(FE_WINDOWS_COMPILE),1)
+  EXPAT_FLAGS = -DHAVE_SYSCALL_GETRANDOM -DHAVE_MEMMOVE
+ endif
 else
  LIBS += -lexpat
  EXPAT =
@@ -489,7 +492,7 @@ $(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
 
 $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) -DHAVE_MEMMOVE
+	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) $(EXPAT_FLAGS)
 
 $(EXPAT_OBJ_DIR):
 	$(MD) $@
