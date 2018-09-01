@@ -280,23 +280,21 @@ void wait_callback( void *o )
 
 bool FeWindow::run()
 {
-#ifndef SFML_SYSTEM_MACOS
-	// Don't move so much to the corner on Macs due to hot corners
-	//
-	const int HIDE_OFFSET=3;
-#else
-	const int HIDE_OFFSET=1;
-#endif
-	// Move the mouse to the bottom left corner so it isn't visible
-	// when the emulator launches.
-	//
-	sf::Vector2i reset_pos = sf::Mouse::getPosition();
+	sf::Vector2i reset_pos;
 
-	sf::Vector2i hide_pos = getPosition();
-	hide_pos.x += getSize().x - HIDE_OFFSET;
-	hide_pos.y += getSize().y - HIDE_OFFSET;
+	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
+	{
+		// Move the mouse to the bottom right corner so it isn't visible
+		// when the emulator launches.
+		//
+		reset_pos = sf::Mouse::getPosition();
 
-	sf::Mouse::setPosition( hide_pos );
+		sf::Vector2i hide_pos = getPosition();
+		hide_pos.x += getSize().x - 1;
+		hide_pos.y += getSize().y - 1;
+
+		sf::Mouse::setPosition( hide_pos );
+	}
 
 	sf::Clock timer;
 
@@ -393,7 +391,8 @@ bool FeWindow::run()
 	SetForegroundWindow( getSystemHandle() );
 #endif
 
-	sf::Mouse::setPosition( reset_pos );
+	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
+		sf::Mouse::setPosition( reset_pos );
 
 	// Empty the window event queue, so we don't go triggering other
 	// right away after running an emulator

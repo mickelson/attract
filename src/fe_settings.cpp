@@ -278,6 +278,11 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_selection_max_step( 128 ),
 	m_selection_speed( 40 ),
+#ifdef SFML_SYSTEM_MACOS
+	m_move_mouse_on_launch( false ), // hotcorners
+#else
+	m_move_mouse_on_launch( true ),
+#endif
 	m_scrape_snaps( true ),
 	m_scrape_marquees( true ),
 	m_scrape_flyers( true ),
@@ -406,6 +411,7 @@ const char *FeSettings::configSettingStrings[] =
 	"smooth_images",
 	"selection_max_step",
 	"selection_speed_ms",
+	"move_mouse_on_launch",
 	"scrape_snaps",
 	"scrape_marquees",
 	"scrape_flyers",
@@ -2699,6 +2705,7 @@ const std::string FeSettings::get_info( int index ) const
 	case TrackUsage:
 	case MultiMon:
 	case SmoothImages:
+	case MoveMouseOnLaunch:
 	case ScrapeSnaps:
 	case ScrapeMarquees:
 	case ScrapeFlyers:
@@ -2747,6 +2754,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_multimon;
 	case SmoothImages:
 		return m_smooth_images;
+	case MoveMouseOnLaunch:
+		return m_move_mouse_on_launch;
 	case ScrapeSnaps:
 		return m_scrape_snaps;
 	case ScrapeMarquees:
@@ -2916,6 +2925,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_selection_speed = as_int( value );
 		if ( m_selection_speed < 0 )
 			m_selection_speed = 0;
+		break;
+
+	case MoveMouseOnLaunch:
+		m_move_mouse_on_launch = config_str_to_bool( value );
 		break;
 
 	case ScrapeSnaps:
