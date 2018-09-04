@@ -2031,7 +2031,7 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
 			ctx.opt_list[13].get_value() );
 
-#ifdef SFML_SYSTEM_WINDOWS   
+#ifdef SFML_SYSTEM_WINDOWS
 	ctx.fe_settings.set_info( FeSettings::HideConsole,
 			ctx.opt_list[14].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 #endif
@@ -2594,7 +2594,14 @@ bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *&
 				: "Remove '$1' from Favourites?";
 
 			if ( ctx.confirm_dialog( msg, ctx.opt_list[1].get_value() ) )
+			{
 				ctx.fe_settings.set_current_fav( new_state );
+
+				// ugh
+				FePresent *fep = FePresent::script_get_fep();
+				if ( fep )
+					fep->on_transition( ChangedTag, FeRomInfo::Favourite );
+			}
 		}
 		break;
 

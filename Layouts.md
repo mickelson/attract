@@ -338,7 +338,7 @@ Return Value:
 Add a surface to the end of Attract-Mode's draw list.  A surface is an off-
 screen texture upon which you can draw other image, artwork, text, listbox
 and surface objects.  The resulting texture is treated as a static image by
-Attract-Mode which can in turn have image effects applied to it (scale, 
+Attract-Mode which can in turn have image effects applied to it (scale,
 position, pinch, skew, shaders, etc) when it is drawn.
 
 Parameters:
@@ -571,6 +571,7 @@ happening.  It will have one of the following values:
    * `Transition.ShowOverlay`
    * `Transition.HideOverlay`
    * `Transition.NewSelOverlay`
+   * `Transition.ChangedTag`
 
 The value of the `var` parameter passed to the transition function depends
 upon the value of `ttype`:
@@ -611,6 +612,10 @@ upon the value of `ttype`:
 
    * When `ttype` is `Transition.NewSelOverlay`, var will be the index of the
      new selection in the Overlay menu.
+
+   * When `ttype` is `Transition.ChangedTag`, var will be `Info.Favourite` if
+     the favourite status of the current game was changed, and `Info.Tags` if
+     a tag for the current game was changed.
 
    * When `ttype` is `Transition.ToGame`, `Transition.FromGame`,
      `Transition.EndNavigation`, or `Transition.HideOverlay`, `var` will be
@@ -1624,8 +1629,8 @@ Properties:
    * `glyph_size` - Get the height in pixels of the capital letter.
      Useful if you want to set the textbox height to match the letter height.
    * `char_spacing` - Get/set the spacing factor between letters.  Default value is 1.0
-   * `line_spacing` - Get/set the spacing factor between lines.  Default value is 1.0  
-     At values 0.75 or lower letters start to overlap. For uppercase texts it's around 0.5  
+   * `line_spacing` - Get/set the spacing factor between lines.  Default value is 1.0
+     At values 0.75 or lower letters start to overlap. For uppercase texts it's around 0.5
      It's advised to use this property with the new align modes.
    * `style` - Get/set the text style.  Can be a combination of one or more
      of the following (i.e. `Style.Bold | Style.Italic`):
@@ -1646,7 +1651,7 @@ Properties:
       - `Align.BottomRight`
       - `Align.MiddleCentre`
       - `Align.MiddleLeft`
-      - `Align.MiddleRight`  
+      - `Align.MiddleRight`
      The last 3 alignment modes have the same function as the first 3,
      but they are more accurate. The first 3 modes are preserved for compatibility.
    * `word_wrap` - Get/set whether word wrapping is enabled in this text
@@ -1654,7 +1659,7 @@ Properties:
    * `msg_width` - Get the width of the text message, in layout coordinates.
    * `font` - Get/set the name of the font used for this text.  Default is
      the layout font name.
-   * `margin` - Get/set the margin spacing in pixels to sides of the text.  
+   * `margin` - Get/set the margin spacing in pixels to sides of the text.
      Default value is `-1` which calcualtes the margin based on the .char_size.
    * `shader` - Get/set the GLSL shader for this text. This can only be set to
      an instance of the class `fe.Shader` (see: `fe.add_shader()`).
@@ -1756,7 +1761,7 @@ Properties:
       - `Style.Underlined`
    * `font` - Get/set the name of the font used for this listbox.  Default is
      the layout font name.
-   * `margin` - Get/set the margin spacing in pixels to sides of the text.  
+   * `margin` - Get/set the margin spacing in pixels to sides of the text.
      Default value is `-1` which calcualtes the margin based on the .char_size.
    * `format_string` - Get/set the format for the text to display in each list
      entry. Magic tokens can be used here, see [Magic Tokens](#magic) for more
@@ -1807,7 +1812,7 @@ Properties:
 
 Member Functions:
 
-   * `get_metadata( tag )` - Get the meta data (if available in the source 
+   * `get_metadata( tag )` - Get the meta data (if available in the source
      file) that corresponds to the specified tag (i.e. "artist", "album", etc.)
    * `load_from_archive( archive, filename )` - Load the sound from the
      specified archive file (.zip, etc).
@@ -1860,6 +1865,19 @@ The current Attract-Mode version.
 
 The path to Attract-Mode's config directory.
 
+#### `IntroActive` [bool] ####
+
+true if the intro is active, false otherwise.
+
+#### `Language` [string] ####
+
+The configured language.
+
+#### `OS` [string] ####
+
+The Operating System that Attract-Mode is running under.  Will be one of:
+"Windows", "OSX", "FreeBSD", "Linux" or "Unknown".
+
 #### `ScreenWidth` [int] ####
 #### `ScreenHeight` [int] ####
 
@@ -1868,15 +1886,6 @@ The screen width and height in pixels.
 #### `ScreenSaverActive` [bool] ####
 
 true if the screen saver is active, false otherwise.
-
-#### `IntroActive` [bool] ####
-
-true if the intro is active, false otherwise.
-
-#### `OS` [string] ####
-
-The Operating System that Attract-Mode is running under.  Will be one of:
-"Windows", "OSX", "FreeBSD", "Linux" or "Unknown"
 
 #### `ShadersAvailable` [bool] ####
 

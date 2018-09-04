@@ -301,6 +301,7 @@ const char *FeVM::transitionTypeStrings[] =
 		"ShowOverlay",
 		"HideOverlay",
 		"NewSelOverlay",
+		"ChangedTag",
 		NULL
 };
 
@@ -512,6 +513,7 @@ bool FeVM::on_new_layout()
 #else
 		.Const( _SC("FeDataDirectory"), "" )
 #endif
+		.Const( _SC("Language"), m_feSettings->get_info( FeSettings::Language ).c_str() )
 
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )

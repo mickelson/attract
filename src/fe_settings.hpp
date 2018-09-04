@@ -556,7 +556,6 @@ public:
 		std::string &str ) const;
 
 	void set_language( const std::string &l );
-	const std::string &get_language() const { return m_language; }
 	void get_languages_list( std::vector < FeLanguage > &ll ) const;
 
 	bool get_emulator_setup_script( std::string &path, std::string &file );
