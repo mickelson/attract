@@ -428,28 +428,19 @@ $(info flags:$(CFLAGS) $(FE_FLAGS))
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
 
-# Parse version from git
-VER_TAG   := $(shell git describe --tags --abbrev=0 2>/dev/null || echo $(FE_VERSION))
-VER_COUNT := $(shell git rev-list --count ${VER_TAG}..HEAD 2>/dev/null || echo 0)
-VER_TEMP  = $(subst -, ,$(VER_TAG))
+VER_TEMP  = $(subst -, ,$(FE_VERSION))
 VER_PARTS = $(subst ., ,$(word 1,$(VER_TEMP)))
 VER_MAJOR = $(subst v,,$(word 1,$(VER_PARTS)))
 VER_MINOR = $(word 2,$(VER_PARTS))
 ifneq ($(word 3,$(VER_PARTS)),)
-VER_POINT = $(word 3,$(VER_PARTS))
+ VER_POINT = $(word 3,$(VER_PARTS))
 else
-VER_POINT = 0
-endif
-ifneq ($(VER_COUNT),0)
-  VER_TAG := $(VER_TAG)-$(VER_COUNT)
-endif
-ifneq (,$(findstring -dirty,$(shell git describe --dirty)))
-  VER_TAG := $(VER_TAG)-dirty
+ VER_POINT = 0
 endif
 
 # version macros
-FE_FLAGS += -DFE_VERSION_MAJOR=$(VER_MAJOR) -DFE_VERSION_MINOR=$(VER_MINOR) -DFE_VERSION_POINT=$(word 3,$(VER_PARTS)) -DFE_VERSION_COUNT=$(VER_COUNT)
-FE_FLAGS += -DFE_VERSION_D='"$(VER_TAG)"' -DFE_VERSION_NUM=$(VER_MAJOR)$(VER_MINOR)$(VER_POINT)
+FE_FLAGS += -DFE_VERSION_MAJOR=$(VER_MAJOR) -DFE_VERSION_MINOR=$(VER_MINOR) -DFE_VERSION_POINT=$(VER_POINT)
+FE_FLAGS += -DFE_VERSION_D='"$(FE_VERSION)"' -DFE_VERSION_NUM=$(VER_MAJOR)$(VER_MINOR)$(VER_POINT)
 
 $(OBJ_DIR)/%.res: $(SRC_DIR)/%.rc | $(OBJ_DIR)
 	$(CC_MSG)
