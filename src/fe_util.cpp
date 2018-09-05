@@ -866,19 +866,52 @@ bool run_program( const std::string &prog,
 
 	if (( NULL != callback ) && ( block ))
 	{
-		const int BUFF_SIZE = 20480;
-		char buffer[ BUFF_SIZE+1 ];
-		buffer[BUFF_SIZE]=0;
+		const int BUFF_SIZE = 2048;
+		char buffer[ BUFF_SIZE*2 ];
+		char *ibuf=buffer;
 		DWORD bytes_read;
-		while ( ReadFile( child_output_read, buffer, BUFF_SIZE, &bytes_read, NULL ) != 0 )
+
+		while ( block && ( ReadFile( child_output_read, ibuf, BUFF_SIZE-1, &bytes_read, NULL ) != 0 ))
 		{
-			buffer[bytes_read]=0;
-			if ( callback( buffer, opaque ) == false )
+			ibuf[bytes_read]=0;
+
+			// call the callback - do this line by line for consistency w/ linux handling
+			// newline character at end of string is preserved (see `man getline`)
+			//
+			char *obuf = buffer;
+			char *c = strchr( obuf, '\n' );
+
+			while ( c || ( strlen( obuf ) > BUFF_SIZE-1 ) )
 			{
-				TerminateProcess( pi.hProcess, 0 );
-				block=false;
-				break;
+				int olen = BUFF_SIZE-1;
+				if ( c )
+					olen = c - obuf + 1;
+
+				char rep = obuf[olen];
+				obuf[olen] = 0;
+
+				if ( callback( obuf, opaque ) == false )
+				{
+					TerminateProcess( pi.hProcess, 0 );
+					block=false;
+					break;
+				}
+
+				obuf[olen] = rep;
+				obuf += olen;
+				c = strchr( obuf, '\n' );
 			}
+
+			// deal with leftovers
+			if ( strlen( obuf ) > 0 )
+			{
+				int sl = strlen( obuf );
+				strncpy( buffer, obuf, sl );
+				buffer[ sl ] =0;
+				ibuf = buffer + sl;
+			}
+			else
+				ibuf = buffer;
 		}
 	}
 
