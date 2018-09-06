@@ -42,6 +42,7 @@ protected:
 
 public:
 	FeWindow( FeSettings &fes );
+	~FeWindow();
 
 	void initial_create();		// first time window creation
 	bool run();						// run the currently selected game (blocking). returns false if window closed in the interim

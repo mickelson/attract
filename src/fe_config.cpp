@@ -236,6 +236,14 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 		for ( int i=1; i < FeEmulatorInfo::LAST_INDEX; i++ )
 		{
+#ifdef SFML_SYSTEM_MACOS
+			// Pause hotkey functionality is not fully implemented on OS X, block
+			// the user from trying to use it
+			//
+			if ( i == (int)FeEmulatorInfo:Pause_hotkey )
+				continue;
+#endif
+
 			std::string help( "_help_emu_" );
 			help += FeEmulatorInfo::indexStrings[i];
 
@@ -468,8 +476,18 @@ bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 		return m_parent_save;
 
 	for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
+	{
+#ifdef SFML_SYSTEM_MACOS
+			// Pause hotkey functionality is not fully implemented on OS X, block
+			// the user from trying to use it
+			//
+			if ( i == (int)FeEmulatorInfo:Pause_hotkey )
+				continue;
+#endif
+
 		m_emulator->set_info( (FeEmulatorInfo::Index)i,
 				ctx.opt_list[i].get_value() );
+	}
 
 	std::string filename = ctx.fe_settings.get_config_dir();
 	confirm_directory( filename, FE_EMULATOR_SUBDIR );

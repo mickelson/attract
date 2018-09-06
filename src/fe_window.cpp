@@ -105,6 +105,12 @@ FeWindow::FeWindow( FeSettings &fes )
 {
 }
 
+FeWindow::~FeWindow()
+{
+	if ( m_running_pid && process_exists( m_running_pid ) )
+		kill_program( m_running_pid );
+}
+
 void FeWindow::onCreate()
 {
 #ifdef SFML_SYSTEM_WINDOWS

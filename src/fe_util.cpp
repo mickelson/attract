@@ -112,6 +112,7 @@ namespace {
 	}
 
 #endif
+
 } // end namespace
 
 //
@@ -774,6 +775,32 @@ const char *get_OS_string()
 #endif
 }
 
+namespace
+{
+	bool process_check_for_hotkey(
+		const run_program_options_class *opt,
+		const FeInputMapEntry &hotkey )
+
+	{
+		// Check for key down
+		//
+		if ( !hotkey.get_current_state( opt->joy_thresh ) )
+			return false;
+
+		// If down, wait for key release
+		//
+		while ( hotkey.get_current_state( opt->joy_thresh ) )
+		{
+			if ( opt->wait_cb )
+				opt->wait_cb( opt->launch_opaque );
+
+			sf::sleep( sf::milliseconds( 10 ) );
+		}
+
+		return true;
+	}
+};
+
 run_program_options_class::run_program_options_class()
 	: joy_thresh( 0 ),
 	launch_cb( NULL ),
@@ -824,14 +851,14 @@ void windows_wait_process(
 		case WAIT_TIMEOUT:
 			// We should only ever get here if an exit_hotkey was provided
 			//
-			if ( exit_is.get_current_state( opt->joy_thresh ) )
+			if ( process_check_for_hotkey( opt, exit_is ) )
 			{
 				FeLog() << " - Exit Hotkey pressed, terminating process: " << (int)dwProcessId << std::endl;
 				TerminateProcess( hProcess, 0 );
 
 				keep_wait=false;
 			}
-			else if ( pause_is.get_current_state( opt->joy_thresh ) )
+			else if ( process_check_for_hotkey( opt, pause_is ) )
 			{
 				FeLog() << " - Pause Hotkey pressed, pausing process: " << (int)dwProcessId << std::endl;
 
@@ -882,9 +909,9 @@ void unix_wait_process( unsigned int pid, run_program_options_class *opt )
 		if ( w == 0 )
 		{
 			// waitpid should only return 0 if WNOHANG is used and the child is still running, so we
-			// should only ever get here if there is an exit_hotkey provided
+			// should only ever get here if there is an hotkey provided
 			//
-			if ( exit_is.get_current_state( opt->joy_thresh ) )
+			if ( process_check_for_hotkey( opt, exit_is ) )
 			{
 				// Where the user has configured the "exit hotkey" in Attract-Mode to the same key as the emulator
 				// uses to exit, we often have a problem of losing focus.  Delaying a bit and testing to make sure
@@ -925,10 +952,11 @@ void unix_wait_process( unsigned int pid, run_program_options_class *opt )
 
 				break; // leave do/while loop
 			}
-			else if ( pause_is.get_current_state( opt->joy_thresh ) )
+			else if ( process_check_for_hotkey( opt, pause_is ) )
 			{
 				FeLog() << " - Pause Hotkey pressed, sending SIGSTOP signal to process " << pid << std::endl;
 
+				// TODO: OS X - implement finding and hiding of foreground window
 #if defined( USE_XLIB )
 				Window wnd( 0 );
 				int revert;
@@ -1185,8 +1213,7 @@ void resume_program(
 
 	pfn_NtResumeProcess( hp );
 
-	// TODO: confirm need for this sleep
-//	sf::sleep( sf::milliseconds( 600 ) );
+	sf::sleep( sf::milliseconds( 600 ) );
 
 	HWND w = (HWND)wnd;
 	ShowWindow( w, SW_RESTORE );
@@ -1202,9 +1229,11 @@ void resume_program(
 	windows_wait_process( hp, (DWORD)pid, opt );
 	CloseHandle( hp );
 #else
+	// TODO: OS X - implement setting of foreground window
 #if defined ( USE_XLIB )
 	set_x11_foreground_window( (unsigned long)wnd );
 #endif
+
 	kill( pid, SIGCONT );
 	unix_wait_process( pid, opt );
 #endif
