@@ -231,7 +231,9 @@ void launch_callback( void *o )
 		// On X11 Linux, fullscreen mode is confirmed to block the emulator
 		// from running on some systems...
 		//
+#if defined(USE_XLIB)
 		sf::sleep( sf::milliseconds( 1000 ) );
+#endif
 		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
 	}
