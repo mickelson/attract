@@ -227,31 +227,13 @@ void launch_callback( void *o )
 	FeWindow *win = (FeWindow *)o;
 	if ( win->m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
-#if defined(USE_XLIB)
 		//
 		// On X11 Linux, fullscreen mode is confirmed to block the emulator
-		// from running on some systems...  So we wait 1 second and if we still
-		// have focus then we close our main window now (and then recreate it (!)
-		// when the emulator is done).
+		// from running on some systems...
 		//
 		sf::sleep( sf::milliseconds( 1000 ) );
-
- // hasFocus() is only available as of SFML 2.2.
- #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
-		if ( win->hasFocus() )
-		{
-			FeDebug() << "Attract-Mode window still has focus, closing now" << std::endl;
-			win->close();
-		}
- #else
-		FeDebug() << "Closing Attract-Mode window" << std::endl;
-		win->close();
- #endif
-
-#else
 		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
-#endif
 	}
 #endif
 }
