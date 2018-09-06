@@ -240,7 +240,7 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 			// Pause hotkey functionality is not fully implemented on OS X, block
 			// the user from trying to use it
 			//
-			if ( i == (int)FeEmulatorInfo:Pause_hotkey )
+			if ( i == (int)FeEmulatorInfo::Pause_hotkey )
 				continue;
 #endif
 
@@ -478,11 +478,11 @@ bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 	for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
 	{
 #ifdef SFML_SYSTEM_MACOS
-			// Pause hotkey functionality is not fully implemented on OS X, block
-			// the user from trying to use it
-			//
-			if ( i == (int)FeEmulatorInfo:Pause_hotkey )
-				continue;
+		// Pause hotkey functionality is not fully implemented on OS X, block
+		// the user from trying to use it
+		//
+		if ( i == (int)FeEmulatorInfo::Pause_hotkey )
+			continue;
 #endif
 
 		m_emulator->set_info( (FeEmulatorInfo::Index)i,
