@@ -235,31 +235,15 @@ void launch_callback( void *o )
 	FeWindow *win = (FeWindow *)o;
 	if ( win->m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
-#if defined(USE_XLIB)
 		//
 		// On X11 Linux, fullscreen mode is confirmed to block the emulator
-		// from running on some systems...  So we wait 1 second and if we still
-		// have focus then we close our main window now (and then recreate it (!)
-		// when the emulator is done).
+		// from running on some systems...
 		//
+#if defined(USE_XLIB)
 		sf::sleep( sf::milliseconds( 1000 ) );
-
- // hasFocus() is only available as of SFML 2.2.
- #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
-		if ( win->hasFocus() )
-		{
-			FeDebug() << "Attract-Mode window still has focus, closing now" << std::endl;
-			win->close();
-		}
- #else
-		FeDebug() << "Closing Attract-Mode window" << std::endl;
-		win->close();
- #endif
-
-#else
+#endif
 		FeDebug() << "Closing Attract-Mode window" << std::endl;
 		win->close(); // this fixes raspi version (w/sfml-pi) obscuring daphne (and others?)
-#endif
 	}
 #endif
 }
@@ -288,23 +272,21 @@ void wait_callback( void *o )
 
 bool FeWindow::run()
 {
-#ifndef SFML_SYSTEM_MACOS
-	// Don't move so much to the corner on Macs due to hot corners
-	//
-	const int HIDE_OFFSET=3;
-#else
-	const int HIDE_OFFSET=1;
-#endif
-	// Move the mouse to the bottom left corner so it isn't visible
-	// when the emulator launches.
-	//
-	sf::Vector2i reset_pos = sf::Mouse::getPosition();
+	sf::Vector2i reset_pos;
 
-	sf::Vector2i hide_pos = getPosition();
-	hide_pos.x += getSize().x - HIDE_OFFSET;
-	hide_pos.y += getSize().y - HIDE_OFFSET;
+	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
+	{
+		// Move the mouse to the bottom right corner so it isn't visible
+		// when the emulator launches.
+		//
+		reset_pos = sf::Mouse::getPosition();
 
-	sf::Mouse::setPosition( hide_pos );
+		sf::Vector2i hide_pos = getPosition();
+		hide_pos.x += getSize().x - 1;
+		hide_pos.y += getSize().y - 1;
+
+		sf::Mouse::setPosition( hide_pos );
+	}
 
 	sf::Clock timer;
 
@@ -477,7 +459,8 @@ bool FeWindow::run()
 	SetForegroundWindow( getSystemHandle() );
 #endif
 
-	sf::Mouse::setPosition( reset_pos );
+	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
+		sf::Mouse::setPosition( reset_pos );
 
 	// Empty the window event queue, so we don't go triggering other
 	// right away after running an emulator

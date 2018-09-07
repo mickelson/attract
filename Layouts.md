@@ -571,6 +571,7 @@ happening.  It will have one of the following values:
    * `Transition.ShowOverlay`
    * `Transition.HideOverlay`
    * `Transition.NewSelOverlay`
+   * `Transition.ChangedTag`
 
 The value of the `var` parameter passed to the transition function depends
 upon the value of `ttype`:
@@ -611,6 +612,10 @@ upon the value of `ttype`:
 
    * When `ttype` is `Transition.NewSelOverlay`, var will be the index of the
      new selection in the Overlay menu.
+
+   * When `ttype` is `Transition.ChangedTag`, var will be `Info.Favourite` if
+     the favourite status of the current game was changed, and `Info.Tags` if
+     a tag for the current game was changed.
 
    * When `ttype` is `Transition.ToGame`, `Transition.FromGame`,
      `Transition.EndNavigation`, or `Transition.HideOverlay`, `var` will be
@@ -1866,6 +1871,19 @@ The current Attract-Mode version.
 
 The path to Attract-Mode's config directory.
 
+#### `IntroActive` [bool] ####
+
+true if the intro is active, false otherwise.
+
+#### `Language` [string] ####
+
+The configured language.
+
+#### `OS` [string] ####
+
+The Operating System that Attract-Mode is running under.  Will be one of:
+"Windows", "OSX", "FreeBSD", "Linux" or "Unknown".
+
 #### `ScreenWidth` [int] ####
 #### `ScreenHeight` [int] ####
 
@@ -1874,15 +1892,6 @@ The screen width and height in pixels.
 #### `ScreenSaverActive` [bool] ####
 
 true if the screen saver is active, false otherwise.
-
-#### `IntroActive` [bool] ####
-
-true if the intro is active, false otherwise.
-
-#### `OS` [string] ####
-
-The Operating System that Attract-Mode is running under.  Will be one of:
-"Windows", "OSX", "FreeBSD", "Linux" or "Unknown"
 
 #### `ShadersAvailable` [bool] ####
 

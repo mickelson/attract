@@ -108,18 +108,27 @@ function fix_zoom( ttype, var, ttime )
 	return false;
 }
 
+// Create a FadeArt that doesn't do anything on transitions (just timed fading of artwork)
+//
+class MyFade extends FadeArt { function on_transition( ttype, var, ttime ) {return false;}; };
+local lb_bg = MyFade( "fanart", 24, 96, 192, 192 );
+
 local sort_lb = fe.add_listbox( 176, 96, 45, 202 );
 sort_lb.rows = 13;
 sort_lb.charsize = 10;
 sort_lb.set_rgb( 255, 255, 0 );
 sort_lb.format_string = "[SortValue]";
-sort_lb.bg_alpha=255;
+sort_lb.bg_alpha = 195;
+sort_lb.selbg_alpha = 225;
+sort_lb.set_selbg_rgb( 0, 0, 120 );
 sort_lb.visible = false;
 
 local lb = fe.add_listbox( 24, 96, 192, 202 );
 lb.rows = 13;
 lb.charsize = 10;
-lb.bg_alpha=255;
+lb.bg_alpha=195;
+lb.selbg_alpha=225;
+lb.set_selbg_rgb( 0, 0, 120 );
 
 local tmp = FadeArt( "marquee", 144, 24, 168, 48 );
 tmp.trigger = Transition.EndNavigation;

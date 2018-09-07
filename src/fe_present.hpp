@@ -54,7 +54,8 @@ enum FeTransitionType
 	EndNavigation,		// var = 0
 	ShowOverlay,		// var = Custom, Exit, Displays, Filters, Tags
 	HideOverlay,		// var = 0
-	NewSelOverlay		// var = index of new selection
+	NewSelOverlay,		// var = index of new selection
+	ChangedTag		   // var = FeRomInfo::Favourite, FeRomInfo::Tags
 };
 
 //

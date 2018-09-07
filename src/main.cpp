@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 
 	bool exit_selected=false;
 
-	if ( feSettings.get_language().empty() )
+	if ( feSettings.get_info( FeSettings::Language ).empty() )
 	{
 #ifdef SFML_SYSTEM_ANDROID
 		android_copy_assets();
@@ -720,7 +720,7 @@ int main(int argc, char *argv[])
 							// Add an exit option at the end of the lists menu
 							//
 							std::string exit_str;
-							feSettings.get_resource( "Exit Attract-Mode", exit_str );
+							feSettings.get_exit_message( exit_str );
 							disp_names.push_back( exit_str );
 							exit_opt = disp_names.size() - 1;
 						}
@@ -793,13 +793,19 @@ int main(int argc, char *argv[])
 									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ) ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
+								{
 									feVM.update_to_new_list( 0, true ); // our current display might have changed, so update
+									feVM.on_transition( ChangedTag, FeRomInfo::Favourite );
+								}
 							}
 						}
 						else
 						{
 							if ( feSettings.set_current_fav( new_state ) )
+							{
 								feVM.update_to_new_list( 0, true ); // our current display might have changed, so update
+								feVM.on_transition( ChangedTag, FeRomInfo::Favourite );
+							}
 						}
 						redraw = true;
 					}

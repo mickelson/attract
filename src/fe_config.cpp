@@ -1969,6 +1969,11 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_exit_command" );
 
 	ctx.add_optl( Opt::EDIT,
+			"Exit Message",
+			ctx.fe_settings.get_info( FeSettings::ExitMessage ),
+			"_help_exit_message" );
+
+	ctx.add_optl( Opt::EDIT,
 			"Default Font",
 			ctx.fe_settings.get_info( FeSettings::DefaultFont ),
 			"_help_default_font" );
@@ -2033,18 +2038,21 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
 			ctx.opt_list[9].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
+	ctx.fe_settings.set_info( FeSettings::ExitMessage,
 			ctx.opt_list[10].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath,
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[11].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
+	ctx.fe_settings.set_info( FeSettings::FontPath,
 			ctx.opt_list[12].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
+			ctx.opt_list[13].get_value() );
 
 #ifdef SFML_SYSTEM_WINDOWS
 	ctx.fe_settings.set_info( FeSettings::HideConsole,
-			ctx.opt_list[13].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[14].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 #endif
 
 	return true;
@@ -2605,7 +2613,14 @@ bool FeEditGameMenu::on_option_select( FeConfigContext &ctx, FeBaseConfigMenu *&
 				: "Remove '$1' from Favourites?";
 
 			if ( ctx.confirm_dialog( msg, ctx.opt_list[1].get_value() ) )
+			{
 				ctx.fe_settings.set_current_fav( new_state );
+
+				// ugh
+				FePresent *fep = FePresent::script_get_fep();
+				if ( fep )
+					fep->on_transition( ChangedTag, FeRomInfo::Favourite );
+			}
 		}
 		break;
 

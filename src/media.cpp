@@ -1099,7 +1099,9 @@ bool FeMedia::internal_open( sf::Texture *outt )
 bool FeMedia::end_of_file()
 {
 	sf::Lock l(m_imp->m_read_mutex);
-	return ( m_imp->m_read_eof );
+
+	bool retval = ( m_imp->m_read_eof );
+	return retval;
 }
 
 bool FeMedia::read_packet()

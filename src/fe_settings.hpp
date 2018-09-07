@@ -104,6 +104,7 @@ public:
 	{
 		Language=0,
 		ExitCommand,
+		ExitMessage,
 		DefaultFont,
 		FontPath,
 		ScreenSaverTimeout,
@@ -121,6 +122,7 @@ public:
 		SmoothImages,
 		SelectionMaxStep,
 		SelectionSpeed,
+		MoveMouseOnLaunch,
 		ScrapeSnaps,
 		ScrapeMarquees,
 		ScrapeFlyers,
@@ -150,6 +152,8 @@ private:
 	std::string m_config_path;
 	std::string m_default_font;
 	std::string m_exit_command;
+	std::string m_exit_message;
+	std::string m_exit_question;
 	std::string m_language;
 	std::string m_current_search_str;
 
@@ -202,6 +206,7 @@ private:
 	FilterWrapModeType m_filter_wrap_mode;
 	int m_selection_max_step; // max selection acceleration step.  0 to disable accel
 	int m_selection_speed;
+	bool m_move_mouse_on_launch; // configure whether mouse gets moved to bottom right corner on launch
 	bool m_scrape_snaps;
 	bool m_scrape_marquees;
 	bool m_scrape_flyers;
@@ -350,6 +355,8 @@ public:
 		FeEmulatorInfo *&emu );
 
 	int exit_command() const; // run configured exit command (if any)
+	void get_exit_message( std::string &exit_message ) const;
+	void get_exit_question( std::string &exit_question ) const;
 
 	void toggle_layout();
 	void set_current_layout_file( const std::string &layout_file );
@@ -553,7 +560,6 @@ public:
 		std::string &str ) const;
 
 	void set_language( const std::string &l );
-	const std::string &get_language() const { return m_language; }
 	void get_languages_list( std::vector < FeLanguage > &ll ) const;
 
 	bool get_emulator_setup_script( std::string &path, std::string &file );

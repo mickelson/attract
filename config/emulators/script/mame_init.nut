@@ -158,17 +158,24 @@ class RompathParser
 			local t = split( temp[1], ";" );
 			foreach ( p in t )
 			{
-				local p2 = fe.path_expand( p );
+				local p2 = strip( p );
 
 				// make sure there is a trailing slash
 				if (( p2.len() > 0 ) && ( p2[ p2.len()-1 ] != 47 ))
 					p2 += "/";
 
-				if (( fe.path_test( p2, PathTest.IsRelativePath ) )
-						&& ( homepath.len() > 0 ))
-					rompaths.push( homepath + p2 );
+				if ( fe.path_test( p2, PathTest.IsRelativePath ) )
+				{
+					if (( homepath.len() > 0 ) && ( fe.path_test( homepath + p2, PathTest.IsDirectory ) ))
+						rompaths.push( homepath + p2 );
+					else if ( fe.path_test( exepath + p2, PathTest.IsDirectory ) )
+						rompaths.push( exepath + p2 );
+				}
 				else
+				{
+					p2 = fe.path_expand( p2 );
 					rompaths.push( p2 );
+				}
 			}
 		}
 	}

@@ -46,14 +46,28 @@ FeNetTask::FeNetTask( const std::string &host,
 {
 }
 
-
 FeNetTask::FeNetTask()
 	: m_type( NoTask ),
 	m_id( 0 )
 {
 }
 
-bool FeNetTask::do_task( sf::Http::Response::Status &status )
+FeNetTask::FeNetTask( const FeNetTask &o )
+{
+	*this = o;
+}
+
+const FeNetTask &FeNetTask::operator=( const FeNetTask &o )
+{
+	m_type = o.m_type;
+	m_host = o.m_host;
+	m_req = o.m_req;
+	m_filename = o.m_filename;
+	m_result = o.m_result;
+	m_id = o.m_id;
+}
+
+bool FeNetTask::do_task( sf::Http::Response::Status &status, bool &in_req )
 {
 	const char *FROM_FIELD = "From";
 	const char *FROM_VALUE = "user@attractmode.org";
@@ -67,7 +81,14 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status )
 	req.setField( FROM_FIELD, FROM_VALUE );
 	req.setField( UA_FIELD, UA_VALUE );
 
+	// This call can get hung up, so we use in_req to track if we need to
+	// do a hard reset of this thread in the event the user cancels while
+	// it is blocked on the sendRequest call.
+	//
+	in_req = true;
 	sf::Http::Response resp = http.sendRequest( req, sf::seconds( 8 ) );
+	in_req = false;
+
 	status = resp.getStatus();
 
 	if ( status != sf::Http::Response::Ok )
@@ -131,7 +152,7 @@ void FeNetQueue::add_buffer_task( const std::string &host,
 }
 
 bool FeNetQueue::do_next_task( sf::Http::Response::Status &status,
-	std::string &err_req )
+	std::string &err_req, bool &in_req )
 {
 	FeNetTask t;
 	status = sf::Http::Response::Ok;
@@ -140,6 +161,7 @@ bool FeNetQueue::do_next_task( sf::Http::Response::Status &status,
 	//
 	{
 		sf::Lock l( m_mutex );
+
 		if ( m_in_queue.empty() )
 			return false;
 
@@ -151,20 +173,24 @@ bool FeNetQueue::do_next_task( sf::Http::Response::Status &status,
 
 	// Perform task
 	//
-	if ( t.do_task( status ) )
-	{
-		// Queue Result
-		//
-		sf::Lock l( m_mutex );
-		m_out_queue.push( t );
-	}
-	else if ( status != sf::Http::Response::Ok )
-		err_req = t.get_req();
+	bool res = t.do_task( status, in_req );
 
+	// Queue result
+	//
 	{
 		sf::Lock l( m_mutex );
+
+		if ( res )
+			m_out_queue.push( t );
+		else if ( status != sf::Http::Response::Ok )
+			err_req = t.get_req();
+
 		m_in_flight--;
+
+		FeDebug() << "WORKERS: queue_in=" << m_in_queue.size() << ", in_progress=" << m_in_flight
+			<< ", queue_out=" << m_out_queue.size() << std::endl;
 	}
+
 	return true;
 }
 
@@ -184,27 +210,44 @@ bool FeNetQueue::pop_completed_task( int &id,
 bool FeNetQueue::all_done()
 {
 	sf::Lock l( m_mutex );
-	return ( m_in_queue.empty() && m_out_queue.empty() && ( m_in_flight == 0 ) );
+
+	bool retval = ( m_in_queue.empty() && m_out_queue.empty() && ( m_in_flight == 0 ) );
+	return retval;
 }
 
 bool FeNetQueue::output_done()
 {
 	sf::Lock l( m_mutex );
-	return ( m_out_queue.empty() && ( m_in_flight == 0 ) );
+
+	bool retval = ( m_out_queue.empty() && ( m_in_flight == 0 ) );
+	return retval;
 }
 
 FeNetWorker::FeNetWorker( FeNetQueue &queue )
 	: m_queue( queue ),
 	m_thread( &FeNetWorker::work_process, this ),
-	m_proceed( true )
+	m_proceed( true ),
+	m_in_req( false )
 {
 	m_thread.launch();
 }
 
 FeNetWorker::~FeNetWorker()
 {
+	// Note m_proceed and m_in_req being used across threads without mutex
 	m_proceed = false;
-	m_thread.wait();
+
+	if ( m_in_req )
+	{
+		// We terminate because http.sendRequest() can hung up.
+		// By terminating here the user can still escape out of a hung up scrape
+		//
+		FeLog() << "Hard termination of worker thread!" << std::endl;
+		m_thread.terminate();
+		m_in_req = false;
+	}
+	else
+		m_thread.wait();
 }
 
 void FeNetWorker::work_process()
@@ -214,7 +257,7 @@ void FeNetWorker::work_process()
 		sf::Http::Response::Status status;
 		std::string err_req;
 
-		bool completed = m_queue.do_next_task( status, err_req );
+		bool completed = m_queue.do_next_task( status, err_req, m_in_req );
 
 		if (( status != sf::Http::Response::Ok )
 			&& ( status != sf::Http::Response::NotFound ))
@@ -226,4 +269,6 @@ void FeNetWorker::work_process()
 		if ( !completed ) // sleep if there is nothing in the queue
 			sf::sleep( sf::milliseconds( 10 ) );
 	}
+
+	FeDebug() << "WORKER thread process completed." << std::endl;
 }

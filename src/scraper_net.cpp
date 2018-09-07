@@ -299,7 +299,8 @@ bool get_system_list( FeImporterContext &c,
 	sf::Http::Response::Status status;
 	std::string err_req;
 
-	q.do_next_task( status, err_req );
+	bool in_req=false;
+	q.do_next_task( status, err_req, in_req );
 
 	if ( status != sf::Http::Response::Ok )
 	{
@@ -492,7 +493,8 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			perform_substitution( plat_string, "$1", as_str( *iti ) );
 
 			q.add_buffer_task( HOSTNAME, plat_string, 0 );
-			q.do_next_task( status, err_req );
+			bool in_req=false;
+			q.do_next_task( status, err_req, in_req );
 			if ( status != sf::Http::Response::Ok )
 			{
 				FeLog() << " * Unable to get platform information. Status code: "
@@ -672,29 +674,18 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 					const std::string &rn = (worklist[id])->get_info( FeRomInfo::Romname );
 					set_game_overview( emu_name, rn, overview, false );
 				}
-
-			}
-
-			if (( c.uiupdate ) && !worklist.empty() )
-			{
-				int p = c.progress_past + done_count * c.progress_range / ( NUM_ARTS * worklist.size() );
-				if ( c.uiupdate( c.uiupdatedata, p, aux ) == false )
-					return false;
-			}
-		}
-		else if ( q.output_done() )
-		{
-			sf::Http::Response::Status status;
-			std::string err_req;
-			q.do_next_task( status, err_req );
-			if ( status != sf::Http::Response::Ok )
-			{
-				FeLog() << " * Error processing request. Status code: "
-					<< status << " (" << err_req << ")" << std::endl;
 			}
 		}
 		else
 			sf::sleep( sf::milliseconds( 10 ) );
+
+		if (( c.uiupdate ) && !worklist.empty() )
+		{
+			int p = c.progress_past + done_count * c.progress_range / ( NUM_ARTS * worklist.size() );
+			if ( c.uiupdate( c.uiupdatedata, p, aux ) == false )
+				return false;
+		}
+
 	}
 #endif
 	return true;

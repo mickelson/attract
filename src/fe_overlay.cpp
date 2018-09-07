@@ -580,13 +580,19 @@ int FeOverlay::tags_dialog()
 		if ( !name.empty() )
 		{
 			if ( m_feSettings.set_current_tag( name, true ) )
+			{
 				m_fePresent.update_to_new_list( 0, true ); // changing tag status altered our current list
+				m_fePresent.on_transition( ChangedTag, FeRomInfo::Tags );
+			}
 		}
 	}
 	else if (( sel >=0 ) && ( sel < (int)tags_list.size() ))
 	{
 		if ( m_feSettings.set_current_tag( tags_list[sel].first, !(tags_list[sel].second) ) )
+		{
 			m_fePresent.update_to_new_list( 0, true ); // changing tag status altered our current list
+			m_fePresent.on_transition( ChangedTag, FeRomInfo::Tags );
+		}
 	}
 
 	return sel;
@@ -1931,7 +1937,10 @@ bool FeOverlay::common_exit()
 		return true;
 	}
 
-	int retval = confirm_dialog( "Exit Attract-Mode?", "" );
+	std::string exit_msg;
+	m_feSettings.get_exit_question( exit_msg );
+
+	int retval = confirm_dialog( exit_msg, "" );
 
 	//
 	// retval is 0 if the user confirmed exit.

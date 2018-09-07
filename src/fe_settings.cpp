@@ -278,6 +278,11 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_selection_max_step( 128 ),
 	m_selection_speed( 40 ),
+#ifdef SFML_SYSTEM_MACOS
+	m_move_mouse_on_launch( false ), // hotcorners
+#else
+	m_move_mouse_on_launch( true ),
+#endif
 	m_scrape_snaps( true ),
 	m_scrape_marquees( true ),
 	m_scrape_flyers( true ),
@@ -389,6 +394,7 @@ const char *FeSettings::configSettingStrings[] =
 {
 	"language",
 	"exit_command",
+	"exit_message",
 	"default_font",
 	"font_path",
 	"screen_saver_timeout",
@@ -406,6 +412,7 @@ const char *FeSettings::configSettingStrings[] =
 	"smooth_images",
 	"selection_max_step",
 	"selection_speed_ms",
+	"move_mouse_on_launch",
 	"scrape_snaps",
 	"scrape_marquees",
 	"scrape_flyers",
@@ -568,7 +575,7 @@ void FeSettings::init_display()
 		if ( m_displays_menu_exit )
 		{
 			std::string exit_str;
-			get_resource( "Exit Attract-Mode", exit_str );
+			get_exit_message( exit_str );
 
 			FeRomInfo rom( exit_str );
 			rom.set_info( FeRomInfo::Title, exit_str );
@@ -2230,6 +2237,23 @@ int FeSettings::exit_command() const
 	return r;
 }
 
+void FeSettings::get_exit_message( std::string &exit_message ) const
+{
+	if ( m_exit_message.empty() )
+		get_resource( "Exit Attract-Mode", exit_message );
+	else
+		exit_message = m_exit_message;
+}
+
+void FeSettings::get_exit_question( std::string &exit_question ) const
+{
+	// Question string is never empty; check message.
+	if ( m_exit_message.empty() )
+		get_resource( "Exit Attract-Mode?", exit_question );
+	else
+		exit_question = m_exit_question;
+}
+
 void FeSettings::do_text_substitutions( std::string &str, int filter_offset, int index_offset )
 {
 	int filter_index = get_filter_index_from_offset( filter_offset );
@@ -2645,6 +2669,8 @@ const std::string FeSettings::get_info( int index ) const
 		return m_language;
 	case ExitCommand:
 		return m_exit_command;
+	case ExitMessage:
+		return m_exit_message;
 	case DefaultFont:
 		return m_default_font;
 	case FontPath:
@@ -2683,6 +2709,7 @@ const std::string FeSettings::get_info( int index ) const
 	case TrackUsage:
 	case MultiMon:
 	case SmoothImages:
+	case MoveMouseOnLaunch:
 	case ScrapeSnaps:
 	case ScrapeMarquees:
 	case ScrapeFlyers:
@@ -2731,6 +2758,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_multimon;
 	case SmoothImages:
 		return m_smooth_images;
+	case MoveMouseOnLaunch:
+		return m_move_mouse_on_launch;
 	case ScrapeSnaps:
 		return m_scrape_snaps;
 	case ScrapeMarquees:
@@ -2765,6 +2794,11 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ExitCommand:
 		m_exit_command = value;
+		break;
+
+	case ExitMessage:
+		m_exit_message = value;
+		m_exit_question = value + "?";
 		break;
 
 	case DefaultFont:
@@ -2900,6 +2934,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_selection_speed = as_int( value );
 		if ( m_selection_speed < 0 )
 			m_selection_speed = 0;
+		break;
+
+	case MoveMouseOnLaunch:
+		m_move_mouse_on_launch = config_str_to_bool( value );
 		break;
 
 	case ScrapeSnaps:

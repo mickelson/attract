@@ -33,22 +33,25 @@ follows:
 
 		attract --font <font_name>
 
-2. If you are running Attract-Mode for the first time, it will load directly
-to its configuration mode.  If you do not start in config mode, pressing "TAB"
+2. If you are running Attract-Mode for the first time, you will be prompted to
+select the language to use and then the frontend will load directly to its
+configuration mode.  If you do not start in config mode, pressing the "TAB" key
 will get you there.  By default, config mode can be navigated using the up/
 down arrows, enter to select an option, and escape to go back.
 
-3. Select the "Emulators" menu and edit/create a configuration for an
-emulator that you wish to use.  Default configurations are provided for some
-popular emulators, however some settings will likely have to be customized
-for your system (file locations etc).
+3. Select the "Emulators" option, where you will be presented with the option
+of editting the configuration for the emulators Attract-Mode auto-detected (if
+any).  Edit an existing emulator or select 'Add' to add a new emulator
+configuration.  Default configuration templates are provided for various
+popular emulators to help you get started, however some settings will likely
+have to be customized for your system (file locations etc).
 
 4. Once you have an emulator configured correctly for your system, select
 the "Generate Collection/Rom List" option from the emulator's configuration
 menu.  Attract-Mode will use the configured emulator settings to generate a
 list of available games for the emulator.  Next select the "Scrape Artwork"
 option if you want to have Attract-Mode go and automatically download artwork
-images for this emulator from thegamesdb.net and mamedb.com.
+images for the emulator from the web.
 
 5.  Exit config mode by selecting the "Back" option a few times.  You should
 now have a usable front-end!

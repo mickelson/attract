@@ -42,6 +42,9 @@ public:
 		BufferTask=-4
 	};
 
+	FeNetTask( const FeNetTask & );
+	const FeNetTask &operator=( const FeNetTask & );
+
 protected:
 	FeNetTask(
 		const std::string &host,
@@ -56,7 +59,7 @@ protected:
 
 	FeNetTask();
 
-	bool do_task( sf::Http::Response::Status &status );
+	bool do_task( sf::Http::Response::Status &status, bool &in_req );
 
 	// this function consumes the task's result, so it will no longer be
 	// available for future calls to this function...
@@ -102,7 +105,7 @@ public:
 	// Returns true if a task is performed, false if no task in queue
 	//
 	bool do_next_task( sf::Http::Response::Status &status,
-		std::string &err_req );
+		std::string &err_req, bool &in_req );
 
 	bool pop_completed_task( int &id,
 			std::string &result );
@@ -116,6 +119,7 @@ class FeNetWorker
 	FeNetQueue &m_queue;
 	sf::Thread m_thread;
 	bool m_proceed;
+	bool m_in_req;
 
 	FeNetWorker( const FeNetWorker & );
 	FeNetWorker &operator=( const FeNetWorker & );
