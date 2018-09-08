@@ -1268,6 +1268,10 @@ void resume_program(
 #endif
 
 	kill( pid, SIGCONT );
+
+	if ( opt->launch_cb )
+		opt->launch_cb( opt->launch_opaque );
+
 	unix_wait_process( pid, opt );
 #endif
 }
