@@ -112,6 +112,7 @@ namespace {
 	}
 
 #endif
+
 } // end namespace
 
 //
@@ -774,6 +775,222 @@ const char *get_OS_string()
 #endif
 }
 
+namespace
+{
+	bool process_check_for_hotkey(
+		const run_program_options_class *opt,
+		const FeInputMapEntry &hotkey )
+
+	{
+		// Check for key down
+		//
+		if ( !hotkey.get_current_state( opt->joy_thresh ) )
+			return false;
+
+		// If down, wait for key release
+		//
+		while ( hotkey.get_current_state( opt->joy_thresh ) )
+		{
+			if ( opt->wait_cb )
+				opt->wait_cb( opt->launch_opaque );
+
+			sf::sleep( sf::milliseconds( 10 ) );
+		}
+
+		return true;
+	}
+};
+
+run_program_options_class::run_program_options_class()
+	: joy_thresh( 0 ),
+	launch_cb( NULL ),
+	wait_cb( NULL ),
+	launch_opaque( NULL ),
+	running_pid( 0 ),
+	running_wnd( NULL )
+{
+}
+
+const int POLL_FOR_EXIT_MS=20;
+
+#if defined ( SFML_SYSTEM_WINDOWS )
+
+typedef LONG (NTAPI *NtSuspendProcess)(IN HANDLE ProcessHandle );
+typedef LONG (NTAPI *NtResumeProcess)(IN HANDLE ProcessHandle );
+
+void windows_wait_process(
+	const HANDLE &hProcess,
+	const DWORD &dwProcessId,
+	run_program_options_class *opt )
+{
+	DWORD timeout = ( opt->exit_hotkey.empty() && opt->pause_hotkey.empty() )
+		? INFINITE : POLL_FOR_EXIT_MS;
+
+	FeInputMapEntry exit_is( opt->exit_hotkey );
+	FeInputMapEntry pause_is( opt->pause_hotkey );
+
+	bool keep_wait=true;
+	while (keep_wait)
+	{
+		switch (MsgWaitForMultipleObjects(1, &hProcess,
+						FALSE, timeout, 0))
+		{
+		case WAIT_OBJECT_0:
+			keep_wait=false;
+			break;
+
+		case WAIT_OBJECT_0 + 1:
+			//
+			// See: https://blogs.msdn.microsoft.com/oldnewthing/20050217-00/?p=36423
+			//
+			if ( opt->wait_cb )
+				opt->wait_cb( opt->launch_opaque );
+
+			break;
+
+		case WAIT_TIMEOUT:
+			// We should only ever get here if an exit_hotkey was provided
+			//
+			if ( process_check_for_hotkey( opt, exit_is ) )
+			{
+				FeLog() << " - Exit Hotkey pressed, terminating process: " << (int)dwProcessId << std::endl;
+				TerminateProcess( hProcess, 0 );
+
+				keep_wait=false;
+			}
+			else if ( process_check_for_hotkey( opt, pause_is ) )
+			{
+				FeLog() << " - Pause Hotkey pressed, pausing process: " << (int)dwProcessId << std::endl;
+
+				HWND fgw = GetForegroundWindow();
+				ShowWindow( fgw, SW_FORCEMINIMIZE );
+				FeDebug() << "Force minimize window: " << fgw << std::endl;
+
+				// Sleep to let the other process deal with the hiding of its window
+				// before we suspend it
+				sf::sleep( sf::milliseconds( 600 ) );
+
+				// Undocumented windows system call
+				NtSuspendProcess pfn_NtSuspendProcess = (NtSuspendProcess)GetProcAddress(
+					GetModuleHandle( "ntdll" ), "NtSuspendProcess" );
+
+				pfn_NtSuspendProcess( hProcess );
+
+				opt->running_wnd = (void *)fgw;
+				opt->running_pid = dwProcessId;
+
+				keep_wait=false;
+			}
+			break;
+
+		default:
+			FeLog() << "Unexpected failure waiting on process" << std::endl;
+			keep_wait=false;
+			break;
+		}
+	}
+}
+
+#else
+
+void unix_wait_process( unsigned int pid, run_program_options_class *opt )
+
+{
+	int status;
+	int k = ( opt->exit_hotkey.empty() && opt->pause_hotkey.empty() )
+		? 0 : WNOHANG; // option for waitpid.  0= wait for process to complete, WNOHANG=return right away
+
+	FeInputMapEntry exit_is( opt->exit_hotkey );
+	FeInputMapEntry pause_is( opt->pause_hotkey );
+
+	while (1)
+	{
+		pid_t w = waitpid( pid, &status, k );
+		if ( w == 0 )
+		{
+			// waitpid should only return 0 if WNOHANG is used and the child is still running, so we
+			// should only ever get here if there is an hotkey provided
+			//
+			if ( process_check_for_hotkey( opt, exit_is ) )
+			{
+				// Where the user has configured the "exit hotkey" in Attract-Mode to the same key as the emulator
+				// uses to exit, we often have a problem of losing focus.  Delaying a bit and testing to make sure
+				// the emulator process is still running before sending the kill signal seems to help...
+				//
+				sf::sleep( sf::milliseconds( 100 ) );
+				if ( kill( pid, 0 ) == 0 )
+				{
+					FeLog() << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
+					kill( pid, SIGTERM );
+
+					//
+					// Give the process TERM_TIMEOUT ms to respond to sig term
+					//
+					const int TERM_TIMEOUT = 1500;
+					sf::Clock term_clock;
+
+					while (( term_clock.getElapsedTime().asMilliseconds() < TERM_TIMEOUT )
+						&& ( waitpid( pid, &status, WNOHANG ) == 0 ))
+					{
+						sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
+					}
+
+					//
+					// Do the more abrupt SIGKILL if process is still running at this point
+					//
+					if ( kill( pid, 0 ) == 0 )
+					{
+						FeLog() << " - Timeout on SIGTERM after " << TERM_TIMEOUT
+							<< " ms, sending SIGKILL signal to process " << pid << std::endl;
+
+						kill( pid, SIGKILL );
+					}
+
+					// reap
+					waitpid( pid, &status, 0 );
+				}
+
+				break; // leave do/while loop
+			}
+			else if ( process_check_for_hotkey( opt, pause_is ) )
+			{
+				FeLog() << " - Pause Hotkey pressed, sending SIGSTOP signal to process " << pid << std::endl;
+
+				// TODO: OS X - implement finding and hiding of foreground window
+#if defined( USE_XLIB )
+				Window wnd( 0 );
+				int revert;
+
+				::Display *xdisp = XOpenDisplay( NULL );
+				XGetInputFocus( xdisp, &wnd, &revert );
+				opt->running_wnd = (void *)wnd;
+
+				XUnmapWindow( xdisp, wnd );
+				XFlush( xdisp );
+				FeDebug() << "Unmapped window: " << wnd << std::endl;
+
+				// Sleep to let the other process deal with the unmapping of its window
+				// before we SIGSTOP it
+				sf::sleep( sf::milliseconds( 600 ) );
+#endif
+				opt->running_pid = pid;
+				kill( pid, SIGSTOP );
+				break; // leave do/while loop
+			}
+
+			sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
+		}
+		else
+		{
+			if ( w < 0 )
+				FeLog() << " ! error returned by wait_pid(): "
+					<< strerror( errno ) << std::endl;
+
+			break; // leave do/while loop
+		}
+	}
+}
+#endif
 
 bool run_program( const std::string &prog,
 	const std::string &args,
@@ -781,13 +998,8 @@ bool run_program( const std::string &prog,
 	output_callback_fn callback,
 	void *opaque,
 	bool block,
-	const std::string &exit_hotkey,
-	int joy_thresh,
-	launch_callback_fn launch_cb,
-	launch_callback_fn wait_cb,
-	void *launch_opaque )
+	run_program_options_class *opt )
 {
-	const int POLL_FOR_EXIT_MS=50;
 
 	std::string work_dir = cwork_dir;
 	if ( work_dir.empty() )
@@ -798,6 +1010,10 @@ bool run_program( const std::string &prog,
 		if ( pos != std::string::npos )
 			work_dir = prog.substr( 0, pos );
 	}
+
+	run_program_options_class default_opt;
+	if ( !opt )
+		opt = &default_opt;
 
 #ifdef SFML_SYSTEM_WINDOWS
 	HANDLE child_output_read=NULL;
@@ -918,50 +1134,11 @@ bool run_program( const std::string &prog,
 	if ( child_output_read )
 		CloseHandle( child_output_read );
 
-	if ( launch_cb )
-		launch_cb( launch_opaque );
+	if ( opt->launch_cb )
+		opt->launch_cb( opt->launch_opaque );
 
-	DWORD timeout = ( callback || exit_hotkey.empty() )
-		? INFINITE : POLL_FOR_EXIT_MS;
-
-	FeInputMapEntry exit_is( exit_hotkey );
-
-	bool keep_wait=block;
-	while (keep_wait)
-	{
-		switch (MsgWaitForMultipleObjects(1, &pi.hProcess,
-						FALSE, timeout, 0))
-		{
-		case WAIT_OBJECT_0:
-			keep_wait=false;
-			break;
-
-		case WAIT_OBJECT_0 + 1:
-			//
-			// See: https://blogs.msdn.microsoft.com/oldnewthing/20050217-00/?p=36423
-			//
-			if ( wait_cb )
-				wait_cb( launch_opaque );
-
-			break;
-
-		case WAIT_TIMEOUT:
-			// We should only ever get here if an exit_hotkey was provided
-			//
-			if ( exit_is.get_current_state( joy_thresh ) )
-			{
-				TerminateProcess( pi.hProcess, 0 );
-
-				keep_wait=false;
-			}
-			break;
-
-		default:
-			FeLog() << "Unexpected failure waiting on process" << std::endl;
-			keep_wait=false;
-			break;
-		}
-	}
+	if ( block )
+		windows_wait_process( pi.hProcess, pi.dwProcessId, opt );
 
 	CloseHandle( pi.hProcess );
 	CloseHandle( pi.hThread );
@@ -1035,11 +1212,7 @@ bool run_program( const std::string &prog,
 				if ( callback( buffer, opaque ) == false )
 				{
 					// User cancelled
-					kill( pid, SIGKILL );
-
-					int status;
-					waitpid( pid, &status, 0 );
-
+					kill_program( pid );
 					block=false;
 					break;
 				}
@@ -1049,81 +1222,101 @@ bool run_program( const std::string &prog,
 			close( mypipe[0] );
 		}
 
-		if ( launch_cb )
-			launch_cb( launch_opaque );
+		if ( opt->launch_cb )
+			opt->launch_cb( opt->launch_opaque );
 
 		if ( block )
-		{
-			int status;
-			int opt = exit_hotkey.empty() ? 0 : WNOHANG; // option for waitpid.  0= wait for process to complete, WNOHANG=return right away
-
-			FeInputMapEntry exit_is( exit_hotkey );
-
-			while (1)
-			{
-				pid_t w = waitpid( pid, &status, opt );
-				if ( w == 0 )
-				{
-					// waitpid should only return 0 if WNOHANG is used and the child is still running, so we
-					// should only ever get here if there is an exit_hotkey provided
-					//
-					if ( exit_is.get_current_state( joy_thresh ) )
-					{
-						// Where the user has configured the "exit hotkey" in Attract-Mode to the same key as the emulator
-						// uses to exit, we often have a problem of losing focus.  Delaying a bit and testing to make sure
-						// the emulator process is still running before sending the kill signal seems to help...
-						//
-						sf::sleep( sf::milliseconds( 100 ) );
-						if ( kill( pid, 0 ) == 0 )
-						{
-							FeLog() << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
-							kill( pid, SIGTERM );
-
-
-							//
-							// Give the process TERM_TIMEOUT ms to respond to sig term
-							//
-							const int TERM_TIMEOUT = 1500;
-							sf::Clock term_clock;
-
-							while (( term_clock.getElapsedTime().asMilliseconds() < TERM_TIMEOUT )
-								&& ( waitpid( pid, &status, WNOHANG ) == 0 ))
-							{
-								sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
-							}
-
-							//
-							// Do the more abrupt SIGKILL if process is still running at this point
-							//
-							if ( kill( pid, 0 ) == 0 )
-							{
-								FeLog() << " - Timeout on SIGTERM after " << TERM_TIMEOUT
-									<< " ms, sending SIGKILL signal to process " << pid << std::endl;
-
-								kill( pid, SIGKILL );
-							}
-
-							// reap
-							waitpid( pid, &status, 0 );
-						}
-
-						break; // leave do/while loop
-					}
-					sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
-				}
-				else
-				{
-					if ( w < 0 )
-						FeLog() << " ! error returned by wait_pid(): "
-							<< strerror( errno ) << std::endl;
-
-					break; // leave do/while loop
-				}
-			}
-		}
+			unix_wait_process( pid, opt );
 	}
 #endif // SFML_SYSTEM_WINDOWS
 	return true;
+}
+
+void resume_program(
+	unsigned int pid,
+	void *wnd,
+	run_program_options_class *opt )
+{
+#if defined( SFML_SYSTEM_WINDOWS )
+	HANDLE hp = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pid );
+
+	// Undocumented Windows system call
+	NtResumeProcess pfn_NtResumeProcess = (NtResumeProcess)GetProcAddress(
+		GetModuleHandle( "ntdll" ), "NtResumeProcess" );
+
+	pfn_NtResumeProcess( hp );
+
+	sf::sleep( sf::milliseconds( 600 ) );
+
+	HWND w = (HWND)wnd;
+	ShowWindow( w, SW_RESTORE );
+	SetForegroundWindow( w );
+
+	// We do this to process messages on the frontend's window
+	// (allowing it to adjust to the foreground window change ??)
+	//
+	// In any event, this seems to be necessary...
+	if ( opt->wait_cb )
+		opt->wait_cb( opt->launch_opaque );
+
+	windows_wait_process( hp, (DWORD)pid, opt );
+	CloseHandle( hp );
+#else
+	// TODO: OS X - implement setting of foreground window
+#if defined ( USE_XLIB )
+	set_x11_foreground_window( (unsigned long)wnd );
+#endif
+
+	kill( pid, SIGCONT );
+
+	if ( opt->launch_cb )
+		opt->launch_cb( opt->launch_opaque );
+
+	unix_wait_process( pid, opt );
+#endif
+}
+
+void kill_program( unsigned int pid )
+{
+#if defined( SFML_SYSTEM_WINDOWS )
+	HANDLE hp = OpenProcess( PROCESS_TERMINATE, FALSE, pid );
+
+	if ( hp )
+		TerminateProcess( hp, 0 );
+
+	CloseHandle( hp );
+#else
+	kill( pid, SIGKILL );
+
+	// reap
+	int status;
+	waitpid( pid, &status, 0 );
+#endif
+}
+
+bool process_exists(
+	unsigned int pid )
+{
+#if defined( SFML_SYSTEM_WINDOWS )
+	HANDLE pss = CreateToolhelp32Snapshot( TH32CS_SNAPALL, 0 );
+	PROCESSENTRY32 pe = {0};
+	pe.dwSize = sizeof( pe );
+
+	if ( Process32First( pss, &pe ) )
+	{
+		do
+		{
+			if ( pe.th32ProcessID == pid )
+				return true;
+		}
+		while ( Process32Next( pss, &pe ) );
+	}
+
+	CloseHandle( pss );
+	return false;
+#else
+	return ( kill( pid, 0 ) == 0 );
+#endif
 }
 
 std::string name_with_brackets_stripped( const std::string &name )
@@ -1226,6 +1419,22 @@ void get_x11_geometry( bool multimon, int &x, int &y, int &width, int &height )
 #endif
 
 	XCloseDisplay( xdisp );
+}
+
+void set_x11_foreground_window( unsigned long w )
+{
+	::Display *xdisp = XOpenDisplay( NULL );
+	Window wnd = (Window)w;
+
+	// Note: order seems to matter here!
+	// (if 'set input focus' is before 'raise window' the window doesn't actually get raised !?)
+	// We used XMapRaised() because in some cases we have unmapped the window being raised
+	XMapRaised( xdisp, wnd );
+
+	XSetInputFocus( xdisp, wnd, RevertToParent, CurrentTime );
+	XFlush( xdisp );
+
+	FeDebug() << "Raised and changed window input focus to: " << (unsigned long)wnd << std::endl;
 }
 #endif
 
@@ -1429,7 +1638,7 @@ std::string get_focus_process()
 #elif defined( USE_XLIB )
 
 	::Display *xdisp = XOpenDisplay( NULL );
-	Atom atom = XInternAtom( xdisp, "_NET_WM_PID", True );
+	Atom _NET_WM_PID = XInternAtom( xdisp, "_NET_WM_PID", True );
 
 	Window wnd( 0 );
 	int revert;
@@ -1446,7 +1655,7 @@ std::string get_focus_process()
 
 	if ( XGetWindowProperty( xdisp,
 				wnd,
-				atom,
+				_NET_WM_PID,
 				0,
 				1024,
 				False,
@@ -1457,13 +1666,13 @@ std::string get_focus_process()
 				&bytes_after,
 				&prop ) != Success )
 	{
-		FeLog() << "Could not get window property." << std::endl;
+		FeDebug() << "Could not get window property." << std::endl;
 		return retval;
 	}
 
 	if ( !prop )
 	{
-		FeLog() << "Empty window property." << std::endl;
+		FeDebug() << "Empty window property." << std::endl;
 		return retval;
 	}
 
@@ -1489,3 +1698,4 @@ std::string get_focus_process()
 
 	return retval;
 }
+

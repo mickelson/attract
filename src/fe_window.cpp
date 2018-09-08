@@ -99,8 +99,16 @@ bool is_multimon_config( FeSettings &fes )
 const char *FeWindowPosition::FILENAME = "window.am";
 
 FeWindow::FeWindow( FeSettings &fes )
-	: m_fes( fes )
+	: m_fes( fes ),
+	m_running_pid( 0 ),
+	m_running_wnd( NULL )
 {
+}
+
+FeWindow::~FeWindow()
+{
+	if ( m_running_pid && process_exists( m_running_pid ) )
+		kill_program( m_running_pid );
 }
 
 void FeWindow::onCreate()
@@ -282,8 +290,84 @@ bool FeWindow::run()
 
 	sf::Clock timer;
 
-	int nbm_wait; // non-blocking mode wait time (in seconds)
-	m_fes.run( nbm_wait, launch_callback, wait_callback, this );
+	// We need to get this variable before calling m_fes.prep_for_launch(),
+	// which goes and resets the last launch tracking to the current selection
+	bool is_relaunch = m_fes.is_last_launch( 0, 0 );
+
+	std::string command, args, work_dir;
+	FeEmulatorInfo *emu = NULL;
+	m_fes.prep_for_launch( command, args, work_dir, emu );
+
+	if ( !emu )
+	{
+		FeLog() << "Error getting emulator info for launch" << std::endl;
+		return false;
+	}
+
+	// non-blocking mode wait time (in seconds)
+	int nbm_wait = as_int( emu->get_info( FeEmulatorInfo::NBM_wait ) );
+
+	run_program_options_class opt;
+	opt.exit_hotkey = emu->get_info( FeEmulatorInfo::Exit_hotkey );
+	opt.pause_hotkey = emu->get_info( FeEmulatorInfo::Pause_hotkey );
+	opt.joy_thresh = m_fes.get_joy_thresh();
+	opt.launch_cb = (( nbm_wait <= 0 ) ? launch_callback : NULL );
+	opt.wait_cb = wait_callback;
+	opt.launch_opaque = this;
+
+	bool have_paused_prog = m_running_pid && process_exists( m_running_pid );
+
+	// check if we need to resume a previously paused game
+	if ( have_paused_prog && is_relaunch )
+	{
+		FeLog() << "*** Resuming previously paused program, pid: " << m_running_pid << std::endl;
+		resume_program( m_running_pid, m_running_wnd, &opt );
+	}
+	else
+	{
+		if ( have_paused_prog )
+		{
+			FeLog() << "*** Killing previously paused program, pid: " << m_running_pid << std::endl;
+			kill_program( m_running_pid );
+
+			m_running_pid = 0;
+			m_running_wnd = NULL;
+		}
+
+		if ( !work_dir.empty() )
+			FeLog() << " - Working directory: " << work_dir << std::endl;
+
+		FeLog() << "*** Running: " << command << " " << args << std::endl;
+
+		run_program(
+			command,
+			args,
+			work_dir,
+			NULL,
+			NULL,
+			( nbm_wait <= 0 ), // don't block if nbm_wait > 0
+			&opt );
+	}
+
+	if ( opt.running_pid != 0 )
+	{
+		// User has paused the progam and it is still running in the background
+		m_running_pid = opt.running_pid;
+		m_running_wnd = opt.running_wnd;
+
+#if defined(USE_XLIB)
+		set_x11_foreground_window( getSystemHandle() );
+#elif defined(SFML_SYSTEM_MACOS)
+		osx_take_focus();
+#elif defined(SFML_SYSTEM_WINDOWS)
+		SetForegroundWindow( getSystemHandle() );
+#endif
+	}
+	else
+	{
+		m_running_pid = 0;
+		m_running_wnd = NULL;
+	}
 
 	//
 	// If nbm_wait > 0, then m_fes.run() above is non-blocking and we need
@@ -400,4 +484,9 @@ void FeWindow::on_exit()
 		FeWindowPosition win_pos( getPosition(), getSize() );
 		win_pos.save( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
 	}
+}
+
+bool FeWindow::has_running_process()
+{
+	return ( m_running_pid != 0 );
 }

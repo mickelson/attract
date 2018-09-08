@@ -851,6 +851,7 @@ const char *FeEmulatorInfo::indexStrings[] =
 	"import_extras",
 	"nb_mode_wait",
 	"exit_hotkey",
+	"pause_hotkey",
 	NULL
 };
 
@@ -867,6 +868,7 @@ const char *FeEmulatorInfo::indexDispStrings[] =
 	"Additional Import File(s)",
 	"Non-Blocking Mode Wait",
 	"Exit Hotkey",
+	"Pause Hotkey",
 	NULL
 };
 
@@ -921,6 +923,8 @@ const std::string FeEmulatorInfo::get_info( int i ) const
 		return as_str( m_nbm_wait );
 	case Exit_hotkey:
 		return m_exit_hotkey;
+	case Pause_hotkey:
+		return m_pause_hotkey;
 	default:
 		return "";
 	}
@@ -981,6 +985,8 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 		break;
 	case Exit_hotkey:
 		m_exit_hotkey = s; break;
+	case Pause_hotkey:
+		m_pause_hotkey = s; break;
 	default:
 		break;
 	}

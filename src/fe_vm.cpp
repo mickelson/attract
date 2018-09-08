@@ -602,6 +602,7 @@ bool FeVM::on_new_layout()
 	info.Const( "System", FeRomInfo::LAST_INDEX ); // special cases with same value
 	info.Const( "NoSort", FeRomInfo::LAST_INDEX ); //
 	info.Const( "Overview", FeRomInfo::LAST_INDEX+1 ); //
+	info.Const( "IsPaused", FeRomInfo::LAST_INDEX+2 ); //
 	ConstTable().Enum( _SC("Info"), info);
 
 	Enumeration transition;
@@ -2268,7 +2269,7 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 
 	static std::string retval;
 
-	if (( index > FeRomInfo::LAST_INDEX+1 ) || ( index < 0 ))
+	if (( index > FeRomInfo::LAST_INDEX+2 ) || ( index < 0 ))
 	{
 		// the better thing to do would be to raise a squirrel error here
 		//
@@ -2296,6 +2297,14 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 			retval );
 
 		return retval.c_str();
+	}
+	else if ( index == FeRomInfo::LAST_INDEX+2 )
+	{
+		// IsPaused
+		if ( fev->m_window.has_running_process() && fev->m_feSettings->is_last_launch( filter_offset, offset ) )
+			return "1";
+		else
+			return "";
 	}
 
 	return (fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();

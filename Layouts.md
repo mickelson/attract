@@ -681,6 +681,7 @@ Parameters:
       - `Info.FileIsAvailable`
       - `Info.System`
       - `Info.Overview`
+      - `Info.IsPaused`
    * index_offset - the offset (from the current selection) of the game to
      retrieve info on.  i.e. -1=previous game, 0=current game, 1=next game...
      and so on.  Default value is 0.
@@ -691,6 +692,11 @@ Parameters:
 Return Value:
 
    * A string containing the requested information.
+
+Notes:
+
+   * The `Info.IsPaused` attribute is `1` if the game is currently paused by
+     the frontend, and an empty string if it is not.
 
 
 <a name="get_art" />

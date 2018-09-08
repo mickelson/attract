@@ -1803,6 +1803,13 @@ bool FeSettings::select_last_launch()
 	return retval;
 }
 
+bool FeSettings::is_last_launch( int filter_offset, int index_offset )
+{
+	return (( m_last_launch_display == m_current_display )
+		&& ( m_last_launch_filter == get_filter_index_from_offset( filter_offset ) )
+		&& ( m_last_launch_rom == get_rom_index( m_last_launch_filter, index_offset ) ));
+}
+
 bool FeSettings::get_current_fav()
 {
 	int filter_index = get_current_filter_index();
@@ -2024,12 +2031,11 @@ void FeSettings::get_sounds_list( std::vector < std::string > &ll ) const
 	internal_gather_config_files( ll, "", FE_SOUND_SUBDIR );
 }
 
-void FeSettings::run( int &nbm_wait,
-	launch_callback_fn launch_cb,
-	launch_callback_fn wait_cb,
-	void *launch_opaque )
+void FeSettings::prep_for_launch( std::string &command,
+	std::string &args,
+	std::string &work_dir,
+	FeEmulatorInfo *&emu )
 {
-	nbm_wait=0;
 	int filter_index = get_current_filter_index();
 
 	if ( get_filter_size( filter_index ) < 1 )
@@ -2041,13 +2047,11 @@ void FeSettings::run( int &nbm_wait,
 	if ( !rom )
 		return;
 
-	const FeEmulatorInfo *emu = get_emulator(
-			rom->get_info( FeRomInfo::Emulator ) );
+	emu = get_emulator( rom->get_info( FeRomInfo::Emulator ) );
 	if ( !emu )
 		return;
 
 	const std::string &rom_name = rom->get_info( FeRomInfo::Romname );
-	nbm_wait = as_int( emu->get_info( FeEmulatorInfo::NBM_wait ) );
 
 	m_last_launch_display = get_current_display_index();
 	m_last_launch_filter = filter_index;
@@ -2073,7 +2077,7 @@ void FeSettings::run( int &nbm_wait,
 	else
 		m_last_launch_rom = rom_index;
 
-	std::string command, args, rom_path, extension, romfilename;
+	std::string rom_path, extension, romfilename;
 
 	std::vector<std::string>::const_iterator itr;
 
@@ -2184,7 +2188,7 @@ void FeSettings::run( int &nbm_wait,
 
 	command = clean_path( temp );
 
-	std::string work_dir = clean_path( emu->get_info( FeEmulatorInfo::Working_dir ), true );
+	work_dir = clean_path( emu->get_info( FeEmulatorInfo::Working_dir ), true );
 	if ( work_dir.empty() )
 	{
 		size_t pos = command.find_last_of( "/\\" );
@@ -2192,27 +2196,7 @@ void FeSettings::run( int &nbm_wait,
 			work_dir = command.substr( 0, pos );
 	}
 
-	if ( !work_dir.empty() )
-		FeLog() << " - Working directory: " << work_dir << std::endl;
-
-	FeLog() << "*** Running: " << command << " " << args << std::endl;
-
-	std::string exit_hotkey = emu->get_info( FeEmulatorInfo::Exit_hotkey );
-
 	save_state();
-
-	run_program(
-		command,
-		args,
-		work_dir,
-		NULL,
-		NULL,
-		( nbm_wait <= 0 ), // don't block if nbm_wait > 0
-		exit_hotkey,
-		m_joy_thresh,
-		(( nbm_wait <= 0 ) ? launch_cb : NULL ),
-		wait_cb,
-		launch_opaque );
 }
 
 void FeSettings::update_stats( int play_count, int play_time )
