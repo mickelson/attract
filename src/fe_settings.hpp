@@ -341,14 +341,18 @@ public:
 	const std::string &get_search_rule() const;
 
 	bool select_last_launch();
+	bool is_last_launch( int filter_offset, int index_offset );
 	int get_joy_thresh() const { return m_joy_thresh; }
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
-	void run( int &nbm_wait,
-		launch_callback_fn launch_cb,
-		launch_callback_fn wait_cb,
-		void *launch_opaque ); // run current selection
+	// prepares for emulator launch by setting various tracking variables (last launch, etc)
+	// and determining the correct executable, command line parameters and working directory to use
+	void prep_for_launch(
+		std::string &command,
+		std::string &args,
+		std::string &work_dir,
+		FeEmulatorInfo *&emu );
 
 	int exit_command() const; // run configured exit command (if any)
 	void get_exit_message( std::string &exit_message ) const;
