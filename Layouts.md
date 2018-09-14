@@ -53,7 +53,7 @@ Contents
       * [`fe.LayoutGlobals`](#LayoutGlobals)
       * [`fe.CurrentList`](#CurrentList)
       * [`fe.Overlay`](#Overlay)
-      * [`fe.Display`](#Filter)
+      * [`fe.Display`](#Display)
       * [`fe.Filter`](#Filter)
       * [`fe.Monitor`](#Monitor)
       * [`fe.Image`](#Image)
