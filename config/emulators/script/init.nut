@@ -66,6 +66,9 @@ function write_config( emu, filename, force=false )
 	if ( emu.rawin( "source" ) )
 		new_cfg.write_line( "info_source  " + emu["source"] + "\n" );
 
+	if ( emu.rawin( "import_extras" ) )
+		new_cfg.write_line( "import_extras    " + emu["import_extras"] + "\n" );
+
 	if ( emu.rawin( "min_run" ) )
 		new_cfg.write_line( "minimum_run_time " + emu["min_run"] + "\n" );
 

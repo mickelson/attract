@@ -213,8 +213,10 @@ bool directory_exists( const std::string &file )
 		return file_exists( file + '/' );
 }
 
-bool is_relative_path( const std::string &name )
+bool is_relative_path( const std::string &n )
 {
+	std::string name = clean_path( n );
+
 #ifdef SFML_SYSTEM_WINDOWS
 	if (( name.size() > 2 )
 			&& ( isalpha( name[0] ) )

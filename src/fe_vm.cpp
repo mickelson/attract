@@ -911,6 +911,7 @@ bool FeVM::on_new_layout()
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
 	fe.Overload<void (*)(int, bool)>(_SC("set_display"), &FeVM::cb_set_display);
 	fe.Overload<void (*)(int)>(_SC("set_display"), &FeVM::cb_set_display);
+	fe.Overload<const char *(*)(const char *)>(_SC("get_text"), &FeVM::cb_get_text);
 
 	//
 	// Define variables that get exposed to Squirrel
@@ -1565,6 +1566,7 @@ public:
 			fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
 			fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 			fe.Func<bool (*)(const char *, int)>(_SC("path_test"), &FeVM::cb_path_test);
+			fe.Overload<const char *(*)(const char *)>(_SC("get_text"), &FeVM::cb_get_text);
 		}
 
 		Sqrat::RootTable().Bind( _SC("fe"),  fe );
@@ -2507,6 +2509,21 @@ void FeVM::cb_set_display( int idx, bool stack_previous )
 void FeVM::cb_set_display( int idx )
 {
 	cb_set_display( idx, false );
+}
+
+const char *FeVM::cb_get_text( const char *t )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+	FeSettings *fes = fev->m_feSettings;
+
+	static std::string retval;
+	retval.clear();
+
+	if ( t )
+		fes->get_resource( t, retval );
+
+	return retval.c_str();
 }
 
 void FeVM::init_with_default_layout()

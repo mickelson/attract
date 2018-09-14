@@ -386,6 +386,34 @@ if ( ver >= 162 ) // mame and mess merged as of v 162
 	}
 }
 
+// Check for extras files (catver.ini and nplayers.ini)
+//
+ext_files <-
+[
+	"catver.ini",
+	"nplayers.ini"
+];
+
+ext_paths <- [ path ];
+
+if ( rp.homepath.len() > 0 )
+	ext_paths.push( rp.homepath );
+
+if ( my_OS == "Linux" )
+	ext_paths.push( fe.path_expand( "$HOME/.mame/" ) );
+
+foreach ( ef in ext_files )
+{
+	foreach ( ep in ext_paths )
+	{
+		if ( fe.path_test( ep + ef, PathTest.IsFile ) )
+		{
+			mame_emu["import_extras"] += ep + ef + ";";
+			break;
+		}
+	}
+}
+
 local emu_dir = FeConfigDirectory + "emulators/";
 
 // Write emulator config for arcade
