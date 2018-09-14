@@ -284,7 +284,8 @@ void FeOverlay::splash_message( const std::string &msg,
 
 int FeOverlay::confirm_dialog( const std::string &msg,
 	const std::string &rep,
-	bool default_yes )
+	bool default_yes,
+	FeInputMap::Command default_exit )
 {
 	std::string msg_str;
 	m_feSettings.get_resource( msg, rep, msg_str );
@@ -293,7 +294,7 @@ int FeOverlay::confirm_dialog( const std::string &msg,
 	m_feSettings.get_resource( "Yes", list[0] );
 	m_feSettings.get_resource( "No", list[1] );
 
-	return common_basic_dialog( msg_str, list, (default_yes ? 0 : 1), 1, FeInputMap::Exit );
+	return common_basic_dialog( msg_str, list, (default_yes ? 0 : 1), 1, default_exit );
 }
 
 int FeOverlay::common_list_dialog(

@@ -790,7 +790,9 @@ int main(int argc, char *argv[])
 							// returns 0 if user confirmed toggle
 							if ( feOverlay.confirm_dialog(
 									msg,
-									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ) ) == 0 )
+									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ),
+									false,
+									FeInputMap::ToggleFavourite ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
 								{

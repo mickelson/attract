@@ -606,6 +606,7 @@ upon the value of `ttype`:
    * When `ttype` is `Transition.ShowOverlay`, var will be:
       - `Overlay.Custom` if a script generated overlay is being shown
       - `Overlay.Exit` if the exit menu is being shown
+      - `Overlay.Favourite` if the add/remove favourite menu is being shown
       - `Overlay.Displays` if the displays menu is being shown
       - `Overlay.Filters` if the filters menu is being shown
       - `Overlay.Tags` if the tags menu is being shown
