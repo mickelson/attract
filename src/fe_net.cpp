@@ -139,6 +139,7 @@ bool FeNetTask::do_task( long *code )
 					<< " (" << m_req << ")" << std::endl;
 		}
 
+		curl_easy_cleanup( curl_handle );
 		return false;
 	}
 
