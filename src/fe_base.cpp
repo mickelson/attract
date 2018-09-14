@@ -155,6 +155,9 @@ void fe_print_version()
 #ifdef USE_LIBARCHIVE
 		<< " +7z"
 #endif
+#ifdef USE_LIBCURL
+		<< " +Curl"
+#endif
 		<< ") " << std::endl;
 #ifdef NO_MOVIE
 	FeLog() << "No Video, using SFML for Audio." << std::endl;

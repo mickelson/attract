@@ -33,9 +33,9 @@
 #include <map>
 #include <cstring>
 
-#ifndef NO_NET
+#ifdef USE_LIBCURL
 #include "fe_net.hpp"
-#endif // NO_NET
+#endif // USE_LIBCURL
 
 extern const char *FE_ROMLIST_SUBDIR;
 
@@ -79,7 +79,7 @@ bool has_same_name_as_parent( FeRomInfo &rom, ParentMapType &parent_map )
 	return false;
 }
 
-#ifndef NO_NET
+#ifdef USE_LIBCURL
 bool process_q_simple( FeNetQueue &q,
 	FeImporterContext &c,
 	int taskc )
@@ -147,7 +147,7 @@ bool FeSettings::simple_scraper( FeImporterContext &c,
 		const char *art_label,
 		bool is_vid )
 {
-#ifndef NO_NET
+#ifdef USE_LIBCURL
 	//
 	// Build a map for looking up parents
 	//
@@ -199,6 +199,7 @@ bool FeSettings::simple_scraper( FeImporterContext &c,
 
 	return process_q_simple( q, c, taskc );
 #else
+	FeLog() << " - Unable to scrape network, frontend was built without libcurl enabled" << std::endl;
 	return true;
 #endif
 }
@@ -269,16 +270,16 @@ bool FeSettings::general_mame_scraper( FeImporterContext &c )
 	return true;
 }
 
-#ifndef NO_NET
+#ifdef USE_LIBCURL
 namespace
 {
 //
 // Functions and constants used by thegamesdb_scraper()
 //
 const char *HOSTNAME = "http://legacy.thegamesdb.net";
-const char *PLATFORM_LIST_REQ = "api/GetPlatformsList.php";
-const char *PLAT_REQ = "api/GetPlatform.php?id=$1";
-const char *GAME_REQ = "api/GetGame.php?name=$1";
+const char *PLATFORM_LIST_REQ = "/api/GetPlatformsList.php";
+const char *PLAT_REQ = "/api/GetPlatform.php?id=$1";
+const char *GAME_REQ = "/api/GetGame.php?name=$1";
 
 const char *flyer_sub = "flyer/";
 const char *wheel_sub = "wheel/";
@@ -294,26 +295,22 @@ bool get_system_list( FeImporterContext &c,
 	std::vector<std::string> &system_list,
 	std::vector<int> &system_ids )
 {
-	FeNetQueue q;
-	q.add_buffer_task( HOSTNAME, PLATFORM_LIST_REQ, 0 );
-	sf::Http::Response::Status status;
-	std::string err_req;
+	FeNetTask my_task( HOSTNAME, PLATFORM_LIST_REQ, 0 );
 
-	bool in_req=false;
-	q.do_next_task( status, err_req, in_req );
-
-	if ( status != sf::Http::Response::Ok )
-	{
-		fes.get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
-			as_str( status ), c.user_message );
-
-		FeLog() << " ! " << c.user_message << " (" << err_req << ")" << std::endl;
-		return false;
-	}
+	bool res = my_task.do_task();
 
 	int ignored;
 	std::string body;
-	q.pop_completed_task( ignored, body );
+	my_task.grab_result( ignored, body );
+
+	if ( !res )
+	{
+		fes.get_resource( "Error getting platform list from thegamesdb.net.  Code: $1",
+			body, c.user_message );
+
+		FeLog() << " ! " << c.user_message << std::endl;
+		return false;
+	}
 
 	FeGameDBPlatformListParser gdbplp;
 	gdbplp.parse( body );
@@ -460,7 +457,7 @@ bool create_fanart_ft(
 
 bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 {
-#ifndef NO_NET
+#ifdef USE_LIBCURL
 	std::vector<std::string> system_list;
 	std::vector<int> system_ids;
 
@@ -486,25 +483,19 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 		for ( std::vector<int>::iterator iti=system_ids.begin();
 				iti != system_ids.end(); ++iti )
 		{
-			sf::Http::Response::Status status;
-			std::string err_req;
-
 			std::string plat_string = PLAT_REQ;
 			perform_substitution( plat_string, "$1", as_str( *iti ) );
 
-			q.add_buffer_task( HOSTNAME, plat_string, 0 );
-			bool in_req=false;
-			q.do_next_task( status, err_req, in_req );
-			if ( status != sf::Http::Response::Ok )
+			FeNetTask my_task( HOSTNAME, plat_string, 0 );
+			if ( !my_task.do_task() )
 			{
-				FeLog() << " * Unable to get platform information. Status code: "
-					<< status << " (" << err_req << ")" << std::endl;
+				FeLog() << " * Unable to get platform information." << std::endl;
 				continue;
 			}
 
 			int ignored;
 			std::string body;
-			q.pop_completed_task( ignored, body );
+			my_task.grab_result( ignored, body );
 
 			FeGameDBArt my_art;
 			FeGameDBPlatformParser gdbpp( my_art );
@@ -685,8 +676,10 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			if ( c.uiupdate( c.uiupdatedata, p, aux ) == false )
 				return false;
 		}
-
 	}
+#else
+	c.user_message = "Unable to scrape, frontend was built without libcurl enabled!";
+	FeLog() << c.user_message << std::endl;
 #endif
 	return true;
 }

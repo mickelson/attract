@@ -29,9 +29,6 @@
 # Uncomment next line to disable movie support (i.e. no FFmpeg).
 #NO_MOVIE=1
 #
-# Uncomment next line to disable network support (i.e. no SFML Network).
-#NO_NET=1
-#
 # By default, if FontConfig gets enabled we link against the system's expat
 # library (because FontConfig uses expat too).  If FontConfig is not used
 # then Attract-Mode is statically linked to its own version of expat.
@@ -209,7 +206,7 @@ ifeq ($(WINDOWS_STATIC),1)
  ifeq ($(shell $(PKG_CONFIG) --exists sfml && echo "1" || echo "0"), 1)
   SFML_PC="sfml"
  else
-  SFML_PC="sfml-system sfml-window sfml-graphics sfml-network"
+  SFML_PC="sfml-system sfml-window sfml-graphics"
  endif
  LIBS += $(shell $(PKG_CONFIG) --static --libs $(SFML_PC))
  CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags $(SFML_PC))
@@ -217,22 +214,9 @@ ifeq ($(WINDOWS_STATIC),1)
 
 else
 
- ifeq ($(NO_NET),1)
-  LIBS += -lsfml-graphics \
+ LIBS += -lsfml-graphics \
 	-lsfml-window \
 	-lsfml-system
-  FE_FLAGS += -DNO_NET
- else
-  LIBS += -lsfml-graphics \
-	-lsfml-window \
-	-lsfml-network \
-	-lsfml-system
- endif
-endif
-
-ifneq ($(NO_NET),1)
- _DEP += fe_net.hpp
- _OBJ += fe_net.o
 endif
 
 ifeq ($(FE_MACOSX_COMPILE),1)
@@ -299,6 +283,10 @@ ifeq ($(shell $(PKG_CONFIG) --exists libarchive && echo "1" || echo "0"), 1)
  USE_LIBARCHIVE=1
 endif
 
+ifeq ($(shell $(PKG_CONFIG) --exists libcurl && echo "1" || echo "0"), 1)
+ USE_LIBCURL=1
+endif
+
 #
 # Now process the various settings...
 #
@@ -359,6 +347,13 @@ ifeq ($(USE_LIBARCHIVE),1)
  LIBS += -lz
 else
  CFLAGS += -I$(EXTLIBS_DIR)/miniz
+endif
+
+ifeq ($(USE_LIBCURL),1)
+ FE_FLAGS += -DUSE_LIBCURL
+ TEMP_LIBS += libcurl
+ _DEP += fe_net.hpp
+ _OBJ += fe_net.o
 endif
 
 ifeq ($(NO_MOVIE),1)
