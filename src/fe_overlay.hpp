@@ -75,7 +75,8 @@ public:
 
 	int confirm_dialog( const std::string &msg,
 		const std::string &rep="",
-		bool default_yes = false );
+		bool default_yes = false,
+		FeInputMap::Command default_exit = FeInputMap::Exit);
 
 	bool config_dialog();
 	bool edit_game_dialog();
