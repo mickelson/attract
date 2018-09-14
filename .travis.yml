@@ -20,6 +20,7 @@ addons:
     - libfontconfig1-dev
     - libxinerama-dev
     - freeglut3-dev
+    - libcurl4-openssl-dev
     - pkg-config
     - pkgconf
     - fakeroot
@@ -40,7 +41,7 @@ matrix:
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update --all; fi
 install:
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive curl; fi
 script:
 - make -j8
 before_deploy:

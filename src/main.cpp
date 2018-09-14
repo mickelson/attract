@@ -53,6 +53,10 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 #endif
 
+#ifdef USE_LIBCURL
+#include <curl/curl.h>
+#endif
+
 void process_args( int argc, char *argv[],
 			std::string &config_path,
 			std::string &cmdln_font,
@@ -66,6 +70,10 @@ int main(int argc, char *argv[])
 	bool launch_game = false;
 	bool process_console = false;
 	FeLogLevel log_level = FeLog_Info;
+
+#ifdef USE_LIBCURL
+	curl_global_init( CURL_GLOBAL_ALL );
+#endif
 
 	process_args( argc, argv, config_path, cmdln_font, process_console, log_file, log_level );
 
@@ -1051,6 +1059,10 @@ int main(int argc, char *argv[])
 
 	soundsys.stop();
 	feSettings.save_state();
+
+#ifdef USE_LIBCURL
+	curl_global_cleanup();
+#endif
 
 	FeDebug() << "Attract-Mode ended normally" << std::endl;
 	return 0;
