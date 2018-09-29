@@ -409,7 +409,12 @@ else
 endif
 
 CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide
-SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a $(OBJ_DIR)/libnowide.a
+SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
+
+# Our nowide "lib" is only needed on Windows systems
+ifeq ($(FE_WINDOWS_COMPILE),1)
+ SQUIRREL += $(OBJ_DIR)/libnowide.a
+endif
 
 ifeq ($(NO_SWF),1)
  FE_FLAGS += -DNO_SWF
