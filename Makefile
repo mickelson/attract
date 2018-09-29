@@ -408,8 +408,8 @@ else
  EXPAT =
 endif
 
-CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include
-SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
+CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide
+SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a $(OBJ_DIR)/libnowide.a
 
 ifeq ($(NO_SWF),1)
  FE_FLAGS += -DNO_SWF
@@ -565,6 +565,25 @@ $(AUDIO_OBJ_DIR):
 	$(MD) $@
 
 #
+# Nowide
+#
+NOWIDE_OBJ_DIR = $(OBJ_DIR)/nowidelib
+
+NOWIDEOBJS= \
+	$(NOWIDE_OBJ_DIR)/iostream.o
+
+$(OBJ_DIR)/libnowide.a: $(NOWIDEOBJS) | $(NOWIDE_OBJ_DIR)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(NOWIDEOBJS)
+
+$(NOWIDE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/nowide/%.cpp | $(NOWIDE_OBJ_DIR)
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS)
+
+$(NOWIDE_OBJ_DIR):
+	$(MD) $@
+
+#
 # gameswf
 #
 GAMESWF_OBJ_DIR = $(OBJ_DIR)/gameswflib
@@ -707,4 +726,4 @@ smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
 
 clean:
-	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(NOWIDE_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core

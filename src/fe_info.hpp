@@ -26,6 +26,7 @@
 #include "fe_base.hpp"
 #include <map>
 #include <vector>
+#include "nowide/fstream.hpp"
 
 extern const char *FE_STAT_FILE_EXTENSION;
 extern const char FE_TAGS_SEP;
@@ -129,7 +130,7 @@ public:
 
 	void init();
 	bool apply_rule( const FeRomInfo &rom ) const;
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 
 	FeRomInfo::Index get_target() const { return m_filter_target; };
 	FilterComp get_comp() const { return m_filter_comp; };
@@ -168,7 +169,7 @@ public:
 		const std::string &value,
 		const std::string &fn );
 
-	void save( std::ofstream &, const char *filter_tag ) const;
+	void save( nowide::ofstream &, const char *filter_tag ) const;
 	const std::string &get_name() const { return m_name; };
 	void set_name( const std::string &n ) { m_name = n; };
 
@@ -217,7 +218,7 @@ public:
 		const std::string &value,
 		const std::string &filename );
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 
 	void merge_params( const FeScriptConfigurable &o );
 
@@ -272,7 +273,7 @@ public:
 	int get_rom_index( int filter_index ) const;
 	void set_rom_index( int filter_index, int rom_index );
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 
 	const std::string &get_name() const { return m_info[Name]; };
 	const std::string &get_layout() const { return m_info[Layout]; };
@@ -423,7 +424,7 @@ public:
 		const std::string &value,
 		const std::string &filename );
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 
 private:
 	static const char *indexStrings[];
@@ -446,7 +447,7 @@ public:
 
 	const std::string &get_name() const { return m_name; };
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 
 	bool operator!=( const FeLayoutInfo & );
 

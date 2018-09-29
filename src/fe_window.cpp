@@ -35,7 +35,7 @@
 #endif // SFM_SYSTEM_MACOS
 
 #include <iostream>
-#include <fstream>
+#include "nowide/fstream.hpp"
 
 #include <SFML/System/Sleep.hpp>
 
@@ -80,7 +80,7 @@ public:
 
 	void save( const std::string &filename )
 	{
-		std::ofstream outfile( filename.c_str() );
+		nowide::ofstream outfile( filename.c_str() );
 		if ( outfile.is_open() )
 		{
 			outfile << "position " << m_pos.x << "," << m_pos.y << std::endl;
@@ -301,7 +301,7 @@ bool FeWindow::run()
 	if ( !emu )
 	{
 		FeLog() << "Error getting emulator info for launch" << std::endl;
-		return false;
+		return true;
 	}
 
 	// non-blocking mode wait time (in seconds)

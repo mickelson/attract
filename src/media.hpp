@@ -53,10 +53,7 @@ public:
 	FeMedia( Type t );
 	~FeMedia();
 
-	bool openFromFile( const std::string &name,
-			sf::Texture *out_texture=NULL );
-
-	bool openFromArchive( const std::string &archive,
+	bool open( const std::string &archive,
 			const std::string &name,
 			sf::Texture *out_texture=NULL );
 
@@ -111,7 +108,6 @@ protected:
 	bool read_packet();
 	bool end_of_file();
 
-	bool internal_open( sf::Texture *outt );
 	void try_hw_accel( AVCodecContext *& ctx, AVCodec *&dec );
 
 private:

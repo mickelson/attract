@@ -44,7 +44,7 @@
 #include <sqstdstring.h>
 #include <sqstdsystem.h>
 
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <iostream>
 #include <stdio.h>
 #include <ctime>
@@ -324,7 +324,7 @@ FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSoun
 	std::string filename = m_feSettings->get_config_dir();
 	filename += FE_SCRIPT_NV_FILE;
 
-	std::ifstream infile( filename.c_str() );
+	nowide::ifstream infile( filename.c_str() );
 	if ( !infile.is_open() )
 		return;
 
@@ -351,7 +351,7 @@ FeVM::~FeVM()
 	std::string filename = m_feSettings->get_config_dir();
 	filename += FE_SCRIPT_NV_FILE;
 
-	std::ofstream outfile( filename.c_str() );
+	nowide::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
 		outfile << read_non_volatile_to_string( _SC( "nv" ) ) << std::endl;

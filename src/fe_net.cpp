@@ -22,7 +22,7 @@
 
 #include "fe_net.hpp"
 #include "fe_base.hpp"
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <iostream>
 #include <cstring>
 
@@ -153,7 +153,7 @@ bool FeNetTask::do_task( long *code )
 		else
 			m_filename += ".png";
 
-		std::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
+		nowide::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
 		if ( !outfile.is_open() )
 		{
 			FeLog() << " ! Unable to open file for writing: "

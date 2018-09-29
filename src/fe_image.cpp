@@ -314,7 +314,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return false;
 
 		m_movie = new FeMedia( FeMedia::AudioVideo );
-		res = m_movie->openFromArchive( path, filename, &m_texture );
+		res = m_movie->open( path, filename, &m_texture );
 	}
 	else
 	{
@@ -328,7 +328,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return false;
 
 		m_movie = new FeMedia( FeMedia::AudioVideo );
-		res = m_movie->openFromFile( loaded_name, &m_texture );
+		res = m_movie->open( "", loaded_name, &m_texture );
 	}
 
 	if ( !res )
@@ -1623,7 +1623,7 @@ int FeImage::get_blend_mode() const
 {
 	return (FeBlend::Mode)m_blend_mode;
 }
- 
+
 void FeImage::set_blend_mode( int b )
 {
 	m_blend_mode = (FeBlend::Mode)b;

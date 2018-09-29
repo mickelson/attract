@@ -23,6 +23,7 @@
 #include "media.hpp"
 #include "zip.hpp"
 #include "fe_base.hpp"
+#include "fe_file.hpp"
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
 
@@ -245,7 +246,7 @@ void FeMediaImp::close()
 	if (m_io_ctx)
 	{
 		if ( m_io_ctx->opaque )
-			delete (FeZipStream *)(m_io_ctx->opaque);
+			delete (sf::InputStream *)(m_io_ctx->opaque);
 
 		av_free( m_io_ctx->buffer );
 		av_free( m_io_ctx );
@@ -882,23 +883,9 @@ void FeMedia::setVolume(float volume)
 	sf::SoundStream::setVolume( volume );
 }
 
-bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
+int fe_media_read( void *opaque, uint8_t *buff, int buff_size )
 {
-	close();
-	init_av();
-
-	if ( avformat_open_input( &(m_imp->m_format_ctx), name.c_str(), NULL, NULL ) < 0 )
-	{
-		FeLog() << "Error opening input file: " << name << std::endl;
-		return false;
-	}
-
-	return internal_open( outt );
-}
-
-int fe_zip_read( void *opaque, uint8_t *buff, int buff_size )
-{
-	FeZipStream *z = (FeZipStream *)opaque;
+	sf::InputStream *z = (sf::InputStream *)opaque;
 
 	sf::Int64 bytes_read = z->read( buff, buff_size );
 
@@ -909,9 +896,9 @@ int fe_zip_read( void *opaque, uint8_t *buff, int buff_size )
 }
 
 // whence: SEEK_SET, SEEK_CUR, SEEK_END, and AVSEEK_SIZE
-int64_t fe_zip_seek( void *opaque, int64_t offset, int whence )
+int64_t fe_media_seek( void *opaque, int64_t offset, int whence )
 {
-	FeZipStream *z = (FeZipStream *)opaque;
+	sf::InputStream *z = (sf::InputStream *)opaque;
 
 	switch ( whence )
 	{
@@ -930,28 +917,38 @@ int64_t fe_zip_seek( void *opaque, int64_t offset, int whence )
 	}
 }
 
-bool FeMedia::openFromArchive( const std::string &archive,
+bool FeMedia::open( const std::string &archive,
 	const std::string &name, sf::Texture *outt )
 {
 	close();
 	init_av();
 
-	FeZipStream *z = new FeZipStream( archive );
-	if ( !z->open( name ) )
+	sf::InputStream *s = NULL;
+
+	if ( !archive.empty() )
 	{
-		// Error opening specified filename. Try to correct
-		// in case filname is in a subdir of the archive
-		std::string temp;
-		if ( get_archive_filename_with_base( temp, archive, name ) )
+		FeZipStream *z = new FeZipStream( archive );
+
+		if ( !z->open( name ) )
 		{
-			z->open( temp );
+			// Error opening specified filename. Try to correct
+			// in case filname is in a subdir of the archive
+			std::string temp;
+			if ( get_archive_filename_with_base( temp, archive, name ) )
+			{
+				z->open( temp );
+			}
+			else
+			{
+				delete s;
+				return false;
+			}
 		}
-		else
-		{
-			delete z;
-			return false;
-		}
+
+		s = (sf::InputStream *)z;
 	}
+	else
+		s = new FeFileInputStream( name );
 
 	m_imp->m_format_ctx = avformat_alloc_context();
 
@@ -964,8 +961,8 @@ bool FeMedia::openFromArchive( const std::string &archive,
 		AV_INPUT_BUFFER_PADDING_SIZE );
 
 	m_imp->m_io_ctx = avio_alloc_context( avio_ctx_buffer,
-		avio_ctx_buffer_size, 0, z, &fe_zip_read,
-		NULL, &fe_zip_seek );
+		avio_ctx_buffer_size, 0, s, &fe_media_read,
+		NULL, &fe_media_seek );
 
 	m_imp->m_format_ctx->pb = m_imp->m_io_ctx;
 
@@ -975,11 +972,6 @@ bool FeMedia::openFromArchive( const std::string &archive,
 		return false;
 	}
 
-	return internal_open( outt );
-}
-
-bool FeMedia::internal_open( sf::Texture *outt )
-{
 	if ( avformat_find_stream_info( m_imp->m_format_ctx, NULL ) < 0 )
 	{
 		FeLog() << "Error finding stream information in input file: "

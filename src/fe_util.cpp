@@ -25,11 +25,12 @@
 #include "fe_input.hpp"
 #include <iostream>
 #include <iomanip>
-#include <fstream>
+#include "nowide/fstream.hpp"
+#include "nowide/cstdio.hpp"
+#include "nowide/cstdlib.hpp"
+#include "nowide/convert.hpp"
 #include <sstream>
-#include <stdlib.h>
 #include <algorithm>
-#include <cstdlib>
 #include <cctype>
 #include <cstring>
 
@@ -86,13 +87,46 @@ namespace {
 			s += c;
 	}
 
+	void wstr_from_c( std::basic_string<wchar_t> &s, const wchar_t *c )
+	{
+		if ( c )
+			s += c;
+	}
+
+	std::string narrow( const std::basic_string<wchar_t> &s )
+	{
+		try
+		{
+			return nowide::narrow( s );
+		}
+		catch ( ... )
+		{
+			FeLog() << "Error converting string to UTF-8."<< std::endl;
+			return "";
+		}
+	}
+
+	std::basic_string<wchar_t> widen( const std::string &s )
+	{
+		try
+		{
+			return nowide::widen( s );
+		}
+		catch ( ... )
+		{
+			FeLog() << "Error converting string from UTF-8: " << s << std::endl;
+			return L"";
+		}
+	}
+
+
 #if defined(SFML_SYSTEM_WINDOWS)
 
 	std::string get_home_dir()
 	{
 		std::string retval;
-		str_from_c( retval, getenv( "HOMEDRIVE" ) );
-		str_from_c( retval, getenv( "HOMEPATH" ) );
+		str_from_c( retval, nowide::getenv( "HOMEDRIVE" ) );
+		str_from_c( retval, nowide::getenv( "HOMEPATH" ) );
 
 		return retval;
 	}
@@ -102,7 +136,7 @@ namespace {
 	std::string get_home_dir()
 	{
 		std::string retval;
-		str_from_c( retval, getenv( "HOME" ));
+		str_from_c( retval, nowide::getenv( "HOME" ));
 		if ( retval.empty() )
 		{
 			struct passwd *pw = getpwuid(getuid());
@@ -200,7 +234,11 @@ int icompare(
 
 bool file_exists( const std::string &file )
 {
-	return (( access( file.c_str(), 0 ) == -1 ) ? false : true);
+#ifdef SFML_SYSTEM_WINDOWS
+	return ( _waccess( widen( file ).c_str(), 0 ) != -1 );
+#else
+	return ( access( file.c_str(), 0 ) != -1 );
+#endif
 }
 
 bool directory_exists( const std::string &file )
@@ -261,7 +299,7 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 		if (( retval.size() >= l ) && ( retval.compare( 0, l, subs[i].comp ) == 0 ))
 		{
 			std::string temp;
-			str_from_c( temp, getenv( subs[i].env ) );
+			str_from_c( temp, nowide::getenv( subs[i].env ) );
 			retval.replace( 0, l, temp );
 			break;
 		}
@@ -375,24 +413,24 @@ bool get_subdirectories(
 #ifdef SFML_SYSTEM_WINDOWS
 	std::string temp = path + "*";
 
-	struct _finddata_t t;
-	intptr_t srch = _findfirst( temp.c_str(), &t );
+	struct _wfinddata_t t;
+	intptr_t srch = _wfindfirst( widen( temp ).c_str(), &t );
 
 	if  ( srch < 0 )
 		return false;
 
 	do
 	{
-		std::string what;
-		str_from_c( what, t.name );
+		std::basic_string<wchar_t> what;
+		wstr_from_c( what, t.name );
 
-		if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) )
+		if ( ( what.compare( L"." ) == 0 ) || ( what.compare( L".." ) == 0 ) )
 			continue;
 
 		if ( t.attrib & _A_SUBDIR )
-			list.push_back( what );
+			list.push_back( narrow( what ) );
 
-	} while ( _findnext( srch, &t ) == 0 );
+	} while ( _wfindnext( srch, &t ) == 0 );
 	_findclose( srch );
 
 #else
@@ -439,16 +477,15 @@ bool get_basename_from_extension(
 
 	temp += "*" + extension;
 
-	struct _finddata_t t;
-	intptr_t srch = _findfirst( temp.c_str(), &t );
+	struct _wfinddata_t t;
+	intptr_t srch = _wfindfirst( widen( temp ).c_str(), &t );
 
 	if  ( srch < 0 )
 		return false;
 
 	do
 	{
-		std::string what;
-		str_from_c( what, t.name );
+		std::string what = narrow( t.name );
 
 		// I don't know why but the search filespec we are using
 		// "path/*.ext"seems to also match "path/*.ext*"... so we
@@ -487,7 +524,7 @@ bool get_basename_from_extension(
 
 		}
 #ifdef SFML_SYSTEM_WINDOWS
-	} while ( _findnext( srch, &t ) == 0 );
+	} while ( _wfindnext( srch, &t ) == 0 );
 	_findclose( srch );
 #else
 	}
@@ -507,15 +544,16 @@ bool get_filename_from_base(
 #ifdef SFML_SYSTEM_WINDOWS
 	std::string temp = path + base_name + "*";
 
-	struct _finddata_t t;
-	intptr_t srch = _findfirst( temp.c_str(), &t );
+	struct _wfinddata_t t;
+	intptr_t srch = _wfindfirst( widen( temp ).c_str(), &t );
 
 	if  ( srch < 0 )
 		return false;
 
 	do
 	{
-		const char *what = t.name;
+		std::string whatstr = narrow( t.name );
+		const char *what = whatstr.c_str();
 		size_t what_len = strlen( what );
 
 		if (( strcmp( what, "." ) != 0 )
@@ -567,7 +605,7 @@ bool get_filename_from_base(
 				in_list.push_back( path + what );
 #ifdef SFML_SYSTEM_WINDOWS
 		}
-	} while ( _findnext( srch, &t ) == 0 );
+	} while ( _wfindnext( srch, &t ) == 0 );
 	_findclose( srch );
 #else
 		}
@@ -702,7 +740,7 @@ std::string get_available_filename(
 //
 void delete_file( const std::string &file )
 {
-	remove( file.c_str() );
+	nowide::remove( file.c_str() );
 }
 
 bool confirm_directory( const std::string &base, const std::string &sub )
@@ -712,7 +750,7 @@ bool confirm_directory( const std::string &base, const std::string &sub )
 	if ( !directory_exists( base ) )
 	{
 #ifdef SFML_SYSTEM_WINDOWS
-		mkdir( base.c_str() );
+		_wmkdir( widen( base ).c_str() );
 #else
 		mkdir( base.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
@@ -722,7 +760,7 @@ bool confirm_directory( const std::string &base, const std::string &sub )
 	if ( (!sub.empty()) && (!directory_exists( base + sub )) )
 	{
 #ifdef SFML_SYSTEM_WINDOWS
-		mkdir( (base + sub).c_str() );
+		_wmkdir( widen(base + sub).c_str() );
 #else
 		mkdir( (base + sub).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
@@ -1026,7 +1064,7 @@ bool run_program( const std::string &prog,
 	satts.bInheritHandle = TRUE;
 	satts.lpSecurityDescriptor = NULL;
 
-	STARTUPINFO si;
+	STARTUPINFOW si;
 	PROCESS_INFORMATION pi;
 	MSG msg;
 
@@ -1041,19 +1079,19 @@ bool run_program( const std::string &prog,
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
 
-	std::string comstr( prog );
-	comstr += " ";
-	comstr += args;
+	std::basic_string<wchar_t> comstr( widen( prog ) );
+	comstr += L" ";
+	comstr += widen( args );
 
-	LPSTR cmdline = new char[ comstr.length() + 1 ];
-	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
+	LPWSTR cmdline = new wchar_t[ comstr.length() + 1 ];
+	wcsncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
-	DWORD current_wd_len = GetCurrentDirectory( 0, NULL );
-	LPSTR current_wd = new char[ current_wd_len ];
-	GetCurrentDirectory( current_wd_len, current_wd );
-	SetCurrentDirectory( work_dir.c_str() );
+	DWORD current_wd_len = GetCurrentDirectoryW( 0, NULL );
+	LPWSTR current_wd = new wchar_t[ current_wd_len ];
+	GetCurrentDirectoryW( current_wd_len, current_wd );
+	SetCurrentDirectoryW( widen( work_dir ).c_str() );
 
-	bool ret = CreateProcess( NULL,
+	bool ret = CreateProcessW( NULL,
 		cmdline,
 		NULL,
 		NULL,
@@ -1064,7 +1102,7 @@ bool run_program( const std::string &prog,
 		&si,
 		&pi );
 
-	SetCurrentDirectory( current_wd );
+	SetCurrentDirectoryW( current_wd );
 	delete [] current_wd;
 
 	// Parent process - close the child write handle after child created
@@ -1078,7 +1116,7 @@ bool run_program( const std::string &prog,
 
 	if ( ret == false )
 	{
-		FeLog() << "Error executing command: '" << comstr << "'" << std::endl;
+		FeLog() << "Error executing command: '" << narrow( comstr ) << "'" << std::endl;
 		return false;
 	}
 
@@ -1687,7 +1725,7 @@ std::string get_focus_process()
 	// Note: this is Linux specific
 	//
 	std::string fn = "/proc/" + as_str( pid ) + "/cmdline";
-	std::ifstream myfile( fn.c_str() );
+	nowide::ifstream myfile( fn.c_str() );
 	if ( myfile.good() )
 	{
 		getline( myfile, retval );

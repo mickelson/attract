@@ -34,15 +34,15 @@ extern "C"
 #include "gameswf/gameswf.h"
 #endif
 
-#include <iostream>
 #include <iomanip>
-#include <fstream>
+#include "nowide/fstream.hpp"
+#include "nowide/iostream.hpp"
 
 #define FE_NAME_D			"Attract-Mode"
 
 const char *FE_NAME			= FE_NAME_D;
 const char *FE_COPYRIGHT		= FE_NAME_D " " FE_VERSION_D \
-	" Copyright (c) 2013-2017 Andrew Mickelson";
+	" Copyright (c) 2013-2018 Andrew Mickelson";
 const char *FE_VERSION 			= FE_VERSION_D;
 
 const char *FE_WHITESPACE=" \t\r";
@@ -56,11 +56,11 @@ const char *FE_EMULATOR_FILE_EXTENSION	= ".cfg";
 const char *FE_EMULATOR_DEFAULT		= "default-emulator.cfg";
 
 namespace {
-	std::ofstream g_logfile;
+	nowide::ofstream g_logfile;
 #ifdef SFML_SYSTEM_WINDOWS
-	std::ofstream g_nullstream( "NUL" );
+	nowide::ofstream g_nullstream( "NUL" );
 #else
-	std::ofstream g_nullstream( "/dev/null" );
+	nowide::ofstream g_nullstream( "/dev/null" );
 #endif
 	enum FeLogLevel g_log_level=FeLog_Info;
 
@@ -98,7 +98,7 @@ std::ostream &FeLog()
 	if ( g_logfile.is_open() )
 		return g_logfile;
 	else
-		return std::cout;
+		return nowide::cout;
 }
 
 void fe_set_log_file( const std::string &fn )
@@ -203,7 +203,7 @@ void FeBaseConfigurable::invalid_setting(
 bool FeBaseConfigurable::load_from_file( const std::string &filename,
 	const char *sep )
 {
-   std::ifstream myfile( filename.c_str() );
+   nowide::ifstream myfile( filename.c_str() );
 
    if ( !myfile.is_open() )
 		return false;

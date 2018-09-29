@@ -28,7 +28,8 @@
 #include <cstdio>
 #include <iostream>
 #include <iomanip>
-#include <fstream>
+#include "nowide/fstream.hpp"
+
 #include <expat.h>
 
 #include <SFML/System/Clock.hpp>
@@ -140,7 +141,7 @@ std::string get_crc( const std::string &full_path,
 		return "";
 	}
 
-	std::ifstream myfile( full_path.c_str(),
+	nowide::ifstream myfile( full_path.c_str(),
 		std::ios_base::in | std::ios_base::binary );
 
 	if ( !myfile.is_open() )
@@ -686,7 +687,7 @@ bool FeListXMLParser::parse_file( const std::string &filename )
 	m_element_open=m_keep_rom=false;
 	m_continue_parse=true;
 
-	std::ifstream myfile( filename.c_str() );
+	nowide::ifstream myfile( filename.c_str() );
 	if ( !myfile.is_open() )
 	{
 		FeLog() << "Error opening file: " << filename << std::endl;

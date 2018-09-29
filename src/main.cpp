@@ -33,6 +33,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include "nowide/args.hpp"
 
 #ifndef NO_MOVIE
 #include <Audio/AudioDevice.hpp>
@@ -75,6 +76,7 @@ int main(int argc, char *argv[])
 	curl_global_init( CURL_GLOBAL_ALL );
 #endif
 
+	nowide::args a( argc, argv );
 	process_args( argc, argv, config_path, cmdln_font, process_console, log_file, log_level );
 
 	FeSettings feSettings( config_path, cmdln_font );

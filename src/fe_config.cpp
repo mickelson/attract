@@ -32,7 +32,7 @@
 #endif
 
 #include <iostream>
-#include <fstream>
+#include "nowide/fstream.hpp"
 
 FeMenuOpt::FeMenuOpt( int t, const std::string &set, const std::string &val )
 	: m_list_index( -1 ),
@@ -557,7 +557,7 @@ public:
 
 	void save( const std::string &filename )
 	{
-		std::ofstream outfile( filename.c_str() );
+		nowide::ofstream outfile( filename.c_str() );
 		if ( outfile.is_open() )
 		{
 			outfile << "selected ";

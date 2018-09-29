@@ -28,7 +28,6 @@
 #include "fe_text.hpp"
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <fstream>
 #include <cmath>
 
 class FeConfigContextImp : public FeConfigContext

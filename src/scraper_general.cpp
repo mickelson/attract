@@ -28,7 +28,7 @@
 #include <iomanip>
 #include <sstream>
 #include <iostream>
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <list>
 #include <map>
 
@@ -68,7 +68,7 @@ void write_romlist( const std::string &filename,
 				<< filename << std::endl;
 
 	int i=0;
-	std::ofstream outfile( filename.c_str() );
+	nowide::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
 		// one line header showing what the columns represent
@@ -118,7 +118,7 @@ void ini_import( const std::string &filename,
 			my_map[ alt_key ] = "";
 	}
 
-	std::ifstream myfile( filename.c_str() );
+	nowide::ifstream myfile( filename.c_str() );
 
 	if ( myfile.is_open() )
 	{
@@ -238,7 +238,7 @@ bool import_mamewah( const std::string &input_filename,
 		FeRomInfo::Category
 	};
 
-	std::ifstream myfile( input_filename.c_str() );
+	nowide::ifstream myfile( input_filename.c_str() );
 	if ( !myfile.is_open() )
 	{
 		FeLog() << " ! Error opening file: " << input_filename << std::endl;
@@ -419,7 +419,7 @@ bool FeSettings::apply_xml_import( FeImporterContext &c )
 				(*itr).set_info( FeRomInfo::Romname,
 						n.substr( start_pos + 1 ) );
 
-			std::ifstream myfile( fname.c_str() );
+			nowide::ifstream myfile( fname.c_str() );
 
 			int fields_left( 3 );
 
