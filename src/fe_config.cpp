@@ -313,7 +313,14 @@ namespace
 		FeConfigContext *od = (FeConfigContext *)d;
 
 		od->splash_message( "Generating Rom List: $1%", as_str( i ), aux );
-		return !od->check_for_cancel();
+
+		if ( od->check_for_cancel() )
+		{
+			od->splash_message( "Please Wait", "", "" );
+			return false;
+		}
+
+		return true;
 	}
 
 	bool scrape_ui_update( void *d, int i, const std::string &aux )
@@ -321,7 +328,14 @@ namespace
 		FeConfigContext *od = (FeConfigContext *)d;
 
 		od->splash_message( "Scraping Artwork: $1%", as_str( i ), aux );
-		return !od->check_for_cancel();
+
+		if ( od->check_for_cancel() )
+		{
+			od->splash_message( "Please Wait", "", "" );
+			return false;
+		}
+
+		return true;
 	}
 };
 

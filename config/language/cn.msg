@@ -274,6 +274,7 @@ Edit Game;Edit Game
 Edit Shortcut;Edit Shortcut
 Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
+Exit Message;Exit Message
 Insert Command Shortcut;Insert Command Shortcut
 Insert Display Shortcut;Insert Display Shortcut
 Insert Game Entry;Insert Game Entry
@@ -284,6 +285,7 @@ Layout File;Layout File
 Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Pause Hotkey;Pause Hotkey
+Please Wait;Please Wait
 Press Hotkey;Press Hotkey
 Remove tag: '$1';Remove tag: '$1'
 Select template to use for emulator settings;Select template to use for emulator settings
@@ -378,6 +380,7 @@ _help_emu_system;The system identifier(s) for this emulator.  Multiple values ca
 _help_emu_workdir;The working directory for this emulator.  This is the directory that the frontend runs the emulator from.  Also, any relative rom paths, artwork paths, or additional import file paths are treated as being relative to this directory
 _help_emulators;Configure emulator settings
 _help_exit_command;Command to execute when exiting the frontend [i.e. "sudo shutdown"]
+_help_exit_message;Alternate message to exit the frontend [i.e. "Shut Down System"]
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_add_rule;Add a rule to this filter.  A game must match all filter rules (or a single exception) to be listed in a filter
 _help_filter_delete;Delete this filter

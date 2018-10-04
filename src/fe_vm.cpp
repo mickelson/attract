@@ -1814,6 +1814,8 @@ namespace
 
 bool FeVM::setup_wizard()
 {
+	m_overlay->splash_message( "Please Wait" );
+
 	std::string path, fname;
 	if ( !m_feSettings->get_emulator_setup_script( path, fname ) )
 	{
@@ -1828,7 +1830,7 @@ bool FeVM::setup_wizard()
 	Sqrat::Object etg = Sqrat::RootTable().GetSlot( "emulators_to_generate" );
 	if ( etg.IsNull() )
 	{
-		FeDebug() << "Unable to get 'emulators_to_generate' from setup script" << fname << std::endl;
+		FeDebug() << "Unable to get 'emulators_to_generate' from setup script: " << fname << std::endl;
 		return false;
 	}
 

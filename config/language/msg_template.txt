@@ -171,6 +171,7 @@ Play Sound;Play Sound
 PlayedCount;PlayedCount
 PlayedTime;PlayedTime
 Players;Players
+Please Wait;Please Wait
 Plug-ins;Plug-ins
 Press Input;Press Input
 Press Hotkey;Press Hotkey

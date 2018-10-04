@@ -28,6 +28,13 @@
 ////////////////////////////////////////////////////////////////////////
 return [
 		{
+			"name"   : "atari800-5200",
+			"exe"    : "atari800",
+			"args"   : "-fullscreen -5200_rom \"[romfilename]\"",
+			"system" : "Atari 5200",
+			"source" : "thegamesdb.net",
+		},
+		{
 			"name"   : "daphne",
 			"args"   : "[name] vldp -framefile [rompath]../vldp/[name]/[name].txt -blank_searches -min_seek_delay 1000 -seek_frames_per_ms 20 -homedir [rompath].. -sound_buffer 2048 -fullscreen -fastboot -useoverlaysb 0",
 			"exts"   : ".zip",
@@ -115,6 +122,14 @@ return [
 			"source" : "thegamesdb.net"
 		},
 		{
+			"name"   : "pcsx2",
+			"exe"    : ["pcsx2", "PCSX2"],
+			"args"   : "\"[romfilename]\" --fullscreen --nogui",
+			"exts"   : ".iso;.bin;.mdf;.img",
+			"system" : "Sony Playstation 2",
+			"source" : "thegamesdb.net"
+		},
+		{
 			"name"   : "scummvm",
 			"args"   : "-f [name]",
 			"rompath": "",
@@ -124,6 +139,17 @@ return [
 			"Windows"  : {
 				"path"    : "%PROGRAMFILESx86%/ScummVM/",
 			},
+		},
+		{
+			"name"   : "snes9x",
+			"args"   : "\"[romfilename]\"",
+			"exts"   : ".zip;.7z;.bin;.fig;.mgd;.sfc;.smc;.swc",
+			"system" : "Super Nintendo (SNES)",
+			"source" : "thegamesdb.net"
+
+			"Linux"  : {
+				"exe" : [ "snes9x", "snes9x-gtk" ],
+				},
 		},
 		{
 			"name"   : "steam",
@@ -144,15 +170,18 @@ return [
 				},
 		},
 		{
-			"name"   : "snes9x",
-			"args"   : "\"[romfilename]\"",
-			"exts"   : ".zip;.7z;.bin;.fig;.mgd;.sfc;.smc;.swc",
-			"system" : "Super Nintendo (SNES)",
+			"name"	: "stella",
+			"args"	: "-fullscreen 1 \"[romfilename]\"",
+			"exts"	: ".zip,.gz,.a26,.bin,.rom",
+			"system"	: "Atari 2600",
 			"source" : "thegamesdb.net"
-
-			"Linux"  : {
-				"exe" : [ "snes9x", "snes9x-gtk" ],
-				},
+		},
+		{
+			"name"   : "supermodel",
+			"args"   : "\"[romfilename]\" -fullscreen",
+			"exts"	: ".zip",
+			"system" : "Arcade",
+			"source" : "thegamesdb.net"
 		},
 		{
 			"name"   : "vice",
@@ -160,6 +189,14 @@ return [
 			"args"   : "-autostart \"[romfilename]\" +confirmexit -fullscreen -autostart-warp",
 			"exts"   : ".crt;.d64;.g64;.tap;.x64;.t64;.prg;.vsf;.zip",
 			"system" : "Commodore 64",
+			"source" : "thegamesdb.net",
+			"hotkey" : "Escape",
+		},
+		{
+			"name"   : "virtualjaguar",
+			"args"   : "\"[romfilename]\" -f",
+			"romext" : ".zip",
+			"system" : "Atari Jaguar",
 			"source" : "thegamesdb.net",
 			"hotkey" : "Escape",
 		},
