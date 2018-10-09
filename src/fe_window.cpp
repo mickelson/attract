@@ -218,6 +218,7 @@ void FeWindow::initial_create()
 
 #ifdef SFML_SYSTEM_WINDOWS
 	SetForegroundWindow( getSystemHandle() );
+	LockSetForegroundWindow( LSFW_LOCK );
 #endif
 
 	sf::Vector2u wsize = getSize();
@@ -317,6 +318,10 @@ bool FeWindow::run()
 
 	bool have_paused_prog = m_running_pid && process_exists( m_running_pid );
 
+#if defined(SFML_SYSTEM_WINDOWS)
+	LockSetForegroundWindow( LSFW_UNLOCK );
+#endif
+
 	// check if we need to resume a previously paused game
 	if ( have_paused_prog && is_relaunch )
 	{
@@ -352,16 +357,9 @@ bool FeWindow::run()
 	if ( opt.running_pid != 0 )
 	{
 		// User has paused the progam and it is still running in the background
+		// (Note that this only can happen when run_program is blocking (i.e. nbm_wait <= 0)
 		m_running_pid = opt.running_pid;
 		m_running_wnd = opt.running_wnd;
-
-#if defined(USE_XLIB)
-		set_x11_foreground_window( getSystemHandle() );
-#elif defined(SFML_SYSTEM_MACOS)
-		osx_take_focus();
-#elif defined(SFML_SYSTEM_WINDOWS)
-		SetForegroundWindow( getSystemHandle() );
-#endif
 	}
 	else
 	{
@@ -439,7 +437,7 @@ bool FeWindow::run()
 #if defined(SFML_SYSTEM_LINUX)
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
-#if defined(USE_XLIB)
+ #if defined(USE_XLIB)
 		//
 		// On X11 Linux fullscreen mode we might have forcibly closed our window after launching the
 		// emulator. Recreate it now if we did.
@@ -449,14 +447,19 @@ bool FeWindow::run()
 		//
 		if ( !isOpen() )
 			initial_create();
-#else
+ #else
 		initial_create(); // On raspberry pi, we have forcibly closed the window, so recreate it now
-#endif
+ #endif
 	}
+ #if defined(USE_XLIB)
+	set_x11_foreground_window( getSystemHandle() );
+ #endif
+
 #elif defined(SFML_SYSTEM_MACOS)
 	osx_take_focus();
 #elif defined(SFML_SYSTEM_WINDOWS)
 	SetForegroundWindow( getSystemHandle() );
+	LockSetForegroundWindow( LSFW_LOCK );
 #endif
 
 	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
