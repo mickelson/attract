@@ -587,7 +587,14 @@ int main(int argc, char *argv[])
 						get_available_filename( feSettings.get_config_dir(),
 										"screen", ".png", filename );
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+						sf::Texture texture;
+						texture.create( window.getSize().x, window.getSize().y );
+						texture.update( window );
+						sf::Image sshot_img = texture.copyToImage();
+#else
 						sf::Image sshot_img = window.capture();
+#endif
 						sshot_img.saveToFile( filename );
 					}
 					break;

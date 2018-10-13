@@ -73,13 +73,22 @@ FeTextPrimative::FeTextPrimative( const FeTextPrimative &c )
 
 void FeTextPrimative::setColor( const sf::Color &c )
 {
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+		m_texts[i].setFillColor( c );
+#else
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 		m_texts[i].setColor( c );
+#endif
 }
 
 const sf::Color &FeTextPrimative::getColor() const
 {
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+	return m_texts[0].getFillColor();
+#else
 	return m_texts[0].getColor();
+#endif
 }
 
 void FeTextPrimative::setBgColor( const sf::Color &c )
@@ -242,12 +251,12 @@ sf::Vector2f FeTextPrimative::setString(
 		m_texts.resize( 1 );
 
 	const sf::Font *font = getFont();
-	
+
 	//
 	// We cut the first line of text here
 	//
 	fit_string( t, position, first_char, last_char );
-	
+
 	if ( m_first_line > 0 )
 	{
 		int actual_first_line = 1;

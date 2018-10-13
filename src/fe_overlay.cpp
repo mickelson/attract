@@ -1638,7 +1638,11 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 
 	const sf::Font *font = tp->getFont();
 	sf::Text cursor( "|", *font, tp->getCharacterSize() / tp->getTextScale().x );
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+	cursor.setFillColor( tp->getColor() );
+#else
 	cursor.setColor( tp->getColor() );
+#endif
 	cursor.setStyle( sf::Text::Bold );
 	cursor.setScale( tp->getTextScale() );
 
@@ -1900,7 +1904,12 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			m_wnd.draw( *(*itr), t );
 
 		int cursor_fade = ( sin( cursor_timer.getElapsedTime().asMilliseconds() / 250.0 * M_PI ) + 1.0 ) * 255;
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+		cursor.setFillColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
+#else
 		cursor.setColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
+#endif
 
 		m_wnd.draw( cursor, t );
 		m_wnd.display();
