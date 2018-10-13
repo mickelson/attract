@@ -1074,8 +1074,8 @@ bool FeMedia::open( const std::string &archive,
 				m_video->disptex_height = codec_ctx->height;
 
 				m_video->display_texture = outt;
-				m_video->display_texture->create( m_video->disptex_width,
-						m_video->disptex_height );
+				if ( outt->getSize() != sf::Vector2u( m_video->disptex_width, m_video->disptex_height ) )
+					m_video->display_texture->create( m_video->disptex_width, m_video->disptex_height );
 
 				m_video->preload();
 			}

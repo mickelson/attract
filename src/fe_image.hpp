@@ -51,7 +51,6 @@ public:
 	virtual ~FeBaseTextureContainer();
 
 	virtual const sf::Texture &get_texture()=0;
-	virtual const sf::Vector2u get_texture_size();
 
 	virtual void on_new_selection( FeSettings *feSettings )=0;
 	virtual void on_end_navigation( FeSettings *feSettings )=0;
@@ -124,7 +123,6 @@ public:
 	~FeTextureContainer();
 
 	const sf::Texture &get_texture();
-	const sf::Vector2u get_texture_size();
 
 	void on_new_selection( FeSettings *feSettings );
 	void on_end_navigation( FeSettings *feSettings );
@@ -185,7 +183,6 @@ private:
 	void clear();
 
 	sf::Texture m_texture;
-	sf::Vector2u m_used_size;
 
 	std::string m_art_name; // artwork label/template name (dynamic images)
 	std::string m_file_name; // the name of the loaded file

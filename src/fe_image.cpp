@@ -77,11 +77,6 @@ FeBaseTextureContainer::~FeBaseTextureContainer()
 {
 }
 
-const sf::Vector2u FeBaseTextureContainer::get_texture_size()
-{
-	return get_texture().getSize();
-}
-
 void FeBaseTextureContainer::set_play_state( bool play )
 {
 }
@@ -360,7 +355,6 @@ bool FeTextureContainer::load_with_ffmpeg(
 	else
 		m_movie_status = 1; // 1=on track to be played
 
-	m_used_size = m_texture.getSize();
 	m_file_name = loaded_name;
 	return true;
 }
@@ -507,19 +501,15 @@ bool FeTextureContainer::load_to_texture( sf::InputStream &s )
 	if ( !img.loadFromStream( s ) )
 		return false;
 
-	m_used_size = img.getSize();
-
-	// Minimize the reallocation of video memory by only calling loadFromImage()
-	// if the image size we need to load won't fit in the existing allocated texture
+	// Reuse texture if we are loading an image that is the same size
 	//
-	// (if it does fit, simply reuse existing)
-	//
-	sf::Vector2u tex_size = m_texture.getSize();
-	if (( tex_size.x < m_used_size.x ) || ( tex_size.y < m_used_size.y ))
-		return m_texture.loadFromImage( img );
+	if ( m_texture.getSize() == img.getSize() )
+	{
+		m_texture.update( img, 0, 0 );
+		return true;
+	}
 
-	m_texture.update( img, 0, 0 );
-	return true;
+	return m_texture.loadFromImage( img );
 }
 
 const sf::Texture &FeTextureContainer::get_texture()
@@ -529,16 +519,6 @@ const sf::Texture &FeTextureContainer::get_texture()
 		return m_swf->get_texture();
 #endif
 	return m_texture;
-}
-
-const sf::Vector2u FeTextureContainer::get_texture_size()
-{
-#ifndef NO_SWF
-	if ( m_swf )
-		return m_swf->get_texture().getSize();
-#endif
-
-	return m_used_size;
 }
 
 void FeTextureContainer::on_new_selection( FeSettings *feSettings )
@@ -997,7 +977,6 @@ void FeTextureContainer::clear()
 {
 	m_movie_status = -1;
 	m_file_name.clear();
-	m_used_size = sf::Vector2u( 0, 0 );
 
 #ifndef NO_SWF
 	if ( m_swf )
@@ -1184,7 +1163,7 @@ void FeImage::texture_changed( FeBaseTextureContainer *new_tex )
 
 	//  reset texture rect now to the one reported by the new texture object
 	m_sprite.setTextureRect(
-		sf::IntRect( 0, 0, m_tex->get_texture_size().x, m_tex->get_texture_size().y ) );
+		sf::IntRect( 0, 0, m_tex->get_texture().getSize().x, m_tex->get_texture().getSize().y ) );
 
 	scale();
 }
@@ -1370,7 +1349,7 @@ void FeImage::setColor( const sf::Color &c )
 
 const sf::Vector2u FeImage::getTextureSize() const
 {
-	return m_tex->get_texture_size();
+	return m_tex->get_texture().getSize();
 }
 
 const sf::IntRect &FeImage::getTextureRect() const
