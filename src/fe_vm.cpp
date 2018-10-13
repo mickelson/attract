@@ -1381,21 +1381,25 @@ void FePresent::script_process_magic_strings( std::string &str,
 	if ( !vm )
 		return;
 
-	size_t pos = str.find( "[!" );
+	const char *TOK = "[!";
+	int TOK_LEN = 2;
+
+	size_t pos = str.find( TOK );
 	while ( pos != std::string::npos )
 	{
-		size_t end = str.find_first_of( ']', pos+1 );
+		size_t end = str.find_first_of( ']', pos + TOK_LEN );
 		if ( end == std::string::npos )
 			break;
 
-		std::string magic = str.substr( pos+2, end-pos-2 );
-		std::string result;
+		std::string magic = str.substr( pos + TOK_LEN, end-pos-TOK_LEN );
 
 		try
 		{
 			Sqrat::Function func( Sqrat::RootTable(), magic.c_str() );
 			if ( !func.IsNull() )
 			{
+				std::string result;
+
 				switch ( fe_get_num_params( vm, func.GetFunc(), func.GetEnv() ) )
 				{
 				case 2:
@@ -1408,6 +1412,16 @@ void FePresent::script_process_magic_strings( std::string &str,
 					result = func.Evaluate<const char *>();
 					break;
 				}
+
+				str.replace( pos, end+1, result );
+				pos += result.size();
+			}
+			else
+			{
+				FeDebug() << "Potential magic string ignored, no corresponding function in script: "
+					<< TOK << magic << "]" << std::endl;
+
+				pos += TOK_LEN;
 			}
 		}
 		catch( Sqrat::Exception &e )
@@ -1417,8 +1431,7 @@ void FePresent::script_process_magic_strings( std::string &str,
 				<< e.Message() << std::endl;
 		}
 
-		str.replace( pos, end+1, result );
-		pos = str.find( "[!" );
+		pos = str.find( TOK, pos );
 	}
 }
 

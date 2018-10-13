@@ -336,6 +336,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 		FeLog() << "ERROR loading video: "
 			<< loaded_name << std::endl;
 
+		m_texture = sf::Texture();
 		delete m_movie;
 		m_movie = NULL;
 		return false;
@@ -389,6 +390,7 @@ bool FeTextureContainer::try_to_load(
 				FeLog() << " ! ERROR loading SWF from archive: "
 					<< path << " (" << filename << ")" << std::endl;
 
+				m_texture = sf::Texture();
 				delete m_swf;
 				m_swf = NULL;
 				return false;
@@ -411,6 +413,7 @@ bool FeTextureContainer::try_to_load(
 				FeLog() << " ! ERROR loading SWF: "
 					<< loaded_name << std::endl;
 
+				m_texture = sf::Texture();
 				delete m_swf;
 				m_swf = NULL;
 				return false;

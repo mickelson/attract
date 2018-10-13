@@ -1169,6 +1169,13 @@ bool run_program( const std::string &prog,
 			else
 				ibuf = buffer;
 		}
+
+		// handle last bit of data if not terminated with a line ending
+		if ( block && ( ibuf != buffer ) )
+		{
+			if ( callback( buffer, opaque ) == false )
+				TerminateProcess( pi.hProcess, 0 );
+		}
 	}
 
 	if ( child_output_read )

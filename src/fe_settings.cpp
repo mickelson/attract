@@ -2183,6 +2183,8 @@ void FeSettings::prep_for_launch( std::string &command,
 		perform_substitution( args, "[systemn]", systems.back() );
 	}
 
+	do_text_substitutions_absolute( args, filter_index, rom_index );
+
 	std::string temp = get_game_extra( Executable );
 	if ( temp.empty() )
 		temp = emu->get_info( FeEmulatorInfo::Executable );
@@ -2269,18 +2271,15 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 	//
 	// Perform substitutions of the [XXX] sequences occurring in str
 	//
-	size_t n = std::count( str.begin(), str.end(), '[' );
-
-	size_t open = 0;
-	for ( size_t x=0; x<n; x++ )
+	size_t pos = str.find( "[" );
+	while ( pos != std::string::npos )
 	{
-		open = str.find_first_of( '[', open );
-		size_t close = str.find_first_of( ']', open );
+		size_t close = str.find_first_of( ']', pos+1 );
 
 		if ( close == std::string::npos )
 			break; // done, no more enclosed tokens
 
-		std::string token = str.substr( open+1, close-open-1 );
+		std::string token = str.substr( pos+1, close-pos-1 );
 		bool matched=false;
 
 		//
@@ -2300,14 +2299,17 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 						rom_index,
 						(FeRomInfo::Index)i );
 
-				str.replace( open, close-open+1, rep );
-				open += rep.size();
+				str.replace( pos, close-pos+1, rep );
+				pos += rep.size();
 				matched=true;
 			}
 		}
 
 		if ( matched )
+		{
+			pos = str.find( "[", pos );
 			continue;
+		}
 
 		//
 		// Next check for various special case attributes
@@ -2346,7 +2348,7 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 
 		if ( !matched )
 		{
-			open++;
+			pos = str.find( "[", pos+1 );
 			continue;
 		}
 
@@ -2458,8 +2460,8 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 			break;
 		}
 
-		str.replace( open, close-open+1, rep );
-		open += rep.size();
+		str.replace( pos, close-pos+1, rep );
+		pos = str.find( "[", pos+rep.size() );
 	}
 }
 
