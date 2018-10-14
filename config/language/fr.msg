@@ -99,7 +99,7 @@ Hide Brackets in Game Title;Cacher les crochets dans le titre du jeu
 Info Source/Scraper;Info Source/Aspiration
 Joystick Threshold;Seuil du joystick
 Jump to Next Display;Bascule sur la liste de roms suivante 
-Language;Langage
+Language;Langue
 Layout;Thème
 Layout Options;Options du Layout
 Left;Gauche
@@ -266,7 +266,7 @@ _help_input_add;Ajouter un nouveau contrôle
 _help_input_delete;Enlever ce contrôle
 _help_intro;Configurer l'intro
 _help_joystick_threshold;Seuil d'amplitude des mouvements du joystick, de 1 à 100 (100=moins sensible)
-_help_language;Sélectionner le langage
+_help_language;Sélectionner la langue
 _help_misc;Configurations diverses
 _help_mouse_threshold;Seuil d'amplitude des mouvements de la souris, de 1 à 100 (100=moins sensible)
 _help_plugin_command;Exécutable associé à ce plug-in
