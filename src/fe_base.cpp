@@ -139,7 +139,7 @@ void fe_print_version()
 {
 	FeLog() << FE_NAME << " " << FE_VERSION << " ("
 		<< get_OS_string()
-		<< ", SFML " << SFML_VERSION_MAJOR << '.' << SFML_VERSION_MINOR
+		<< ", SFML " << SFML_VERSION_MAJOR << '.' << SFML_VERSION_MINOR << "." << SFML_VERSION_PATCH
 #ifdef USE_FONTCONFIG
 		<< " +FontConfig"
 #endif

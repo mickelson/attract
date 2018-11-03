@@ -3,7 +3,7 @@ Upstream-Name: attract
 Source: http://attractmode.org
 
 Files: *
-Copyright: 2013-2015 Andrew Mickelson <andrew@attractmode.org>
+Copyright: 2013-2018 Andrew Mickelson <andrew@attractmode.org>
 License: GPL-3+
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
