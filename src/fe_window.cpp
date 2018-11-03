@@ -24,6 +24,7 @@
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
 #include "fe_window.hpp"
+#include "fe_present.hpp"
 
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -298,6 +299,7 @@ bool FeWindow::run()
 	std::string command, args, work_dir;
 	FeEmulatorInfo *emu = NULL;
 	m_fes.prep_for_launch( command, args, work_dir, emu );
+	FePresent::script_process_magic_strings( args, 0, 0 );
 
 	if ( !emu )
 	{
