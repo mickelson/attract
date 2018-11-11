@@ -339,7 +339,9 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 
 void FePresent::init_default_images()
 {
-	if ( !default_texture->loadFromFile( m_feSettings->get_default_image_path() ))
+	std::string file = m_feSettings->get_default_image_path();
+
+	if ( !file_exists( file ) || !default_texture->loadFromFile( m_feSettings->get_default_image_path() ))
 		default_texture->loadFromMemory(PNG_NO_IMAGE, PNG_NO_IMAGE_SIZE);
 
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
