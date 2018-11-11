@@ -197,6 +197,7 @@ public:
 	virtual ~FePresent( void );
 
 	void init_monitors();
+	void init_default_images();
 
 	bool load_intro(); // returns false if no intro is available
 	void load_screensaver();
@@ -238,6 +239,9 @@ public:
 
 	const sf::Vector2i &get_layout_size() const { return m_layoutSize; }
 	FeShader *get_empty_shader();
+
+	sf::Texture *default_texture;
+	sf::Texture *empty_texture;
 
 	// Returns true if a script has set custom overlay controls.
 	// parameters are set to those controls (which may be NULL!)

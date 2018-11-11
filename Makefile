@@ -104,6 +104,7 @@ EXE_EXT=
 OBJ_DIR=obj
 SRC_DIR=src
 EXTLIBS_DIR=extlibs
+IMAGES_DIR=images
 FE_FLAGS=
 
 _DEP =\
@@ -408,7 +409,7 @@ else
  EXPAT =
 endif
 
-CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide
+CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide -I$(IMAGES_DIR)
 SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
 
 # Our nowide "lib" is only needed on Windows systems

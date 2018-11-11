@@ -143,6 +143,7 @@ const char *FE_LIST_DEFAULT			= "default-display.cfg";
 const char *FE_FILTER_DEFAULT			= "default-filter.cfg";
 const char *FE_CFG_YES_STR				= "yes";
 const char *FE_CFG_NO_STR				= "no";
+const char *FE_DEFAULT_IMAGE			= "default.png";
 
 const std::string FE_EMPTY_STRING;
 
@@ -230,6 +231,27 @@ const char *FeSettings::filterWrapDispTokens[] =
 	NULL
 };
 
+const char *FeSettings::imagePlaceholderTokens[] =
+{
+	"hide_all",
+	"show_all",
+	"only_artwork",
+	"only_static",
+	"only_magic_tokens",
+	NULL
+};
+
+const char *FeSettings::imagePlaceholderDispTokens[] =
+{
+	"Hide all (Default)",
+	"Show all",
+	"Only Artwork",
+	"Only Static",
+	"Only Magic Tokens",
+	NULL
+};
+
+
 const char *FeSettings::startupTokens[] =
 {
 	"default",
@@ -277,6 +299,7 @@ FeSettings::FeSettings( const std::string &config_path,
 #endif
 	m_smooth_images( true ),
 	m_filter_wrap_mode( WrapWithinDisplay ),
+	m_img_placeholder_mode( HideAll ),
 	m_selection_max_step( 128 ),
 	m_selection_speed( 40 ),
 #ifdef SFML_SYSTEM_MACOS
@@ -408,6 +431,7 @@ const char *FeSettings::configSettingStrings[] =
 	"joystick_threshold",
 	"window_mode",
 	"filter_wrap_mode",
+	"img_placeholder_mode",
 	"track_usage",
 	"multiple_monitors",
 	"smooth_images",
@@ -1301,6 +1325,14 @@ FeLayoutInfo &FeSettings::get_current_config( FePathType t )
 const std::string &FeSettings::get_config_dir() const
 {
 	return m_config_path;
+}
+
+const std::string FeSettings::get_default_image_path() const
+{
+	std::string path( m_config_path );
+	path += FE_MENU_ART_SUBDIR;
+	path += FE_DEFAULT_IMAGE;
+	return path;
 }
 
 bool FeSettings::config_file_exists() const
@@ -2635,6 +2667,11 @@ FeSettings::FilterWrapModeType FeSettings::get_filter_wrap_mode() const
 	return m_filter_wrap_mode;
 }
 
+FeSettings::ImagePlaceholderModeType FeSettings::get_img_placeholder_mode() const
+{
+	return m_img_placeholder_mode;
+}
+
 FeSettings::StartupModeType FeSettings::get_startup_mode() const
 {
 	return m_startup_mode;
@@ -2698,6 +2735,8 @@ const std::string FeSettings::get_info( int index ) const
 		return windowModeTokens[ m_window_mode ];
 	case FilterWrapMode:
 		return filterWrapTokens[ m_filter_wrap_mode ];
+	case ImagePlaceholderMode:
+		return imagePlaceholderTokens[ m_img_placeholder_mode ];
 	case SelectionMaxStep:
 		return as_str( m_selection_max_step );
 	case SelectionSpeed:
@@ -2907,6 +2946,24 @@ bool FeSettings::set_info( int index, const std::string &value )
 			}
 
 			if ( filterWrapTokens[i] == NULL )
+				return false;
+		}
+		break;
+
+	case ImagePlaceholderMode:
+		{
+			int i=0;
+			while ( imagePlaceholderTokens[i] != NULL )
+			{
+				if ( value.compare( imagePlaceholderTokens[i] ) == 0 )
+				{
+					m_img_placeholder_mode = (ImagePlaceholderModeType)i;
+					break;
+				}
+				i++;
+			}
+
+			if ( imagePlaceholderTokens[i] == NULL )
 				return false;
 		}
 		break;

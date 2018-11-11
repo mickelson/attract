@@ -517,6 +517,38 @@ bool FeTextureContainer::load_to_texture( sf::InputStream &s )
 
 const sf::Texture &FeTextureContainer::get_texture()
 {
+	bool show_placeholder = false;
+	if ( m_file_name.size() == 0 )
+	{
+		FePresent *fep = FePresent::script_get_fep();
+		FeSettings *fes = fep->get_fes();
+		switch ( fes->get_img_placeholder_mode() )
+		{
+			case FeSettings::HideAll:
+				show_placeholder = false;
+				break;
+			case FeSettings::ShowAll:
+				show_placeholder = true;
+				break;
+			case FeSettings::OnlyArtwork:
+				if ( m_type == IsArtwork )
+				show_placeholder = true;
+				break;
+			case FeSettings::OnlyStatic:
+				if ( m_type == IsStatic )
+				show_placeholder = true;
+				break;
+			case FeSettings::OnlyMagic:
+				if ( m_type == IsDynamic )
+				show_placeholder = true;
+				break;
+		}
+		if ( show_placeholder )
+			return *fep->default_texture;
+		else
+			return *fep->empty_texture;
+	}
+
 #ifndef NO_SWF
 	if ( m_swf )
 		return m_swf->get_texture();

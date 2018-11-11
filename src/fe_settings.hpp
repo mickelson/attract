@@ -96,6 +96,10 @@ public:
 	static const char *filterWrapTokens[];
 	static const char *filterWrapDispTokens[];
 
+	enum ImagePlaceholderModeType { HideAll=0, ShowAll, OnlyArtwork, OnlyStatic, OnlyMagic };
+	static const char *imagePlaceholderTokens[];
+	static const char *imagePlaceholderDispTokens[];
+
 	enum StartupModeType { ShowLastSelection=0, LaunchLastGame, ShowDisplaysMenu };
 	static const char *startupTokens[];
 	static const char *startupDispTokens[];
@@ -117,6 +121,7 @@ public:
 		JoystickThreshold,
 		WindowMode,
 		FilterWrapMode,
+		ImagePlaceholderMode,
 		TrackUsage,
 		MultiMon,
 		SmoothImages,
@@ -204,6 +209,7 @@ private:
 	WindowType m_window_mode;
 	bool m_smooth_images;
 	FilterWrapModeType m_filter_wrap_mode;
+	ImagePlaceholderModeType m_img_placeholder_mode;
 	int m_selection_max_step; // max selection acceleration step.  0 to disable accel
 	int m_selection_speed;
 	bool m_move_mouse_on_launch; // configure whether mouse gets moved to bottom right corner on launch
@@ -444,6 +450,7 @@ public:
 		std::string &module_file ) const;
 
 	const std::string &get_config_dir() const;
+	const std::string get_default_image_path() const;
 	bool config_file_exists() const;
 
 	// [out] fpath = if font is in a zip file, this is the path to the zip
@@ -456,6 +463,7 @@ public:
 
 	WindowType get_window_mode() const;
 	FilterWrapModeType get_filter_wrap_mode() const;
+	ImagePlaceholderModeType get_img_placeholder_mode() const;
 	StartupModeType get_startup_mode() const;
 	int get_screen_saver_timeout() const;
 

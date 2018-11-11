@@ -1971,6 +1971,20 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Filter Wrap Mode", filterwrapmode, "_help_filter_wrap_mode" );
 	ctx.back_opt().append_vlist( wrap_modes );
 
+	std::string imageplaceholdermode;
+	ctx.fe_settings.get_resource( FeSettings::imagePlaceholderDispTokens[ ctx.fe_settings.get_img_placeholder_mode() ], imageplaceholdermode );
+	std::vector < std::string > placeholder_modes;
+	i=0;
+	while ( FeSettings::imagePlaceholderDispTokens[i] != 0 )
+	{
+		placeholder_modes.push_back( std::string() );
+		ctx.fe_settings.get_resource( FeSettings::imagePlaceholderDispTokens[ i ], placeholder_modes.back() );
+		i++;
+	}
+	ctx.add_optl( Opt::LIST, "Missing Image Placeholders", imageplaceholdermode, "_help_image_placeholder_mode" );
+	ctx.back_opt().append_vlist( placeholder_modes );
+
+
 	ctx.add_optl( Opt::LIST,
 			"Confirm Exit",
 			ctx.fe_settings.get_info_bool( FeSettings::ConfirmExit ) ? bool_opts[0] : bool_opts[1],
@@ -2046,27 +2060,30 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
 			FeSettings::filterWrapTokens[ ctx.opt_list[7].get_vindex() ] );
 
+	ctx.fe_settings.set_info( FeSettings::ImagePlaceholderMode,
+			FeSettings::imagePlaceholderTokens[ ctx.opt_list[8].get_vindex() ] );
+
 	ctx.fe_settings.set_info( FeSettings::ConfirmExit,
-			ctx.opt_list[8].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[9].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[9].get_value() );
-
-	ctx.fe_settings.set_info( FeSettings::ExitMessage,
 			ctx.opt_list[10].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
+	ctx.fe_settings.set_info( FeSettings::ExitMessage,
 			ctx.opt_list[11].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::FontPath,
+	ctx.fe_settings.set_info( FeSettings::DefaultFont,
 			ctx.opt_list[12].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
+	ctx.fe_settings.set_info( FeSettings::FontPath,
 			ctx.opt_list[13].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
+			ctx.opt_list[14].get_value() );
 
 #ifdef SFML_SYSTEM_WINDOWS
 	ctx.fe_settings.set_info( FeSettings::HideConsole,
-			ctx.opt_list[14].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[15].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 #endif
 
 	return true;

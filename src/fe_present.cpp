@@ -29,6 +29,7 @@
 #include "fe_file.hpp"
 #include "fe_blend.hpp"
 #include "zip.hpp"
+#include "png_no_image.hpp"
 
 #include <iostream>
 
@@ -160,6 +161,7 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 	m_overlay_lb( NULL )
 {
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
+	init_default_images();
 	init_monitors();
 }
 
@@ -333,6 +335,18 @@ void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const
 				target.draw( (*itl)->drawable(), states );
 		}
 	}
+}
+
+void FePresent::init_default_images()
+{
+	if ( !default_texture->loadFromFile( m_feSettings->get_default_image_path() ))
+		default_texture->loadFromMemory(PNG_NO_IMAGE, PNG_NO_IMAGE_SIZE);
+
+	default_texture->generateMipmap();
+	default_texture->setSmooth( true );
+
+	empty_texture = new sf::Texture;
+	empty_texture->create( 1, 1 );
 }
 
 FeImage *FePresent::add_image( bool is_artwork,
