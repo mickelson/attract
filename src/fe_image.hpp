@@ -159,6 +159,7 @@ public:
 
 	void set_mipmap( bool );
 	bool get_mipmap() const;
+	void swap_texture_buffers();
 
 protected:
 	FeTextureContainer *get_derived_texture_container();
@@ -182,7 +183,8 @@ private:
 	void internal_update_selection( FeSettings *feSettings );
 	void clear();
 
-	sf::Texture m_texture;
+	sf::Texture *m_texture[2];
+	int m_active_texture;
 
 	std::string m_art_name; // artwork label/template name (dynamic images)
 	std::string m_file_name; // the name of the loaded file

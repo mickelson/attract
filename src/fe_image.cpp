@@ -237,8 +237,12 @@ FeTextureContainer::FeTextureContainer(
 	m_swf( NULL ),
 	m_movie_status( -1 ),
 	m_video_flags( VF_Normal ),
-	m_mipmap( false )
+	m_mipmap( false ),
+	m_active_texture( 0 )
 {
+	m_texture[0] = new sf::Texture;
+	m_texture[1] = new sf::Texture;
+
 	if ( is_artwork )
 	{
 		m_type = IsArtwork;
@@ -276,7 +280,7 @@ bool FeTextureContainer::fix_masked_image()
 {
 	bool retval=false;
 
-	sf::Image tmp_img = m_texture.copyToImage();
+	sf::Image tmp_img = m_texture[m_active_texture]->copyToImage();
 	sf::Vector2u tmp_s = tmp_img.getSize();
 
 	if (( tmp_s.x > 0 ) && ( tmp_s.y > 0 ))
@@ -284,7 +288,7 @@ bool FeTextureContainer::fix_masked_image()
 		sf::Color p = tmp_img.getPixel( 0, 0 );
 		tmp_img.createMaskFromColor( p );
 
-		if ( m_texture.loadFromImage( tmp_img ) )
+		if ( m_texture[m_active_texture]->loadFromImage( tmp_img ) )
 			retval=true;
 
 		notify_texture_change();
@@ -314,7 +318,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return false;
 
 		m_movie = new FeMedia( FeMedia::AudioVideo );
-		res = m_movie->open( path, filename, &m_texture );
+		res = m_movie->open( path, filename, m_texture[m_active_texture] );
 	}
 	else
 	{
@@ -328,7 +332,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 			return false;
 
 		m_movie = new FeMedia( FeMedia::AudioVideo );
-		res = m_movie->open( "", loaded_name, &m_texture );
+		res = m_movie->open( "", loaded_name, m_texture[m_active_texture] );
 	}
 
 	if ( !res )
@@ -336,7 +340,6 @@ bool FeTextureContainer::load_with_ffmpeg(
 		FeLog() << "ERROR loading video: "
 			<< loaded_name << std::endl;
 
-		m_texture = sf::Texture();
 		delete m_movie;
 		m_movie = NULL;
 		return false;
@@ -390,7 +393,6 @@ bool FeTextureContainer::try_to_load(
 				FeLog() << " ! ERROR loading SWF from archive: "
 					<< path << " (" << filename << ")" << std::endl;
 
-				m_texture = sf::Texture();
 				delete m_swf;
 				m_swf = NULL;
 				return false;
@@ -413,7 +415,6 @@ bool FeTextureContainer::try_to_load(
 				FeLog() << " ! ERROR loading SWF: "
 					<< loaded_name << std::endl;
 
-				m_texture = sf::Texture();
 				delete m_swf;
 				m_swf = NULL;
 				return false;
@@ -458,7 +459,7 @@ bool FeTextureContainer::try_to_load(
 		if ( load_to_texture( zs ) )
 		{
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
-			if ( m_mipmap ) m_texture.generateMipmap();
+			if ( m_mipmap ) m_texture[m_active_texture]->generateMipmap();
 #endif
 			m_file_name = loaded_name;
 			return true;
@@ -479,7 +480,7 @@ bool FeTextureContainer::try_to_load(
 		if ( load_to_texture( filestream ) )
 		{
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
-			if ( m_mipmap ) m_texture.generateMipmap();
+			if ( m_mipmap ) m_texture[m_active_texture]->generateMipmap();
 #endif
 			m_file_name = loaded_name;
 			return true;
@@ -500,19 +501,31 @@ bool FeTextureContainer::try_to_load(
 
 bool FeTextureContainer::load_to_texture( sf::InputStream &s )
 {
+	swap_texture_buffers();
+
 	sf::Image img;
 	if ( !img.loadFromStream( s ) )
 		return false;
 
 	// Reuse texture if we are loading an image that is the same size
 	//
-	if ( m_texture.getSize() == img.getSize() )
+	if ( m_texture[m_active_texture]->getSize() == img.getSize() )
 	{
-		m_texture.update( img, 0, 0 );
+		m_texture[m_active_texture]->update( img, 0, 0 );
 		return true;
 	}
 
-	return m_texture.loadFromImage( img );
+	if ( m_texture[m_active_texture] )
+	{
+		delete m_texture[m_active_texture];
+		m_texture[m_active_texture] = NULL;
+	}
+
+	m_texture[m_active_texture] = new sf::Texture;
+	m_texture[m_active_texture]->loadFromImage( img );
+	m_texture[m_active_texture]->setSmooth( m_texture[1 - m_active_texture]->isSmooth() );	
+
+	return true;
 }
 
 const sf::Texture &FeTextureContainer::get_texture()
@@ -521,7 +534,7 @@ const sf::Texture &FeTextureContainer::get_texture()
 	if ( m_swf )
 		return m_swf->get_texture();
 #endif
-	return m_texture;
+	return *m_texture[m_active_texture];
 }
 
 void FeTextureContainer::on_new_selection( FeSettings *feSettings )
@@ -765,7 +778,7 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 		if ( m_movie->tick() )
 		{
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
-			if ( m_mipmap ) m_texture.generateMipmap();
+			if ( m_mipmap ) m_texture[m_active_texture]->generateMipmap();
 #endif
 			return true;
 		}
@@ -1005,25 +1018,30 @@ void FeTextureContainer::set_smooth( bool s )
 	if ( m_swf )
 		m_swf->set_smooth( s );
 #endif
-	m_texture.setSmooth( s );
+	m_texture[m_active_texture]->setSmooth( s );
 }
 
 bool FeTextureContainer::get_smooth() const
 {
-	return m_texture.isSmooth();
+	return m_texture[m_active_texture]->isSmooth();
 }
 
 void FeTextureContainer::set_mipmap( bool m )
 {
 	m_mipmap = m;
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
-	if ( m_mipmap && !m_movie) m_texture.generateMipmap();;
+	if ( m_mipmap && !m_movie) m_texture[m_active_texture]->generateMipmap();
 #endif
 }
 
 bool FeTextureContainer::get_mipmap() const
 {
 	return m_mipmap;
+}
+
+void FeTextureContainer::swap_texture_buffers()
+{
+	m_active_texture = 1 - m_active_texture;
 }
 
 void FeTextureContainer::release_audio( bool state )
