@@ -154,6 +154,11 @@ bool FeBaseTextureContainer::get_mipmap() const
 	return false;
 }
 
+bool FeBaseTextureContainer::is_swf() const
+{
+	return false;
+}
+
 void FeBaseTextureContainer::transition_swap( FeBaseTextureContainer *o )
 {
 	//
@@ -1026,6 +1031,11 @@ bool FeTextureContainer::get_mipmap() const
 	return m_mipmap;
 }
 
+bool FeTextureContainer::is_swf() const
+{
+	return m_swf;
+}
+
 void FeTextureContainer::release_audio( bool state )
 {
 #ifndef NO_MOVIE
@@ -1107,6 +1117,11 @@ void FeSurfaceTextureContainer::set_mipmap( bool m )
 }
 
 bool FeSurfaceTextureContainer::get_mipmap() const
+{
+	return false;
+}
+
+bool FeSurfaceTextureContainer::is_swf() const
 {
 	return false;
 }
@@ -1219,7 +1234,10 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 	else
 		states.shader = FeBlend::get_default_shader( m_blend_mode );
 
-	states.blendMode = FeBlend::get_blend_mode( m_blend_mode );
+	if (( m_tex->is_swf() ) && ( m_blend_mode == FeBlend::Alpha ))
+		states.blendMode = FeBlend::get_blend_mode( FeBlend::Premultiplied );
+	else
+		states.blendMode = FeBlend::get_blend_mode( m_blend_mode );
 
 	target.draw( m_sprite, states );
 }
