@@ -342,7 +342,9 @@ void FePresent::init_default_images()
 	if ( !default_texture->loadFromFile( m_feSettings->get_default_image_path() ))
 		default_texture->loadFromMemory(PNG_NO_IMAGE, PNG_NO_IMAGE_SIZE);
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
 	default_texture->generateMipmap();
+#endif
 	default_texture->setSmooth( true );
 
 	empty_texture = new sf::Texture;
