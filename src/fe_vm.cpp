@@ -1202,6 +1202,7 @@ void FeVM::on_transition(
 		{
 			video_tick();
 
+			redraw_surfaces();
 			m_window.clear();
 			m_window.draw( *this );
 			m_window.display();
