@@ -902,6 +902,7 @@ void FeOverlay::input_map_dialog(
 
 		if ( redraw )
 		{
+			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 			m_wnd.draw( message, t );
@@ -1335,6 +1336,7 @@ void FeOverlay::init_event_loop( FeEventLoopCtx &ctx )
 
 		if ( m_fePresent.tick() )
 		{
+			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 
@@ -1422,6 +1424,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 		if ( redraw )
 		{
+			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 
@@ -1896,6 +1899,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 		if ( m_feSettings.get_current_state( FeInputMap::Left ) || m_feSettings.get_current_state( FeInputMap::Right ))
 			cursor_timer.restart();
 
+		m_fePresent.redraw_surfaces();
 		m_wnd.clear();
 		m_wnd.draw( m_fePresent, t );
 
