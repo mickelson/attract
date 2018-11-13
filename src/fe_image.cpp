@@ -259,6 +259,11 @@ FeTextureContainer::FeTextureContainer(
 
 FeTextureContainer::~FeTextureContainer()
 {
+	delete m_texture[0];
+	delete m_texture[1];
+	m_texture[0] = NULL;
+	m_texture[1] = NULL;
+
 #ifndef NO_MOVIE
 	if ( m_movie )
 	{
