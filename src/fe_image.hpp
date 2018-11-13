@@ -86,6 +86,7 @@ public:
 
 	virtual void set_mipmap( bool )=0;
 	virtual bool get_mipmap() const=0;
+	virtual bool is_swf() const;
 
 	// function for use with surface objects
 	//
@@ -159,6 +160,7 @@ public:
 
 	void set_mipmap( bool );
 	bool get_mipmap() const;
+	bool is_swf() const;
 
 protected:
 	FeTextureContainer *get_derived_texture_container();

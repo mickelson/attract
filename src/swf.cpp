@@ -180,6 +180,9 @@ bool FeSwf::open_from_file( const std::string &file )
 	m_texture.create( m_imp->root->get_movie_width(),
 		m_imp->root->get_movie_height() );
 
+	m_texture.setSmooth( true );
+
+	m_context.setActive( true );
 	m_texture.setActive();
 
 	// alpha blending
@@ -226,6 +229,7 @@ const sf::Texture &FeSwf::get_texture() const
 
 bool FeSwf::tick()
 {
+	m_context.setActive( true );
 	return do_frame( true );
 }
 
@@ -252,6 +256,7 @@ bool FeSwf::do_frame( bool is_tick )
 	}
 
 	m_texture.display();
+	m_context.setActive( false );
 
 	return ( m_imp->root != NULL );
 }
