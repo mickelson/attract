@@ -24,7 +24,6 @@
 #define SWF_HPP
 
 #include <SFML/Graphics.hpp>
-#include "fe_util.hpp"
 
 struct FeSwfState;
 
@@ -53,9 +52,7 @@ private:
 
 	FeSwfState *m_imp;
 	sf::RenderTexture m_texture;
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 5, 0 ))
-	sf::Context context;
-#endif
+	sf::Context m_context;
 };
 
 #endif

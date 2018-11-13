@@ -181,9 +181,8 @@ bool FeSwf::open_from_file( const std::string &file )
 		m_imp->root->get_movie_height() );
 
 	m_texture.setSmooth( true );
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 5, 0 ))
-	context.setActive( true );
-#endif
+
+	m_context.setActive( true );
 	m_texture.setActive();
 
 	// alpha blending
@@ -230,14 +229,12 @@ const sf::Texture &FeSwf::get_texture() const
 
 bool FeSwf::tick()
 {
+	m_context.setActive( true );
 	return do_frame( true );
 }
 
 bool FeSwf::do_frame( bool is_tick )
 {
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 5, 0 ))
-	context.setActive( true );
-#endif
 	m_texture.setActive();
 	m_texture.clear( sf::Color::Transparent );
 
@@ -259,6 +256,7 @@ bool FeSwf::do_frame( bool is_tick )
 	}
 
 	m_texture.display();
+	m_context.setActive( false );
 
 	return ( m_imp->root != NULL );
 }

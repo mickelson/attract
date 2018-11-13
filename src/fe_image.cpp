@@ -1121,11 +1121,6 @@ bool FeSurfaceTextureContainer::get_mipmap() const
 	return false;
 }
 
-bool FeSurfaceTextureContainer::is_swf() const
-{
-	return false;
-}
-
 FePresentableParent *FeSurfaceTextureContainer::get_presentable_parent()
 {
 	return this;
