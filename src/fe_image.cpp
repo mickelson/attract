@@ -367,6 +367,7 @@ bool FeTextureContainer::load_with_ffmpeg(
 	else
 		m_movie_status = 1; // 1=on track to be played
 
+	m_texture.setSmooth( m_smooth );
 	m_file_name = loaded_name;
 	return true;
 }
@@ -437,6 +438,7 @@ bool FeTextureContainer::try_to_load(
 			}
 		}
 
+		m_swf->set_smooth( m_smooth );
 		m_file_name = loaded_name;
 		return true;
 	}
@@ -480,6 +482,7 @@ bool FeTextureContainer::try_to_load(
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
 			if ( m_mipmap ) m_texture.generateMipmap();
 #endif
+			m_texture.setSmooth( m_smooth );
 			m_file_name = loaded_name;
 			return true;
 		}
@@ -504,6 +507,7 @@ bool FeTextureContainer::try_to_load(
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
 			if ( m_mipmap ) m_texture.generateMipmap();
 #endif
+			m_texture.setSmooth( m_smooth );
 			m_file_name = loaded_name;
 			return true;
 		}
@@ -1028,6 +1032,7 @@ void FeTextureContainer::clear()
 
 void FeTextureContainer::set_smooth( bool s )
 {
+	m_smooth = s;
 #ifndef NO_SWF
 	if ( m_swf )
 		m_swf->set_smooth( s );
@@ -1037,14 +1042,14 @@ void FeTextureContainer::set_smooth( bool s )
 
 bool FeTextureContainer::get_smooth() const
 {
-	return m_texture.isSmooth();
+	return m_smooth;
 }
 
 void FeTextureContainer::set_mipmap( bool m )
 {
 	m_mipmap = m;
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
-	if ( m_mipmap && !m_movie) m_texture.generateMipmap();;
+	if ( m_mipmap && !m_movie) m_texture.generateMipmap();
 #endif
 }
 
