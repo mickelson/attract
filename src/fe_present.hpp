@@ -192,6 +192,8 @@ protected:
 	void set_layout_font( const char * );
 	void set_preserve_aspect_ratio( bool );
 
+	sf::Context *swf_context;
+
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
 	virtual ~FePresent( void );
@@ -260,6 +262,7 @@ public:
 			int filter_offset,
 			int index_offset );
 	static std::string script_get_base_path();
+	sf::Context *get_swf_context();
 
 	//
 	//

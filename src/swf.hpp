@@ -30,7 +30,7 @@ struct FeSwfState;
 class FeSwf
 {
 public:
-	FeSwf();
+	FeSwf( sf::Context &ctx );
 	~FeSwf();
 
 	bool open_from_file( const std::string &filename );
@@ -52,7 +52,7 @@ private:
 
 	FeSwfState *m_imp;
 	sf::RenderTexture m_texture;
-	sf::Context m_context;
+	sf::Context &m_context;
 };
 
 #endif

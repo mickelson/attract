@@ -398,8 +398,8 @@ bool FeTextureContainer::try_to_load(
 				return false;
 			}
 
-			m_swf = new FeSwf();
-
+			FePresent *fep = FePresent::script_get_fep();
+			m_swf = new FeSwf( *(fep)->get_swf_context() );
 			if (!m_swf->open_from_archive( path, filename ))
 			{
 				FeLog() << " ! ERROR loading SWF from archive: "
@@ -425,7 +425,8 @@ bool FeTextureContainer::try_to_load(
 				return false;
 			}
 
-			m_swf = new FeSwf();
+			FePresent *fep = FePresent::script_get_fep();
+			m_swf = new FeSwf( *(fep)->get_swf_context() );
 			if (!m_swf->open_from_file( loaded_name ))
 			{
 				FeLog() << " ! ERROR loading SWF: "

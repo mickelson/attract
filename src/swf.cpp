@@ -116,7 +116,8 @@ struct FeSwfState
 	FeZipStream *zip;
 };
 
-FeSwf::FeSwf()
+FeSwf::FeSwf( sf::Context &ctx ) :
+m_context ( ctx )
 {
 	open_swf();
 	m_imp = new FeSwfState();
@@ -191,12 +192,6 @@ bool FeSwf::open_from_file( const std::string &file )
 
 	glEnable( GL_LINE_SMOOTH );
 	glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
-
-	glMatrixMode( GL_PROJECTION );
-
-#ifndef USE_GLES
-	glOrtho( -1.f, 1.f, 1.f, -1.f, -1, 1 );
-#endif
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();

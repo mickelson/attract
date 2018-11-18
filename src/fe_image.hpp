@@ -164,6 +164,7 @@ public:
 
 protected:
 	FeTextureContainer *get_derived_texture_container();
+	sf::Context *m_swf_context;
 
 private:
 

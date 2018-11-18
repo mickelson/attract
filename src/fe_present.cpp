@@ -30,6 +30,13 @@
 #include "fe_blend.hpp"
 #include "zip.hpp"
 
+#ifdef USE_GLES
+#include <GLES/gl.h>
+#include <GLES/glext.h>
+#else
+#include <SFML/OpenGL.hpp>
+#endif
+
 #include <iostream>
 
 #ifndef NO_MOVIE
@@ -161,6 +168,13 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
 {
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	init_monitors();
+
+	swf_context = new sf::Context();
+	glMatrixMode( GL_PROJECTION );
+#ifndef USE_GLES
+	glOrtho( -1.f, 1.f, 1.f, -1.f, 1, -1 );
+#endif
+
 }
 
 void FePresent::init_monitors()
@@ -249,6 +263,8 @@ void FePresent::init_monitors()
 FePresent::~FePresent()
 {
 	clear();
+	delete swf_context;
+	swf_context = NULL;
 }
 
 void FePresent::clear()
@@ -1423,3 +1439,7 @@ std::string FePresent::script_get_base_path()
 	return path;
 }
 
+sf::Context *FePresent::get_swf_context()
+{
+	return swf_context;
+}
