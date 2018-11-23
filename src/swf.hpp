@@ -30,7 +30,7 @@ struct FeSwfState;
 class FeSwf
 {
 public:
-	FeSwf( sf::Context &ctx );
+	FeSwf();
 	~FeSwf();
 
 	bool open_from_file( const std::string &filename );
@@ -51,8 +51,8 @@ private:
 	bool do_frame( bool is_tick );
 
 	FeSwfState *m_imp;
-	sf::RenderTexture m_texture;
-	sf::Context &m_context;
+	sf::RenderTexture *m_texture;
+	sf::Context *m_context;
 };
 
 #endif

@@ -398,8 +398,7 @@ bool FeTextureContainer::try_to_load(
 				return false;
 			}
 
-			FePresent *fep = FePresent::script_get_fep();
-			m_swf = new FeSwf( *(fep)->get_swf_context() );
+			m_swf = new FeSwf();
 			if (!m_swf->open_from_archive( path, filename ))
 			{
 				FeLog() << " ! ERROR loading SWF from archive: "
@@ -425,8 +424,7 @@ bool FeTextureContainer::try_to_load(
 				return false;
 			}
 
-			FePresent *fep = FePresent::script_get_fep();
-			m_swf = new FeSwf( *(fep)->get_swf_context() );
+			m_swf = new FeSwf();
 			if (!m_swf->open_from_file( loaded_name ))
 			{
 				FeLog() << " ! ERROR loading SWF: "
@@ -746,7 +744,7 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
 #ifndef NO_SWF
-	if (( play_movies ) && ( m_swf ))
+	if (( play_movies ) && ( m_swf ) && !( m_video_flags & VF_NoAutoStart ))
 	{
 		return m_swf->tick();
 	}

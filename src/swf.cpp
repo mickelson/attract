@@ -22,6 +22,7 @@
 
 #include "swf.hpp"
 #include "zip.hpp"
+#include "fe_present.hpp"
 
 #include <base/tu_file.h>
 #include "gameswf/gameswf_types.h"
@@ -116,9 +117,12 @@ struct FeSwfState
 	FeZipStream *zip;
 };
 
-FeSwf::FeSwf( sf::Context &ctx ) :
-m_context ( ctx )
+FeSwf::FeSwf()
 {
+	FePresent *fep = FePresent::script_get_fep();
+	m_context = fep->get_swf_context();
+	m_context->setActive( true );
+	m_texture = new sf::RenderTexture();
 	open_swf();
 	m_imp = new FeSwfState();
 	m_imp->zip = NULL;
@@ -126,6 +130,10 @@ m_context ( ctx )
 
 FeSwf::~FeSwf()
 {
+	m_context->setActive( true );
+	delete m_texture;
+	m_texture = NULL;
+
 	// root and play need to be destroyed before m_imp->zip is deleted
 	//
 	m_imp->root = NULL;
@@ -140,6 +148,8 @@ FeSwf::~FeSwf()
 
 bool FeSwf::open_from_archive( const std::string &path, const std::string &file )
 {
+	m_context->setActive( true );
+	
 	if ( m_imp->zip )
 	{
 		m_imp->root = NULL;
@@ -161,6 +171,8 @@ bool FeSwf::open_from_archive( const std::string &path, const std::string &file 
 
 bool FeSwf::open_from_file( const std::string &file )
 {
+	m_context->setActive( true );
+	
 	m_imp->play = NULL;
 	m_imp->root = NULL;
 
@@ -178,13 +190,10 @@ bool FeSwf::open_from_file( const std::string &file )
 	if ( m_imp->root == NULL )
 		return false;
 
-	m_texture.create( m_imp->root->get_movie_width(),
+	m_texture->create( m_imp->root->get_movie_width(),
 		m_imp->root->get_movie_height() );
 
-	m_texture.setSmooth( true );
-
-	m_context.setActive( true );
-	m_texture.setActive();
+	m_texture->setActive( true );
 
 	// alpha blending
 	glEnable( GL_BLEND );
@@ -198,10 +207,6 @@ bool FeSwf::open_from_file( const std::string &file )
 
 	glDisable( GL_LIGHTING );
 
-#ifndef USE_GLES
-	glPushAttrib( GL_ALL_ATTRIB_BITS );
-#endif
-
 	m_imp->root->set_display_viewport( 0, 0,
 		m_imp->root->get_movie_width(),
 		m_imp->root->get_movie_height() );
@@ -209,29 +214,30 @@ bool FeSwf::open_from_file( const std::string &file )
 	m_imp->root->set_background_alpha( 0.0f );
 
 	do_frame( false );
+	
 	return true;
 }
 
 const sf::Vector2u FeSwf::get_size() const
 {
-	return m_texture.getSize();
+	return m_texture->getSize();
 }
 
 const sf::Texture &FeSwf::get_texture() const
 {
-	return m_texture.getTexture();
+	return m_texture->getTexture();
 }
 
 bool FeSwf::tick()
 {
-	m_context.setActive( true );
+	m_context->setActive( true );
+	m_texture->setActive( true );
 	return do_frame( true );
 }
 
 bool FeSwf::do_frame( bool is_tick )
 {
-	m_texture.setActive();
-	m_texture.clear( sf::Color::Transparent );
+	m_texture->clear( sf::Color::Transparent );
 
 	if ( m_imp->root != NULL )
 	{
@@ -250,13 +256,11 @@ bool FeSwf::do_frame( bool is_tick )
 		m_imp->root->display();
 	}
 
-	m_texture.display();
-	m_context.setActive( false );
-
+	m_texture->display();
 	return ( m_imp->root != NULL );
 }
 
 void FeSwf::set_smooth( bool s )
 {
-	m_texture.setSmooth( s );
+	m_texture->setSmooth( s );
 }
