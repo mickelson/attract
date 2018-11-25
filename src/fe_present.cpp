@@ -1256,16 +1256,17 @@ void FePresent::set_transforms()
 				(float) m_mon[0].size.y / m_layoutSize.x,
 				(float) m_mon[0].size.x / m_layoutSize.y );
 
-			float adjust_x = (m_layoutSize.y * m_layoutScale.x - m_mon[0].size.x) / 2;
-			float adjust_y = (m_layoutSize.x * m_layoutScale.y - m_mon[0].size.y) / 2;
+			float adjust_x = abs( m_layoutSize.y * m_layoutScale.x - m_mon[0].size.x ) / 2;
+			float adjust_y = abs( m_layoutSize.x * m_layoutScale.y - m_mon[0].size.y ) / 2;
+		
 			if ( actualRotation == FeSettings::RotateRight )
 			{
-				m_transform.translate( m_mon[0].size.x + adjust_x, adjust_y );
+				m_transform.translate( m_mon[0].size.x - adjust_x, adjust_y );
 				m_transform.rotate(90);
 			}
 			else
 			{
-				m_transform.translate( -adjust_x, m_mon[0].size.y - adjust_y );
+				m_transform.translate( adjust_x, m_mon[0].size.y - adjust_y );
 				m_transform.rotate(270);
 			}
 		}
