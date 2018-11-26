@@ -27,10 +27,30 @@
 
 class FeSettings;
 
+class FeWindowPosition : public FeBaseConfigurable
+{
+public:
+	sf::Vector2i m_pos;
+	sf::Vector2u m_size;
+
+	static const char *FILENAME;
+
+	FeWindowPosition( const sf::Vector2i &pos, const sf::Vector2u &size );
+
+	int process_setting( const std::string &setting,
+		const std::string &value,
+		const std::string &filename );
+
+	void save( const std::string &filename );
+};
+
 class FeWindow : public sf::RenderWindow
 {
 	friend void launch_callback( void *o );
 	friend void wait_callback( void *o );
+
+private:
+	int m_win_mode = 0;
 
 protected:
 	FeSettings &m_fes;

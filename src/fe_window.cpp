@@ -40,56 +40,47 @@
 
 #include <SFML/System/Sleep.hpp>
 
-class FeWindowPosition : public FeBaseConfigurable
+FeWindowPosition::FeWindowPosition( const sf::Vector2i &pos, const sf::Vector2u &size )
+	: m_pos( pos ),
+	m_size( size )
 {
-public:
-	sf::Vector2i m_pos;
-	sf::Vector2u m_size;
+}
 
-	static const char *FILENAME;
-
-	FeWindowPosition( const sf::Vector2i &pos, const sf::Vector2u &size )
-		: m_pos( pos ),
-		m_size( size )
+int FeWindowPosition::process_setting( const std::string &setting,
+	const std::string &value,
+	const std::string &filename )
+{
+	size_t pos=0;
+	std::string token;
+	if ( setting.compare( "position" ) == 0 )
 	{
+		token_helper( value, pos, token, "," );
+		m_pos.x = as_int( token );
+
+		token_helper( value, pos, token );
+		m_pos.y = as_int( token );
 	}
-
-	int process_setting( const std::string &setting,
-		const std::string &value,
-		const std::string &filename )
+	else if ( setting.compare( "size" ) == 0 )
 	{
-		size_t pos=0;
-		std::string token;
-		if ( setting.compare( "position" ) == 0 )
-		{
-			token_helper( value, pos, token, "," );
-			m_pos.x = as_int( token );
+		token_helper( value, pos, token, "," );
+		m_size.x = as_int( token );
 
-			token_helper( value, pos, token );
-			m_pos.y = as_int( token );
-		}
-		else if ( setting.compare( "size" ) == 0 )
-		{
-			token_helper( value, pos, token, "," );
-			m_size.x = as_int( token );
-
-			token_helper( value, pos, token );
-			m_size.y = as_int( token );
-		}
-		return 1;
-	};
-
-	void save( const std::string &filename )
-	{
-		nowide::ofstream outfile( filename.c_str() );
-		if ( outfile.is_open() )
-		{
-			outfile << "position " << m_pos.x << "," << m_pos.y << std::endl;
-			outfile << "size " << m_size.x << "," << m_size.y << std::endl;
-		}
-		outfile.close();
+		token_helper( value, pos, token );
+		m_size.y = as_int( token );
 	}
+	return 1;
 };
+
+void FeWindowPosition::save( const std::string &filename )
+{
+	nowide::ofstream outfile( filename.c_str() );
+	if ( outfile.is_open() )
+	{
+		outfile << "position " << m_pos.x << "," << m_pos.y << std::endl;
+		outfile << "size " << m_size.x << "," << m_size.y << std::endl;
+	}
+	outfile.close();
+}
 
 bool is_multimon_config( FeSettings &fes )
 {
@@ -183,34 +174,40 @@ void FeWindow::initial_create()
 		sf::Style::None			// FeSettings::WindowNoBorder
 	};
 
-	int win_mode = m_fes.get_window_mode();
+	m_win_mode = m_fes.get_window_mode();
 
 #ifdef USE_XINERAMA
-	if ( is_multimon_config( m_fes ) && ( win_mode != FeSettings::Default ))
+	if ( is_multimon_config( m_fes ) && ( m_win_mode != FeSettings::Default ))
 		FeLog() << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
 #endif
 
 	// Create window
 	FeDebug() << "Creating Attract-Mode window" << std::endl;
 
+	FeWindowPosition win_pos(
+		sf::Vector2i( 0, 0 ),
+		sf::Vector2u( 480, 320 ) );
+
+	win_pos.load_from_file( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
+	sf::VideoMode video_mode;
+
+	if ( is_windowed_mode( m_win_mode ))
+		video_mode = sf::VideoMode( win_pos.m_size.x, win_pos.m_size.y, sf::VideoMode::getDesktopMode().bitsPerPixel );
+	else 
+		video_mode = sf::VideoMode::getDesktopMode();
+
 	create(
-		sf::VideoMode::getDesktopMode(),
+		video_mode,
 		"Attract-Mode",
-		style_map[ win_mode ] );
+		style_map[ m_win_mode ] );
 
-	if ( is_windowed_mode( win_mode ) )
+	if ( is_windowed_mode( m_win_mode ) )
 	{
-		FeWindowPosition win_pos(
-			sf::Vector2i( 0, 0 ),
-			sf::Vector2u( 480, 320 ) );
-
-		win_pos.load_from_file( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
-
 		setPosition( win_pos.m_pos );
 		setSize( win_pos.m_size );
 	}
 #ifdef SFML_SYSTEM_MACOS
-	else if ( win_mode == FeSettings::Default )
+	else if ( m_win_mode == FeSettings::Default )
 	{
 		osx_hide_menu_bar();
 		setPosition( sf::Vector2i( 0, 0 ) );
@@ -484,7 +481,7 @@ bool FeWindow::run()
 
 void FeWindow::on_exit()
 {
-	if ( is_windowed_mode( m_fes.get_window_mode() ) )
+	if ( is_windowed_mode( m_win_mode ) )
 	{
 		FeWindowPosition win_pos( getPosition(), getSize() );
 		win_pos.save( m_fes.get_config_dir() + FeWindowPosition::FILENAME );

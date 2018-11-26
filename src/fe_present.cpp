@@ -21,6 +21,7 @@
  */
 
 #include "fe_present.hpp"
+#include "fe_window.hpp"
 #include "fe_util.hpp"
 #include "fe_image.hpp"
 #include "fe_text.hpp"
@@ -232,10 +233,17 @@ void FePresent::init_monitors()
 	else
 #endif
 	{
-		//
-		// Where there is no multi-monitor support, we just use the desktop dimensions returned by SFML
-		//
-		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+		FeWindowPosition win_pos(
+			sf::Vector2i( 0, 0 ),
+			sf::Vector2u( 480, 320 ) );
+			
+		win_pos.load_from_file( m_feSettings->get_config_dir() + FeWindowPosition::FILENAME );
+		sf::VideoMode vm;
+		
+		if ( is_windowed_mode( m_feSettings->get_window_mode() ))
+			vm = sf::VideoMode( win_pos.m_size.x, win_pos.m_size.y, sf::VideoMode::getDesktopMode().bitsPerPixel );
+		else 
+			vm = sf::VideoMode::getDesktopMode();
 
 		FeMonitor mc( 0, vm.width, vm.height );
 		m_mon.push_back( mc );
