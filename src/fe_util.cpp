@@ -822,14 +822,18 @@ namespace
 		const FeInputMapEntry &hotkey )
 
 	{
+		const int TIMEOUT_MS = 5000;
+
 		// Check for key down
 		//
 		if ( !hotkey.get_current_state( opt->joy_thresh ) )
 			return false;
 
-		// If down, wait for key release
+		// If down, wait for key release (or timeout)
 		//
-		while ( hotkey.get_current_state( opt->joy_thresh ) )
+		sf::Clock t;
+		while (( hotkey.get_current_state( opt->joy_thresh ) )
+			&& ( t.getElapsedTime().asMilliseconds() < TIMEOUT_MS ))
 		{
 			if ( opt->wait_cb )
 				opt->wait_cb( opt->launch_opaque );
@@ -873,7 +877,7 @@ void windows_wait_process(
 	while (keep_wait)
 	{
 		switch (MsgWaitForMultipleObjects(1, &hProcess,
-						FALSE, timeout, 0))
+						FALSE, timeout, QS_ALLINPUT ))
 		{
 		case WAIT_OBJECT_0:
 			keep_wait=false;
@@ -1184,7 +1188,7 @@ bool run_program( const std::string &prog,
 	if ( opt->launch_cb )
 		opt->launch_cb( opt->launch_opaque );
 
-	if ( block )
+	if ( block && ( NULL == callback ))
 		windows_wait_process( pi.hProcess, pi.dwProcessId, opt );
 
 	CloseHandle( pi.hProcess );
