@@ -21,7 +21,6 @@
  */
 
 #include "fe_present.hpp"
-#include "fe_window.hpp"
 #include "fe_util.hpp"
 #include "fe_image.hpp"
 #include "fe_text.hpp"
@@ -145,9 +144,10 @@ int FeMonitor::get_num()
 	return num;
 }
 
-FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
+FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWindow &wnd )
 	: m_feSettings( fesettings ),
 	m_currentFont( &defaultfont ),
+	m_window( wnd ),
 	m_defaultFont( defaultfont ),
 	m_baseRotation( FeSettings::RotateNone ),
 	m_toggleRotation( FeSettings::RotateNone ),
@@ -233,19 +233,7 @@ void FePresent::init_monitors()
 	else
 #endif
 	{
-		FeWindowPosition win_pos(
-			sf::Vector2i( 0, 0 ),
-			sf::Vector2u( 480, 320 ) );
-			
-		win_pos.load_from_file( m_feSettings->get_config_dir() + FeWindowPosition::FILENAME );
-		sf::VideoMode vm;
-		
-		if ( is_windowed_mode( m_feSettings->get_window_mode() ))
-			vm = sf::VideoMode( win_pos.m_size.x, win_pos.m_size.y, sf::VideoMode::getDesktopMode().bitsPerPixel );
-		else 
-			vm = sf::VideoMode::getDesktopMode();
-
-		FeMonitor mc( 0, vm.width, vm.height );
+		FeMonitor mc( 0, m_window.getSize().x, m_window.getSize().y );
 		m_mon.push_back( mc );
 	}
 

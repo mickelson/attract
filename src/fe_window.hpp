@@ -50,7 +50,7 @@ class FeWindow : public sf::RenderWindow
 	friend void wait_callback( void *o );
 
 private:
-	int m_win_mode = 0;
+	int m_win_mode;
 
 protected:
 	FeSettings &m_fes;

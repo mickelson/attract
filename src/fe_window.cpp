@@ -93,7 +93,8 @@ const char *FeWindowPosition::FILENAME = "window.am";
 FeWindow::FeWindow( FeSettings &fes )
 	: m_fes( fes ),
 	m_running_pid( 0 ),
-	m_running_wnd( NULL )
+	m_running_wnd( NULL ),
+	m_win_mode( 0 )
 {
 }
 
