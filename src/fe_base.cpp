@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-2016 Andrew Mickelson
+ *  Copyright (C) 2013-2018 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -187,13 +187,15 @@ void FeBaseConfigurable::invalid_setting(
 	FeLog() << ".";
 
 	int i=0;
-	if (valid1[i])
+	if ( valid1 && valid1[i] )
+	{
 		FeLog() << "  Valid " << label <<"s are: " << valid1[i++];
 
-	while (valid1[i])
-		FeLog() << ", " << valid1[i++];
+		while (valid1[i])
+			FeLog() << ", " << valid1[i++];
+	}
 
-	if ( valid2 != NULL )
+	if ( valid2 )
 	{
 		i=0;
 		while (valid2[i])

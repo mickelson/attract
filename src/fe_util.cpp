@@ -822,14 +822,18 @@ namespace
 		const FeInputMapEntry &hotkey )
 
 	{
+		const int TIMEOUT_MS = 5000;
+
 		// Check for key down
 		//
 		if ( !hotkey.get_current_state( opt->joy_thresh ) )
 			return false;
 
-		// If down, wait for key release
+		// If down, wait for key release (or timeout)
 		//
-		while ( hotkey.get_current_state( opt->joy_thresh ) )
+		sf::Clock t;
+		while (( hotkey.get_current_state( opt->joy_thresh ) )
+			&& ( t.getElapsedTime().asMilliseconds() < TIMEOUT_MS ))
 		{
 			if ( opt->wait_cb )
 				opt->wait_cb( opt->launch_opaque );
@@ -873,7 +877,7 @@ void windows_wait_process(
 	while (keep_wait)
 	{
 		switch (MsgWaitForMultipleObjects(1, &hProcess,
-						FALSE, timeout, 0))
+						FALSE, timeout, QS_ALLINPUT ))
 		{
 		case WAIT_OBJECT_0:
 			keep_wait=false;
@@ -1184,7 +1188,7 @@ bool run_program( const std::string &prog,
 	if ( opt->launch_cb )
 		opt->launch_cb( opt->launch_opaque );
 
-	if ( block )
+	if ( block && ( NULL == callback ))
 		windows_wait_process( pi.hProcess, pi.dwProcessId, opt );
 
 	CloseHandle( pi.hProcess );
@@ -1425,20 +1429,19 @@ std::basic_string<sf::Uint32> clipboard_get_content()
 // namespace (Window, etc) clashes with the SFML namespace used in fe_window
 // (sf::Window)
 //
-void get_x11_geometry( bool multimon, int &x, int &y, int &width, int &height )
+void get_x11_multimon_geometry( int &x, int &y, unsigned int &width, unsigned int &height )
 {
 	x=0;
 	y=0;
 	width=0;
 	height=0;
 
+#ifdef USE_XINERAMA
 	::Display *xdisp = XOpenDisplay( NULL );
 	int num=0;
 
-#ifdef USE_XINERAMA
 	XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
-
-	if ( multimon )
+	if ( num > 0 ) // num is 0 if xinerama is not active
 	{
 		if ( num > 1 )
 		{
@@ -1448,23 +1451,40 @@ void get_x11_geometry( bool multimon, int &x, int &y, int &width, int &height )
 
 		for ( int i=0; i<num; i++ )
 		{
-			width = std::max( width, si[i].x_org + si[i].width );
-			height = std::max( height, si[i].y_org + si[i].height );
+			width = std::max( (int)width, si[i].x_org + si[i].width );
+			height = std::max( (int)height, si[i].y_org + si[i].height );
 		}
 	}
 	else
+		get_x11_primary_screen_size( width, height );
+
+	XFree( si );
+	XCloseDisplay( xdisp );
+#else
+	get_x11_primary_screen_size( width, height );
+#endif
+}
+
+void get_x11_primary_screen_size( unsigned int &width, unsigned int &height )
+{
+	::Display *xdisp = XOpenDisplay( NULL );
+	::Screen *xscreen = XDefaultScreenOfDisplay( xdisp );
+
+	width = XWidthOfScreen( xscreen );
+	height = XHeightOfScreen( xscreen );
+
+#ifdef USE_XINERAMA
+	int num=0;
+	XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
+
+	if ( num > 0 )
 	{
 		width = si[0].width;
 		height = si[0].height;
 	}
 
 	XFree( si );
-#else
-	::Screen *xscreen = XDefaultScreenOfDisplay( xdisp );
-	width = XWidthOfScreen( xscreen );
-	height = XHeightOfScreen( xscreen );
 #endif
-
 	XCloseDisplay( xdisp );
 }
 

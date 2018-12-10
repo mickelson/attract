@@ -509,9 +509,28 @@ int FeSettings::process_setting( const std::string &setting,
 			{
 				if ( set_info( i, value ) == false )
 				{
+					const char **valid = NULL;
+					switch ( i )
+					{
+						case WindowMode:
+							valid = windowModeTokens;
+							break;
+
+						case FilterWrapMode:
+							valid = filterWrapTokens;
+							break;
+
+						case StartupMode:
+							valid = startupTokens;
+							break;
+
+						default:
+							break;
+					}
+
 					invalid_setting( fn,
 						configSettingStrings[i],
-						value, NULL, NULL, "value" );
+						value, valid, NULL, "value" );
 					return 1;
 				}
 				return 0;
