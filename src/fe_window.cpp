@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2013-2016 Andrew Mickelson
+ *  Copyright (C) 2013-2018 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *
@@ -114,57 +114,6 @@ FeWindow::~FeWindow()
 
 void FeWindow::onCreate()
 {
-#ifdef SFML_SYSTEM_WINDOWS
-	//
-	// Windows Notes:
-	//
-	// Out present strategy with Windows is to stick with the WS_POPUP window style for our
-	// window.  SFML seems to always create windows with this style
-	//
-	// In previous FE versions, the WS_POPUP style was causing grief switching to MAME.
-	// It also looked clunky/flickery when transitioning between frontend and emulator.
-	// More recent tests suggest these WS_POPUP problems have gone away (fingers crossed)
-	//
-	// With Windows 10 v1607, it seems that the WS_POPUP style is required in order for a
-	// window to be drawn over the taskbar.
-	//
-	// Windows API call to undo the WS_POPUP Style.  Seems to require a ShowWindow() call
-	// afterwards to take effect:
-	//
-	//		SetWindowLongPtr( getSystemHandle(), GWL_STYLE,
-	//			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
-	//
-	if ( is_multimon_config( m_fes ) )
-	{
-		// Note that as of 2.1, SFML caches the window size internally
-		setPosition( sf::Vector2i(
-			GetSystemMetrics( SM_XVIRTUALSCREEN ),
-			GetSystemMetrics( SM_YVIRTUALSCREEN ) ) );
-
-		setSize( sf::Vector2u(
-			GetSystemMetrics( SM_CXVIRTUALSCREEN ),
-			GetSystemMetrics( SM_CYVIRTUALSCREEN ) ) );
-	}
-
-#elif defined(USE_XLIB)
-	//
-	// Notes: if xinerama and multimon are enabled, this should set our window to cover all available
-	// monitors
-	//
-	// If multimon is disabled, this fixes positioning problems that SFML(?) seems to have where
-	// the window contents aren't drawn in the correct place vertically on fullscreen/fillscreen modes
-	//
-	int x, y, width, height;
-	get_x11_geometry(
-		is_multimon_config( m_fes ),
-		x, y, width, height );
-
-	// Note that as of 2.1, SFML caches the window size internally
-	setPosition( sf::Vector2i( x, y ) );
-	setSize( sf::Vector2u( width, height ) );
-
-#endif
-
 	setVerticalSyncEnabled(true);
 	setKeyRepeatEnabled(false);
 	setMouseCursorVisible(false);
@@ -183,20 +132,120 @@ void FeWindow::initial_create()
 		sf::Style::None			// FeSettings::WindowNoBorder
 	};
 
+	sf::VideoMode vm = sf::VideoMode::getDesktopMode(); // width/height/bpp of OpenGL surface to create
+
+	sf::Vector2i wpos( 0, 0 );  // position to set window to
+
+	bool do_multimon = is_multimon_config( m_fes );
 	int win_mode = m_fes.get_window_mode();
 
-#ifdef USE_XINERAMA
-	if ( is_multimon_config( m_fes ) && ( win_mode != FeSettings::Default ))
-		FeLog() << " ! NOTE: Use the 'Fill Screen' window mode if you want multiple monitor support to function correctly" << std::endl;
+#if defined(USE_XLIB)
+
+	if ( !do_multimon && ( win_mode != FeSettings::Fullscreen ))
+	{
+		// If we aren't doing multimonitor mode (it isn't configured or we are in a window)
+		// then use the primary screen size as our OpenGL surface size and 'fillscreen' window
+		// size.
+		//
+		// We don't do this on "Fullscreen Mode", which has to be set to a valid videomode
+		// returned by SFML.
+
+		// Known issue: Linux Mint 18.3 Cinnamon w/ SFML 2.5.1, w/ fullscreen and multimon disabled:
+		// SFML fullscreen is extended across all monitors but positioned incorrectly
+		// (it is positioned to accomodate window decoration that isn't there).  setPosition()
+		// doesn't work
+		//
+		get_x11_primary_screen_size( vm.width, vm.height );
+	}
+	else
+	{
+		// In testing on Linux Mint Cinnamon 18.3 w/ SFML 2.5.1, this call to get_x11_multimon_geometry()
+		// isn't needed and multimon works without any further repositioning of our window.  I'm
+		// keeping it though because it has been needed historically (earlier versions of SFML,
+		// other window managers etc) and it seems to lead to the same results
+		//
+		get_x11_multimon_geometry( wpos.x, wpos.y, vm.width, vm.height );
+	}
+
+#elif defined(SFML_SYSTEM_WINDOWS)
+
+	//
+	// Windows General Notes:
+	//
+	// Out present strategy with Windows is to stick with the WS_POPUP window style for our
+	// window.  SFML seems to always create windows with this style
+	//
+	// In previous FE versions, the WS_POPUP style was causing grief switching to MAME.
+	// It also looked clunky/flickery when transitioning between frontend and emulator.
+	// More recent tests suggest these WS_POPUP problems have gone away (fingers crossed)
+	//
+	// With Windows 10 v1607, it seems that the WS_POPUP style is required in order for a
+	// window to be drawn over the taskbar.
+	//
+	// Windows API call to undo the WS_POPUP Style.  Seems to require a ShowWindow() call
+	// afterwards to take effect:
+	//
+	//		SetWindowLongPtr( getSystemHandle(), GWL_STYLE,
+	//			WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
+	//
+
+	//
+	//
+	if ( do_multimon
+			&& ( win_mode == FeSettings::Fullscreen )
+			&& ( GetSystemMetrics( SM_CMONITORS ) > 1 ) )
+	{
+		//
+		// Tested on Windows 10 w/ SFML 2.5.1 - SFML seems to be forcing the window to being the primary
+		// monitor size notwithstanding that we tell it to use bigger (i.e. full multimon desktop) dimensions.
+		//
+		// As a workaround we force 'Fill Screen' mode here, since the user seems to want multimon to work and we
+		// have detected that multiple monitors are available
+		//
+		FeLog() << " ! NOTE: Switching to 'Fill Screen' window mode (required for multiple monitor support)." << std::endl;
+		win_mode = FeSettings::Default;
+	}
+
+	// Cover all available monitors with our window in multimonitor config
+	//
+	if ( do_multimon )
+	{
+		wpos.x = GetSystemMetrics( SM_XVIRTUALSCREEN );
+		wpos.y = GetSystemMetrics( SM_YVIRTUALSCREEN );
+
+		vm.width = GetSystemMetrics( SM_CXVIRTUALSCREEN );
+		vm.height = GetSystemMetrics( SM_CYVIRTUALSCREEN );
+	}
+
+	// Some Windows users are reporting emulators hanging/failing to get focus when launched
+	// from 'fullscreen' (fullscreen mode, fillscreen where window dimensions = screen dimensions)
+	// They also report that the same emulator does work when Attract-Mode is in one of its windowed
+	// modes.
+	//
+	// We work around this issue for these users by having the default "fillscreen" mode actually
+	// extend 1 pixel offscreen in each direction (-1, -1, scr_width+2, scr_height+2).  The expectation
+	// is that this will prevent Windows from giving the frontend window the "fullscreen mode" treatment
+	// which seems to be the cause of this issue.  This is actually the same behaviour that earlier
+	// versions of Attract-Mode had (first by design, then by accident).
+	//
+	if ( win_mode == FeSettings::Default )
+	{
+		wpos.x -= 1;
+		wpos.y -= 1;
+		vm.width += 2;
+		vm.height += 2;
+	}
 #endif
 
+	//
 	// Create window
-	FeDebug() << "Creating Attract-Mode window" << std::endl;
+	//
+	create( vm, "Attract-Mode", style_map[ win_mode ] );
 
-	create(
-		sf::VideoMode::getDesktopMode(),
-		"Attract-Mode",
-		style_map[ win_mode ] );
+	//
+	// Set Size and position of window in window manager
+	//
+	sf::Vector2u wsize( vm.width, vm.height ); // default wsize = OpenGL surface size
 
 	if ( is_windowed_mode( win_mode ) )
 	{
@@ -206,29 +255,37 @@ void FeWindow::initial_create()
 
 		win_pos.load_from_file( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
 
-		setPosition( win_pos.m_pos );
-		setSize( win_pos.m_size );
+		wpos = win_pos.m_pos;
+		wsize = win_pos.m_size;
 	}
+
 #ifdef SFML_SYSTEM_MACOS
-	else if ( win_mode == FeSettings::Default )
+	if ( win_mode == FeSettings::Default )
 	{
+		// note ordering req: pretty sure this needs to be before the setPosition() call below
 		osx_hide_menu_bar();
-		setPosition( sf::Vector2i( 0, 0 ) );
 	}
 #endif
+
+	// Known issue: Linux Mint 18.3 Cinnamon w/ SFML 2.5.1, position isn't being set
+	// (Window always winds up at 0,0)
+	setPosition( wpos );
+	setSize( wsize );
+
+	FeDebug() << "Created Attract-Mode Window: " << wsize.x << "x" << wsize.y << " @ "
+		<< wpos.x << "," << wpos.y << " [OpenGL surface: "
+		<< vm.width << "x" << vm.height << " bpp=" << vm.bitsPerPixel << "]" << std::endl;
 
 #ifdef SFML_SYSTEM_WINDOWS
 	SetForegroundWindow( getSystemHandle() );
 	LockSetForegroundWindow( LSFW_LOCK );
 #endif
 
-	sf::Vector2u wsize = getSize();
 	m_fes.init_mouse_capture( wsize.x, wsize.y );
 
 	// Only mess with the mouse position if mouse moves mapped
 	if ( m_fes.test_mouse_reset( 0, 0 ) )
 		sf::Mouse::setPosition( sf::Vector2i( wsize.x / 2, wsize.y / 2 ), *this );
-
 }
 
 void launch_callback( void *o )
@@ -263,7 +320,7 @@ void wait_callback( void *o )
 				return;
 		}
 		// Clear the frame buffer so there is no stale frame flashing on game launch/exit
-		// Don't clear if Multimonitor is enabled and window mode is set to Fill Screen
+		// Don't clear if Multimonitor is enabled
 		if ( !is_multimon_config( win->m_fes ) )
 		{
 			win->clear();

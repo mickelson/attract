@@ -282,7 +282,8 @@ std::basic_string<sf::Uint32> clipboard_get_content();
 // (sf::Window)
 //
 #if defined(USE_XLIB)
-void get_x11_geometry( bool multimon, int &, int &, int &, int & );
+void get_x11_multimon_geometry( int &x, int &y, unsigned int &width, unsigned int &height );
+void get_x11_primary_screen_size( unsigned int &width, unsigned int &height );
 
 // set foreground window to the specified window.
 void set_x11_foreground_window( unsigned long w );
