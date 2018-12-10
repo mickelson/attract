@@ -37,6 +37,10 @@
 #include <Audio/AudioDevice.hpp>
 #endif
 
+#ifdef USE_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 
 #include <windows.h>
@@ -52,6 +56,10 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 
 	mon.transform = sf::Transform().translate( mon_rect->left, mon_rect->top );
 
+	FeDebug() << "Multimon: monitor #" << monitors->size()
+		<< ": " << mon.size.x << "x" << mon.size.y << " @ "
+		<< mon_rect->left << "," << mon_rect->top << std::endl;
+
 	// make sure primary monitor is first in m_mon vector
 	//
 	if (( mon_rect->left == 0 ) && ( mon_rect->top == 0 ))
@@ -61,10 +69,6 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 
 	return TRUE;
 }
-#endif
-
-#ifdef USE_XINERAMA
-#include <X11/extensions/Xinerama.h>
 #endif
 
 FeFontContainer::FeFontContainer()
@@ -183,8 +187,20 @@ void FePresent::init_monitors()
 		// The Windows virtual screen can have a negative valued top left corner, whereas in SFML we
 		// always have a 0,0 top left.  So we correct the transforms in m_mon to SFML's coordinates now.
 		//
-		sf::Transform correction = sf::Transform().translate( -GetSystemMetrics( SM_XVIRTUALSCREEN ),
-																				-GetSystemMetrics( SM_YVIRTUALSCREEN ) );
+		int translate_x = -GetSystemMetrics( SM_XVIRTUALSCREEN );
+		int translate_y = -GetSystemMetrics( SM_YVIRTUALSCREEN );
+
+		//
+		// On Windows 'Fill screen' mode our window is offscreen 1 pixel in each direction, so correct
+		// for that here to align draw area with screen
+		//
+		if ( m_feSettings->get_window_mode() == FeSettings::Default )
+		{
+			translate_x += 1;
+			translate_y += 1;
+		}
+
+		sf::Transform correction = sf::Transform().translate( translate_x, translate_y );
 
 		for ( std::vector<FeMonitor>::iterator itr=m_mon.begin(); itr!=m_mon.end(); ++itr )
 			(*itr).transform *= correction;
@@ -213,6 +229,10 @@ void FePresent::init_monitors()
 						si[i].x_org,
 						si[i].y_org );
 
+					FeDebug() << "Multimon: monitor #" << si[i].screen_number
+						<< ": " << mon.size.x << "x" << mon.size.y << " @ "
+						<< si[i].x_org << "," << si[i].y_org << std::endl;
+
 					m_mon.push_back( mon );
 				}
 			}
@@ -239,6 +259,18 @@ void FePresent::init_monitors()
 		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
 
 		FeMonitor mc( 0, vm.width, vm.height );
+
+#ifdef SFML_SYSTEM_WINDOWS
+		//
+		// On Windows 'Fill screen' mode our window is offscreen 1 pixel in each direction, so correct
+		// for that here to align draw area with screen.
+		//
+		if ( m_feSettings->get_window_mode() == FeSettings::Default )
+		{
+			mc.transform = sf::Transform().translate( 1, 1 );
+		}
+#endif
+
 		m_mon.push_back( mc );
 	}
 

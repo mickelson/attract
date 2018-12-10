@@ -34,7 +34,6 @@ matrix:
   - os: linux
     dist: xenial
     sudo: required
-    env: BUILD_PKG=yes
   exclude:
   - os: osx
     compiler: gcc
@@ -46,7 +45,6 @@ script:
 - make -j8
 before_deploy:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then util/osx/create-pkg.sh; fi
-- if [ "$BUILD_PKG" == "yes" ]; then dpkg-buildpackage -us -uc; fi
 deploy:
   provider: releases
   api_key:
@@ -54,9 +52,8 @@ deploy:
   file_glob: true
   file:
   - attract-*.dmg
-  - ../attract*.deb
   skip_cleanup: true
   on:
     tags: true
     repo: mickelson/attract
-    condition: $TRAVIS_OS_NAME = osx || $BUILD_PKG = yes
+    condition: $TRAVIS_OS_NAME = osx
