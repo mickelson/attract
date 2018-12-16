@@ -143,6 +143,7 @@ public:
 	virtual ~FeBaseStream();
 
 	bool at_end;					// set when at the end of our input
+	bool far_behind;
 	AVCodecContext *codec_ctx;
 	AVCodec *codec;
 	int stream_id;
@@ -199,6 +200,7 @@ private:
 public:
 	bool run_video_thread;
 	sf::Time time_base;
+	sf::Time max_sleep;
 	sf::Clock video_timer;
 	sf::Texture *display_texture;
 	SwsContext *sws_ctx;
@@ -259,6 +261,7 @@ void FeMediaImp::close()
 
 FeBaseStream::FeBaseStream()
 	: at_end( false ),
+	far_behind( false ),
 	codec_ctx( NULL ),
 	codec( NULL ),
 	stream_id( -1 )
@@ -277,6 +280,7 @@ FeBaseStream::~FeBaseStream()
 
 	codec = NULL;
 	at_end = false;
+	far_behind = false;
 	stream_id = -1;
 }
 
@@ -284,6 +288,7 @@ void FeBaseStream::stop()
 {
 	clear_packet_queue();
 	at_end=false;
+	far_behind = false;
 }
 
 AVPacket *FeBaseStream::pop_packet()
@@ -588,8 +593,6 @@ void FeVideoImp::preload()
 
 void FeVideoImp::video_thread()
 {
-	sf::Time max_sleep = time_base / (sf::Int64)2;
-
 	const int QMAX = 16;
 	const int QMIN = 0;
 	int qscore( 10 ); // quality scoring
@@ -601,6 +604,8 @@ void FeVideoImp::video_thread()
 	int64_t prev_pts = 0;
 	int64_t prev_duration = 0;
 
+	sf::Time wait_time;
+
 	if ((!sws_ctx) || (!rgba_buffer[0]))
 	{
 		FeLog() << "Error initializing video thread" << std::endl;
@@ -610,12 +615,26 @@ void FeVideoImp::video_thread()
 	while ( run_video_thread )
 	{
 		bool do_process = true;
+
+		//
+		// If we are falling behind for more than 2 seconds
+		// it can only mean that we are in suspend/hibernation state,
+		// so we flag the video to be restarted on the next tick.
+		// This prevents displaying only keyframes for several seconds on wake.
+		//
+		if ( wait_time < sf::seconds( -2.0f ) )
+		{
+			wait_time = sf::seconds( 0 );
+			far_behind = true;
+			run_video_thread = false;
+		}
+
 		//
 		// First, display queued frame
 		//
 		if ( detached_frame )
 		{
-			sf::Time wait_time = (sf::Int64)detached_frame->pts * time_base
+			wait_time = (sf::Int64)detached_frame->pts * time_base
 					- m_parent->get_video_time();
 
 			if ( wait_time < max_sleep )
@@ -863,6 +882,9 @@ void FeMedia::close()
 
 bool FeMedia::is_playing()
 {
+	if ((m_video) && (m_video->far_behind))
+		return false;
+
 	if ((m_video) && (!m_video->at_end))
 		return (m_video->run_video_thread);
 
@@ -1065,6 +1087,8 @@ bool FeMedia::open( const std::string &archive,
 				m_video->codec = dec;
 				m_video->time_base = sf::seconds(
 						av_q2d(m_imp->m_format_ctx->streams[stream_id]->time_base) );
+
+				m_video->max_sleep = sf::seconds( 0.5 / av_q2d(m_imp->m_format_ctx->streams[stream_id]->r_frame_rate));
 
 				float aspect_ratio = 1.0;
 				if ( codec_ctx->sample_aspect_ratio.num != 0 )
