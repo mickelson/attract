@@ -248,9 +248,16 @@ namespace
 			temp += nv;
 			temp += ";";
 
-			Sqrat::Script sc;
-			sc.CompileString( temp );
-			sc.Run();
+			try
+			{
+				Sqrat::Script sc;
+				sc.CompileString( temp );
+				sc.Run();
+			}
+			catch ( Sqrat::Exception e )
+			{
+				FeLog() << "Error compiling " << name << " string: [" << nv << "] - " << e.Message() << std::endl;
+			}
 		}
 	}
 };
@@ -700,6 +707,7 @@ bool FeVM::on_new_layout()
 	fe.Bind( _SC("Text"),
 		DerivedClass<FeText, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("msg"), &FeText::get_string, &FeText::set_string )
+		.Prop(_SC("msg_wrapped"), &FeText::get_string_wrapped )
 		.Prop(_SC("bg_red"), &FeText::get_bgr, &FeText::set_bgr )
 		.Prop(_SC("bg_green"), &FeText::get_bgg, &FeText::set_bgg )
 		.Prop(_SC("bg_blue"), &FeText::get_bgb, &FeText::set_bgb )
