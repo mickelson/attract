@@ -587,6 +587,17 @@ int FeTextPrimative::getFirstLineHint() const
 	return m_first_line;
 }
 
+const char *FeTextPrimative::getStringWrapped()
+{
+	std::string str;
+	for ( unsigned int i=0; i < m_texts.size(); i++ )
+	{
+		str += m_texts[i].getString();
+		str += "\n";
+	}
+	return str.c_str();
+}
+
 void FeTextPrimative::draw( sf::RenderTarget &target, sf::RenderStates states ) const
 {
 	if ( m_needs_pos_set )

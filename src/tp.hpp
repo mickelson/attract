@@ -99,6 +99,7 @@ public:
 	int getStyle() const;
 	int getFirstLineHint() const;
 	const sf::Vector2f &getTextScale() const;
+	const char *getStringWrapped();
 
 	int getActualWidth(); // return the width of the actual text
 

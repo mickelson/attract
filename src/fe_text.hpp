@@ -76,6 +76,7 @@ public:
 
 	const char *get_string();
 	void set_string(const char *s);
+	const char *get_string_wrapped();
 
 	int get_actual_width() { return m_draw_text.getActualWidth(); };
 
