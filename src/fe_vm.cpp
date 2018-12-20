@@ -248,9 +248,16 @@ namespace
 			temp += nv;
 			temp += ";";
 
-			Sqrat::Script sc;
-			sc.CompileString( temp );
-			sc.Run();
+			try
+			{
+				Sqrat::Script sc;
+				sc.CompileString( temp );
+				sc.Run();
+			}
+			catch ( Sqrat::Exception e )
+			{
+				FeLog() << "Error compiling " << name << " string: [" << nv << "] - " << e.Message() << std::endl;
+			}
 		}
 	}
 };
