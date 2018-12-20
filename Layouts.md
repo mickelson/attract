@@ -1618,6 +1618,7 @@ otherwise instantiated in a script.
 Properties:
    * `msg` - Get/set the text label's message.  Magic tokens can be used here,
      see [Magic Tokens](#magic) for more information.
+   * `msg_wrapped` - Get the text label's message after word wrapping.
    * `x` - Get/set x position of top left corner (in layout coordinates).
    * `y` - Get/set y position of top left corner (in layout coordinates).
    * `width` - Get/set width of text (in layout coordinates).

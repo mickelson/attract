@@ -227,6 +227,11 @@ const char *FeText::get_string()
 	return m_string.c_str();
 }
 
+const char *FeText::get_string_wrapped()
+{
+	return m_draw_text.getStringWrapped();
+}
+
 void FeText::set_string(const char *s)
 {
 	m_string=s;
