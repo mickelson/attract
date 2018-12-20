@@ -23,17 +23,11 @@ using ::system;
 ///
 /// Same as std::system but cmd is UTF-8.
 ///
-/// If the input is not valid UTF-8, -1 returned and errno set to EINVAL
-///
 inline int system(char const *cmd)
 {
     if(!cmd)
         return _wsystem(0);
-    wstackstring wcmd;
-    if(!wcmd.convert(cmd)) {
-        errno = EINVAL;
-        return -1;
-    }
+    wstackstring wcmd(cmd);
     return _wsystem(wcmd.c_str());
 }
 

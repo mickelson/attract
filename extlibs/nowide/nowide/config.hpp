@@ -17,16 +17,6 @@
 #define NOWIDE_MSVC
 #endif
 
-#ifdef NOWIDE_WINDOWS
-#   if defined(DLL_EXPORT) || defined(NOWIDE_EXPORT)
-#       ifdef NOWIDE_SOURCE
-#           define NOWIDE_DECL __declspec(dllexport)
-#       else
-#           define NOWIDE_DECL __declspec(dllimport)
-#       endif  //NOWIDE_SOURCE
-#   endif  // DYN_LINK
-#endif  
-
 #ifndef NOWIDE_DECL
 #   define NOWIDE_DECL
 #endif

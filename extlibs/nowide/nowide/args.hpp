@@ -95,13 +95,8 @@ namespace nowide {
             try{ 
                 args_.resize(wargc+1,0);
                 arg_values_.resize(wargc);
-                for(int i=0;i<wargc;i++) {
-                    if(!arg_values_[i].convert(wargv[i])) {
-                        wargc = i;
-                        break;
-                    }
-                    args_[i] = arg_values_[i].c_str();
-                }
+                for(int i=0;i<wargc;i++) 
+                    args_[i] = arg_values_[i].convert(wargv[i]);
                 argc = wargc;
                 argv = &args_[0];
             }
@@ -123,17 +118,16 @@ namespace nowide {
                 int count = 0;
                 for(wstrings_end = wstrings;*wstrings_end;wstrings_end+=wcslen(wstrings_end)+1)
                         count++;
-                if(env_.convert(wstrings,wstrings_end)) {
-                    envp_.resize(count+1,0);
-                    char *p=env_.c_str();
-                    int pos = 0;
-                    for(int i=0;i<count;i++) {
-                        if(*p!='=')
-                            envp_[pos++] = p;
-                        p+=strlen(p)+1;
-                    }
-                    en = &envp_[0];
+                env_.convert(wstrings,wstrings_end);
+                envp_.resize(count+1,0);
+                char *p=env_.c_str();
+                int pos = 0;
+                for(int i=0;i<count;i++) {
+                    if(*p!='=')
+                        envp_[pos++] = p;
+                    p+=strlen(p)+1;
                 }
+                en = &envp_[0];
             }
             catch(...) {
                 FreeEnvironmentStringsW(wstrings);

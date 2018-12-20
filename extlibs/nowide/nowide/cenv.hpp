@@ -36,9 +36,7 @@ namespace nowide {
     {
         static stackstring value;
         
-        wshort_stackstring name;
-        if(!name.convert(key))
-            return 0;
+        wshort_stackstring name(key);
 
         static const size_t buf_size = 64;
         wchar_t buf[buf_size];
@@ -55,8 +53,7 @@ namespace nowide {
                 return 0;
             ptr = &tmp[0];
         }
-        if(!value.convert(ptr))
-            return 0;
+        value.convert(ptr);
         return value.c_str();
     }
     ///
@@ -67,17 +64,13 @@ namespace nowide {
     ///
     inline int setenv(char const *key,char const *value,int override)
     {
-        wshort_stackstring name;
-        if(!name.convert(key))
-            return -1;
+        wshort_stackstring name(key);
         if(!override) {
             wchar_t unused[2];
             if(!(GetEnvironmentVariableW(name.c_str(),unused,2)==0 && GetLastError() == 203)) // ERROR_ENVVAR_NOT_FOUND
                 return 0;
         }
-        wstackstring wval;
-        if(!wval.convert(value))
-            return -1;
+        wstackstring wval(value);
         if(SetEnvironmentVariableW(name.c_str(),wval.c_str()))
             return 0;
         return -1;
@@ -87,9 +80,7 @@ namespace nowide {
     ///
     inline int unsetenv(char const *key)
     {
-        wshort_stackstring name;
-        if(!name.convert(key))
-            return -1;
+        wshort_stackstring name(key);
         if(SetEnvironmentVariableW(name.c_str(),0))
             return 0;
         return -1;
@@ -106,12 +97,10 @@ namespace nowide {
         if(*key_end == '\0')
             return -1;
         wshort_stackstring wkey;
-        if(!wkey.convert(key,key_end))
-            return -1;
-        
         wstackstring wvalue;
-        if(!wvalue.convert(key_end+1))
-            return -1;
+
+        wkey.convert(key,key_end);
+        wvalue.convert(key_end+1);
 
         if(SetEnvironmentVariableW(wkey.c_str(),wvalue.c_str()))
             return 0;
