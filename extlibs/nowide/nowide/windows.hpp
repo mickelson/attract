@@ -10,10 +10,6 @@
 
 #include <stddef.h>
 
-#ifdef NOWIDE_USE_WINDOWS_H
-#include <windows.h>
-#else
-
 //
 // These are function prototypes... Allow to to include windows.h
 //
@@ -29,9 +25,6 @@ __declspec(dllimport) int             __stdcall SetEnvironmentVariableW(wchar_t 
 __declspec(dllimport) unsigned long   __stdcall GetEnvironmentVariableW(wchar_t const *,wchar_t *,unsigned long);
 
 }
-
-#endif 
-
 
 
 #endif

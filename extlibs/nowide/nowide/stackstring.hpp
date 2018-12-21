@@ -20,6 +20,8 @@ namespace nowide {
 ///
 /// It uses on stack buffer of the string is short enough
 /// and allocated a buffer on the heap if the size of the buffer is too small
+///
+/// If invalid UTF charracters are detected they are replaced with U+FFFD substutution charracter
 ///    
 template<typename CharOut=wchar_t,typename CharIn = char,size_t BufferSize = 256>
 class basic_stackstring {
@@ -30,7 +32,7 @@ public:
     typedef CharIn input_char;
 
     basic_stackstring(basic_stackstring const &other) : 
-    mem_buffer_(0)
+        mem_buffer_(0)
     {
         clear();
         if(other.mem_buffer_) {
@@ -63,30 +65,28 @@ public:
     basic_stackstring() : mem_buffer_(0)
     {
     }
-    bool convert(input_char const *input)
+    basic_stackstring(input_char const *input) : mem_buffer_(0)
     {
-        return convert(input,details::basic_strend(input));
+        convert(input);
     }
-    bool convert(input_char const *begin,input_char const *end)
+    output_char *convert(input_char const *input)
+    {
+        convert(input,details::basic_strend(input));
+        return c_str();
+    }
+    output_char *convert(input_char const *begin,input_char const *end)
     {
         clear();
 
         size_t space = get_space(sizeof(input_char),sizeof(output_char),end - begin) + 1;
         if(space <= buffer_size) {
-            if(basic_convert(buffer_,buffer_size,begin,end))
-                return true;
-            clear();
-            return false;
+            basic_convert(buffer_,buffer_size,begin,end);
         }
         else {
             mem_buffer_ = new output_char[space];
-            if(!basic_convert(mem_buffer_,space,begin,end)) {
-                clear();
-                return false;
-            }
-            return true;
+            basic_convert(mem_buffer_,space,begin,end);
         }
-
+        return c_str();
     }
     output_char *c_str()
     {

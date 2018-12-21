@@ -50,7 +50,7 @@ namespace nowide {
         /// Creates new filebuf
         ///
         basic_filebuf() : 
-            buffer_size_(4),
+            buffer_size_(BUFSIZ),
             buffer_(0),
             file_(0),
             own_(true),
@@ -93,11 +93,9 @@ namespace nowide {
             wchar_t const *smode = get_mode(mode);
             if(!smode)
                 return 0;
-            wstackstring name;
-            if(!name.convert(s)) 
-                return 0;
+            wstackstring name(s);
             #ifdef NOWIDE_FSTREAM_TESTS
-            FILE *f = ::fopen(s,nowide::convert(smode).c_str());
+            FILE *f = ::fopen(s,nowide::narrow(smode).c_str());
             #else
             FILE *f = ::_wfopen(name.c_str(),smode);
             #endif
@@ -260,13 +258,14 @@ namespace nowide {
                 }
                 last_char_ = c;
                 setg(&last_char_,&last_char_,&last_char_ + 1);
-                return c;
             }
-            make_buffer();
-            size_t n = ::fread(buffer_,1,buffer_size_,file_);
-            setg(buffer_,buffer_,buffer_+n);
-            if(n == 0)
-                return EOF;
+            else {
+                make_buffer();
+                size_t n = ::fread(buffer_,1,buffer_size_,file_);
+                setg(buffer_,buffer_,buffer_+n);
+                if(n == 0)
+                    return EOF;
+            }
             return std::char_traits<char>::to_int_type(*gptr());
         }
 

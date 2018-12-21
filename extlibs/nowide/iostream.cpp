@@ -77,12 +77,12 @@ namespace details {
             wchar_t *out = wbuffer_;
             uf::code_point c;
             size_t decoded = 0;
-            while(p < e && (c = uf::utf_traits<char>::decode(p,e))!=uf::illegal && c!=uf::incomplete) {
+            while(p < e && (c = uf::utf_traits<char>::decode(p,e))!=uf::incomplete) {
+                if(c == uf::illegal)
+                    c = NOWIDE_REPLACEMENT_CHARACTER;
                 out = uf::utf_traits<wchar_t>::encode(c,out);
                 decoded = p-b;
             }
-            if(c==uf::illegal)
-                return -1;
             if(!WriteConsoleW(handle_,wbuffer_,out - wbuffer_,&size,0))
                 return -1;
             return decoded;

@@ -10,6 +10,7 @@
 
 #include <nowide/utf.hpp>
 #include <nowide/cstdint.hpp>
+#include <nowide/replacement.hpp>
 #include <nowide/static_assert.hpp>
 #include <locale>
 
@@ -84,7 +85,10 @@ protected:
         while(max > 0 && from < from_end){
             char const *prev_from = from;
             nowide::uint32_t ch=nowide::utf::utf_traits<char>::decode(from,from_end);
-            if(ch==nowide::utf::incomplete || ch==nowide::utf::illegal) {
+            if(ch==nowide::utf::illegal) {
+                ch = NOWIDE_REPLACEMENT_CHARACTER;
+            }
+            else if(ch==nowide::utf::incomplete) {
                 from = prev_from;
                 break;
             }
@@ -136,11 +140,9 @@ protected:
             uint32_t ch=nowide::utf::utf_traits<char>::decode(from,from_end);
             
             if(ch==nowide::utf::illegal) {
-                from = from_saved;
-                r=std::codecvt_base::error;
-                break;
+                ch = NOWIDE_REPLACEMENT_CHARACTER;
             }
-            if(ch==nowide::utf::incomplete) {
+            else if(ch==nowide::utf::incomplete) {
                 from = from_saved;
                 r=std::codecvt_base::partial;
                 break;
@@ -241,9 +243,7 @@ protected:
                     ch=((uint32_t(vh) << 10)  | vl) + 0x10000;
                 }
                 else {
-                    // Invalid surrogate
-                    r=std::codecvt_base::error;
-                    break;
+                    ch = NOWIDE_REPLACEMENT_CHARACTER;
                 }
             }
             else {
@@ -261,8 +261,7 @@ protected:
                     // if we observe second surrogate pair and 
                     // first only may be expected we should break from the loop with error
                     // as it is illegal input
-                    r=std::codecvt_base::error;
-                    break;
+                    ch = NOWIDE_REPLACEMENT_CHARACTER;
                 }
             }
             if(!nowide::utf::is_valid_codepoint(ch)) {
@@ -354,9 +353,12 @@ protected:
         while(max > 0 && from < from_end){
             char const *save_from = from;
             nowide::uint32_t ch=nowide::utf::utf_traits<char>::decode(from,from_end);
-            if(ch==nowide::utf::incomplete || ch==nowide::utf::illegal) {
+            if(ch==nowide::utf::incomplete) {
                 from = save_from;
                 break;
+            }
+            else if(ch == nowide::utf::illegal) {
+                ch = NOWIDE_REPLACEMENT_CHARACTER;
             }
             max--;
         }
@@ -396,11 +398,9 @@ protected:
             uint32_t ch=nowide::utf::utf_traits<char>::decode(from,from_end);
             
             if(ch==nowide::utf::illegal) {
-                r=std::codecvt_base::error;
-                from = from_saved;
-                break;
+                ch = NOWIDE_REPLACEMENT_CHARACTER;
             }
-            if(ch==nowide::utf::incomplete) {
+            else if(ch==nowide::utf::incomplete) {
                 r=std::codecvt_base::partial;
                 from=from_saved;
                 break;
@@ -434,7 +434,7 @@ protected:
     }
     
     virtual std::codecvt_base::result 
-    do_out( std::mbstate_t &std_state,
+    do_out( std::mbstate_t &/*std_state*/,
             uchar const *from,
             uchar const *from_end,
             uchar const *&from_next,
@@ -453,8 +453,7 @@ protected:
             nowide::uint32_t ch=0;
             ch = *from;
             if(!nowide::utf::is_valid_codepoint(ch)) {
-                r=std::codecvt_base::error;
-                break;
+                ch = NOWIDE_REPLACEMENT_CHARACTER;
             }
             int len = nowide::utf::utf_traits<char>::width(ch);
             if(to_end - to < len) {
