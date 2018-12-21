@@ -52,7 +52,6 @@ private:
 
 	FeSwfState *m_imp;
 	sf::RenderTexture m_texture;
-	sf::Context m_context;
 };
 
 #endif

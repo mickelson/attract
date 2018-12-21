@@ -42,12 +42,15 @@
 
 #include <iostream>
 
+#include "fe_base.hpp" // logging
+
 namespace
 {
 	gameswf::render_handler *swf_render=NULL;
 	gameswf::sound_handler *swf_sound=NULL;
 	int swf_count=0;
 	FeZipStream *swf_zip=NULL;
+	sf::Context *swf_context=NULL;
 
 	static tu_file *swf_file_opener( const char *url )
 	{
@@ -62,6 +65,8 @@ namespace
 	{
 		if ( swf_render == NULL )
 		{
+			FeDebug() << "Initializing game_swf renderer" << std::endl;
+
 #ifdef USE_GLES
 			swf_render = gameswf::create_render_handler_ogles();
 #else
@@ -84,6 +89,31 @@ namespace
 #else
 			gameswf::set_glyph_provider( gameswf::create_glyph_provider_tu() );
 #endif
+
+			swf_context = new sf::Context();
+			swf_context->setActive( true );
+
+			// alpha blending
+			glEnable( GL_BLEND );
+			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+			glEnable( GL_LINE_SMOOTH );
+			glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+
+			glMatrixMode( GL_PROJECTION );
+
+#ifndef USE_GLES
+			glOrtho( -1.f, 1.f, 1.f, -1.f, -1, 1 );
+#endif
+
+			glMatrixMode( GL_MODELVIEW );
+			glLoadIdentity();
+
+			glDisable( GL_LIGHTING );
+
+#ifndef USE_GLES
+			glPushAttrib( GL_ALL_ATTRIB_BITS );
+#endif
 		}
 		swf_count++;
 	}
@@ -93,6 +123,8 @@ namespace
 		swf_count--;
 		if ( swf_count == 0 )
 		{
+			FeDebug() << "Uninitializing game_swf renderer" << std::endl;
+
 			gameswf::set_render_handler( NULL );
 			delete swf_render;
 			swf_render = NULL;
@@ -103,6 +135,9 @@ namespace
 				delete swf_sound;
 				swf_sound = NULL;
 			}
+
+			delete swf_context;
+			swf_context=NULL;
 		}
 	}
 };
@@ -182,31 +217,6 @@ bool FeSwf::open_from_file( const std::string &file )
 
 	m_texture.setSmooth( true );
 
-	m_context.setActive( true );
-	m_texture.setActive();
-
-	// alpha blending
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-	glEnable( GL_LINE_SMOOTH );
-	glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
-
-	glMatrixMode( GL_PROJECTION );
-
-#ifndef USE_GLES
-	glOrtho( -1.f, 1.f, 1.f, -1.f, -1, 1 );
-#endif
-
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-
-	glDisable( GL_LIGHTING );
-
-#ifndef USE_GLES
-	glPushAttrib( GL_ALL_ATTRIB_BITS );
-#endif
-
 	m_imp->root->set_display_viewport( 0, 0,
 		m_imp->root->get_movie_width(),
 		m_imp->root->get_movie_height() );
@@ -229,12 +239,13 @@ const sf::Texture &FeSwf::get_texture() const
 
 bool FeSwf::tick()
 {
-	m_context.setActive( true );
 	return do_frame( true );
 }
 
 bool FeSwf::do_frame( bool is_tick )
 {
+	swf_context->setActive( true );
+
 	m_texture.setActive();
 	m_texture.clear( sf::Color::Transparent );
 
@@ -256,7 +267,7 @@ bool FeSwf::do_frame( bool is_tick )
 	}
 
 	m_texture.display();
-	m_context.setActive( false );
+	swf_context->setActive( false );
 
 	return ( m_imp->root != NULL );
 }
