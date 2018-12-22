@@ -61,6 +61,16 @@ namespace
 			return new tu_file(url, "rb");
 	}
 
+	void delete_swf_context()
+	{
+		if ( swf_context )
+		{
+			delete swf_context;
+			swf_context=NULL;
+			FeDebug() << "Deleted swf context" << std::endl;
+		}
+	}
+
 	void open_swf()
 	{
 		if ( swf_render == NULL )
@@ -90,30 +100,39 @@ namespace
 			gameswf::set_glyph_provider( gameswf::create_glyph_provider_tu() );
 #endif
 
-			swf_context = new sf::Context();
-			swf_context->setActive( true );
+			// One time initialization of an sf::Context to be used for swf rendering
+			//
+			if ( !swf_context )
+			{
+				swf_context = new sf::Context();
+				std::atexit( delete_swf_context );
 
-			// alpha blending
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+				FeDebug() << "Created swf context" << std::endl;
 
-			glEnable( GL_LINE_SMOOTH );
-			glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+				swf_context->setActive( true );
 
-			glMatrixMode( GL_PROJECTION );
+				// alpha blending
+				glEnable( GL_BLEND );
+				glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+				glEnable( GL_LINE_SMOOTH );
+				glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+
+				glMatrixMode( GL_PROJECTION );
 
 #ifndef USE_GLES
-			glOrtho( -1.f, 1.f, 1.f, -1.f, -1, 1 );
+				glOrtho( -1.f, 1.f, 1.f, -1.f, -1, 1 );
 #endif
 
-			glMatrixMode( GL_MODELVIEW );
-			glLoadIdentity();
+				glMatrixMode( GL_MODELVIEW );
+				glLoadIdentity();
 
-			glDisable( GL_LIGHTING );
+				glDisable( GL_LIGHTING );
 
 #ifndef USE_GLES
-			glPushAttrib( GL_ALL_ATTRIB_BITS );
+				glPushAttrib( GL_ALL_ATTRIB_BITS );
 #endif
+			}
 		}
 		swf_count++;
 	}
@@ -135,9 +154,6 @@ namespace
 				delete swf_sound;
 				swf_sound = NULL;
 			}
-
-			delete swf_context;
-			swf_context=NULL;
 		}
 	}
 };
