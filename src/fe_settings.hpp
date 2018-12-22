@@ -428,6 +428,12 @@ public:
 		bool image_only,
 		bool ignore_emu=false );
 
+	void get_fallback_layout_artwork_file(
+		const FeRomInfo &rom,
+		const std::string &art_name,
+		std::vector<std::string> &vid_list,
+		std::vector<std::string> &image_list );
+
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
 	bool has_video_artwork( const FeRomInfo &rom, const std::string &art_name );
 	bool has_image_artwork( const FeRomInfo &rom, const std::string &art_name );
@@ -574,16 +580,6 @@ inline bool is_windowed_mode( int m )
 {
 	return (( m == FeSettings::Window ) || ( m == FeSettings::WindowNoBorder ));
 }
-
-//
-// Utility function used to collect artwork files with 'target_name' from
-// the specified art_paths
-//
-bool gather_artwork_filenames(
-	const std::vector < std::string > &art_paths,
-	const std::string &target_name,
-	std::vector<std::string> &vids,
-	std::vector<std::string> &images );
 
 bool art_exists( const std::string &path, const std::string &base );
 

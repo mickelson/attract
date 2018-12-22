@@ -37,38 +37,6 @@
 #include "swf.hpp"
 #endif
 
-#include <iostream>
-#include <cstdlib>
-#include <cstring>
-
-namespace
-{
-	bool gather_artwork_filenames_from_archive(
-			const std::string &archive_name,
-			const std::string &target_name,
-			std::vector<std::string> &vids,
-			std::vector<std::string> &images )
-	{
-		std::vector < std::string > out;
-		gather_archive_filenames_with_base(
-			images,
-			out,
-			archive_name,
-			target_name,
-			FE_ART_EXTENSIONS );
-
-#ifndef NO_MOVIE
-		for ( std::vector<std::string>::iterator itr=out.begin();
-				itr!=out.end(); ++itr )
-		{
-			if ( FeMedia::is_supported_media_file( *itr ) )
-				vids.push_back( *itr );
-		}
-#endif
-		return ( !images.empty() || !vids.empty() );
-	}
-};
-
 FeBaseTextureContainer::FeBaseTextureContainer()
 {
 }
@@ -610,46 +578,7 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 			image_list,
 			(m_video_flags & VF_DisableVideo) ) )
 		{
-			// check for layout fallback images/videos
-			std::string layout_path;
-			feSettings->get_path( FeSettings::Current,
-				layout_path );
-
-			if ( !layout_path.empty() )
-			{
-				const std::string &emu_name = rom->get_info(
-					FeRomInfo::Emulator );
-
-				if ( is_supported_archive( layout_path ) )
-				{
-					archive_name = layout_path;
-
-					// check for "[emulator-[artlabel]" artworks first
-					if ( !gather_artwork_filenames_from_archive(
-							layout_path, emu_name + "-" + m_art_name,
-							vid_list, image_list ) )
-					{
-						// then "[artlabel]"
-						gather_artwork_filenames_from_archive( layout_path,
-							m_art_name, vid_list, image_list );
-					}
-				}
-				else
-				{
-					std::vector<std::string> layout_paths;
-					layout_paths.push_back( layout_path );
-
-					// check for "[emulator-[artlabel]" artworks first
-					if ( !gather_artwork_filenames( layout_paths,
-							emu_name + "-" + m_art_name,
-							vid_list, image_list ) )
-					{
-						// then "[artlabel]"
-						gather_artwork_filenames( layout_paths,
-							m_art_name, vid_list, image_list );
-					}
-				}
-			}
+			feSettings->get_fallback_layout_artwork_file( *rom, m_art_name, vid_list, image_list );
 		}
 	}
 	else if ( m_type == IsDynamic )
