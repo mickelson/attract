@@ -406,6 +406,8 @@ bool FeTextureContainer::try_to_load(
 			}
 		}
 
+		m_movie_status = !(m_video_flags & VF_NoAutoStart);
+
 		m_swf->set_smooth( m_smooth );
 		m_file_name = loaded_name;
 		return true;
@@ -673,18 +675,16 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 
 bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
+	if ( !play_movies || (m_video_flags & VF_DisableVideo) )
+		return false;
+
 #ifndef NO_SWF
-	if (( play_movies ) && ( m_swf ))
-	{
+	if ( m_swf && m_movie_status )
 		return m_swf->tick();
-	}
 #endif
 
 #ifndef NO_MOVIE
-	if (( play_movies )
-		&& ( m_movie )
-		&& ( !(m_video_flags & VF_DisableVideo) )
-		&& ( m_movie_status > 0 ))
+	if (( m_movie ) && ( m_movie_status > 0 ))
 	{
 		if ( m_movie_status < PLAY_COUNT )
 		{
@@ -736,6 +736,14 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 
 void FeTextureContainer::set_play_state( bool play )
 {
+#ifndef NO_SWF
+	if ( m_swf )
+	{
+		m_movie_status = play;
+		return;
+	}
+#endif
+
 #ifndef NO_MOVIE
 	if (m_movie)
 	{
@@ -770,7 +778,7 @@ bool FeTextureContainer::get_play_state() const
 {
 #ifndef NO_SWF
 	if ( m_swf )
-		return true;
+		return m_movie_status;
 #endif
 
 #ifndef NO_MOVIE
