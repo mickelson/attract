@@ -2359,56 +2359,60 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 	static std::string retval;
 	retval.clear();
 
+	if ( !rom )
+		return retval.c_str();
+
 	std::vector<std::string> vid_list, image_list;
-	if (( rom ) &&
-		( fes->get_best_artwork_file(
+	if ( !fes->get_best_artwork_file(
 			*rom,
 			art,
 			vid_list,
 			image_list,
-			(art_flags&AF_ImagesOnly) ) ))
+			(art_flags&AF_ImagesOnly) ) )
 	{
-		if ( art_flags&AF_FullList )
+		fes->get_fallback_layout_artwork_file( *rom, art, vid_list, image_list );
+	}
+
+	if ( art_flags&AF_FullList )
+	{
+		std::vector<std::string>::iterator itr;
+		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
 		{
-			std::vector<std::string>::iterator itr;
-			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			for ( itr=vid_list.begin(); itr!=vid_list.end(); ++itr )
 			{
-				for ( itr=vid_list.begin(); itr!=vid_list.end(); ++itr )
-				{
-					if ( !retval.empty() )
-						retval += ";";
+				if ( !retval.empty() )
+					retval += ";";
 
-					// see note below re: need for absolute path
-					retval += absolute_path( *itr );
-				}
-			}
-			else
-			{
-				for ( itr=image_list.begin(); itr!=image_list.end(); ++itr )
-				{
-					if ( !retval.empty() )
-						retval += ";";
-
-					// see note below re: need for absolute path
-					retval += absolute_path( *itr );
-				}
+				// see note below re: need for absolute path
+				retval += absolute_path( *itr );
 			}
 		}
 		else
 		{
-			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
-				retval = vid_list.front();
-			else if ( !image_list.empty() )
-				retval = image_list.front();
+			for ( itr=image_list.begin(); itr!=image_list.end(); ++itr )
+			{
+				if ( !retval.empty() )
+					retval += ";";
 
-			// We force our return value to an absolute path, to work
-			// around Attract-Mode's tendency to assume that relative
-			// paths are relative to the layout directory.
-			//
-			// We are almost certain that is not the case here...
-			//
-			retval = absolute_path( retval );
+				// see note below re: need for absolute path
+				retval += absolute_path( *itr );
+			}
 		}
+	}
+	else
+	{
+		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			retval = vid_list.front();
+		else if ( !image_list.empty() )
+			retval = image_list.front();
+
+		// We force our return value to an absolute path, to work
+		// around Attract-Mode's tendency to assume that relative
+		// paths are relative to the layout directory.
+		//
+		// We are almost certain that is not the case here...
+		//
+		retval = absolute_path( retval );
 	}
 
 	return retval.c_str();
