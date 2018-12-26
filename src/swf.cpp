@@ -128,10 +128,6 @@ namespace
 				glLoadIdentity();
 
 				glDisable( GL_LIGHTING );
-
-#ifndef USE_GLES
-				glPushAttrib( GL_ALL_ATTRIB_BITS );
-#endif
 			}
 		}
 		swf_count++;
