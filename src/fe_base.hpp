@@ -50,6 +50,7 @@ std::ostream &FeDebug();
 void fe_set_log_file( const std::string & );
 void fe_set_log_level( enum FeLogLevel );
 void fe_print_version();
+bool fe_is_dwmapi_available();
 
 class FeBaseConfigurable
 {

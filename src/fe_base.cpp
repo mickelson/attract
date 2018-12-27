@@ -59,6 +59,7 @@ namespace {
 	nowide::ofstream g_logfile;
 #ifdef SFML_SYSTEM_WINDOWS
 	nowide::ofstream g_nullstream( "NUL" );
+	double fe_os_version;
 #else
 	nowide::ofstream g_nullstream( "/dev/null" );
 #endif
@@ -137,6 +138,17 @@ void fe_set_log_level( enum FeLogLevel f )
 
 void fe_print_version()
 {
+#ifdef SFML_SYSTEM_WINDOWS
+	OSVERSIONINFOEX info;
+	ZeroMemory(&info, sizeof(OSVERSIONINFOEX));
+	info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	GetVersionEx((LPOSVERSIONINFO)&info);
+	fe_os_version = info.dwMajorVersion 
+			+ ( info.dwMinorVersion / 10.0 );
+
+	FeDebug() << "Windows version: " << fe_os_version << std::endl;
+#endif
+
 	FeLog() << FE_NAME << " " << FE_VERSION << " ("
 		<< get_OS_string()
 		<< ", SFML " << SFML_VERSION_MAJOR << '.' << SFML_VERSION_MINOR
@@ -169,6 +181,20 @@ void fe_print_version()
 #endif
 
 }
+
+#ifdef SFML_SYSTEM_WINDOWS
+bool fe_is_dwmapi_available()
+{
+	// Return true if we are running on
+	// Windows Vista or above.
+	// This function is used to decide
+	// to whether DwmFlush() or not
+	if ( fe_os_version >= 6.0 )
+		return true;
+	else
+		return false;
+}
+#endif
 
 void FeBaseConfigurable::invalid_setting(
 	const std::string & fn,

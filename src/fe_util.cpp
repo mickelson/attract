@@ -1516,6 +1516,20 @@ void hide_console()
 		ShowWindow(handle, SW_HIDE);
 	}
 }
+
+void set_win32_foreground_window( HWND hwnd, HWND order )
+{
+	HWND hCurWnd = GetForegroundWindow();
+	DWORD dwMyID = GetCurrentThreadId();
+	DWORD dwCurID = GetWindowThreadProcessId(hCurWnd, NULL);
+	AttachThreadInput(dwCurID, dwMyID, true);
+	SetWindowPos(hwnd, order, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+	SetForegroundWindow(hwnd);
+	SetFocus(hwnd);
+	SetActiveWindow(hwnd);
+	AttachThreadInput(dwCurID, dwMyID, false);
+}
+
 #endif
 
 std::string url_escape( const std::string &raw )

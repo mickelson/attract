@@ -250,6 +250,7 @@ endif
 ifeq ($(FE_WINDOWS_COMPILE),1)
  _DEP += attract.rc
  _OBJ += attract.res
+ LIBS += -ldwmapi
  ifeq ($(WINDOWS_CONSOLE),1)
   CFLAGS += -mconsole
   FE_FLAGS += -DWINDOWS_CONSOLE
