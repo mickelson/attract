@@ -251,33 +251,18 @@ void FeWindow::initial_create()
 		vm.height += 2;
 	}
 
-	// To avoid problems with black screen on launching games when window mode is set to Fullscreen
-	// we hide the main renderwindow and show this m_blackout window instead
-	// which has the extended size by 1 pixel in each direction to stop Windows
-	// from treating it as exclusive borderless.
-	//
-	if ( m_win_mode == FeSettings::Fullscreen )
-	{
-		m_blackout.create(sf::VideoMode(16, 16, 32), "", sf::Style::None);
-		m_blackout.setVerticalSyncEnabled(true);
-		m_blackout.setKeyRepeatEnabled(false);
-		m_blackout.setMouseCursorVisible(false);
-		m_blackout.setSize( sf::Vector2u( vm.width + 2, vm.height + 2 ));
-		m_blackout.setPosition( sf::Vector2i( -1, -1 ));
-		m_blackout.display();
-		
-		// We hide the black window from the task bar and the alt+tab switcher
-		int style = GetWindowLongPtr(m_blackout.getSystemHandle(), GWL_EXSTYLE );
-		SetWindowLongPtr( m_blackout.getSystemHandle(), GWL_EXSTYLE, style | WS_EX_TOOLWINDOW );
-	}
-
 #endif
 
 	//
 	// Create window
 	//
 	create( vm, "Attract-Mode", style_map[ m_win_mode ] );
-
+	
+	// We need to clear and display here before calling setSize and setPosition
+	// to avoid a white window flash on launching Attract Mode.
+	clear();
+	display();
+	
 	//
 	// Set Size and position of window in window manager
 	//
@@ -313,7 +298,41 @@ void FeWindow::initial_create()
 		<< vm.width << "x" << vm.height << " bpp=" << vm.bitsPerPixel << "]" << std::endl;
 
 #if defined(SFML_SYSTEM_WINDOWS)
+
+	// If the window mode is set to Window (No Border) and the values in window.am
+	// match the display resolution we treat it as if it was Fullscreen
+	// to properly handle borderless fulscreen optimizations.
+	// Required on Vista and above.
+	//
+	if ( fe_is_dwmapi_available()
+		&& ( m_win_mode == FeSettings::WindowNoBorder )
+		&& ( wpos.x == 0 )
+		&& ( wpos.y == 0 )
+		&& ( vm.width == wsize.x )
+		&& ( vm.height == wsize.y ))
+		m_win_mode = FeSettings::Fullscreen;
+
+	// To avoid problems with black screen on launching games when window mode is set to Fullscreen
+	// we hide the main renderwindow and show this m_blackout window instead
+	// which has the extended size by 1 pixel in each direction to stop Windows
+	// from treating it as exclusive borderless.
+	//
 	if ( m_win_mode == FeSettings::Fullscreen )
+	{
+		m_blackout.create(sf::VideoMode(16, 16, 32), "", sf::Style::None);
+		m_blackout.setVerticalSyncEnabled(true);
+		m_blackout.setKeyRepeatEnabled(false);
+		m_blackout.setMouseCursorVisible(false);
+		m_blackout.setSize( sf::Vector2u( vm.width + 2, vm.height + 2 ));
+		m_blackout.setPosition( sf::Vector2i( -1, -1 ));
+		m_blackout.display();
+		
+		// We hide the black window from the task bar and the alt+tab switcher
+		int style = GetWindowLongPtr(m_blackout.getSystemHandle(), GWL_EXSTYLE );
+		SetWindowLongPtr( m_blackout.getSystemHandle(), GWL_EXSTYLE, style | WS_EX_TOOLWINDOW );
+	}
+		
+	if (( m_win_mode == FeSettings::Fullscreen ) || ( m_win_mode == FeSettings::Window ))
 		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
 	else
 		set_win32_foreground_window( getSystemHandle(), HWND_TOPMOST );
@@ -409,7 +428,7 @@ bool FeWindow::run()
 	bool have_paused_prog = m_running_pid && process_exists( m_running_pid );
 
 #if defined(SFML_SYSTEM_WINDOWS)
-	if ( m_win_mode == FeSettings::Fullscreen )
+	if (( m_win_mode == FeSettings::Fullscreen ) || ( m_win_mode == FeSettings::Window ))
 	{
 		set_win32_foreground_window( getSystemHandle(), HWND_BOTTOM );
 		m_blackout.display();
@@ -566,7 +585,7 @@ bool FeWindow::run()
 #elif defined(SFML_SYSTEM_MACOS)
 	osx_take_focus();
 #elif defined(SFML_SYSTEM_WINDOWS)
-	if ( m_win_mode == FeSettings::Fullscreen )
+	if (( m_win_mode == FeSettings::Fullscreen ) || ( m_win_mode == FeSettings::Window ))
 	{
 		m_blackout.display();
 		setVisible( true );
