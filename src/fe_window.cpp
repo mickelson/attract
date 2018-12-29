@@ -29,7 +29,9 @@
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#ifndef WINDOWS_XP
 #include <dwmapi.h>
+#endif
 #endif // SFML_SYSTEM_WINDOWS
 
 #ifdef SFML_SYSTEM_MACOS
@@ -129,10 +131,9 @@ void FeWindow::display()
 	// Starting from Windows Vista all non fullscreen window modes
 	// go through DWM, so we have to flush here to sync to the DMW's v-sync
 	// to avoid stuttering.
-#if defined(SFML_SYSTEM_WINDOWS)
-	if ( fe_is_dwmapi_available() )
-		if ( m_win_mode != FeSettings::Fullscreen )
-			DwmFlush();
+#if !defined(WINDOWS_XP)
+	if ( m_win_mode != FeSettings::Fullscreen )
+		DwmFlush();
 #endif
 	sf::RenderWindow::display();
 }
@@ -299,18 +300,19 @@ void FeWindow::initial_create()
 
 #if defined(SFML_SYSTEM_WINDOWS)
 
+#if !defined(WINDOWS_XP)
 	// If the window mode is set to Window (No Border) and the values in window.am
 	// match the display resolution we treat it as if it was Fullscreen
 	// to properly handle borderless fulscreen optimizations.
 	// Required on Vista and above.
 	//
-	if ( fe_is_dwmapi_available()
-		&& ( m_win_mode == FeSettings::WindowNoBorder )
+	if (( m_win_mode == FeSettings::WindowNoBorder )
 		&& ( wpos.x == 0 )
 		&& ( wpos.y == 0 )
 		&& ( vm.width == wsize.x )
 		&& ( vm.height == wsize.y ))
 		m_win_mode = FeSettings::Fullscreen;
+#endif
 
 	// To avoid problems with black screen on launching games when window mode is set to Fullscreen
 	// we hide the main renderwindow and show this m_blackout window instead

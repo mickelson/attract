@@ -55,6 +55,7 @@
 
 #FE_DEBUG=1
 #VERBOSE=1
+#WINDOWS_XP=1
 
 FE_VERSION=v2.5.1
 
@@ -250,7 +251,11 @@ endif
 ifeq ($(FE_WINDOWS_COMPILE),1)
  _DEP += attract.rc
  _OBJ += attract.res
- LIBS += -ldwmapi
+ ifeq ($(WINDOWS_XP),1)
+  FE_FLAGS += -DWINDOWS_XP
+ else
+  LIBS += -ldwmapi
+ endif
  ifeq ($(WINDOWS_CONSOLE),1)
   CFLAGS += -mconsole
   FE_FLAGS += -DWINDOWS_CONSOLE
