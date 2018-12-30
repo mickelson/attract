@@ -102,7 +102,8 @@ const char *FeWindowPosition::FILENAME = "window.am";
 FeWindow::FeWindow( FeSettings &fes )
 	: m_fes( fes ),
 	m_running_pid( 0 ),
-	m_running_wnd( NULL )
+	m_running_wnd( NULL ),
+	m_win_mode( 0 )
 {
 }
 
@@ -137,11 +138,11 @@ void FeWindow::initial_create()
 	sf::Vector2i wpos( 0, 0 );  // position to set window to
 
 	bool do_multimon = is_multimon_config( m_fes );
-	int win_mode = m_fes.get_window_mode();
+	m_win_mode = m_fes.get_window_mode();
 
 #if defined(USE_XLIB)
 
-	if ( !do_multimon && ( win_mode != FeSettings::Fullscreen ))
+	if ( !do_multimon && ( m_win_mode != FeSettings::Fullscreen ))
 	{
 		// If we aren't doing multimonitor mode (it isn't configured or we are in a window)
 		// then use the primary screen size as our OpenGL surface size and 'fillscreen' window
@@ -192,7 +193,7 @@ void FeWindow::initial_create()
 	//
 	//
 	if ( do_multimon
-			&& ( win_mode == FeSettings::Fullscreen )
+			&& ( m_win_mode == FeSettings::Fullscreen )
 			&& ( GetSystemMetrics( SM_CMONITORS ) > 1 ) )
 	{
 		//
@@ -203,7 +204,7 @@ void FeWindow::initial_create()
 		// have detected that multiple monitors are available
 		//
 		FeLog() << " ! NOTE: Switching to 'Fill Screen' window mode (required for multiple monitor support)." << std::endl;
-		win_mode = FeSettings::Default;
+		m_win_mode = FeSettings::Default;
 	}
 
 	// Cover all available monitors with our window in multimonitor config
@@ -228,7 +229,7 @@ void FeWindow::initial_create()
 	// which seems to be the cause of this issue.  This is actually the same behaviour that earlier
 	// versions of Attract-Mode had (first by design, then by accident).
 	//
-	if ( win_mode == FeSettings::Default )
+	if ( m_win_mode == FeSettings::Default )
 	{
 		wpos.x -= 1;
 		wpos.y -= 1;
@@ -240,14 +241,14 @@ void FeWindow::initial_create()
 	//
 	// Create window
 	//
-	create( vm, "Attract-Mode", style_map[ win_mode ] );
+	create( vm, "Attract-Mode", style_map[ m_win_mode ] );
 
 	//
 	// Set Size and position of window in window manager
 	//
 	sf::Vector2u wsize( vm.width, vm.height ); // default wsize = OpenGL surface size
 
-	if ( is_windowed_mode( win_mode ) )
+	if ( is_windowed_mode( m_win_mode ) )
 	{
 		FeWindowPosition win_pos(
 			sf::Vector2i( 0, 0 ),
@@ -260,7 +261,7 @@ void FeWindow::initial_create()
 	}
 
 #ifdef SFML_SYSTEM_MACOS
-	if ( win_mode == FeSettings::Default )
+	if ( m_win_mode == FeSettings::Default )
 	{
 		// note ordering req: pretty sure this needs to be before the setPosition() call below
 		osx_hide_menu_bar();
@@ -541,7 +542,7 @@ bool FeWindow::run()
 
 void FeWindow::on_exit()
 {
-	if ( is_windowed_mode( m_fes.get_window_mode() ) )
+	if ( is_windowed_mode( m_win_mode ) )
 	{
 		FeWindowPosition win_pos( getPosition(), getSize() );
 		win_pos.save( m_fes.get_config_dir() + FeWindowPosition::FILENAME );

@@ -32,6 +32,9 @@ class FeWindow : public sf::RenderWindow
 	friend void launch_callback( void *o );
 	friend void wait_callback( void *o );
 
+private:
+	int m_win_mode;
+
 protected:
 	FeSettings &m_fes;
 	unsigned int m_running_pid;
