@@ -1422,7 +1422,7 @@ void FePresent::script_process_magic_strings( std::string &str,
 					break;
 				}
 
-				str.replace( pos, end+1, result );
+				str.replace( pos, end-pos+1, result );
 				pos += result.size();
 			}
 			else
