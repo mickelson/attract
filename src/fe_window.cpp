@@ -29,6 +29,9 @@
 #ifdef SFML_SYSTEM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#ifndef WINDOWS_XP
+#include <dwmapi.h>
+#endif
 #endif // SFML_SYSTEM_WINDOWS
 
 #ifdef SFML_SYSTEM_MACOS
@@ -39,6 +42,21 @@
 #include "nowide/fstream.hpp"
 
 #include <SFML/System/Sleep.hpp>
+
+#ifdef SFML_SYSTEM_WINDOWS
+void set_win32_foreground_window( HWND hwnd, HWND order )
+{
+	HWND hCurWnd = GetForegroundWindow();
+	DWORD dwMyID = GetCurrentThreadId();
+	DWORD dwCurID = GetWindowThreadProcessId(hCurWnd, NULL);
+	AttachThreadInput(dwCurID, dwMyID, true);
+	SetWindowPos(hwnd, order, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+	SetForegroundWindow(hwnd);
+	SetFocus(hwnd);
+	SetActiveWindow(hwnd);
+	AttachThreadInput(dwCurID, dwMyID, false);
+}
+#endif
 
 class FeWindowPosition : public FeBaseConfigurable
 {
@@ -102,7 +120,8 @@ const char *FeWindowPosition::FILENAME = "window.am";
 FeWindow::FeWindow( FeSettings &fes )
 	: m_fes( fes ),
 	m_running_pid( 0 ),
-	m_running_wnd( NULL )
+	m_running_wnd( NULL ),
+	m_win_mode( 0 )
 {
 }
 
@@ -122,6 +141,18 @@ void FeWindow::onCreate()
 	sf::RenderWindow::onCreate();
 }
 
+void FeWindow::display()
+{
+	// Starting from Windows Vista all non fullscreen window modes
+	// go through DWM, so we have to flush here to sync to the DMW's v-sync
+	// to avoid stuttering.
+#if defined(SFML_SYSTEM_WINDOWS) && !defined(WINDOWS_XP)
+	if ( m_win_mode != FeSettings::Fullscreen )
+		DwmFlush();
+#endif
+	sf::RenderWindow::display();
+}
+
 void FeWindow::initial_create()
 {
 	int style_map[4] =
@@ -137,11 +168,11 @@ void FeWindow::initial_create()
 	sf::Vector2i wpos( 0, 0 );  // position to set window to
 
 	bool do_multimon = is_multimon_config( m_fes );
-	int win_mode = m_fes.get_window_mode();
+	m_win_mode = m_fes.get_window_mode();
 
 #if defined(USE_XLIB)
 
-	if ( !do_multimon && ( win_mode != FeSettings::Fullscreen ))
+	if ( !do_multimon && ( m_win_mode != FeSettings::Fullscreen ))
 	{
 		// If we aren't doing multimonitor mode (it isn't configured or we are in a window)
 		// then use the primary screen size as our OpenGL surface size and 'fillscreen' window
@@ -192,7 +223,7 @@ void FeWindow::initial_create()
 	//
 	//
 	if ( do_multimon
-			&& ( win_mode == FeSettings::Fullscreen )
+			&& ( m_win_mode == FeSettings::Fullscreen )
 			&& ( GetSystemMetrics( SM_CMONITORS ) > 1 ) )
 	{
 		//
@@ -203,7 +234,7 @@ void FeWindow::initial_create()
 		// have detected that multiple monitors are available
 		//
 		FeLog() << " ! NOTE: Switching to 'Fill Screen' window mode (required for multiple monitor support)." << std::endl;
-		win_mode = FeSettings::Default;
+		m_win_mode = FeSettings::Default;
 	}
 
 	// Cover all available monitors with our window in multimonitor config
@@ -228,26 +259,32 @@ void FeWindow::initial_create()
 	// which seems to be the cause of this issue.  This is actually the same behaviour that earlier
 	// versions of Attract-Mode had (first by design, then by accident).
 	//
-	if ( win_mode == FeSettings::Default )
+	if ( m_win_mode == FeSettings::Default )
 	{
 		wpos.x -= 1;
 		wpos.y -= 1;
 		vm.width += 2;
 		vm.height += 2;
 	}
+
 #endif
 
 	//
 	// Create window
 	//
-	create( vm, "Attract-Mode", style_map[ win_mode ] );
+	create( vm, "Attract-Mode", style_map[ m_win_mode ] );
+
+	// We need to clear and display here before calling setSize and setPosition
+	// to avoid a white window flash on launching Attract Mode.
+	clear();
+	display();
 
 	//
 	// Set Size and position of window in window manager
 	//
 	sf::Vector2u wsize( vm.width, vm.height ); // default wsize = OpenGL surface size
 
-	if ( is_windowed_mode( win_mode ) )
+	if ( is_windowed_mode( m_win_mode ) )
 	{
 		FeWindowPosition win_pos(
 			sf::Vector2i( 0, 0 ),
@@ -260,7 +297,7 @@ void FeWindow::initial_create()
 	}
 
 #ifdef SFML_SYSTEM_MACOS
-	if ( win_mode == FeSettings::Default )
+	if ( m_win_mode == FeSettings::Default )
 	{
 		// note ordering req: pretty sure this needs to be before the setPosition() call below
 		osx_hide_menu_bar();
@@ -276,9 +313,46 @@ void FeWindow::initial_create()
 		<< wpos.x << "," << wpos.y << " [OpenGL surface: "
 		<< vm.width << "x" << vm.height << " bpp=" << vm.bitsPerPixel << "]" << std::endl;
 
-#ifdef SFML_SYSTEM_WINDOWS
-	SetForegroundWindow( getSystemHandle() );
-	LockSetForegroundWindow( LSFW_LOCK );
+#if defined(SFML_SYSTEM_WINDOWS)
+
+#if !defined(WINDOWS_XP)
+	// If the window mode is set to Window (No Border) and the values in window.am
+	// match the display resolution we treat it as if it was Fullscreen
+	// to properly handle borderless fulscreen optimizations.
+	// Required on Vista and above.
+	//
+	if (( m_win_mode == FeSettings::WindowNoBorder )
+		&& ( wpos.x == 0 )
+		&& ( wpos.y == 0 )
+		&& ( vm.width == wsize.x )
+		&& ( vm.height == wsize.y ))
+		m_win_mode = FeSettings::Fullscreen;
+#endif
+
+	// To avoid problems with black screen on launching games when window mode is set to Fullscreen
+	// we hide the main renderwindow and show this m_blackout window instead
+	// which has the extended size by 1 pixel in each direction to stop Windows
+	// from treating it as exclusive borderless.
+	//
+	if ( m_win_mode == FeSettings::Fullscreen )
+	{
+		m_blackout.create(sf::VideoMode(16, 16, 32), "", sf::Style::None);
+		m_blackout.setVerticalSyncEnabled(true);
+		m_blackout.setKeyRepeatEnabled(false);
+		m_blackout.setMouseCursorVisible(false);
+		m_blackout.setSize( sf::Vector2u( vm.width + 2, vm.height + 2 ));
+		m_blackout.setPosition( sf::Vector2i( -1, -1 ));
+		m_blackout.display();
+
+		// We hide the black window from the task bar and the alt+tab switcher
+		int style = GetWindowLongPtr(m_blackout.getSystemHandle(), GWL_EXSTYLE );
+		SetWindowLongPtr( m_blackout.getSystemHandle(), GWL_EXSTYLE, style | WS_EX_TOOLWINDOW );
+	}
+
+	if (( m_win_mode == FeSettings::Fullscreen ) || ( m_win_mode == FeSettings::Window ))
+		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
+	else
+		set_win32_foreground_window( getSystemHandle(), HWND_TOPMOST );
 #endif
 
 	m_fes.init_mouse_capture( wsize.x, wsize.y );
@@ -318,13 +392,6 @@ void wait_callback( void *o )
 		{
 			if ( ev.type == sf::Event::Closed )
 				return;
-		}
-		// Clear the frame buffer so there is no stale frame flashing on game launch/exit
-		// Don't clear if Multimonitor is enabled
-		if ( !is_multimon_config( win->m_fes ) )
-		{
-			win->clear();
-			win->display();
 		}
 	}
 }
@@ -378,7 +445,20 @@ bool FeWindow::run()
 	bool have_paused_prog = m_running_pid && process_exists( m_running_pid );
 
 #if defined(SFML_SYSTEM_WINDOWS)
-	LockSetForegroundWindow( LSFW_UNLOCK );
+	if (( m_win_mode == FeSettings::Fullscreen ) || ( m_win_mode == FeSettings::Window ))
+	{
+		set_win32_foreground_window( getSystemHandle(), HWND_BOTTOM );
+		m_blackout.display();
+		setVisible( false );
+		set_win32_foreground_window( m_blackout.getSystemHandle(), HWND_TOP );
+	}
+	else
+	{
+		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
+		if ( !is_multimon_config( m_fes ))
+			clear();
+		display();
+	}
 #endif
 
 	// check if we need to resume a previously paused game
@@ -448,7 +528,12 @@ bool FeWindow::run()
 					return false;
 			}
 
+#if defined(SFML_SYSTEM_WINDOWS)
+			has_focus = hasFocus() | m_blackout.hasFocus();
+#else
 			has_focus = hasFocus();
+#endif
+
 #else
 			//
 			// flakey pre-SFML 2.2 implementation
@@ -517,8 +602,23 @@ bool FeWindow::run()
 #elif defined(SFML_SYSTEM_MACOS)
 	osx_take_focus();
 #elif defined(SFML_SYSTEM_WINDOWS)
-	SetForegroundWindow( getSystemHandle() );
-	LockSetForegroundWindow( LSFW_LOCK );
+	if (( m_win_mode == FeSettings::Fullscreen ) || ( m_win_mode == FeSettings::Window ))
+	{
+		m_blackout.display();
+		setVisible( true );
+
+		// Since we are double/triple buffering in fullscreen
+		// we need to clear the frames rendered ahead
+		// to avoid back buffer flashing on game launch/exit
+		for ( int i = 0; i < 3; i++ )
+		{
+			clear();
+			display();
+		}
+		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
+	}
+	else
+		set_win32_foreground_window( getSystemHandle(), HWND_TOPMOST );
 #endif
 
 	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
@@ -541,6 +641,10 @@ bool FeWindow::run()
 
 void FeWindow::on_exit()
 {
+#if defined(SFML_SYSTEM_WINDOWS)
+	m_blackout.close();
+#endif
+
 	if ( is_windowed_mode( m_fes.get_window_mode() ) )
 	{
 		FeWindowPosition win_pos( getPosition(), getSize() );
