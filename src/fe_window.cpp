@@ -43,6 +43,21 @@
 
 #include <SFML/System/Sleep.hpp>
 
+#ifdef SFML_SYSTEM_WINDOWS
+void set_win32_foreground_window( HWND hwnd, HWND order )
+{
+	HWND hCurWnd = GetForegroundWindow();
+	DWORD dwMyID = GetCurrentThreadId();
+	DWORD dwCurID = GetWindowThreadProcessId(hCurWnd, NULL);
+	AttachThreadInput(dwCurID, dwMyID, true);
+	SetWindowPos(hwnd, order, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+	SetForegroundWindow(hwnd);
+	SetFocus(hwnd);
+	SetActiveWindow(hwnd);
+	AttachThreadInput(dwCurID, dwMyID, false);
+}
+#endif
+
 class FeWindowPosition : public FeBaseConfigurable
 {
 public:
@@ -258,12 +273,12 @@ void FeWindow::initial_create()
 	// Create window
 	//
 	create( vm, "Attract-Mode", style_map[ m_win_mode ] );
-	
+
 	// We need to clear and display here before calling setSize and setPosition
 	// to avoid a white window flash on launching Attract Mode.
 	clear();
 	display();
-	
+
 	//
 	// Set Size and position of window in window manager
 	//
@@ -328,12 +343,12 @@ void FeWindow::initial_create()
 		m_blackout.setSize( sf::Vector2u( vm.width + 2, vm.height + 2 ));
 		m_blackout.setPosition( sf::Vector2i( -1, -1 ));
 		m_blackout.display();
-		
+
 		// We hide the black window from the task bar and the alt+tab switcher
 		int style = GetWindowLongPtr(m_blackout.getSystemHandle(), GWL_EXSTYLE );
 		SetWindowLongPtr( m_blackout.getSystemHandle(), GWL_EXSTYLE, style | WS_EX_TOOLWINDOW );
 	}
-		
+
 	if (( m_win_mode == FeSettings::Fullscreen ) || ( m_win_mode == FeSettings::Window ))
 		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
 	else
@@ -591,7 +606,7 @@ bool FeWindow::run()
 	{
 		m_blackout.display();
 		setVisible( true );
-	
+
 		// Since we are double/triple buffering in fullscreen
 		// we need to clear the frames rendered ahead
 		// to avoid back buffer flashing on game launch/exit
@@ -629,7 +644,7 @@ void FeWindow::on_exit()
 #if defined(SFML_SYSTEM_WINDOWS)
 	m_blackout.close();
 #endif
-	
+
 	if ( is_windowed_mode( m_fes.get_window_mode() ) )
 	{
 		FeWindowPosition win_pos( getPosition(), getSize() );

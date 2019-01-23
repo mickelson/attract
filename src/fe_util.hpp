@@ -27,11 +27,6 @@
 #include <string>
 #include <SFML/Config.hpp>
 
-#ifdef SFML_SYSTEM_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif // SFML_SYSTEM_WINDOWS
-
 #ifdef FE_DEBUG
 #include <cassert>
 #endif
@@ -338,7 +333,6 @@ bool get_console_stdin( std::string &str );
 //
 #ifdef SFML_SYSTEM_WINDOWS
 void hide_console();
-void set_win32_foreground_window( HWND hwnd, HWND order );
 #endif
 
 #ifdef FE_DEBUG
