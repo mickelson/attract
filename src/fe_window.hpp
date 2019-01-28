@@ -32,9 +32,6 @@ class FeWindow : public sf::RenderWindow
 	friend void launch_callback( void *o );
 	friend void wait_callback( void *o );
 
-private:
-	int m_win_mode;
-
 protected:
 	FeSettings &m_fes;
 	unsigned int m_running_pid;
@@ -57,7 +54,7 @@ public:
 
 	// return true if there is another process (i.e. a paused emulator) that we are currently running
 	bool has_running_process();
-	
+
 	// override from base class
 	void display();
 };
