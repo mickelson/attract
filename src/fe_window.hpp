@@ -43,6 +43,10 @@ protected:
 	// override from base class
 	void onCreate();
 
+private:
+	sf::Window m_blackout;
+	int m_win_mode;
+
 public:
 	FeWindow( FeSettings &fes );
 	~FeWindow();
@@ -53,6 +57,9 @@ public:
 
 	// return true if there is another process (i.e. a paused emulator) that we are currently running
 	bool has_running_process();
+	
+	// override from base class
+	void display();
 };
 
 #endif
