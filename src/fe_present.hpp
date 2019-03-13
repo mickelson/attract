@@ -28,6 +28,7 @@
 #include "fe_settings.hpp"
 #include "fe_sound.hpp"
 #include "fe_shader.hpp"
+#include "fe_window.hpp"
 
 class FeImage;
 class FeBaseTextureContainer;
@@ -113,6 +114,7 @@ protected:
 	};
 
 	FeSettings *m_feSettings;
+	FeWindow &m_window;
 
 	const FeFontContainer *m_currentFont;
 	FeFontContainer &m_defaultFont;
@@ -193,7 +195,7 @@ protected:
 	void set_preserve_aspect_ratio( bool );
 
 public:
-	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
+	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWindow &wnd );
 	virtual ~FePresent( void );
 
 	void init_monitors();

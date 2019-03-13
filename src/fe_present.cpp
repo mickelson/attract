@@ -149,9 +149,10 @@ int FeMonitor::get_num()
 	return num;
 }
 
-FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
+FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWindow &wnd )
 	: m_feSettings( fesettings ),
 	m_currentFont( &defaultfont ),
+	m_window( wnd ),
 	m_defaultFont( defaultfont ),
 	m_baseRotation( FeSettings::RotateNone ),
 	m_toggleRotation( FeSettings::RotateNone ),
@@ -253,12 +254,7 @@ void FePresent::init_monitors()
 	else
 #endif
 	{
-		//
-		// Where there is no multi-monitor support, we just use the desktop dimensions returned by SFML
-		//
-		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
-
-		FeMonitor mc( 0, vm.width, vm.height );
+		FeMonitor mc( 0, m_window.getSize().x, m_window.getSize().y );
 
 #ifdef SFML_SYSTEM_WINDOWS
 		//
@@ -267,6 +263,8 @@ void FePresent::init_monitors()
 		//
 		if ( m_feSettings->get_window_mode() == FeSettings::Default )
 		{
+			mc.size.x -= 2;
+			mc.size.y -= 2;
 			mc.transform = sf::Transform().translate( 1, 1 );
 		}
 #endif
