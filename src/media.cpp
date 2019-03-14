@@ -790,7 +790,8 @@ the_end:
 FeMedia::FeMedia( Type t )
 	: sf::SoundStream(),
 	m_audio( NULL ),
-	m_video( NULL )
+	m_video( NULL ),
+	m_aspect_ratio( 1.0 )
 {
 	m_imp = new FeMediaImp( t );
 }
@@ -1090,11 +1091,12 @@ bool FeMedia::open( const std::string &archive,
 
 				m_video->max_sleep = sf::seconds( 0.5 / av_q2d(m_imp->m_format_ctx->streams[stream_id]->r_frame_rate));
 
-				float aspect_ratio = 1.0;
 				if ( codec_ctx->sample_aspect_ratio.num != 0 )
-					aspect_ratio = av_q2d( codec_ctx->sample_aspect_ratio );
+					m_aspect_ratio = av_q2d( codec_ctx->sample_aspect_ratio );
+				if ( m_imp->m_format_ctx->streams[stream_id]->sample_aspect_ratio.num != 0 )
+					m_aspect_ratio = av_q2d( m_imp->m_format_ctx->streams[stream_id]->sample_aspect_ratio );
 
-				m_video->disptex_width = codec_ctx->width * aspect_ratio;
+				m_video->disptex_width = codec_ctx->width;
 				m_video->disptex_height = codec_ctx->height;
 
 				m_video->display_texture = outt;
@@ -1397,6 +1399,11 @@ bool FeMedia::is_multiframe() const
 	}
 
 	return false;
+}
+
+float FeMedia::get_aspect_ratio() const
+{
+	return m_aspect_ratio;
 }
 
 sf::Time FeMedia::get_duration() const

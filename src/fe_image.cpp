@@ -127,6 +127,11 @@ bool FeBaseTextureContainer::is_swf() const
 	return false;
 }
 
+float FeBaseTextureContainer::get_movie_aspect_ratio() const
+{
+	return 1.0;
+}
+
 void FeBaseTextureContainer::transition_swap( FeBaseTextureContainer *o )
 {
 	//
@@ -1000,6 +1005,14 @@ bool FeTextureContainer::is_swf() const
 	return m_swf;
 }
 
+float FeTextureContainer::get_movie_aspect_ratio() const
+{
+	if ( m_movie )
+		m_movie->get_aspect_ratio();
+	else
+		return 1.0;
+}
+
 void FeTextureContainer::release_audio( bool state )
 {
 #ifndef NO_MOVIE
@@ -1204,6 +1217,7 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 void FeImage::scale()
 {
 	sf::IntRect texture_rect = m_sprite.getTextureRect();
+	float ratio = m_tex->get_movie_aspect_ratio();
 
 	if (( texture_rect.width == 0 ) || ( texture_rect.height == 0 ))
 		return;
@@ -1240,25 +1254,25 @@ void FeImage::scale()
 				sf::Transform t;
 				t.rotate( m_sprite.getRotation() );
 
-				if ( scale_x > scale_y ) // centre in x direction
+				if ( scale_x > scale_y * ratio ) // centre in x direction
 					final_pos += t.transformPoint(
-						( m_size.x - ( abs( texture_rect.width ) * scale_y )) / 2.0,
+						( m_size.x - abs( texture_rect.width ) * scale_y * ratio ) / 2.0,
 						0 );
 				else // centre in y direction
 					final_pos += t.transformPoint( 0,
-						( m_size.y - ( abs( texture_rect.height ) * scale_x )) / 2.0);
+						( m_size.y - abs( texture_rect.height ) * scale_x / ratio ) / 2.0 );
 			}
 		}
 
 		scale = true;
 	}
 
-	if ( m_preserve_aspect_ratio && ( scale_y != scale_x ))
+	if ( m_preserve_aspect_ratio )
 	{
-		if ( scale_y > scale_x )
-			scale_y = scale_x;
+		if ( scale_y * ratio > scale_x )
+			scale_y = scale_x / ratio;
 		else
-			scale_x = scale_y;
+			scale_x = scale_y * ratio;
 	}
 
 	if ( scale )
