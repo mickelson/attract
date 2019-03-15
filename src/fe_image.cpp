@@ -1007,9 +1007,10 @@ bool FeTextureContainer::is_swf() const
 
 float FeTextureContainer::get_movie_aspect_ratio() const
 {
+#ifndef NO_MOVIE
 	if ( m_movie )
-		m_movie->get_aspect_ratio();
-	else
+		return m_movie->get_aspect_ratio();
+#endif
 		return 1.0;
 }
 
