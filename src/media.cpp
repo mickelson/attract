@@ -622,7 +622,7 @@ void FeVideoImp::video_thread()
 		// so we flag the video to be restarted on the next tick.
 		// This prevents displaying only keyframes for several seconds on wake.
 		//
-		if ( wait_time < sf::seconds( -2.0f ) )
+		if ( wait_time < sf::seconds( -5.0f ) )
 		{
 			wait_time = sf::seconds( 0 );
 			far_behind = true;
