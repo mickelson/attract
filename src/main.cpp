@@ -45,6 +45,7 @@
 
 #ifdef SFML_SYSTEM_WINDOWS
 #include <windows.h>
+#include "nvapi.hpp"
 
 extern "C"
 {
@@ -107,6 +108,13 @@ int main(int argc, char *argv[])
 	//
 	fe_print_version();
 	FeLog() << std::endl;
+
+#ifdef SFML_SYSTEM_WINDOWS
+	// Detect an nvidia card and if it's found create an nvidia profile
+	// for Attract Mode with optimizations
+	nvapi_init();
+	FeDebug() << std::endl;
+#endif
 
 	feSettings.load();
 
