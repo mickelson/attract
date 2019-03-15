@@ -270,19 +270,8 @@ void FeWindow::initial_create()
 #endif
 
 	//
-	// Create window
+	// If in windowed mode load the parameters from the window.am file
 	//
-	create( vm, "Attract-Mode", style_map[ m_win_mode ] );
-
-	// We need to clear and display here before calling setSize and setPosition
-	// to avoid a white window flash on launching Attract Mode.
-	clear();
-	display();
-
-	//
-	// Set Size and position of window in window manager
-	//
-	sf::Vector2u wsize( vm.width, vm.height ); // default wsize = OpenGL surface size
 
 	if ( is_windowed_mode( m_win_mode ) )
 	{
@@ -293,8 +282,21 @@ void FeWindow::initial_create()
 		win_pos.load_from_file( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
 
 		wpos = win_pos.m_pos;
-		wsize = win_pos.m_size;
+		vm.width = win_pos.m_size.x;
+		vm.height = win_pos.m_size.y;
 	}
+
+	sf::Vector2u wsize( vm.width, vm.height );
+
+	//
+	// Create window
+	//
+	create( vm, "Attract-Mode", style_map[ m_win_mode ] );
+
+	// We need to clear and display here before calling setSize and setPosition
+	// to avoid a white window flash on launching Attract Mode.
+	clear();
+	display();
 
 #ifdef SFML_SYSTEM_MACOS
 	if ( m_win_mode == FeSettings::Default )
@@ -645,7 +647,7 @@ void FeWindow::on_exit()
 	m_blackout.close();
 #endif
 
-	if ( is_windowed_mode( m_fes.get_window_mode() ) )
+	if ( is_windowed_mode( m_win_mode ) )
 	{
 		FeWindowPosition win_pos( getPosition(), getSize() );
 		win_pos.save( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
