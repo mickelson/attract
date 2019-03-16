@@ -194,7 +194,7 @@ private:
 	bool m_flag_set;
 };
 
-FeOverlay::FeOverlay( sf::RenderWindow &wnd,
+FeOverlay::FeOverlay( FeWindow &wnd,
 		FeSettings &fes,
 		FePresent &fep )
 	: m_wnd( wnd ),
@@ -1511,9 +1511,9 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 class FeKeyRepeat
 {
 private:
-	sf::RenderWindow &m_wnd;
+	FeWindow &m_wnd;
 public:
-	FeKeyRepeat( sf::RenderWindow &wnd )
+	FeKeyRepeat( FeWindow &wnd )
 	: m_wnd( wnd )
 	{
 		m_wnd.setKeyRepeatEnabled( true );
