@@ -25,6 +25,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "fe_present.hpp"
+#include "fe_window.hpp"
 
 class FeSettings;
 class FeInputMapEntry;
@@ -38,7 +39,7 @@ class FeOverlay
 friend class FeConfigContextImp;
 
 private:
-	sf::RenderWindow &m_wnd;
+	FeWindow &m_wnd;
 	FeSettings &m_feSettings;
 	FePresent &m_fePresent;
 	const sf::Color m_textColour;
@@ -66,7 +67,7 @@ private:
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
 
 public:
-	FeOverlay( sf::RenderWindow &wnd,
+	FeOverlay( FeWindow &wnd,
 		FeSettings &fes,
 		FePresent &fep );
 
