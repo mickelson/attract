@@ -41,7 +41,9 @@ protected:
 	void onCreate();
 
 private:
-	sf::Window m_blackout;
+#if defined(SFML_SYSTEM_WINDOWS)
+	sf::RenderWindow m_blackout;
+#endif
 	int m_win_mode;
 
 public:
