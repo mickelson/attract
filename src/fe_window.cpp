@@ -133,7 +133,17 @@ FeWindow::~FeWindow()
 
 void FeWindow::onCreate()
 {
+	// On Windows Vista and above all non fullscreen window modes
+	// go through DWM. We have to disable vsync
+	// when we rely solely on DwmFlush()
+#if defined(SFML_SYSTEM_WINDOWS) && !defined(WINDOWS_XP)
+	if ( m_win_mode != FeSettings::Fullscreen )
+		setVerticalSyncEnabled(false);
+	else
+		setVerticalSyncEnabled(true);
+#else
 	setVerticalSyncEnabled(true);
+#endif
 	setKeyRepeatEnabled(false);
 	setMouseCursorVisible(false);
 	setJoystickThreshold( 1.0 );
