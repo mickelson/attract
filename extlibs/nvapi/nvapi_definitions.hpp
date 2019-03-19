@@ -9,8 +9,9 @@ namespace {
 enum Esetting {
 	OGL_THREAD_CONTROL_ID                               = 0x20C1221E,
 	OGL_TRIPLE_BUFFER_ID                                = 0x20FDD1F9,
-	PREFERRED_PSTATE_ID                                 = 0x1057EB71
-
+	PREFERRED_PSTATE_ID                                 = 0x1057EB71,
+	PRERENDERLIMIT_ID                                   = 0x007BA09E,
+	OGL_MAX_FRAMES_ALLOWED_ID                           = 0x208E55E3
 };
 
 enum EValues_OGL_THREAD_CONTROL {
@@ -38,6 +39,14 @@ enum EValues_PREFERRED_PSTATE {
 	PREFERRED_PSTATE_MAX                                 = 0x00000005,
 	PREFERRED_PSTATE_NUM_VALUES = 8,
 	PREFERRED_PSTATE_DEFAULT = PREFERRED_PSTATE_OPTIMAL_POWER
+};
+
+enum EValues_PRERENDERLIMIT {
+    PRERENDERLIMIT_MIN                                   = 0x00,
+    PRERENDERLIMIT_MAX                                   = 0xff,
+    PRERENDERLIMIT_APP_CONTROLLED                        = 0x00,
+    PRERENDERLIMIT_NUM_VALUES = 3,
+    PRERENDERLIMIT_DEFAULT = PRERENDERLIMIT_APP_CONTROLLED
 };
 
 typedef enum _NvAPI_Status
@@ -290,6 +299,7 @@ typedef NvAPI_Status (*NvAPI_Initialize_t)();
 typedef NvAPI_Status (*NvAPI_EnumPhysicalGPUs_t)(int **handles, int *count);
 typedef NvAPI_Status (*NvAPI_GPU_GetUsages_t)(int *handle, unsigned int *usages);
 typedef NvAPI_Status (*NvAPI_DRS_CreateProfile_t)(NvDRSSessionHandle hSession, NVDRS_PROFILE *pProfileInfo, NvDRSProfileHandle *phProfile);
+typedef NvAPI_Status (*NvAPI_DRS_DeleteProfile_t)(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile);
 typedef NvAPI_Status (*NvAPI_DRS_CreateSession_t)(NvDRSSessionHandle *phSession);
 typedef NvAPI_Status (*NvAPI_DRS_LoadSettings_t)(NvDRSSessionHandle 	hSession);
 typedef NvAPI_Status (*NvAPI_DRS_CreateApplication_t)(NvDRSSessionHandle hSession, NvDRSProfileHandle  hProfile, NVDRS_APPLICATION *pApplication);
@@ -297,6 +307,8 @@ typedef NvAPI_Status (*NvAPI_DRS_SetSetting_t)(NvDRSSessionHandle hSession, NvDR
 typedef NvAPI_Status (*NvAPI_DRS_SaveSettings_t)(NvDRSSessionHandle hSession);
 typedef NvAPI_Status (*NvAPI_DRS_DestroySession_t)(NvDRSSessionHandle hSession);
 typedef NvAPI_Status (*NvAPI_DRS_FindProfileByName_t)(NvDRSSessionHandle hSession, NvAPI_UnicodeString profileName, NvDRSProfileHandle* phProfile);
+typedef NvAPI_Status (*NvAPI_DRS_FindApplicationByName_t)(NvDRSSessionHandle hSession, NvAPI_UnicodeString appName, NvDRSProfileHandle* phProfile, NVDRS_APPLICATION* pApplication);
+typedef NvAPI_Status (*NvAPI_DRS_GetProfileInfo_t)(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_PROFILE* pProfileInfo);
 typedef NvAPI_Status (*NvAPI_GetErrorMessage_t)(NvAPI_Status nr,NvAPI_ShortString szDesc);
 
 // nvapi.dll internal function pointers
@@ -305,6 +317,7 @@ NvAPI_Initialize_t				NvAPI_Initialize			= NULL;
 NvAPI_EnumPhysicalGPUs_t		NvAPI_EnumPhysicalGPUs		= NULL;
 NvAPI_GPU_GetUsages_t			NvAPI_GPU_GetUsages			= NULL;
 NvAPI_DRS_CreateProfile_t		NvAPI_DRS_CreateProfile		= NULL;
+NvAPI_DRS_DeleteProfile_t		NvAPI_DRS_DeleteProfile		= NULL;
 NvAPI_DRS_CreateSession_t		NvAPI_DRS_CreateSession		= NULL;
 NvAPI_DRS_LoadSettings_t		NvAPI_DRS_LoadSettings		= NULL;
 NvAPI_DRS_CreateApplication_t	NvAPI_DRS_CreateApplication	= NULL;
@@ -312,6 +325,8 @@ NvAPI_DRS_SetSetting_t			NvAPI_DRS_SetSetting 		= NULL;
 NvAPI_DRS_SaveSettings_t		NvAPI_DRS_SaveSettings		= NULL;
 NvAPI_DRS_DestroySession_t		NvAPI_DRS_DestroySession	= NULL;
 NvAPI_DRS_FindProfileByName_t	NvAPI_DRS_FindProfileByName	= NULL;
+NvAPI_DRS_FindApplicationByName_t	NvAPI_DRS_FindApplicationByName = NULL;
+NvAPI_DRS_GetProfileInfo_t		NvAPI_DRS_GetProfileInfo 	= NULL;
 NvAPI_GetErrorMessage_t			NvAPI_GetErrorMessage		= NULL;
 
 }
