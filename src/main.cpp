@@ -112,7 +112,9 @@ int main(int argc, char *argv[])
 #ifdef SFML_SYSTEM_WINDOWS
 	// Detect an nvidia card and if it's found create an nvidia profile
 	// for Attract Mode with optimizations
-	nvapi_init();
+	if ( nvapi_init() > 0 )
+		FeLog() << "Nvidia GPU detected. Attract Mode profile was not found so it has been created.\n"
+				<< "In order for the changes to take effect, please restart Attract Mode\n" << std::endl;
 	FeDebug() << std::endl;
 #endif
 
