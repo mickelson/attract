@@ -117,14 +117,14 @@ OS X.
 1. Follow the steps in the mxe tutorial to set up mxe on your system:
    <http://mxe.cc/#tutorial>
 
-2. Make mxe's sfml, ffmpeg and libarchive packages:
+2. Make mxe's sfml, ffmpeg, libarchive and curl packages:
 
-           make ffmpeg sfml libarchive
+           make ffmpeg sfml libarchive curl
 
-   the above command will make 32-bit versions of ffmpeg and sfml (and anything
-   else that they depend on). To make the 64-bit version use the following:
+   the above command will make 32-bit versions of ffmpeg, sfml, libarchive and curl
+   (and anything else that they depend on). To make the 64-bit version use the following:
 
-           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml libarchive
+           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml libarchive curl
 
 3. Extract the Attract-Mode source to your system.
 
@@ -156,7 +156,7 @@ Windows (native compile):
 
            pacman -Syu
 
-4. Install required packaged. (optionally use the mingw-w64-i686-toolchain
+4. Install required packages. (optionally use the mingw-w64-i686-toolchain
    instead for 32-bit windows architectures), install "all" (by default) :
 
            pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg mingw64/mingw-w64-x86_64-libarchive
