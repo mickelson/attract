@@ -46,14 +46,12 @@ public:
 	const FeNetTask &operator=( const FeNetTask & );
 
 	FeNetTask(
-		const std::string &host,
-		const std::string &req,
+		const std::string &url,
 		const std::string &filename,
 		TaskType t=FileTask );
 
 	FeNetTask(
-		const std::string &host,
-		const std::string &req,
+		const std::string &url,
 		int id );
 
 	FeNetTask();
@@ -66,8 +64,7 @@ public:
 
 private:
 	TaskType m_type;
-	std::string m_host;
-	std::string m_req;
+	std::string m_url;
 	std::string m_filename;
 	std::string m_result;
 	int m_id;
@@ -94,13 +91,11 @@ protected:
 public:
 	FeNetQueue();
 
-	void add_file_task( const std::string &host,
-			const std::string &req,
+	void add_file_task( const std::string &url,
 			const std::string &file_name,
 			bool flag_special=false );
 
-	void add_buffer_task( const std::string &host,
-			const std::string &req,
+	void add_buffer_task( const std::string &url,
 			int id );
 
 	bool pop_completed_task( int &id,

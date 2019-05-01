@@ -27,13 +27,11 @@
 #include <set>
 #include <map>
 #include <vector>
-#include "fe_romlist.hpp"
+#include "scraper_base.hpp"
 
 class FeXMLParser
 {
 public:
-	typedef bool (*UiUpdate) (void *, int, const std::string &);
-
 	void set_continue_parse( bool f ) { m_continue_parse=f; };
 	bool get_continue_parse() { return m_continue_parse; };
 
@@ -68,24 +66,6 @@ class FeMapComp
 {
 public:
 	bool operator()(const char *lhs, const char *rhs) const;
-};
-
-class FeImporterContext
-{
-public:
-	FeImporterContext( const FeEmulatorInfo &e, FeRomInfoListType &rl );
-	const FeEmulatorInfo &emulator;
-	FeRomInfoListType &romlist;
-	bool scrape_art;
-	FeXMLParser::UiUpdate uiupdate;
-	void *uiupdatedata;
-	bool full;
-	bool use_net;
-	int progress_past;
-	int progress_range;
-	int download_count;
-	std::string user_message;
-	std::string out_name;
 };
 
 class FeListXMLParser : public FeXMLParser
@@ -144,93 +124,5 @@ private:
 	void end_element( const char * );
 	void clear_parse_state();
 };
-
-class FeGameDBPlatformListParser : private FeXMLParser
-{
-public:
-	FeGameDBPlatformListParser();
-	bool parse( const std::string &filename );
-
-	std::vector<std::string> m_names;
-	std::vector<int> m_ids;
-
-private:
-	void start_element( const char *, const char ** );
-	void end_element( const char * );
-
-	int m_id;
-	std::string m_name;
-};
-
-class FeGameDBArt
-{
-public:
-	std::string base;
-
-	std::string flyer;
-	std::string wheel;
-	std::string snap;
-	std::string marquee;
-	std::vector<std::string> fanart;
-
-	void clear();
-};
-
-class FeGameDBPlatformParser : private FeXMLParser
-{
-public:
-	FeGameDBPlatformParser( FeGameDBArt &art );
-	bool parse( const std::string &filename );
-
-private:
-	void start_element( const char *, const char ** );
-	void end_element( const char * );
-
-	FeGameDBArt &m_art;
-};
-
-
-class FeGameDBParser : private FeXMLParser
-{
-public:
-	FeGameDBParser(
-			std::vector<std::string> &system_list,
-			FeRomInfo &,
-			FeGameDBArt *art=NULL );
-
-	bool parse( const std::string &data );
-
-	bool get_overview( std::string & );
-
-private:
-	void start_element( const char *, const char ** );
-	void end_element( const char * );
-
-	void set_info_val( FeRomInfo::Index i, const std::string &v );
-
-	std::vector<std::string> &m_system_list;
-
-	FeGameDBArt m_work_art;
-	std::string m_title;
-	std::string m_alt_title;
-	std::string m_year;
-	std::string m_category;
-	std::string m_players;
-	std::string m_manufacturer;
-	std::string m_platform;
-	std::string m_overview;
-	std::string m_overview_keep;
-
-	FeRomInfo &m_rom;
-	FeGameDBArt *m_art;
-	bool m_screenshot;
-	bool m_fanart;
-	bool m_ignore;
-};
-
-//
-// Utility function to get strings to use to see if game names match filenames
-//
-std::string get_fuzzy( const std::string &orig );
 
 #endif

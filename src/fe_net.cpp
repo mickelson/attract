@@ -41,23 +41,20 @@ static size_t write_curl_callback( void *contents, size_t size, size_t nmemb, vo
 	return add_size;
 }
 
-FeNetTask::FeNetTask( const std::string &host,
-		const std::string &req,
+FeNetTask::FeNetTask( const std::string &url,
 		const std::string &filename,
 		TaskType t )
 	: m_type( t ),
-	m_host( host ),
-	m_req( req ),
+	m_url( url ),
 	m_filename( filename ),
 	m_id( FileTaskError )
 {
 }
 
-FeNetTask::FeNetTask( const std::string &host,
-		const std::string &req, int id )
+FeNetTask::FeNetTask( const std::string &url,
+		int id )
 	: m_type( BufferTask ),
-	m_host( host ),
-	m_req( req ),
+	m_url( url ),
 	m_id( id )
 {
 }
@@ -76,8 +73,7 @@ FeNetTask::FeNetTask( const FeNetTask &o )
 const FeNetTask &FeNetTask::operator=( const FeNetTask &o )
 {
 	m_type = o.m_type;
-	m_host = o.m_host;
-	m_req = o.m_req;
+	m_url = o.m_url;
 	m_filename = o.m_filename;
 	m_result = o.m_result;
 	m_id = o.m_id;
@@ -114,8 +110,7 @@ bool FeNetTask::do_task( long *code )
 	// fail on 404 file not found messages
 	curl_easy_setopt( curl_handle, CURLOPT_FAILONERROR, 1L );
 
-	std::string fullreq = m_host + m_req;
-	curl_easy_setopt( curl_handle, CURLOPT_URL, fullreq.c_str() );
+	curl_easy_setopt( curl_handle, CURLOPT_URL, m_url.c_str() );
 
 	res = curl_easy_perform( curl_handle );
 
@@ -126,7 +121,7 @@ bool FeNetTask::do_task( long *code )
 			long rcode;
 			curl_easy_getinfo( curl_handle, CURLINFO_RESPONSE_CODE, &rcode );
 
-			FeDebug() << " * Http error: " << rcode << " (" << m_req << ")" << std::endl;
+			FeDebug() << " * Http error: " << rcode << " (" << m_url << ")" << std::endl;
 
 			if ( code )
 				*code = rcode;
@@ -136,7 +131,7 @@ bool FeNetTask::do_task( long *code )
 			m_result = curl_easy_strerror( res );
 
 			FeLog() << " ! Error processing request: " << m_result
-					<< " (" << m_req << ")" << std::endl;
+					<< " (" << m_url << ")" << std::endl;
 		}
 
 		curl_easy_cleanup( curl_handle );
@@ -147,12 +142,6 @@ bool FeNetTask::do_task( long *code )
 
 	if (( m_type == FileTask ) || ( m_type == SpecialFileTask ))
 	{
-		size_t pos = m_req.find_last_of( '.' );
-		if ( pos != std::string::npos )
-			m_filename += m_req.substr( pos );
-		else
-			m_filename += ".png";
-
 		nowide::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
 		if ( !outfile.is_open() )
 		{
@@ -187,22 +176,20 @@ FeNetQueue::FeNetQueue()
 {
 }
 
-void FeNetQueue::add_file_task( const std::string &host,
-		const std::string &req,
+void FeNetQueue::add_file_task( const std::string &url,
 		const std::string &file_name,
 		bool flag_special )
 {
 	sf::Lock l( m_mutex );
-	m_in_queue.push_front( FeNetTask( host, req, file_name,
+	m_in_queue.push_front( FeNetTask( url, file_name,
 		flag_special ? FeNetTask::SpecialFileTask : FeNetTask::FileTask ) );
 }
 
-void FeNetQueue::add_buffer_task( const std::string &host,
-		const std::string &req,
+void FeNetQueue::add_buffer_task( const std::string &url,
 		int id )
 {
 	sf::Lock l( m_mutex );
-	m_in_queue.push_back( FeNetTask( host, req, id ) );
+	m_in_queue.push_back( FeNetTask( url, id ) );
 }
 
 bool FeNetQueue::get_next_task( FeNetTask &t )

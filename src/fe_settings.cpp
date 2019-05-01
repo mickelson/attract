@@ -421,6 +421,7 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_fanart",
 	"scrape_videos",
 	"scrape_overview",
+	"thegamesdb_key",
 #ifdef SFML_SYSTEM_WINDOWS
 	"hide_console",
 #endif
@@ -2723,6 +2724,8 @@ const std::string FeSettings::get_info( int index ) const
 		return as_str( m_selection_speed );
 	case StartupMode:
 		return startupTokens[ m_startup_mode ];
+	case ThegamesdbKey:
+		return m_tgdb_key;
 
 	case DisplaysMenuExit:
 	case HideBrackets:
@@ -2868,6 +2871,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 			if ( startupTokens[i] == NULL )
 				return false;
 		}
+		break;
+
+	case ThegamesdbKey:
+		m_tgdb_key = value;
 		break;
 
 	case ConfirmFavourites:

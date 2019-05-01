@@ -28,6 +28,7 @@
 #include "fe_romlist.hpp"
 #include "fe_input.hpp"
 #include "fe_util.hpp"
+#include "scraper_base.hpp"
 #include <deque>
 
 extern const char *FE_ART_EXTENSIONS[];
@@ -42,8 +43,6 @@ extern const char *FE_SWF_EXT;
 
 extern const char *FE_CFG_YES_STR;
 extern const char *FE_CFG_NO_STR;
-
-class FeImporterContext;
 
 // A container for each task when importing/building romlists from the command line
 class FeImportTask
@@ -130,6 +129,7 @@ public:
 		ScrapeFanArt,
 		ScrapeVids,
 		ScrapeOverview,
+		ThegamesdbKey,
 #ifdef SFML_SYSTEM_WINDOWS
 		HideConsole,
 #endif
@@ -163,6 +163,9 @@ private:
 
 	std::string m_last_game_overview_path;  // cache the last loaded game overview path
 	std::string m_last_game_overview_text;  // cache the last loaded game overview text
+
+	// configured API key to use for for thegamesdb.net scraping.  If blank, AM's standard public key is used
+	std::string m_tgdb_key;
 
 	std::vector<std::string> m_font_paths;
 	std::vector<FeDisplayInfo> m_displays;
@@ -523,7 +526,6 @@ public:
 	//
 	// Returns false if cancelled by the user
 	//
-	typedef bool (*UiUpdate) ( void *, int, const std::string & );
 	bool build_romlist( const std::vector < std::string > &emu_name, const std::string &out_filename,
 		UiUpdate, void *, std::string &, bool use_net=true );
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );

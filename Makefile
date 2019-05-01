@@ -115,6 +115,7 @@ _DEP =\
 	fe_info.hpp \
 	fe_input.hpp \
 	fe_romlist.hpp \
+	scraper_base.hpp \
 	scraper_xml.hpp \
 	fe_settings.hpp \
 	fe_config.hpp \
@@ -143,9 +144,11 @@ _OBJ =\
 	fe_input.o \
 	fe_romlist.o \
 	fe_settings.o \
+	scraper_base.o \
 	scraper_xml.o \
 	scraper_general.o \
 	scraper_net.o \
+	scraper_gamesdb.o \
 	fe_config.o \
 	fe_presentable.o \
 	fe_present.o \
@@ -414,7 +417,7 @@ else
  EXPAT =
 endif
 
-CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide -I$(EXTLIBS_DIR)/nvapi
+CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide -I$(EXTLIBS_DIR)/nvapi -I$(EXTLIBS_DIR)/rapidjson/include
 SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
 
 # Our nowide "lib" is only needed on Windows systems
