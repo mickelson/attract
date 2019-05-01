@@ -32,6 +32,8 @@
 #include "fe_base.hpp" // For FeLog()
 #include "scraper_base.hpp"
 
+#ifdef USE_LIBCURL
+
 const char *FE_IDDB_EXT = ".txt";
 
 //
@@ -649,7 +651,6 @@ void create_single_id_query(
 	q_total++;
 }
 
-// TODO: FIX For USE_LIBCURL == false
 bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 {
 	FeLog() << " - scraping thegamesdb.net..." << std::endl;
@@ -1188,3 +1189,14 @@ fail_emu_scrape:
 
 	return true;
 }
+
+#else
+
+bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
+{
+	c.user_message = "Unable to scrape, frontend was built without libcurl enabled!";
+	FeLog() << c.user_message << std::endl;
+	return true;
+}
+
+#endif
