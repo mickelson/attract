@@ -42,7 +42,7 @@ makedepends=(
     "libglu1-mesa-dev"
     "libopenal-dev"
     "libxinerama-dev"
-    "libcurl4-openssl-dev"
+    "libcurl4-gnutls-dev"
     "${jpeglib}"
 )
 
@@ -73,7 +73,7 @@ depends:ubuntu-cosmic=(
 	"libglu1-mesa"
 	"libopenal1"
 	"libxinerama1"
-	"libcurl3"
+	"libcurl4"
 	"libjpeg-turbo8"
 )
 
@@ -92,7 +92,7 @@ depends:ubuntu-bionic=(
 	"libglu1-mesa"
 	"libopenal1"
 	"libxinerama1"
-	"libcurl3"
+	"libcurl4"
 	"libjpeg-turbo8"
 )
 
@@ -111,7 +111,7 @@ depends:ubuntu-xenial=(
 	"libglu1-mesa"
 	"libopenal1"
 	"libxinerama1"
-	"libcurl3"
+	"libcurl4"
 	"libjpeg-turbo8"
 )
 
@@ -130,7 +130,7 @@ depends:ubuntu-trusty=(
 	"libglu1-mesa"
 	"libopenal1"
 	"libxinerama1"
-	"libcurl3"
+	"libcurl4"
 	"libjpeg-turbo8"
 )
 
@@ -149,7 +149,7 @@ depends:debian-stretch=(
 	"libglu1-mesa"
 	"libopenal1"
 	"libxinerama1"
-	"libcurl3"
+	"libcurl4"
 	"libjpeg62-turbo"
 )
 
@@ -168,7 +168,7 @@ depends:debian-jessie=(
 	"libglu1-mesa"
 	"libopenal1"
 	"libxinerama1"
-	"libcurl3"
+	"libcurl4"
 	"libjpeg62-turbo"
 )
 
