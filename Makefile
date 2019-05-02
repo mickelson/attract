@@ -29,9 +29,6 @@
 # Uncomment next line to disable movie support (i.e. no FFmpeg).
 #NO_MOVIE=1
 #
-# Uncomment next line to disable network support (i.e. no SFML Network).
-#NO_NET=1
-#
 # By default, if FontConfig gets enabled we link against the system's expat
 # library (because FontConfig uses expat too).  If FontConfig is not used
 # then Attract-Mode is statically linked to its own version of expat.
@@ -58,8 +55,9 @@
 
 #FE_DEBUG=1
 #VERBOSE=1
+#WINDOWS_XP=1
 
-FE_VERSION=v2.4.1
+FE_VERSION=v2.5.1
 
 CC=gcc
 CXX=g++
@@ -117,6 +115,7 @@ _DEP =\
 	fe_info.hpp \
 	fe_input.hpp \
 	fe_romlist.hpp \
+	scraper_base.hpp \
 	scraper_xml.hpp \
 	fe_settings.hpp \
 	fe_config.hpp \
@@ -145,9 +144,11 @@ _OBJ =\
 	fe_input.o \
 	fe_romlist.o \
 	fe_settings.o \
+	scraper_base.o \
 	scraper_xml.o \
 	scraper_general.o \
 	scraper_net.o \
+	scraper_gamesdb.o \
 	fe_config.o \
 	fe_presentable.o \
 	fe_present.o \
@@ -209,7 +210,7 @@ ifeq ($(WINDOWS_STATIC),1)
  ifeq ($(shell $(PKG_CONFIG) --exists sfml && echo "1" || echo "0"), 1)
   SFML_PC="sfml"
  else
-  SFML_PC="sfml-system sfml-window sfml-graphics sfml-network"
+  SFML_PC="sfml-system sfml-window sfml-graphics"
  endif
  LIBS += $(shell $(PKG_CONFIG) --static --libs $(SFML_PC))
  CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags $(SFML_PC))
@@ -217,22 +218,9 @@ ifeq ($(WINDOWS_STATIC),1)
 
 else
 
- ifeq ($(NO_NET),1)
-  LIBS += -lsfml-graphics \
+ LIBS += -lsfml-graphics \
 	-lsfml-window \
 	-lsfml-system
-  FE_FLAGS += -DNO_NET
- else
-  LIBS += -lsfml-graphics \
-	-lsfml-window \
-	-lsfml-network \
-	-lsfml-system
- endif
-endif
-
-ifneq ($(NO_NET),1)
- _DEP += fe_net.hpp
- _OBJ += fe_net.o
 endif
 
 ifeq ($(FE_MACOSX_COMPILE),1)
@@ -266,6 +254,11 @@ endif
 ifeq ($(FE_WINDOWS_COMPILE),1)
  _DEP += attract.rc
  _OBJ += attract.res
+ ifeq ($(WINDOWS_XP),1)
+  FE_FLAGS += -DWINDOWS_XP
+ else
+  LIBS += -ldwmapi
+ endif
  ifeq ($(WINDOWS_CONSOLE),1)
   CFLAGS += -mconsole
   FE_FLAGS += -DWINDOWS_CONSOLE
@@ -297,6 +290,10 @@ endif
 
 ifeq ($(shell $(PKG_CONFIG) --exists libarchive && echo "1" || echo "0"), 1)
  USE_LIBARCHIVE=1
+endif
+
+ifeq ($(shell $(PKG_CONFIG) --exists libcurl && echo "1" || echo "0"), 1)
+ USE_LIBCURL=1
 endif
 
 #
@@ -361,6 +358,13 @@ else
  CFLAGS += -I$(EXTLIBS_DIR)/miniz
 endif
 
+ifeq ($(USE_LIBCURL),1)
+ FE_FLAGS += -DUSE_LIBCURL
+ TEMP_LIBS += libcurl
+ _DEP += fe_net.hpp
+ _OBJ += fe_net.o
+endif
+
 ifeq ($(NO_MOVIE),1)
  FE_FLAGS += -DNO_MOVIE
  ifeq ($(WINDOWS_STATIC),1)
@@ -413,8 +417,13 @@ else
  EXPAT =
 endif
 
-CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include
+CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide -I$(EXTLIBS_DIR)/nvapi -I$(EXTLIBS_DIR)/rapidjson/include
 SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
+
+# Our nowide "lib" is only needed on Windows systems
+ifeq ($(FE_WINDOWS_COMPILE),1)
+ SQUIRREL += $(OBJ_DIR)/libnowide.a
+endif
 
 ifeq ($(NO_SWF),1)
  FE_FLAGS += -DNO_SWF
@@ -570,6 +579,25 @@ $(AUDIO_OBJ_DIR):
 	$(MD) $@
 
 #
+# Nowide
+#
+NOWIDE_OBJ_DIR = $(OBJ_DIR)/nowidelib
+
+NOWIDEOBJS= \
+	$(NOWIDE_OBJ_DIR)/iostream.o
+
+$(OBJ_DIR)/libnowide.a: $(NOWIDEOBJS) | $(NOWIDE_OBJ_DIR)
+	$(AR_MSG)
+	$(SILENT)$(AR) $(ARFLAGS) $@ $(NOWIDEOBJS)
+
+$(NOWIDE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/nowide/%.cpp | $(NOWIDE_OBJ_DIR)
+	$(CC_MSG)
+	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS)
+
+$(NOWIDE_OBJ_DIR):
+	$(MD) $@
+
+#
 # gameswf
 #
 GAMESWF_OBJ_DIR = $(OBJ_DIR)/gameswflib
@@ -712,4 +740,4 @@ smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
 
 clean:
-	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(NOWIDE_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core

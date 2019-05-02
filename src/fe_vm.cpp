@@ -44,7 +44,7 @@
 #include <sqstdstring.h>
 #include <sqstdsystem.h>
 
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <iostream>
 #include <stdio.h>
 #include <ctime>
@@ -248,9 +248,16 @@ namespace
 			temp += nv;
 			temp += ";";
 
-			Sqrat::Script sc;
-			sc.CompileString( temp );
-			sc.Run();
+			try
+			{
+				Sqrat::Script sc;
+				sc.CompileString( temp );
+				sc.Run();
+			}
+			catch ( Sqrat::Exception e )
+			{
+				FeLog() << "Error compiling " << name << " string: [" << nv << "] - " << e.Message() << std::endl;
+			}
 		}
 	}
 };
@@ -306,7 +313,7 @@ const char *FeVM::transitionTypeStrings[] =
 };
 
 FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound, bool console_input )
-	: FePresent( &fes, defaultfont ),
+	: FePresent( &fes, defaultfont, wnd ),
 	m_window( wnd ),
 	m_overlay( NULL ),
 	m_ambient_sound( ambient_sound ),
@@ -324,7 +331,7 @@ FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSoun
 	std::string filename = m_feSettings->get_config_dir();
 	filename += FE_SCRIPT_NV_FILE;
 
-	std::ifstream infile( filename.c_str() );
+	nowide::ifstream infile( filename.c_str() );
 	if ( !infile.is_open() )
 		return;
 
@@ -351,7 +358,7 @@ FeVM::~FeVM()
 	std::string filename = m_feSettings->get_config_dir();
 	filename += FE_SCRIPT_NV_FILE;
 
-	std::ofstream outfile( filename.c_str() );
+	nowide::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
 		outfile << read_non_volatile_to_string( _SC( "nv" ) ) << std::endl;
@@ -570,6 +577,7 @@ bool FeVM::on_new_layout()
 			.Const( "Displays", FeInputMap::DisplaysMenu )
 			.Const( "Filters", FeInputMap::FiltersMenu )
 			.Const( "Tags", FeInputMap::ToggleTags )
+			.Const( "Favourite", FeInputMap::ToggleFavourite )
 			)
 		.Enum( _SC("PathTest"), Enumeration()
 			.Const( "IsFileOrDirectory", IsFileOrDirectory )
@@ -699,6 +707,7 @@ bool FeVM::on_new_layout()
 	fe.Bind( _SC("Text"),
 		DerivedClass<FeText, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("msg"), &FeText::get_string, &FeText::set_string )
+		.Prop(_SC("msg_wrapped"), &FeText::get_string_wrapped )
 		.Prop(_SC("bg_red"), &FeText::get_bgr, &FeText::set_bgr )
 		.Prop(_SC("bg_green"), &FeText::get_bgg, &FeText::set_bgg )
 		.Prop(_SC("bg_blue"), &FeText::get_bgb, &FeText::set_bgb )
@@ -910,6 +919,7 @@ bool FeVM::on_new_layout()
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
 	fe.Overload<void (*)(int, bool)>(_SC("set_display"), &FeVM::cb_set_display);
 	fe.Overload<void (*)(int)>(_SC("set_display"), &FeVM::cb_set_display);
+	fe.Overload<const char *(*)(const char *)>(_SC("get_text"), &FeVM::cb_get_text);
 
 	//
 	// Define variables that get exposed to Squirrel
@@ -1200,6 +1210,7 @@ void FeVM::on_transition(
 		{
 			video_tick();
 
+			redraw_surfaces();
 			m_window.clear();
 			m_window.draw( *this );
 			m_window.display();
@@ -1379,21 +1390,25 @@ void FePresent::script_process_magic_strings( std::string &str,
 	if ( !vm )
 		return;
 
-	size_t pos = str.find( "[!" );
+	const char *TOK = "[!";
+	int TOK_LEN = 2;
+
+	size_t pos = str.find( TOK );
 	while ( pos != std::string::npos )
 	{
-		size_t end = str.find_first_of( ']', pos+1 );
+		size_t end = str.find_first_of( ']', pos + TOK_LEN );
 		if ( end == std::string::npos )
 			break;
 
-		std::string magic = str.substr( pos+2, end-pos-2 );
-		std::string result;
+		std::string magic = str.substr( pos + TOK_LEN, end-pos-TOK_LEN );
 
 		try
 		{
 			Sqrat::Function func( Sqrat::RootTable(), magic.c_str() );
 			if ( !func.IsNull() )
 			{
+				std::string result;
+
 				switch ( fe_get_num_params( vm, func.GetFunc(), func.GetEnv() ) )
 				{
 				case 2:
@@ -1406,6 +1421,16 @@ void FePresent::script_process_magic_strings( std::string &str,
 					result = func.Evaluate<const char *>();
 					break;
 				}
+
+				str.replace( pos, end-pos+1, result );
+				pos += result.size();
+			}
+			else
+			{
+				FeDebug() << "Potential magic string ignored, no corresponding function in script: "
+					<< TOK << magic << "]" << std::endl;
+
+				pos += TOK_LEN;
 			}
 		}
 		catch( Sqrat::Exception &e )
@@ -1415,8 +1440,7 @@ void FePresent::script_process_magic_strings( std::string &str,
 				<< e.Message() << std::endl;
 		}
 
-		str.replace( pos, end+1, result );
-		pos = str.find( "[!" );
+		pos = str.find( TOK, pos );
 	}
 }
 
@@ -1564,6 +1588,7 @@ public:
 			fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
 			fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
 			fe.Func<bool (*)(const char *, int)>(_SC("path_test"), &FeVM::cb_path_test);
+			fe.Overload<const char *(*)(const char *)>(_SC("get_text"), &FeVM::cb_get_text);
 		}
 
 		Sqrat::RootTable().Bind( _SC("fe"),  fe );
@@ -1811,6 +1836,8 @@ namespace
 
 bool FeVM::setup_wizard()
 {
+	m_overlay->splash_message( "Please Wait" );
+
 	std::string path, fname;
 	if ( !m_feSettings->get_emulator_setup_script( path, fname ) )
 	{
@@ -1825,7 +1852,7 @@ bool FeVM::setup_wizard()
 	Sqrat::Object etg = Sqrat::RootTable().GetSlot( "emulators_to_generate" );
 	if ( etg.IsNull() )
 	{
-		FeDebug() << "Unable to get 'emulators_to_generate' from setup script" << fname << std::endl;
+		FeDebug() << "Unable to get 'emulators_to_generate' from setup script: " << fname << std::endl;
 		return false;
 	}
 
@@ -2332,56 +2359,60 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 	static std::string retval;
 	retval.clear();
 
+	if ( !rom )
+		return retval.c_str();
+
 	std::vector<std::string> vid_list, image_list;
-	if (( rom ) &&
-		( fes->get_best_artwork_file(
+	if ( !fes->get_best_artwork_file(
 			*rom,
 			art,
 			vid_list,
 			image_list,
-			(art_flags&AF_ImagesOnly) ) ))
+			(art_flags&AF_ImagesOnly) ) )
 	{
-		if ( art_flags&AF_FullList )
+		fes->get_fallback_layout_artwork_file( *rom, art, vid_list, image_list );
+	}
+
+	if ( art_flags&AF_FullList )
+	{
+		std::vector<std::string>::iterator itr;
+		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
 		{
-			std::vector<std::string>::iterator itr;
-			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			for ( itr=vid_list.begin(); itr!=vid_list.end(); ++itr )
 			{
-				for ( itr=vid_list.begin(); itr!=vid_list.end(); ++itr )
-				{
-					if ( !retval.empty() )
-						retval += ";";
+				if ( !retval.empty() )
+					retval += ";";
 
-					// see note below re: need for absolute path
-					retval += absolute_path( *itr );
-				}
-			}
-			else
-			{
-				for ( itr=image_list.begin(); itr!=image_list.end(); ++itr )
-				{
-					if ( !retval.empty() )
-						retval += ";";
-
-					// see note below re: need for absolute path
-					retval += absolute_path( *itr );
-				}
+				// see note below re: need for absolute path
+				retval += absolute_path( *itr );
 			}
 		}
 		else
 		{
-			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
-				retval = vid_list.front();
-			else if ( !image_list.empty() )
-				retval = image_list.front();
+			for ( itr=image_list.begin(); itr!=image_list.end(); ++itr )
+			{
+				if ( !retval.empty() )
+					retval += ";";
 
-			// We force our return value to an absolute path, to work
-			// around Attract-Mode's tendency to assume that relative
-			// paths are relative to the layout directory.
-			//
-			// We are almost certain that is not the case here...
-			//
-			retval = absolute_path( retval );
+				// see note below re: need for absolute path
+				retval += absolute_path( *itr );
+			}
 		}
+	}
+	else
+	{
+		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			retval = vid_list.front();
+		else if ( !image_list.empty() )
+			retval = image_list.front();
+
+		// We force our return value to an absolute path, to work
+		// around Attract-Mode's tendency to assume that relative
+		// paths are relative to the layout directory.
+		//
+		// We are almost certain that is not the case here...
+		//
+		retval = absolute_path( retval );
 	}
 
 	return retval.c_str();
@@ -2506,6 +2537,21 @@ void FeVM::cb_set_display( int idx, bool stack_previous )
 void FeVM::cb_set_display( int idx )
 {
 	cb_set_display( idx, false );
+}
+
+const char *FeVM::cb_get_text( const char *t )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+	FeSettings *fes = fev->m_feSettings;
+
+	static std::string retval;
+	retval.clear();
+
+	if ( t )
+		fes->get_resource( t, retval );
+
+	return retval.c_str();
 }
 
 void FeVM::init_with_default_layout()

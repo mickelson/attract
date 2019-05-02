@@ -417,12 +417,15 @@ _help_scrape_mamedb;MAME snap과 marquee를 mamedb.com에서 가져올 지 여�
 #
 Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
 Clear Hotkey?;Clear Hotkey?
+Exit Message;Exit Message
 Layout File;Layout File
 Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Pause Hotkey;Pause Hotkey
+Please Wait;Please Wait
 Press Hotkey;Press Hotkey
 Select template to use for emulator settings;Select template to use for emulator settings
 _help_emu_pause_hotkey;Set a global hotkey to pause the emulator.  When pressed, Attract-Mode will pause the emulator process and return to the frontend. The emulator process can be resumed by selecting the same game again in the frontend.
+_help_exit_message;Alternate message to exit the frontend [i.e. "Shut Down System"]
 _help_input_action;
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use

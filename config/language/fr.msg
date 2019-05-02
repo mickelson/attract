@@ -99,7 +99,7 @@ Hide Brackets in Game Title;Cacher les crochets dans le titre du jeu
 Info Source/Scraper;Info Source/Aspiration
 Joystick Threshold;Seuil du joystick
 Jump to Next Display;Bascule sur la liste de roms suivante 
-Language;Langage
+Language;Langue
 Layout;Thème
 Layout Options;Options du Layout
 Left;Gauche
@@ -266,7 +266,7 @@ _help_input_add;Ajouter un nouveau contrôle
 _help_input_delete;Enlever ce contrôle
 _help_intro;Configurer l'intro
 _help_joystick_threshold;Seuil d'amplitude des mouvements du joystick, de 1 à 100 (100=moins sensible)
-_help_language;Sélectionner le langage
+_help_language;Sélectionner la langue
 _help_misc;Configurations diverses
 _help_mouse_threshold;Seuil d'amplitude des mouvements de la souris, de 1 à 100 (100=moins sensible)
 _help_plugin_command;Exécutable associé à ce plug-in
@@ -354,6 +354,7 @@ Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
+Exit Message;Exit Message
 Extra;Extra
 FileIsAvailable;FileIsAvailable
 Insert Command Shortcut;Insert Command Shortcut
@@ -372,6 +373,7 @@ Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
 Pause Hotkey;Pause Hotkey
 Play Sound;Play Sound
+Please Wait;Please Wait
 Press Hotkey;Press Hotkey
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
@@ -406,6 +408,7 @@ _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
 _help_emu_pause_hotkey;Set a global hotkey to pause the emulator.  When pressed, Attract-Mode will pause the emulator process and return to the frontend. The emulator process can be resumed by selecting the same game again in the frontend.
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_emu_workdir;The working directory for this emulator.  This is the directory that the frontend runs the emulator from.  Also, any relative rom paths, artwork paths, or additional import file paths are treated as being relative to this directory
+_help_exit_message;Alternate message to exit the frontend [i.e. "Shut Down System"]
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_game_custom_args;Set this to override the default command line arguments for this game.  Set this to [nothing] if you want to override with no parameters.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]

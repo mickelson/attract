@@ -240,6 +240,7 @@ public:
 	static void cb_signal( const char * );
 	static void cb_set_display( int, bool );
 	static void cb_set_display( int );
+	static const char *cb_get_text( const char * );
 };
 
 #endif

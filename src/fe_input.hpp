@@ -29,6 +29,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "nowide/fstream.hpp"
 
 class FeMapping;
 
@@ -212,7 +213,7 @@ public:
 		const std::string &value,
 		const std::string &fn );
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 	bool has_mouse_moves() const { return ( m_mmove_count > 0 ); };
 
 	static Command string_to_command( const std::string &s );
@@ -310,7 +311,7 @@ public:
 	bool get_sound( FeInputMap::Command c, std::string &name ) const;
 	void set_sound( FeInputMap::Command c, const std::string &name );
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 
 private:
 	int m_sound_vol;

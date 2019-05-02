@@ -22,8 +22,9 @@
 
 #include "fe_romlist.hpp"
 #include "fe_util.hpp"
+
 #include <iostream>
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <algorithm>
 
 #include <squirrel.h>
@@ -223,7 +224,7 @@ bool FeRomList::load_romlist( const std::string &path,
 	m_fav_changed=false;
 
 	std::string load_name( m_user_path + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION );
-	std::ifstream myfile( load_name.c_str() );
+	nowide::ifstream myfile( load_name.c_str() );
 
 	if ( myfile.is_open() )
 	{
@@ -266,7 +267,7 @@ bool FeRomList::load_romlist( const std::string &path,
 			if ( (*itr).empty() )
 				continue;
 
-			std::ifstream myfile( std::string(load_name + (*itr) + FE_FAVOURITE_FILE_EXTENSION).c_str() );
+			nowide::ifstream myfile( std::string(load_name + (*itr) + FE_FAVOURITE_FILE_EXTENSION).c_str() );
 
 			if ( !myfile.is_open() )
 				continue;
@@ -504,7 +505,7 @@ void FeRomList::save_favs()
 	}
 	else
 	{
-		std::ofstream outfile( fname.c_str() );
+		nowide::ofstream outfile( fname.c_str() );
 		if ( !outfile.is_open() )
 			return;
 
@@ -575,7 +576,7 @@ void FeRomList::save_tags()
 		}
 		else
 		{
-			std::ofstream outfile( file_name.c_str() );
+			nowide::ofstream outfile( file_name.c_str() );
 			if ( !outfile.is_open() )
 				continue;
 

@@ -21,11 +21,12 @@
  */
 
 #include "fe_file.hpp"
+#include "nowide/cstdio.hpp"
 
 FeFileInputStream::FeFileInputStream( const std::string &fn )
 	: m_file( NULL )
 {
-	m_file = fopen( fn.c_str(), "rb" );
+	m_file = nowide::fopen( fn.c_str(), "rb" );
 }
 
 FeFileInputStream::~FeFileInputStream()

@@ -25,11 +25,12 @@
 #include "fe_input.hpp"
 #include <iostream>
 #include <iomanip>
-#include <fstream>
+#include "nowide/fstream.hpp"
+#include "nowide/cstdio.hpp"
+#include "nowide/cstdlib.hpp"
+#include "nowide/convert.hpp"
 #include <sstream>
-#include <stdlib.h>
 #include <algorithm>
-#include <cstdlib>
 #include <cctype>
 #include <cstring>
 
@@ -86,13 +87,46 @@ namespace {
 			s += c;
 	}
 
+	void wstr_from_c( std::basic_string<wchar_t> &s, const wchar_t *c )
+	{
+		if ( c )
+			s += c;
+	}
+
+	std::string narrow( const std::basic_string<wchar_t> &s )
+	{
+		try
+		{
+			return nowide::narrow( s );
+		}
+		catch ( ... )
+		{
+			FeLog() << "Error converting string to UTF-8."<< std::endl;
+			return "";
+		}
+	}
+
+	std::basic_string<wchar_t> widen( const std::string &s )
+	{
+		try
+		{
+			return nowide::widen( s );
+		}
+		catch ( ... )
+		{
+			FeLog() << "Error converting string from UTF-8: " << s << std::endl;
+			return L"";
+		}
+	}
+
+
 #if defined(SFML_SYSTEM_WINDOWS)
 
 	std::string get_home_dir()
 	{
 		std::string retval;
-		str_from_c( retval, getenv( "HOMEDRIVE" ) );
-		str_from_c( retval, getenv( "HOMEPATH" ) );
+		str_from_c( retval, nowide::getenv( "HOMEDRIVE" ) );
+		str_from_c( retval, nowide::getenv( "HOMEPATH" ) );
 
 		return retval;
 	}
@@ -102,7 +136,7 @@ namespace {
 	std::string get_home_dir()
 	{
 		std::string retval;
-		str_from_c( retval, getenv( "HOME" ));
+		str_from_c( retval, nowide::getenv( "HOME" ));
 		if ( retval.empty() )
 		{
 			struct passwd *pw = getpwuid(getuid());
@@ -200,7 +234,11 @@ int icompare(
 
 bool file_exists( const std::string &file )
 {
-	return (( access( file.c_str(), 0 ) == -1 ) ? false : true);
+#ifdef SFML_SYSTEM_WINDOWS
+	return ( _waccess( widen( file ).c_str(), 0 ) != -1 );
+#else
+	return ( access( file.c_str(), 0 ) != -1 );
+#endif
 }
 
 bool directory_exists( const std::string &file )
@@ -213,8 +251,10 @@ bool directory_exists( const std::string &file )
 		return file_exists( file + '/' );
 }
 
-bool is_relative_path( const std::string &name )
+bool is_relative_path( const std::string &n )
 {
+	std::string name = clean_path( n );
+
 #ifdef SFML_SYSTEM_WINDOWS
 	if (( name.size() > 2 )
 			&& ( isalpha( name[0] ) )
@@ -259,7 +299,7 @@ std::string clean_path( const std::string &path, bool add_trailing_slash )
 		if (( retval.size() >= l ) && ( retval.compare( 0, l, subs[i].comp ) == 0 ))
 		{
 			std::string temp;
-			str_from_c( temp, getenv( subs[i].env ) );
+			str_from_c( temp, nowide::getenv( subs[i].env ) );
 			retval.replace( 0, l, temp );
 			break;
 		}
@@ -373,24 +413,24 @@ bool get_subdirectories(
 #ifdef SFML_SYSTEM_WINDOWS
 	std::string temp = path + "*";
 
-	struct _finddata_t t;
-	intptr_t srch = _findfirst( temp.c_str(), &t );
+	struct _wfinddata_t t;
+	intptr_t srch = _wfindfirst( widen( temp ).c_str(), &t );
 
 	if  ( srch < 0 )
 		return false;
 
 	do
 	{
-		std::string what;
-		str_from_c( what, t.name );
+		std::basic_string<wchar_t> what;
+		wstr_from_c( what, t.name );
 
-		if ( ( what.compare( "." ) == 0 ) || ( what.compare( ".." ) == 0 ) )
+		if ( ( what.compare( L"." ) == 0 ) || ( what.compare( L".." ) == 0 ) )
 			continue;
 
 		if ( t.attrib & _A_SUBDIR )
-			list.push_back( what );
+			list.push_back( narrow( what ) );
 
-	} while ( _findnext( srch, &t ) == 0 );
+	} while ( _wfindnext( srch, &t ) == 0 );
 	_findclose( srch );
 
 #else
@@ -437,16 +477,15 @@ bool get_basename_from_extension(
 
 	temp += "*" + extension;
 
-	struct _finddata_t t;
-	intptr_t srch = _findfirst( temp.c_str(), &t );
+	struct _wfinddata_t t;
+	intptr_t srch = _wfindfirst( widen( temp ).c_str(), &t );
 
 	if  ( srch < 0 )
 		return false;
 
 	do
 	{
-		std::string what;
-		str_from_c( what, t.name );
+		std::string what = narrow( t.name );
 
 		// I don't know why but the search filespec we are using
 		// "path/*.ext"seems to also match "path/*.ext*"... so we
@@ -485,7 +524,7 @@ bool get_basename_from_extension(
 
 		}
 #ifdef SFML_SYSTEM_WINDOWS
-	} while ( _findnext( srch, &t ) == 0 );
+	} while ( _wfindnext( srch, &t ) == 0 );
 	_findclose( srch );
 #else
 	}
@@ -505,15 +544,16 @@ bool get_filename_from_base(
 #ifdef SFML_SYSTEM_WINDOWS
 	std::string temp = path + base_name + "*";
 
-	struct _finddata_t t;
-	intptr_t srch = _findfirst( temp.c_str(), &t );
+	struct _wfinddata_t t;
+	intptr_t srch = _wfindfirst( widen( temp ).c_str(), &t );
 
 	if  ( srch < 0 )
 		return false;
 
 	do
 	{
-		const char *what = t.name;
+		std::string whatstr = narrow( t.name );
+		const char *what = whatstr.c_str();
 		size_t what_len = strlen( what );
 
 		if (( strcmp( what, "." ) != 0 )
@@ -565,7 +605,7 @@ bool get_filename_from_base(
 				in_list.push_back( path + what );
 #ifdef SFML_SYSTEM_WINDOWS
 		}
-	} while ( _findnext( srch, &t ) == 0 );
+	} while ( _wfindnext( srch, &t ) == 0 );
 	_findclose( srch );
 #else
 		}
@@ -700,7 +740,7 @@ std::string get_available_filename(
 //
 void delete_file( const std::string &file )
 {
-	remove( file.c_str() );
+	nowide::remove( file.c_str() );
 }
 
 bool confirm_directory( const std::string &base, const std::string &sub )
@@ -710,7 +750,7 @@ bool confirm_directory( const std::string &base, const std::string &sub )
 	if ( !directory_exists( base ) )
 	{
 #ifdef SFML_SYSTEM_WINDOWS
-		mkdir( base.c_str() );
+		_wmkdir( widen( base ).c_str() );
 #else
 		mkdir( base.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
@@ -720,7 +760,7 @@ bool confirm_directory( const std::string &base, const std::string &sub )
 	if ( (!sub.empty()) && (!directory_exists( base + sub )) )
 	{
 #ifdef SFML_SYSTEM_WINDOWS
-		mkdir( (base + sub).c_str() );
+		_wmkdir( widen(base + sub).c_str() );
 #else
 		mkdir( (base + sub).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH  );
 #endif // SFML_SYSTEM_WINDOWS
@@ -782,14 +822,18 @@ namespace
 		const FeInputMapEntry &hotkey )
 
 	{
+		const int TIMEOUT_MS = 5000;
+
 		// Check for key down
 		//
 		if ( !hotkey.get_current_state( opt->joy_thresh ) )
 			return false;
 
-		// If down, wait for key release
+		// If down, wait for key release (or timeout)
 		//
-		while ( hotkey.get_current_state( opt->joy_thresh ) )
+		sf::Clock t;
+		while (( hotkey.get_current_state( opt->joy_thresh ) )
+			&& ( t.getElapsedTime().asMilliseconds() < TIMEOUT_MS ))
 		{
 			if ( opt->wait_cb )
 				opt->wait_cb( opt->launch_opaque );
@@ -833,7 +877,7 @@ void windows_wait_process(
 	while (keep_wait)
 	{
 		switch (MsgWaitForMultipleObjects(1, &hProcess,
-						FALSE, timeout, 0))
+						FALSE, timeout, QS_ALLINPUT ))
 		{
 		case WAIT_OBJECT_0:
 			keep_wait=false;
@@ -1024,7 +1068,7 @@ bool run_program( const std::string &prog,
 	satts.bInheritHandle = TRUE;
 	satts.lpSecurityDescriptor = NULL;
 
-	STARTUPINFO si;
+	STARTUPINFOW si;
 	PROCESS_INFORMATION pi;
 	MSG msg;
 
@@ -1039,19 +1083,19 @@ bool run_program( const std::string &prog,
 		si.dwFlags |= STARTF_USESTDHANDLES;
 	}
 
-	std::string comstr( prog );
-	comstr += " ";
-	comstr += args;
+	std::basic_string<wchar_t> comstr( widen( prog ) );
+	comstr += L" ";
+	comstr += widen( args );
 
-	LPSTR cmdline = new char[ comstr.length() + 1 ];
-	strncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
+	LPWSTR cmdline = new wchar_t[ comstr.length() + 1 ];
+	wcsncpy( cmdline, comstr.c_str(), comstr.length() + 1 );
 
-	DWORD current_wd_len = GetCurrentDirectory( 0, NULL );
-	LPSTR current_wd = new char[ current_wd_len ];
-	GetCurrentDirectory( current_wd_len, current_wd );
-	SetCurrentDirectory( work_dir.c_str() );
+	DWORD current_wd_len = GetCurrentDirectoryW( 0, NULL );
+	LPWSTR current_wd = new wchar_t[ current_wd_len ];
+	GetCurrentDirectoryW( current_wd_len, current_wd );
+	SetCurrentDirectoryW( widen( work_dir ).c_str() );
 
-	bool ret = CreateProcess( NULL,
+	bool ret = CreateProcessW( NULL,
 		cmdline,
 		NULL,
 		NULL,
@@ -1062,7 +1106,7 @@ bool run_program( const std::string &prog,
 		&si,
 		&pi );
 
-	SetCurrentDirectory( current_wd );
+	SetCurrentDirectoryW( current_wd );
 	delete [] current_wd;
 
 	// Parent process - close the child write handle after child created
@@ -1076,7 +1120,7 @@ bool run_program( const std::string &prog,
 
 	if ( ret == false )
 	{
-		FeLog() << "Error executing command: '" << comstr << "'" << std::endl;
+		FeLog() << "Error executing command: '" << narrow( comstr ) << "'" << std::endl;
 		return false;
 	}
 
@@ -1129,6 +1173,13 @@ bool run_program( const std::string &prog,
 			else
 				ibuf = buffer;
 		}
+
+		// handle last bit of data if not terminated with a line ending
+		if ( block && ( ibuf != buffer ) )
+		{
+			if ( callback( buffer, opaque ) == false )
+				TerminateProcess( pi.hProcess, 0 );
+		}
 	}
 
 	if ( child_output_read )
@@ -1137,7 +1188,7 @@ bool run_program( const std::string &prog,
 	if ( opt->launch_cb )
 		opt->launch_cb( opt->launch_opaque );
 
-	if ( block )
+	if ( block && ( NULL == callback ))
 		windows_wait_process( pi.hProcess, pi.dwProcessId, opt );
 
 	CloseHandle( pi.hProcess );
@@ -1378,20 +1429,19 @@ std::basic_string<sf::Uint32> clipboard_get_content()
 // namespace (Window, etc) clashes with the SFML namespace used in fe_window
 // (sf::Window)
 //
-void get_x11_geometry( bool multimon, int &x, int &y, int &width, int &height )
+void get_x11_multimon_geometry( int &x, int &y, unsigned int &width, unsigned int &height )
 {
 	x=0;
 	y=0;
 	width=0;
 	height=0;
 
+#ifdef USE_XINERAMA
 	::Display *xdisp = XOpenDisplay( NULL );
 	int num=0;
 
-#ifdef USE_XINERAMA
 	XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
-
-	if ( multimon )
+	if ( num > 0 ) // num is 0 if xinerama is not active
 	{
 		if ( num > 1 )
 		{
@@ -1401,23 +1451,40 @@ void get_x11_geometry( bool multimon, int &x, int &y, int &width, int &height )
 
 		for ( int i=0; i<num; i++ )
 		{
-			width = std::max( width, si[i].x_org + si[i].width );
-			height = std::max( height, si[i].y_org + si[i].height );
+			width = std::max( (int)width, si[i].x_org + si[i].width );
+			height = std::max( (int)height, si[i].y_org + si[i].height );
 		}
 	}
 	else
+		get_x11_primary_screen_size( width, height );
+
+	XFree( si );
+	XCloseDisplay( xdisp );
+#else
+	get_x11_primary_screen_size( width, height );
+#endif
+}
+
+void get_x11_primary_screen_size( unsigned int &width, unsigned int &height )
+{
+	::Display *xdisp = XOpenDisplay( NULL );
+	::Screen *xscreen = XDefaultScreenOfDisplay( xdisp );
+
+	width = XWidthOfScreen( xscreen );
+	height = XHeightOfScreen( xscreen );
+
+#ifdef USE_XINERAMA
+	int num=0;
+	XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
+
+	if ( num > 0 )
 	{
 		width = si[0].width;
 		height = si[0].height;
 	}
 
 	XFree( si );
-#else
-	::Screen *xscreen = XDefaultScreenOfDisplay( xdisp );
-	width = XWidthOfScreen( xscreen );
-	height = XHeightOfScreen( xscreen );
 #endif
-
 	XCloseDisplay( xdisp );
 }
 
@@ -1685,7 +1752,7 @@ std::string get_focus_process()
 	// Note: this is Linux specific
 	//
 	std::string fn = "/proc/" + as_str( pid ) + "/cmdline";
-	std::ifstream myfile( fn.c_str() );
+	nowide::ifstream myfile( fn.c_str() );
 	if ( myfile.good() )
 	{
 		getline( myfile, retval );

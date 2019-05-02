@@ -28,7 +28,6 @@
 #include "fe_text.hpp"
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <fstream>
 #include <cmath>
 
 class FeConfigContextImp : public FeConfigContext
@@ -195,7 +194,7 @@ private:
 	bool m_flag_set;
 };
 
-FeOverlay::FeOverlay( sf::RenderWindow &wnd,
+FeOverlay::FeOverlay( FeWindow &wnd,
 		FeSettings &fes,
 		FePresent &fep )
 	: m_wnd( wnd ),
@@ -284,7 +283,8 @@ void FeOverlay::splash_message( const std::string &msg,
 
 int FeOverlay::confirm_dialog( const std::string &msg,
 	const std::string &rep,
-	bool default_yes )
+	bool default_yes,
+	FeInputMap::Command default_exit )
 {
 	std::string msg_str;
 	m_feSettings.get_resource( msg, rep, msg_str );
@@ -293,7 +293,7 @@ int FeOverlay::confirm_dialog( const std::string &msg,
 	m_feSettings.get_resource( "Yes", list[0] );
 	m_feSettings.get_resource( "No", list[1] );
 
-	return common_basic_dialog( msg_str, list, (default_yes ? 0 : 1), 1, FeInputMap::Exit );
+	return common_basic_dialog( msg_str, list, (default_yes ? 0 : 1), 1, default_exit );
 }
 
 int FeOverlay::common_list_dialog(
@@ -902,6 +902,7 @@ void FeOverlay::input_map_dialog(
 
 		if ( redraw )
 		{
+			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 			m_wnd.draw( message, t );
@@ -1335,6 +1336,7 @@ void FeOverlay::init_event_loop( FeEventLoopCtx &ctx )
 
 		if ( m_fePresent.tick() )
 		{
+			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 
@@ -1422,6 +1424,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 		if ( redraw )
 		{
+			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 
@@ -1508,9 +1511,9 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 class FeKeyRepeat
 {
 private:
-	sf::RenderWindow &m_wnd;
+	FeWindow &m_wnd;
 public:
-	FeKeyRepeat( sf::RenderWindow &wnd )
+	FeKeyRepeat( FeWindow &wnd )
 	: m_wnd( wnd )
 	{
 		m_wnd.setKeyRepeatEnabled( true );
@@ -1638,7 +1641,11 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 
 	const sf::Font *font = tp->getFont();
 	sf::Text cursor( "|", *font, tp->getCharacterSize() / tp->getTextScale().x );
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+	cursor.setFillColor( tp->getColor() );
+#else
 	cursor.setColor( tp->getColor() );
+#endif
 	cursor.setStyle( sf::Text::Bold );
 	cursor.setScale( tp->getTextScale() );
 
@@ -1892,6 +1899,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 		if ( m_feSettings.get_current_state( FeInputMap::Left ) || m_feSettings.get_current_state( FeInputMap::Right ))
 			cursor_timer.restart();
 
+		m_fePresent.redraw_surfaces();
 		m_wnd.clear();
 		m_wnd.draw( m_fePresent, t );
 
@@ -1900,7 +1908,12 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 			m_wnd.draw( *(*itr), t );
 
 		int cursor_fade = ( sin( cursor_timer.getElapsedTime().asMilliseconds() / 250.0 * M_PI ) + 1.0 ) * 255;
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+		cursor.setFillColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
+#else
 		cursor.setColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
+#endif
 
 		m_wnd.draw( cursor, t );
 		m_wnd.display();

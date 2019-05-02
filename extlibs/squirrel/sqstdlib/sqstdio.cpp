@@ -5,12 +5,34 @@
 #include <sqstdio.h>
 #include "sqstdstream.h"
 
+// Begin Attract-Mode specific change
+#ifdef _WIN32
+#include <SFML/System/Utf.hpp>
+#endif
+// End Attract-Mode specific change
+
 #define SQSTD_FILE_TYPE_TAG (SQSTD_STREAM_TYPE_TAG | 0x00000001)
 //basic API
 SQFILE sqstd_fopen(const SQChar *filename ,const SQChar *mode)
 {
 #ifndef SQUNICODE
+
+// Begin Attract-Mode specific change
+#ifdef _WIN32
+	std::string fn = filename;
+	std::string m = mode;
+	std::basic_string<wchar_t> wide_fn;
+	std::basic_string<wchar_t> wide_mode;
+
+	sf::Utf8::toWide( fn.begin(), fn.end(), std::back_inserter( wide_fn ) );
+	sf::Utf8::toWide( m.begin(), m.end(), std::back_inserter( wide_mode ) );
+
+	return (SQFILE)_wfopen(wide_fn.c_str(),wide_mode.c_str());
+#else
 	return (SQFILE)fopen(filename,mode);
+#endif
+// End Attract-Mode specific change
+
 #else
 	return (SQFILE)_wfopen(filename,mode);
 #endif
@@ -72,7 +94,7 @@ struct SQFile : public SQStream {
 		return false;
 	}
 	void Close() {
-		if(_handle && _owns) { 
+		if(_handle && _owns) {
 			sqstd_fclose(_handle);
 			_handle = NULL;
 			_owns = false;
@@ -139,7 +161,7 @@ static SQInteger _file_constructor(HSQUIRRELVM v)
 	} else {
 		return sq_throwerror(v,_SC("wrong parameter"));
 	}
-	
+
 	f = new (sq_malloc(sizeof(SQFile)))SQFile(newf,owns);
 	if(SQ_FAILED(sq_setinstanceup(v,1,f))) {
 		f->~SQFile();
@@ -241,7 +263,7 @@ static SQInteger _io_file_lexfeed_UTF8(SQUserPointer file)
 	if(c >= 0x80) {
 		SQInteger tmp;
 		SQInteger codelen = utf8_lengths[c>>4];
-		if(codelen == 0) 
+		if(codelen == 0)
 			return 0;
 			//"invalid UTF-8 stream";
 		tmp = c&byte_masks[codelen];
@@ -314,14 +336,14 @@ SQRESULT sqstd_loadfile(HSQUIRRELVM v,const SQChar *filename,SQBool printerror)
 				//gotta swap the next 2 lines on BIG endian machines
 				case 0xFFFE: func = _io_file_lexfeed_UCS2_BE; break;//UTF-16 little endian;
 				case 0xFEFF: func = _io_file_lexfeed_UCS2_LE; break;//UTF-16 big endian;
-				case 0xBBEF: 
-					if(sqstd_fread(&uc,1,sizeof(uc),file) == 0) { 
-						sqstd_fclose(file); 
-						return sq_throwerror(v,_SC("io error")); 
+				case 0xBBEF:
+					if(sqstd_fread(&uc,1,sizeof(uc),file) == 0) {
+						sqstd_fclose(file);
+						return sq_throwerror(v,_SC("io error"));
 					}
-					if(uc != 0xBF) { 
-						sqstd_fclose(file); 
-						return sq_throwerror(v,_SC("Unrecognozed ecoding")); 
+					if(uc != 0xBF) {
+						sqstd_fclose(file);
+						return sq_throwerror(v,_SC("Unrecognozed ecoding"));
 					}
 #ifdef SQUNICODE
 					func = _io_file_lexfeed_UTF8;

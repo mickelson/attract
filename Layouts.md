@@ -37,6 +37,7 @@ Contents
       * [`fe.path_expand()`](#path_expand)
       * [`fe.path_test()`](#path_test)
       * [`fe.get_config()`](#get_config)
+      * [`fe.get_text()`](#get_text)
    * [Objects and Variables](#objects)
       * [`fe.ambient_sound`](#ambient_sound)
       * [`fe.layout`](#layout)
@@ -606,6 +607,7 @@ upon the value of `ttype`:
    * When `ttype` is `Transition.ShowOverlay`, var will be:
       - `Overlay.Custom` if a script generated overlay is being shown
       - `Overlay.Exit` if the exit menu is being shown
+      - `Overlay.Favourite` if the add/remove favourite menu is being shown
       - `Overlay.Displays` if the displays menu is being shown
       - `Overlay.Filters` if the filters menu is being shown
       - `Overlay.Tags` if the tags menu is being shown
@@ -1089,6 +1091,23 @@ Return Value:
 
      For an example, please see one of the plug-ins included with Attract-
      Mode or the "Attrac-Man" layout.
+
+
+<a name="get_text" />
+#### `fe.get_text()` ####
+
+    fe.get_text( text )
+
+Translate the specified text into the user's language.  If no translation is
+found, then return the contents of `text`.
+
+Parameters:
+
+   * text - the text string to translate.
+
+Return Value:
+
+   * A string containing the translated text.
 
 
 <a name="objects" />
@@ -1599,6 +1618,7 @@ otherwise instantiated in a script.
 Properties:
    * `msg` - Get/set the text label's message.  Magic tokens can be used here,
      see [Magic Tokens](#magic) for more information.
+   * `msg_wrapped` - Get the text label's message after word wrapping.
    * `x` - Get/set x position of top left corner (in layout coordinates).
    * `y` - Get/set y position of top left corner (in layout coordinates).
    * `width` - Get/set width of text (in layout coordinates).

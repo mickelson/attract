@@ -31,9 +31,14 @@
 #include "zip.hpp"
 
 #include <iostream>
+#include <cmath>
 
 #ifndef NO_MOVIE
 #include <Audio/AudioDevice.hpp>
+#endif
+
+#ifdef USE_XINERAMA
+#include <X11/extensions/Xinerama.h>
 #endif
 
 #ifdef SFML_SYSTEM_WINDOWS
@@ -51,6 +56,10 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 
 	mon.transform = sf::Transform().translate( mon_rect->left, mon_rect->top );
 
+	FeDebug() << "Multimon: monitor #" << monitors->size()
+		<< ": " << mon.size.x << "x" << mon.size.y << " @ "
+		<< mon_rect->left << "," << mon_rect->top << std::endl;
+
 	// make sure primary monitor is first in m_mon vector
 	//
 	if (( mon_rect->left == 0 ) && ( mon_rect->top == 0 ))
@@ -60,10 +69,6 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 
 	return TRUE;
 }
-#endif
-
-#ifdef USE_XINERAMA
-#include <X11/extensions/Xinerama.h>
 #endif
 
 FeFontContainer::FeFontContainer()
@@ -144,9 +149,10 @@ int FeMonitor::get_num()
 	return num;
 }
 
-FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont )
+FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWindow &wnd )
 	: m_feSettings( fesettings ),
 	m_currentFont( &defaultfont ),
+	m_window( wnd ),
 	m_defaultFont( defaultfont ),
 	m_baseRotation( FeSettings::RotateNone ),
 	m_toggleRotation( FeSettings::RotateNone ),
@@ -182,8 +188,20 @@ void FePresent::init_monitors()
 		// The Windows virtual screen can have a negative valued top left corner, whereas in SFML we
 		// always have a 0,0 top left.  So we correct the transforms in m_mon to SFML's coordinates now.
 		//
-		sf::Transform correction = sf::Transform().translate( -GetSystemMetrics( SM_XVIRTUALSCREEN ),
-																				-GetSystemMetrics( SM_YVIRTUALSCREEN ) );
+		int translate_x = -GetSystemMetrics( SM_XVIRTUALSCREEN );
+		int translate_y = -GetSystemMetrics( SM_YVIRTUALSCREEN );
+
+		//
+		// On Windows 'Fill screen' mode our window is offscreen 1 pixel in each direction, so correct
+		// for that here to align draw area with screen
+		//
+		if ( m_feSettings->get_window_mode() == FeSettings::Default )
+		{
+			translate_x += 1;
+			translate_y += 1;
+		}
+
+		sf::Transform correction = sf::Transform().translate( translate_x, translate_y );
 
 		for ( std::vector<FeMonitor>::iterator itr=m_mon.begin(); itr!=m_mon.end(); ++itr )
 			(*itr).transform *= correction;
@@ -212,6 +230,10 @@ void FePresent::init_monitors()
 						si[i].x_org,
 						si[i].y_org );
 
+					FeDebug() << "Multimon: monitor #" << si[i].screen_number
+						<< ": " << mon.size.x << "x" << mon.size.y << " @ "
+						<< si[i].x_org << "," << si[i].y_org << std::endl;
+
 					m_mon.push_back( mon );
 				}
 			}
@@ -232,12 +254,21 @@ void FePresent::init_monitors()
 	else
 #endif
 	{
-		//
-		// Where there is no multi-monitor support, we just use the desktop dimensions returned by SFML
-		//
-		sf::VideoMode vm = sf::VideoMode::getDesktopMode();
+		FeMonitor mc( 0, m_window.getSize().x, m_window.getSize().y );
 
-		FeMonitor mc( 0, vm.width, vm.height );
+#ifdef SFML_SYSTEM_WINDOWS
+		//
+		// On Windows 'Fill screen' mode our window is offscreen 1 pixel in each direction, so correct
+		// for that here to align draw area with screen.
+		//
+		if ( m_feSettings->get_window_mode() == FeSettings::Default )
+		{
+			mc.size.x -= 2;
+			mc.size.y -= 2;
+			mc.transform = sf::Transform().translate( 1, 1 );
+		}
+#endif
+
 		m_mon.push_back( mc );
 	}
 
@@ -1256,16 +1287,17 @@ void FePresent::set_transforms()
 				(float) m_mon[0].size.y / m_layoutSize.x,
 				(float) m_mon[0].size.x / m_layoutSize.y );
 
-			float adjust_x = (m_layoutSize.y * m_layoutScale.x - m_mon[0].size.x) / 2;
-			float adjust_y = (m_layoutSize.x * m_layoutScale.y - m_mon[0].size.y) / 2;
+			float adjust_x = std::fabs( m_layoutSize.y * m_layoutScale.x - m_mon[0].size.x ) / 2;
+			float adjust_y = std::fabs( m_layoutSize.x * m_layoutScale.y - m_mon[0].size.y ) / 2;
+		
 			if ( actualRotation == FeSettings::RotateRight )
 			{
-				m_transform.translate( m_mon[0].size.x + adjust_x, adjust_y );
+				m_transform.translate( m_mon[0].size.x - adjust_x, adjust_y );
 				m_transform.rotate(90);
 			}
 			else
 			{
-				m_transform.translate( -adjust_x, m_mon[0].size.y - adjust_y );
+				m_transform.translate( adjust_x, m_mon[0].size.y - adjust_y );
 				m_transform.rotate(270);
 			}
 		}

@@ -25,7 +25,8 @@
 #include "zip.hpp"
 #include <iostream>
 #include <sstream>
-#include <fstream>
+#include "nowide/fstream.hpp"
+
 #include <cstring>
 #include <iomanip>
 #include <algorithm>
@@ -420,6 +421,7 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_fanart",
 	"scrape_videos",
 	"scrape_overview",
+	"thegamesdb_key",
 #ifdef SFML_SYSTEM_WINDOWS
 	"hide_console",
 #endif
@@ -508,9 +510,28 @@ int FeSettings::process_setting( const std::string &setting,
 			{
 				if ( set_info( i, value ) == false )
 				{
+					const char **valid = NULL;
+					switch ( i )
+					{
+						case WindowMode:
+							valid = windowModeTokens;
+							break;
+
+						case FilterWrapMode:
+							valid = filterWrapTokens;
+							break;
+
+						case StartupMode:
+							valid = startupTokens;
+							break;
+
+						default:
+							break;
+					}
+
 					invalid_setting( fn,
 						configSettingStrings[i],
-						value, NULL, NULL, "value" );
+						value, valid, NULL, "value" );
 					return 1;
 				}
 				return 0;
@@ -695,7 +716,7 @@ void FeSettings::save_state()
 
 	filename += FE_STATE_FILE;
 
-	std::ofstream outfile( filename.c_str() );
+	nowide::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
 		outfile << display_idx << ";"
@@ -722,7 +743,7 @@ void FeSettings::load_state()
 	std::string filename( m_config_path );
 	filename += FE_STATE_FILE;
 
-	std::ifstream myfile( filename.c_str() );
+	nowide::ifstream myfile( filename.c_str() );
 	std::string line;
 
 	if ( myfile.is_open() && myfile.good() )
@@ -1525,7 +1546,7 @@ bool FeSettings::load_game_extras(
 	if ( !file_exists( path ) )
 		return false;
 
-	std::ifstream in_file( path.c_str() );
+	nowide::ifstream in_file( path.c_str() );
 	if ( !in_file.is_open() )
 		return false;
 
@@ -1629,7 +1650,7 @@ void FeSettings::save_game_extras( const std::string &romlist_name,
 		return;
 	}
 
-	std::ofstream out_file( path.c_str() );
+	nowide::ofstream out_file( path.c_str() );
 	if ( !out_file.is_open() )
 		return;
 
@@ -1683,7 +1704,7 @@ bool FeSettings::get_game_overview_absolute( int filter_index, int rom_index, st
 
 	ov.clear();
 
-	std::ifstream myfile( path.c_str() );
+	nowide::ifstream myfile( path.c_str() );
 	if ( !myfile.is_open() )
 		return false;
 
@@ -1726,7 +1747,7 @@ void FeSettings::set_game_overview( const std::string &emu,
 			return;
 		}
 
-		std::ofstream outfile( path.c_str() );
+		nowide::ofstream outfile( path.c_str() );
 		if ( outfile.is_open() )
 		{
 			outfile << ov << std::endl;
@@ -2182,6 +2203,8 @@ void FeSettings::prep_for_launch( std::string &command,
 		perform_substitution( args, "[systemn]", systems.back() );
 	}
 
+	do_text_substitutions_absolute( args, filter_index, rom_index );
+
 	std::string temp = get_game_extra( Executable );
 	if ( temp.empty() )
 		temp = emu->get_info( FeEmulatorInfo::Executable );
@@ -2268,18 +2291,15 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 	//
 	// Perform substitutions of the [XXX] sequences occurring in str
 	//
-	size_t n = std::count( str.begin(), str.end(), '[' );
-
-	size_t open = 0;
-	for ( size_t x=0; x<n; x++ )
+	size_t pos = str.find( "[" );
+	while ( pos != std::string::npos )
 	{
-		open = str.find_first_of( '[', open );
-		size_t close = str.find_first_of( ']', open );
+		size_t close = str.find_first_of( ']', pos+1 );
 
 		if ( close == std::string::npos )
 			break; // done, no more enclosed tokens
 
-		std::string token = str.substr( open+1, close-open-1 );
+		std::string token = str.substr( pos+1, close-pos-1 );
 		bool matched=false;
 
 		//
@@ -2299,14 +2319,17 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 						rom_index,
 						(FeRomInfo::Index)i );
 
-				str.replace( open, close-open+1, rep );
-				open += rep.size();
+				str.replace( pos, close-pos+1, rep );
+				pos += rep.size();
 				matched=true;
 			}
 		}
 
 		if ( matched )
+		{
+			pos = str.find( "[", pos );
 			continue;
+		}
 
 		//
 		// Next check for various special case attributes
@@ -2345,7 +2368,7 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 
 		if ( !matched )
 		{
-			open++;
+			pos = str.find( "[", pos+1 );
 			continue;
 		}
 
@@ -2457,8 +2480,8 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 			break;
 		}
 
-		str.replace( open, close-open+1, rep );
-		open += rep.size();
+		str.replace( pos, close-pos+1, rep );
+		pos = str.find( "[", pos+rep.size() );
 	}
 }
 
@@ -2701,6 +2724,8 @@ const std::string FeSettings::get_info( int index ) const
 		return as_str( m_selection_speed );
 	case StartupMode:
 		return startupTokens[ m_startup_mode ];
+	case ThegamesdbKey:
+		return m_tgdb_key;
 
 	case DisplaysMenuExit:
 	case HideBrackets:
@@ -2846,6 +2871,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 			if ( startupTokens[i] == NULL )
 				return false;
 		}
+		break;
+
+	case ThegamesdbKey:
+		m_tgdb_key = value;
 		break;
 
 	case ConfirmFavourites:
@@ -3164,7 +3193,7 @@ void FeSettings::save() const
 
 	FeLog() << "Writing config to: " << filename << std::endl;
 
-	std::ofstream outfile( filename.c_str() );
+	nowide::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
 		outfile << "# Generated by " << FE_NAME << " " << FE_VERSION << std::endl
@@ -3442,7 +3471,7 @@ void FeSettings::get_languages_list( std::vector < FeLanguage > &ll ) const
 
 			// Read first line of file to get key info
 			//
-			std::ifstream myfile( fname.c_str() );
+			nowide::ifstream myfile( fname.c_str() );
 			if ( !myfile.is_open() )
 				continue;
 
@@ -3708,6 +3737,31 @@ bool gather_artwork_filenames(
 	return ( !images.empty() || !vids.empty() );
 }
 
+bool gather_artwork_filenames_from_archive(
+		const std::string &archive_name,
+		const std::string &target_name,
+		std::vector<std::string> &vids,
+		std::vector<std::string> &images )
+{
+	std::vector < std::string > out;
+	gather_archive_filenames_with_base(
+		images,
+		out,
+		archive_name,
+		target_name,
+		FE_ART_EXTENSIONS );
+
+#ifndef NO_MOVIE
+	for ( std::vector<std::string>::iterator itr=out.begin();
+			itr!=out.end(); ++itr )
+	{
+		if ( FeMedia::is_supported_media_file( *itr ) )
+			vids.push_back( *itr );
+	}
+#endif
+	return ( !images.empty() || !vids.empty() );
+}
+
 bool art_exists( const std::string &path, const std::string &base )
 {
 	std::vector<std::string> u1;
@@ -3858,6 +3912,55 @@ bool FeSettings::get_best_artwork_file(
 	return false;
 }
 
+void FeSettings::get_fallback_layout_artwork_file(
+	const FeRomInfo &rom,
+	const std::string &art_name,
+	std::vector<std::string> &vid_list,
+	std::vector<std::string> &image_list )
+{
+	// check for layout fallback images/videos
+	std::string layout_path;
+	std::string archive_name;
+
+	get_path( FeSettings::Current, layout_path );
+
+	if ( !layout_path.empty() )
+	{
+		const std::string &emu_name = rom.get_info(
+			FeRomInfo::Emulator );
+
+		if ( is_supported_archive( layout_path ) )
+		{
+			archive_name = layout_path;
+
+			// check for "[emulator-[artlabel]" artworks first
+			if ( !gather_artwork_filenames_from_archive(
+				layout_path, emu_name + "-" + art_name,
+				vid_list, image_list ) )
+			{
+				// then "[artlabel]"
+				gather_artwork_filenames_from_archive( layout_path,
+					art_name, vid_list, image_list );
+			}
+		}
+		else
+		{
+			std::vector<std::string> layout_paths;
+			layout_paths.push_back( layout_path );
+
+			// check for "[emulator-[artlabel]" artworks first
+			if ( !gather_artwork_filenames( layout_paths,
+				emu_name + "-" + art_name,
+				vid_list, image_list ) )
+			{
+				// then "[artlabel]"
+				gather_artwork_filenames( layout_paths,
+					art_name, vid_list, image_list );
+			}
+		}
+	}
+}
+
 bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> temp1, temp2;
@@ -3992,7 +4095,7 @@ void FeSettings::update_romlist_after_edit(
 	//
 	bool found_similar=false;
 
-	std::ifstream infile( in_path.c_str() );
+	nowide::ifstream infile( in_path.c_str() );
 	if ( !infile.is_open() )
 		return;
 
@@ -4039,7 +4142,7 @@ void FeSettings::update_romlist_after_edit(
 	//
 	// Write out the update romlist file
 	//
-	std::ofstream outfile( out_path.c_str() );
+	nowide::ofstream outfile( out_path.c_str() );
 	if ( outfile.is_open() )
 	{
                 // one line header showing what the columns represent

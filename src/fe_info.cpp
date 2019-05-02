@@ -24,7 +24,7 @@
 #include "fe_util.hpp"
 #include <iostream>
 #include <sstream>
-#include <fstream>
+
 #include <iomanip>
 
 #include <squirrel.h>
@@ -117,7 +117,7 @@ void FeRomInfo::load_stats( const std::string &path )
 	m_info[PlayedTime] = "0";
 
 	std::string filename = path + m_info[Romname] + FE_STAT_FILE_EXTENSION;
-	std::ifstream myfile( filename.c_str() );
+	nowide::ifstream myfile( filename.c_str() );
 
 	if ( !myfile.is_open() )
 		return;
@@ -147,7 +147,7 @@ void FeRomInfo::update_stats( const std::string &path, int count_incr, int playe
 	m_info[PlayedTime] = as_str( new_time );
 
 	std::string filename = path + m_info[Romname] + FE_STAT_FILE_EXTENSION;
-	std::ofstream myfile( filename.c_str() );
+	nowide::ofstream myfile( filename.c_str() );
 
 	if ( !myfile.is_open() )
 	{
@@ -342,7 +342,7 @@ bool FeRule::apply_rule( const FeRomInfo &rom ) const
 	}
 }
 
-void FeRule::save( std::ofstream &f ) const
+void FeRule::save( nowide::ofstream &f ) const
 {
 	if (( m_filter_target != FeRomInfo::LAST_INDEX )
 		&& ( m_filter_comp != LAST_COMPARISON ))
@@ -509,7 +509,7 @@ int FeFilter::process_setting( const std::string &setting,
 	return 0;
 }
 
-void FeFilter::save( std::ofstream &f, const char *filter_tag ) const
+void FeFilter::save( nowide::ofstream &f, const char *filter_tag ) const
 {
 	std::string n;
 	if ( m_name.find_first_of( ' ' ) != std::string::npos )
@@ -796,7 +796,7 @@ void FeDisplayInfo::get_filters_list( std::vector<std::string> &l ) const
 	}
 }
 
-void FeDisplayInfo::save( std::ofstream &f ) const
+void FeDisplayInfo::save( nowide::ofstream &f ) const
 {
 	using std::setw;
 	using std::left;
@@ -1115,7 +1115,7 @@ void FeEmulatorInfo::save( const std::string &filename ) const
 {
 	FeLog() << "Writing emulator config to: " << filename << std::endl;
 
-	std::ofstream outfile( filename.c_str() );
+	nowide::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
 		using std::string;
@@ -1296,7 +1296,7 @@ int FeScriptConfigurable::process_setting( const std::string &setting,
 		return 1;
 }
 
-void FeScriptConfigurable::save( std::ofstream &f ) const
+void FeScriptConfigurable::save( nowide::ofstream &f ) const
 {
 	std::map<std::string,std::string>::const_iterator itr;
 	for ( itr=m_params.begin(); itr!=m_params.end(); ++itr )
@@ -1337,7 +1337,7 @@ int FePlugInfo::process_setting( const std::string &setting,
 	return 0;
 }
 
-void FePlugInfo::save( std::ofstream &f ) const
+void FePlugInfo::save( nowide::ofstream &f ) const
 {
 	f << std::endl << "plugin" << '\t' << m_name << std::endl;
 
@@ -1366,7 +1366,7 @@ FeLayoutInfo::FeLayoutInfo( const std::string &name )
 {
 }
 
-void FeLayoutInfo::save( std::ofstream &f ) const
+void FeLayoutInfo::save( nowide::ofstream &f ) const
 {
 	if ( !m_params.empty() )
 	{

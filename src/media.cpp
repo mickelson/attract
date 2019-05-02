@@ -23,6 +23,7 @@
 #include "media.hpp"
 #include "zip.hpp"
 #include "fe_base.hpp"
+#include "fe_file.hpp"
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
 
@@ -142,6 +143,7 @@ public:
 	virtual ~FeBaseStream();
 
 	bool at_end;					// set when at the end of our input
+	bool far_behind;
 	AVCodecContext *codec_ctx;
 	AVCodec *codec;
 	int stream_id;
@@ -198,6 +200,7 @@ private:
 public:
 	bool run_video_thread;
 	sf::Time time_base;
+	sf::Time max_sleep;
 	sf::Clock video_timer;
 	sf::Texture *display_texture;
 	SwsContext *sws_ctx;
@@ -245,7 +248,7 @@ void FeMediaImp::close()
 	if (m_io_ctx)
 	{
 		if ( m_io_ctx->opaque )
-			delete (FeZipStream *)(m_io_ctx->opaque);
+			delete (sf::InputStream *)(m_io_ctx->opaque);
 
 		av_free( m_io_ctx->buffer );
 		av_free( m_io_ctx );
@@ -258,6 +261,7 @@ void FeMediaImp::close()
 
 FeBaseStream::FeBaseStream()
 	: at_end( false ),
+	far_behind( false ),
 	codec_ctx( NULL ),
 	codec( NULL ),
 	stream_id( -1 )
@@ -276,6 +280,7 @@ FeBaseStream::~FeBaseStream()
 
 	codec = NULL;
 	at_end = false;
+	far_behind = false;
 	stream_id = -1;
 }
 
@@ -283,6 +288,7 @@ void FeBaseStream::stop()
 {
 	clear_packet_queue();
 	at_end=false;
+	far_behind = false;
 }
 
 AVPacket *FeBaseStream::pop_packet()
@@ -587,8 +593,6 @@ void FeVideoImp::preload()
 
 void FeVideoImp::video_thread()
 {
-	sf::Time max_sleep = time_base / (sf::Int64)2;
-
 	const int QMAX = 16;
 	const int QMIN = 0;
 	int qscore( 10 ); // quality scoring
@@ -600,6 +604,8 @@ void FeVideoImp::video_thread()
 	int64_t prev_pts = 0;
 	int64_t prev_duration = 0;
 
+	sf::Time wait_time;
+
 	if ((!sws_ctx) || (!rgba_buffer[0]))
 	{
 		FeLog() << "Error initializing video thread" << std::endl;
@@ -609,12 +615,26 @@ void FeVideoImp::video_thread()
 	while ( run_video_thread )
 	{
 		bool do_process = true;
+
+		//
+		// If we are falling behind for more than 2 seconds
+		// it can only mean that we are in suspend/hibernation state,
+		// so we flag the video to be restarted on the next tick.
+		// This prevents displaying only keyframes for several seconds on wake.
+		//
+		if ( wait_time < sf::seconds( -5.0f ) )
+		{
+			wait_time = sf::seconds( 0 );
+			far_behind = true;
+			run_video_thread = false;
+		}
+
 		//
 		// First, display queued frame
 		//
 		if ( detached_frame )
 		{
-			sf::Time wait_time = (sf::Int64)detached_frame->pts * time_base
+			wait_time = (sf::Int64)detached_frame->pts * time_base
 					- m_parent->get_video_time();
 
 			if ( wait_time < max_sleep )
@@ -770,7 +790,8 @@ the_end:
 FeMedia::FeMedia( Type t )
 	: sf::SoundStream(),
 	m_audio( NULL ),
-	m_video( NULL )
+	m_video( NULL ),
+	m_aspect_ratio( 1.0 )
 {
 	m_imp = new FeMediaImp( t );
 }
@@ -862,6 +883,9 @@ void FeMedia::close()
 
 bool FeMedia::is_playing()
 {
+	if ((m_video) && (m_video->far_behind))
+		return false;
+
 	if ((m_video) && (!m_video->at_end))
 		return (m_video->run_video_thread);
 
@@ -882,23 +906,9 @@ void FeMedia::setVolume(float volume)
 	sf::SoundStream::setVolume( volume );
 }
 
-bool FeMedia::openFromFile( const std::string &name, sf::Texture *outt )
+int fe_media_read( void *opaque, uint8_t *buff, int buff_size )
 {
-	close();
-	init_av();
-
-	if ( avformat_open_input( &(m_imp->m_format_ctx), name.c_str(), NULL, NULL ) < 0 )
-	{
-		FeLog() << "Error opening input file: " << name << std::endl;
-		return false;
-	}
-
-	return internal_open( outt );
-}
-
-int fe_zip_read( void *opaque, uint8_t *buff, int buff_size )
-{
-	FeZipStream *z = (FeZipStream *)opaque;
+	sf::InputStream *z = (sf::InputStream *)opaque;
 
 	sf::Int64 bytes_read = z->read( buff, buff_size );
 
@@ -909,9 +919,9 @@ int fe_zip_read( void *opaque, uint8_t *buff, int buff_size )
 }
 
 // whence: SEEK_SET, SEEK_CUR, SEEK_END, and AVSEEK_SIZE
-int64_t fe_zip_seek( void *opaque, int64_t offset, int whence )
+int64_t fe_media_seek( void *opaque, int64_t offset, int whence )
 {
-	FeZipStream *z = (FeZipStream *)opaque;
+	sf::InputStream *z = (sf::InputStream *)opaque;
 
 	switch ( whence )
 	{
@@ -930,28 +940,38 @@ int64_t fe_zip_seek( void *opaque, int64_t offset, int whence )
 	}
 }
 
-bool FeMedia::openFromArchive( const std::string &archive,
+bool FeMedia::open( const std::string &archive,
 	const std::string &name, sf::Texture *outt )
 {
 	close();
 	init_av();
 
-	FeZipStream *z = new FeZipStream( archive );
-	if ( !z->open( name ) )
+	sf::InputStream *s = NULL;
+
+	if ( !archive.empty() )
 	{
-		// Error opening specified filename. Try to correct
-		// in case filname is in a subdir of the archive
-		std::string temp;
-		if ( get_archive_filename_with_base( temp, archive, name ) )
+		FeZipStream *z = new FeZipStream( archive );
+
+		if ( !z->open( name ) )
 		{
-			z->open( temp );
+			// Error opening specified filename. Try to correct
+			// in case filname is in a subdir of the archive
+			std::string temp;
+			if ( get_archive_filename_with_base( temp, archive, name ) )
+			{
+				z->open( temp );
+			}
+			else
+			{
+				delete s;
+				return false;
+			}
 		}
-		else
-		{
-			delete z;
-			return false;
-		}
+
+		s = (sf::InputStream *)z;
 	}
+	else
+		s = new FeFileInputStream( name );
 
 	m_imp->m_format_ctx = avformat_alloc_context();
 
@@ -964,8 +984,8 @@ bool FeMedia::openFromArchive( const std::string &archive,
 		AV_INPUT_BUFFER_PADDING_SIZE );
 
 	m_imp->m_io_ctx = avio_alloc_context( avio_ctx_buffer,
-		avio_ctx_buffer_size, 0, z, &fe_zip_read,
-		NULL, &fe_zip_seek );
+		avio_ctx_buffer_size, 0, s, &fe_media_read,
+		NULL, &fe_media_seek );
 
 	m_imp->m_format_ctx->pb = m_imp->m_io_ctx;
 
@@ -975,11 +995,6 @@ bool FeMedia::openFromArchive( const std::string &archive,
 		return false;
 	}
 
-	return internal_open( outt );
-}
-
-bool FeMedia::internal_open( sf::Texture *outt )
-{
 	if ( avformat_find_stream_info( m_imp->m_format_ctx, NULL ) < 0 )
 	{
 		FeLog() << "Error finding stream information in input file: "
@@ -1074,16 +1089,19 @@ bool FeMedia::internal_open( sf::Texture *outt )
 				m_video->time_base = sf::seconds(
 						av_q2d(m_imp->m_format_ctx->streams[stream_id]->time_base) );
 
-				float aspect_ratio = 1.0;
-				if ( codec_ctx->sample_aspect_ratio.num != 0 )
-					aspect_ratio = av_q2d( codec_ctx->sample_aspect_ratio );
+				m_video->max_sleep = sf::seconds( 0.5 / av_q2d(m_imp->m_format_ctx->streams[stream_id]->r_frame_rate));
 
-				m_video->disptex_width = codec_ctx->width * aspect_ratio;
+				if ( codec_ctx->sample_aspect_ratio.num != 0 )
+					m_aspect_ratio = av_q2d( codec_ctx->sample_aspect_ratio );
+				if ( m_imp->m_format_ctx->streams[stream_id]->sample_aspect_ratio.num != 0 )
+					m_aspect_ratio = av_q2d( m_imp->m_format_ctx->streams[stream_id]->sample_aspect_ratio );
+
+				m_video->disptex_width = codec_ctx->width;
 				m_video->disptex_height = codec_ctx->height;
 
 				m_video->display_texture = outt;
-				m_video->display_texture->create( m_video->disptex_width,
-						m_video->disptex_height );
+				if ( outt->getSize() != sf::Vector2u( m_video->disptex_width, m_video->disptex_height ) )
+					m_video->display_texture->create( m_video->disptex_width, m_video->disptex_height );
 
 				m_video->preload();
 			}
@@ -1381,6 +1399,11 @@ bool FeMedia::is_multiframe() const
 	}
 
 	return false;
+}
+
+float FeMedia::get_aspect_ratio() const
+{
+	return m_aspect_ratio;
 }
 
 sf::Time FeMedia::get_duration() const

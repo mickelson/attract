@@ -86,6 +86,8 @@ public:
 
 	virtual void set_mipmap( bool )=0;
 	virtual bool get_mipmap() const=0;
+	virtual bool is_swf() const;
+	virtual float get_movie_aspect_ratio() const;
 
 	// function for use with surface objects
 	//
@@ -159,6 +161,8 @@ public:
 
 	void set_mipmap( bool );
 	bool get_mipmap() const;
+	bool is_swf() const;
+	float get_movie_aspect_ratio() const;
 
 protected:
 	FeTextureContainer *get_derived_texture_container();
@@ -177,10 +181,13 @@ private:
 		const std::string &filename,
 		bool is_image=false );
 
+	bool load_to_texture( sf::InputStream &s );
+
 	void internal_update_selection( FeSettings *feSettings );
 	void clear();
 
 	sf::Texture m_texture;
+
 	std::string m_art_name; // artwork label/template name (dynamic images)
 	std::string m_file_name; // the name of the loaded file
 	int m_index_offset;
@@ -196,6 +203,7 @@ private:
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
 	FeVideoFlags m_video_flags;
 	bool m_mipmap;
+	bool m_smooth;
 };
 
 class FeSurfaceTextureContainer : public FeBaseTextureContainer, public FePresentableParent

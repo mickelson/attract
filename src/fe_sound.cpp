@@ -154,7 +154,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 	if ( is_supported_archive( path ) )
 	{
 #ifndef NO_MOVIE
-		if ( !m_sound.openFromArchive( path, fn ) )
+		if ( !m_sound.open( path, fn ) )
 		{
 			FeLog() << "Error loading sound file from archive: "
 				<< path << " (" << fn << ")" << std::endl;
@@ -189,7 +189,7 @@ void FeSound::load( const std::string &path, const std::string &fn )
 		std::string file_to_load = path + fn;
 
 #ifndef NO_MOVIE
-		if ( !m_sound.openFromFile( file_to_load ) )
+		if ( !m_sound.open( "", file_to_load ) )
 		{
 			FeLog() << "Error loading sound file: " << file_to_load << std::endl;
 			m_file_name = "";

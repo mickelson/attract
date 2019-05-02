@@ -53,10 +53,7 @@ public:
 	FeMedia( Type t );
 	~FeMedia();
 
-	bool openFromFile( const std::string &name,
-			sf::Texture *out_texture=NULL );
-
-	bool openFromArchive( const std::string &archive,
+	bool open( const std::string &archive,
 			const std::string &name,
 			sf::Texture *out_texture=NULL );
 
@@ -82,6 +79,7 @@ public:
 
 	bool is_playing();
 	bool is_multiframe() const;
+	float get_aspect_ratio() const;
 
 	sf::Time get_video_time();
 	sf::Time get_duration() const;
@@ -111,7 +109,6 @@ protected:
 	bool read_packet();
 	bool end_of_file();
 
-	bool internal_open( sf::Texture *outt );
 	void try_hw_accel( AVCodecContext *& ctx, AVCodec *&dec );
 
 private:
@@ -123,6 +120,7 @@ private:
 	FeMedia( const FeMedia & );
 	FeMedia &operator=( const FeMedia & );
 	static void init_av();
+	float m_aspect_ratio;
 };
 
 #endif

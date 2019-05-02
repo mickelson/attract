@@ -23,7 +23,6 @@
 #include "fe_input.hpp"
 #include "fe_util.hpp"
 #include <iostream>
-#include <fstream>
 #include <algorithm>
 #include <iomanip>
 #include <cstring>
@@ -1435,7 +1434,7 @@ int FeInputMap::process_setting( const std::string &setting,
 	return 0;
 }
 
-void FeInputMap::save( std::ofstream &f ) const
+void FeInputMap::save( nowide::ofstream &f ) const
 {
 	std::vector< FeInputMapEntry >::const_iterator it;
 
@@ -1647,7 +1646,7 @@ void FeSoundInfo::set_sound( FeInputMap::Command c, const std::string &name )
 		m_sounds[ c ] = name;
 }
 
-void FeSoundInfo::save( std::ofstream &f ) const
+void FeSoundInfo::save( nowide::ofstream &f ) const
 {
 	std::map<FeInputMap::Command, std::string>::const_iterator it;
 

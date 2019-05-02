@@ -33,6 +33,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include "nowide/args.hpp"
 
 #ifndef NO_MOVIE
 #include <Audio/AudioDevice.hpp>
@@ -44,6 +45,7 @@
 
 #ifdef SFML_SYSTEM_WINDOWS
 #include <windows.h>
+#include "nvapi.hpp"
 
 extern "C"
 {
@@ -51,6 +53,10 @@ extern "C"
 __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
+#endif
+
+#ifdef USE_LIBCURL
+#include <curl/curl.h>
 #endif
 
 void process_args( int argc, char *argv[],
@@ -67,6 +73,11 @@ int main(int argc, char *argv[])
 	bool process_console = false;
 	FeLogLevel log_level = FeLog_Info;
 
+#ifdef USE_LIBCURL
+	curl_global_init( CURL_GLOBAL_ALL );
+#endif
+
+	nowide::args a( argc, argv );
 	process_args( argc, argv, config_path, cmdln_font, process_console, log_file, log_level );
 
 	FeSettings feSettings( config_path, cmdln_font );
@@ -97,6 +108,15 @@ int main(int argc, char *argv[])
 	//
 	fe_print_version();
 	FeLog() << std::endl;
+
+#ifdef SFML_SYSTEM_WINDOWS
+	// Detect an nvidia card and if it's found create an nvidia profile
+	// for Attract Mode with optimizations
+	if ( nvapi_init() > 0 )
+		FeLog() << "Nvidia GPU detected. Attract Mode profile was not found so it has been created.\n"
+				<< "In order for the changes to take effect, please restart Attract Mode\n" << std::endl;
+	FeDebug() << std::endl;
+#endif
 
 	feSettings.load();
 
@@ -577,7 +597,14 @@ int main(int argc, char *argv[])
 						get_available_filename( feSettings.get_config_dir(),
 										"screen", ".png", filename );
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+						sf::Texture texture;
+						texture.create( window.getSize().x, window.getSize().y );
+						texture.update( window );
+						sf::Image sshot_img = texture.copyToImage();
+#else
 						sf::Image sshot_img = window.capture();
+#endif
 						sshot_img.saveToFile( filename );
 					}
 					break;
@@ -790,7 +817,9 @@ int main(int argc, char *argv[])
 							// returns 0 if user confirmed toggle
 							if ( feOverlay.confirm_dialog(
 									msg,
-									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ) ) == 0 )
+									feSettings.get_rom_info( 0, 0, FeRomInfo::Title ),
+									false,
+									FeInputMap::ToggleFavourite ) == 0 )
 							{
 								if ( feSettings.set_current_fav( new_state ) )
 								{
@@ -1049,6 +1078,10 @@ int main(int argc, char *argv[])
 
 	soundsys.stop();
 	feSettings.save_state();
+
+#ifdef USE_LIBCURL
+	curl_global_cleanup();
+#endif
 
 	FeDebug() << "Attract-Mode ended normally" << std::endl;
 	return 0;

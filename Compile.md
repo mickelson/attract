@@ -3,33 +3,36 @@ Compiling Attract-Mode
 
 Build instructions are set out by operating system below:
 
-Linux, FreeBSD, Ubuntu:
-----------------------
+Linux, FreeBSD:
+---------------
 
 These instructions assume that you have the GNU C/C++ compilers and basic
 build utilities (make, pkg-config, ar) on your system.  This means the
 "build-essential" and "pkg-config" packages on Debian or Ubuntu-based
 distributions.  Other distributions should have similar packages available.
 
-1. Install the following *development* libraries on your system [use sudo apt-get install xxx, where xxx should be replaced by the library name between brackets, eg. sudo apt-get install libsfml-dev]:
+1. Install the following *development* libraries on your system:
+
    * Required:
-      - SFML SDK version 2.x (<http://sfml-dev.org>) [libsfml-dev]
-      - OpenAL [libopenal-dev]
-      - Zlib [zlib1g-dev]
-      - FreeType 2 [libfreetype6-dev]
-      - The following FFmpeg libraries (required for videos): 
-          * avformat [libavformat-dev],
-          * avcodec [libavcodec-dev], 
-          * swscale [libswscale-dev], 
-          * avutil [libavutil-dev],
-          * swresample [libswresample-dev] or avresample [libavresample-dev].
-      - OpenGL and GLU (or OpenGLES for GLES version) [freeglut3-dev]
-      - JPEG library [libjpeg-dev]
-      - Make [make] and Package Config [pkg-config]
+      - SFML SDK version 2.x (<http://sfml-dev.org>)
+      - OpenAL
+      - Zlib
+      - FreeType 2
+      - The following FFmpeg libraries (required for videos):
+          * avformat,
+          * avcodec,
+          * swscale,
+          * avutil,
+          * swresample or avresample.
+      - OpenGL and GLU (or OpenGLES for GLES version)
+      - JPEG library
+      - Make and Package Config
+
    * Optional:
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
-      - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support). [libarchive-dev]
+      - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
+      - Libcurl (for network info/artwork scraping).
 
 2. Extract the Attract-Mode source to your system.
 
@@ -114,14 +117,14 @@ OS X.
 1. Follow the steps in the mxe tutorial to set up mxe on your system:
    <http://mxe.cc/#tutorial>
 
-2. Make mxe's sfml, ffmpeg and libarchive packages:
+2. Make mxe's sfml, ffmpeg, libarchive and curl packages:
 
-           make ffmpeg sfml libarchive
+           make ffmpeg sfml libarchive curl
 
-   the above command will make 32-bit versions of ffmpeg and sfml (and anything
-   else that they depend on). To make the 64-bit version use the following:
+   the above command will make 32-bit versions of ffmpeg, sfml, libarchive and curl
+   (and anything else that they depend on). To make the 64-bit version use the following:
 
-           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml libarchive
+           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml libarchive curl
 
 3. Extract the Attract-Mode source to your system.
 
@@ -153,7 +156,7 @@ Windows (native compile):
 
            pacman -Syu
 
-4. Install required packaged. (optionally use the mingw-w64-i686-toolchain
+4. Install required packages. (optionally use the mingw-w64-i686-toolchain
    instead for 32-bit windows architectures), install "all" (by default) :
 
            pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg mingw64/mingw-w64-x86_64-libarchive

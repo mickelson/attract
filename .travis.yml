@@ -20,6 +20,7 @@ addons:
     - libfontconfig1-dev
     - libxinerama-dev
     - freeglut3-dev
+    - libcurl4-openssl-dev
     - pkg-config
     - pkgconf
     - fakeroot
@@ -33,19 +34,17 @@ matrix:
   - os: linux
     dist: xenial
     sudo: required
-    env: BUILD_PKG=yes
   exclude:
   - os: osx
     compiler: gcc
 before_install:
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update --all; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
 install:
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive curl; fi
 script:
 - make -j8
 before_deploy:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then util/osx/create-pkg.sh; fi
-- if [ "$BUILD_PKG" == "yes" ]; then dpkg-buildpackage -us -uc; fi
 deploy:
   provider: releases
   api_key:
@@ -53,9 +52,8 @@ deploy:
   file_glob: true
   file:
   - attract-*.dmg
-  - ../attract*.deb
   skip_cleanup: true
   on:
     tags: true
     repo: mickelson/attract
-    condition: $TRAVIS_OS_NAME = osx || $BUILD_PKG = yes
+    condition: $TRAVIS_OS_NAME = osx

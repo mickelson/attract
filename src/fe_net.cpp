@@ -22,26 +22,39 @@
 
 #include "fe_net.hpp"
 #include "fe_base.hpp"
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <iostream>
+#include <cstring>
 
-FeNetTask::FeNetTask( const std::string &host,
-		const std::string &req,
+#include <curl/curl.h>
+
+static size_t write_curl_callback( void *contents, size_t size, size_t nmemb, void *userp )
+{
+	size_t add_size = size * nmemb;
+
+	std::vector<char> *mem = (std::vector<char> *)userp;
+	size_t old_size = mem->size();
+
+	mem->resize( old_size + add_size );
+	memcpy( &((*mem)[old_size]), contents, add_size );
+
+	return add_size;
+}
+
+FeNetTask::FeNetTask( const std::string &url,
 		const std::string &filename,
 		TaskType t )
 	: m_type( t ),
-	m_host( host ),
-	m_req( req ),
+	m_url( url ),
 	m_filename( filename ),
 	m_id( FileTaskError )
 {
 }
 
-FeNetTask::FeNetTask( const std::string &host,
-		const std::string &req, int id )
+FeNetTask::FeNetTask( const std::string &url,
+		int id )
 	: m_type( BufferTask ),
-	m_host( host ),
-	m_req( req ),
+	m_url( url ),
 	m_id( id )
 {
 }
@@ -60,49 +73,76 @@ FeNetTask::FeNetTask( const FeNetTask &o )
 const FeNetTask &FeNetTask::operator=( const FeNetTask &o )
 {
 	m_type = o.m_type;
-	m_host = o.m_host;
-	m_req = o.m_req;
+	m_url = o.m_url;
 	m_filename = o.m_filename;
 	m_result = o.m_result;
 	m_id = o.m_id;
+
+	return *this;
 }
 
-bool FeNetTask::do_task( sf::Http::Response::Status &status, bool &in_req )
+bool FeNetTask::do_task( long *code )
 {
-	const char *FROM_FIELD = "From";
-	const char *FROM_VALUE = "user@attractmode.org";
-	const char *UA_FIELD = "User-Agent";
-	const char *UA_VALUE = "Attract-Mode/1.x";
+	const char *UA_VALUE = "Attract-Mode/2.x";
 
-	sf::Http http;
-	http.setHost( m_host );
+	std::vector<char> rbuff;
 
-	sf::Http::Request req( m_req );
-	req.setField( FROM_FIELD, FROM_VALUE );
-	req.setField( UA_FIELD, UA_VALUE );
+	CURL *curl_handle;
+	CURLcode res;
 
-	// This call can get hung up, so we use in_req to track if we need to
-	// do a hard reset of this thread in the event the user cancels while
-	// it is blocked on the sendRequest call.
-	//
-	in_req = true;
-	sf::Http::Response resp = http.sendRequest( req, sf::seconds( 8 ) );
-	in_req = false;
+	// set up our http request
+	curl_handle = curl_easy_init();
 
-	status = resp.getStatus();
+	curl_easy_setopt( curl_handle, CURLOPT_WRITEFUNCTION, write_curl_callback );
+	curl_easy_setopt( curl_handle, CURLOPT_WRITEDATA, (void *)&rbuff );
+	curl_easy_setopt( curl_handle, CURLOPT_USERAGENT, UA_VALUE );
 
-	if ( status != sf::Http::Response::Ok )
+	// set to abort if slower than 30 bytes/sec during 60 seconds
+	curl_easy_setopt( curl_handle, CURLOPT_LOW_SPEED_TIME, 60L );
+	curl_easy_setopt( curl_handle, CURLOPT_LOW_SPEED_LIMIT, 30L );
+
+	// set to complete connection within 10 seconds
+	curl_easy_setopt( curl_handle, CURLOPT_CONNECTTIMEOUT, 10L );
+
+	// follow redirection
+	curl_easy_setopt( curl_handle, CURLOPT_FOLLOWLOCATION, 1L );
+
+	// fail on 404 file not found messages
+	curl_easy_setopt( curl_handle, CURLOPT_FAILONERROR, 1L );
+
+	curl_easy_setopt( curl_handle, CURLOPT_URL, m_url.c_str() );
+
+	res = curl_easy_perform( curl_handle );
+
+	if ( res != CURLE_OK )
+	{
+		if ( res == CURLE_HTTP_RETURNED_ERROR )
+		{
+			long rcode;
+			curl_easy_getinfo( curl_handle, CURLINFO_RESPONSE_CODE, &rcode );
+
+			FeDebug() << " * Http error: " << rcode << " (" << m_url << ")" << std::endl;
+
+			if ( code )
+				*code = rcode;
+		}
+		else
+		{
+			m_result = curl_easy_strerror( res );
+
+			FeLog() << " ! Error processing request: " << m_result
+					<< " (" << m_url << ")" << std::endl;
+		}
+
+		curl_easy_cleanup( curl_handle );
 		return false;
+	}
+
+	curl_easy_cleanup( curl_handle );
 
 	if (( m_type == FileTask ) || ( m_type == SpecialFileTask ))
 	{
-		size_t pos = m_req.find_last_of( '.' );
-		if ( pos != std::string::npos )
-			m_filename += m_req.substr( pos );
-		else
-			m_filename += ".png";
-
-		std::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
+		nowide::ofstream outfile( m_filename.c_str(), std::ios_base::binary );
 		if ( !outfile.is_open() )
 		{
 			FeLog() << " ! Unable to open file for writing: "
@@ -110,14 +150,17 @@ bool FeNetTask::do_task( sf::Http::Response::Status &status, bool &in_req )
 			return false;
 		}
 
-		outfile << resp.getBody();
+		outfile.write( &(rbuff[0]), rbuff.size() );
 		outfile.close();
 
 		m_id=m_type;
 		m_result = m_filename;
 	}
 	else
-		m_result = resp.getBody();
+	{
+		m_result.clear();
+		m_result.append( &(rbuff[0]), rbuff.size() );
+	}
 
 	return true;
 }
@@ -133,65 +176,51 @@ FeNetQueue::FeNetQueue()
 {
 }
 
-void FeNetQueue::add_file_task( const std::string &host,
-		const std::string &req,
+void FeNetQueue::add_file_task( const std::string &url,
 		const std::string &file_name,
 		bool flag_special )
 {
 	sf::Lock l( m_mutex );
-	m_in_queue.push_front( FeNetTask( host, req, file_name,
+	m_in_queue.push_front( FeNetTask( url, file_name,
 		flag_special ? FeNetTask::SpecialFileTask : FeNetTask::FileTask ) );
 }
 
-void FeNetQueue::add_buffer_task( const std::string &host,
-		const std::string &req,
+void FeNetQueue::add_buffer_task( const std::string &url,
 		int id )
 {
 	sf::Lock l( m_mutex );
-	m_in_queue.push_back( FeNetTask( host, req, id ) );
+	m_in_queue.push_back( FeNetTask( url, id ) );
 }
 
-bool FeNetQueue::do_next_task( sf::Http::Response::Status &status,
-	std::string &err_req, bool &in_req )
+bool FeNetQueue::get_next_task( FeNetTask &t )
 {
-	FeNetTask t;
-	status = sf::Http::Response::Ok;
-
 	// Grab next task from the input queue
 	//
-	{
-		sf::Lock l( m_mutex );
+	sf::Lock l( m_mutex );
 
-		if ( m_in_queue.empty() )
-			return false;
+	if ( m_in_queue.empty() )
+		return false;
 
-		t = m_in_queue.front();
-		m_in_queue.pop_front();
+	t = m_in_queue.front();
+	m_in_queue.pop_front();
 
-		m_in_flight++;
-	}
+	m_in_flight++;
+	return true;
+}
 
-	// Perform task
-	//
-	bool res = t.do_task( status, in_req );
-
+void FeNetQueue::done_with_task( const FeNetTask &t, bool res )
+{
 	// Queue result
 	//
-	{
-		sf::Lock l( m_mutex );
+	sf::Lock l( m_mutex );
 
-		if ( res )
-			m_out_queue.push( t );
-		else if ( status != sf::Http::Response::Ok )
-			err_req = t.get_req();
+	if ( res )
+		m_out_queue.push( t );
 
-		m_in_flight--;
+	m_in_flight--;
 
-		FeDebug() << "WORKERS: queue_in=" << m_in_queue.size() << ", in_progress=" << m_in_flight
-			<< ", queue_out=" << m_out_queue.size() << std::endl;
-	}
-
-	return true;
+	FeDebug() << "WORKERS: queue_in=" << m_in_queue.size() << ", in_progress=" << m_in_flight
+		<< ", queue_out=" << m_out_queue.size() << std::endl;
 }
 
 bool FeNetQueue::pop_completed_task( int &id,
@@ -205,6 +234,14 @@ bool FeNetQueue::pop_completed_task( int &id,
 		return true;
 	}
 	return false;
+}
+
+void FeNetQueue::abort()
+{
+	sf::Lock l( m_mutex );
+
+	while ( !m_in_queue.empty() )
+		m_in_queue.pop_front();
 }
 
 bool FeNetQueue::all_done()
@@ -226,47 +263,44 @@ bool FeNetQueue::output_done()
 FeNetWorker::FeNetWorker( FeNetQueue &queue )
 	: m_queue( queue ),
 	m_thread( &FeNetWorker::work_process, this ),
-	m_proceed( true ),
-	m_in_req( false )
+	m_proceed( true )
 {
 	m_thread.launch();
 }
 
 FeNetWorker::~FeNetWorker()
 {
-	// Note m_proceed and m_in_req being used across threads without mutex
 	m_proceed = false;
-
-	if ( m_in_req )
-	{
-		// We terminate because http.sendRequest() can hung up.
-		// By terminating here the user can still escape out of a hung up scrape
-		//
-		FeLog() << "Hard termination of worker thread!" << std::endl;
-		m_thread.terminate();
-		m_in_req = false;
-	}
-	else
-		m_thread.wait();
+	m_thread.wait();
 }
 
 void FeNetWorker::work_process()
 {
 	while ( m_proceed && !m_queue.all_done() )
 	{
-		sf::Http::Response::Status status;
-		std::string err_req;
+		bool res=false;
+		FeNetTask t;
 
-		bool completed = m_queue.do_next_task( status, err_req, m_in_req );
-
-		if (( status != sf::Http::Response::Ok )
-			&& ( status != sf::Http::Response::NotFound ))
+		if ( m_queue.get_next_task( t ) )
 		{
-			FeLog() << " ! Error processing request. Status code: "
-				<< status << " (" << err_req << ")" << std::endl;
+			// Perform task
+			//
+			long code( 0 );
+			res = t.do_task( &code );
+
+			m_queue.done_with_task( t, res );
+
+			if ( !res )
+			{
+				if ( code == 500 )
+				{
+					FeLog() << "Aborting scrape of server, encountered http error code: " << code << std::endl;
+					m_queue.abort();
+				}
+			}
 		}
 
-		if ( !completed ) // sleep if there is nothing in the queue
+		if ( !res ) // sleep if there is nothing in the queue
 			sf::sleep( sf::milliseconds( 10 ) );
 	}
 
