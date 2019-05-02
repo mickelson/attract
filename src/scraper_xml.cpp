@@ -322,7 +322,8 @@ void FeListXMLParser::start_element(
 				|| ( strcmp( element, "genre" ) == 0 )
 				|| ( strcmp( element, "year" ) == 0 )
 				|| ( strcmp( element, "publisher" ) == 0 )
-				|| ( strcmp( element, "manufacturer" ) == 0 ))
+				|| ( strcmp( element, "manufacturer" ) == 0 )
+				|| ( strcmp( element, "buttons" ) == 0 ))
 		{
 			m_element_open=true;
 		}
@@ -421,6 +422,8 @@ void FeListXMLParser::end_element( const char *element )
 			(*m_itr).set_info( FeRomInfo::Cloneof, m_current_data );
 		else if ( strcmp( element, "genre" ) == 0 ) // Hyperspin .xml
 			(*m_itr).set_info( FeRomInfo::Category, m_current_data );
+		else if ( strcmp( element, "buttons" ) == 0 ) // Hyperspin .xml
+			(*m_itr).set_info( FeRomInfo::Buttons, m_current_data );
 
 		m_current_data.clear();
 		m_element_open=false;
