@@ -94,6 +94,17 @@ const char *FE_ART_EXTENSIONS[]		=
 	NULL
 };
 
+const char *FE_VID_EXTENSIONS[]		=
+{
+	".mp4",
+	".avi",
+	".flv",
+	".m4v",
+	".mpg",
+	".mpeg",
+	NULL
+};
+
 const char *FE_FONT_EXTENSIONS[]		=
 {
 	".ttf",
@@ -3668,17 +3679,20 @@ bool gather_artwork_filenames(
 
 			continue;
 		}
-
-		get_filename_from_base(
+		get_filename_from_base_fast(
 			img_contents,
-			vid_contents,
 			(*itr),
-			target_name + '.',
+			target_name,
 			FE_ART_EXTENSIONS );
-
 #ifdef NO_MOVIE
 		vid_contents.clear();
 #else
+		get_filename_from_base_fast(
+			vid_contents,
+			(*itr),
+			target_name,
+			FE_VID_EXTENSIONS );
+
 		for ( std::vector<std::string>::iterator itn = vid_contents.begin();
 				itn != vid_contents.end(); )
 		{

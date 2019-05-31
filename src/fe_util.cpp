@@ -534,6 +534,22 @@ bool get_basename_from_extension(
 	return !(list.empty());
 }
 
+bool get_filename_from_base_fast(
+	std::vector<std::string> &in_list,
+	const std::string &path,
+	const std::string &base_name,
+	const char **filter )
+{
+	int i=0;
+	while ( filter[i] != NULL )
+	{
+		std::string file = path + base_name + filter[i];
+		if ( file_exists( file ))
+			in_list.push_back( file );
+		i++;
+	}
+}
+
 bool get_filename_from_base(
 	std::vector<std::string> &in_list,
 	std::vector<std::string> &out_list,

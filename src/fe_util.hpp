@@ -220,6 +220,15 @@ bool get_filename_from_base( std::vector<std::string> &in_list,
 	const char **ext_filter=NULL );
 
 //
+// A faster version of the get_filename_from_base function. Instead of using a
+// directory crawler it checks if the file exists based on a table with known extension types
+//
+bool get_filename_from_base_fast( std::vector<std::string> &in_list,
+	const std::string &path,
+	const std::string &base_name,
+	const char **ext_filter=NULL );
+
+//
 // Get a filename that does not currently exist.
 // The resulting filename must start with "base" and end with "extension"
 //
