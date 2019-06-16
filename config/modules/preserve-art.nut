@@ -15,6 +15,7 @@
 // img.set_anchor( ::Anchor.Top );
 //
 // local art = PreserveArt( "snap", 0, 0, 320, 240 );
+// art.trigger = Transition.EndNavigation; // Optional
 // art.set_fit_or_fill( "fit" );  // fit, fill or stretch
 // art.set_anchor( ::Anchor.Bottom ); // Top, Left, Center, Centre, Right, Bottom
 //
@@ -225,7 +226,11 @@ class PreserveArt
     function _get( idx ) { return surface[idx]; }
     function _set( idx, val )
     {
-        if ( idx == "index_offset" ) art.index_offset = val; else if ( idx == "filter_offset" ) art.filter_offset = val; else if ( idx == "file_name" ) art.file_name = val; else surface[idx] = val;
+        if ( idx == "index_offset" ) art.index_offset = val;
+        else if ( idx == "filter_offset" ) art.filter_offset = val;
+        else if ( idx == "file_name" ) art.file_name = val;
+        else if ( idx == "trigger" ) art.trigger = val;
+        else surface[idx] = val;
     }
     
     function print( msg )
@@ -237,7 +242,7 @@ class PreserveArt
     
     function onTransition( ttype, var, ttime )
     {
-        if ( ttype == Transition.StartLayout || ttype == Transition.ToNewList || ttype == Transition.FromOldSelection ) request_size = true;
+        if ( ttype == Transition.StartLayout || ttype == Transition.FromOldSelection || ttype == Transition.ToNewList || ttype == Transition.EndNavigation ) request_size = true;
     }
     
     function onTick( ttime )
