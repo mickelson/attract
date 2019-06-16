@@ -254,6 +254,8 @@ const char *GENRES_REQ = "/Genres?apikey=$1";
 const char *PUBLISHERS_REQ = "/Publishers?apikey=$1";
 
 const char *DATA_E = "data";
+const char *CODE_E = "code";
+const char *STATUS_E = "status";
 const char *PLATFORMS_E = "platforms";
 const char *GENRES_E = "genres";
 const char *PUBLISHERS_E = "publishers";
@@ -273,7 +275,49 @@ const char *ID_E = "id";
 const char *RMA_E = "remaining_monthly_allowance";
 const char *EXTRA_E = "extra_allowance";
 
-bool get_json_doc( const std::string &api_key, rapidjson::Document &d, const char *req )
+bool parse_confirm_data( const std::string &t, rapidjson::Document &doc, int &remaining_allowance )
+{
+	if ( doc.Parse( t.c_str() ).HasParseError() )
+	{
+		FeLog() << "Error parsing json, text: " << t << std::endl;
+		return false;
+	}
+
+	// check for error from thegamesdb.net api
+	if ( !doc.HasMember( CODE_E ) && !doc[CODE_E].IsInt() )
+	{
+		FeLog() << "Error, unable to get response code, text: " << t << std::endl;
+		return false;
+	}
+
+	int code = doc[CODE_E].GetInt();
+	if ( code != 200 )
+	{
+		std::string status;
+		if ( doc.HasMember( STATUS_E ) && doc[STATUS_E].IsString() )
+			status = doc[STATUS_E].GetString();
+
+		FeLog() << "Thegamesdb.net API returned an error, code: " << code << ", status: " << status << std::endl;
+		return false;
+	}
+
+	// confirm data element exists
+	if ( !doc.HasMember( DATA_E ) || !doc[DATA_E].IsObject() )
+	{
+		FeLog() << "Error, unable to get data element, text: " << t << std::endl;
+		return false;
+	}
+
+	if ( doc.HasMember( RMA_E ) && doc[RMA_E].IsInt() && doc.HasMember( EXTRA_E ) && doc[EXTRA_E].IsInt() )
+	{
+		remaining_allowance = doc[RMA_E].GetInt() + doc[EXTRA_E].GetInt();
+		FeDebug() << "remaining allowance=" << remaining_allowance << std::endl;
+	}
+
+	return true;
+}
+
+bool get_json_doc( const std::string &api_key, rapidjson::Document &doc, const char *req, int &remaining_allowance )
 {
 	std::string my_url = HOSTNAME;
 	my_url += req;
@@ -281,25 +325,13 @@ bool get_json_doc( const std::string &api_key, rapidjson::Document &d, const cha
 
 	FeNetTask my_task( my_url, 0 );
 	my_task.do_task();
+	FeDebug() << " - db query: " << my_url << std::endl;
 
 	std::string body;
 	int ignored;
 	my_task.grab_result( ignored, body );
 
-	if ( d.Parse( body.c_str() ).HasParseError() )
-	{
-		FeLog() << "Error parsing json, url: " << my_url << std::endl;
-		return false;
-	}
-
-	// confirm data element exists
-	if ( !d.HasMember( DATA_E ) || !d[DATA_E].IsObject() )
-	{
-		FeLog() << "Error, unable to get data element, url: " << my_url << std::endl;
-		return false;
-	}
-
-	return true;
+	return parse_confirm_data( body, doc, remaining_allowance );
 }
 
 bool get_tgdb_platform_list(
@@ -314,7 +346,7 @@ bool get_tgdb_platform_list(
 		return true;
 
 	rapidjson::Document d;
-	if ( get_json_doc( api_key, d, PLATFORM_REQ ) )
+	if ( get_json_doc( api_key, d, PLATFORM_REQ, remaining_allowance ) )
 	{
 		const rapidjson::Value &e = d[DATA_E];
 		if ( !e.HasMember( PLATFORMS_E ) || !e[PLATFORMS_E].IsObject() )
@@ -332,8 +364,6 @@ bool get_tgdb_platform_list(
 				itr->value[ NAME_E ].GetString(),
 				itr->value[ ID_E ].GetInt() ) );
 		}
-
-		remaining_allowance = d[RMA_E].GetInt() + d[EXTRA_E].GetInt();
 	}
 
 	write_local_if_needed( local_file, plats );
@@ -425,7 +455,7 @@ bool get_tgdb_genres_map(
 	if ( !load_from_local( local_file, temp ) )
 	{
 		rapidjson::Document d;
-		if ( get_json_doc( api_key, d, GENRES_REQ ) )
+		if ( get_json_doc( api_key, d, GENRES_REQ, remaining_allowance ) )
 		{
 			const rapidjson::Value &e = d[DATA_E];
 			if ( !e.HasMember( GENRES_E ) || !e[GENRES_E].IsObject() )
@@ -444,8 +474,6 @@ bool get_tgdb_genres_map(
 					itr->value[ NAME_E ].GetString(),
 					itr->value[ ID_E ].GetInt() ) );
 			}
-
-			remaining_allowance = d[RMA_E].GetInt() + d[EXTRA_E].GetInt();
 		}
 
 		write_local_if_needed( local_file, temp );
@@ -471,7 +499,7 @@ bool get_tgdb_publishers_map(
 	if ( !load_from_local( local_file, temp ) )
 	{
 		rapidjson::Document d;
-		if ( get_json_doc( api_key, d, PUBLISHERS_REQ ) )
+		if ( get_json_doc( api_key, d, PUBLISHERS_REQ, remaining_allowance ) )
 		{
 			const rapidjson::Value &e = d[DATA_E];
 			if ( !e.HasMember( PUBLISHERS_E ) || !e[PUBLISHERS_E].IsObject() )
@@ -490,8 +518,6 @@ bool get_tgdb_publishers_map(
 					itr->value[ NAME_E ].GetString(),
 					itr->value[ ID_E ].GetInt() ) );
 			}
-
-			remaining_allowance = d[RMA_E].GetInt() + d[EXTRA_E].GetInt();
 		}
 
 		write_local_if_needed( local_file, temp );
@@ -646,7 +672,7 @@ void create_single_id_query(
 	perform_substitution( my_req, "$1", api_key );
 	perform_substitution( my_req, "$2", id_str );
 
-	FeDebug() << "Queued request: " << my_req << std::endl;
+	FeDebug() << " - db query: " << my_req << std::endl;
 	q.add_buffer_task( my_req, id );
 	q_total++;
 }
@@ -755,27 +781,15 @@ bool FeSettings::thegamesdb_scraper( FeImporterContext &c )
 			FeLog() << " * Unable to get platform information" << std::endl;
 			goto fail_emu_scrape;
 		}
+		FeDebug() << " - db query: " << my_req << std::endl;
 
 		int ignored;
 		std::string body;
 		my_task.grab_result( ignored, body );
 
 		rapidjson::Document doc;
-		if ( doc.Parse( body.c_str() ).HasParseError() )
-		{
-			FeLog() << "Error parsing json: " << body << std::endl;
+		if ( !parse_confirm_data( body, doc, remaining_allowance ) )
 			goto fail_emu_scrape;
-		}
-
-		if ( doc.HasMember( RMA_E ) && doc[RMA_E].IsInt() && doc.HasMember( EXTRA_E ) && doc[EXTRA_E].IsInt() )
-			remaining_allowance = doc[RMA_E].GetInt() + doc[EXTRA_E].GetInt();
-
-		// confirm data element exists
-		if ( !doc.HasMember( DATA_E ) || !doc[DATA_E].IsObject() )
-		{
-			FeLog() << "Error, unable to get data element: " << body << std::endl;
-			goto fail_emu_scrape;
-		}
 
 		const rapidjson::Value &d = doc[DATA_E];
 		if ( !d.HasMember( BASEURL_E ) || !d[BASEURL_E].IsObject() )
@@ -855,7 +869,7 @@ fail_emu_scrape:
 		my_fuzz_map[ get_fuzzy( temp ) ] = name_worklist.back();
 		name_worklist.pop_back();
 
-		FeDebug() << "Queued request: " << my_req << std::endl;
+		FeDebug() << " - db query: " << my_req << std::endl;
 		q.add_buffer_task( my_req, INFO_QUERY );
 		q_total++;
 	}
@@ -924,26 +938,10 @@ fail_emu_scrape:
 			q_count++;
 
 			rapidjson::Document doc;
-			if ( doc.Parse( result.c_str() ).HasParseError() )
-			{
-				FeLog() << "Error parsing json: " << result << std::endl;
+			if ( !parse_confirm_data( result, doc, remaining_allowance ) )
 				continue;
-			}
-
-			// confirm data element exists
-			if ( !doc.HasMember( DATA_E ) || !doc[DATA_E].IsObject() )
-			{
-				FeLog() << "Error, unable to get data element: " << result << std::endl;
-				continue;
-			}
 
 			const rapidjson::Value &d = doc[DATA_E];
-
-			if ( doc.HasMember( RMA_E ) && doc[RMA_E].IsInt() && doc.HasMember( EXTRA_E ) && doc[EXTRA_E].IsInt() )
-			{
-				remaining_allowance = doc[RMA_E].GetInt() + doc[EXTRA_E].GetInt();
-				FeDebug() << "remaining allowance=" << remaining_allowance << std::endl;
-			}
 
 			if ( id == IMAGE_QUERY )
 			{
@@ -1070,6 +1068,7 @@ fail_emu_scrape:
 					}
 
 					ptr = (*it2).second;
+					my_fuzz_map.erase( it2 );
 				}
 				else
 					ptr = (*it).second;
@@ -1079,19 +1078,9 @@ fail_emu_scrape:
 
 				if ( c.scrape_art )
 				{
-					// Don't scrape art for a clone if its parent has the same name
-					// ... also don't scrape if we have the artwork already
-					if ( ( !has_same_name_as_parent( *ptr, parent_map ) )
-							&& (( m_scrape_snaps && !has_artwork( *ptr, "snap" ) )
-								|| ( m_scrape_marquees && !has_artwork( *ptr, "marquee" ) )
-								|| ( m_scrape_flyers && !has_artwork( *ptr, "flyer" ) )
-								|| ( m_scrape_wheels && !has_artwork( *ptr, "wheel" ) )
-								|| ( m_scrape_fanart && !has_artwork( *ptr, "fanart" ) )) )
-					{
-						// Found a gamesdb.net ID for this game that we now have to do an images query
-						// for
-						id_worklist.push_back( std::pair<int, FeRomInfo *>( e[ID_E].GetInt(), ptr ) );
-					}
+					// Found a gamesdb.net ID for this game that we now have to do an images query
+					// for
+					id_worklist.push_back( std::pair<int, FeRomInfo *>( e[ID_E].GetInt(), ptr ) );
 				}
 				else
 				{
@@ -1181,6 +1170,21 @@ fail_emu_scrape:
 		}
 		else
 			sf::sleep( sf::milliseconds( 10 ) );
+	}
+
+	if ( !my_fuzz_map.empty() )
+	{
+		FeLog() << " - " << my_fuzz_map.size() << " games not matched on thegamesdb.net: ";
+
+		bool dc = false;
+		std::map<std::string, FeRomInfo *>::iterator it2;
+		for ( it2 = my_fuzz_map.begin(); it2 != my_fuzz_map.end(); ++it2 )
+		{
+			FeLog() << ( dc?",":"" ) << "\"" << (*it2).second->get_info( FeRomInfo::Romname ) << "\"";
+			dc=true;
+		}
+
+		FeLog() << std::endl;
 	}
 
 	FeLog() << " - thegamesdb.net reports a remaining allowance of: "
