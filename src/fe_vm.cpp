@@ -633,8 +633,10 @@ bool FeVM::on_new_layout()
 	}
 	info.Const( "System", FeRomInfo::LAST_INDEX ); // special cases with same value
 	info.Const( "NoSort", FeRomInfo::LAST_INDEX ); //
+
 	info.Const( "Overview", FeRomInfo::LAST_INDEX+1 ); //
 	info.Const( "IsPaused", FeRomInfo::LAST_INDEX+2 ); //
+	info.Const( "SortValue", FeRomInfo::LAST_INDEX+3 ); //
 	ConstTable().Enum( _SC("Info"), info);
 
 	Enumeration transition;
@@ -2310,47 +2312,66 @@ const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	static std::string retval;
-
-	if (( index > FeRomInfo::LAST_INDEX+2 ) || ( index < 0 ))
+	if (( index > FeRomInfo::LAST_INDEX+3 ) || ( index < 0 ))
 	{
-		// the better thing to do would be to raise a squirrel error here
+		// TODO: the better thing to do would be to raise a squirrel error here
 		//
 		FeLog() << "game_info(): index out of range" << std::endl;
 		return "";
 	}
-	else if ( index == FeRomInfo::LAST_INDEX )
+
+	static std::string retval;
+	retval.clear();
+
+	switch ( index )
 	{
-		std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
-		FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );
+	case FeRomInfo::LAST_INDEX:
+		{
+			std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
+			FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );
 
-		retval.clear();
-		if ( emu )
-			retval = emu->get_info( FeEmulatorInfo::System );
+			retval.clear();
+			if ( emu )
+				retval = emu->get_info( FeEmulatorInfo::System );
 
-		return retval.c_str();
-	}
-	else if ( index == FeRomInfo::LAST_INDEX+1 )
-	{
-		// Overview
-		int filter_index = fev->m_feSettings->get_filter_index_from_offset( filter_offset );
+		}
+		break;
 
-		fev->m_feSettings->get_game_overview_absolute( filter_index,
-			fev->m_feSettings->get_rom_index( filter_index, offset ),
-			retval );
+	case FeRomInfo::LAST_INDEX+1: // Overview
+		{
+			int filter_index = fev->m_feSettings->get_filter_index_from_offset( filter_offset );
 
-		return retval.c_str();
-	}
-	else if ( index == FeRomInfo::LAST_INDEX+2 )
-	{
-		// IsPaused
+			fev->m_feSettings->get_game_overview_absolute( filter_index,
+				fev->m_feSettings->get_rom_index( filter_index, offset ),
+				retval );
+
+		}
+		break;
+
+	case FeRomInfo::LAST_INDEX+2: // IsPaused
 		if ( fev->m_window.has_running_process() && fev->m_feSettings->is_last_launch( filter_offset, offset ) )
-			return "1";
-		else
-			return "";
+			retval = "1";
+		break;
+
+	case FeRomInfo::LAST_INDEX+3: // SortValue
+		{
+			FeRomInfo::Index sort_by;
+			bool reverse_sort;
+			int list_limit;
+
+			fev->m_feSettings->get_current_sort( sort_by, reverse_sort, list_limit );
+
+			retval = fev->m_feSettings->get_rom_info( filter_offset, offset,
+				( sort_by == FeRomInfo::LAST_INDEX ) ? FeRomInfo::Title : sort_by );
+		}
+		break;
+
+	default:
+		retval = fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index );
+		break;
 	}
 
-	return (fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();
+	return retval.c_str();
 }
 
 const char *FeVM::cb_game_info( int index, int offset )
