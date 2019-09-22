@@ -204,7 +204,7 @@ public:
 	void load_screensaver();
 	void load_layout( bool initial_load=false );
 
-	void update_to_new_list( int var=0, bool new_layout=false );
+	virtual void update_to_new_list( int var=0, bool reset_display=false ); // NOTE virtual function!
 	void on_end_navigation();
 	void redraw_surfaces();
 

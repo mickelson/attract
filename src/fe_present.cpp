@@ -1086,9 +1086,9 @@ void FePresent::load_layout( bool initial_load )
 	update_to_new_list( FromToNoValue, true );
 }
 
-void FePresent::update_to_new_list( int var, bool new_layout )
+void FePresent::update_to_new_list( int var, bool reset_display )
 {
-	update( true, new_layout );
+	update( true, reset_display );
 	on_transition( ToNewList, var );
 }
 
@@ -1289,7 +1289,7 @@ void FePresent::set_transforms()
 
 			float adjust_x = std::fabs( m_layoutSize.y * m_layoutScale.x - m_mon[0].size.x ) / 2;
 			float adjust_y = std::fabs( m_layoutSize.x * m_layoutScale.y - m_mon[0].size.y ) / 2;
-		
+
 			if ( actualRotation == FeSettings::RotateRight )
 			{
 				m_transform.translate( m_mon[0].size.x - adjust_x, adjust_y );

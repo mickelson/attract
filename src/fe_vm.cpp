@@ -482,6 +482,31 @@ void FeVM::vm_init()
 	Sqrat::DefaultVM::Set( vm );
 }
 
+void FeVM::update_to_new_list( int var, bool reset_display )
+{
+	if ( reset_display )
+	{
+		//
+		// Populate script arrays that may change from display to display (currently just fe.filters)
+		//
+		Sqrat::Table fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+
+		Sqrat::Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
+		fe.Bind( _SC("filters"), ftab );
+		Sqrat::Array farray( ftab.GetObject() );
+
+		farray.Resize( 0 );
+
+		FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
+		if ( di )
+		{
+			for ( int i=0; i < di->get_filter_count(); i++ )
+				farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+		}
+	}
+
+	FePresent::update_to_new_list( var, reset_display );
+}
 
 bool FeVM::on_new_layout()
 {
@@ -938,20 +963,12 @@ bool FeVM::on_new_layout()
 			m_feSettings->get_display( i ) );
 
 	//
-	// fe.filters
+	// Note the fe.filters array gets populated in call to FeVM::update_to_new_list(), since it
+	// gets reset even when the layout itself isn't necessarily reloaded (i.e. when navigating between
+	// displays that use the same layout)
 	//
-	FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
-
-
 	Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("filters"), ftab );
-	Array farray( ftab.GetObject() );
-
-	if ( di )
-	{
-		for ( int i=0; i < di->get_filter_count(); i++ )
-			farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
-	}
 
 	//
 	// fe.monitors
