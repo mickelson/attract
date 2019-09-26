@@ -589,7 +589,9 @@ int FeTextPrimative::getFirstLineHint() const
 
 const char *FeTextPrimative::getStringWrapped()
 {
-	std::string str;
+	static std::string str;
+	str.clear();
+
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 	{
 		str += m_texts[i].getString();
