@@ -579,14 +579,11 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 		if ( !rom )
 			return;
 
-		if ( !feSettings->get_best_artwork_file( *rom,
+		feSettings->get_best_artwork_file( *rom,
 			m_art_name,
 			vid_list,
 			image_list,
-			(m_video_flags & VF_DisableVideo) ) )
-		{
-			feSettings->get_fallback_layout_artwork_file( *rom, m_art_name, vid_list, image_list );
-		}
+			(m_video_flags & VF_DisableVideo) );
 	}
 	else if ( m_type == IsDynamic )
 	{

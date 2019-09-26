@@ -245,6 +245,13 @@ private:
 
 	std::string get_played_display_string( int filter_index, int rom_index );
 
+	bool internal_get_best_artwork_file(
+		const FeRomInfo &rom,
+		const std::string &art_name,
+		std::vector<std::string> &vid_list,
+		std::vector<std::string> &image_list,
+		bool image_only,
+		bool ignore_emu );
 
 	bool simple_scraper( FeImporterContext &, const char *, const char *, const char *, const char *, bool = false );
 	bool general_mame_scraper( FeImporterContext & );
@@ -423,19 +430,12 @@ public:
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
 	FeScriptConfigurable &get_display_menu_per_display_params() { return m_display_menu_per_display_params; };
 
-	bool get_best_artwork_file(
+	void get_best_artwork_file(
 		const FeRomInfo &rom,
 		const std::string &art_name,
 		std::vector<std::string> &vid_list,
 		std::vector<std::string> &image_list,
-		bool image_only,
-		bool ignore_emu=false );
-
-	void get_fallback_layout_artwork_file(
-		const FeRomInfo &rom,
-		const std::string &art_name,
-		std::vector<std::string> &vid_list,
-		std::vector<std::string> &image_list );
+		bool image_only );
 
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
 	bool has_video_artwork( const FeRomInfo &rom, const std::string &art_name );

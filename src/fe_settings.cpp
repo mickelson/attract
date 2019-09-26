@@ -3772,7 +3772,7 @@ bool art_exists( const std::string &path, const std::string &base )
 }
 
 
-bool FeSettings::get_best_artwork_file(
+bool FeSettings::internal_get_best_artwork_file(
 	const FeRomInfo &rom,
 	const std::string &art_name,
 	std::vector<std::string> &vid_list,
@@ -3912,72 +3912,81 @@ bool FeSettings::get_best_artwork_file(
 	return false;
 }
 
-void FeSettings::get_fallback_layout_artwork_file(
+void FeSettings::get_best_artwork_file(
 	const FeRomInfo &rom,
 	const std::string &art_name,
 	std::vector<std::string> &vid_list,
-	std::vector<std::string> &image_list )
+	std::vector<std::string> &image_list,
+	bool image_only )
 {
+	if ( internal_get_best_artwork_file( rom, art_name, vid_list, image_list, image_only, false ) )
+		return;
+
 	// check for layout fallback images/videos
 	std::string layout_path;
 	std::string archive_name;
 
 	get_path( FeSettings::Current, layout_path );
 
-	if ( !layout_path.empty() )
-	{
-		const std::string &emu_name = rom.get_info(
+	if ( layout_path.empty() )
+		return;
+
+	const std::string &emu_name = rom.get_info(
 			FeRomInfo::Emulator );
 
-		if ( is_supported_archive( layout_path ) )
-		{
-			archive_name = layout_path;
+	if ( is_supported_archive( layout_path ) )
+	{
+		archive_name = layout_path;
 
-			// check for "[emulator-[artlabel]" artworks first
-			if ( !gather_artwork_filenames_from_archive(
-				layout_path, emu_name + "-" + art_name,
-				vid_list, image_list ) )
-			{
-				// then "[artlabel]"
-				gather_artwork_filenames_from_archive( layout_path,
-					art_name, vid_list, image_list );
-			}
-		}
-		else
+		// check for "[emulator-[artlabel]" artworks first
+		if ( gather_artwork_filenames_from_archive(
+			layout_path, emu_name + "-" + art_name,
+			vid_list, image_list ) )
 		{
-			std::vector<std::string> layout_paths;
-			layout_paths.push_back( layout_path );
-
-			// check for "[emulator-[artlabel]" artworks first
-			if ( !gather_artwork_filenames( layout_paths,
-				emu_name + "-" + art_name,
-				vid_list, image_list ) )
-			{
-				// then "[artlabel]"
-				gather_artwork_filenames( layout_paths,
-					art_name, vid_list, image_list );
-			}
+			if ( !image_only && !vid_list.empty() )
+				return;
 		}
+
+		gather_artwork_filenames_from_archive( layout_path,
+			art_name, vid_list, image_list );
+	}
+	else
+	{
+		std::vector<std::string> layout_paths;
+		layout_paths.push_back( layout_path );
+
+		// check for "[emulator-[artlabel]" artworks first
+		if ( gather_artwork_filenames( layout_paths,
+			emu_name + "-" + art_name,
+			vid_list, image_list ) )
+		{
+			if ( !image_only && !vid_list.empty() )
+				return;
+		}
+
+		// then "[artlabel]"
+		gather_artwork_filenames( layout_paths,
+			art_name, vid_list, image_list );
 	}
 }
 
 bool FeSettings::has_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> temp1, temp2;
-	return ( get_best_artwork_file( rom, art_name, temp1, temp2, false, true ) );
+	return ( internal_get_best_artwork_file( rom, art_name, temp1, temp2, false, true ) );
 }
 
 bool FeSettings::has_video_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> vids, temp;
-	get_best_artwork_file( rom, art_name, vids, temp, false, true );
+	internal_get_best_artwork_file( rom, art_name, vids, temp, false, true );
 	return (!vids.empty());
 }
 
 bool FeSettings::has_image_artwork( const FeRomInfo &rom, const std::string &art_name )
 {
 	std::vector<std::string> temp, images;
-	get_best_artwork_file( rom, art_name, temp, images, true );
+	internal_get_best_artwork_file( rom, art_name, temp, images, true, true );
 	return (!images.empty());
 }
 

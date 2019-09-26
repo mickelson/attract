@@ -2401,15 +2401,12 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 		return retval.c_str();
 
 	std::vector<std::string> vid_list, image_list;
-	if ( !fes->get_best_artwork_file(
+	fes->get_best_artwork_file(
 			*rom,
 			art,
 			vid_list,
 			image_list,
-			(art_flags&AF_ImagesOnly) ) )
-	{
-		fes->get_fallback_layout_artwork_file( *rom, art, vid_list, image_list );
-	}
+			(art_flags&AF_ImagesOnly) );
 
 	if ( art_flags&AF_FullList )
 	{
