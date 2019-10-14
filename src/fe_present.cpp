@@ -32,6 +32,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <limits>
 
 #ifndef NO_MOVIE
 #include <Audio/AudioDevice.hpp>
@@ -1137,6 +1138,15 @@ bool FePresent::saver_activation_check()
 			return true;
 		}
 	}
+
+	// Protect against integer overflow of the layout time,  which is limited by our usage of
+	// sf::Time::asMilliseconds().  asMillseconds() returns sf::Int32, which maxes out at ~2billion
+	//
+	// THis means the layout is forced by AM to reset after about a month of running
+	//
+	if ( m_layoutTimer.getElapsedTime().asMilliseconds() > std::numeric_limits<sf::Int32>::max() - 10000 )
+		load_layout();
+
 	return false;
 }
 
