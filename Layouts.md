@@ -1464,6 +1464,8 @@ Properties:
      to display.  Default value is `texture_width`.
    * `subimg_height` - Get/set the height of the image texture sub-rectangle
      to display.  Default value is `texture_height`.
+   * `sample_aspect_ratio` - Get the "sample aspect ratio", which is the width
+     of a pixel divided by the height of the pixel.
    * `origin_x` - Get/set the x position of the local origin for the image.
      The origin defines the centre point for any positioning or rotation of
      the image.  Default origin in 0,0 (top-left corner).

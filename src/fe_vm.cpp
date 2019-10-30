@@ -697,6 +697,7 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("subimg_y"), &FeImage::get_subimg_y, &FeImage::set_subimg_y )
 		.Prop(_SC("subimg_width"), &FeImage::get_subimg_width, &FeImage::set_subimg_width )
 		.Prop(_SC("subimg_height"), &FeImage::get_subimg_height, &FeImage::set_subimg_height )
+		.Prop(_SC("sample_aspect_ratio"), &FeImage::get_sample_aspect_ratio )
 		// "movie_enabled" deprecated as of version 1.3, use the video_flags property instead:
 		.Prop(_SC("movie_enabled"), &FeImage::getMovieEnabled, &FeImage::setMovieEnabled )
 		.Prop(_SC("video_flags"), &FeImage::getVideoFlags, &FeImage::setVideoFlags )

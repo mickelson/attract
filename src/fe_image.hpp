@@ -87,7 +87,7 @@ public:
 	virtual void set_mipmap( bool )=0;
 	virtual bool get_mipmap() const=0;
 	virtual bool is_swf() const;
-	virtual float get_movie_aspect_ratio() const;
+	virtual float get_sample_aspect_ratio() const;
 
 	// function for use with surface objects
 	//
@@ -162,7 +162,7 @@ public:
 	void set_mipmap( bool );
 	bool get_mipmap() const;
 	bool is_swf() const;
-	float get_movie_aspect_ratio() const;
+	float get_sample_aspect_ratio() const;
 
 protected:
 	FeTextureContainer *get_derived_texture_container();
@@ -309,6 +309,7 @@ public:
 	int get_subimg_y() const;
 	int get_subimg_width() const;
 	int get_subimg_height() const;
+	float get_sample_aspect_ratio() const;
 	bool get_preserve_aspect_ratio() const;
 	bool get_mipmap() const;
 

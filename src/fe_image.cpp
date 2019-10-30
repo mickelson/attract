@@ -127,7 +127,7 @@ bool FeBaseTextureContainer::is_swf() const
 	return false;
 }
 
-float FeBaseTextureContainer::get_movie_aspect_ratio() const
+float FeBaseTextureContainer::get_sample_aspect_ratio() const
 {
 	return 1.0;
 }
@@ -1002,7 +1002,7 @@ bool FeTextureContainer::is_swf() const
 	return m_swf;
 }
 
-float FeTextureContainer::get_movie_aspect_ratio() const
+float FeTextureContainer::get_sample_aspect_ratio() const
 {
 #ifndef NO_MOVIE
 	if ( m_movie )
@@ -1215,7 +1215,7 @@ void FeImage::draw(sf::RenderTarget& target, sf::RenderStates states) const
 void FeImage::scale()
 {
 	sf::IntRect texture_rect = m_sprite.getTextureRect();
-	float ratio = m_tex->get_movie_aspect_ratio();
+	float ratio = m_tex->get_sample_aspect_ratio();
 
 	if (( texture_rect.width == 0 ) || ( texture_rect.height == 0 ))
 		return;
@@ -1557,6 +1557,11 @@ int FeImage::get_subimg_width() const
 int FeImage::get_subimg_height() const
 {
 	return getTextureRect().height;
+}
+
+float FeImage::get_sample_aspect_ratio() const
+{
+	return m_tex->get_sample_aspect_ratio();
 }
 
 bool FeImage::get_preserve_aspect_ratio() const
