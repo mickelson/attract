@@ -966,12 +966,21 @@ bool FeVM::on_new_layout()
 			m_feSettings->get_display( i ) );
 
 	//
-	// Note the fe.filters array gets populated in call to FeVM::update_to_new_list(), since it
+	// Note the fe.filters array also gets repopulated in call to FeVM::update_to_new_list(), since it
 	// gets reset even when the layout itself isn't necessarily reloaded (i.e. when navigating between
 	// displays that use the same layout)
 	//
 	Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("filters"), ftab );
+
+	FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
+	if ( di )
+	{
+		Array farray( ftab.GetObject() );
+
+		for ( i=0; i < di->get_filter_count(); i++ )
+			farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+	}
 
 	//
 	// fe.monitors
