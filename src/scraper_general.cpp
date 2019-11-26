@@ -120,44 +120,135 @@ void ini_import( const std::string &filename,
 
 	nowide::ifstream myfile( filename.c_str() );
 
-	if ( myfile.is_open() )
+	if ( !myfile.is_open() )
 	{
-		std::string line;
+		FeLog() << "Error opening file: " << filename << std::endl;
+		return;
+	}
 
-		// Jump forward to the init_tag (if provided)
-		//
-		if ( !init_tag.empty() )
+	std::string line;
+
+	// Jump forward to the init_tag (if provided)
+	//
+	if ( !init_tag.empty() )
+	{
+		while (( myfile.good() )
+				&& ( line.compare(0, init_tag.size(), init_tag ) != 0 ))
+			getline( myfile, line );
+	}
+
+	// Now read until the next tag is found
+	getline( myfile, line );
+	bool done=false;
+
+	while ( myfile.good() && !done )
+	{
+		if ( !line.empty() && ( line[0] == '[' ))
 		{
-			while (( myfile.good() )
-					&& ( line.compare(0, init_tag.size(), init_tag ) != 0 ))
-				getline( myfile, line );
+			done=true;
+			break;
 		}
+		std::string name;
+		size_t pos=0;
+		token_helper( line, pos, name, "=" );
 
-		// Now read until the next tag is found
-		getline( myfile, line );
-		bool done=false;
-
-		while ( myfile.good() && !done )
+		std::map<std::string, std::string, myclasscmp>::iterator itr;
+		itr = my_map.find( name );
+		if ( itr != my_map.end() )
 		{
-			if ( !line.empty() && ( line[0] == '[' ))
-			{
-				done=true;
-				break;
-			}
-			std::string name;
-			size_t pos=0;
-			token_helper( line, pos, name, "=" );
+			std::string val;
+			token_helper( line, pos, val, "=" );
+			my_map[ name ] = val;
+		}
+		getline( myfile, line );
+	}
+	myfile.close();
 
-			std::map<std::string, std::string, myclasscmp>::iterator itr;
-			itr = my_map.find( name );
-			if ( itr != my_map.end() )
+	int count=0;
+	for ( FeRomInfoListType::iterator itr=romlist.begin();
+			itr!=romlist.end(); ++itr )
+	{
+		std::string val = my_map[ (*itr).get_info( FeRomInfo::Romname ) ];
+
+		if ( val.empty() )
+			val = my_map[ (*itr).get_info( FeRomInfo::AltRomname ) ];
+
+		if ( val.empty() )
+			val = my_map[ (*itr).get_info( FeRomInfo::Cloneof ) ];
+
+		if ( !val.empty() )
+		{
+			count++;
+			(*itr).set_info( index, val );
+		}
+	}
+
+	FeLog() << "[Import " << filename << "] - found info for " << count
+		<< " entries." << std::endl;
+}
+
+void ini_import2( const std::string &filename,
+				FeRomInfoListType &romlist,
+				FeRomInfo::Index index )
+{
+	std::map <std::string, std::string, myclasscmp> my_map;
+
+	// create entries in the map for each name we want to find
+	for ( FeRomInfoListType::iterator itr=romlist.begin();
+			itr!=romlist.end(); ++itr )
+	{
+		my_map[ (*itr).get_info( FeRomInfo::Romname ) ] = "";
+
+		const std::string &cloneof_key = (*itr).get_info( FeRomInfo::Cloneof );
+		if ( !cloneof_key.empty() )
+			my_map[ cloneof_key ] = "";
+
+		const std::string &alt_key = (*itr).get_info( FeRomInfo::AltRomname );
+		if ( !alt_key.empty() )
+			my_map[ alt_key ] = "";
+	}
+
+	nowide::ifstream myfile( filename.c_str() );
+
+	if ( !myfile.is_open() )
+	{
+		FeLog() << "Error opening file: " << filename << std::endl;
+		return;
+	}
+
+	std::string line;
+	std::string section;
+
+	getline( myfile, line );
+	while ( myfile.good() )
+	{
+		if ( !line.empty() )
+		{
+			if ( line[0] == '[' )
+			{
+				size_t end = line.find_last_of( "]" );
+				if ( end == std::string::npos )
+					end = line.size();
+
+				section = line.substr( 1, end - 1 );
+			}
+			else if ( !line.empty() )
 			{
 				std::string val;
-				token_helper( line, pos, val, "=" );
-				my_map[ name ] = val;
+				size_t end = line.find_last_not_of( FE_WHITESPACE );
+				if ( end == std::string::npos )
+					end = line.size()-1;
+
+				val = line.substr( 0, end+1 );
+
+				std::map<std::string, std::string, myclasscmp>::iterator itr;
+				itr = my_map.find( val );
+
+				if ( itr != my_map.end() )
+					my_map[ val ] = section;
 			}
-			getline( myfile, line );
 		}
+		getline( myfile, line );
 	}
 	myfile.close();
 
@@ -197,6 +288,10 @@ void apply_import_extras( FeImporterContext &c, bool skip_xml )
 			ini_import( path, c.romlist, FeRomInfo::Category, "[Category]" );
 		else if ( tail_compare( path, "nplayers.ini" ) )
 			ini_import( path, c.romlist, FeRomInfo::Players, "[NPlayers]" );
+		else if ( tail_compare( path, "series.ini" ) )
+			ini_import2( path, c.romlist, FeRomInfo::Series );
+		else if ( tail_compare( path, "languages.ini" ) )
+			ini_import2( path, c.romlist, FeRomInfo::Language );
 		else if ( tail_compare( path, ".xml" ) )
 		{
 			if ( skip_xml )

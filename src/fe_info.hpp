@@ -57,6 +57,10 @@ public:
 		AltTitle,
 		Extra,
 		Buttons,
+		Series,
+		Language,
+		Region,
+		Rating,
 		Favourite,		// everything from Favourite on is not loaded from romlist
 		Tags,
 		PlayedCount,
