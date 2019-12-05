@@ -1017,7 +1017,7 @@ int main(int argc, char *argv[])
 				if ( FeInputMap::is_ui_command( ms ) )
 					ms = feSettings.get_default_command( ms );
 
-				if ( FeInputMap::is_repeatable_command( ms ) )
+				if ( !from_ui || FeInputMap::is_repeatable_command( ms ) )
 					feVM.on_end_navigation();
 
 				move_state = FeInputMap::LAST_COMMAND;
