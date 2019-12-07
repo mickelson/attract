@@ -186,8 +186,8 @@ int main(int argc, char *argv[])
 	int guard_joyid=-1, guard_axis=-1;
 
 	// variables used to track movement when a key is held down
-	FeInputMap::Command move_state( FeInputMap::LAST_COMMAND );
-
+	FeInputMap::Command move_state( FeInputMap::LAST_COMMAND ); // command mapped to the move
+	FeInputMap::Command move_triggered( FeInputMap::LAST_COMMAND ); // "repeatable" command triggered on move (if any)
 	sf::Clock move_timer;
 	sf::Event move_event;
 	int move_last_triggered( 0 );
@@ -425,24 +425,27 @@ int main(int argc, char *argv[])
 			}
 
 			//
-			// If we are responding to user input (as opposed to a signal raised from a
-			// script) then manage keyrepeats now.
+			// KEY REPEAT LOGIC (1 of 2)
 			//
+			// if 'move_state' is set, we typically bail here and let the move timer trigger
+			// the next action
+			//
+			// Special case: If we didn't get a move_triggered value set when the move state was first
+			// set, then capture the next fe.signal() command after the move state started, as the
+			// user's scripts may be remapping the signal to another value.  If that is the case, we
+			// let the signal proceed (and set move_triggered below... at step 2 of 2)
+			//
+			if (( move_state != FeInputMap::LAST_COMMAND )
+					&& ( from_ui || ( move_triggered != FeInputMap::LAST_COMMAND )))
+				continue;
+
 			if ( from_ui )
 			{
-				if ( move_state != FeInputMap::LAST_COMMAND )
-					continue;
-
-				move_state=FeInputMap::LAST_COMMAND;
-
-				if ( ( FeInputMap::is_ui_command( c ) && ( c != FeInputMap::Back ) )
-					|| FeInputMap::is_repeatable_command( c ) )
-				{
-					// setup variables to test for when the navigation keys are held down
-					move_state = c;
-					move_timer.restart();
-					move_event = ev;
-				}
+				// setup variables to test for when the navigation keys are held down
+				move_state = c;
+				move_timer.restart();
+				move_event = ev;
+				move_triggered = FeInputMap::LAST_COMMAND;
 			}
 
 			//
@@ -522,6 +525,7 @@ int main(int argc, char *argv[])
 			if ( feSettings.get_present_state() == FeSettings::Intro_Showing )
 			{
 				move_state = FeInputMap::LAST_COMMAND;
+				move_triggered = FeInputMap::LAST_COMMAND;
 				move_last_triggered = 0;
 
 				feVM.load_layout( true );
@@ -543,6 +547,24 @@ int main(int argc, char *argv[])
 
 				redraw=true;
 				continue;
+			}
+
+			//
+			// KEY REPEAT LOGIC (2 of 2)
+			//
+			// If we get here then this is the first pass through input potentially being held down
+			// (i.e. repeat navigation).  Since we now know what the ultimate value of c is now, record
+			// it in move_triggered
+			//
+			// ( !from_ui && ( move_triggered == LAST_COMMAND ) ) will catch where remapping by script
+			//
+			// ( move_state == LAST_COMMAND ) will catch the regular case with no remapping
+			//
+			if (( !from_ui && ( move_triggered == FeInputMap::LAST_COMMAND ))
+					|| ( move_state != FeInputMap::LAST_COMMAND ))
+			{
+				if ( FeInputMap::is_repeatable_command( c ) )
+					move_triggered = c;
 			}
 
 			//
@@ -901,26 +923,13 @@ int main(int argc, char *argv[])
 				int t = move_timer.getElapsedTime().asMilliseconds();
 				if (( t > TRIG_CHANGE_MS ) && ( t - move_last_triggered > feSettings.selection_speed() ))
 				{
-					FeInputMap::Command ms = move_state;
-					if ( FeInputMap::is_ui_command( ms ) )
+					if (( move_triggered == FeInputMap::LAST_COMMAND )
+						|| feVM.script_handle_event( move_triggered ))
 					{
-						//
-						// Give the script the option to handle the (pre-map) action.
-						//
-						if ( feVM.script_handle_event( ms ) )
-						{
-							redraw=true;
-							ms = FeInputMap::LAST_COMMAND;
-						}
-						else
-						{
-							ms = feSettings.get_default_command( ms );
-							if ( !FeInputMap::is_repeatable_command( ms ) )
-								ms = FeInputMap::LAST_COMMAND;
-						}
+						redraw=true;
+						move_triggered = FeInputMap::LAST_COMMAND;
 					}
-
-					if ( ms != FeInputMap::LAST_COMMAND )
+					else
 					{
 						move_last_triggered = t;
 						int step = 1;
@@ -950,7 +959,7 @@ int main(int argc, char *argv[])
 								step = max_step;
 						}
 
-						switch ( ms )
+						switch ( move_triggered )
 						{
 						case FeInputMap::PrevGame: step = -step; break;
 						case FeInputMap::NextGame: break; // do nothing
@@ -998,7 +1007,7 @@ int main(int argc, char *argv[])
 
 						if ( step != 0 )
 						{
-							if ( feVM.script_handle_event( ms ) == false )
+							if ( !feVM.script_handle_event( move_triggered ) )
 								feVM.change_selection( step, false );
 
 							redraw=true;
@@ -1013,14 +1022,11 @@ int main(int argc, char *argv[])
 				// that maps to a repeatable input (i.e. "Up"->"prev game") then trigger the
 				// "End Navigation" stuff now
 				//
-				FeInputMap::Command ms = move_state;
-				if ( FeInputMap::is_ui_command( ms ) )
-					ms = feSettings.get_default_command( ms );
-
-				if ( !from_ui || FeInputMap::is_repeatable_command( ms ) )
+				if ( move_triggered != FeInputMap::LAST_COMMAND )
 					feVM.on_end_navigation();
 
 				move_state = FeInputMap::LAST_COMMAND;
+				move_triggered = FeInputMap::LAST_COMMAND;
 				move_last_triggered = 0;
 
 				redraw=true;
