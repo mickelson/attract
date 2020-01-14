@@ -22,6 +22,7 @@
 
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
+#include "fe_present.hpp"
 #include "zip.hpp"
 #include <iostream>
 #include <sstream>
@@ -2569,7 +2570,7 @@ bool FeSettings::get_font_file( std::string &fpath,
 	//
 	std::string test;
 	std::string layout_dir;
-	get_path( Current, layout_dir );
+	layout_dir = FePresent::script_get_base_path();
 
 	if ( is_supported_archive( layout_dir ) )
 	{
