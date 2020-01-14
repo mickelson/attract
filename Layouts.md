@@ -64,8 +64,9 @@ Contents
       * [`fe.Shader`](#Shader)
    * [Constants](#constants)
 
-
+&nbsp;
 <a name="overview" />
+
 Overview
 --------
 
@@ -102,8 +103,9 @@ single ".nut" file stored in this subdirectory.  They can also have their own
 separate subdirectory or archive file (in which case the script itself needs to
 be in a file called `plugin.nut`).
 
-
+&nbsp;
 <a name="squirrel" />
+
 Squirrel Language
 -----------------
 
@@ -122,8 +124,9 @@ manuals:
 Also check out the Introduction to Squirrel on the Attract-Mode wiki:
 https://github.com/mickelson/attract/wiki/Introduction-to-Squirrel-Programming
 
-
+&nbsp;
 <a name="squirrel_ext" />
+
 Language Extensions
 -------------------
 
@@ -138,7 +141,9 @@ language and standard libraries:
 
 Supported archive formats are: .zip, .7z, .rar, .tar.gz, .tar.bz2 and .tar
 
+&nbsp;
 <a name="binding" />
+
 Frontend Binding
 ----------------
 
@@ -147,16 +152,19 @@ Squirrel are arranged under the `fe` table, which is bound to Squirrel's
 root table.
 
 Example:
-
-		fe.layout.base_rotation = RotateScreen.Right;
-		fe.add_image( "bg.png", 0, 0 );
-		local marquee = fe.add_artwork( "marquee", 256, 20, 512, 256 );
-		marquee.set_rgb( 100, 100, 100 );
+```` squirrel
+fe.layout.base_rotation = RotateScreen.Right;
+fe.add_image( "bg.png", 0, 0 );
+local marquee = fe.add_artwork( "marquee", 256, 20, 512, 256 );
+marquee.set_rgb( 100, 100, 100 );
+````
 
 The remainder of this document describes the functions, objects, classes
 and constants that are exposed to layout and plug-in scripts.
 
+&nbsp;
 <a name="magic" />
+
 Magic Tokens
 ----------------
 
@@ -213,44 +221,47 @@ Manufacturer's name.  There are more examples below.
      as well, the appropriate filter_offset is supplied.
 
 Examples:
+```` squirrel
+// Add a text that displays the filter name and list location
+//
+fe.add_text( "[FilterName] [[ListEntry]/[ListSize]]",
+		0, 0, 400, 20 );
 
-		// Add a text that displays the filter name and list location
-		//
-		fe.add_text( "[FilterName] [[ListEntry]/[ListSize]]",
-				0, 0, 400, 20 );
+// Add an image that will match to the first word in the
+// Manufacturer name (i.e. "Atari.png", "Nintendo.jpg")
+//
+function strip_man( ioffset )
+{
+	local m = fe.game_info(Info.Manufacturer,ioffset);
+	return split( m, " " )[0];
+}
+fe.add_image( "[!strip_man]", 0, 0 );
 
-		// Add an image that will match to the first word in the
-		// Manufacturer name (i.e. "Atari.png", "Nintendo.jpg")
-		//
-		function strip_man( ioffset )
-		{
-			local m = fe.game_info(Info.Manufacturer,ioffset);
-			return split( m, " " )[0];
-		}
-		fe.add_image( "[!strip_man]", 0, 0 );
+// Add a text that will display a copyright message if both
+// the manufacturer name and a year are present.  Otherwise,
+// just show the Manufactuer name.
+//
+function well_formatted()
+{
+	local m = fe.game_info( Info.Manufacturer );
+	local y = fe.game_info( Info.Year );
 
-		// Add a text that will display a copyright message if both
-		// the manufacturer name and a year are present.  Otherwise,
-		// just show the Manufactuer name.
-		//
-		function well_formatted()
-		{
-			local m = fe.game_info( Info.Manufacturer );
-			local y = fe.game_info( Info.Year );
+	if (( m.len() > 0 ) && ( y.len() > 0 ))
+		return "Copyright " + y + ", " + m;
 
-			if (( m.len() > 0 ) && ( y.len() > 0 ))
-				return "Copyright " + y + ", " + m;
+	return m;
+}
+fe.add_text( "[!well_formatted]", 0, 0 );
+````
 
-			return m;
-		}
-		fe.add_text( "[!well_formatted]", 0, 0 );
-
-
+&nbsp;
 <a name="functions" />
+
 Functions
 ---------
 
 <a name="add_image" />
+
 #### `fe.add_image()` ####
 
     fe.add_image( name )
@@ -295,8 +306,9 @@ Return Value:
    * An instance of the class [`fe.Image`](#Image) which can be used to
      interact with the added image/video.
 
-
+&nbsp;
 <a name="add_artwork" />
+
 #### `fe.add_artwork()` ####
 
     fe.add_artwork( label )
@@ -330,8 +342,9 @@ Return Value:
    * An instance of the class [`fe.Image`](#Image) which can be used to
      interact with the added artwork.
 
-
+&nbsp;
 <a name="add_surface" />
+
 #### `fe.add_surface()` ####
 
     fe.add_surface( w, h )
@@ -352,8 +365,9 @@ Return Value:
    * An instance of the class [`fe.Image`](#Image) which can be used to
      interact with the added surface.
 
-
+&nbsp;
 <a name="add_clone" />
+
 #### `fe.add_clone()` ####
 
     fe.add_clone( img )
@@ -372,8 +386,9 @@ Return Value:
    * An instance of the class [`fe.Image`](#Image) which can be used to
      interact with the added clone.
 
-
+&nbsp;
 <a name="add_text" />
+
 #### `fe.add_text()` ####
 
     fe.add_text( msg, x, y, w, h )
@@ -399,8 +414,9 @@ Return Value:
    * An instance of the class [`fe.Text`](#Text) which can be used to
      interact with the added text.
 
-
+&nbsp;
 <a name="add_listbox" />
+
 #### `fe.add_listbox()` ####
 
     fe.add_listbox( x, y, w, h )
@@ -421,8 +437,9 @@ Return Value:
    * An instance of the class [`fe.ListBox`](#ListBox) which can be used to
      interact with the added text.
 
-
+&nbsp;
 <a name="add_shader" />
+
 #### `fe.add_shader()` ####
 
     fe.add_shader( type, file1, file2 )
@@ -459,33 +476,38 @@ http://www.sfml-dev.org/tutorials/2.1/graphics-shader.php
 
 The minimal vertex shader expected is as follows:
 
-    void main()
-    {
-        // transform the vertex position
-        gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+```` glsl
+void main()
+{
+  // transform the vertex position
+  gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 
-        // transform the texture coordinates
-        gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
+  // transform the texture coordinates
+  gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
 
-        // forward the vertex color
-        gl_FrontColor = gl_Color;
-    }
+  // forward the vertex color
+  gl_FrontColor = gl_Color;
+}
+````
 
 The minimal fragment shader expected is as follows:
 
-    uniform sampler2D texture;
+```` glsl
+uniform sampler2D texture;
 
-    void main()
-    {
-        // lookup the pixel in the texture
-        vec4 pixel = texture2D(texture, gl_TexCoord[0].xy);
+void main()
+{
+  // lookup the pixel in the texture
+  vec4 pixel = texture2D(texture, gl_TexCoord[0].xy);
 
-        // multiply it by the color
-        gl_FragColor = gl_Color * pixel;
-    }
+  // multiply it by the color
+  gl_FragColor = gl_Color * pixel;
+}
+````
 
-
+&nbsp;
 <a name="add_sound" />
+
 #### `fe.add_sound()` ####
 
     fe.add_sound( name, reuse )
@@ -506,8 +528,9 @@ Return Value:
    * An instance of the class [`fe.Sound`](#Sound) which can be used to
      interact with the sound.
 
-
+&nbsp;
 <a name="add_ticks_callback" />
+
 #### `fe.add_ticks_callback()` ####
 
     fe.add_ticks_callback( environment, function_name )
@@ -535,8 +558,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="add_transition_callback" />
+
 #### `fe.add_transition_callback()` ####
 
     fe.add_transition_callback( environment, function_name )
@@ -645,8 +669,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="game_info" />
+
 #### `fe.game_info()` ####
 
     fe.game_info( id )
@@ -700,8 +725,9 @@ Notes:
    * The `Info.IsPaused` attribute is `1` if the game is currently paused by
      the frontend, and an empty string if it is not.
 
-
+&nbsp;
 <a name="get_art" />
+
 #### `fe.get_art()` ####
 
     fe.get_art( label )
@@ -740,8 +766,9 @@ Return Value:
      an archive, then both the archive path and the internal path are returned,
      separated by a pipe `|` character: "<archive_path>|<content_path>"
 
-
+&nbsp;
 <a name="get_input_state" />
+
 #### `fe.get_input_state()` ####
 
     fe.get_input_state( input_id )
@@ -766,8 +793,9 @@ Return Value:
 
    * `true` if input is pressed, `false` otherwise.
 
-
+&nbsp;
 <a name="get_input_pos" />
+
 #### `fe.get_input_pos()` ####
 
     fe.get_input_pos( input_id )
@@ -784,8 +812,9 @@ Return Value:
 
    * Current position of the specified axis, in range [0..100].
 
-
+&nbsp;
 <a name="signal" />
+
 #### `fe.signal()` ####
 
     fe.signal( signal_str )
@@ -846,8 +875,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="set_display" />
+
 #### `fe.set_display()` ####
 
     fe.set_display( index, stack_previous )
@@ -872,8 +902,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="add_signal_handler" />
+
 #### `fe.add_signal_handler()` ####
 
 
@@ -918,8 +949,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="remove_signal_handler" />
+
 #### `fe.remove_signal_handler()` ####
 
     fe.remove_signal_handler( environment, function_name )
@@ -939,8 +971,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="do_nut" />
+
 #### `fe.do_nut()` ####
 
     fe.do_nut( name )
@@ -957,7 +990,9 @@ Return Value:
 
    * None.
 
+&nbsp;
 <a name="load_module" />
+
 #### `fe.load_module()` ####
 
     fe.load_module( name )
@@ -974,8 +1009,9 @@ Return Value:
 
    * `true` if the module was loaded, `false' if it was not found.
 
-
+&nbsp;
 <a name="plugin_command" />
+
 #### `fe.plugin_command()` ####
 
     fe.plugin_command( executable, arg_string )
@@ -1008,8 +1044,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="plugin_command_bg" />
+
 #### `fe.plugin_command_bg()` ####
 
     fe.plugin_command_bg( executable, arg_string )
@@ -1025,8 +1062,9 @@ Return Value:
 
    * None.
 
-
+&nbsp;
 <a name="path_expand" />
+
 #### `fe.path_expand()` ####
 
     fe.path_expand( path )
@@ -1045,8 +1083,9 @@ Return Value:
 
    * The expansion of path.
 
-
+&nbsp;
 <a name="path_test" />
+
 #### `fe.path_test()` ####
 
     fe.path_test( path, flag )
@@ -1068,8 +1107,9 @@ Return Value:
 
    * (boolean) result.
 
-
+&nbsp;
 <a name="get_config" />
+
 #### `fe.get_config()` ####
 
 Get the user configured settings for this layout/plugin/screensaver/intro.
@@ -1093,8 +1133,9 @@ Return Value:
      For an example, please see one of the plug-ins included with Attract-
      Mode or the "Attrac-Man" layout.
 
-
+&nbsp;
 <a name="get_text" />
+
 #### `fe.get_text()` ####
 
     fe.get_text( text )
@@ -1110,61 +1151,70 @@ Return Value:
 
    * A string containing the translated text.
 
-
+&nbsp;
 <a name="objects" />
+
 Objects and Variables
 ---------------------
 
 <a name="ambient_sound" />
+
 #### `fe.ambient_sound` ####
 
 `fe.ambient_sound` is an instance of the `fe.Sound` class and can be used to
 control the ambient sound track.
 
-
+&nbsp;
 <a name="layout" />
+
 #### `fe.layout` ####
 
 `fe.layout` is an instance of the `fe.LayoutGlobals` class and is where
 global layout settings are stored.
 
-
+&nbsp;
 <a name="list" />
+
 #### `fe.list` ####
 
 `fe.list` is an instance of the `fe.CurrentList` class and is where current
 display settings are stored.
 
-
+&nbsp;
 <a name="overlay" />
+
 #### `fe.overlay` ####
 
 `fe.overlay` is an instance of the `fe.Overlay` class and is where overlay
 functionality may be accessed.
 
-
+&nbsp;
 <a name="obj" />
+
 #### `fe.obj` ####
 
 `fe.obj` contains the Attract-Mode draw list.  It is an array of `fe.Image`,
 `fe.Text` and `fe.ListBox` instances.
 
-
+&nbsp;
 <a name="displays" />
+
 #### `fe.displays` ####
 
 `fe.displays` contains information on the available displays.  It is an array
 of `fe.Display` instances.
 
-
+&nbsp;
 <a name="filters" />
+
 #### `fe.filters` ####
 
 `fe.filters` contains information on the available filters.  It is an array
 of `fe.Filter` instances.
 
-
+&nbsp;
 <a name="monitors" />
+
 #### `fe.monitors` ####
 
 `fe.monitors` is an array of `fe.Monitor` instances, and provides the
@@ -1172,20 +1222,25 @@ mechanism for interacting with the various monitors in a multi-monitor setup.
 There will always be at least one entry in this list, and the first entry
 will always be the "primary" monitor.
 
-
+&nbsp;
 <a name="script_dir" />
+
 #### `fe.script_dir` ####
 
 When Attract-Mode runs a layout or plug-in script, `fe.script_dir` is set to
 the layout or plug-in's directory.
 
+&nbsp;
 <a name="script_file" />
+
 #### `fe.script_file` ####
 
 When Attract-Mode runs a layout or plug-in script, `fe.script_file` is set to
 the name of the layout or plug-in script file.
 
+&nbsp;
 <a name="nv" />
+
 #### `fe.nv` ####
 
 The fe.nv table can be used by layouts and plugins to store persistent values.
@@ -1193,12 +1248,14 @@ The values in this table get saved by Attract-Mode whenever the layout changes
 and are saved to disk when Attract-Mode is shut down.  Boolean, integer, float,
 string, array and table values can be stored in this table.
 
-
+&nbsp;
 <a name="classes" />
+
 Classes
 -------
 
 <a name="LayoutGlobals" />
+
 #### `fe.LayoutGlobals` ####
 
 This class is a container for global layout settings.  The instance of this
@@ -1237,8 +1294,9 @@ Notes:
    * The actual rotation of the layout can be determined using the following
      equation: `( fe.layout.base_rotation + fe.layout.toggle_rotation ) % 4`
 
-
+&nbsp;
 <a name="CurrentList" />
+
 #### `fe.CurrentList` ####
 
 This class is a container for status information regarding the current display.
@@ -1263,8 +1321,9 @@ Properties:
    * `size` - Get the size of the current game list.  If a search rule has
      been applied, this will be the number of matches found (if > 0)
 
-
+&nbsp;
 <a name="Overlay" />
+
 #### `fe.Overlay` ####
 
 This class is a container for overlay functionality.  The instance of this
@@ -1306,8 +1365,9 @@ Member Functions:
      to the user.  This could be useful during computationally-intensive
      operations.
 
-
+&nbsp;
 <a name="Display" />
+
 #### `fe.Display` ####
 
 This class is a container for information about the available displays.
@@ -1323,8 +1383,9 @@ Properties:
      display cycle.
    * `in_menu` - Get whether the display is shown in the "Displays Menu"
 
-
+&nbsp;
 <a name="Filter" />
+
 #### `fe.Filter` ####
 
 This class is a container for information about the available filters.
@@ -1365,8 +1426,9 @@ Properties:
    * `list_limit` - Get the value of the list limit applied to the filter game
      list.
 
-
+&nbsp;
 <a name="Monitor" />
+
 #### `fe.Monitor` ####
 
 This class represents a monitor in Attract-Mode, and provides the interface
@@ -1402,8 +1464,9 @@ Notes:
    * The first entry in the `fe.monitors` array is always the "primary" display
      for the system.
 
-
+&nbsp;
 <a name="Image" />
+
 #### `fe.Image` ####
 
 The class representing an image in Attract-Mode.  Instances of this class
@@ -1550,7 +1613,9 @@ Member Functions:
      surface's draw list (see [`fe.add_surface()`](#add_surface) for parameters
      and return value).
 
+&nbsp;
 <a name="ImageNotes" />
+
 Notes:
 
    * Note that Attract-Mode defers the loading of artwork and dynamic images
@@ -1563,25 +1628,24 @@ Notes:
      Example:
 
 ```` squirrel
-   local my_art = fe.add_artwork( "snap", 0, 0, 100, 100 );
+local my_art = fe.add_artwork( "snap", 0, 0, 100, 100 );
 
-   fe.add_transition_callback("artwork_transition");
-   function artwork_transition( ttype, var, ttime )
-   {
-      if (( ttype == Transition.FromOldSelection )
-         || ( ttype == Transition.ToNewList ))
-      {
-         //
-         // do stuff with my_art's texture_width or texture_height here...
-         //
-         // for example, flip the image vertically:
-         my_art.subimg_height = -1 * texture_height;
-         my_art.subimg_y = texture_height;
-      }
+fe.add_transition_callback( "artwork_transition" );
+function artwork_transition( ttype, var, ttime )
+{
+  if (( ttype == Transition.FromOldSelection )
+     || ( ttype == Transition.ToNewList ))
+  {
+    //
+    // do stuff with my_art's texture_width or texture_height here...
+    //
+    // for example, flip the image vertically:
+    my_art.subimg_height = -1 * texture_height;
+    my_art.subimg_y = texture_height;
+  }
 
-      return false;
-   }
-
+  return false;
+}
 ````
 
    * To flip an image vertically, set the `subimg_height` property to
@@ -1590,27 +1654,28 @@ Notes:
      `-1 * texture_width` and `subimg_x` to `texture_width`.
 
 ```` squirrel
-
-   // flip "img" vertically
-   function flip_y( img )
-   {
-      img.subimg_height = -1 * img.texture_height;
-      img.subimg_y = img.texture_height;
-   }
+// flip "img" vertically
+function flip_y( img )
+{
+  img.subimg_height = -1 * img.texture_height;
+  img.subimg_y = img.texture_height;
+}
 ````
+
    * To rotate an image around its centre, set the origin_x and origin_y
      values to one half of the image's width and height (respectively)
      and then set the 'rotation' value accordingly
 
 ```` squirrel
-
-   local img = fe.add_image( "img.png", 100, 100, 200, 200 );
-   img.origin_x = 100;
-   img.origin_y = 100;
-   img.rotation = 90; // rotate img around its centre
+local img = fe.add_image( "img.png", 100, 100, 200, 200 );
+img.origin_x = 100;
+img.origin_y = 100;
+img.rotation = 90; // rotate img around its centre
 ````
 
+&nbsp;
 <a name="Text" />
+
 #### `fe.Text` ####
 
 The class representing a text label in Attract-Mode.  Instances of this
@@ -1706,8 +1771,9 @@ Member Functions:
    * `set_pos( x, y, width, height )` - Set the text position and size (in
      layout coordinates).
 
-
+&nbsp;
 <a name="ListBox" />
+
 #### `fe.ListBox` ####
 
 The class representing the listbox in Attract-Mode.  Instances of this
@@ -1816,8 +1882,9 @@ Member Functions:
    * `set_pos( x, y, width, height )` - Set the listbox position and size (in
      layout coordinates).
 
-
+&nbsp;
 <a name="Sound" />
+
 #### `fe.Sound` ####
 
 The class representing an audio track.  Instances of this class are returned
@@ -1846,8 +1913,9 @@ Member Functions:
    * `load_from_archive( archive, filename )` - Load the sound from the
      specified archive file (.zip, etc).
 
-
+&nbsp;
 <a name="Shader" />
+
 #### `fe.Shader` ####
 
 The class representing a GLSL shader.  Instances of this class are returned
@@ -1880,8 +1948,9 @@ Member Functions:
      GLSL type) with the specified name to the texture contained in "image".
      "image" must be an instance of the `fe.Image` class.
 
-
+&nbsp;
 <a name="constants" />
+
 Constants
 ---------
 
