@@ -248,7 +248,7 @@ bool write_local_if_needed(
 	return true;
 }
 
-const char *HOSTNAME = "https://api.thegamesdb.net";
+const char *HOSTNAME = "https://api.thegamesdb.net/v1";
 const char *PLATFORM_REQ = "/Platforms?apikey=$1";
 const char *GENRES_REQ = "/Genres?apikey=$1";
 const char *PUBLISHERS_REQ = "/Publishers?apikey=$1";
@@ -262,6 +262,7 @@ const char *PUBLISHERS_E = "publishers";
 const char *GAMES_E = "games";
 const char *GAME_TITLE_E = "game_title";
 const char *RELEASE_E = "release";
+const char *RATING_E = "rating";
 const char *PLAYERS_E = "players";
 const char *OVERVIEW_E = "overview";
 const char *PLATFORM_E = "platform";
@@ -660,7 +661,7 @@ void create_single_id_query(
 
 	if ( !scrape_art )
 	{
-		my_req += "/Games/ByGameID?apikey=$1&id=$2&fields=players%2Cpublishers%2Cgenres%2Coverview";
+		my_req += "/Games/ByGameID?apikey=$1&id=$2&fields=players%2Cpublishers%2Cgenres%2Coverview%2Crating";
 		id = INFO_QUERY;
 	}
 	else
@@ -1149,6 +1150,13 @@ fail_emu_scrape:
 						}
 						ptr->set_info( FeRomInfo::Manufacturer, manu_str );
 					}
+
+					if ( e.HasMember( RATING_E ) && e[RATING_E].IsString() )
+					{
+						std::string rating = e[RATING_E].GetString();
+						ptr->set_info( FeRomInfo::Rating, rating );
+					}
+
 
 					if ( g[i].HasMember( OVERVIEW_E ) && g[i][OVERVIEW_E].IsString() )
 					{
