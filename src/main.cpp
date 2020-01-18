@@ -402,8 +402,8 @@ int main(int argc, char *argv[])
 			//
 			if (( guard_joyid >= 0 )
 				&& ( std::abs( sf::Joystick::getAxisPosition(
-					guard_joyid, (sf::Joystick::Axis)guard_axis )
-						< feSettings.get_joy_thresh() )))
+					guard_joyid, (sf::Joystick::Axis)guard_axis ))
+						< feSettings.get_joy_thresh() ))
 			{
 				guard_joyid = -1;
 				guard_axis = -1;
