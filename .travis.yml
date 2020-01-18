@@ -40,7 +40,7 @@ matrix:
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
 install:
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive curl; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ffmpeg sfml libarchive curl; echo ""; fi
 script:
 - make -j8
 before_deploy:
