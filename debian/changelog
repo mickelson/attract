@@ -1,5 +1,5 @@
-attract (2.6.0-1) unstable; urgency=low
+attract (2.6.1-1) unstable; urgency=low
 
-  * Version 2.6.0 package.
+  * Version 2.6.1 package.
 
- -- Andrew Mickelson <andrew@attractmode.org>  Mon, 14 Oct 2019 04:20:00 -0800
+ -- Andrew Mickelson <andrew@attractmode.org>  Fri, 17 Jan 2020 04:20:00 -0800
