@@ -132,6 +132,7 @@ _DEP =\
 	fe_listbox.hpp \
 	fe_vm.hpp \
 	fe_blend.hpp \
+	path_cache.hpp \
 	zip.hpp
 
 _OBJ =\
@@ -164,6 +165,7 @@ _OBJ =\
 	fe_vm.o \
 	fe_blend.o \
 	zip.o \
+	path_cache.o \
 	main.o
 
 ifneq ($(FE_WINDOWS_COMPILE),1)

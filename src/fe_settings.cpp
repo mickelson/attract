@@ -680,6 +680,8 @@ void FeSettings::init_display()
 	// the display (which happens when settings get changed for example)
 	//
 	construct_display_maps();
+
+	m_path_cache.clear();
 }
 
 void FeSettings::construct_display_maps()
@@ -3003,6 +3005,7 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_hide_console = config_str_to_bool( value );
 		break;
 #endif
+
 	case VideoDecoder:
 #ifndef NO_MOVIE
 		FeMedia::set_current_decoder( value );
@@ -3623,7 +3626,8 @@ bool gather_artwork_filenames(
 	const std::vector < std::string > &art_paths,
 	const std::string &target_name,
 	std::vector<std::string> &vids,
-	std::vector<std::string> &images )
+	std::vector<std::string> &images,
+	FePathCache *path_cache )
 {
 	for ( std::vector< std::string >::const_iterator itr = art_paths.begin();
 			itr != art_paths.end(); ++itr )
@@ -3670,12 +3674,24 @@ bool gather_artwork_filenames(
 			continue;
 		}
 
-		get_filename_from_base(
-			img_contents,
-			vid_contents,
-			(*itr),
-			target_name + '.',
-			FE_ART_EXTENSIONS );
+		if ( path_cache )
+		{
+			path_cache->get_filename_from_base(
+				img_contents,
+				vid_contents,
+				(*itr),
+				target_name + '.',
+				FE_ART_EXTENSIONS );
+		}
+		else
+		{
+			get_filename_from_base(
+				img_contents,
+				vid_contents,
+				(*itr),
+				target_name + '.',
+				FE_ART_EXTENSIONS );
+		}
 
 #ifdef NO_MOVIE
 		vid_contents.clear();
@@ -3855,7 +3871,7 @@ bool FeSettings::internal_get_best_artwork_file(
 		const std::string &cloneof = rom.get_info( FeRomInfo::Cloneof );
 
 		std::vector<std::string> romname_image_list;
-		if ( gather_artwork_filenames( art_paths, romname, vid_list, romname_image_list ) )
+		if ( gather_artwork_filenames( art_paths, romname, vid_list, romname_image_list, &m_path_cache ) )
 		{
 			// test for "romname" specific videos first
 			if ( !image_only && !vid_list.empty() )
@@ -3865,7 +3881,7 @@ bool FeSettings::internal_get_best_artwork_file(
 		bool check_altname = ( !altname.empty() && ( romname.compare( altname ) != 0 ));
 
 		std::vector<std::string> altname_image_list;
-		if ( check_altname && gather_artwork_filenames( art_paths, altname, vid_list, altname_image_list ) )
+		if ( check_altname && gather_artwork_filenames( art_paths, altname, vid_list, altname_image_list, &m_path_cache ) )
 		{
 			// test for "altname" specific videos second
 			if ( !image_only && !vid_list.empty() )
@@ -3875,7 +3891,7 @@ bool FeSettings::internal_get_best_artwork_file(
 		bool check_cloneof = ( !cloneof.empty() && (altname.compare( cloneof ) != 0 ));
 
 		std::vector<std::string> cloneof_image_list;
-		if ( check_cloneof && gather_artwork_filenames( art_paths, cloneof, vid_list, cloneof_image_list ) )
+		if ( check_cloneof && gather_artwork_filenames( art_paths, cloneof, vid_list, cloneof_image_list, &m_path_cache ) )
 		{
 			// then "cloneof" specific videos
 			if ( !image_only && !vid_list.empty() )
@@ -3906,7 +3922,7 @@ bool FeSettings::internal_get_best_artwork_file(
 		// then "emulator"
 		if ( !ignore_emu && !emu_name.empty()
 			&& gather_artwork_filenames( art_paths,
-				emu_name, vid_list, image_list ) )
+				emu_name, vid_list, image_list, &m_path_cache ) )
 			return true;
 	}
 
@@ -3959,7 +3975,7 @@ void FeSettings::get_best_artwork_file(
 		// check for "[emulator-[artlabel]" artworks first
 		if ( gather_artwork_filenames( layout_paths,
 			emu_name + "-" + art_name,
-			vid_list, image_list ) )
+			vid_list, image_list, &m_path_cache ) )
 		{
 			if ( !image_only && !vid_list.empty() )
 				return;
@@ -3967,7 +3983,7 @@ void FeSettings::get_best_artwork_file(
 
 		// then "[artlabel]"
 		gather_artwork_filenames( layout_paths,
-			art_name, vid_list, image_list );
+			art_name, vid_list, image_list, &m_path_cache );
 	}
 }
 
@@ -4025,7 +4041,7 @@ bool FeSettings::get_best_dynamic_image_file(
 	std::vector< std::string > paths;
 	paths.push_back( path );
 
-	return gather_artwork_filenames( paths, base, vid_list, image_list );
+	return gather_artwork_filenames( paths, base, vid_list, image_list, NULL );
 }
 
 void FeSettings::update_romlist_after_edit(

@@ -29,6 +29,7 @@
 #include "fe_input.hpp"
 #include "fe_util.hpp"
 #include "scraper_base.hpp"
+#include "path_cache.hpp"
 #include <deque>
 
 extern const char *FE_ART_EXTENSIONS[];
@@ -178,6 +179,7 @@ private:
 	std::deque<int> m_display_stack; // stack for displays to navigate to when "back" button pressed (and
 					// display shortcuts are used)
 	FeRomList m_rl;
+	FePathCache m_path_cache;
 
 	FeInputMap m_inputmap;
 	FeSoundInfo m_sounds;
