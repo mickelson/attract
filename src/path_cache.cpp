@@ -69,7 +69,8 @@ bool FePathCache::get_filename_from_base(
 	if ( itr == cache.end() )
 		return false;
 
-	do
+	while ( ( itr != cache.end() )
+		&& ( strncasecmp( (*itr).c_str(), base_name.c_str(), base_name.size() ) == 0 ))
 	{
 		if ( filter && !(tail_compare( *itr, filter )) )
 			out_list.push_back( path + *itr );
@@ -77,8 +78,7 @@ bool FePathCache::get_filename_from_base(
 			in_list.push_back( path + *itr );
 
 		++itr;
-	} while ( ( itr != cache.end() )
-		&& ( strncasecmp( (*itr).c_str(), base_name.c_str(), base_name.size() ) == 0 ));
+	}
 
 	return !(in_list.empty());
 }
