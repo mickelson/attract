@@ -1848,6 +1848,17 @@ Properties:
       - `Align.Centre` (default)
       - `Align.Left`
       - `Align.Right`
+      - `Align.TopCentre`
+      - `Align.TopLeft`
+      - `Align.TopRight`
+      - `Align.BottomCentre`
+      - `Align.BottomLeft`
+      - `Align.BottomRight`
+      - `Align.MiddleCentre`
+      - `Align.MiddleLeft`
+      - `Align.MiddleRight`
+     The last 3 alignment modes have the same function as the first 3,
+     but they are more accurate. The first 3 modes are preserved for compatibility.
    * `sel_style` - Get/set the selection text style.  Can be a combination
      of one or more of the following (i.e. `Style.Bold | Style.Italic`):
       - `Style.Regular` (default)
