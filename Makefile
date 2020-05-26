@@ -326,11 +326,15 @@ ifneq ($(USE_VC4),1)
  endif
 endif
 
+ifeq ($(USE_MMAL),1)
+ FE_FLAGS += -DUSE_MMAL
+endif
+
 ifeq ($(USE_XLIB),1)
  FE_FLAGS += -DUSE_XLIB
  LIBS += -lX11
 
- ifeq ($(USE_XINERAMA),1)
+ifeq ($(USE_XINERAMA),1)
   FE_FLAGS += -DUSE_XINERAMA
   LIBS += -lXinerama
  endif
