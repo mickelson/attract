@@ -78,6 +78,10 @@
  #endif
 #endif
 
+#ifdef USE_DRM
+#include <xf86drm.h>
+#endif
+
 
 namespace {
 
@@ -851,7 +855,12 @@ run_program_options_class::run_program_options_class()
 	wait_cb( NULL ),
 	launch_opaque( NULL ),
 	running_pid( 0 ),
+#if defined( USE_DRM )
+	drm_fd( 0 ),
 	running_wnd( NULL )
+#else
+	running_wnd( NULL )
+#endif
 {
 }
 
@@ -1201,6 +1210,14 @@ bool run_program( const std::string &prog,
 	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
 		FeLog() << "Error, pipe() failed" << std::endl;
 
+#ifdef USE_DRM
+	// if we have sufficient permission, dropMaster() will allow the emulator to
+	// take over the screen from Attract-mode
+	//
+	if ( opt->drm_fd )
+		drmDropMaster( opt->drm_fd );
+#endif
+
 	pid_t pid = fork();
 	switch (pid)
 	{
@@ -1277,7 +1294,17 @@ bool run_program( const std::string &prog,
 			opt->launch_cb( opt->launch_opaque );
 
 		if ( block )
+		{
 			unix_wait_process( pid, opt );
+
+#ifdef USE_DRM
+			// if we have sufficient permission, setMaster() will cause Attract-Mode to take back
+			// control over the screen
+			//
+			if ( opt->drm_fd )
+				drmSetMaster( opt->drm_fd );
+#endif
+		}
 	}
 #endif // SFML_SYSTEM_WINDOWS
 	return true;

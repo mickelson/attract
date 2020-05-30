@@ -113,6 +113,9 @@ public:
 	unsigned int running_pid;
 	void *running_wnd;
 
+#ifdef USE_DRM
+	int drm_fd;
+#endif
 	// Default constructor
 	//
 	run_program_options_class();

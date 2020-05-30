@@ -462,6 +462,12 @@ bool FeWindow::run()
 	opt.launch_cb = (( nbm_wait <= 0 ) ? launch_callback : NULL );
 	opt.wait_cb = wait_callback;
 	opt.launch_opaque = this;
+#if defined(USE_DRM)
+	//
+	// If using DRM with sfml-pi getSystemHandle() will return the drm fd
+	//
+	opt.drm_fd = getSystemHandle();
+#endif
 
 	bool have_paused_prog = m_running_pid && process_exists( m_running_pid );
 

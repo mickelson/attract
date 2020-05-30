@@ -2905,6 +2905,9 @@ bool FeSettings::set_info( int index, const std::string &value )
 		break;
 
 	case WindowMode:
+#if defined(USE_DRM)
+		m_window_mode = Fullscreen;
+#else
 		{
 			int i=0;
 			while ( windowModeTokens[i] != NULL )
@@ -2920,6 +2923,7 @@ bool FeSettings::set_info( int index, const std::string &value )
 			if ( windowModeTokens[i] == NULL )
 				return false;
 		}
+#endif
 		break;
 
 	case FilterWrapMode:

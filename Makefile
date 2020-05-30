@@ -26,6 +26,9 @@
 # Uncomment next line to build GLES version (embedded systems)
 #USE_GLES=1
 #
+# Uncomment the next line to build the DRM/KMS version (alternative to X11)
+#USE_DRM=1
+#
 # Uncomment next line to disable movie support (i.e. no FFmpeg).
 #NO_MOVIE=1
 #
@@ -190,14 +193,18 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
    _OBJ += fe_util_osx.o
    LIBS += -framework Cocoa -framework Carbon -framework IOKit
   else
-   ifneq ($(USE_GLES),1)
-    #
-    # Test for Xlib and Xinerama...
-    #
-    ifeq ($(shell $(PKG_CONFIG) --exists x11 && echo "1" || echo "0"), 1)
-     USE_XLIB=1
-     ifeq ($(shell $(PKG_CONFIG) --exists xinerama && echo "1" || echo "0"), 1)
-      USE_XINERAMA=1
+   ifeq ($(USE_GLES),1)
+   else
+    ifeq ($(USE_DRM),1)
+    else
+     #
+     # Test for Xlib and Xinerama...
+     #
+     ifeq ($(shell $(PKG_CONFIG) --exists x11 && echo "1" || echo "0"), 1)
+      USE_XLIB=1
+      ifeq ($(shell $(PKG_CONFIG) --exists xinerama && echo "1" || echo "0"), 1)
+       USE_XINERAMA=1
+      endif
      endif
     endif
    endif
@@ -314,7 +321,7 @@ ifeq ($(USE_GLES),1)
  #
  # Hack for Raspberry Pi includes...
  #
-ifneq ($(USE_VC4),1)
+ ifneq ($(USE_VC4),1)
   ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
    CFLAGS += -I/opt/vc/include -L/opt/vc/lib
    ifneq ("$(wildcard /opt/vc/lib/libbrcmGLESv2.so)","")
@@ -339,6 +346,11 @@ ifeq ($(USE_XINERAMA),1)
   LIBS += -lXinerama
  endif
 
+endif
+
+ifeq ($(USE_DRM),1)
+ TEMP_LIBS += libdrm gbm
+ FE_FLAGS += -DUSE_DRM
 endif
 
 ifeq ($(FE_HWACCEL_VAAPI),1)
