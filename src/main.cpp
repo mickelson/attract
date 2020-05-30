@@ -141,8 +141,6 @@ int main(int argc, char *argv[])
 	soundsys.update_volumes();
 	soundsys.play_ambient();
 
-	FeBlend::load_default_shaders();
-
 	FeWindow window( feSettings );
 	window.initial_create();
 

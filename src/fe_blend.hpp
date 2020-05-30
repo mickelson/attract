@@ -27,14 +27,9 @@
 
 class FeBlend
 {
-private:
-	static const char *DEFAULT_SHADER_GLSL_MULTIPLIED;
-	static const char *DEFAULT_SHADER_GLSL_OVERLAY;
-	static const char *DEFAULT_SHADER_GLSL_PREMULTIPLIED;
-
 public:
 	enum Mode
-	{ 
+	{
 		Alpha,
 		Add,
 		Subtract,
@@ -43,15 +38,10 @@ public:
 		Overlay,
 		Premultiplied,
 		None
-	}; 
+	};
 
 	static sf::BlendMode get_blend_mode( int blend_mode );
 	static sf::Shader* get_default_shader( int blend_mode );
-	static void load_default_shaders();
-
-	static sf::Shader default_shader_multiplied;
-	static sf::Shader default_shader_overlay;
-	static sf::Shader default_shader_premultiplied;
 };
 
 #endif
