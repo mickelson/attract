@@ -1467,7 +1467,7 @@ void FeMedia::get_decoder_list( std::vector< std::string > &l )
 
 	l.push_back( "software" );
 
-#ifdef USE_GLES
+#if defined(USE_GLES) || defined(USE_MMAL)
 	//
 	// Raspberry Pi specific - check for mmal
 	//
@@ -1503,7 +1503,7 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 	if ( g_decoder.empty() || ( g_decoder.compare( "software" ) == 0 ))
 		return;
 
-#ifdef USE_GLES
+#if defined(USE_GLES) || defined(USE_MMAL)
 	if ( g_decoder.compare( "mmal" ) == 0 )
 	{
 		switch( dec->id )
