@@ -364,9 +364,17 @@ bool FeEmulatorEditMenu::on_option_select(
 			// Make sure m_emulator is set with all the configured info
 			//
 			for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
-				m_emulator->set_info( (FeEmulatorInfo::Index)i,
-					ctx.opt_list[i].get_value() );
-
+            {
+#ifdef SFML_SYSTEM_MACOS
+                // Pause hotkey functionality is not fully implemented on OS X, block
+                // the user from trying to use it
+                //
+                if ( i == (int)FeEmulatorInfo::Pause_hotkey )
+                    continue;
+#endif
+                m_emulator->set_info( (FeEmulatorInfo::Index)i,
+                    ctx.opt_list[i].get_value() );
+            }
 			// Do some checks and confirmation before launching the Generator
 			//
 			std::vector<std::string> paths = m_emulator->get_paths();
