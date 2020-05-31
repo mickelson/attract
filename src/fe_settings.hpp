@@ -131,6 +131,7 @@ public:
 		ScrapeVids,
 		ScrapeOverview,
 		ThegamesdbKey,
+		PowerSaving,
 #ifdef SFML_SYSTEM_WINDOWS
 		HideConsole,
 #endif
@@ -222,6 +223,7 @@ private:
 #ifdef SFML_SYSTEM_WINDOWS
 	bool m_hide_console;
 #endif
+	bool m_power_saving;
 	bool m_loaded_game_extras;
 	enum FePresentState m_present_state;
 

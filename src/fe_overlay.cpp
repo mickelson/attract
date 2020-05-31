@@ -900,7 +900,7 @@ void FeOverlay::input_map_dialog(
 		if ( m_fePresent.tick() )
 			redraw = true;
 
-		if ( redraw )
+		if ( redraw || !m_feSettings.get_info_bool( FeSettings::PowerSaving ) )
 		{
 			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
@@ -1422,7 +1422,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 		if ( m_fePresent.tick() )
 			redraw = true;
 
-		if ( redraw )
+		if ( redraw || !m_feSettings.get_info_bool( FeSettings::PowerSaving ) )
 		{
 			m_fePresent.redraw_surfaces();
 			m_wnd.clear();
@@ -1918,7 +1918,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 		m_wnd.draw( cursor, t );
 		m_wnd.display();
 
-		if ( !redraw )
+		if ( !redraw && m_feSettings.get_info_bool( FeSettings::PowerSaving ) )
 			sf::sleep( sf::milliseconds( 30 ) );
 
 		redraw = false;
