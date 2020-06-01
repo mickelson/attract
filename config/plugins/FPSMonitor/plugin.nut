@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////
 //
-// Attract-Mode Frontend - FPS Monitor Plugin v1.5
-// Oomek 2019
+// Attract-Mode Frontend - FPS Monitor Plugin v2.0
+// Radek Dutkiewicz (Oomek) 2020
 //
 ///////////////////////////////////////////////////
 
-class UserConfig </ help="A plugin that shows an FPS meter" />
+class UserConfig </ help="A plugin that shows an FPS meter v2.0" />
 {
 	</ label="Graph Size",
 		help="Set the graph size",
@@ -44,14 +44,10 @@ class FPSMonitor
 	fps_width = 16
 	fps_scale = 2
 
-	fps_graph_width = 128
+	fps_graph_width = 64
 	fps_graph_height = 10
 	fps_background = null
-	fps_graph_pixel = null
-	fps_graph_surface1 = null
-	fps_graph_surface2 = null
-	fps_graph_surface2_clone = null
-	fps_graph_surface1_clone = null
+	fps_columns = []
 
 	constructor()
 	{
@@ -97,41 +93,24 @@ class FPSMonitor
 		fps_background.width = ( fps_graph_width - 2.0 ) * fps_scale_x
 		fps_background.height = fps_graph_height * fps_scale_y
 
-		fps_graph_surface1 = fe.add_surface( fps_graph_width, fps_graph_height )
-		fps_graph_surface1.smooth = false
-
-		fps_graph_surface2 = fe.add_surface( fps_graph_width, fps_graph_height )
-		fps_graph_surface2.smooth = false
-
-		fps_counter = fps_graph_surface2.add_text ( "", 0, 0, fps_width * 2, fps_graph_height )
+		fps_counter = fe.add_text ( "", 0, 0, fps_width, fps_graph_height )
 		fps_counter.font = "fps_font"
 
 		fps_counter.set_rgb ( 100, 255, 100 )
 		fps_counter.char_size = ceil( 10.0 * ( fps_scale ))
-		fps_counter.margin = floor( 3.0 * fps_scale )
-		fps_counter.align = Align.MiddleLeft
+		fps_counter.margin = 0
+		fps_counter.align = Align.MiddleCentre
 
-		fps_graph_pixel = fps_graph_surface1.add_image( "fps_graph.png", fps_graph_width - 2, 0, 1, 128 )
-		fps_graph_pixel.smooth = false
-
-		fps_graph_surface1.blend_mode = BlendMode.Premultiplied
-		fps_graph_surface2.blend_mode = BlendMode.Premultiplied
-
-		fps_graph_surface2_clone = fps_graph_surface1.add_clone( fps_graph_surface2 )
-		fps_graph_surface2_clone.smooth = false
-
-		fps_graph_surface1_clone = fps_graph_surface2.add_clone( fps_graph_surface1 )
-		fps_graph_surface1_clone.smooth = false
-
-		fps_graph_surface1.visible = false
-
-		fps_graph_surface1_clone.x = fps_width - 1
-		fps_graph_surface1_clone.subimg_x = fps_width
-		fps_graph_surface1_clone.subimg_width = fps_graph_width - fps_width - 1
-		fps_graph_surface1_clone.width = fps_graph_width - fps_width - 1
-
-		fps_graph_surface2.width = fps_graph_width * fps_scale_x
-		fps_graph_surface2.height = fps_graph_height * fps_scale_y
+		fps_background.width = fps_width + fps_graph_width
+		fps_columns.push(fe.add_image( "fps_graph.png", fps_width, 0, 1, fps_graph_height ))
+		fps_columns[0].subimg_height = fps_columns[0].height
+		fps_columns[0].subimg_y = -fps_graph_height
+		for (local i = 1; i < fps_graph_width; i++)
+		{
+			local obj = fe.add_clone(fps_columns[0])
+			obj.x = fps_width + i
+			fps_columns.push(obj)
+		}
 	}
 
 	function fps_signal( signal )
@@ -142,14 +121,11 @@ class FPSMonitor
 			else fps_visible = false
 			fps_counter.visible = fps_visible
 			fps_background.visible = fps_visible
-			fps_graph_surface2.visible = fps_visible
-			fps_graph_pixel.visible = fps_visible
-			fps_graph_surface1_clone.visible = fps_visible
+			foreach( c in fps_columns ) c.visible = fps_visible
 			return true;
 		}
 		if ( signal == fps_reload_key )
 		{
-			fps_graph_surface1_clone.alpha = 1
 			fps_reload_trigger = true
 		}
 		return false;
@@ -173,8 +149,12 @@ class FPSMonitor
 			if ( fps_time_delta > 0 )
 			{
 				fps_array[fps_array_idx] = ceil( 1000.0 / fps_time_delta.tofloat() )
-				fps_graph_pixel.y = -ceil( fps_array[fps_array_idx] / 60.0 * fps_graph_height ) + fps_graph_height - 1
+				for ( local i = 0; i < fps_graph_width-1; i++ )
+					fps_columns[i].subimg_y = fps_columns[i+1].subimg_y
+
+				fps_columns[fps_graph_width-1].subimg_y = - fps_graph_height + ceil( fps_array[fps_array_idx] / 60.0 * fps_graph_height ) + 1
 				fps_array_idx ++
+
 				if ( fps_array_idx >= fps_array_size ) fps_array_idx = 0
 				fps_max = 0
 				foreach ( f in fps_array )
