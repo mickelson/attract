@@ -78,11 +78,6 @@
  #endif
 #endif
 
-#ifdef USE_DRM
-#include <xf86drm.h>
-#endif
-
-
 namespace {
 
 	void str_from_c( std::string &s, const char *c )
@@ -1211,11 +1206,15 @@ bool run_program( const std::string &prog,
 		FeLog() << "Error, pipe() failed" << std::endl;
 
 #ifdef USE_DRM
-	// if we have sufficient permission, dropMaster() will allow the emulator to
+	// Use attract-drm-helper to call drmDropMaster() and allow the emulator to
 	// take over the screen from Attract-mode
 	//
 	if ( opt->drm_fd )
-		drmDropMaster( opt->drm_fd );
+	{
+		std::string cmd( "attract-drm-helper drop " );
+		cmd += as_str( opt->drm_fd );
+		system( cmd.c_str() );
+	}
 #endif
 
 	pid_t pid = fork();
@@ -1266,7 +1265,6 @@ bool run_program( const std::string &prog,
 		_exit(127);
 
 	default: // parent process
-
 		if ( mypipe[0] )
 		{
 			FILE *fp = fdopen( mypipe[0], "r" );
@@ -1298,11 +1296,15 @@ bool run_program( const std::string &prog,
 			unix_wait_process( pid, opt );
 
 #ifdef USE_DRM
-			// if we have sufficient permission, setMaster() will cause Attract-Mode to take back
+			// Use attract-drm-helper to call drmSetMaster() and cause Attract-Mode to take back
 			// control over the screen
 			//
 			if ( opt->drm_fd )
-				drmSetMaster( opt->drm_fd );
+			{
+				std::string cmd( "attract-drm-helper set " );
+				cmd += as_str( opt->drm_fd );
+				system( cmd.c_str() );
+			}
 #endif
 		}
 	}
