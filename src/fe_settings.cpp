@@ -295,6 +295,7 @@ FeSettings::FeSettings( const std::string &config_path,
 #ifdef SFML_SYSTEM_WINDOWS
 	m_hide_console( false ),
 #endif
+	m_power_saving( false ),
 	m_loaded_game_extras( false ),
 	m_present_state( Layout_Showing )
 {
@@ -423,6 +424,7 @@ const char *FeSettings::configSettingStrings[] =
 	"scrape_videos",
 	"scrape_overview",
 	"thegamesdb_key",
+	"power_saving",
 #ifdef SFML_SYSTEM_WINDOWS
 	"hide_console",
 #endif
@@ -2745,6 +2747,7 @@ const std::string FeSettings::get_info( int index ) const
 	case ScrapeFanArt:
 	case ScrapeVids:
 	case ScrapeOverview:
+	case PowerSaving:
 #ifdef SFML_SYSTEM_WINDOWS
 	case HideConsole:
 #endif
@@ -2802,6 +2805,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_scrape_vids;
 	case ScrapeOverview:
 		return m_scrape_overview;
+	case PowerSaving:
+		return m_power_saving;
 #ifdef SFML_SYSTEM_WINDOWS
 	case HideConsole:
 		return m_hide_console;
@@ -3002,6 +3007,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case ScrapeOverview:
 		m_scrape_overview = config_str_to_bool( value );
+		break;
+
+	case PowerSaving:
+		m_power_saving = config_str_to_bool( value );
 		break;
 
 #ifdef SFML_SYSTEM_WINDOWS

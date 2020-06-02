@@ -2019,6 +2019,12 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Video Decoder", vid_dec, "_help_video_decoder" );
 	ctx.back_opt().append_vlist( decoders );
 
+	ctx.add_optl( Opt::LIST,
+			"Power Saving",
+			ctx.fe_settings.get_info_bool( FeSettings::PowerSaving ) ? bool_opts[0] : bool_opts[1],
+			"_help_power_saving" );
+	ctx.back_opt().append_vlist( bool_opts );
+
 #ifdef SFML_SYSTEM_WINDOWS
 	ctx.add_optl( Opt::LIST, "Hide Console",
 		ctx.fe_settings.get_hide_console() ? bool_opts[0] : bool_opts[1],
@@ -2072,9 +2078,12 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
 			ctx.opt_list[13].get_value() );
 
+	ctx.fe_settings.set_info( FeSettings::PowerSaving,
+			ctx.opt_list[14].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
 #ifdef SFML_SYSTEM_WINDOWS
 	ctx.fe_settings.set_info( FeSettings::HideConsole,
-			ctx.opt_list[14].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[15].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 #endif
 
 	return true;

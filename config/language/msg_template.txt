@@ -397,6 +397,7 @@ _help_video_decoder;Configure the decoder to use for video playback (if multiple
 _help_volume;Valid volume settings are from 0 (mute) to 100
 _help_window_mode;Set whether Attract-Mode fills the screen or runs in a window
 _help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
+_help_power_saving;Helps to save power by only redrawing the screen when it's neccessary. May cause animation stuttering on some layouts, or freezing on Linux.
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
 # The next line is needed at the end of the template file

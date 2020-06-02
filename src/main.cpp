@@ -1056,7 +1056,7 @@ int main(int argc, char *argv[])
 		if ( feVM.saver_activation_check() )
 			soundsys.sound_event( FeInputMap::ScreenSaver );
 
-		if ( redraw )
+		if ( redraw || !feSettings.get_info_bool( FeSettings::PowerSaving ) )
 		{
 			feVM.redraw_surfaces();
 
