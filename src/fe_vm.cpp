@@ -508,6 +508,23 @@ void FeVM::update_to_new_list( int var, bool reset_display )
 	FePresent::update_to_new_list( var, reset_display );
 }
 
+namespace
+{
+	bool nesting_compare( FeBaseTextureContainer *one, FeBaseTextureContainer *two )
+	{
+		if ( one->get_presentable_parent() != NULL && two->get_presentable_parent() == NULL )
+			return true;
+
+		if ( one->get_presentable_parent() == NULL && two->get_presentable_parent() == NULL )
+			return false;
+
+		if ( one->get_presentable_parent() != NULL && two->get_presentable_parent() != NULL )
+			return ( one->get_presentable_parent()->get_nesting_level() > two->get_presentable_parent()->get_nesting_level() );
+
+		return false;
+	}
+};
+
 bool FeVM::on_new_layout()
 {
 	using namespace Sqrat;
@@ -1096,6 +1113,11 @@ bool FeVM::on_new_layout()
 		FeLog() << " - Loaded layout: " << rep_path
 			<< " (" << filename << ")" << std::endl;
 	}
+
+	// To avoid frame delay of nested surfaces we have to sort them here
+	// so the most nested ones are redrawn first
+	FePresent *fep = FePresent::script_get_fep();
+	std::stable_sort( fep->m_texturePool.begin(), fep->m_texturePool.end(), nesting_compare );
 
 	return true;
 }

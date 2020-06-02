@@ -35,6 +35,15 @@ FeBasePresentable::~FeBasePresentable()
 {
 }
 
+FePresentableParent::FePresentableParent( )
+	: m_nesting_level ( 0 )
+{
+}
+
+FePresentableParent::~FePresentableParent()
+{
+}
+
 void FeBasePresentable::on_new_selection( FeSettings * )
 {
 }
@@ -213,6 +222,16 @@ void FeBasePresentable::set_zorder( int pos )
 
 	std::stable_sort( m_parent.elements.begin(), m_parent.elements.end(), zcompare );
 	FePresent::script_flag_redraw();
+}
+
+int FePresentableParent::get_nesting_level()
+{
+	return m_nesting_level;
+}
+
+void FePresentableParent::set_nesting_level( int p )
+{
+	m_nesting_level = p;
 }
 
 FeImage *FePresentableParent::add_image(const char *n, int x, int y, int w, int h)
