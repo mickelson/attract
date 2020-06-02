@@ -110,7 +110,14 @@ class FeListBox;
 class FePresentableParent
 {
 public:
+	FePresentableParent();
+	virtual ~FePresentableParent();
+
 	std::vector< FeBasePresentable * > elements;
+
+	int m_nesting_level;
+	int get_nesting_level();
+	void set_nesting_level( int );
 
 	FeImage *add_image(const char *,int, int, int, int);
 	FeImage *add_image(const char *, int, int);

@@ -435,6 +435,7 @@ FeImage *FePresent::add_surface( int w, int h, FePresentableParent &p )
 {
 	FeSurfaceTextureContainer *new_surface = new FeSurfaceTextureContainer( w, h );
 	new_surface->set_smooth( m_feSettings->get_info_bool( FeSettings::SmoothImages ) );
+	new_surface->set_nesting_level( p.get_nesting_level() + 1 );
 
 	//
 	// Set the default sprite size to the same as the texture itself
