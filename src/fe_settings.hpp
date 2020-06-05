@@ -28,6 +28,9 @@
 #include "fe_romlist.hpp"
 #include "fe_input.hpp"
 #include "fe_util.hpp"
+#include "scraper_base.hpp"
+#include "path_cache.hpp"
+#include <deque>
 
 extern const char *FE_ART_EXTENSIONS[];
 
@@ -41,8 +44,6 @@ extern const char *FE_SWF_EXT;
 
 extern const char *FE_CFG_YES_STR;
 extern const char *FE_CFG_NO_STR;
-
-class FeImporterContext;
 
 // A container for each task when importing/building romlists from the command line
 class FeImportTask
@@ -103,6 +104,7 @@ public:
 	{
 		Language=0,
 		ExitCommand,
+		ExitMessage,
 		DefaultFont,
 		FontPath,
 		ScreenSaverTimeout,
@@ -118,8 +120,9 @@ public:
 		TrackUsage,
 		MultiMon,
 		SmoothImages,
-		AccelerateSelection,
+		SelectionMaxStep,
 		SelectionSpeed,
+		MoveMouseOnLaunch,
 		ScrapeSnaps,
 		ScrapeMarquees,
 		ScrapeFlyers,
@@ -127,6 +130,8 @@ public:
 		ScrapeFanArt,
 		ScrapeVids,
 		ScrapeOverview,
+		ThegamesdbKey,
+		PowerSaving,
 #ifdef SFML_SYSTEM_WINDOWS
 		HideConsole,
 #endif
@@ -142,20 +147,27 @@ public:
 	enum GameExtra
 	{
 		Executable =0, // custom executable to override the configured emulator executable
-		Arguments,     // custom arguments to override the configured emulator arguments
-		Overview
+		Arguments      // custom arguments to override the configured emulator arguments
 	};
 
 private:
 	std::string m_config_path;
 	std::string m_default_font;
 	std::string m_exit_command;
+	std::string m_exit_message;
+	std::string m_exit_question;
 	std::string m_language;
 	std::string m_current_search_str;
 
 	std::string m_menu_prompt;		// 'Displays Menu" prompt
 	std::string m_menu_layout;		// 'Displays Menu' layout.  if blank, use built-in menu
 	std::string m_menu_layout_file;		// 'Displays Menu" toggled layout file
+
+	std::string m_last_game_overview_path;  // cache the last loaded game overview path
+	std::string m_last_game_overview_text;  // cache the last loaded game overview text
+
+	// configured API key to use for for thegamesdb.net scraping.  If blank, AM's standard public key is used
+	std::string m_tgdb_key;
 
 	std::vector<std::string> m_font_paths;
 	std::vector<FeDisplayInfo> m_displays;
@@ -165,13 +177,18 @@ private:
 	std::vector<int> m_display_cycle; // display indices to show in cycle
 	std::vector<int> m_display_menu; // display indices to show in menu
 	std::map<GameExtra,std::string> m_game_extras; // "extra" rom settings for the current rom
+	std::deque<int> m_display_stack; // stack for displays to navigate to when "back" button pressed (and
+					// display shortcuts are used)
 	FeRomList m_rl;
+	FePathCache m_path_cache;
 
 	FeInputMap m_inputmap;
 	FeSoundInfo m_sounds;
 	FeResourceMap m_resourcemap;
 	FeLayoutInfo m_saver_params;
 	FeLayoutInfo m_intro_params;
+	FeLayoutInfo m_current_layout_params; // copy of current layout params (w/ per display params as well)
+	FeLayoutInfo m_display_menu_per_display_params; // stores only the 'per_display' params for the display menu
 	sf::IntRect m_mousecap_rect;
 
 	int m_current_display; // -1 if we are currently showing the 'displays menu' w/ custom layout
@@ -193,8 +210,9 @@ private:
 	WindowType m_window_mode;
 	bool m_smooth_images;
 	FilterWrapModeType m_filter_wrap_mode;
-	bool m_accel_selection;
+	int m_selection_max_step; // max selection acceleration step.  0 to disable accel
 	int m_selection_speed;
+	bool m_move_mouse_on_launch; // configure whether mouse gets moved to bottom right corner on launch
 	bool m_scrape_snaps;
 	bool m_scrape_marquees;
 	bool m_scrape_flyers;
@@ -205,6 +223,7 @@ private:
 #ifdef SFML_SYSTEM_WINDOWS
 	bool m_hide_console;
 #endif
+	bool m_power_saving;
 	bool m_loaded_game_extras;
 	enum FePresentState m_present_state;
 
@@ -230,11 +249,18 @@ private:
 
 	std::string get_played_display_string( int filter_index, int rom_index );
 
+	bool internal_get_best_artwork_file(
+		const FeRomInfo &rom,
+		const std::string &art_name,
+		std::vector<std::string> &vid_list,
+		std::vector<std::string> &image_list,
+		bool image_only,
+		bool ignore_emu );
 
 	bool simple_scraper( FeImporterContext &, const char *, const char *, const char *, const char *, bool = false );
 	bool general_mame_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
-	void apply_xml_import( FeImporterContext &, bool );
+	bool apply_xml_import( FeImporterContext & );
 
 	bool load_game_extras(
 		const std::string &romlist_name,
@@ -245,6 +271,9 @@ private:
 		const std::string &romlist_name,
 		const std::string &romname,
 		const std::map<GameExtra,std::string> &extras );
+
+	// sets path to filename for specified emu and romname.  Returns true if file exists, false otherwise
+	bool get_game_overview_filepath( const std::string &emu, const std::string &romname, std::string &path );
 
 public:
 	FeSettings( const std::string &config_dir,
@@ -266,6 +295,9 @@ public:
 	void get_input_mappings( std::vector < FeMapping > &l ) const { m_inputmap.get_mappings( l ); };
 	void set_input_mapping( FeMapping &m ) { m_inputmap.set_mapping( m ); };
 
+	void on_joystick_connect() { m_inputmap.on_joystick_connect(); };
+	std::vector < std::pair< int, std::string > > &get_joy_config() { return m_inputmap.get_joy_config(); };
+
 	void set_volume( FeSoundInfo::SoundType, const std::string & );
 	int get_set_volume( FeSoundInfo::SoundType ) const;
 	int get_play_volume( FeSoundInfo::SoundType ) const;
@@ -278,10 +310,27 @@ public:
 	void step_current_selection( int step );
 	void set_current_selection( int filter_index, int rom_index ); // use rom_index<0 to only change the filter
 
-	// Switches the display
-	// returns true if the display change results in a new layout, false otherwise
+	//////////////////////
 	//
-	bool set_display( int index );
+	// Set the "display" that will be shown to the one at the specified index
+	//
+	//////////////////////
+	//
+	// index=-1, stack_previous=false is a special case, used to show the "displays menu"
+	// when a custom layout is being used
+	//
+	// If "stack_previous" is true, the currently shown display is added to the display
+	// stack (so that if the user presses the back button later the fe will navigate back
+	// to the earlier display).  If index is -1 when stack_previous is true, then the
+	// display will be moved to the display at the top of the display stack (if there is one)
+	//
+	// Returns true if the display change results in a new layout, false otherwise
+	//
+	bool set_display( int index, bool stack_previous=false );
+
+	// Return true if there are displays available to navigate back to on a "back" button press
+	//
+	bool back_displays_available() { return !m_display_stack.empty(); };
 
 	int get_current_display_index() const;
 	int get_display_index_from_name( const std::string &name ) const;
@@ -306,12 +355,22 @@ public:
 	const std::string &get_search_rule() const;
 
 	bool select_last_launch();
+	bool is_last_launch( int filter_offset, int index_offset );
 	int get_joy_thresh() const { return m_joy_thresh; }
 	void init_mouse_capture( int window_x, int window_y );
 	bool test_mouse_reset( int mouse_x, int mouse_y ) const;
 
-	void run( int &minimum_run_seconds, launch_callback_fn launch_cb, void *launch_opaque ); // run current selection
+	// prepares for emulator launch by setting various tracking variables (last launch, etc)
+	// and determining the correct executable, command line parameters and working directory to use
+	void prep_for_launch(
+		std::string &command,
+		std::string &args,
+		std::string &work_dir,
+		FeEmulatorInfo *&emu );
+
 	int exit_command() const; // run configured exit command (if any)
+	void get_exit_message( std::string &exit_message ) const;
+	void get_exit_question( std::string &exit_question ) const;
 
 	void toggle_layout();
 	void set_current_layout_file( const std::string &layout_file );
@@ -329,6 +388,7 @@ public:
 	FeRomInfo *get_rom_absolute( int filter_index, int rom_index );
 
 	int selection_speed() const { return m_selection_speed; }
+	int selection_max_step() const { return m_selection_max_step; }
 
 	// get a list of available plugins
 	void get_available_plugins( std::vector < std::string > &list ) const;
@@ -372,14 +432,14 @@ public:
 	bool get_layout_dir( const std::string &layout_name, std::string &layout_dir ) const;
 	void get_layouts_list( std::vector<std::string> &layouts ) const;
 	FeLayoutInfo &get_layout_config( const std::string &layout_name );
+	FeScriptConfigurable &get_display_menu_per_display_params() { return m_display_menu_per_display_params; };
 
-	bool get_best_artwork_file(
+	void get_best_artwork_file(
 		const FeRomInfo &rom,
 		const std::string &art_name,
 		std::vector<std::string> &vid_list,
 		std::vector<std::string> &image_list,
-		bool image_only,
-		bool ignore_emu=false );
+		bool image_only );
 
 	bool has_artwork( const FeRomInfo &rom, const std::string &art_name );
 	bool has_video_artwork( const FeRomInfo &rom, const std::string &art_name );
@@ -441,10 +501,11 @@ public:
 	// Save an updated rom in the current romlist file (used with "Edit Game" command)
 	// original is assumed to be the currently selected rom
 	//
+	enum UpdateType { UpdateEntry, EraseEntry, InsertEntry };
 	void update_romlist_after_edit(
 		const FeRomInfo &original,		// original rom values
 		const FeRomInfo &replacement,		// new rom values
-		bool erase=false );			// if true, erase original instead
+		UpdateType erase=UpdateEntry );
 
 	void update_stats( int count_incr, int time_incr );
 
@@ -458,20 +519,26 @@ public:
 	void set_game_extra( GameExtra id, const std::string &value );
 	void save_game_extras();
 
+	bool get_game_overview_absolute( int filter_index, int rom_index, std::string &overview );
+
+	// only overwrites an existing file if overwrite = true
+	void set_game_overview( const std::string &emu, const std::string &romname, const std::string &overview, bool overwrite );
+
 	// This function implements the config-mode romlist generation
 	// A romlist named "<emu_name>.txt" is created in the romlist dir,
 	// overwriting any previous list of this name.
 	//
-	typedef bool (*UiUpdate) ( void *, int, const std::string & );
+	// Returns false if cancelled by the user
+	//
 	bool build_romlist( const std::vector < std::string > &emu_name, const std::string &out_filename,
-		UiUpdate, void *, std::string & );
+		UiUpdate, void *, std::string &, bool use_net=true );
 	bool scrape_artwork( const std::string &emu_name, UiUpdate uiu, void *uid, std::string &msg );
 
 	FeEmulatorInfo *get_emulator( const std::string & );
-	FeEmulatorInfo *create_emulator( const std::string & );
+	FeEmulatorInfo *create_emulator( const std::string &, const std::string & );
 	void delete_emulator( const std::string & );
 
-	void get_list_of_emulators( std::vector<std::string> &emu_list );
+	void get_list_of_emulators( std::vector<std::string> &emu_list, bool get_templates=false );
 
 	//
 	// Functions used for configuration
@@ -505,8 +572,9 @@ public:
 		std::string &str ) const;
 
 	void set_language( const std::string &l );
-	const std::string &get_language() const { return m_language; }
 	void get_languages_list( std::vector < FeLanguage > &ll ) const;
+
+	bool get_emulator_setup_script( std::string &path, std::string &file );
 
 	// Utility function to get a list of layout*.nut files from the specified path...
 	static void get_layout_file_basenames_from_path(
@@ -518,16 +586,6 @@ inline bool is_windowed_mode( int m )
 {
 	return (( m == FeSettings::Window ) || ( m == FeSettings::WindowNoBorder ));
 }
-
-//
-// Utility function used to collect artwork files with 'target_name' from
-// the specified art_paths
-//
-bool gather_artwork_filenames(
-	const std::vector < std::string > &art_paths,
-	const std::string &target_name,
-	std::vector<std::string> &vids,
-	std::vector<std::string> &images );
 
 bool art_exists( const std::string &path, const std::string &base );
 

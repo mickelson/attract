@@ -1,21 +1,5 @@
-attract (2.2.1-1) unstable; urgency=low
+attract (2.6.1-1) unstable; urgency=low
 
-  * Version 2.2.1 package.
+  * Version 2.6.1 package.
 
-attract (2.1.0-1) unstable; urgency=low
-
-  * Version 2.1 package.
-
- -- Andrew Mickelson <andrew@attractmode.org>  Wed, 08 Jun 2016 22:33:19 -0800
-
-attract (2.0.0-1) unstable; urgency=low
-
-  * Version 2.0 package.
-
- -- Andrew Mickelson <andrew@attractmode.org>  Fri, 19 Feb 2016 22:33:19 -0800
-
-attract (1.6.2-1) unstable; urgency=low
-
-  * Initial debian package.
-
- -- Andrew Mickelson <andrew@attractmode.org>  Mon, 02 Nov 2015 22:33:19 -0800
+ -- Andrew Mickelson <andrew@attractmode.org>  Fri, 17 Jan 2020 04:20:00 -0800

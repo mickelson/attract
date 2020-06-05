@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>attract-mode.desktop</id>
+  <metadata_license>CC0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <name>Attract-Mode</name>
+  <summary>A graphical frontend for emulators</summary>
+
+  <description>
+    <p>
+      Attract-Mode is a graphical frontend for command line emulators such as MAME,
+      MESS and Nestopia. It hides the underlying operating system and is intended to
+      be controlled with a joystick, gamepad or spinner, making it ideal for use
+      in arcade cabinets.
+    </p>
+  </description>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>http://attractmode.org/images/cools1.png</image>
+    </screenshot>
+    <screenshot>
+      <image>http://attractmode.org/images/attracman.png</image>
+    </screenshot>
+    <screenshot>
+      <image>http://attractmode.org/images/cools2.png</image>
+    </screenshot>
+    <screenshot>
+      <image>http://attractmode.org/images/config.png</image>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">http://attractmode.org/</url>
+
+  <provides>
+    <binary>attract</binary>
+  </provides>
+  <categories>
+    <category>Game</category>
+    <category>Emulator</category>
+  </categories>
+</component>

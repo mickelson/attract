@@ -31,6 +31,9 @@
 #include <cassert>
 #endif
 
+#define FE_VERSION_INT( a, b, c ) ((a)<<16 | (b)<<8 | (c))
+#define SFML_VERSION_INT FE_VERSION_INT( SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH )
+
 extern const char *FE_WHITESPACE;
 
 //
@@ -64,6 +67,10 @@ bool tail_compare(
 	const std::string &filename,
 	const std::vector<std::string> &ext_list );
 
+bool tail_compare(
+	const std::string &filename,
+	const char **ext_list );
+
 //
 // Case insensitive compare of one and two
 // returns 0 if equal
@@ -73,6 +80,47 @@ int icompare( const std::string &one,
 
 typedef bool (*output_callback_fn)( const char *, void * );
 typedef void (*launch_callback_fn)( void * );
+
+// Optional settings (and return values!) that are sent to run_program() when running an emulator
+//
+class run_program_options_class
+{
+public:
+	// [in] "joy_thresh" - joystick threshold, only used if exit_hotkey or pause_hotkey
+	//                is mapped to a joystick
+	int joy_thresh;
+
+	// [in] "launch_cb" = callback function to call after program launched
+	launch_callback_fn launch_cb;
+
+	//	[in] "wait_cb" = callback function to call repeatedly while waiting for program return [windows only]
+	launch_callback_fn wait_cb;
+
+	//	[in] "launch_opaque" - opaque ptr to pass to the launch callback (and wait callback) function.
+	//                   run_program() doesn't care what this is.
+	void *launch_opaque;
+
+	// [in] "exit_hotkey" - hotkey that when pressed will force exit of program
+	//					(use empty for no hotkey checking)
+	std::string exit_hotkey;
+
+	// [in] "exit_hotkey" - hotkey that when pressed will pause the program
+	//					(use empty for no hotkey checking)
+	std::string pause_hotkey;
+
+	// [out] "running_pid" - process id of the still running process (if pause hotkey pressed)
+	// [out] "running_wnd" - window handle of the still running process (if pause hotkey pressed)
+	unsigned int running_pid;
+	void *running_wnd;
+
+#ifdef USE_DRM
+	int drm_fd;
+#endif
+	// Default constructor
+	//
+	run_program_options_class();
+};
+
 //
 // Run the specified program, blocks while program running
 //
@@ -87,13 +135,7 @@ typedef void (*launch_callback_fn)( void * );
 //					doesn't care what this is.
 //		"block" - if true, don't return until program is done execution
 //					if false, "cb" and "opaque" are ignored
-//		"exit_hotkey" - hotkey that when pressed will force exit of program
-//					(use NULL for no hotkey checking)
-//		"joy_thresh" - joystick threshold, only used if exit_hotkey is mapped to
-//					a joystick
-//		"launch_cb" = callback function to call after program launched
-//		"launch_opaque" - opaque ptr to pass to the launch callback function.  run_program()
-//					doesn't care what this is.
+//		"opt" - optional settings and return values used when launching an emulator
 //
 //	Returns true if program ran successfully
 //
@@ -103,10 +145,16 @@ bool run_program( const std::string &prog,
 	output_callback_fn cb = NULL,
 	void *opaque=NULL,
 	bool block=true,
-	const std::string &exit_hotkey="",
-	int joy_thresh=0,
-	launch_callback_fn launch_cb= NULL,
-	void *launch_opaque=NULL );
+	run_program_options_class *opt = NULL );
+
+void resume_program(
+	unsigned int pid,
+	void *wnd,
+	run_program_options_class *opt = NULL );
+
+void kill_program( unsigned int pid );
+
+bool process_exists( unsigned int pid );
 
 //
 // Utility functions for file processing:
@@ -125,6 +173,9 @@ bool is_relative_path( const std::string &file );
 // path is to a directory
 std::string clean_path( const std::string &path,
 	bool add_trailing_slash = false );
+
+// get program path (NOT the working directory)
+std::string get_program_path();
 
 // return path as an absolute path
 std::string absolute_path( const std::string &path );
@@ -189,6 +240,8 @@ std::string get_available_filename(
 // Create "base" directory if it doesn't exist
 // Create "sub" folder in "base" if it doesn't already exist
 //
+// returns true if directory created
+//
 bool confirm_directory( const std::string &base, const std::string &sub );
 
 //
@@ -232,7 +285,11 @@ std::basic_string<sf::Uint32> clipboard_get_content();
 // (sf::Window)
 //
 #if defined(USE_XLIB)
-void get_x11_geometry( bool multimon, int &, int &, int &, int & );
+void get_x11_multimon_geometry( int &x, int &y, unsigned int &width, unsigned int &height );
+void get_x11_primary_screen_size( unsigned int &width, unsigned int &height );
+
+// set foreground window to the specified window.
+void set_x11_foreground_window( unsigned long w );
 #endif
 
 #ifndef NO_MOVIE
@@ -243,6 +300,9 @@ void print_ffmpeg_version_info();
 #endif
 
 std::string url_escape( const std::string &raw );
+std::string newline_escape( const std::string &raw );
+
+void remove_trailing_spaces( std::string &str );
 
 void get_url_components( const std::string &url,
 	std::string &host,
@@ -261,6 +321,9 @@ bool line_to_setting_and_value( const std::string &line,
 	std::string &setting,
 	std::string &value,
 	const char *sep=FE_WHITESPACE );
+
+// return the name of the process that currently has window focus
+std::string get_focus_process();
 
 //
 // Non-blocking check for input on stdin

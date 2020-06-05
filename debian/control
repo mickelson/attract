@@ -6,7 +6,8 @@ Build-Depends: debhelper (>= 9), pkgconf, git,
  libarchive-dev, libavcodec-dev, libavformat-dev, libavresample-dev,
  libavutil-dev, libfontconfig-dev, libfreetype6-dev, libglu-dev,
  libjpeg62-turbo-dev | libjpeg-turbo8-dev,
- libopenal-dev, libsfml-dev, libswscale-dev, libxinerama-dev
+ libopenal-dev, libsfml-dev, libswscale-dev, libxinerama-dev,
+ libcurl4-openssl-dev | libcurl4-nss-dev | libcurl4-gnutls-dev
 Standards-Version: 3.9.5
 Homepage: http://attractmode.org
 
@@ -18,4 +19,4 @@ Description: Attract-Mode emulator frontend
  MESS and Nestopia. It hides the underlying operating system and is intended
  to be controlled with a joystick, gamepad or spin dial, making it ideal for
  use in arcade cabinets. Attract-Mode is open source and runs on Linux, OS X
- and Windows. 
+ and Windows.

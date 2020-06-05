@@ -28,6 +28,7 @@
 #include "fe_settings.hpp"
 #include "fe_sound.hpp"
 #include "fe_shader.hpp"
+#include "fe_window.hpp"
 
 class FeImage;
 class FeBaseTextureContainer;
@@ -35,8 +36,12 @@ class FeText;
 class FeListBox;
 class FeFontContainer;
 class FeSurfaceTextureContainer;
-class FeZipStream;
 class FePresentableParent;
+
+namespace sf
+{
+	class InputStream;
+};
 
 enum FeTransitionType
 {
@@ -50,7 +55,8 @@ enum FeTransitionType
 	EndNavigation,		// var = 0
 	ShowOverlay,		// var = Custom, Exit, Displays, Filters, Tags
 	HideOverlay,		// var = 0
-	NewSelOverlay		// var = index of new selection
+	NewSelOverlay,		// var = index of new selection
+	ChangedTag		   // var = FeRomInfo::Favourite, FeRomInfo::Tags
 };
 
 //
@@ -70,7 +76,7 @@ public:
 private:
 	sf::Font m_font;
 	std::string m_name;
-	FeZipStream *m_zs;
+	sf::InputStream *m_stream;
 };
 
 //
@@ -108,6 +114,7 @@ protected:
 	};
 
 	FeSettings *m_feSettings;
+	FeWindow &m_window;
 
 	const FeFontContainer *m_currentFont;
 	FeFontContainer &m_defaultFont;
@@ -188,7 +195,7 @@ protected:
 	void set_preserve_aspect_ratio( bool );
 
 public:
-	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont );
+	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWindow &wnd );
 	virtual ~FePresent( void );
 
 	void init_monitors();
@@ -197,8 +204,9 @@ public:
 	void load_screensaver();
 	void load_layout( bool initial_load=false );
 
-	void update_to_new_list( int var=0, bool new_layout=false );
+	virtual void update_to_new_list( int var=0, bool reset_display=false ); // NOTE virtual function!
 	void on_end_navigation();
+	void redraw_surfaces();
 
 	bool tick(); // run vm on_tick and update videos.  return true if redraw required
 	bool video_tick(); // update videos only. return true if redraw required

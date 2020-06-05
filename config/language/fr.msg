@@ -73,6 +73,7 @@ Enter Display Name;Entrer le nom de la liste
 Enter Emulator Name;Nom de l'émulateur?
 Enter Filter Name;Entrer le nom du filtre
 Executable;Exécutable
+Exit;Sortie (Confirmer)
 Exit Attract-Mode;Quitter Attract-Mode
 Exit Attract-Mode?;Quitter Attract-Mode?
 Exit Command;Commande de sortie
@@ -98,13 +99,12 @@ Hide Brackets in Game Title;Cacher les crochets dans le titre du jeu
 Info Source/Scraper;Info Source/Aspiration
 Joystick Threshold;Seuil du joystick
 Jump to Next Display;Bascule sur la liste de roms suivante 
-Language;Langage
+Language;Langue
 Layout;Thème
 Layout Options;Options du Layout
 Left;Gauche
 List Limit;taille maximum de la liste
 Manufacturer;Fabriquant
-Minimum Run Time;Temps minimum fonctionnement 
 Mouse Threshold;Seuil de la souris
 Movie Volume;Volume des vidéos
 Name;Nom
@@ -245,7 +245,7 @@ _help_emu_exit_hotkey;Définit un raccourci clavier pour sortir de l'émulateur.
 _help_emu_gen_romlist;Génére une liste de ROM en cherchant dans le chemin des ROM avec l'extension choisie, incorporant l'XML et les fichiers additionnels d'information dans la liste générée (si disponible)
 _help_emu_import_extras;Fichiers additionels nécessitant d'être lus lors de la génération de la liste de ROM pour cet émulateur. Fichiers supportés: catver.ini (catégories) et nplayers.ini (nombre de joueur). Plusieurs fichiers peuvent être saisis si séparés par un point-virgule
 _help_emu_info_source;Saisir "listxml" si cet émulateur propose un fichier de type mame -listxml, "listsoftware" pour les fichiers du type mame/mess -listsoftware, "thegamesdb.net" pour extraire les informations du site thegamesdb.net, ou "steam" pour les lires depuis une installation de steam. Les sources "listsoftware" et "thegamesdb.net" nécessitent que des identifiants systèmes spécifiques soient configurés pour fonctionner correctement
-_help_emu_minimum_run_time;Définit un temps minimum de fonctionnement (en secondes). Attract-Mode va attendre, après avoir lancé l'émulateur, que ce temps minimum se soit écoulé avant de re-basculer au premier plan. Ceci est nécessaire pour que Steam fonctionne correctement sous Windows. Saisir 0 si vous n'en avez pas besoin
+_help_emu_nb_mode_wait;Définit un temps minimum de fonctionnement (en secondes). Attract-Mode va attendre, après avoir lancé l'émulateur, que ce temps minimum se soit écoulé avant de re-basculer au premier plan. Ceci est nécessaire pour que Steam fonctionne correctement sous Windows. Saisir 0 si vous n'en avez pas besoin
 _help_emu_romext;Extension des ROM pour cet émulateur (ex .zip).  Possibilité d'utiliser des extensions multiples séparées par un point-virgule
 _help_emu_rompath;Chemin des ROM pour cet émulateur
 _help_emu_scrape_artwork;Aspirer les artworks manquants pour cet émulateur sur TheGamesDB.net et mamedb.com
@@ -266,7 +266,7 @@ _help_input_add;Ajouter un nouveau contrôle
 _help_input_delete;Enlever ce contrôle
 _help_intro;Configurer l'intro
 _help_joystick_threshold;Seuil d'amplitude des mouvements du joystick, de 1 à 100 (100=moins sensible)
-_help_language;Sélectionner le langage
+_help_language;Sélectionner la langue
 _help_misc;Configurations diverses
 _help_mouse_threshold;Seuil d'amplitude des mouvements de la souris, de 1 à 100 (100=moins sensible)
 _help_plugin_command;Exécutable associé à ce plug-in
@@ -302,12 +302,12 @@ Ambient Sounds;Son d'ambiance
 Configure available emulators;Configurer les émulateurs disponibles
 Configure filter rule;Configuration de la règle de filtrage
 Delete this filter;Supprimer ce filtre
-Exit;Sortie (Confirmer)
 Exit menu;Quitter le menu
 Generate Collection/Romlist;Générer la liste de ROM
 Launch Last Game on Startup;Lancer le dernier jeu au démarrage
 Lists;Listes
 Lists Menu;Menu des listes
+Minimum Run Time;Temps minimum fonctionnement 
 Next List;Liste suivante
 Previous List;Liste précédent
 XML Mode;Mode XML
@@ -327,8 +327,13 @@ $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
+Artwork Name;Artwork Name
+Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
+Blank Game;Blank Game
 Buttons;Buttons
+Clear Hotkey?;Clear Hotkey?
 Configure / Displays Menu;Configure / Displays Menu
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
 Confirm Exit;Confirm Exit
@@ -338,27 +343,43 @@ Custom Executable;Custom Executable
 Default;Default
 Default Action;Default Action
 Delete game '$1'?;Delete game '$1'?
+Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Game;Delete this Game
+Delete this Shortcut;Delete this Shortcut
 Edit Game;Edit Game
+Edit Shortcut;Edit Shortcut
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
 Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
+Exit Message;Exit Message
 Extra;Extra
 FileIsAvailable;FileIsAvailable
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
 Launch Last Game;Launch Last Game
+Layout File;Layout File
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
+Pause Hotkey;Pause Hotkey
 Play Sound;Play Sound
+Please Wait;Please Wait
+Press Hotkey;Press Hotkey
 Previous Game;Previous Game
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove tag: '$1';Remove tag: '$1'
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Select template to use for emulator settings;Select template to use for emulator settings
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
@@ -384,8 +405,10 @@ _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
 _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
+_help_emu_pause_hotkey;Set a global hotkey to pause the emulator.  When pressed, Attract-Mode will pause the emulator process and return to the frontend. The emulator process can be resumed by selecting the same game again in the frontend.
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_emu_workdir;The working directory for this emulator.  This is the directory that the frontend runs the emulator from.  Also, any relative rom paths, artwork paths, or additional import file paths are treated as being relative to this directory
+_help_exit_message;Alternate message to exit the frontend [i.e. "Shut Down System"]
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_game_custom_args;Set this to override the default command line arguments for this game.  Set this to [nothing] if you want to override with no parameters.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
@@ -395,8 +418,15 @@ _help_game_edit;Edit this game information
 _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_input_action;
 _help_input_default_action;Set the default behaviour for this control
-_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
+_help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
+_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode.  Setting this to 'No' may reduce screen flicker when launching games
+_help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
+_help_shortcut_delete;Delete this shortcut from the Romlist
+_help_shortcut_label_edit;Edit this shortcut's label
+_help_shortcut_target_edit;Edit this shortcut's target
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)

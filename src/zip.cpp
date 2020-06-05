@@ -22,6 +22,7 @@
 
 #include "zip.hpp"
 #include "fe_util.hpp"
+#include "fe_base.hpp"
 #include <iostream>
 #include <cstring>
 #include <SFML/System/Mutex.hpp>
@@ -168,7 +169,7 @@ bool fe_zip_open_to_buff(
 
 	if ( r != ARCHIVE_OK )
 	{
-		std::cerr << "Error opening archive: "
+		FeLog() << "Error opening archive: "
 			<< arch << std::endl;
 		archive_read_free( a );
 		return false;
@@ -207,7 +208,7 @@ bool fe_zip_get_dir(
 
 	if ( r != ARCHIVE_OK )
 	{
-		std::cerr << "Error opening archive: "
+		FeLog() << "Error opening archive: "
 			<< archive << std::endl;
 		archive_read_free( a );
 		return false;
@@ -238,7 +239,7 @@ bool fe_zip_open_to_buff(
 
 	if ( !mz_zip_reader_init_file( &zip, archive, 0 ) )
 	{
-		std::cerr << "Error initializing zip.  zip: "
+		FeLog() << "Error initializing zip.  zip: "
 			<< archive << std::endl;
 		return false;
 	}
@@ -247,8 +248,6 @@ bool fe_zip_open_to_buff(
 		filename, NULL, 0 );
 	if ( index < 0 )
 	{
-		std::cerr << "Error locating file. zip: "
-			<< archive << ", file: " << filename << std::endl;
 		mz_zip_reader_end( &zip );
 		return false;
 	}
@@ -256,7 +255,7 @@ bool fe_zip_open_to_buff(
 	mz_zip_archive_file_stat file_stat;
 	if ( !mz_zip_reader_file_stat(&zip, index, &file_stat) )
 	{
-		std::cerr << "Error reading filestats. zip: "
+		FeLog() << "Error reading filestats. zip: "
 			<< archive << ", file: " << filename << std::endl;
 		mz_zip_reader_end( &zip );
 		return false;
@@ -267,7 +266,7 @@ bool fe_zip_open_to_buff(
 	if ( !mz_zip_reader_extract_to_mem( &zip,
 		index, &(buff[0]), buff.size(), 0 ) )
 	{
-		std::cerr << "Error extracting to buffer. zip: "
+		FeLog() << "Error extracting to buffer. zip: "
 			<< archive << ", file: " << filename << std::endl;
 		mz_zip_reader_end( &zip );
 		return false;
@@ -290,7 +289,7 @@ bool fe_zip_get_dir(
 
 	if ( !mz_zip_reader_init_file( &zip, archive, 0 ) )
 	{
-		std::cerr << "Error initializing zip: "
+		FeLog() << "Error initializing zip: "
 			<< archive << std::endl;
 		return false;
 	}
@@ -327,16 +326,7 @@ const char *FE_ARCHIVE_EXT[] =
 
 bool is_supported_archive( const std::string &fname )
 {
-	int i=0;
-	while ( FE_ARCHIVE_EXT[i] != NULL )
-	{
-		if ( tail_compare( fname, FE_ARCHIVE_EXT[i] ) )
-			return true;
-
-		i++;
-	}
-
-	return false;
+	return tail_compare( fname, FE_ARCHIVE_EXT );
 }
 
 void *zip_stream_alloc_cb( size_t s )
@@ -454,19 +444,7 @@ void gather_archive_filenames_with_base(
 				in_list.push_back( *itr );
 			else
 			{
-				bool match_ext=false;
-				int i=0;
-				while ( exts[i] != 0 )
-				{
-					if ( tail_compare( *itr, exts[i] ) )
-					{
-						match_ext = true;
-						break;
-					}
-					i++;
-				}
-
-				if ( match_ext )
+				if ( tail_compare( *itr, exts ) )
 					in_list.push_back( *itr );
 				else
 					out_list.push_back( *itr );

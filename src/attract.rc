@@ -1,3 +1,7 @@
+#define RT_MANIFEST 24
+#define APP_MANIFEST 1
+APP_MANIFEST RT_MANIFEST attract.exe.manifest
+
 #define STRINGIZE_HELPER(...) #__VA_ARGS__
 #define STRINGIZE(x) STRINGIZE_HELPER(x)
 
@@ -21,8 +25,8 @@
 //#define LANG_WITH_CHARSET "040904E4"
 //#endif
 
-#define RC_VERSION_BUILD FE_VERSION_MAJOR.FE_VERSION_MINOR.FE_VERSION_POINT.FE_VERSION_COUNT
-#define RC_VERSION_FILE FE_VERSION_MAJOR,FE_VERSION_MINOR,FE_VERSION_POINT,FE_VERSION_COUNT
+#define RC_VERSION_BUILD FE_VERSION_MAJOR.FE_VERSION_MINOR.FE_VERSION_POINT
+#define RC_VERSION_FILE FE_VERSION_MAJOR,FE_VERSION_MINOR,FE_VERSION_POINT
 
 1 VERSIONINFO
 	FILEVERSION RC_VERSION_FILE
@@ -43,7 +47,7 @@
 				VALUE "FileDescription", "Attract-Mode Frontend\0"
 				VALUE "FileVersion", STRINGIZE(RC_VERSION_FILE) "\0"
 				VALUE "InternalName", "attract\0"
-				VALUE "LegalCopyright", "Copyright (c) 2013-2016 Andrew Mickelson\0"
+				VALUE "LegalCopyright", "Copyright (c) 2013-2018 Andrew Mickelson\0"
 				VALUE "OriginalFilename", "ATTRACT.EXE\0"
 				VALUE "ProductName", "Attract-Mode\0"
 				VALUE "ProductVersion", STRINGIZE(RC_VERSION_BUILD) "\0"

@@ -1013,8 +1013,9 @@ function state_update( ttime, animate_frame )
 			g.set_pos( g2p( ::GhostHouse[0] ), g2p( ::GhostHouse[1] + 1 ) );
 		}
 
-		::last_ghost = ttime - 3000;
+		::last_ghost = ttime - 3001;
 		::reset_actors = false;
+		::reset_ttime = true;
 	}
 	
 	// Release a ghost from the ghost house every 3 seconds
@@ -1252,6 +1253,8 @@ function speed_adjust()
 ::reset_actors <- true;
 ::last_frame <- 0;
 ::sounds <- {};
+::reset_ttime <- false;
+::ttime_adj <- 0;
 
 if ( AM_CONFIG["intro_sound"].len() > 0 )
 	::sounds["intro"] <- fe.add_sound( AM_CONFIG["intro_sound"] );
@@ -1281,6 +1284,20 @@ fe.add_ticks_callback( "tick" );
 //
 function tick( ttime )
 {
+	if ( ::reset_ttime )
+	{
+		::ttime_adj = ttime;
+
+		::global_state <- GhostState.Scatter;
+		::last_frame = 0;
+		::last_ghost = 0;
+		ttime = 0;
+
+		::reset_ttime = false;
+	}
+	else
+		ttime = ttime - ::ttime_adj;
+
 	local frame = ttime / 8.3; // 8.3=1000/120
 
 	if ( ::sounds.rawin("intro") && ::sounds["intro"].playing )

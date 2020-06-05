@@ -22,8 +22,9 @@
 
 #include "fe_romlist.hpp"
 #include "fe_util.hpp"
+
 #include <iostream>
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <algorithm>
 
 #include <squirrel.h>
@@ -48,7 +49,7 @@ void FeRomListSorter::init_title_rex( const std::string &re_mask )
 		(const SQChar *)re_mask.c_str(), &err );
 
 	if ( !m_rex )
-		std::cout << "Error compiling regular expression \""
+		FeLog() << "Error compiling regular expression \""
 			<< re_mask << "\": " << err << std::endl;
 }
 
@@ -223,7 +224,7 @@ bool FeRomList::load_romlist( const std::string &path,
 	m_fav_changed=false;
 
 	std::string load_name( m_user_path + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION );
-	std::ifstream myfile( load_name.c_str() );
+	nowide::ifstream myfile( load_name.c_str() );
 
 	if ( myfile.is_open() )
 	{
@@ -266,7 +267,7 @@ bool FeRomList::load_romlist( const std::string &path,
 			if ( (*itr).empty() )
 				continue;
 
-			std::ifstream myfile( std::string(load_name + (*itr) + FE_FAVOURITE_FILE_EXTENSION).c_str() );
+			nowide::ifstream myfile( std::string(load_name + (*itr) + FE_FAVOURITE_FILE_EXTENSION).c_str() );
 
 			if ( !myfile.is_open() )
 				continue;
@@ -363,13 +364,66 @@ bool FeRomList::load_romlist( const std::string &path,
 			(*it).load_stats( stat_path );
 	}
 
-	std::cout << " - Loaded master romlist '" << m_romlist_name
+	FeLog() << " - Loaded master romlist '" << m_romlist_name
 			<< "' in " << load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << m_list.size() << " entries kept, " << m_global_filtered_out_count
 			<< " discarded)" << std::endl;
 
 	create_filters( display );
 	return retval;
+}
+
+void FeRomList::build_single_filter_list( FeFilter *f,
+	std::vector< FeRomInfo *> &result )
+{
+	if ( f )
+	{
+		if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
+			result.reserve( f->get_size() );
+
+		if ( f->test_for_target( FeRomInfo::FileIsAvailable ) )
+			get_file_availability();
+
+		f->init();
+		for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			if ( f->apply_filter( *itr ) )
+				result.push_back( &( *itr ) );
+	}
+	else // no filter situation, so we just add the entire list...
+	{
+		result.reserve( m_list.size() );
+		for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			result.push_back( &( *itr ) );
+	}
+
+	if ( f )
+	{
+		// track the size of the filtered list in our filter info object
+		f->set_size( result.size() );
+
+		//
+		// Sort and/or prune now if configured for this filter
+		//
+		FeRomInfo::Index sort_by=f->get_sort_by();
+		bool rev = f->get_reverse_order();
+		int list_limit = f->get_list_limit();
+
+		if ( sort_by != FeRomInfo::LAST_INDEX )
+		{
+			std::stable_sort( result.begin(), result.end(),
+				FeRomListSorter2( sort_by, rev ) );
+		}
+		else if ( rev != false )
+			std::reverse( result.begin(), result.end() );
+
+		if (( list_limit != 0 ) && ( (int)result.size() > abs( list_limit ) ))
+		{
+			if ( list_limit > 0 )
+				result.erase( result.begin() + list_limit, result.end() );
+			else
+				result.erase( result.begin(), result.end() + list_limit );
+		}
+	}
 }
 
 void FeRomList::create_filters(
@@ -396,59 +450,11 @@ void FeRomList::create_filters(
 	{
 		m_filtered_list.push_back( std::vector< FeRomInfo *>()  );
 
-		FeFilter *f = display.get_filter( i );
-		if ( f )
-		{
-			if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
-				m_filtered_list[i].reserve( f->get_size() );
-
-			if ( f->test_for_target( FeRomInfo::FileIsAvailable ) )
-				get_file_availability();
-
-			f->init();
-			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
-				if ( f->apply_filter( *itr ) )
-					m_filtered_list[i].push_back( &( *itr ) );
-		}
-		else // no filter situation, so we just add the entire list...
-		{
-			m_filtered_list[i].reserve( m_list.size() );
-			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
-				m_filtered_list[i].push_back( &( *itr ) );
-		}
-
-		if ( f )
-		{
-			// track the size of the filtered list in our filter info object
-			f->set_size( m_filtered_list[i].size() );
-
-			//
-			// Sort and/or prune now if configured for this filter
-			//
-			FeRomInfo::Index sort_by=f->get_sort_by();
-			bool rev = f->get_reverse_order();
-			int list_limit = f->get_list_limit();
-
-			if ( sort_by != FeRomInfo::LAST_INDEX )
-			{
-				std::stable_sort( m_filtered_list[i].begin(),
-						m_filtered_list[i].end(),
-						FeRomListSorter2( sort_by, rev ) );
-			}
-			else if ( rev != false )
-				std::reverse( m_filtered_list[i].begin(), m_filtered_list[i].end() );
-
-			if (( list_limit != 0 ) && ( (int)m_filtered_list[i].size() > abs( list_limit ) ))
-			{
-				if ( list_limit > 0 )
-					m_filtered_list[i].erase( m_filtered_list[i].begin() + list_limit, m_filtered_list[i].end() );
-				else
-					m_filtered_list[i].erase( m_filtered_list[i].begin(), m_filtered_list[i].end() + list_limit );
-			}
-		}
+		build_single_filter_list( display.get_filter( i ),
+			m_filtered_list[i] );
 	}
 
-	std::cout << " - Constructed " << filters_count << " filters in "
+	FeLog() << " - Constructed " << filters_count << " filters in "
 			<< load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << filters_count * m_list.size() << " comparisons)" << std::endl;
 }
@@ -499,7 +505,7 @@ void FeRomList::save_favs()
 	}
 	else
 	{
-		std::ofstream outfile( fname.c_str() );
+		nowide::ofstream outfile( fname.c_str() );
 		if ( !outfile.is_open() )
 			return;
 
@@ -570,7 +576,7 @@ void FeRomList::save_tags()
 		}
 		else
 		{
-			std::ofstream outfile( file_name.c_str() );
+			nowide::ofstream outfile( file_name.c_str() );
 			if ( !outfile.is_open() )
 				continue;
 
@@ -678,13 +684,8 @@ bool FeRomList::fix_filters( FeDisplayInfo &display, FeRomInfo::Index target )
 		if ( f->test_for_target( target ) )
 		{
 			m_filtered_list[i].clear();
+			build_single_filter_list( f, m_filtered_list[i] );
 			retval = true;
-
-			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
-			{
-				if ( f->apply_filter( *itr ) )
-					m_filtered_list[i].push_back( &( *itr ) );
-			}
 		}
 	}
 
@@ -728,10 +729,10 @@ void FeRomList::get_file_availability()
 
 // NOTE: this function is implemented in fe_settings.cpp
 bool internal_resolve_config_file(
-						const std::string &config_path,
-						std::string &result,
-						const char *subdir,
-						const std::string &name  );
+	const std::string &config_path,
+	std::string &result,
+	const char *subdir,
+	const std::string &name  );
 
 
 FeEmulatorInfo *FeRomList::get_emulator( const std::string & emu )
@@ -765,7 +766,7 @@ FeEmulatorInfo *FeRomList::get_emulator( const std::string & emu )
 	return NULL;
 }
 
-FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu )
+FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu, const std::string &emu_template )
 {
 	// If an emulator with the given name already exists we return it
 	//
@@ -779,9 +780,20 @@ FeEmulatorInfo *FeRomList::create_emulator( const std::string &emu )
 	FeEmulatorInfo new_emu( emu );
 
 	std::string defaults_file;
-	if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
+	if ( !emu_template.empty() )
 	{
-		new_emu.load_from_file( defaults_file );
+		defaults_file = m_config_path;
+		defaults_file += FE_EMULATOR_TEMPLATES_SUBDIR;
+		defaults_file += emu_template;
+		defaults_file += FE_EMULATOR_FILE_EXTENSION;
+
+		if ( !new_emu.load_from_file( defaults_file ) )
+			FeLog() << "Unable to open file: " << defaults_file << std::endl;
+	}
+	else if ( internal_resolve_config_file( m_config_path, defaults_file, NULL, FE_EMULATOR_DEFAULT ) )
+	{
+		if ( !new_emu.load_from_file( defaults_file ) )
+			FeLog() << "Unable to open file: " << defaults_file << std::endl;
 
 		//
 		// Find and replace the [emulator] token, replace with the specified
@@ -822,6 +834,7 @@ void FeRomList::delete_emulator( const std::string & emu )
 	path += emu;
 	path += FE_EMULATOR_FILE_EXTENSION;
 
+	FeLog() << "Deleting emulator: " << path << std::endl;
 	delete_file( path );
 
 	//

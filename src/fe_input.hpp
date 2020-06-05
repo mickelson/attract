@@ -29,6 +29,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "nowide/fstream.hpp"
 
 class FeMapping;
 
@@ -40,13 +41,19 @@ public:
 		Unsupported=-1,
 		Keyboard=0,
 		Mouse=1,
-		Joystick0=2 // up to sf::Joystick::Count joysticks supported starting from Joystick0
+		Touch=2,
+		Joystick0=3 // up to sf::Joystick::Count joysticks supported starting from Joystick0
 	};
 
 	enum MouseCode
 	{
 		MouseUp, MouseDown, MouseLeft, MouseRight,
 		MouseWheelUp, MouseWheelDown, MouseBLeft, MouseBRight, MouseBMiddle, MouseBX1, MouseBX2
+	};
+
+	enum TouchCode
+	{
+		SwipeUp, SwipeDown, SwipeLeft, SwipeRight, Tap
 	};
 
 	enum JoyCode
@@ -86,11 +93,14 @@ public:
 	// Works for joystick axes
 	int get_current_pos() const;
 
+	std::string get_joy_name() const; // return the system name for this joystick
+
 	bool operator==(const FeInputSingle &) const;
 	bool operator!=(const FeInputSingle &) const;
 
 private:
 	static const char *mouseStrings[];
+	static const char *touchStrings[];
 	static const char *joyStrings[];
 
 	Type m_type;
@@ -147,7 +157,9 @@ public:
 		PrevLetter,
 		NextLetter,
 		Intro,
+		InsertGame,
 		EditGame,
+		LayoutOptions,
 		Custom1,
 		Custom2,
 		Custom3,
@@ -190,6 +202,10 @@ public:
 	//
 	void initialize_mappings();
 
+	// fix mappings when joystick connected/disconnected
+	void on_joystick_connect();
+	std::vector < std::pair < int, std::string > > &get_joy_config() { return m_joy_config; };
+
 	void get_mappings( std::vector< FeMapping > &mappings ) const;
 	void set_mapping( const FeMapping &mapping );
 
@@ -197,7 +213,7 @@ public:
 		const std::string &value,
 		const std::string &fn );
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 	bool has_mouse_moves() const { return ( m_mmove_count > 0 ); };
 
 	static Command string_to_command( const std::string &s );
@@ -233,6 +249,9 @@ private:
 	// Used to track the keys that are currently "down" and of interest
 	mutable std::set< FeInputSingle > m_tracked_keys;
 
+	// Config for mapping joysticks by name to specific id #s
+	std::vector< std::pair< int, std::string > > m_joy_config;
+
 	int m_mmove_count; // counter of whether mouse moves are mapped
 };
 
@@ -249,7 +268,7 @@ public:
 	std::string as_string() const;
 	bool has_mouse_move() const;
 
-	std::vector < FeInputSingle > inputs;
+	std::set < FeInputSingle > inputs;
 	FeInputMap::Command command;
 };
 
@@ -263,7 +282,7 @@ public:
 	std::vector< std::string > input_list;
 
 	FeMapping( FeInputMap::Command cmd );
-	bool operator< ( const FeMapping ) const;
+	bool operator< ( const FeMapping & ) const;
 };
 
 //
@@ -292,7 +311,7 @@ public:
 	bool get_sound( FeInputMap::Command c, std::string &name ) const;
 	void set_sound( FeInputMap::Command c, const std::string &name );
 
-	void save( std::ofstream & ) const;
+	void save( nowide::ofstream & ) const;
 
 private:
 	int m_sound_vol;

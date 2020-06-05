@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.attractmode.attract"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-feature android:glEsVersion="0x00010001" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-sdk android:minSdkVersion="9"
+              android:targetSdkVersion="19" />
+
+    <application android:label="Attract-Mode"
+                 android:hasCode="false"
+                 android:allowBackup="true">
+
+    <activity android:name="android.app.NativeActivity"
+              android:label="Attract-Mode"
+              android:configChanges="keyboardHidden|orientation|screenSize">
+
+        <meta-data android:name="android.app.lib_name" android:value="sfml-activity" />
+        <meta-data android:name="sfml.app.lib_name" android:value="attract" />
+
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+    </application>
+</manifest>

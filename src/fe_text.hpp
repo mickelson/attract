@@ -66,11 +66,17 @@ public:
 	void set_word_wrap( bool );
 	bool get_word_wrap();
 
+	void set_no_margin( bool );
+	bool get_no_margin();
+	void set_margin( int );
+	int get_margin();
+
 	void set_first_line_hint( int l );
 	int get_first_line_hint();
 
 	const char *get_string();
 	void set_string(const char *s);
+	const char *get_string_wrapped();
 
 	int get_actual_width() { return m_draw_text.getActualWidth(); };
 
@@ -79,6 +85,9 @@ public:
 	int get_bgb();
 	int get_bga();
 	int get_charsize();
+	int get_glyph_size();
+	float get_spacing();
+	float get_line_spacing();
 	int get_style();
 	int get_align();
 	const char *get_font();
@@ -88,6 +97,8 @@ public:
 	void set_bga(int a);
 	void set_bg_rgb( int, int, int );
 	void set_charsize(int s);
+	void set_spacing(float s);
+	void set_line_spacing(float s);
 	void set_style(int s);
 	void set_align(int a);
 	void set_font(const char *f);

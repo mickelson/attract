@@ -12,18 +12,27 @@ build utilities (make, pkg-config, ar) on your system.  This means the
 distributions.  Other distributions should have similar packages available.
 
 1. Install the following *development* libraries on your system:
+
    * Required:
       - SFML SDK version 2.x (<http://sfml-dev.org>)
       - OpenAL
-      - zlib
+      - Zlib
       - FreeType 2
-      - The following FFmpeg libraries (required for videos): avformat,
-      avcodec, swscale, avutil and either swresample or avresample.
+      - The following FFmpeg libraries (required for videos):
+          * avformat,
+          * avcodec,
+          * swscale,
+          * avutil,
+          * swresample or avresample.
       - OpenGL and GLU (or OpenGLES for GLES version)
+      - JPEG library
+      - Make and Package Config
+
    * Optional:
       - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
       - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
+      - Libcurl (for network info/artwork scraping).
 
 2. Extract the Attract-Mode source to your system.
 
@@ -45,7 +54,8 @@ distributions.  Other distributions should have similar packages available.
            sudo make install
 
    This will copy the "attract" executable to `/usr/local/bin/` and default
-   data to `/usr/local/share/attract/`
+   data to `/usr/local/share/attract/`.  Note: if you are building the OpenGL
+   ES version you need to include the `USE_GLES=1` parameter here as well.
 
    For a single user install on Linux or FreeBSD, you can complete this step
    by copying the contents of the "config" directory from the Attract-Mode
@@ -107,14 +117,14 @@ OS X.
 1. Follow the steps in the mxe tutorial to set up mxe on your system:
    <http://mxe.cc/#tutorial>
 
-2. Make mxe's sfml, ffmpeg and libarchive packages:
+2. Make mxe's sfml, ffmpeg, libarchive and curl packages:
 
-           make ffmpeg sfml libarchive
+           make ffmpeg sfml libarchive curl
 
-   the above command will make 32-bit versions of ffmpeg and sfml (and anything
-   else that they depend on). To make the 64-bit version use the following:
+   the above command will make 32-bit versions of ffmpeg, sfml, libarchive and curl
+   (and anything else that they depend on). To make the 64-bit version use the following:
 
-           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml libarchive
+           make MXE_TARGETS='x86_64-w64-mingw32.static' ffmpeg sfml libarchive curl
 
 3. Extract the Attract-Mode source to your system.
 
@@ -140,14 +150,14 @@ Windows (native compile):
 
 2. Launch the MSYS2 shell and update the system:
 
-           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime`
+           pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime
 
 3. Close MSYS2 Shell,  run it again and run the following command:
 
            pacman -Syu
 
-4. Install required packaged. (optionally use the mingw-w64-i686-toolchain
-   instead for 32-bit windows architectures):
+4. Install required packages. (optionally use the mingw-w64-i686-toolchain
+   instead for 32-bit windows architectures), install "all" (by default) :
 
            pacman -S git mingw-w64-x86_64-toolchain msys/make mingw64/mingw-w64-x86_64-sfml mingw64/mingw-w64-x86_64-ffmpeg mingw64/mingw-w64-x86_64-libarchive
 

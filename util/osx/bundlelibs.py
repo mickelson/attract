@@ -22,15 +22,18 @@ otool = toolchain + "otool"
 install_name_tool = toolchain + "install_name_tool"
 
 def runOtool(filename):
+	print otool + " -XL " + filename
 	p = subprocess.Popen([otool, '-XL', filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	return iter(p.stdout.readline, b'')
 
 def fixname(filename, old, new):
+	print install_name_tool + " -change " + old + " " + new + " " + filename
 	p = subprocess.Popen([install_name_tool, '-change', old, new, filename], stdout=subprocess.PIPE)
 	p.communicate()
 	return
 
 def fixid(filename, newid):
+	print install_name_tool + " -id @loader_path/../libs/" + newid + " " + filename
 	p = subprocess.Popen([install_name_tool, '-id', '@loader_path/../libs/' + newid, filename], stdout=subprocess.PIPE)
 	p.communicate()
 	return
@@ -57,7 +60,14 @@ def mainloop(filename):
 		else:
 			m = re.search('\s+(@rpath(.*)) \(.*\)$', line)
 			if m and len(m.group(2)) != 0:
-				path = os.path.realpath(os.path.join(os.getenv('LIB_BASE_PATH','/'), 'usr/local/lib', m.group(2)))
+				my_base = m.group(2)
+
+				test = my_base.strip('/').split(".")[0]
+				for b in os.listdir( os.path.join( os.getenv('LIB_BASE_PATH','/'), 'usr/local/lib' )):
+					if ( b.find( test ) != -1 ):
+						my_base = b
+						break
+				path = os.path.realpath(os.path.join(os.getenv('LIB_BASE_PATH','/'), 'usr/local/lib', my_base ))
 				print path
 				linkname = os.path.basename(path)
 				fixname(filename, m.group(1), '@loader_path/../libs/' + linkname)

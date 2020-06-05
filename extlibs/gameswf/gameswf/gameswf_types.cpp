@@ -297,7 +297,7 @@ namespace gameswf
 		// length of the two basis vectors.
 		float	basis0_length2 = m_[0][0] * m_[0][0] + m_[0][1] * m_[0][1];
 		float	basis1_length2 = m_[1][0] * m_[1][0] + m_[1][1] * m_[1][1];
-		float	max_length2 = fmax(basis0_length2, basis1_length2);
+		float	max_length2 = my_fmax(basis0_length2, basis1_length2);
 		return sqrtf(max_length2);
 	}
 
@@ -592,10 +592,10 @@ namespace gameswf
 	void	rect::expand_to_point(float x, float y)
 	// Expand this rectangle to enclose the given point.
 	{
-		m_x_min = fmin(m_x_min, x);
-		m_y_min = fmin(m_y_min, y);
-		m_x_max = fmax(m_x_max, x);
-		m_y_max = fmax(m_y_max, y);
+		m_x_min = my_fmin(m_x_min, x);
+		m_y_min = my_fmin(m_y_min, y);
+		m_x_max = my_fmax(m_x_max, x);
+		m_y_max = my_fmax(m_y_max, y);
 	}
 
 	void	rect::expand_to_point(const point& p)

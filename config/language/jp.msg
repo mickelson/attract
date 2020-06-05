@@ -1,4 +1,4 @@
-#@日本語 (Japanese);win_font=YuGothR,ARIALUNI,MSMINCHO;mac_font=Osaka;linux_font=TakaoGothic,TakaoPGothic
+#@日本語 (Japanese);win_font=YuGothR,ARIALUNI,MSMINCHO;mac_font=Osaka;linux_font=TakaoGothic,TakaoPGothic,NotoSansCJK-Regular
 #
 # Interface strings
 #
@@ -73,6 +73,7 @@ Enter Display Name;新しいディスプレイの名前を入力して下さい
 Enter Emulator Name;エミュレータの名前を入力して下さい
 Enter Filter Name;フィルターの名前を入れて下さい
 Executable;実行ファイル
+Exit;終了 (Yes/No 確認)
 Exit Attract-Mode;プログラムを終了
 Exit Attract-Mode?;終了しますか?
 Exit Command;終了コマンド
@@ -106,7 +107,6 @@ Layout Options;レイアウト別設定
 Left;270°
 List Limit;リストのサイズ限度
 Manufacturer;発売元(Manufacturer)
-Minimum Run Time;最小実行時間
 Mouse Threshold;マウスの感度
 Movie Volume;ムービーボリューム
 Name;名前
@@ -239,7 +239,7 @@ _help_emu_exit_hotkey;このエミュレータを終了するグローバルホ�
 _help_emu_gen_romlist;指定されたRomファイルの位置, XML モード, 追加ファイル (catver.ini 等) を使ってRomファイルリストを作成します
 _help_emu_import_extras;Romファイルリストの作成時に追加で使うファイルを指定します. ジャンル (catver.ini), またはプレイ人数 (nplayers.ini) などを使えます
 _help_emu_info_source;mess : MAME タイプの -listxml, mess : MESS タイプの -listsoftware, thegamesdb.net : このサイトを使う, steam : steamサイトを使う. mess, thegamesdb.net の場合IDを正しく設定する必要があります.
-_help_emu_minimum_run_time; 最小の実行時間を秒単位で設定します. 普通は0で構わないですが,一部のゲーム(steam等)には適当に設定する必要があります
+_help_emu_nb_mode_wait; 最小の実行時間を秒単位で設定します. 普通は0で構わないですが,一部のゲーム(steam等)には適当に設定する必要があります
 _help_emu_romext;Romファイルの拡張子(.zip 等)を指定します. セミコロン(
 _help_emu_rompath;エミュレータのRomファイルの位置を指定します
 _help_emu_scrape_artwork;TheGamesDB.net または mamedb.com からゲームの情報をダウンロードします
@@ -293,9 +293,9 @@ Ambient Sounds;BGMファイル
 Configure available emulators;エミュレータの設定
 Configure filter rule;フィルターのルールー編集
 Delete this filter;このフィルターを削除
-Exit;終了 (Yes/No 確認)
 Exit menu;出る
 Launch Last Game on Startup;最後にプレイしたゲームを次の起動時 再起動
+Minimum Run Time;最小実行時間
 Page Down;1画面下
 Page Up;1画面上
 XML Mode;XML モード
@@ -317,8 +317,13 @@ $1 Rule(s);$1 Rule(s)
 Add '$1' to Favourites?;Add '$1' to Favourites?
 Add Exception;Add Exception
 Add tag: '$1';Add tag: '$1'
+Artwork Name;Artwork Name
+Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?;Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?
+Blank Game;Blank Game
 Buttons;Buttons
+Clear Hotkey?;Clear Hotkey?
 Configure / Displays Menu;Configure / Displays Menu
+Configure / Joystick Mapping;Configure / Joystick Mapping
 Configure Intro;Configure Intro
 Configure Layout;Configure Layout
 Confirm Exit;Confirm Exit
@@ -328,28 +333,44 @@ Custom Executable;Custom Executable
 Default;Default
 Default Action;Default Action
 Delete game '$1'?;Delete game '$1'?
+Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Game;Delete this Game
+Delete this Shortcut;Delete this Shortcut
 Edit Game;Edit Game
+Edit Shortcut;Edit Shortcut
 Empty;Empty
 Enable Multiple Monitors;Enable Multiple Monitors
 Enter Romlist Name;Enter Romlist Name
 Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
+Exit Message;Exit Message
+Insert Command Shortcut;Insert Command Shortcut
+Insert Display Shortcut;Insert Display Shortcut
+Insert Game Entry;Insert Game Entry
+Insert Menu Entry;Insert Menu Entry
 Intro;Intro
+Joystick $1;Joystick $1
+Joystick Mappings;Joystick Mappings
 Launch Last Game;Launch Last Game
+Layout File;Layout File
 Menu Prompt;Menu Prompt
 Menu Style / Layout;Menu Style / Layout
 Next Game;Next Game
 Next Page;Next Page
+Non-Blocking Mode Wait;Non-Blocking Mode Wait
 Overview;Overview
+Pause Hotkey;Pause Hotkey
 Play Sound;Play Sound
+Please Wait;Please Wait
+Press Hotkey;Press Hotkey
 Previous Game;Previous Game
 Previous Page;Previous Page
 Remove '$1' from Favourites?;Remove '$1' from Favourites?
 Remove tag: '$1';Remove tag: '$1'
 Scrape Fanart;Scrape Fanart
 Scrape Videos (MAME only);Scrape Videos (MAME only)
+Select template to use for emulator settings;Select template to use for emulator settings
 Show Displays Menu;Show Displays Menu
 Show Last Selection (Default);Show Last Selection (Default)
 Show in Cycle;Show in Cycle
@@ -380,8 +401,10 @@ _help_display_in_menu;Include this display in the "Displays Menu"?
 _help_displays_menu;Configure options for the "Displays Menu"
 _help_displays_menu_layout;The layout to use for the 'Displays Menu'. Set to 'Default' to use the frontend's built-in menu
 _help_displays_menu_prompt;The 'Displays Menu' prompt (i.e. "Select System")
+_help_emu_pause_hotkey;Set a global hotkey to pause the emulator.  When pressed, Attract-Mode will pause the emulator process and return to the frontend. The emulator process can be resumed by selecting the same game again in the frontend.
 _help_emu_sel_gen_romlist;Generate a Collection/Romlist containing games for multiple emulators
 _help_emu_workdir;The working directory for this emulator.  This is the directory that the frontend runs the emulator from.  Also, any relative rom paths, artwork paths, or additional import file paths are treated as being relative to this directory
+_help_exit_message;Alternate message to exit the frontend [i.e. "Shut Down System"]
 _help_filter_add_exception;Add an exception to this filter.  If a game matches an exception (and wasn't filtered out by an earlier rule) it will be listed in the filter
 _help_filter_exception;Configure this filter exception.  If a game matches an exception it will be listed in the filter.  Rules and exceptions get applied in the order that they are listed
 _help_game_custom_args;Set this to override the default command line arguments for this game.  Set this to [nothing] if you want to override with no parameters.  The following get substituted appropriately: [name], [romext], [rompath], [emulator], [romfilename], [system], [systemn]
@@ -391,10 +414,17 @@ _help_game_edit;Edit this game information
 _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
+_help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_input_action;
 _help_input_default_action;Set the default behaviour for this control
 _help_intro;Configure intro
-_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode
+_help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
+_help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
+_help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode.  Setting this to 'No' may reduce screen flicker when launching games
 _help_scrape_vids;Set whether game videos should be downloaded when scraping
+_help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
+_help_shortcut_delete;Delete this shortcut from the Romlist
+_help_shortcut_label_edit;Edit this shortcut's label
+_help_shortcut_target_edit;Edit this shortcut's target
 _help_startup_mode;Set what should happen when Attract-Mode first starts up
 _help_video_decoder;Configure the decoder to use for video playback (if multiple decoders are available)

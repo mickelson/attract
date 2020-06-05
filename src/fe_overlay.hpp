@@ -25,8 +25,10 @@
 
 #include <SFML/Graphics.hpp>
 #include "fe_present.hpp"
+#include "fe_window.hpp"
 
 class FeSettings;
+class FeInputMapEntry;
 class FeBaseConfigMenu;
 class FeTextPrimative;
 
@@ -37,7 +39,7 @@ class FeOverlay
 friend class FeConfigContextImp;
 
 private:
-	sf::RenderWindow &m_wnd;
+	FeWindow &m_wnd;
 	FeSettings &m_feSettings;
 	FePresent &m_fePresent;
 	const sf::Color m_textColour;
@@ -54,7 +56,7 @@ private:
 		sf::Vector2f &text_scale,
 		int &char_size ) const;
 
-	void input_map_dialog( const std::string &msg_str, std::string &map_str,
+	void input_map_dialog( const std::string &msg_str, FeInputMapEntry &res,
 			FeInputMap::Command &conflict );
 	int display_config_dialog( FeBaseConfigMenu *, bool & );
 
@@ -65,18 +67,21 @@ private:
 			std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
 
 public:
-	FeOverlay( sf::RenderWindow &wnd,
+	FeOverlay( FeWindow &wnd,
 		FeSettings &fes,
 		FePresent &fep );
 
 	void splash_message( const std::string &, const std::string &rep="",
 		const std::string &aux="" );
+
 	int confirm_dialog( const std::string &msg,
 		const std::string &rep="",
-		FeInputMap::Command extra_exit=FeInputMap::LAST_COMMAND );
+		bool default_yes = false,
+		FeInputMap::Command default_exit = FeInputMap::Exit);
 
 	bool config_dialog();
 	bool edit_game_dialog();
+	bool layout_options_dialog();
 	int languages_dialog();
 	int tags_dialog();
 

@@ -81,7 +81,11 @@ void FeShader::set_param( const char *name, float x )
 {
 	if ( m_type != Empty )
 	{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+		m_shader.setUniform( name, x );
+#else
 		m_shader.setParameter( name, x );
+#endif
 		FePresent::script_flag_redraw();
 	}
 }
@@ -90,7 +94,11 @@ void FeShader::set_param( const char *name, float x, float y )
 {
 	if ( m_type != Empty )
 	{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+		m_shader.setUniform( name, sf::Glsl::Vec2( x, y ) );
+#else
 		m_shader.setParameter( name, x, y );
+#endif
 		FePresent::script_flag_redraw();
 	}
 }
@@ -99,7 +107,11 @@ void FeShader::set_param( const char *name, float x, float y, float z )
 {
 	if ( m_type != Empty )
 	{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+		m_shader.setUniform( name, sf::Glsl::Vec3( x, y, z ) );
+#else
 		m_shader.setParameter( name, x, y, z );
+#endif
 		FePresent::script_flag_redraw();
 	}
 }
@@ -108,7 +120,11 @@ void FeShader::set_param( const char *name, float x, float y, float z, float w )
 {
 	if ( m_type != Empty )
 	{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+		m_shader.setUniform( name, sf::Glsl::Vec4( x, y, z, w ) );
+#else
 		m_shader.setParameter( name, x, y, z, w );
+#endif
 		FePresent::script_flag_redraw();
 	}
 }
@@ -117,7 +133,11 @@ void FeShader::set_texture_param( const char *name )
 {
 	if ( m_type != Empty )
 	{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+		m_shader.setUniform( name, sf::Shader::CurrentTexture );
+#else
 		m_shader.setParameter( name, sf::Shader::CurrentTexture );
+#endif
 		FePresent::script_flag_redraw();
 	}
 }
@@ -130,7 +150,11 @@ void FeShader::set_texture_param( const char *name, FeImage *image )
 
 		if ( texture )
 		{
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			m_shader.setUniform( name, *texture );
+#else
 			m_shader.setParameter( name, *texture );
+#endif
 			FePresent::script_flag_redraw();
 		}
 	}

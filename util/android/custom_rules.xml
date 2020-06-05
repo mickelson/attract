@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <target name="-pre-compile">
+
+        <!-- copy Attract-Mode config files to assets -->
+        <property name="config.dir" location="../../config" />
+        <echo message="Copying '${config.dir}' to assets" />
+
+        <copy todir="assets">
+         <fileset dir="../../config" />
+        </copy>
+
+        <!-- create manifest of copied config files -->
+        <path id="example.path">
+         <fileset dir="../../config" />
+        </path>
+
+        <!-- Format path -->
+        <pathconvert pathsep="${line.separator}" property="echo.path.compile" refid="example.path">
+         <map from="${config.dir}/" to="" />
+        </pathconvert>
+
+        <echo file="assets/manifest.txt">${echo.path.compile}${line.separator}</echo>
+    </target>
+</project>

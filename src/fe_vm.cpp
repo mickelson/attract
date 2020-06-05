@@ -30,6 +30,7 @@
 #include "fe_config.hpp"
 #include "fe_overlay.hpp"
 #include "fe_window.hpp"
+#include "fe_blend.hpp"
 
 #include "fe_util.hpp"
 #include "fe_util_sq.hpp"
@@ -43,7 +44,7 @@
 #include <sqstdstring.h>
 #include <sqstdsystem.h>
 
-#include <fstream>
+#include "nowide/fstream.hpp"
 #include <iostream>
 #include <stdio.h>
 #include <ctime>
@@ -58,10 +59,13 @@ namespace
 	//
 	void printFunc(HSQUIRRELVM v, const SQChar *s, ...)
 	{
+		char buff[2048];
 		va_list vl;
 		va_start(vl, s);
-		vprintf(s, vl);
+		vsnprintf( buff, 2048, s, vl);
 		va_end(vl);
+
+		FeLog() << buff;
 	}
 
 	bool my_callback( const char *buffer, void *opaque )
@@ -77,7 +81,7 @@ namespace
 		}
 		catch( Sqrat::Exception e )
 		{
-			std::cout << "Script Error: " << e.Message() << std::endl;
+			FeLog() << "Script Error: " << e.Message() << std::endl;
 		}
 
 		return false;
@@ -137,12 +141,14 @@ namespace
 				sc.CompileFile( path_to_run );
 			}
 
+			FeDebug() << "Running script: " << path_to_run << std::endl;
 			sc.Run();
+			FeDebug() << "Done script: " << path_to_run << std::endl;
 		}
 		catch(Sqrat:: Exception e )
 		{
 			if ( !silent )
-				std::cerr << "Script Error in " << path_to_run
+				FeLog() << "Script Error in " << path_to_run
 					<< " - " << e.Message() << std::endl;
 		}
 		return true;
@@ -242,9 +248,16 @@ namespace
 			temp += nv;
 			temp += ";";
 
-			Sqrat::Script sc;
-			sc.CompileString( temp );
-			sc.Run();
+			try
+			{
+				Sqrat::Script sc;
+				sc.CompileString( temp );
+				sc.Run();
+			}
+			catch ( Sqrat::Exception e )
+			{
+				FeLog() << "Error compiling " << name << " string: [" << nv << "] - " << e.Message() << std::endl;
+			}
 		}
 	}
 };
@@ -295,11 +308,12 @@ const char *FeVM::transitionTypeStrings[] =
 		"ShowOverlay",
 		"HideOverlay",
 		"NewSelOverlay",
+		"ChangedTag",
 		NULL
 };
 
 FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound, bool console_input )
-	: FePresent( &fes, defaultfont ),
+	: FePresent( &fes, defaultfont, wnd ),
 	m_window( wnd ),
 	m_overlay( NULL ),
 	m_ambient_sound( ambient_sound ),
@@ -317,7 +331,7 @@ FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSoun
 	std::string filename = m_feSettings->get_config_dir();
 	filename += FE_SCRIPT_NV_FILE;
 
-	std::ifstream infile( filename.c_str() );
+	nowide::ifstream infile( filename.c_str() );
 	if ( !infile.is_open() )
 		return;
 
@@ -344,7 +358,7 @@ FeVM::~FeVM()
 	std::string filename = m_feSettings->get_config_dir();
 	filename += FE_SCRIPT_NV_FILE;
 
-	std::ofstream outfile( filename.c_str() );
+	nowide::ofstream outfile( filename.c_str() );
 	if ( outfile.is_open() )
 	{
 		outfile << read_non_volatile_to_string( _SC( "nv" ) ) << std::endl;
@@ -468,6 +482,48 @@ void FeVM::vm_init()
 	Sqrat::DefaultVM::Set( vm );
 }
 
+void FeVM::update_to_new_list( int var, bool reset_display )
+{
+	if ( reset_display )
+	{
+		//
+		// Populate script arrays that may change from display to display (currently just fe.filters)
+		//
+		Sqrat::Table fe( Sqrat::RootTable().GetSlot( _SC("fe") ) );
+
+		Sqrat::Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
+		fe.Bind( _SC("filters"), ftab );
+		Sqrat::Array farray( ftab.GetObject() );
+
+		farray.Resize( 0 );
+
+		FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
+		if ( di )
+		{
+			for ( int i=0; i < di->get_filter_count(); i++ )
+				farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+		}
+	}
+
+	FePresent::update_to_new_list( var, reset_display );
+}
+
+namespace
+{
+	bool nesting_compare( FeBaseTextureContainer *one, FeBaseTextureContainer *two )
+	{
+		if ( one->get_presentable_parent() != NULL && two->get_presentable_parent() == NULL )
+			return true;
+
+		if ( one->get_presentable_parent() == NULL && two->get_presentable_parent() == NULL )
+			return false;
+
+		if ( one->get_presentable_parent() != NULL && two->get_presentable_parent() != NULL )
+			return ( one->get_presentable_parent()->get_nesting_level() > two->get_presentable_parent()->get_nesting_level() );
+
+		return false;
+	}
+};
 
 bool FeVM::on_new_layout()
 {
@@ -506,6 +562,7 @@ bool FeVM::on_new_layout()
 #else
 		.Const( _SC("FeDataDirectory"), "" )
 #endif
+		.Const( _SC("Language"), m_feSettings->get_info( FeSettings::Language ).c_str() )
 
 		.Enum( _SC("Style"), Enumeration()
 			.Const( _SC("Regular"), sf::Text::Regular )
@@ -517,6 +574,15 @@ bool FeVM::on_new_layout()
 			.Const( _SC("Left"), FeTextPrimative::Left )
 			.Const( _SC("Centre"), FeTextPrimative::Centre )
 			.Const( _SC("Right"), FeTextPrimative::Right )
+			.Const( _SC("TopLeft"), FeTextPrimative::Top | FeTextPrimative::Left)
+			.Const( _SC("TopCentre"), FeTextPrimative::Top | FeTextPrimative::Centre )
+			.Const( _SC("TopRight"), FeTextPrimative::Top | FeTextPrimative::Right )
+			.Const( _SC("BottomLeft"), FeTextPrimative::Bottom | FeTextPrimative::Left )
+			.Const( _SC("BottomCentre"), FeTextPrimative::Bottom | FeTextPrimative::Centre )
+			.Const( _SC("BottomRight"), FeTextPrimative::Bottom | FeTextPrimative::Right )
+			.Const( _SC("MiddleLeft"), FeTextPrimative::Middle | FeTextPrimative::Left )
+			.Const( _SC("MiddleCentre"), FeTextPrimative::Middle | FeTextPrimative::Centre )
+			.Const( _SC("MiddleRight"), FeTextPrimative::Middle | FeTextPrimative::Right )
 			)
 		.Enum( _SC("RotateScreen"), Enumeration()
 			.Const( _SC("None"), FeSettings::RotateNone )
@@ -553,7 +619,26 @@ bool FeVM::on_new_layout()
 			.Const( "Displays", FeInputMap::DisplaysMenu )
 			.Const( "Filters", FeInputMap::FiltersMenu )
 			.Const( "Tags", FeInputMap::ToggleTags )
-                        )
+			.Const( "Favourite", FeInputMap::ToggleFavourite )
+			)
+		.Enum( _SC("PathTest"), Enumeration()
+			.Const( "IsFileOrDirectory", IsFileOrDirectory )
+			.Const( "IsFile", IsFile )
+			.Const( "IsDirectory", IsDirectory )
+			.Const( "IsRelativePath", IsRelativePath )
+			.Const( "IsSupportedArchive", IsSupportedArchive )
+			.Const( "IsSupportedMedia", IsSupportedMedia )
+			)
+		.Enum( _SC("BlendMode"), Enumeration()
+			.Const( _SC("Alpha"), FeBlend::Alpha )
+			.Const( _SC("Add"), FeBlend::Add )
+			.Const( _SC("Subtract"), FeBlend::Subtract )
+			.Const( _SC("Screen"), FeBlend::Screen )
+			.Const( _SC("Multiply"), FeBlend::Multiply )
+			.Const( _SC("Overlay"), FeBlend::Overlay )
+			.Const( _SC("Premultiplied"), FeBlend::Premultiplied )
+			.Const( _SC("None"), FeBlend::None )
+			)
 		;
 
 	Enumeration info;
@@ -565,7 +650,10 @@ bool FeVM::on_new_layout()
 	}
 	info.Const( "System", FeRomInfo::LAST_INDEX ); // special cases with same value
 	info.Const( "NoSort", FeRomInfo::LAST_INDEX ); //
+
 	info.Const( "Overview", FeRomInfo::LAST_INDEX+1 ); //
+	info.Const( "IsPaused", FeRomInfo::LAST_INDEX+2 ); //
+	info.Const( "SortValue", FeRomInfo::LAST_INDEX+3 ); //
 	ConstTable().Enum( _SC("Info"), info);
 
 	Enumeration transition;
@@ -626,6 +714,7 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("subimg_y"), &FeImage::get_subimg_y, &FeImage::set_subimg_y )
 		.Prop(_SC("subimg_width"), &FeImage::get_subimg_width, &FeImage::set_subimg_width )
 		.Prop(_SC("subimg_height"), &FeImage::get_subimg_height, &FeImage::set_subimg_height )
+		.Prop(_SC("sample_aspect_ratio"), &FeImage::get_sample_aspect_ratio )
 		// "movie_enabled" deprecated as of version 1.3, use the video_flags property instead:
 		.Prop(_SC("movie_enabled"), &FeImage::getMovieEnabled, &FeImage::setMovieEnabled )
 		.Prop(_SC("video_flags"), &FeImage::getVideoFlags, &FeImage::setVideoFlags )
@@ -637,6 +726,8 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("file_name"), &FeImage::getFileName, &FeImage::setFileName )
 		.Prop(_SC("trigger"), &FeImage::getTrigger, &FeImage::setTrigger )
 		.Prop(_SC("smooth"), &FeImage::get_smooth, &FeImage::set_smooth )
+		.Prop( _SC("blend_mode"), &FeImage::get_blend_mode, &FeImage::set_blend_mode )
+		.Prop(_SC("mipmap"), &FeImage::get_mipmap, &FeImage::set_mipmap )
 		.Func( _SC("swap"), &FeImage::transition_swap )
 		.Func( _SC("rawset_index_offset"), &FeImage::rawset_index_offset )
 		.Func( _SC("rawset_filter_offset"), &FeImage::rawset_filter_offset )
@@ -661,17 +752,26 @@ bool FeVM::on_new_layout()
 	fe.Bind( _SC("Text"),
 		DerivedClass<FeText, FeBasePresentable, NoConstructor>()
 		.Prop(_SC("msg"), &FeText::get_string, &FeText::set_string )
+		.Prop(_SC("msg_wrapped"), &FeText::get_string_wrapped )
 		.Prop(_SC("bg_red"), &FeText::get_bgr, &FeText::set_bgr )
 		.Prop(_SC("bg_green"), &FeText::get_bgg, &FeText::set_bgg )
 		.Prop(_SC("bg_blue"), &FeText::get_bgb, &FeText::set_bgb )
 		.Prop(_SC("bg_alpha"), &FeText::get_bga, &FeText::set_bga )
+		// "charsize" deprecated, use the char_size property instead
 		.Prop(_SC("charsize"), &FeText::get_charsize, &FeText::set_charsize )
+		.Prop(_SC("char_size"), &FeText::get_charsize, &FeText::set_charsize )
+		.Prop(_SC("glyph_size"), &FeText::get_glyph_size )
+		.Prop(_SC("char_spacing"), &FeText::get_spacing, &FeText::set_spacing )
+		.Prop(_SC("line_spacing"), &FeText::get_line_spacing, &FeText::set_line_spacing )
 		.Prop(_SC("style"), &FeText::get_style, &FeText::set_style )
 		.Prop(_SC("align"), &FeText::get_align, &FeText::set_align )
 		.Prop(_SC("word_wrap"), &FeText::get_word_wrap, &FeText::set_word_wrap )
 		.Prop(_SC("first_line_hint"), &FeText::get_first_line_hint, &FeText::set_first_line_hint )
 		.Prop(_SC("msg_width"), &FeText::get_actual_width )
 		.Prop(_SC("font"), &FeText::get_font, &FeText::set_font )
+		// "nomargin" deprecated, use the margin property instead
+		.Prop(_SC("nomargin"), &FeText::get_no_margin, &FeText::set_no_margin )
+		.Prop(_SC("margin"), &FeText::get_margin, &FeText::set_margin )
 		.Func( _SC("set_bg_rgb"), &FeText::set_bg_rgb )
 	);
 
@@ -690,11 +790,19 @@ bool FeVM::on_new_layout()
 		.Prop(_SC("selbg_blue"), &FeListBox::get_selbgb, &FeListBox::set_selbgb )
 		.Prop(_SC("selbg_alpha"), &FeListBox::get_selbga, &FeListBox::set_selbga )
 		.Prop(_SC("rows"), &FeListBox::get_rows, &FeListBox::set_rows )
+		.Prop(_SC("list_size"), &FeListBox::get_list_size )
+		// "charsize" deprecated, use the char_size property instead
 		.Prop(_SC("charsize"), &FeListBox::get_charsize, &FeListBox::set_charsize )
+		.Prop(_SC("char_size"), &FeListBox::get_charsize, &FeListBox::set_charsize )
+		.Prop(_SC("glyph_size"), &FeListBox::get_glyph_size )
+		.Prop(_SC("char_spacing"), &FeListBox::get_spacing, &FeListBox::set_spacing )
 		.Prop(_SC("style"), &FeListBox::get_style, &FeListBox::set_style )
 		.Prop(_SC("align"), &FeListBox::get_align, &FeListBox::set_align )
 		.Prop(_SC("sel_style"), &FeListBox::getSelStyle, &FeListBox::setSelStyle )
 		.Prop(_SC("font"), &FeListBox::get_font, &FeListBox::set_font )
+		// "nomargin" deprecated, use the margin property instead
+		.Prop(_SC("nomargin"), &FeListBox::get_no_margin, &FeListBox::set_no_margin )
+		.Prop(_SC("margin"), &FeListBox::get_margin, &FeListBox::set_margin )
 		.Prop(_SC("format_string"), &FeListBox::get_format_string, &FeListBox::set_format_string )
 		.Func( _SC("set_bg_rgb"), &FeListBox::set_bg_rgb )
 		.Func( _SC("set_sel_rgb"), &FeListBox::set_sel_rgb )
@@ -786,11 +894,7 @@ bool FeVM::on_new_layout()
 		.Prop( _SC("list_limit"), &FeFilter::get_list_limit )
 	);
 
-	fe.Bind( _SC("Monitor"), Class <FeMonitor, NoConstructor>()
-		.Prop( _SC("num"), &FeMonitor::get_num )
-		.Prop( _SC("width"), &FeMonitor::get_width )
-		.Prop( _SC("height"), &FeMonitor::get_height )
-
+	fe.Bind( _SC("PresentableParent"), Class <FePresentableParent, NoConstructor>()
 		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int, int, int)>(_SC("add_image"), &FePresentableParent::add_image)
 		.Overload<FeImage * (FePresentableParent::*)(const char *, int, int)>(_SC("add_image"), &FePresentableParent::add_image)
 		.Overload<FeImage * (FePresentableParent::*)(const char *)>(_SC("add_image"), &FePresentableParent::add_image)
@@ -801,6 +905,13 @@ bool FeVM::on_new_layout()
 		.Func( _SC("add_text"), &FePresentableParent::add_text )
 		.Func( _SC("add_listbox"), &FePresentableParent::add_listbox )
 		.Func( _SC("add_surface"), &FePresentableParent::add_surface )
+	);
+
+	fe.Bind( _SC("Monitor"),
+		DerivedClass<FeMonitor, FePresentableParent, NoConstructor>()
+		.Prop( _SC("num"), &FeMonitor::get_num )
+		.Prop( _SC("width"), &FeMonitor::get_width )
+		.Prop( _SC("height"), &FeMonitor::get_height )
 	);
 
 	//
@@ -848,9 +959,12 @@ bool FeVM::on_new_layout()
 	fe.Overload<bool (*)(const char *, const char *)>(_SC("plugin_command"), &FeVM::cb_plugin_command);
 	fe.Func<bool (*)(const char *, const char *)>(_SC("plugin_command_bg"), &FeVM::cb_plugin_command_bg);
 	fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
+	fe.Func<bool (*)(const char *, int)>(_SC("path_test"), &FeVM::cb_path_test);
 	fe.Func<Table (*)()>(_SC("get_config"), &FeVM::cb_get_config);
 	fe.Func<void (*)(const char *)>(_SC("signal"), &FeVM::cb_signal);
-	fe.Func<void (*)(int)>(_SC("set_display"), &FeVM::cb_set_display);
+	fe.Overload<void (*)(int, bool)>(_SC("set_display"), &FeVM::cb_set_display);
+	fe.Overload<void (*)(int)>(_SC("set_display"), &FeVM::cb_set_display);
+	fe.Overload<const char *(*)(const char *)>(_SC("get_text"), &FeVM::cb_get_text);
 
 	//
 	// Define variables that get exposed to Squirrel
@@ -869,18 +983,19 @@ bool FeVM::on_new_layout()
 			m_feSettings->get_display( i ) );
 
 	//
-	// fe.filters
+	// Note the fe.filters array also gets repopulated in call to FeVM::update_to_new_list(), since it
+	// gets reset even when the layout itself isn't necessarily reloaded (i.e. when navigating between
+	// displays that use the same layout)
 	//
-	FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
-
-
 	Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
 	fe.Bind( _SC("filters"), ftab );
-	Array farray( ftab.GetObject() );
 
+	FeDisplayInfo *di = m_feSettings->get_display( m_feSettings->get_current_display_index() );
 	if ( di )
 	{
-		for ( int i=0; i < di->get_filter_count(); i++ )
+		Array farray( ftab.GetObject() );
+
+		for ( i=0; i < di->get_filter_count(); i++ )
 			farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
 	}
 
@@ -949,7 +1064,7 @@ bool FeVM::on_new_layout()
 			m_feSettings->get_current_display_index() );
 
 		if ( di )
-			std::cerr << " ! Error opening layout: "
+			FeLog() << " ! Error opening layout: "
 				<< di->get_info( FeDisplayInfo::Layout ) << std::endl;
 	}
 	else if ( !run_script( path, filename ) )
@@ -957,7 +1072,7 @@ bool FeVM::on_new_layout()
 		if ( ps == FeSettings::Intro_Showing )
 			return false; // silent fail if intro is not found
 		else
-			std::cerr << " ! Script file not found: " << path
+			FeLog() << " ! Script file not found: " << path
 				<< " (" << filename << ")" << std::endl;
 	}
 
@@ -995,9 +1110,14 @@ bool FeVM::on_new_layout()
 
 	if ( !skip_layout && ( ps == FeSettings::Layout_Showing ))
 	{
-		std::cout << " - Loaded layout: " << rep_path
+		FeLog() << " - Loaded layout: " << rep_path
 			<< " (" << filename << ")" << std::endl;
 	}
+
+	// To avoid frame delay of nested surfaces we have to sort them here
+	// so the most nested ones are redrawn first
+	FePresent *fep = FePresent::script_get_fep();
+	std::stable_sort( fep->m_texturePool.begin(), fep->m_texturePool.end(), nesting_compare );
 
 	return true;
 }
@@ -1033,7 +1153,7 @@ bool FeVM::process_console_input()
 	}
 	catch( Sqrat::Exception e )
 	{
-		std::cerr << "Error: " << script << " - " << e.Message() << std::endl;
+		FeLog() << "Error: " << script << " - " << e.Message() << std::endl;
 	}
 
 	return retval;
@@ -1061,7 +1181,7 @@ bool FeVM::on_tick()
 		}
 		catch( Exception &e )
 		{
-			std::cout << "Script Error in tick function: " << (*itr).m_fn << " - "
+			FeLog() << "Script Error in tick function: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
 
 			// Knock out this entry.   If it causes a script error, we don't
@@ -1085,9 +1205,7 @@ void FeVM::on_transition(
 {
 	using namespace Sqrat;
 
-#ifdef FE_DEBUG
-	std::cout << "[Transition] type=" << transitionTypeStrings[t] << ", var=" << var << std::endl;
-#endif // FE_DEBUG
+	FeDebug() << "[Transition] type=" << transitionTypeStrings[t] << ", var=" << var << std::endl;
 
 	sf::Clock ttimer;
 
@@ -1127,7 +1245,7 @@ void FeVM::on_transition(
 			}
 			catch( Exception &e )
 			{
-				std::cout << "Script Error in transition function: " << (*itr)->m_fn
+				FeLog() << "Script Error in transition function: " << (*itr)->m_fn
 						<< " - " << e.Message() << std::endl;
 			}
 
@@ -1143,6 +1261,7 @@ void FeVM::on_transition(
 		{
 			video_tick();
 
+			redraw_surfaces();
 			m_window.clear();
 			m_window.draw( *this );
 			m_window.display();
@@ -1192,7 +1311,7 @@ bool FeVM::script_handle_event( FeInputMap::Command c )
 		}
 		catch( Exception &e )
 		{
-			std::cout << "Script Error in signal handler: " << (*itr).m_fn << " - "
+			FeLog() << "Script Error in signal handler: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
 		}
 	}
@@ -1322,21 +1441,25 @@ void FePresent::script_process_magic_strings( std::string &str,
 	if ( !vm )
 		return;
 
-	size_t pos = str.find( "[!" );
+	const char *TOK = "[!";
+	int TOK_LEN = 2;
+
+	size_t pos = str.find( TOK );
 	while ( pos != std::string::npos )
 	{
-		size_t end = str.find_first_of( ']', pos+1 );
+		size_t end = str.find_first_of( ']', pos + TOK_LEN );
 		if ( end == std::string::npos )
 			break;
 
-		std::string magic = str.substr( pos+2, end-pos-2 );
-		std::string result;
+		std::string magic = str.substr( pos + TOK_LEN, end-pos-TOK_LEN );
 
 		try
 		{
 			Sqrat::Function func( Sqrat::RootTable(), magic.c_str() );
 			if ( !func.IsNull() )
 			{
+				std::string result;
+
 				switch ( fe_get_num_params( vm, func.GetFunc(), func.GetEnv() ) )
 				{
 				case 2:
@@ -1349,17 +1472,26 @@ void FePresent::script_process_magic_strings( std::string &str,
 					result = func.Evaluate<const char *>();
 					break;
 				}
+
+				str.replace( pos, end-pos+1, result );
+				pos += result.size();
+			}
+			else
+			{
+				FeDebug() << "Potential magic string ignored, no corresponding function in script: "
+					<< TOK << magic << "]" << std::endl;
+
+				pos += TOK_LEN;
 			}
 		}
 		catch( Sqrat::Exception &e )
 		{
-			std::cout << "Script Error in magic string function: "
+			FeLog() << "Script Error in magic string function: "
 				<< magic << " - "
 				<< e.Message() << std::endl;
 		}
 
-		str.replace( pos, end+1, result );
-		pos = str.find( "[!" );
+		pos = str.find( TOK, pos );
 	}
 }
 
@@ -1394,7 +1526,14 @@ public:
 			sqstd_register_mathlib( m_vm );
 			sqstd_register_stringlib( m_vm );
 			sqstd_register_systemlib( m_vm );
-//			sqstd_seterrorhandlers( m_vm ); // don't set this on purpose
+
+#ifdef FE_DEBUG
+			// We purposefully do not set this in release builds, because we
+			// use this FeConfigVM to run scripts in config mode and often that means
+			// they crash and burn, and we don't want to be displaying the error messages
+			// for that.
+			sqstd_seterrorhandlers( m_vm );
+#endif
 
 			fe_register_global_func( m_vm, zip_extract_file, "zip_extract_file" );
 			fe_register_global_func( m_vm, zip_get_dir, "zip_get_dir" );
@@ -1406,7 +1545,15 @@ public:
 			.Const( _SC("FeVersion"), FE_VERSION)
 			.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
 			.Const( _SC("OS"), get_OS_string() )
-			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() );
+			.Const( _SC("ShadersAvailable"), sf::Shader::isAvailable() )
+			.Enum( _SC("PathTest"), Sqrat::Enumeration()
+				.Const( "IsFile", FeVM::IsFile )
+				.Const( "IsDirectory", FeVM::IsDirectory )
+				.Const( "IsFileOrDirectory", FeVM::IsFileOrDirectory )
+				.Const( "IsRelativePath", FeVM::IsRelativePath )
+				.Const( "IsSupportedArchive", FeVM::IsSupportedArchive )
+				.Const( "IsSupportedMedia", FeVM::IsSupportedMedia )
+			);
 
 		Sqrat::ConstTable().Const( _SC("FeConfigDirectory"), fe_vm->m_feSettings->get_config_dir().c_str() );
 
@@ -1426,11 +1573,56 @@ public:
 
 			fe.SetInstance( _SC("overlay"), fe_vm );
 
+			fe.Bind( _SC("Display"), Sqrat::Class <FeDisplayInfo, Sqrat::NoConstructor>()
+				.Prop( _SC("name"), &FeDisplayInfo::get_name )
+				.Prop( _SC("layout"), &FeDisplayInfo::get_layout )
+				.Prop( _SC("romlist"), &FeDisplayInfo::get_romlist_name )
+				.Prop( _SC("in_cycle"), &FeDisplayInfo::show_in_cycle )
+				.Prop( _SC("in_menu"), &FeDisplayInfo::show_in_menu )
+			);
+
+			fe.Bind( _SC("Filter"), Sqrat::Class <FeFilter, Sqrat::NoConstructor>()
+				.Prop( _SC("name"), &FeFilter::get_name )
+				.Prop( _SC("index"), &FeFilter::get_rom_index )
+				.Prop( _SC("size"), &FeFilter::get_size )
+				.Prop( _SC("sort_by"), &FeFilter::get_sort_by )
+				.Prop( _SC("reverse_order"), &FeFilter::get_reverse_order )
+				.Prop( _SC("list_limit"), &FeFilter::get_list_limit )
+			);
+
 			fe.Bind( _SC("Monitor"), Sqrat::Class <FeMonitor, Sqrat::NoConstructor>()
 				.Prop( _SC("num"), &FeMonitor::get_num )
 				.Prop( _SC("width"), &FeMonitor::get_width )
 				.Prop( _SC("height"), &FeMonitor::get_height )
 			);
+
+			//
+			// fe.displays
+			//
+			Sqrat::Table dtab;  // hack Table to Array because creating the Array straight up doesn't work
+			fe.Bind( _SC("displays"), dtab );
+			Sqrat::Array darray( dtab.GetObject() );
+
+			int display_count = fe_vm->m_feSettings->displays_count();
+			for ( int i=0; i< display_count; i++ )
+				darray.SetInstance( darray.GetSize(),
+					fe_vm->m_feSettings->get_display( i ) );
+
+			//
+			// fe.filters
+			//
+			FeDisplayInfo *di = fe_vm->m_feSettings->get_display(
+				fe_vm->m_feSettings->get_current_display_index() );
+
+			Sqrat::Table ftab;  // hack Table to Array because creating the Array straight up doesn't work
+			fe.Bind( _SC("filters"), ftab );
+			Sqrat::Array farray( ftab.GetObject() );
+
+			if ( di )
+			{
+				for ( int i=0; i < di->get_filter_count(); i++ )
+					farray.SetInstance( farray.GetSize(), di->get_filter( i ) );
+			}
 
 			// hack Table to Array because creating the Array straight up doesn't work
 			Sqrat::Table mtab;
@@ -1446,6 +1638,8 @@ public:
 			fe.Func<bool (*)(const char *)>(_SC("load_module"), &FeVM::load_module);
 			fe.Func<void (*)(const char *)>(_SC("do_nut"), &FeVM::do_nut);
 			fe.Func<const char* (*)(const char *)>(_SC("path_expand"), &FeVM::cb_path_expand);
+			fe.Func<bool (*)(const char *, int)>(_SC("path_test"), &FeVM::cb_path_test);
+			fe.Overload<const char *(*)(const char *)>(_SC("get_text"), &FeVM::cb_get_text);
 		}
 
 		Sqrat::RootTable().Bind( _SC("fe"),  fe );
@@ -1465,6 +1659,7 @@ public:
 
 			fe.SetValue( _SC("loader_dir"), path );
 		}
+
 		run_script( path, file, true );
 	};
 
@@ -1500,7 +1695,7 @@ void FeVM::script_run_config_function(
 		catch( Sqrat::Exception &e )
 		{
 			return_message = "Script error";
-			std::cout << "Script Error in " << script_file
+			FeLog() << "Script Error in " << script_file
 				<< " - " << e.Message() << std::endl;
 		}
 
@@ -1510,7 +1705,7 @@ void FeVM::script_run_config_function(
 	else
 	{
 		return_message = "Script error: Function not found";
-		std::cout << "Script Error in " << script_file
+		FeLog() << "Script Error in " << script_file
 			<< " - Function not found: " << func_name << std::endl;
 	}
 
@@ -1604,6 +1799,7 @@ void FeVM::script_get_config_options(
 				if ( !otmp.empty() )
 					order = as_int( otmp );
 
+				std::multimap<int,FeMenuOpt>::iterator it;
 				if ( !options.empty() )
 				{
 					std::vector<std::string> options_list;
@@ -1615,36 +1811,50 @@ void FeVM::script_get_config_options(
 						options_list.push_back( temp );
 					} while ( pos < options.size() );
 
-					std::multimap<int,FeMenuOpt>::iterator it = my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
+					it = my_opts.insert( std::pair <int, FeMenuOpt>(
+						order,
+						FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
 
 					(*it).second.append_vlist( options_list );
 				}
 				else if ( config_str_to_bool( is_input ) )
 				{
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
 				}
 				else if ( config_str_to_bool( is_func ) )
 				{
 					FeMenuOpt temp_opt(Opt::SUBMENU, label, "", help, 2, key );
 					temp_opt.opaque_str = value;
 
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								temp_opt ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							temp_opt ) );
 				}
 				else
 				{
-					my_opts.insert(
-							std::pair <int, FeMenuOpt>(
-								order,
-								FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
+					it = my_opts.insert(
+						std::pair <int, FeMenuOpt>(
+							order,
+							FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
+				}
+
+				// Nice and hacky, we put an "%" at start of opaque_str if this is a "per display"
+				// option.  fe_config picks this up and deals with it accordingly
+				//
+				std::string per_display_str;
+				fe_get_attribute_string(
+					config_vm.get_vm(),
+					uConfig.GetObject(), key, "per_display", per_display_str );
+
+				if ( config_str_to_bool( per_display_str ) )
+				{
+					std::string temp = (*it).second.opaque_str;
+					(*it).second.opaque_str = "%";
+					(*it).second.opaque_str += temp;
 				}
 			}
 
@@ -1652,6 +1862,121 @@ void FeVM::script_get_config_options(
 				ctx.opt_list.push_back( (*itr).second );
 		}
 	}
+}
+
+namespace
+{
+	struct generate_ui_info_struct
+	{
+		FeOverlay *ov;
+		std::string emu;
+	};
+
+	bool generate_ui_update( void *d, int i, const std::string &aux )
+	{
+		generate_ui_info_struct *gi = (generate_ui_info_struct *)d;
+
+		std::string msg = gi->emu;
+		msg += " ";
+		msg += as_str( i );
+
+		gi->ov->splash_message( "Generating Rom List: $1%", msg, aux );
+		return !gi->ov->check_for_cancel();
+	}
+};
+
+bool FeVM::setup_wizard()
+{
+	m_overlay->splash_message( "Please Wait" );
+
+	std::string path, fname;
+	if ( !m_feSettings->get_emulator_setup_script( path, fname ) )
+	{
+		FeLog() << "Unable to get emulator setup script. path=" << path
+			<< ", filaname=" << fname << std::endl;
+		return false;
+	}
+
+	FeScriptConfigurable ignored;
+	FeConfigVM config_vm( ignored, path, fname );
+
+	Sqrat::Object etg = Sqrat::RootTable().GetSlot( "emulators_to_generate" );
+	if ( etg.IsNull() )
+	{
+		FeDebug() << "Unable to get 'emulators_to_generate' from setup script: " << fname << std::endl;
+		return false;
+	}
+
+	Sqrat::Array obj( etg );
+
+	std::vector < std::string > emus_to_import;
+
+	Sqrat::Object::iterator it;
+	while ( etg.Next( it ) )
+	{
+		std::string value;
+		fe_get_object_string( Sqrat::DefaultVM::Get(), it.getValue(), value );
+		emus_to_import.push_back( value );
+	}
+
+	if ( emus_to_import.empty() )
+		return false;
+
+	// return 0 if user confirms import
+	if ( m_overlay->confirm_dialog(
+		"Attract-Mode detected emulator(s) that can be imported automatically.  Import them now?",
+		"", true ) != 0 ) // default to "yes"
+	{
+		return false;
+	}
+
+	std::string read_base = m_feSettings->get_config_dir();
+	read_base += FE_EMULATOR_TEMPLATES_SUBDIR;
+
+	std::string write_base = m_feSettings->get_config_dir();
+	write_base += FE_EMULATOR_SUBDIR;
+
+	bool cancelled=false;
+	for ( std::vector<std::string>::iterator itr = emus_to_import.begin();
+		!cancelled && (itr != emus_to_import.end()); ++itr )
+	{
+		// Overwrite emulator config file with template which has just been generated
+		//
+		FeEmulatorInfo emu( *itr );
+		std::string fname = (*itr);
+		fname += FE_EMULATOR_FILE_EXTENSION;
+
+		emu.load_from_file( read_base + fname );
+		emu.save( write_base + fname );
+
+		// Build romlist
+		//
+		std::vector<std::string> emu_list( 1, (*itr) );
+		std::string ignored;
+
+		struct generate_ui_info_struct gi;
+		gi.ov = m_overlay;
+		gi.emu = emu_list[0];
+
+		//
+		// Note: We purposefully disable scraping from the network at startup,
+		//
+		cancelled = !m_feSettings->build_romlist( emu_list,
+				emu_list[0], generate_ui_update, &gi, ignored, false );
+
+		// Create Display
+		//
+		if ( !m_feSettings->check_romlist_configured( emu_list[0] ) )
+		{
+			FeDisplayInfo *new_disp = m_feSettings->create_display( emu_list[0] );
+			new_disp->set_info( FeDisplayInfo::Romlist, emu_list[ 0 ] );
+		}
+	}
+
+	m_feSettings->save();
+	m_feSettings->set_display( 0 );
+
+	return true;
 }
 
 FeImage* FeVM::cb_add_image(const char *n, int x, int y, int w, int h )
@@ -1868,6 +2193,14 @@ bool FeVM::cb_get_input_state( const char *input )
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
+	//
+	// Only test input when frontend has focus (this test only available as of SFML 2.2)
+	//
+	if ( !fev->m_window.hasFocus() )
+		return false;
+#endif
+
 	//
 	// First test if a command has been provided
 	//
@@ -1915,7 +2248,7 @@ void FeVM::do_nut( const char *script_file )
 
 	if ( !internal_do_nut( path, script_file ) )
 	{
-		std::cerr << "Error, file not found: " << path
+		FeLog() << "Error, file not found: " << path
 			<< " (" << script_file << ")" << std::endl;
 	}
 }
@@ -1972,46 +2305,105 @@ const char *FeVM::cb_path_expand( const char *path )
 		return internal_str.c_str();
 }
 
+bool FeVM::cb_path_test( const char *path, int flag )
+{
+	std::string p( path );
+
+	switch ( flag )
+	{
+	case IsFileOrDirectory:
+		return file_exists( p );
+
+	case IsFile:
+		return ( file_exists( p ) && !directory_exists( p ) );
+
+	case IsDirectory:
+		return directory_exists( p );
+
+	case IsRelativePath:
+		return is_relative_path( p );
+
+	case IsSupportedArchive:
+		return is_supported_archive( p );
+
+	case IsSupportedMedia:
+#ifndef NO_MOVIE
+		return FeMedia::is_supported_media_file( p );
+#else
+		return ( tail_compare( p, FE_ART_EXTENSIONS ) );
+#endif
+
+	default:
+		FeLog() << "Error, unrecognized path_test flag: " << flag << std::endl;
+		return false;
+	}
+}
+
 const char *FeVM::cb_game_info( int index, int offset, int filter_offset )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
 
-	static std::string retval;
-
-	if (( index > FeRomInfo::LAST_INDEX+1 ) || ( index < 0 ))
+	if (( index > FeRomInfo::LAST_INDEX+3 ) || ( index < 0 ))
 	{
-		// the better thing to do would be to raise a squirrel error here
+		// TODO: the better thing to do would be to raise a squirrel error here
 		//
-		std::cerr << "game_info(): index out of range" << std::endl;
+		FeLog() << "game_info(): index out of range" << std::endl;
 		return "";
 	}
-	else if ( index == FeRomInfo::LAST_INDEX )
+
+	static std::string retval;
+	retval.clear();
+
+	switch ( index )
 	{
-		std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
-		FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );
+	case FeRomInfo::LAST_INDEX:
+		{
+			std::string emu_name = fev->m_feSettings->get_rom_info( filter_offset, offset, FeRomInfo::Emulator );
+			FeEmulatorInfo *emu = fev->m_feSettings->get_emulator( emu_name );
 
-		retval.clear();
-		if ( emu )
-			retval = emu->get_info( FeEmulatorInfo::System );
+			retval.clear();
+			if ( emu )
+				retval = emu->get_info( FeEmulatorInfo::System );
 
-		return retval.c_str();
+		}
+		break;
+
+	case FeRomInfo::LAST_INDEX+1: // Overview
+		{
+			int filter_index = fev->m_feSettings->get_filter_index_from_offset( filter_offset );
+
+			fev->m_feSettings->get_game_overview_absolute( filter_index,
+				fev->m_feSettings->get_rom_index( filter_index, offset ),
+				retval );
+
+		}
+		break;
+
+	case FeRomInfo::LAST_INDEX+2: // IsPaused
+		if ( fev->m_window.has_running_process() && fev->m_feSettings->is_last_launch( filter_offset, offset ) )
+			retval = "1";
+		break;
+
+	case FeRomInfo::LAST_INDEX+3: // SortValue
+		{
+			FeRomInfo::Index sort_by;
+			bool reverse_sort;
+			int list_limit;
+
+			fev->m_feSettings->get_current_sort( sort_by, reverse_sort, list_limit );
+
+			retval = fev->m_feSettings->get_rom_info( filter_offset, offset,
+				( sort_by == FeRomInfo::LAST_INDEX ) ? FeRomInfo::Title : sort_by );
+		}
+		break;
+
+	default:
+		retval = fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index );
+		break;
 	}
-	else if ( index == FeRomInfo::LAST_INDEX+1 )
-	{
-		// Overview
-		retval.clear();
-		if (( offset == 0 ) && ( filter_offset == 0 ))
-			retval = fev->m_feSettings->get_game_extra( FeSettings::Overview ).c_str();
-		//
-		//TODO: loading overview where there is a filter or index offset is not yet implemented
-		//
 
-		perform_substitution( retval, "\\n", "\n" );
-		return retval.c_str();
-	}
-
-	return (fev->m_feSettings->get_rom_info( filter_offset, offset, (FeRomInfo::Index)index )).c_str();
+	return retval.c_str();
 }
 
 const char *FeVM::cb_game_info( int index, int offset )
@@ -2037,56 +2429,57 @@ const char *FeVM::cb_get_art( const char *art, int index_offset, int filter_offs
 	static std::string retval;
 	retval.clear();
 
+	if ( !rom )
+		return retval.c_str();
+
 	std::vector<std::string> vid_list, image_list;
-	if (( rom ) &&
-		( fes->get_best_artwork_file(
+	fes->get_best_artwork_file(
 			*rom,
 			art,
 			vid_list,
 			image_list,
-			(art_flags&AF_ImagesOnly) ) ))
+			(art_flags&AF_ImagesOnly) );
+
+	if ( art_flags&AF_FullList )
 	{
-		if ( art_flags&AF_FullList )
+		std::vector<std::string>::iterator itr;
+		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
 		{
-			std::vector<std::string>::iterator itr;
-			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			for ( itr=vid_list.begin(); itr!=vid_list.end(); ++itr )
 			{
-				for ( itr=vid_list.begin(); itr!=vid_list.end(); ++itr )
-				{
-					if ( !retval.empty() )
-						retval += ";";
+				if ( !retval.empty() )
+					retval += ";";
 
-					// see note below re: need for absolute path
-					retval += absolute_path( *itr );
-				}
-			}
-			else
-			{
-				for ( itr=image_list.begin(); itr!=image_list.end(); ++itr )
-				{
-					if ( !retval.empty() )
-						retval += ";";
-
-					// see note below re: need for absolute path
-					retval += absolute_path( *itr );
-				}
+				// see note below re: need for absolute path
+				retval += absolute_path( *itr );
 			}
 		}
 		else
 		{
-			if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
-				retval = vid_list.front();
-			else if ( !image_list.empty() )
-				retval = image_list.front();
+			for ( itr=image_list.begin(); itr!=image_list.end(); ++itr )
+			{
+				if ( !retval.empty() )
+					retval += ";";
 
-			// We force our return value to an absolute path, to work
-			// around Attract-Mode's tendency to assume that relative
-			// paths are relative to the layout directory.
-			//
-			// We are almost certain that is not the case here...
-			//
-			retval = absolute_path( retval );
+				// see note below re: need for absolute path
+				retval += absolute_path( *itr );
+			}
 		}
+	}
+	else
+	{
+		if ( !(art_flags&AF_ImagesOnly) &&  !vid_list.empty() )
+			retval = vid_list.front();
+		else if ( !image_list.empty() )
+			retval = image_list.front();
+
+		// We force our return value to an absolute path, to work
+		// around Attract-Mode's tendency to assume that relative
+		// paths are relative to the layout directory.
+		//
+		// We are almost certain that is not the case here...
+		//
+		retval = absolute_path( retval );
 	}
 
 	return retval.c_str();
@@ -2187,13 +2580,13 @@ void FeVM::cb_signal( const char *sig )
 		break;
 
 	default:
-		std::cerr << "Error, unrecognized signal: " << sig << std::endl;
+		FeLog() << "Error, unrecognized signal: " << sig << std::endl;
 		break;
 
 	}
 }
 
-void FeVM::cb_set_display( int idx )
+void FeVM::cb_set_display( int idx, bool stack_previous )
 {
 	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
 	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
@@ -2204,8 +2597,28 @@ void FeVM::cb_set_display( int idx )
 	if ( idx < 0 )
 		idx = 0;
 
-	fes->set_display( idx );
+	fes->set_display( idx, stack_previous );
 	fev->m_posted_commands.push( FeInputMap::Reload );
+}
+
+void FeVM::cb_set_display( int idx )
+{
+	cb_set_display( idx, false );
+}
+
+const char *FeVM::cb_get_text( const char *t )
+{
+	HSQUIRRELVM vm = Sqrat::DefaultVM::Get();
+	FeVM *fev = (FeVM *)sq_getforeignptr( vm );
+	FeSettings *fes = fev->m_feSettings;
+
+	static std::string retval;
+	retval.clear();
+
+	if ( t )
+		fes->get_resource( t, retval );
+
+	return retval.c_str();
 }
 
 void FeVM::init_with_default_layout()

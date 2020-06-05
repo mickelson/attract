@@ -26,6 +26,7 @@
 #include <SFML/Graphics.hpp>
 #include "sprite.hpp"
 #include "fe_presentable.hpp"
+#include "fe_blend.hpp"
 
 class FeSettings;
 class FeMedia;
@@ -56,7 +57,8 @@ public:
 
 	virtual void on_new_list( FeSettings *, bool new_display )=0;
 
-	virtual bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start )=0; // returns true if redraw required
+	virtual bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
+
 	virtual void set_play_state( bool play );
 	virtual bool get_play_state() const;
 	virtual void set_vol( float vol );
@@ -82,6 +84,11 @@ public:
 	virtual void set_smooth( bool )=0;
 	virtual bool get_smooth() const=0;
 
+	virtual void set_mipmap( bool )=0;
+	virtual bool get_mipmap() const=0;
+	virtual bool is_swf() const;
+	virtual float get_sample_aspect_ratio() const;
+
 	// function for use with surface objects
 	//
 	virtual FePresentableParent *get_presentable_parent();
@@ -89,6 +96,7 @@ public:
 	void register_image( FeImage * );
 
 	virtual void release_audio( bool );
+	virtual void on_redraw_surfaces();
 
 protected:
 	FeBaseTextureContainer();
@@ -122,7 +130,7 @@ public:
 	void on_end_navigation( FeSettings *feSettings );
 	void on_new_list( FeSettings *, bool );
 
-	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
+	bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
 	void set_play_state( bool play );
 	bool get_play_state() const;
 	void set_vol( float vol );
@@ -151,6 +159,11 @@ public:
 
 	void release_audio( bool );
 
+	void set_mipmap( bool );
+	bool get_mipmap() const;
+	bool is_swf() const;
+	float get_sample_aspect_ratio() const;
+
 protected:
 	FeTextureContainer *get_derived_texture_container();
 
@@ -168,10 +181,13 @@ private:
 		const std::string &filename,
 		bool is_image=false );
 
+	bool load_to_texture( sf::InputStream &s );
+
 	void internal_update_selection( FeSettings *feSettings );
 	void clear();
 
 	sf::Texture m_texture;
+
 	std::string m_art_name; // artwork label/template name (dynamic images)
 	std::string m_file_name; // the name of the loaded file
 	int m_index_offset;
@@ -186,6 +202,8 @@ private:
 	FeSwf *m_swf;
 	int m_movie_status; // 0=no play, 1=ready to play, >=PLAY_COUNT=playing
 	FeVideoFlags m_video_flags;
+	bool m_mipmap;
+	bool m_smooth;
 };
 
 class FeSurfaceTextureContainer : public FeBaseTextureContainer, public FePresentableParent
@@ -201,10 +219,13 @@ public:
 	void on_end_navigation( FeSettings *feSettings );
 	void on_new_list( FeSettings *, bool );
 
-	bool tick( FeSettings *feSettings, bool play_movies, bool ok_to_start ); // returns true if redraw required
+	void on_redraw_surfaces();
 
 	void set_smooth( bool );
 	bool get_smooth() const;
+
+	void set_mipmap( bool );
+	bool get_mipmap() const;
 
 	FePresentableParent *get_presentable_parent();
 
@@ -220,6 +241,7 @@ protected:
 	sf::Vector2f m_pos;
 	sf::Vector2f m_size;
 	sf::Vector2f m_origin;
+	FeBlend::Mode m_blend_mode;
 	bool m_preserve_aspect_ratio;
 
 	void scale();
@@ -287,7 +309,9 @@ public:
 	int get_subimg_y() const;
 	int get_subimg_width() const;
 	int get_subimg_height() const;
+	float get_sample_aspect_ratio() const;
 	bool get_preserve_aspect_ratio() const;
+	bool get_mipmap() const;
 
 	void set_origin_x( float x );
 	void set_origin_y( float y );
@@ -300,6 +324,7 @@ public:
 	void set_subimg_width( int w );
 	void set_subimg_height( int h );
 	void set_preserve_aspect_ratio( bool p );
+	void set_mipmap( bool m );
 	void transition_swap( FeImage * );
 
 	void rawset_index_offset( int io );
@@ -308,6 +333,9 @@ public:
 
 	void set_smooth( bool );
 	bool get_smooth() const;
+
+	int get_blend_mode() const;
+	void set_blend_mode( int b );
 
 	//
 	// Callback functions for use with surface objects

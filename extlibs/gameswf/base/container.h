@@ -69,7 +69,7 @@ public:
 
 #include <vector>
 
-#if defined __APPLE__
+#if defined(__APPLE__) || defined(ANDROID)
 #include <ext/hash_map>
 #else
 #include <hash_map>
@@ -1314,7 +1314,7 @@ private:
 		}
 
 		// Force new_size to be a power of two.
-		int	bits = fchop(log2((float)(new_size-1)) + 1);
+		int	bits = fchop(my_log2((float)(new_size-1)) + 1);
 		assert((1 << bits) >= new_size);
 
 		new_size = 1 << bits;
