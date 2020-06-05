@@ -337,6 +337,10 @@ ifeq ($(USE_MMAL),1)
  FE_FLAGS += -DUSE_MMAL
 endif
 
+ifeq ($(PLATFORM_RPI4),1)
+ FE_FLAGS += -DPLATFORM_RPI4
+endif
+
 ifeq ($(USE_XLIB),1)
  FE_FLAGS += -DUSE_XLIB
  LIBS += -lX11
