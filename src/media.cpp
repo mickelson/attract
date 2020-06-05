@@ -1508,20 +1508,30 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 	{
 		switch( dec->id )
 		{
+			
+
 		case AV_CODEC_ID_MPEG4:
+#if not defined(PLATFORM_RPI4)
 			dec = avcodec_find_decoder_by_name( "mpeg4_mmal" );
+#endif
 			return;
+
 
 		case AV_CODEC_ID_H264:
 			dec = avcodec_find_decoder_by_name( "h264_mmal" );
 			return;
 
+
 		case AV_CODEC_ID_MPEG2VIDEO:
+#if not defined(PLATFORM_RPI4)
 			dec = avcodec_find_decoder_by_name( "mpeg2_mmal" );
+#endif
 			return;
 
 		case AV_CODEC_ID_VC1:
+#if not defined(PLATFORM_RPI4)
 			dec = avcodec_find_decoder_by_name( "vc1_mmal" );
+#endif
 			return;
 
 		default:
