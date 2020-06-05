@@ -1513,6 +1513,9 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 		case AV_CODEC_ID_MPEG4:
 #if not defined(PLATFORM_RPI4)
 			dec = avcodec_find_decoder_by_name( "mpeg4_mmal" );
+#else
+			FeLog() << "MPEG4 HW video decoding (mpeg4_mmal) not supported on RPI4 for file: " 
+				<< m_imp->m_format_ctx->filename << std::endl;
 #endif
 			return;
 
@@ -1525,12 +1528,18 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 		case AV_CODEC_ID_MPEG2VIDEO:
 #if not defined(PLATFORM_RPI4)
 			dec = avcodec_find_decoder_by_name( "mpeg2_mmal" );
+#else
+			FeLog() << "MPEG2 HW video decoding (mpeg2_mmal) not supported on RPI4 for for file: " 
+				<< m_imp->m_format_ctx->filename <<  std::endl;
 #endif
 			return;
 
 		case AV_CODEC_ID_VC1:
 #if not defined(PLATFORM_RPI4)
 			dec = avcodec_find_decoder_by_name( "vc1_mmal" );
+#else
+			FeLog() << "VC1 HW video decoding (vc1_mmal) not supported on RPI4 for file: " 
+				<< m_imp->m_format_ctx->filename <<  std::endl;
 #endif
 			return;
 
