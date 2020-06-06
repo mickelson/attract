@@ -1054,8 +1054,11 @@ bool FeMedia::open( const std::string &archive,
 
 	if ( m_imp->m_type & Video )
 	{
+		std::string prev_dec_name;
+		int av_result( -1 );
 		int stream_id( -1 );
 		AVCodec *dec;
+
 		stream_id = av_find_best_stream( m_imp->m_format_ctx, AVMEDIA_TYPE_VIDEO,
 					-1, -1, &dec, 0 );
 
@@ -1072,14 +1075,46 @@ bool FeMedia::open( const std::string &archive,
 			// Note also: http://trac.ffmpeg.org/ticket/4404
 			codec_ctx->thread_count=1;
 
+			if (dec)
+				prev_dec_name = std::string(dec->name);
+
 			try_hw_accel( codec_ctx, dec );
 
-			if ( avcodec_open2( codec_ctx, dec, NULL ) < 0 )
+			av_result = avcodec_open2( codec_ctx, dec, NULL );
+			if ( av_result < 0 )
 			{
-				FeLog() << "Could not open video decoder for file: "
-					<< m_imp->m_format_ctx->filename << std::endl;
+				if ( !prev_dec_name.empty() && (g_decoder.compare( "mmal" ) == 0) )
+				{ 
+					switch( dec->id )
+					{
+
+
+					case AV_CODEC_ID_VC1:
+					case AV_CODEC_ID_MPEG2VIDEO:
+					case AV_CODEC_ID_H264:
+					case AV_CODEC_ID_MPEG4:
+						FeLog() << "mmal video decoding (" << dec->name 
+							<< ") not supported for file (trying software): " 
+							<< m_imp->m_format_ctx->filename << std::endl;
+
+						dec = avcodec_find_decoder_by_name(prev_dec_name.c_str());
+
+						av_result = avcodec_open2( codec_ctx, dec, NULL );
+						break;
+						
+					default:
+						break;
+					}
+				}
+
+				if ( av_result < 0 )
+				{
+					FeLog() << "Could not open video decoder for file: "
+							<< m_imp->m_format_ctx->filename << std::endl;
+				}
 			}
-			else
+
+			if ( av_result >=0  )
 			{
 				m_video = new FeVideoImp( this );
 				m_video->stream_id = stream_id;
@@ -1508,13 +1543,16 @@ void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
 	{
 		switch( dec->id )
 		{
+
 		case AV_CODEC_ID_MPEG4:
 			dec = avcodec_find_decoder_by_name( "mpeg4_mmal" );
 			return;
 
+
 		case AV_CODEC_ID_H264:
 			dec = avcodec_find_decoder_by_name( "h264_mmal" );
 			return;
+
 
 		case AV_CODEC_ID_MPEG2VIDEO:
 			dec = avcodec_find_decoder_by_name( "mpeg2_mmal" );
