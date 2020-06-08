@@ -54,6 +54,12 @@
 # decoding on Linux (req FFmpeg >= 3.4)
 #FE_HWACCEL_VAAPI=1
 #FE_HWACCEL_VDPAU=1
+#
+# Uncomment the next line to allow Attract-Mode to be launched from the
+# SSH session. Please be aware that when Attract-Mode is launched from the
+# remote session there is a danger of unknowingly enter shell commands into
+# the non busy console underneath when hardwired keyboard device is used.
+#ALLOW_SSH=1
 ###############################
 
 #FE_DEBUG=1
@@ -351,6 +357,10 @@ endif
 ifeq ($(USE_DRM),1)
  TEMP_LIBS += libdrm gbm
  FE_FLAGS += -DUSE_DRM
+endif
+
+ifeq ($(ALLOW_SSH),1)
+  FE_FLAGS += -DALLOW_SSH
 endif
 
 ifeq ($(FE_HWACCEL_VAAPI),1)

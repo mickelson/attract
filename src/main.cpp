@@ -109,6 +109,14 @@ int main(int argc, char *argv[])
 	fe_print_version();
 	FeLog() << std::endl;
 
+#ifndef ALLOW_SSH
+	if( std::getenv("SSH_CLIENT") || std::getenv("SSH_TTY"))
+	{
+		FeLog() << "SSH session detected. Please run Attract-Mode from the device you're connected to.\n";
+		return 0;
+	}
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 	// Detect an nvidia card and if it's found create an nvidia profile
 	// for Attract Mode with optimizations
