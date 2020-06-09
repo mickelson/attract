@@ -1041,7 +1041,7 @@ void FePresent::load_screensaver()
 	update( true, true );
 }
 
-void FePresent::load_layout( bool initial_load )
+void FePresent::load_layout( bool initial_load, bool suppress_transition )
 {
 	int var = ( m_feSettings->get_present_state() == FeSettings::ScreenSaver_Showing )
 			? FromToScreenSaver : FromToNoValue;
@@ -1084,14 +1084,18 @@ void FePresent::load_layout( bool initial_load )
 		init_with_default_layout();
 	}
 
-	on_transition( StartLayout, var );
-	update_to_new_list( FromToNoValue, true );
+	if ( !suppress_transition )
+		on_transition( StartLayout, var );
+
+	update_to_new_list( FromToNoValue, true, suppress_transition );
 }
 
-void FePresent::update_to_new_list( int var, bool reset_display )
+void FePresent::update_to_new_list( int var, bool reset_display, bool suppress_transition )
 {
 	update( true, reset_display );
-	on_transition( ToNewList, var );
+
+	if ( !suppress_transition )
+		on_transition( ToNewList, var );
 }
 
 bool FePresent::tick()

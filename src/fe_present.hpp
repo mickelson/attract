@@ -202,9 +202,9 @@ public:
 
 	bool load_intro(); // returns false if no intro is available
 	void load_screensaver();
-	void load_layout( bool initial_load=false );
+	void load_layout( bool initial_load=false, bool suppress_transition=false );
 
-	virtual void update_to_new_list( int var=0, bool reset_display=false ); // NOTE virtual function!
+	virtual void update_to_new_list( int var=0, bool reset_display=false, bool suppress_transition=false ); // NOTE virtual function!
 	void on_end_navigation();
 	void redraw_surfaces();
 

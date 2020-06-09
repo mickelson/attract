@@ -200,21 +200,23 @@ int main(int argc, char *argv[])
 		// start the intro now
 		if ( !feVM.load_intro() )
 		{
-			// ... or start the layout if there is no intro
-			feVM.load_layout( true );
-
 			switch ( feSettings.get_startup_mode() )
 			{
 			case FeSettings::LaunchLastGame:
+				feVM.load_layout( true );
 				feSettings.select_last_launch();
 				launch_game=true;
 				break;
 
 			case FeSettings::ShowDisplaysMenu:
+				// we do a double load of the layout on startup if there is custom display menu
+				// so we suppress the extra transition signals that get triggered here
+				feVM.load_layout( true, !feSettings.get_info( FeSettings::MenuLayout ).empty() );
 				FeVM::cb_signal( "displays_menu" );
 				break;
 
 			default:
+				feVM.load_layout( true );
 				break;
 			}
 
@@ -526,20 +528,24 @@ int main(int argc, char *argv[])
 				move_triggered = FeInputMap::LAST_COMMAND;
 				move_last_triggered = 0;
 
-				feVM.load_layout( true );
 
 				switch ( feSettings.get_startup_mode() )
 				{
 				case FeSettings::LaunchLastGame:
+					feVM.load_layout( true );
 					feSettings.select_last_launch();
 					launch_game=true;
 					break;
 
 				case FeSettings::ShowDisplaysMenu:
+					// we do a double load of the layout on startup if there is custom display menu
+					// so we suppress the extra transition signals that get triggered here
+					feVM.load_layout( true, !feSettings.get_info( FeSettings::MenuLayout ).empty() );
 					FeVM::cb_signal( "displays_menu" );
 					break;
 
 				default:
+					feVM.load_layout( true );
 					break;
 				}
 
