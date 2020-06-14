@@ -1644,30 +1644,23 @@ bool line_to_setting_and_value( const std::string &line,
 	std::string &value,
 	const char *sep )
 {
-	// skip opening whitespace on line
-	size_t pos = line.find_first_not_of( FE_WHITESPACE );
-	if ( pos != std::string::npos )
+	size_t pos( 0 );
+
+	std::string tmp_setting;
+	token_helper( line, pos, tmp_setting, sep );
+
+	// skip comments
+	if (( tmp_setting.size() > 0 ) && ( tmp_setting[0] != '#' ))
 	{
-		size_t end = line.find_first_of( sep, pos );
-		std::string tmp_setting;
+		pos = line.find_first_not_of( FE_WHITESPACE, pos );
+		size_t end = line.find_last_not_of( FE_WHITESPACE );
+		if ( pos != std::string::npos )
+			value = line.substr( pos, end - pos + 1 );
 
-		if ( end == std::string::npos )
-			tmp_setting = line.substr( pos );
-		else
-			tmp_setting = line.substr( pos, end - pos );
-
-		// skip comments
-		if (( tmp_setting.size() > 0 ) && (tmp_setting[0] != '#' ))
-		{
-			pos = line.find_first_not_of( FE_WHITESPACE, end + 1 );
-			end = line.find_last_not_of( FE_WHITESPACE );
-			if ( pos != std::string::npos )
-				value = line.substr( pos, end - pos + 1 );
-
-			setting.swap( tmp_setting );
-			return true;
-		}
+		setting.swap( tmp_setting );
+		return true;
 	}
+
 	return false;
 }
 
