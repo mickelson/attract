@@ -331,8 +331,9 @@ std::string get_program_path()
 {
 	std::string path;
 #ifdef SFML_SYSTEM_WINDOWS
-	char result[ MAX_PATH ];
-	path = std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+	wchar_t result[ MAX_PATH ];
+	std::basic_string<wchar_t> s( result, GetModuleFileNameW( NULL, result, MAX_PATH ) );
+	path = narrow( s );
 #else
 	char result[ PATH_MAX ];
 	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
@@ -347,11 +348,11 @@ std::string absolute_path( const std::string &path )
 #ifdef SFML_SYSTEM_WINDOWS
 
 	const int BUFF_SIZE = 512;
-	char buff[ BUFF_SIZE + 1 ];
+	wchar_t buff[ BUFF_SIZE + 1 ];
 	buff[BUFF_SIZE] = 0;
 
-	if ( GetFullPathNameA( path.c_str(), BUFF_SIZE, buff, NULL ))
-		return std::string( buff );
+	if ( GetFullPathNameW( widen( path ).c_str(), BUFF_SIZE, buff, NULL ))
+		return narrow( buff );
 #else
 	char buff[PATH_MAX+1];
 
