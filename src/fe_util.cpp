@@ -851,12 +851,7 @@ run_program_options_class::run_program_options_class()
 	wait_cb( NULL ),
 	launch_opaque( NULL ),
 	running_pid( 0 ),
-#if defined( USE_DRM )
-	drm_fd( 0 ),
 	running_wnd( NULL )
-#else
-	running_wnd( NULL )
-#endif
 {
 }
 
@@ -1206,18 +1201,6 @@ bool run_program( const std::string &prog,
 	if (( NULL != callback ) && block && ( pipe( mypipe ) ))
 		FeLog() << "Error, pipe() failed" << std::endl;
 
-#ifdef USE_DRM
-	// Use attract-drm-helper to call drmDropMaster() and allow the emulator to
-	// take over the screen from Attract-mode
-	//
-	if ( opt->drm_fd )
-	{
-		std::string cmd( "attract-drm-helper drop " );
-		cmd += as_str( opt->drm_fd );
-		system( cmd.c_str() );
-	}
-#endif
-
 	pid_t pid = fork();
 	switch (pid)
 	{
@@ -1295,18 +1278,6 @@ bool run_program( const std::string &prog,
 		if ( block )
 		{
 			unix_wait_process( pid, opt );
-
-#ifdef USE_DRM
-			// Use attract-drm-helper to call drmSetMaster() and cause Attract-Mode to take back
-			// control over the screen
-			//
-			if ( opt->drm_fd )
-			{
-				std::string cmd( "attract-drm-helper set " );
-				cmd += as_str( opt->drm_fd );
-				system( cmd.c_str() );
-			}
-#endif
 		}
 	}
 #endif // SFML_SYSTEM_WINDOWS

@@ -462,10 +462,12 @@ bool FeWindow::run()
 	opt.launch_opaque = this;
 
 #if defined(USE_DRM)
-	//
-	// If using DRM with sfml-pi getSystemHandle() will return the drm fd
-	//
-	opt.drm_fd = getSystemHandle();
+	close();
+	delete m_window;
+	m_window = NULL;
+
+	FePresent *fep = FePresent::script_get_fep();
+	fep->clear();
 #endif
 
 	bool have_paused_prog = m_running_pid && process_exists( m_running_pid );
@@ -618,6 +620,9 @@ bool FeWindow::run()
 		if ( !isOpen() )
 			initial_create();
  #else
+  #if defined(USE_DRM)
+		fep->load_layout( false, true );
+  #endif
 		initial_create(); // On raspberry pi or with DRM, we have forcibly closed the window, so recreate it now
  #endif
 	}
