@@ -123,3 +123,23 @@ sf::Shader* FeBlend::get_default_shader( int blend_mode )
 	}
 }
 
+void FeBlend::clear_default_shaders()
+{
+	if ( default_shader_multiplied )
+	{
+		delete default_shader_multiplied;
+		default_shader_multiplied = NULL;
+	}
+
+	if ( default_shader_overlay )
+	{
+		delete default_shader_overlay;
+		default_shader_overlay = NULL;
+	}
+
+	if ( default_shader_premultiplied )
+	{
+		delete default_shader_premultiplied;
+		default_shader_premultiplied = NULL;
+	}
+}
