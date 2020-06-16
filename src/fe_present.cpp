@@ -73,7 +73,8 @@ BOOL CALLBACK my_mon_enum_proc( HMONITOR, HDC, LPRECT mon_rect, LPARAM data )
 #endif
 
 FeFontContainer::FeFontContainer()
-	: m_stream( NULL )
+	: m_stream( NULL ),
+	m_needs_reload( false )
 {
 }
 
@@ -108,6 +109,23 @@ void FeFontContainer::set_font( const std::string &p, const std::string &n )
 		if ( !m_font.loadFromStream( *m_stream ) )
 			FeLog() << "Error loading font from file: " << p + n << std::endl;
 	}
+}
+
+const sf::Font &FeFontContainer::get_font() const
+{
+	if ( m_needs_reload && m_stream )
+	{
+		m_font.loadFromStream( *m_stream );
+		m_needs_reload=false;
+	}
+
+	return m_font;
+}
+
+void FeFontContainer::clear_font()
+{
+	m_font = sf::Font();
+	m_needs_reload = true;
 }
 
 FeMonitor::FeMonitor( int n, int w, int h )
@@ -255,7 +273,7 @@ void FePresent::init_monitors()
 	else
 #endif
 	{
-		FeMonitor mc( 0, m_window.getSize().x, m_window.getSize().y );
+		FeMonitor mc( 0, m_window.get_win().getSize().x, m_window.get_win().getSize().y );
 
 #ifdef SFML_SYSTEM_WINDOWS
 		//
@@ -294,6 +312,7 @@ void FePresent::clear()
 	m_listBox=NULL; // listbox gets deleted with the m_mon.elements below
 	m_transform = sf::Transform();
 	m_currentFont = &m_defaultFont;
+	m_defaultFont.clear_font();
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	m_user_page_size = -1;
 	m_preserve_aspect = false;
@@ -348,6 +367,8 @@ void FePresent::clear()
 	m_layoutSize = m_mon[0].size;
 	m_layoutScale.x = 1.0;
 	m_layoutScale.y = 1.0;
+
+	FeBlend::clear_default_shaders();
 }
 
 void FePresent::draw( sf::RenderTarget& target, sf::RenderStates states ) const

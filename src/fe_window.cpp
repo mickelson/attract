@@ -118,7 +118,8 @@ bool is_multimon_config( FeSettings &fes )
 const char *FeWindowPosition::FILENAME = "window.am";
 
 FeWindow::FeWindow( FeSettings &fes )
-	: m_fes( fes ),
+	: m_window( NULL ),
+	m_fes( fes ),
 	m_running_pid( 0 ),
 	m_running_wnd( NULL ),
 	m_win_mode( 0 )
@@ -129,31 +130,14 @@ FeWindow::~FeWindow()
 {
 	if ( m_running_pid && process_exists( m_running_pid ) )
 		kill_program( m_running_pid );
-}
 
-void FeWindow::onCreate()
-{
-	// On Windows Vista and above all non fullscreen window modes
-	// go through DWM. We have to disable vsync
-	// when we rely solely on DwmFlush()
-#if defined(SFML_SYSTEM_WINDOWS) && !defined(WINDOWS_XP)
-	if ( m_win_mode != FeSettings::Fullscreen )
-		setVerticalSyncEnabled(false);
-	else
-		setVerticalSyncEnabled(true);
-#else
-	setVerticalSyncEnabled(true);
-#endif
-	setKeyRepeatEnabled(false);
-	setMouseCursorVisible(false);
-	setJoystickThreshold( 1.0 );
-
-	sf::RenderWindow::onCreate();
+	if ( m_window )
+		delete m_window;
 }
 
 void FeWindow::display()
 {
-	sf::RenderWindow::display();
+	m_window->display();
 
 	// Starting from Windows Vista all non fullscreen window modes
 	// go through DWM, so we have to flush here to sync to the DMW's v-sync
@@ -166,6 +150,9 @@ void FeWindow::display()
 
 void FeWindow::initial_create()
 {
+	if ( !m_window )
+		m_window = new sf::RenderWindow();
+
 	int style_map[4] =
 	{
 		sf::Style::None,       // FeSettings::Default
@@ -292,7 +279,6 @@ void FeWindow::initial_create()
 	//
 	// If in windowed mode load the parameters from the window.am file
 	//
-
 	if ( is_windowed_mode( m_win_mode ) )
 	{
 		FeWindowPosition win_pos(
@@ -335,7 +321,19 @@ void FeWindow::initial_create()
 	//
 	// Create window
 	//
-	create( vm, "Attract-Mode", style_map[ m_win_mode ] );
+	m_window->create( vm, "Attract-Mode", style_map[ m_win_mode ] );
+
+	// On Windows Vista and above all non fullscreen window modes
+	// go through DWM. We have to disable vsync
+	// when we rely solely on DwmFlush()
+#if defined(SFML_SYSTEM_WINDOWS) && !defined(WINDOWS_XP)
+	m_window->setVerticalSyncEnabled( m_win_mode == FeSettings::Fullscreen );
+#else
+	m_window->setVerticalSyncEnabled(true);
+#endif
+	m_window->setKeyRepeatEnabled(false);
+	m_window->setMouseCursorVisible(false);
+	m_window->setJoystickThreshold( 1.0 );
 
 	// We need to clear and display here before calling setSize and setPosition
 	// to avoid a white window flash on launching Attract Mode.
@@ -352,7 +350,7 @@ void FeWindow::initial_create()
 
 	// Known issue: Linux Mint 18.3 Cinnamon w/ SFML 2.5.1, position isn't being set
 	// (Window always winds up at 0,0)
-	setPosition( wpos );
+	m_window->setPosition( wpos );
 
 	FeDebug() << "Created Attract-Mode Window: " << wsize.x << "x" << wsize.y << " @ "
 		<< wpos.x << "," << wpos.y << " [OpenGL surface: "
@@ -373,14 +371,14 @@ void FeWindow::initial_create()
 		&& ( vm.height == wsize.y ))
 		m_win_mode = FeSettings::Fullscreen;
 #endif
-	set_win32_foreground_window( getSystemHandle(), HWND_TOP );
+	set_win32_foreground_window( m_window->getSystemHandle(), HWND_TOP );
 #endif
 
 	m_fes.init_mouse_capture( wsize.x, wsize.y );
 
 	// Only mess with the mouse position if mouse moves mapped
 	if ( m_fes.test_mouse_reset( 0, 0 ) )
-		sf::Mouse::setPosition( sf::Vector2i( wsize.x / 2, wsize.y / 2 ), *this );
+		sf::Mouse::setPosition( sf::Vector2i( wsize.x / 2, wsize.y / 2 ), *m_window );
 }
 
 void launch_callback( void *o )
@@ -428,9 +426,9 @@ bool FeWindow::run()
 		//
 		reset_pos = sf::Mouse::getPosition();
 
-		sf::Vector2i hide_pos = getPosition();
-		hide_pos.x += getSize().x - 1;
-		hide_pos.y += getSize().y - 1;
+		sf::Vector2i hide_pos = m_window->getPosition();
+		hide_pos.x += get_win().getSize().x - 1;
+		hide_pos.y += get_win().getSize().y - 1;
 
 		sf::Mouse::setPosition( hide_pos );
 	}
@@ -462,6 +460,7 @@ bool FeWindow::run()
 	opt.launch_cb = (( nbm_wait <= 0 ) ? launch_callback : NULL );
 	opt.wait_cb = wait_callback;
 	opt.launch_opaque = this;
+
 #if defined(USE_DRM)
 	//
 	// If using DRM with sfml-pi getSystemHandle() will return the drm fd
@@ -474,14 +473,14 @@ bool FeWindow::run()
 #if defined(SFML_SYSTEM_WINDOWS)
 	if ( m_win_mode == FeSettings::Fullscreen )
 	{
-		set_win32_foreground_window( getSystemHandle(), HWND_BOTTOM );
+		set_win32_foreground_window( m_window->getSystemHandle(), HWND_BOTTOM );
 		m_blackout.display();
-		setVisible( false );
+		m_window->setVisible( false );
 		set_win32_foreground_window( m_blackout.getSystemHandle(), HWND_TOP );
 	}
 	else
 	{
-		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
+		set_win32_foreground_window( m_window->getSystemHandle(), HWND_TOP );
 		if ( !is_multimon_config( m_fes ))
 			clear();
 		display();
@@ -556,7 +555,7 @@ bool FeWindow::run()
 			}
 
 #if defined(SFML_SYSTEM_WINDOWS)
-			has_focus = hasFocus() | m_blackout.hasFocus();
+			has_focus = hasFocus() || m_blackout.hasFocus();
 #else
 			has_focus = hasFocus();
 #endif
@@ -619,11 +618,11 @@ bool FeWindow::run()
 		if ( !isOpen() )
 			initial_create();
  #else
-		initial_create(); // On raspberry pi, we have forcibly closed the window, so recreate it now
+		initial_create(); // On raspberry pi or with DRM, we have forcibly closed the window, so recreate it now
  #endif
 	}
  #if defined(USE_XLIB)
-	set_x11_foreground_window( getSystemHandle() );
+	set_x11_foreground_window( m_window->getSystemHandle() );
  #endif
 
 #elif defined(SFML_SYSTEM_MACOS)
@@ -632,7 +631,7 @@ bool FeWindow::run()
 	if ( m_win_mode == FeSettings::Fullscreen )
 	{
 		m_blackout.display();
-		setVisible( true );
+		m_window->setVisible( true );
 
 		// Since we are double/triple buffering in fullscreen
 		// we need to clear the frames rendered ahead
@@ -642,10 +641,10 @@ bool FeWindow::run()
 			clear();
 			display();
 		}
-		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
+		set_win32_foreground_window( m_window->getSystemHandle(), HWND_TOP );
 	}
 	else
-		set_win32_foreground_window( getSystemHandle(), HWND_TOP );
+		set_win32_foreground_window( m_window->getSystemHandle(), HWND_TOP );
 #endif
 
 	if ( m_fes.get_info_bool( FeSettings::MoveMouseOnLaunch ) )
@@ -672,9 +671,9 @@ void FeWindow::on_exit()
 	m_blackout.close();
 #endif
 
-	if ( is_windowed_mode( m_win_mode ) )
+	if ( is_windowed_mode( m_win_mode ) && m_window )
 	{
-		FeWindowPosition win_pos( getPosition(), getSize() );
+		FeWindowPosition win_pos( m_window->getPosition(), m_window->getSize() );
 		win_pos.save( m_fes.get_config_dir() + FeWindowPosition::FILENAME );
 	}
 }
@@ -682,4 +681,54 @@ void FeWindow::on_exit()
 bool FeWindow::has_running_process()
 {
 	return ( m_running_pid != 0 );
+}
+
+sf::RenderWindow &FeWindow::get_win()
+{
+	if ( !m_window )
+		FeLog() << "FeWindow::get_win() on NULL window!" << std::endl;
+
+	return *m_window;
+}
+
+void FeWindow::close()
+{
+	if ( m_window )
+		m_window->close();
+}
+
+bool FeWindow::hasFocus()
+{
+	if ( m_window )
+		return m_window->hasFocus();
+
+	return false;
+}
+
+bool FeWindow::isOpen()
+{
+	if ( m_window )
+		return m_window->isOpen();
+
+	return false;
+}
+
+void FeWindow::clear()
+{
+	if ( m_window )
+		m_window->clear();
+}
+
+void FeWindow::draw( const sf::Drawable &d, const sf::RenderStates &r )
+{
+	if ( m_window )
+		m_window->draw( d, r );
+}
+
+bool FeWindow::pollEvent( sf::Event &e )
+{
+	if ( m_window )
+		return m_window->pollEvent( e );
+
+	return false;
 }

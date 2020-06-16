@@ -803,7 +803,7 @@ void FeOverlay::input_map_dialog(
 	// Centre the mouse in case the user is mapping a mouse move event
 	s.x /= 2;
 	s.y /= 2;
-	sf::Mouse::setPosition( sf::Vector2i( s ), m_wnd );
+	sf::Mouse::setPosition( sf::Vector2i( s ), m_wnd.get_win() );
 
 	// empty the window event queue
 	sf::Event ev;
@@ -903,6 +903,7 @@ void FeOverlay::input_map_dialog(
 		if ( redraw || !m_feSettings.get_info_bool( FeSettings::PowerSaving ) )
 		{
 			m_fePresent.redraw_surfaces();
+
 			m_wnd.clear();
 			m_wnd.draw( m_fePresent, t );
 			m_wnd.draw( message, t );
@@ -1511,9 +1512,9 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 class FeKeyRepeat
 {
 private:
-	FeWindow &m_wnd;
+	sf::RenderWindow &m_wnd;
 public:
-	FeKeyRepeat( FeWindow &wnd )
+	FeKeyRepeat( sf::RenderWindow &wnd )
 	: m_wnd( wnd )
 	{
 		m_wnd.setKeyRepeatEnabled( true );
@@ -1655,7 +1656,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 		cursor.getLocalBounds().top * cursor.getScale().y / 2.0 ));
 
 	bool redraw=true;
-	FeKeyRepeat key_repeat_enabler( m_wnd );
+	FeKeyRepeat key_repeat_enabler( m_wnd.get_win() );
 
 	sf::Event joy_guard;
 	bool did_delete( false ); // flag if the user just deleted a character using the UI controls

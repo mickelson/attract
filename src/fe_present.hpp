@@ -70,13 +70,19 @@ public:
 
 	void set_font( const std::string &p, const std::string &n );
 
-	const sf::Font &get_font() const { return m_font; };
+	const sf::Font &get_font() const;
 	const std::string &get_name() const { return m_name; };
 
+	void clear_font();
+
 private:
-	sf::Font m_font;
+	FeFontContainer( const FeFontContainer & );
+	const FeFontContainer &operator=( const FeFontContainer & );
+
+	mutable sf::Font m_font;
 	std::string m_name;
 	sf::InputStream *m_stream;
+	mutable bool m_needs_reload;
 };
 
 //
@@ -149,7 +155,6 @@ protected:
 	FePresent( const FePresent & );
 	FePresent &operator=( const FePresent & );
 
-	virtual void clear();
 	void toggle_movie();
 
 	void toggle_rotate( FeSettings::RotationState ); // toggle between none and provided state
@@ -197,6 +202,8 @@ protected:
 public:
 	FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWindow &wnd );
 	virtual ~FePresent( void );
+
+	virtual void clear();
 
 	void init_monitors();
 

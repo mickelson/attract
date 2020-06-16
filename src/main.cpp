@@ -351,8 +351,8 @@ int main(int argc, char *argv[])
 						// We reset the mouse if we are capturing it and it has moved
 						// outside of its bounding box
 						//
-						sf::Vector2u s = window.getSize();
-						sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), window );
+						sf::Vector2u s = window.get_win().getSize();
+						sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), window.get_win() );
 					}
 					break;
 
@@ -623,13 +623,14 @@ int main(int argc, char *argv[])
 						get_available_filename( feSettings.get_config_dir(),
 										"screen", ".png", filename );
 
+						sf::RenderWindow &w = window.get_win();
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
 						sf::Texture texture;
-						texture.create( window.getSize().x, window.getSize().y );
-						texture.update( window );
+						texture.create( w.getSize().x, w.getSize().y );
+						texture.update( w );
 						sf::Image sshot_img = texture.copyToImage();
 #else
-						sf::Image sshot_img = window.capture();
+						sf::Image sshot_img = w.capture();
 #endif
 						sshot_img.saveToFile( filename );
 					}
