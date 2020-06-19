@@ -985,12 +985,17 @@ void FeEmulatorInfo::set_info( enum Index i, const std::string &s )
 		string_to_vector( s, m_import_extras );
 		break;
 	case NBM_wait:
+#if !defined(NO_NBM_WAIT)
 		m_nbm_wait = as_int( s );
+#endif
 		break;
 	case Exit_hotkey:
 		m_exit_hotkey = s; break;
 	case Pause_hotkey:
-		m_pause_hotkey = s; break;
+#if !defined(NO_PAUSE_HOTKEY)
+		m_pause_hotkey = s;
+#endif
+		break;
 	default:
 		break;
 	}

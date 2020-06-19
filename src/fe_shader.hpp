@@ -55,6 +55,9 @@ public:
 	Type get_type() const { return m_type; };
 
 private:
+	FeShader( const FeShader & );
+	const FeShader &operator=( const FeShader & );
+
 	Type m_type;
 	sf::Shader m_shader;
 };

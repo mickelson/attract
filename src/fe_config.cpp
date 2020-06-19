@@ -236,14 +236,14 @@ void FeEmulatorEditMenu::get_options( FeConfigContext &ctx )
 
 		for ( int i=1; i < FeEmulatorInfo::LAST_INDEX; i++ )
 		{
-#ifdef SFML_SYSTEM_MACOS
-			// Pause hotkey functionality is not fully implemented on OS X, block
-			// the user from trying to use it
-			//
+#if defined(NO_NBM_WAIT)
+			if ( i == (int)FeEmulatorInfo::NBM_wait )
+				continue;
+#endif
+#if defined(NO_PAUSE_HOTKEY)
 			if ( i == (int)FeEmulatorInfo::Pause_hotkey )
 				continue;
 #endif
-
 			std::string help( "_help_emu_" );
 			help += FeEmulatorInfo::indexStrings[i];
 
@@ -363,18 +363,20 @@ bool FeEmulatorEditMenu::on_option_select(
 		{
 			// Make sure m_emulator is set with all the configured info
 			//
+			int j=0;
 			for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
-            {
-#ifdef SFML_SYSTEM_MACOS
-                // Pause hotkey functionality is not fully implemented on OS X, block
-                // the user from trying to use it
-                //
-                if ( i == (int)FeEmulatorInfo::Pause_hotkey )
-                    continue;
+			{
+#if defined(NO_NBM_WAIT)
+				if ( i == (int)FeEmulatorInfo::NBM_wait )
+					continue;
 #endif
-                m_emulator->set_info( (FeEmulatorInfo::Index)i,
-                    ctx.opt_list[i].get_value() );
-            }
+#if defined(NO_PAUSE_HOTKEY)
+				if ( i == (int)FeEmulatorInfo::Pause_hotkey )
+					continue;
+#endif
+				m_emulator->set_info( (FeEmulatorInfo::Index)i,
+						ctx.opt_list[j++].get_value() );
+			}
 			// Do some checks and confirmation before launching the Generator
 			//
 			std::vector<std::string> paths = m_emulator->get_paths();
@@ -497,18 +499,19 @@ bool FeEmulatorEditMenu::save( FeConfigContext &ctx )
 	if ( !m_emulator )
 		return m_parent_save;
 
+	int j=0;
 	for ( int i=0; i < FeEmulatorInfo::LAST_INDEX; i++ )
 	{
-#ifdef SFML_SYSTEM_MACOS
-		// Pause hotkey functionality is not fully implemented on OS X, block
-		// the user from trying to use it
-		//
+#if defined(NO_NBM_WAIT)
+		if ( i == (int)FeEmulatorInfo::NBM_wait )
+			continue;
+#endif
+#if defined(NO_PAUSE_HOTKEY)
 		if ( i == (int)FeEmulatorInfo::Pause_hotkey )
 			continue;
 #endif
-
 		m_emulator->set_info( (FeEmulatorInfo::Index)i,
-				ctx.opt_list[i].get_value() );
+				ctx.opt_list[j++].get_value() );
 	}
 
 	std::string filename = ctx.fe_settings.get_config_dir();
@@ -1911,6 +1914,7 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_language" );
 	ctx.back_opt().append_vlist( disp_lang_list );
 
+#if !defined(FORCE_FULLSCREEN)
 	std::string winmode;
 	ctx.fe_settings.get_resource( FeSettings::windowModeDispTokens[ ctx.fe_settings.get_window_mode() ], winmode );
 	std::vector < std::string > modes;
@@ -1923,7 +1927,7 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	}
 	ctx.add_optl( Opt::LIST, "Window Mode", winmode, "_help_window_mode" );
 	ctx.back_opt().append_vlist( modes );
-
+#endif
 
 	std::string startupmode;
 	ctx.fe_settings.get_resource( FeSettings::startupDispTokens[ ctx.fe_settings.get_startup_mode() ], startupmode );
@@ -1948,11 +1952,13 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 			"_help_track_usage" );
 	ctx.back_opt().append_vlist( bool_opts );
 
+#if !defined(NO_MULTIMON)
 	ctx.add_optl( Opt::LIST,
 			"Enable Multiple Monitors",
 			ctx.fe_settings.get_info_bool( FeSettings::MultiMon ) ? bool_opts[0] : bool_opts[1],
 			"_help_multiple_monitors" );
 	ctx.back_opt().append_vlist( bool_opts );
+#endif
 
 	ctx.add_optl( Opt::LIST,
 			"Hide Brackets in Game Title",
@@ -2037,53 +2043,58 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 
 bool FeMiscMenu::save( FeConfigContext &ctx )
 {
-	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[0].get_vindex() ].language );
+	int i=0;
+	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[i++].get_vindex() ].language );
 
+#if !defined(FORCE_FULLSCREEN)
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
-			FeSettings::windowModeTokens[ ctx.opt_list[1].get_vindex() ] );
+			FeSettings::windowModeTokens[ ctx.opt_list[i++].get_vindex() ] );
+#endif
 
 	ctx.fe_settings.set_info( FeSettings::StartupMode,
-			FeSettings::startupTokens[ ctx.opt_list[2].get_vindex() ] );
+			FeSettings::startupTokens[ ctx.opt_list[i++].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::TrackUsage,
-			ctx.opt_list[3].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
+#if !defined(NO_MULTIMON)
 	ctx.fe_settings.set_info( FeSettings::MultiMon,
-			ctx.opt_list[4].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+#endif
 
 	ctx.fe_settings.set_info( FeSettings::HideBrackets,
-			ctx.opt_list[5].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
-			ctx.opt_list[6].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::FilterWrapMode,
-			FeSettings::filterWrapTokens[ ctx.opt_list[7].get_vindex() ] );
+			FeSettings::filterWrapTokens[ ctx.opt_list[i++].get_vindex() ] );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmExit,
-			ctx.opt_list[8].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::ExitCommand,
-			ctx.opt_list[9].get_value() );
+			ctx.opt_list[i++].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::ExitMessage,
-			ctx.opt_list[10].get_value() );
+			ctx.opt_list[i++].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::DefaultFont,
-			ctx.opt_list[11].get_value() );
+			ctx.opt_list[i++].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::FontPath,
-			ctx.opt_list[12].get_value() );
+			ctx.opt_list[i++].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
-			ctx.opt_list[13].get_value() );
+			ctx.opt_list[i++].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::PowerSaving,
-			ctx.opt_list[14].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 #ifdef SFML_SYSTEM_WINDOWS
 	ctx.fe_settings.set_info( FeSettings::HideConsole,
-			ctx.opt_list[15].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 #endif
 
 	return true;

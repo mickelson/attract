@@ -271,7 +271,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_confirm_exit( true ),
 	m_track_usage( true ),
 	m_multimon( false ),
-#ifdef SFML_SYSTEM_LINUX
+#if defined(SFML_SYSTEM_LINUX) || defined(FORCE_FULLSCREEN)
 	m_window_mode( Fullscreen ),
 #else
 	m_window_mode( Default ),
@@ -2910,9 +2910,7 @@ bool FeSettings::set_info( int index, const std::string &value )
 		break;
 
 	case WindowMode:
-#if defined(USE_DRM)
-		m_window_mode = Fullscreen;
-#else
+#if !defined(FORCE_FULLSCREEN)
 		{
 			int i=0;
 			while ( windowModeTokens[i] != NULL )
@@ -2954,7 +2952,9 @@ bool FeSettings::set_info( int index, const std::string &value )
 		break;
 
 	case MultiMon:
+#if !defined(NO_MULTIMON)
 		m_multimon = config_str_to_bool( value );
+#endif
 		break;
 
 	case SmoothImages:

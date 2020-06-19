@@ -32,6 +32,13 @@
 #include "path_cache.hpp"
 #include <deque>
 
+#if defined(USE_DRM) || defined(USE_GLES)
+ #define FORCE_FULLSCREEN
+#endif
+#if defined(USE_DRM) || defined(USE_GLES) || defined(SFML_SYSTEM_MACOS) || ( defined(SFML_SYSTEM_LINUX) && !defined(USE_XINERAMA) )
+ #define NO_MULTIMON
+#endif
+
 extern const char *FE_ART_EXTENSIONS[];
 
 extern const char *FE_CFG_FILE;

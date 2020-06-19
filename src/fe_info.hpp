@@ -301,6 +301,17 @@ private:
 };
 
 //
+// Defines used to disable features that are unsupported on certain systems
+//
+#if defined(USE_DRM) || defined(SFML_SYSTEM_MACOS)
+ #define NO_PAUSE_HOTKEY
+#endif
+
+#if defined(USE_DRM)
+ #define NO_NBM_WAIT
+#endif
+
+//
 // Class for storing information regarding a specific emulator
 //
 class FeEmulatorInfo : public FeBaseConfigurable

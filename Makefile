@@ -32,6 +32,9 @@
 # Uncomment next line to disable movie support (i.e. no FFmpeg).
 #NO_MOVIE=1
 #
+# Uncomment the next line to enable the use of MMAL video decoder
+#USE_MMAL=1
+#
 # By default, if FontConfig gets enabled we link against the system's expat
 # library (because FontConfig uses expat too).  If FontConfig is not used
 # then Attract-Mode is statically linked to its own version of expat.
@@ -54,6 +57,7 @@
 # decoding on Linux (req FFmpeg >= 3.4)
 #FE_HWACCEL_VAAPI=1
 #FE_HWACCEL_VDPAU=1
+#
 ###############################
 
 #FE_DEBUG=1
