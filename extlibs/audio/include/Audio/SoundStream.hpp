@@ -96,6 +96,7 @@ public :
     ///
     ////////////////////////////////////////////////////////////
     void stop();
+    void signal_stop(); // signal stop is coming up without blocking
 
     ////////////////////////////////////////////////////////////
     /// \brief Return the number of channels of the stream

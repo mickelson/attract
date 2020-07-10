@@ -25,9 +25,9 @@
 #include "fe_settings.hpp"
 #include "fe_shader.hpp"
 #include "fe_present.hpp"
-#include "fe_file.hpp"
 #include "fe_blend.hpp"
 #include "zip.hpp"
+#include "image_loader.hpp"
 
 #ifndef NO_MOVIE
 #include "media.hpp"
@@ -43,6 +43,11 @@ FeBaseTextureContainer::FeBaseTextureContainer()
 
 FeBaseTextureContainer::~FeBaseTextureContainer()
 {
+}
+
+bool FeBaseTextureContainer::get_visible() const
+{
+	return true;
 }
 
 void FeBaseTextureContainer::set_play_state( bool play )
@@ -215,7 +220,10 @@ FeTextureContainer::FeTextureContainer(
 	m_swf( NULL ),
 	m_movie_status( -1 ),
 	m_video_flags( VF_Normal ),
-	m_mipmap( false )
+	m_mipmap( false ),
+	m_smooth( false ),
+	m_frame_displayed( false ),
+	m_entry( NULL )
 {
 	if ( is_artwork )
 	{
@@ -248,6 +256,20 @@ FeTextureContainer::~FeTextureContainer()
 		m_swf=NULL;
 	}
 #endif
+
+	if ( m_entry )
+	{
+		FeImageLoader &il = FeImageLoader::get_ref();
+		il.release_entry( &m_entry );
+	}
+}
+
+bool FeTextureContainer::get_visible() const
+{
+	if ( m_entry )
+		return false;
+
+	return ( !m_movie || m_frame_displayed );
 }
 
 bool FeTextureContainer::fix_masked_image()
@@ -424,6 +446,12 @@ bool FeTextureContainer::try_to_load(
 		return load_with_ffmpeg( path, filename, false );
 #endif
 
+	FeImageLoader &il = FeImageLoader::get_ref();
+	unsigned char *data = NULL;
+
+	if ( m_entry )
+		il.release_entry( &m_entry );
+
 	if ( is_supported_archive( path ) )
 	{
 		loaded_name = path + "|" + filename;
@@ -439,11 +467,12 @@ bool FeTextureContainer::try_to_load(
 		}
 
 		FeZipStream zs( path );
+		std::string temp = filename;
+
 		if ( !zs.open( filename ) )
 		{
 			// Error opening specified filename.  Try to correct
 			// in case filename is in a subdir of the archive
-			std::string temp;
 			if ( get_archive_filename_with_base(
 					temp, path, filename ) )
 			{
@@ -452,15 +481,8 @@ bool FeTextureContainer::try_to_load(
 			}
 		}
 
-		if ( load_to_texture( zs ) )
-		{
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
-			if ( m_mipmap ) m_texture.generateMipmap();
-#endif
-			m_texture.setSmooth( m_smooth );
-			m_file_name = loaded_name;
-			return true;
-		}
+		if ( il.load_image_from_archive( path, temp, &m_entry ) )
+			data = m_entry->get_data();
 	}
 	else
 	{
@@ -476,45 +498,28 @@ bool FeTextureContainer::try_to_load(
 			return false;
 		}
 
-		FeFileInputStream filestream( loaded_name );
-		if ( load_to_texture( filestream ) )
-		{
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
-			if ( m_mipmap ) m_texture.generateMipmap();
-#endif
-			m_texture.setSmooth( m_smooth );
-			m_file_name = loaded_name;
-			return true;
-		}
+		if ( il.load_image_from_file( loaded_name, &m_entry ) )
+			data = m_entry->get_data();
 	}
 
-#ifndef NO_MOVIE
-	//
-	// we should only get here if we failed to load an image with SFML
-	// try loading it with ffmpeg instead, which can handle more image
-	// formats...
-	//
-	return load_with_ffmpeg( path, filename, is_image );
-#else
-	return false;
-#endif
-}
+	m_file_name = loaded_name;
 
-bool FeTextureContainer::load_to_texture( sf::InputStream &s )
-{
-	sf::Image img;
-	if ( !img.loadFromStream( s ) )
-		return false;
+	// resize our texture accordingly
+	if ( m_texture.getSize() != sf::Vector2u( m_entry->get_width(), m_entry->get_height() ) )
+		m_texture.create( m_entry->get_width(), m_entry->get_height() );
 
-	// Reuse texture if we are loading an image that is the same size
-	//
-	if ( m_texture.getSize() == img.getSize() )
+	if ( data )
 	{
-		m_texture.update( img, 0, 0 );
-		return true;
+		m_texture.update( data );
+		il.release_entry( &m_entry ); // don't need entry any more
+
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+		if ( m_mipmap ) m_texture.generateMipmap();
+#endif
+		m_texture.setSmooth( m_smooth );
 	}
 
-	return m_texture.loadFromImage( img );
+	return true;
 }
 
 const sf::Texture &FeTextureContainer::get_texture()
@@ -677,6 +682,25 @@ void FeTextureContainer::internal_update_selection( FeSettings *feSettings )
 
 bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 {
+	//
+	// We have an m_entry if the image is being loaded in the background
+	//
+	if ( m_entry )
+	{
+		FeImageLoader &il = FeImageLoader::get_ref();
+		if ( il.check_loaded( m_entry ) )
+		{
+			m_texture.update( m_entry->get_data() );
+#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
+			if ( m_mipmap ) m_texture.generateMipmap();
+#endif
+			m_texture.setSmooth( m_smooth );
+
+			il.release_entry( &m_entry );
+			return true;
+		}
+	}
+
 	if ( !play_movies || (m_video_flags & VF_DisableVideo) )
 		return false;
 
@@ -725,6 +749,7 @@ bool FeTextureContainer::tick( FeSettings *feSettings, bool play_movies )
 
 		if ( m_movie->tick() )
 		{
+			m_frame_displayed=true;
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
 			if ( m_mipmap ) m_texture.generateMipmap();
 #endif
@@ -949,6 +974,7 @@ FeTextureContainer *FeTextureContainer::get_derived_texture_container()
 void FeTextureContainer::clear()
 {
 	m_movie_status = -1;
+	m_frame_displayed = false;
 	m_file_name.clear();
 
 #ifndef NO_SWF
@@ -963,10 +989,17 @@ void FeTextureContainer::clear()
 	// If a movie is running, close it...
 	if ( m_movie )
 	{
-		delete m_movie;
+		FeImageLoader &il = FeImageLoader::get_ref();
+		il.reap_video( m_movie );
 		m_movie=NULL;
 	}
 #endif
+
+	if ( m_entry )
+	{
+		FeImageLoader &il = FeImageLoader::get_ref();
+		il.release_entry( &m_entry );
+	}
 }
 
 void FeTextureContainer::set_smooth( bool s )
@@ -1141,6 +1174,14 @@ const sf::Texture *FeImage::get_texture()
 		return NULL;
 }
 
+bool FeImage::get_visible() const
+{
+	if ( !FeBasePresentable::get_visible() || !m_tex )
+		return false;
+
+	return m_tex->get_visible();
+
+}
 
 void FeImage::texture_changed( FeBaseTextureContainer *new_tex )
 {

@@ -170,8 +170,8 @@ int FeMonitor::get_num()
 
 FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWindow &wnd )
 	: m_feSettings( fesettings ),
-	m_currentFont( &defaultfont ),
 	m_window( wnd ),
+	m_currentFont( &defaultfont ),
 	m_defaultFont( defaultfont ),
 	m_baseRotation( FeSettings::RotateNone ),
 	m_toggleRotation( FeSettings::RotateNone ),
@@ -1028,18 +1028,9 @@ bool FePresent::load_intro()
 	if ( !on_new_layout() )
 		return false;
 
-	bool retval = false;
-	for ( std::vector<FeBasePresentable *>::iterator itr=m_mon[0].elements.begin();
-			itr!=m_mon[0].elements.end(); ++itr )
-	{
-		if ( (*itr)->get_visible() )
-			retval = true;
-	}
-
-
 	// Don't do the StartLayout signal for the intro
 	update( true, true );
-	return retval;
+	return ( !m_mon[0].elements.empty() );
 }
 
 void FePresent::load_screensaver()

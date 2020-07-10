@@ -68,6 +68,7 @@ public:
 
 	void play();
 	void stop();
+	void signal_stop();
 	void close();
 
 	// tick() needs to be called regularly on video media to update the display

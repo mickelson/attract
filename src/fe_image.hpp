@@ -35,6 +35,7 @@ class FeImage;
 class FeText;
 class FeListBox;
 class FeTextureContainer;
+class FeImageLoaderEntry;
 
 enum FeVideoFlags
 {
@@ -57,6 +58,7 @@ public:
 
 	virtual void on_new_list( FeSettings *, bool new_display )=0;
 
+	virtual bool get_visible() const;
 	virtual bool tick( FeSettings *feSettings, bool play_movies ); // returns true if redraw required
 
 	virtual void set_play_state( bool play );
@@ -125,6 +127,7 @@ public:
 	~FeTextureContainer();
 
 	const sf::Texture &get_texture();
+	bool get_visible() const;
 
 	void on_new_selection( FeSettings *feSettings );
 	void on_end_navigation( FeSettings *feSettings );
@@ -204,6 +207,8 @@ private:
 	FeVideoFlags m_video_flags;
 	bool m_mipmap;
 	bool m_smooth;
+	bool m_frame_displayed;
+	FeImageLoaderEntry *m_entry;
 };
 
 class FeSurfaceTextureContainer : public FeBaseTextureContainer, public FePresentableParent
@@ -294,6 +299,8 @@ public:
 	// Overrides from base class:
 	//
 	const sf::Drawable &drawable() const { return (const sf::Drawable &)*this; };
+
+	bool get_visible() const;
 
 	void texture_changed( FeBaseTextureContainer *new_tex=NULL );
 

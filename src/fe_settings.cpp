@@ -23,6 +23,7 @@
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
 #include "fe_present.hpp"
+#include "image_loader.hpp"
 #include "zip.hpp"
 #include <iostream>
 #include <sstream>
@@ -280,6 +281,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_filter_wrap_mode( WrapWithinDisplay ),
 	m_selection_max_step( 128 ),
 	m_selection_speed( 40 ),
+	m_image_cache_mbytes( 100 ),
 #ifdef SFML_SYSTEM_MACOS
 	m_move_mouse_on_launch( false ), // hotcorners
 #else
@@ -431,6 +433,7 @@ const char *FeSettings::configSettingStrings[] =
 	"video_decoder",
 	"menu_prompt",
 	"menu_layout",
+	"image_cache_mbytes",
 	NULL
 };
 
@@ -2727,6 +2730,8 @@ const std::string FeSettings::get_info( int index ) const
 		return as_str( m_selection_max_step );
 	case SelectionSpeed:
 		return as_str( m_selection_speed );
+	case ImageCacheMBytes:
+		return as_str( m_image_cache_mbytes );
 	case StartupMode:
 		return startupTokens[ m_startup_mode ];
 	case ThegamesdbKey:
@@ -2975,6 +2980,15 @@ bool FeSettings::set_info( int index, const std::string &value )
 		m_selection_speed = as_int( value );
 		if ( m_selection_speed < 0 )
 			m_selection_speed = 0;
+		break;
+
+	case ImageCacheMBytes:
+		m_image_cache_mbytes = as_int( value );
+		if ( m_image_cache_mbytes < 0 )
+			m_image_cache_mbytes = 0;
+
+		FeDebug() << "Setting image cache size to " << m_image_cache_mbytes << " MBytes." << std::endl;
+		FeImageLoader::set_cache_size( m_image_cache_mbytes * 1024 * 1024 );
 		break;
 
 	case MoveMouseOnLaunch:

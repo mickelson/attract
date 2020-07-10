@@ -92,7 +92,7 @@ public:
 	void set_a(int a);
 	void set_rgb(int r, int g, int b);
 
-	bool get_visible() const;
+	virtual bool get_visible() const;
 	void set_visible( bool );
 
 	FeShader *get_shader() const;

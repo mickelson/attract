@@ -345,6 +345,7 @@ Enter new tag name;Enter new tag name
 Exception;Exception
 Exception Edit;Exception Edit
 Exit Message;Exit Message
+Image Cache Size;Image Cache Size
 Insert Command Shortcut;Insert Command Shortcut
 Insert Display Shortcut;Insert Display Shortcut
 Insert Game Entry;Insert Game Entry
@@ -363,6 +364,7 @@ Overview;Overview
 Pause Hotkey;Pause Hotkey
 Play Sound;Play Sound
 Please Wait;Please Wait
+Power Saving;Power Saving
 Press Hotkey;Press Hotkey
 Previous Game;Previous Game
 Previous Page;Previous Page
@@ -415,12 +417,14 @@ _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
+_help_image_cache_mbytes;Configure the maximum size of Attract-Mode's internal image cache (in megabytes)
 _help_input_action;
 _help_input_default_action;Set the default behaviour for this control
 _help_intro;Configure intro
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)
 _help_layout_file;Some layouts provide multiple layout*.nut files.  Select which layout file to use
 _help_multiple_monitors;Enable the use of multiple monitors by Attract-Mode.  Setting this to 'No' may reduce screen flicker when launching games
+_help_power_saving;Helps to save power by only redrawing the screen when it's neccessary. May cause animation stuttering on some layouts, or freezing on Linux.
 _help_scrape_vids;Set whether game videos should be downloaded when scraping
 _help_shortcut_artwork_name_edit;Optionally provide an artwork name to be associated with this shortcut.  The frontend will try to load artworks with this name when displaying the shortcut
 _help_shortcut_delete;Delete this shortcut from the Romlist

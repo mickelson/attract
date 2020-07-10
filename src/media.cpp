@@ -203,8 +203,6 @@ public:
 	sf::Time max_sleep;
 	sf::Clock video_timer;
 	sf::Texture *display_texture;
-	SwsContext *sws_ctx;
-	int sws_flags;
 	int disptex_width;
 	int disptex_height;
 
@@ -221,7 +219,9 @@ public:
 	void play();
 	void stop();
 
-	void preload();
+	void signal_stop(); // signal the bg thread we are stopping, without blocking
+
+	void init_rgba_buffer();
 	void video_thread();
 };
 
@@ -384,8 +384,6 @@ FeVideoImp::FeVideoImp( FeMedia *p )
 #endif
 		run_video_thread( false ),
 		display_texture( NULL ),
-		sws_ctx( NULL ),
-		sws_flags( SWS_BILINEAR ),
 		disptex_width( 0 ),
 		disptex_height( 0 ),
 		display_frame( NULL )
@@ -398,9 +396,6 @@ FeVideoImp::~FeVideoImp()
 
 	if (rgba_buffer[0])
 		av_freep(&rgba_buffer[0]);
-
-	if (sws_ctx)
-		sws_freeContext(sws_ctx);
 }
 
 #if FE_HWACCEL
@@ -471,12 +466,17 @@ void FeVideoImp::play()
 void FeVideoImp::stop()
 {
 	if ( run_video_thread )
-	{
 		run_video_thread = false;
-		m_video_thread.wait();
-	}
+
+	m_video_thread.wait();
 
 	FeBaseStream::stop();
+}
+
+void FeVideoImp::signal_stop()
+{
+	if ( run_video_thread )
+		run_video_thread = false;
 }
 
 namespace
@@ -499,96 +499,19 @@ namespace
 	}
 }
 
-void FeVideoImp::preload()
+void FeVideoImp::init_rgba_buffer()
 {
-	{
-		sf::Lock l( image_swap_mutex );
+	sf::Lock l( image_swap_mutex );
 
-		if (rgba_buffer[0])
-			av_freep(&rgba_buffer[0]);
+	if (rgba_buffer[0])
+		av_freep(&rgba_buffer[0]);
 
-		int ret = av_image_alloc(rgba_buffer, rgba_linesize,
-				disptex_width, disptex_height,
-				AV_PIX_FMT_RGBA, 1);
-		if (ret < 0)
-		{
-			FeLog() << "Error allocating image during preload" << std::endl;
-			return;
-		}
-	}
+	int ret = av_image_alloc(rgba_buffer, rgba_linesize,
+			disptex_width, disptex_height,
+			AV_PIX_FMT_RGBA, 1);
 
-	bool keep_going = true;
-	while ( keep_going )
-	{
-		AVPacket *packet = pop_packet();
-		if ( packet == NULL )
-		{
-			if ( !m_parent->end_of_file() )
-				m_parent->read_packet();
-			else
-				keep_going = false;
-		}
-		else
-		{
-			//
-			// decompress packet and put it in our frame queue
-			//
-			int got_frame = 0;
-#if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( 55, 45, 0 ))
-			AVFrame *raw_frame = av_frame_alloc();
-			codec_ctx->refcounted_frames = 1;
-#else
-			AVFrame *raw_frame = avcodec_alloc_frame();
-#endif
-
-			int len = avcodec_decode_video2( codec_ctx, raw_frame,
-				&got_frame, packet );
-
-			if ( len < 0 )
-			{
-				FeLog() << "Error decoding video" << std::endl;
-				keep_going=false;
-			}
-
-			if ( got_frame )
-			{
-				if ( (codec_ctx->width & 0x7) || (codec_ctx->height & 0x7) )
-					sws_flags |= SWS_ACCURATE_RND;
-
-				enum AVPixelFormat pfmt = codec_ctx->pix_fmt;
-
-#if FE_HWACCEL
-				if ( hw_retrieve_data( raw_frame ) )
-					pfmt = hwaccel_output_format;
-#endif
-
-				sws_ctx = sws_getCachedContext( NULL,
-					codec_ctx->width, codec_ctx->height, pfmt,
-					disptex_width, disptex_height, AV_PIX_FMT_RGBA,
-					sws_flags, NULL, NULL, NULL );
-
-				if ( !sws_ctx )
-				{
-					FeLog() << "Error allocating SwsContext during preload" << std::endl;
-					free_frame( raw_frame );
-					free_packet( packet );
-					return;
-				}
-
-				sf::Lock l( image_swap_mutex );
-				sws_scale( sws_ctx, raw_frame->data, raw_frame->linesize,
-							0, codec_ctx->height, rgba_buffer,
-							rgba_linesize );
-
-				display_texture->update( rgba_buffer[0] );
-
-				keep_going = false;
-			}
-
-			free_frame( raw_frame );
-			free_packet( packet );
-		}
-	}
+	if (ret < 0)
+		FeLog() << "Error allocating rgba buffer" << std::endl;
 }
 
 void FeVideoImp::video_thread()
@@ -603,10 +526,11 @@ void FeVideoImp::video_thread()
 
 	int64_t prev_pts = 0;
 	int64_t prev_duration = 0;
+	SwsContext *sws_ctx = NULL;
 
 	sf::Time wait_time;
 
-	if ((!sws_ctx) || (!rgba_buffer[0]))
+	if (!rgba_buffer[0])
 	{
 		FeLog() << "Error initializing video thread" << std::endl;
 		goto the_end;
@@ -666,6 +590,28 @@ void FeVideoImp::video_thread()
 #if FE_HWACCEL
 				hw_retrieve_data( detached_frame );
 #endif
+
+				if ( !sws_ctx )
+				{
+					enum AVPixelFormat pfmt = codec_ctx->pix_fmt;
+					if ( hwaccel_output_format != AV_PIX_FMT_NONE )
+						pfmt = hwaccel_output_format;
+
+					int sws_flags( SWS_BILINEAR );
+					if ( (codec_ctx->width & 0x7) || (codec_ctx->height & 0x7) )
+						sws_flags |= SWS_ACCURATE_RND;
+
+					sws_ctx = sws_getCachedContext( NULL,
+						codec_ctx->width, codec_ctx->height, pfmt,
+						disptex_width, disptex_height, AV_PIX_FMT_RGBA,
+						sws_flags, NULL, NULL, NULL );
+
+					if ( !sws_ctx )
+					{
+						FeLog() << "Error allocating SwsContext" << std::endl;
+						goto the_end;
+					}
+				}
 
 				sf::Lock l( image_swap_mutex );
 				displayed++;
@@ -777,6 +723,9 @@ the_end:
 	if ( detached_frame )
 		free_frame( detached_frame );
 
+	if ( sws_ctx )
+		sws_freeContext(sws_ctx);
+
 	int average = ( displayed == 0 ) ? qscore_accum : ( qscore_accum / displayed );
 
 	FeDebug() << "End Video Thread - " << m_parent->m_imp->m_format_ctx->filename << std::endl
@@ -834,6 +783,15 @@ void FeMedia::play()
 
 	if ( m_audio )
 		sf::SoundStream::play();
+}
+
+void FeMedia::signal_stop()
+{
+	if ( m_audio )
+		sf::SoundStream::signal_stop();
+
+	if ( m_video )
+		m_video->signal_stop();
 }
 
 void FeMedia::stop()
@@ -1084,7 +1042,7 @@ bool FeMedia::open( const std::string &archive,
 			if ( av_result < 0 )
 			{
 				if ( !prev_dec_name.empty() && (g_decoder.compare( "mmal" ) == 0) )
-				{ 
+				{
 					switch( dec->id )
 					{
 
@@ -1093,15 +1051,15 @@ bool FeMedia::open( const std::string &archive,
 					case AV_CODEC_ID_MPEG2VIDEO:
 					case AV_CODEC_ID_H264:
 					case AV_CODEC_ID_MPEG4:
-						FeLog() << "mmal video decoding (" << dec->name 
-							<< ") not supported for file (trying software): " 
+						FeLog() << "mmal video decoding (" << dec->name
+							<< ") not supported for file (trying software): "
 							<< m_imp->m_format_ctx->filename << std::endl;
 
 						dec = avcodec_find_decoder_by_name(prev_dec_name.c_str());
 
 						av_result = avcodec_open2( codec_ctx, dec, NULL );
 						break;
-						
+
 					default:
 						break;
 					}
@@ -1117,6 +1075,7 @@ bool FeMedia::open( const std::string &archive,
 			if ( av_result >=0  )
 			{
 				m_video = new FeVideoImp( this );
+
 				m_video->stream_id = stream_id;
 				m_video->codec_ctx = codec_ctx;
 
@@ -1138,7 +1097,7 @@ bool FeMedia::open( const std::string &archive,
 				if ( outt->getSize() != sf::Vector2u( m_video->disptex_width, m_video->disptex_height ) )
 					m_video->display_texture->create( m_video->disptex_width, m_video->disptex_height );
 
-				m_video->preload();
+				m_video->init_rgba_buffer();
 			}
 		}
 	}

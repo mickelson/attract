@@ -2025,6 +2025,11 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.add_optl( Opt::LIST, "Video Decoder", vid_dec, "_help_video_decoder" );
 	ctx.back_opt().append_vlist( decoders );
 
+	ctx.add_optl( Opt::EDIT,
+			"Image Cache Size",
+			ctx.fe_settings.get_info( FeSettings::ImageCacheMBytes ),
+			"_help_image_cache_mbytes" );
+
 	ctx.add_optl( Opt::LIST,
 			"Power Saving",
 			ctx.fe_settings.get_info_bool( FeSettings::PowerSaving ) ? bool_opts[0] : bool_opts[1],
@@ -2087,6 +2092,9 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 			ctx.opt_list[i++].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::VideoDecoder,
+			ctx.opt_list[i++].get_value() );
+
+	ctx.fe_settings.set_info( FeSettings::ImageCacheMBytes,
 			ctx.opt_list[i++].get_value() );
 
 	ctx.fe_settings.set_info( FeSettings::PowerSaving,

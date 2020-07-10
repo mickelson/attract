@@ -127,6 +127,10 @@ void SoundStream::stop()
     m_thread.wait();
 }
 
+void SoundStream::signal_stop()
+{
+    m_isStreaming = false;
+}
 
 ////////////////////////////////////////////////////////////
 unsigned int SoundStream::getChannelCount() const
