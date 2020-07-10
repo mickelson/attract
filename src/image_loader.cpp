@@ -1,7 +1,7 @@
 /*
  *
  *  Attract-Mode frontend
- *  Copyright (C) 2015 Andrew Mickelson
+ *  Copyright (C) 2020 Andrew Mickelson
  *
  *  This file is part of Attract-Mode.
  *

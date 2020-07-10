@@ -184,8 +184,6 @@ private:
 		const std::string &filename,
 		bool is_image=false );
 
-	bool load_to_texture( sf::InputStream &s );
-
 	void internal_update_selection( FeSettings *feSettings );
 	void clear();
 

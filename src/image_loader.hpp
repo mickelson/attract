@@ -33,9 +33,9 @@ class FeImageLoaderImp;
 
 class FeImageLoaderEntry
 {
-friend FeImageLoader;
-friend FeImageLoaderThread;
-friend FeImageLRUCache;
+friend class FeImageLoader;
+friend class FeImageLoaderThread;
+friend class FeImageLRUCache;
 
 public:
    ~FeImageLoaderEntry();

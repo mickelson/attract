@@ -594,9 +594,10 @@ void FeVideoImp::video_thread()
 				if ( !sws_ctx )
 				{
 					enum AVPixelFormat pfmt = codec_ctx->pix_fmt;
+#if FE_HWACCEL
 					if ( hwaccel_output_format != AV_PIX_FMT_NONE )
 						pfmt = hwaccel_output_format;
-
+#endif
 					int sws_flags( SWS_BILINEAR );
 					if ( (codec_ctx->width & 0x7) || (codec_ctx->height & 0x7) )
 						sws_flags |= SWS_ACCURATE_RND;
