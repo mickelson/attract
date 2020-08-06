@@ -2029,6 +2029,10 @@ The Operating System that Attract-Mode is running under.  Will be one of:
 
 The screen width and height in pixels.
 
+#### `ScreenRefreshRate` [int] ####
+
+The refresh rate of the main screen in Hz.
+
 #### `ScreenSaverActive` [bool] ####
 
 true if the screen saver is active, false otherwise.
