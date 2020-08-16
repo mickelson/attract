@@ -345,7 +345,7 @@ endif
 
 ifeq ($(USE_XLIB),1)
  FE_FLAGS += -DUSE_XLIB
- LIBS += -lX11
+ LIBS += -lX11 -lXrandr
 
 ifeq ($(USE_XINERAMA),1)
   FE_FLAGS += -DUSE_XINERAMA

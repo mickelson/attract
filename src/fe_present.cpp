@@ -38,6 +38,10 @@
 #include <Audio/AudioDevice.hpp>
 #endif
 
+#ifdef USE_XLIB
+#include <X11/extensions/Xrandr.h>
+#endif
+
 #ifdef USE_XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif
@@ -182,7 +186,8 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWi
 	m_listBox( NULL ),
 	m_emptyShader( NULL ),
 	m_overlay_caption( NULL ),
-	m_overlay_lb( NULL )
+	m_overlay_lb( NULL ),
+	m_refresh_rate( 0 )
 {
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	init_monitors();
@@ -198,6 +203,15 @@ void FePresent::init_monitors()
 	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
 	//
 #if defined(SFML_SYSTEM_WINDOWS)
+
+	DEVMODE devMode;
+	memset( &devMode, 0, sizeof(DEVMODE) );
+	devMode.dmSize = sizeof(DEVMODE);
+	devMode.dmDriverExtra = 0;
+
+	if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &devMode ) != 0 )
+		m_refresh_rate = devMode.dmDisplayFrequency;
+
 	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
 		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
 	{
@@ -226,13 +240,17 @@ void FePresent::init_monitors()
 			(*itr).transform *= correction;
 	}
 	else
-#elif defined(USE_XINERAMA)
+#elif defined(USE_XLIB)
 	if ( 1 )
 	{
 		Display *xdisp = XOpenDisplay( NULL );
-		int num=0;
+		Window root = RootWindow( xdisp, 0 );
+		XRRScreenConfiguration *xconf = XRRGetScreenInfo( xdisp, root );
+		m_refresh_rate = XRRConfigCurrentRate( xconf );
+#if defined(USE_XINERAMA)
+		int num = 0;
+		XineramaScreenInfo *si = XineramaQueryScreens( xdisp, &num );
 
-		XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
 		if ( si )
 		{
 			if (( m_feSettings->get_info_bool( FeSettings::MultiMon ) )
@@ -268,6 +286,7 @@ void FePresent::init_monitors()
 		}
 
 		XFree( si );
+#endif
 		XCloseDisplay( xdisp );
 	}
 	else
@@ -294,6 +313,14 @@ void FePresent::init_monitors()
 	ASSERT( m_mon.size() > 0 );
 
 	m_layoutSize = m_mon[0].size;
+
+	if ( m_refresh_rate == 0 )
+	{
+		FeLog() << "Failed to detect the refresh rate. Defaulting to 60 Hz" << std::endl;
+		m_refresh_rate = 60;
+	}
+	else
+		FeLog() << "Monitor's Refresh Rate: " << m_refresh_rate << " Hz" << std::endl;
 }
 
 FePresent::~FePresent()

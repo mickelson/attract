@@ -138,6 +138,7 @@ protected:
 	std::vector<FeShader *> m_scriptShaders;
 	std::vector<FeFontContainer *> m_fontPool;
 	std::vector<FeMonitor> m_mon;
+	int m_refresh_rate;
 	bool m_playMovies;
 	int m_user_page_size;
 	bool m_preserve_aspect;

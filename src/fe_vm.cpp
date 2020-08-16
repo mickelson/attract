@@ -20,6 +20,7 @@
  *
  */
 
+#include <SFML/OpenGL.hpp>
 #include "fe_vm.hpp"
 #include "fe_settings.hpp"
 #include "fe_present.hpp"
@@ -323,29 +324,6 @@ FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSoun
 	m_script_cfg( NULL ),
 	m_script_id( -1 )
 {
-	//
-	// Frame rate measurement
-	//
-	sf::Clock frame_timer;
-	wnd.clear();
-
-	// We fill up the frame queue first so we do not catch frames with close to 0 delta times
-	//
-	for ( int i = 0; i < 6; i++ )
-		wnd.display();
-
-	frame_timer.restart();
-	int vsync_cycles = 15;
-	for ( int i = 0; i < vsync_cycles; i++ )
-		wnd.display();
-
-	int elapsed = frame_timer.getElapsedTime().asMicroseconds();
-	m_refresh_rate = (int)( 1000000.0 * vsync_cycles / elapsed + 0.5 );
-
-	FeDebug() << "Monitor's Refresh Rate: " << m_refresh_rate << " Hz" << std::endl;
-	FeDebug() << "Frame Time: " << elapsed / 1000.0 / vsync_cycles << " ms" << std::endl;
-
-
 	srand( time( NULL ) );
 	vm_init();
 
@@ -576,7 +554,7 @@ bool FeVM::on_new_layout()
 		.Const( _SC("FeVersionNum"), FE_VERSION_NUM)
 		.Const( _SC("ScreenWidth"), (int)m_mon[0].size.x )
 		.Const( _SC("ScreenHeight"), (int)m_mon[0].size.y )
-		.Const( _SC("ScreenRefreshRate"), (int)get_refresh_rate() )
+		.Const( _SC("ScreenRefreshRate"), m_refresh_rate )
 		.Const( _SC("ScreenSaverActive"), ( ps == FeSettings::ScreenSaver_Showing ) )
 		.Const( _SC("IntroActive"), ( ps == FeSettings::Intro_Showing ) )
 		.Const( _SC("OS"), get_OS_string() )
@@ -1456,11 +1434,6 @@ bool FeVM::splash_message( const char *msg, const char *aux )
 bool FeVM::splash_message( const char *msg )
 {
 	return splash_message( msg, "" );
-}
-
-int FeVM::get_refresh_rate()
-{
-	return m_refresh_rate;
 }
 
 //
