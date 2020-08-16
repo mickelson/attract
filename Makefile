@@ -330,6 +330,7 @@ ifeq ($(USE_GLES),1)
  ifneq ($(USE_VC4),1)
   ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
    CFLAGS += -I/opt/vc/include -L/opt/vc/lib
+   FE_FLAGS += -DUSE_BCM
    ifneq ("$(wildcard /opt/vc/lib/libbrcmGLESv2.so)","")
     GLES_LIB := -lbrcmGLESv2
    else

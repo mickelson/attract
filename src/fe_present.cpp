@@ -195,6 +195,22 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWi
 
 void FePresent::init_monitors()
 {
+#if defined(SFML_SYSTEM_WINDOWS)
+	FeLog() << "FLAG: SFML_SYSTEM_WINDOWS" << std::endl;
+#endif
+#if defined(SFML_SYSTEM_MACOS)
+	FeLog() << "FLAG: SFML_SYSTEM_MACOS" << std::endl;
+#endif
+#if defined(USE_XLIB)
+	FeLog() << "FLAG: USE_XLIB" << std::endl;
+#endif
+#if defined(USE_BCM)
+	FeLog() << "FLAG: USE_BCM" << std::endl;
+#endif
+#if defined(USE_DRM)
+	FeLog() << "FLAG: USE_DRM" << std::endl;
+#endif
+
 	m_mon.clear();
 
 	//
