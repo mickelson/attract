@@ -46,6 +46,10 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 
+#ifdef USE_BCM
+#include <bcm_host.h>
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 
 #include <windows.h>
@@ -217,9 +221,17 @@ void FePresent::init_monitors()
 	// Handle multi-monitors
 	//
 	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
+	// We also determine display's refresh rate here
 	//
-#if defined(SFML_SYSTEM_WINDOWS)
 
+#if defined(USE_BCM)
+	bcm_host_init();
+	TV_DISPLAY_STATE_T tvstate;
+	if (vc_tv_get_display_state( &tvstate ) == 0)
+		m_refresh_rate = tvstate.display.hdmi.frame_rate;
+#endif
+
+#if defined(SFML_SYSTEM_WINDOWS)
 	DEVMODE devMode;
 	memset( &devMode, 0, sizeof(DEVMODE) );
 	devMode.dmSize = sizeof(DEVMODE);
