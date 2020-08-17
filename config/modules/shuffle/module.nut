@@ -37,7 +37,7 @@ class Shuffle {
 
 	// PUBLIC
 
-	// PRIVATE
+	// PROTECTED
 
 	function _refresh_deselected_slot(slot) {
 		this._deselected_slots_visible ? slot.visible = true : slot.visible = false
@@ -53,7 +53,7 @@ class Shuffle {
 		}
 	}
 
-	// PROTECTED
+	// PRIVATE
 
 	function __signal(signal_str) {
 		switch(signal_str) {

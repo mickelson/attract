@@ -25,7 +25,7 @@ This module is meant to be simple. It does not handle presentation of object, no
 | `loop_list` | boolean | NO |
 | `slots` | array | YES |
 
-## Private Functions
+## Protected Functions
 
 These methods, you should not have to overridden or extend unless you are modifying functionality of shuffle.
 
@@ -42,7 +42,7 @@ From within your layout, you will load the Shuffle module. Shuffle keeps present
 fe.load_module("shuffle")
 
 // Create your objects
-local list = [];
+local list = []
 	list.push(fe.add_text("[Title]", 0, 0, fe.layout.width/3, fe.layout.height/26))
 	list.push(fe.add_text("[Title]", fe.layout.width/3, 0, fe.layout.width/3, fe.layout.height/26))
 	list.push(fe.add_text("[Title]", (fe.layout.width/3)*2, 0, fe.layout.width/3, fe.layout.height/26))
@@ -61,7 +61,7 @@ This example will extend the Shuffle class, make a selected slot bold, and desel
 fe.load_module("shuffle")
 
 // Create your objects
-local list = [];
+local list = []
 	list.push(fe.add_text("[Title]", 0, 0, fe.layout.width/3, fe.layout.height/26))
 	list.push(fe.add_text("[Title]", fe.layout.width/3, 0, fe.layout.width/3, fe.layout.height/26))
 	list.push(fe.add_text("[Title]", (fe.layout.width/3)*2, 0, fe.layout.width/3, fe.layout.height/26))
