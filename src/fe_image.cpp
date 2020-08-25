@@ -127,6 +127,24 @@ bool FeBaseTextureContainer::get_mipmap() const
 	return false;
 }
 
+void FeBaseTextureContainer::set_clear( bool c )
+{
+}
+
+bool FeBaseTextureContainer::get_clear() const
+{
+	return false;
+}
+
+void FeBaseTextureContainer::set_repeat( bool r )
+{
+}
+
+bool FeBaseTextureContainer::get_repeat() const
+{
+	return false;
+}
+
 bool FeBaseTextureContainer::is_swf() const
 {
 	return false;
@@ -1030,6 +1048,16 @@ bool FeTextureContainer::get_mipmap() const
 	return m_mipmap;
 }
 
+void FeTextureContainer::set_repeat( bool r )
+{
+	m_texture.setRepeated( r );
+}
+
+bool FeTextureContainer::get_repeat() const
+{
+	return m_texture.isRepeated();
+}
+
 bool FeTextureContainer::is_swf() const
 {
 	return m_swf;
@@ -1053,6 +1081,7 @@ void FeTextureContainer::release_audio( bool state )
 }
 
 FeSurfaceTextureContainer::FeSurfaceTextureContainer( int width, int height )
+	: m_clear( true )
 {
 	m_texture.create( width, height );
 }
@@ -1099,7 +1128,7 @@ void FeSurfaceTextureContainer::on_redraw_surfaces()
 	//
 	// Draw the surface's draw list to the render texture
 	//
-	m_texture.clear( sf::Color::Transparent );
+	if ( m_clear ) m_texture.clear( sf::Color::Transparent );
 	for ( std::vector<FeBasePresentable *>::const_iterator itr = elements.begin();
 				itr != elements.end(); ++itr )
 	{
@@ -1127,6 +1156,26 @@ void FeSurfaceTextureContainer::set_mipmap( bool m )
 bool FeSurfaceTextureContainer::get_mipmap() const
 {
 	return false;
+}
+
+void FeSurfaceTextureContainer::set_clear( bool c )
+{
+	m_clear = c;
+}
+
+bool FeSurfaceTextureContainer::get_clear() const
+{
+	return m_clear;
+}
+
+void FeSurfaceTextureContainer::set_repeat( bool r )
+{
+	m_texture.setRepeated( r );
+}
+
+bool FeSurfaceTextureContainer::get_repeat() const
+{
+	return m_texture.isRepeated();
 }
 
 FePresentableParent *FeSurfaceTextureContainer::get_presentable_parent()
@@ -1651,6 +1700,26 @@ void FeImage::set_mipmap( bool m )
 bool FeImage::get_mipmap() const
 {
 	return m_tex->get_mipmap();
+}
+
+void FeImage::set_clear( bool c )
+{
+	m_tex->set_clear( c );
+}
+
+bool FeImage::get_clear() const
+{
+	return m_tex->get_clear();
+}
+
+void FeImage::set_repeat( bool r )
+{
+	m_tex->set_repeat( r );
+}
+
+bool FeImage::get_repeat() const
+{
+	return m_tex->get_repeat();
 }
 
 void FeImage::transition_swap( FeImage *o )
