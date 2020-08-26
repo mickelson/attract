@@ -50,6 +50,14 @@
 #include <bcm_host.h>
 #endif
 
+#ifdef USE_DRM
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 
 #include <windows.h>
@@ -227,8 +235,51 @@ void FePresent::init_monitors()
 #if defined(USE_BCM)
 	bcm_host_init();
 	TV_DISPLAY_STATE_T tvstate;
-	if (vc_tv_get_display_state( &tvstate ) == 0)
+	if ( vc_tv_get_display_state( &tvstate ) == 0 )
 		m_refresh_rate = tvstate.display.hdmi.frame_rate;
+#endif
+
+#if defined(USE_DRM)
+	#define MAX_DRM_DEVICES 64
+
+	drmDevicePtr devices[MAX_DRM_DEVICES] = { NULL };
+	int num_devices, fd = -1;
+
+	num_devices = drmGetDevices2( 0, devices, MAX_DRM_DEVICES );
+	for ( int i = 0; i < num_devices; i++ )
+	{
+		drmDevicePtr device = devices[i];
+		int ret;
+
+		if ( !( device->available_nodes & ( 1 << DRM_NODE_PRIMARY )))
+			continue;
+
+		int drm_fd = open( device->nodes[DRM_NODE_PRIMARY], O_RDWR | O_CLOEXEC );
+		drmModeRes *p_res = drmModeGetResources( drm_fd );
+
+		for ( int i = 0; i < p_res->count_connectors; i++ )
+		{
+			drmModeConnector *p_connector = drmModeGetConnector( drm_fd, p_res->connectors[i] );
+			drmModeEncoder *encoder;
+			drmModeCrtc *crtc;
+			encoder = drmModeGetEncoder( drm_fd, p_connector->encoder_id );
+			drmModeModeInfo mode_info;
+			memset( &mode_info, 0, sizeof( drmModeModeInfo ));
+			if ( encoder != NULL )
+			{
+				crtc = drmModeGetCrtc( drm_fd, encoder->crtc_id );
+				drmModeFreeEncoder( encoder );
+				if ( crtc != NULL )
+				{
+					if ( crtc->mode_valid )
+						m_refresh_rate = crtc->mode.vrefresh;
+					drmModeFreeCrtc( crtc );
+				}
+			}
+		}
+		close( drm_fd );
+	}
+	drmFreeDevices( devices, num_devices );
 #endif
 
 #if defined(SFML_SYSTEM_WINDOWS)
