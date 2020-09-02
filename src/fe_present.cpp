@@ -58,6 +58,10 @@
 #include <xf86drmMode.h>
 #endif
 
+#ifdef SFML_SYSTEM_MACOS
+#include <CoreVideo/CoreVideo.h>
+#endif
+
 #ifdef SFML_SYSTEM_WINDOWS
 
 #include <windows.h>
@@ -207,22 +211,6 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWi
 
 void FePresent::init_monitors()
 {
-#if defined(SFML_SYSTEM_WINDOWS)
-	FeLog() << "FLAG: SFML_SYSTEM_WINDOWS" << std::endl;
-#endif
-#if defined(SFML_SYSTEM_MACOS)
-	FeLog() << "FLAG: SFML_SYSTEM_MACOS" << std::endl;
-#endif
-#if defined(USE_XLIB)
-	FeLog() << "FLAG: USE_XLIB" << std::endl;
-#endif
-#if defined(USE_BCM)
-	FeLog() << "FLAG: USE_BCM" << std::endl;
-#endif
-#if defined(USE_DRM)
-	FeLog() << "FLAG: USE_DRM" << std::endl;
-#endif
-
 	m_mon.clear();
 
 	//
@@ -231,6 +219,23 @@ void FePresent::init_monitors()
 	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
 	// We also determine display's refresh rate here
 	//
+
+#if defined(SFML_SYSTEM_MACOS)
+	CGDirectDisplayID display_id = CGMainDisplayID();
+	CGDisplayModeRef display_mode = CGDisplayCopyDisplayMode( display_id );
+	size_t refresh_rate = CGDisplayModeGetRefreshRate( display_mode );
+
+	if ( refresh_rate == 0 )
+	{
+		CVDisplayLinkRef display_link;
+		CVDisplayLinkCreateWithCGDisplay( display_id, &display_link );
+		const CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod( display_link );
+		if ( !( time.flags & kCVTimeIsIndefinite ))
+			m_refresh_rate = (int)( (float)time.timeScale / (float)time.timeValue + 0.5f );
+	}
+	else
+		m_refresh_rate = refresh_rate;
+#endif
 
 #if defined(USE_BCM)
 	bcm_host_init();
@@ -399,7 +404,7 @@ void FePresent::init_monitors()
 		m_refresh_rate = 60;
 	}
 	else
-		FeLog() << "Monitor's Refresh Rate: " << m_refresh_rate << " Hz" << std::endl;
+		FeDebug() << "Monitor's Refresh Rate: " << m_refresh_rate << " Hz" << std::endl;
 }
 
 FePresent::~FePresent()

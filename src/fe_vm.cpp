@@ -20,7 +20,6 @@
  *
  */
 
-#include <SFML/OpenGL.hpp>
 #include "fe_vm.hpp"
 #include "fe_settings.hpp"
 #include "fe_present.hpp"
