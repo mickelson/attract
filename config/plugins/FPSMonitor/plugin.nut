@@ -253,13 +253,13 @@ class FPSMonitor
 			if ( fps_enabled == false ) fps_enabled = true
 			else fps_enabled = false
 			fps_text.visible = fps_enabled
+			fps_clear = true
+			fps_bg.visible = fps_enabled
+			fps_su.visible = fps_enabled
 
 			if ( ft_enabled )
 			{
 				ft_text.visible = fps_enabled
-				fps_clear = true
-				fps_bg.visible = fps_enabled
-				fps_su.visible = fps_enabled
 				ft_clear = true
 				ft_bg.visible = fps_enabled
 				ft_su.visible = fps_enabled
