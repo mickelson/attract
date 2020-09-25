@@ -4,11 +4,11 @@
 **************************************/
 
 class Logger {
-  categories = null
-  level = null
+  CATEGORIES = null
+  _level = null
 
 	constructor() {
-    categories = [
+    CATEGORIES = [
       "debug", // Low-level information for developers.
       "info",  // Generic (useful) information about system operation.
       "warn",  // A warning.
@@ -21,26 +21,30 @@ class Logger {
 
   // Public
 
+  function get_categories() { return CATEGORIES }
+
 	function set_level(severity) { // Filter messages based on severity
-		if (typeof severity == "integer" && severity >= 0 && severity <= 4) level = severity
-    else if (typeof severity == "string" && categories.find(severity.tolower())) level = categories.find(severity.tolower())
-    else action_handler(categories[2], "Log level set is not valid.")
+		if (typeof severity == "integer" && severity >= 0 && severity <= 4) this._level = severity
+    else if (typeof severity == "string" && CATEGORIES.find(severity.tolower())) this._level = CATEGORIES.find(severity.tolower())
+    else _action_handler(CATEGORIES[2], "Log level set is not valid.")
 	}
 
-  function debug(message) { action_handler(categories[0], message) }
-  function info(message) { action_handler(categories[1], message) }
-  function warn(message) { action_handler(categories[2], message) }
-  function error(message) { action_handler(categories[3], message) }
-  function fatal(message) { action_handler(categories[4], message) }
+  function debug(message) { _action_handler(CATEGORIES[0], message) }
+  function info(message) { _action_handler(CATEGORIES[1], message) }
+  function warn(message) { _action_handler(CATEGORIES[2], message) }
+  function error(message) { _action_handler(CATEGORIES[3], message) }
+  function fatal(message) { _action_handler(CATEGORIES[4], message) }
 
-  // Private
+  // Protected
 
-	function action_handler(severity, message) {
-    if (categories.find(severity) < level) return
+	function _action_handler(severity, message) {
+    if (CATEGORIES.find(severity) < this._level) return
 
     local stack = getstackinfos(3)
     print("[" + stack.src + ":" + stack.line + "]: (" + severity.toupper() + ") " + message + "\n")
     stack = null
 	}
+
+  // Private
 }
 ::log <- Logger()
