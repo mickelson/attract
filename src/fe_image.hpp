@@ -88,6 +88,13 @@ public:
 
 	virtual void set_mipmap( bool )=0;
 	virtual bool get_mipmap() const=0;
+
+	virtual void set_clear( bool );
+	virtual bool get_clear() const;
+
+	virtual void set_repeat( bool );
+	virtual bool get_repeat() const;
+
 	virtual bool is_swf() const;
 	virtual float get_sample_aspect_ratio() const;
 
@@ -164,6 +171,10 @@ public:
 
 	void set_mipmap( bool );
 	bool get_mipmap() const;
+
+	void set_repeat( bool );
+	bool get_repeat() const;
+
 	bool is_swf() const;
 	float get_sample_aspect_ratio() const;
 
@@ -230,10 +241,17 @@ public:
 	void set_mipmap( bool );
 	bool get_mipmap() const;
 
+	void set_clear( bool );
+	bool get_clear() const;
+
+	void set_repeat( bool );
+	bool get_repeat() const;
+
 	FePresentableParent *get_presentable_parent();
 
 private:
 	sf::RenderTexture m_texture;
+	bool m_clear;
 };
 
 class FeImage : public sf::Drawable, public FeBasePresentable
@@ -317,6 +335,10 @@ public:
 	float get_sample_aspect_ratio() const;
 	bool get_preserve_aspect_ratio() const;
 	bool get_mipmap() const;
+	bool get_smooth() const;
+	int get_blend_mode() const;
+	bool get_clear() const;
+	bool get_repeat() const;
 
 	void set_origin_x( float x );
 	void set_origin_y( float y );
@@ -330,17 +352,16 @@ public:
 	void set_subimg_height( int h );
 	void set_preserve_aspect_ratio( bool p );
 	void set_mipmap( bool m );
+	void set_smooth( bool );
+	void set_clear( bool );
+	void set_repeat( bool );
+	void set_blend_mode( int b );
+
 	void transition_swap( FeImage * );
 
 	void rawset_index_offset( int io );
 	void rawset_filter_offset( int fo );
 	bool fix_masked_image();
-
-	void set_smooth( bool );
-	bool get_smooth() const;
-
-	int get_blend_mode() const;
-	void set_blend_mode( int b );
 
 	//
 	// Callback functions for use with surface objects

@@ -50,6 +50,7 @@ Contents
       * [`fe.monitors`](#monitors)
       * [`fe.script_dir`](#script_dir)
       * [`fe.script_file`](#script_file)
+      * [`fe.module_dir`](#module_dir)
       * [`fe.nv`](#nv)
    * [Classes](#classes)
       * [`fe.LayoutGlobals`](#LayoutGlobals)
@@ -1247,6 +1248,14 @@ the layout or plug-in's directory.
 
 When Attract-Mode runs a layout or plug-in script, `fe.script_file` is set to
 the name of the layout or plug-in script file.
+
+&nbsp;
+<a name="module_dir" />
+
+#### `fe.module_dir` ####
+
+When Attract-Mode runs a module script, `fe.module_dir` is set to
+the module's directory.
 
 &nbsp;
 <a name="nv" />
