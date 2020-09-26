@@ -27,6 +27,7 @@ distributions.  Other distributions should have similar packages available.
       - OpenGL and GLU (or OpenGLES for GLES version)
       - JPEG library
       - Make and Package Config
+      - Xrandr
 
    * Optional:
       - Fontconfig (to assist with finding fonts).

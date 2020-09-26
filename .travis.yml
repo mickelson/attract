@@ -19,6 +19,7 @@ addons:
     - libarchive-dev
     - libfontconfig1-dev
     - libxinerama-dev
+    - libxrandr-dev
     - freeglut3-dev
     - libcurl4-openssl-dev
     - pkg-config
@@ -37,6 +38,8 @@ matrix:
   exclude:
   - os: osx
     compiler: gcc
+    apt:
+      packages: libxrandr-dev
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
 install:
