@@ -262,26 +262,27 @@ void FePresent::init_monitors()
 		int drm_fd = open( device->nodes[DRM_NODE_PRIMARY], O_RDWR | O_CLOEXEC );
 		drmModeRes *p_res = drmModeGetResources( drm_fd );
 
-		for ( int i = 0; i < p_res->count_connectors; i++ )
-		{
-			drmModeConnector *p_connector = drmModeGetConnector( drm_fd, p_res->connectors[i] );
-			drmModeEncoder *encoder;
-			drmModeCrtc *crtc;
-			encoder = drmModeGetEncoder( drm_fd, p_connector->encoder_id );
-			drmModeModeInfo mode_info;
-			memset( &mode_info, 0, sizeof( drmModeModeInfo ));
-			if ( encoder != NULL )
+		if ( p_res )
+			for ( int j = 0; j < p_res->count_connectors; j++ )
 			{
-				crtc = drmModeGetCrtc( drm_fd, encoder->crtc_id );
-				drmModeFreeEncoder( encoder );
-				if ( crtc != NULL )
+				drmModeConnector *p_connector = drmModeGetConnector( drm_fd, p_res->connectors[j] );
+				drmModeEncoder *encoder;
+				drmModeCrtc *crtc;
+				encoder = drmModeGetEncoder( drm_fd, p_connector->encoder_id );
+				drmModeModeInfo mode_info;
+				memset( &mode_info, 0, sizeof( drmModeModeInfo ));
+				if ( encoder != NULL )
 				{
-					if ( crtc->mode_valid )
-						m_refresh_rate = crtc->mode.vrefresh;
-					drmModeFreeCrtc( crtc );
+					crtc = drmModeGetCrtc( drm_fd, encoder->crtc_id );
+					drmModeFreeEncoder( encoder );
+					if ( crtc != NULL )
+					{
+						if ( crtc->mode_valid )
+							m_refresh_rate = crtc->mode.vrefresh;
+						drmModeFreeCrtc( crtc );
+					}
 				}
 			}
-		}
 		close( drm_fd );
 	}
 	drmFreeDevices( devices, num_devices );
