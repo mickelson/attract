@@ -89,7 +89,6 @@ public:
 
 	// set the cache size for the image loader's cache of uncompressed images (in bytes)
 	static void set_cache_size( size_t cache_size );
-	static void set_background_loading( bool flag );
 
 	// destroy vid (on our background thread which will wait on the video threads to stop)
 	void reap_video( FeMedia *vid );
@@ -103,6 +102,9 @@ public:
 	int cache_count();
 	const char *cache_get_name_at( int );
 	int cache_get_size_at( int );
+
+	void set_background_loading( bool flag );
+	bool get_background_loading();
 
 private:
 	FeImageLoader();

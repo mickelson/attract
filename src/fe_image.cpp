@@ -467,9 +467,6 @@ bool FeTextureContainer::try_to_load(
 	FeImageLoader &il = FeImageLoader::get_ref();
 	unsigned char *data = NULL;
 
-	if ( m_entry )
-		il.release_entry( &m_entry );
-
 	if ( is_supported_archive( path ) )
 	{
 		loaded_name = path + "|" + filename;

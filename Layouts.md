@@ -1355,6 +1355,9 @@ Properties:
    * `size` - Get the current size of the image cache (in bytes).
    * `max_size` - Get the (user configured) maximum size of the image cache
       (in bytes).
+   * `bg_load` - Get/set whether images are to be loaded on a background thread.
+      Setting to true might make Attract-Mode animations smoother, but can cause a
+      slight flicker as images get loaded.  Default value is false.
 
 Member Functions:
 
