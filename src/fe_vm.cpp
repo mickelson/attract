@@ -925,6 +925,7 @@ bool FeVM::on_new_layout()
 		.Func( _SC("add_image"), &FeImageLoader::cache_image )
 		.Func( _SC("name_at"), &FeImageLoader::cache_get_name_at )
 		.Func( _SC("size_at"), &FeImageLoader::cache_get_size_at )
+		.Prop( _SC("bg_load"), &FeImageLoader::get_background_loading, &FeImageLoader::set_background_loading )
 	);
 
 	//

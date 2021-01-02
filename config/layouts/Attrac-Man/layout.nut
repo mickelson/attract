@@ -69,6 +69,7 @@ local pres_ar = (::AM_CONFIG["art_mode"]=="Preserve Aspect Ratio");
 fe.layout.width=456;
 fe.layout.height=336;
 fe.layout.preserve_aspect_ratio=true;
+fe.image_cache.bg_load = true;
 
 fe.load_module( "fade" );
 

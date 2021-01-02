@@ -62,6 +62,21 @@ namespace
 	}
 
 	sf::Mutex g_mutex;
+
+#ifdef FE_DEBUG
+	int g_entry_count=0;
+
+	class EntryCountReporter
+	{
+	public:
+		~EntryCountReporter()
+		{
+			FeLog() << "Image Loader Entry Count on exit: " << g_entry_count << std::endl;
+		}
+	};
+
+	EntryCountReporter g_e_rep;
+#endif
 }
 
 class FeImageLRUCache
@@ -303,7 +318,8 @@ class FeImageLoaderImp
 {
 public:
 	FeImageLoaderImp()
-		: m_cache( NULL )
+		: m_cache( NULL ),
+		m_load_images_in_bg( false )
 	{
 	};
 
@@ -315,6 +331,7 @@ public:
 
 	FeImageLRUCache *m_cache;
 	FeImageLoaderThread m_bg_loader;
+	bool m_load_images_in_bg;
 };
 
 FeImageLoaderEntry::FeImageLoaderEntry( sf::InputStream *s )
@@ -325,10 +342,17 @@ FeImageLoaderEntry::FeImageLoaderEntry( sf::InputStream *s )
 		m_data( NULL ),
 		m_loaded( false )
 {
+#ifdef FE_DEBUG
+	g_entry_count++;
+#endif
 }
 
 FeImageLoaderEntry::~FeImageLoaderEntry()
 {
+#ifdef FE_DEBUG
+	g_entry_count--;
+#endif
+
 	if ( m_data )
 		stbi_image_free( m_data );
 
@@ -380,12 +404,7 @@ FeImageLoader::~FeImageLoader()
 bool FeImageLoader::load_image_from_file( const std::string &fn, FeImageLoaderEntry **e )
 {
 	sf::InputStream *fs = new FeFileInputStream( fn );
-
-	bool retval = internal_load_image( fn, fs, e );
-	if ( retval )
-		delete fs;
-
-	return retval;
+	return internal_load_image( fn, fs, e );
 }
 
 bool FeImageLoader::load_image_from_archive( const std::string &arch, const std::string &fn, FeImageLoaderEntry **e )
@@ -394,11 +413,7 @@ bool FeImageLoader::load_image_from_archive( const std::string &arch, const std:
 	zs->open( fn );
 
 	std::string key = arch + "|" + fn;
-	bool retval = internal_load_image( key, zs, e );
-	if ( retval )
-		delete zs;
-
-	return retval;
+	return internal_load_image( key, zs, e );
 }
 
 bool FeImageLoader::internal_load_image( const std::string &key, sf::InputStream *stream, FeImageLoaderEntry **e )
@@ -409,11 +424,12 @@ bool FeImageLoader::internal_load_image( const std::string &key, sf::InputStream
 	if ( m_imp->m_cache && m_imp->m_cache->get( key, &temp_e ) )
 	{
 		FeDebug() << "Image cache hit: " << key << std::endl;
+		delete stream;
 
 		sf::Lock l( g_mutex );
 		temp_e->add_ref();
 		*e = temp_e;
-		return true;
+		return temp_e->m_loaded;
 	}
 
 	temp_e = new FeImageLoaderEntry( stream );
@@ -424,17 +440,38 @@ bool FeImageLoader::internal_load_image( const std::string &key, sf::InputStream
 	cb.skip = &skip;
 	cb.eof = &eof;
 
+	int retval=false;
 	int ignored;
-	stbi_info_from_callbacks( &cb, temp_e->m_stream, &(temp_e->m_width), &(temp_e->m_height), &ignored );
+	bool err=false;
+	if ( !m_imp->m_load_images_in_bg )
+	{
+		temp_e->m_data = stbi_load_from_callbacks( &cb, temp_e->m_stream,
+			&(temp_e->m_width), &(temp_e->m_height), &ignored, STBI_rgb_alpha );
 
-	// reset to beginning of stream
-	stream->seek( 0 );
+		temp_e->m_loaded = true;
 
-	// send to background thread to load pixel data
-	m_imp->m_bg_loader.add( key, temp_e );
+		if ( !temp_e->m_data )
+		{
+			FeLog() << "Error loading image: " << key << " - " << stbi_failure_reason() << std::endl;
+			err = true;
+			retval = false;
+		}
+		else
+			retval = true;
+	}
+	else
+	{
+		stbi_info_from_callbacks( &cb, temp_e->m_stream, &(temp_e->m_width), &(temp_e->m_height), &ignored );
+
+		// reset to beginning of stream
+		stream->seek( 0 );
+
+		// send to background thread to load pixel data
+		m_imp->m_bg_loader.add( key, temp_e );
+	}
 
 	// add to cache
-	if ( m_imp->m_cache )
+	if ( !err && m_imp->m_cache )
 		m_imp->m_cache->put( key, temp_e );
 
 	{
@@ -443,7 +480,7 @@ bool FeImageLoader::internal_load_image( const std::string &key, sf::InputStream
 		(*e)->add_ref();
 	}
 
-	return false;
+	return retval;
 }
 
 void FeImageLoader::release_entry( FeImageLoaderEntry **e )
@@ -497,6 +534,20 @@ void FeImageLoader::set_cache_size( size_t s )
 		il.m_imp->m_cache = new FeImageLRUCache( s );
 	else
 		il.m_imp->m_cache->resize( s );
+}
+
+void FeImageLoader::set_background_loading( bool flag )
+{
+	FeImageLoader &il = get_ref();
+	il.m_imp->m_load_images_in_bg = flag;
+
+	FeDebug() << "Set background image loading: " << flag << std::endl;
+}
+
+bool FeImageLoader::get_background_loading()
+{
+	FeImageLoader &il = get_ref();
+	return il.m_imp->m_load_images_in_bg;
 }
 
 //
