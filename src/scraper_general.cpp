@@ -933,5 +933,9 @@ bool FeSettings::scrape_artwork( const std::string &emu_name, UiUpdate uiu, void
 	else
 		msg = ctx.user_message;
 
+	// if we scraped something then make sure our path caches are reloaded
+	if ( ctx.download_count > 0 )
+		m_path_cache.clear();
+
 	return true;
 }
