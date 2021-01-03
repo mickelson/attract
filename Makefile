@@ -197,7 +197,7 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
    #
    _DEP += fe_util_osx.hpp
    _OBJ += fe_util_osx.o
-   LIBS += -framework Cocoa -framework Carbon -framework IOKit
+   LIBS += -framework Cocoa -framework Carbon -framework IOKit -framework CoreVideo
   else
    ifeq ($(USE_GLES),1)
    else
@@ -331,7 +331,9 @@ ifeq ($(USE_GLES),1)
   ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
    CFLAGS += -I/opt/vc/include -L/opt/vc/lib
    ifneq ("$(wildcard /opt/vc/lib/libbrcmGLESv2.so)","")
+    FE_FLAGS += -DUSE_BCM
     GLES_LIB := -lbrcmGLESv2
+    LIBS += -lbcm_host
    else
     GLES_LIB := -lGLESv2
    endif
@@ -345,7 +347,7 @@ endif
 
 ifeq ($(USE_XLIB),1)
  FE_FLAGS += -DUSE_XLIB
- LIBS += -lX11
+ LIBS += -lX11 -lXrandr
 
 ifeq ($(USE_XINERAMA),1)
   FE_FLAGS += -DUSE_XINERAMA

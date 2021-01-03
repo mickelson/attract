@@ -91,7 +91,6 @@ private:
 	bool m_process_console_input;
 	const FeScriptConfigurable *m_script_cfg;
 	int m_script_id;
-	int m_refresh_rate;
 	sf::Time m_last_ui_cmd;
 
 	std::queue< FeInputMap::Command > m_posted_commands;
@@ -156,7 +155,6 @@ public:
 	void overlay_clear_custom_controls();
 	bool splash_message( const char *, const char * );
 	bool splash_message( const char * );
-	int get_refresh_rate();
 
 	static void script_get_config_options(
 			FeConfigContext &ctx,

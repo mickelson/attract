@@ -38,8 +38,28 @@
 #include <Audio/AudioDevice.hpp>
 #endif
 
+#ifdef USE_XLIB
+#include <X11/extensions/Xrandr.h>
+#endif
+
 #ifdef USE_XINERAMA
 #include <X11/extensions/Xinerama.h>
+#endif
+
+#ifdef USE_BCM
+#include <bcm_host.h>
+#endif
+
+#ifdef USE_DRM
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+#endif
+
+#ifdef SFML_SYSTEM_MACOS
+#include <CoreVideo/CoreVideo.h>
 #endif
 
 #ifdef SFML_SYSTEM_WINDOWS
@@ -182,7 +202,8 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWi
 	m_listBox( NULL ),
 	m_emptyShader( NULL ),
 	m_overlay_caption( NULL ),
-	m_overlay_lb( NULL )
+	m_overlay_lb( NULL ),
+	m_refresh_rate( 0 )
 {
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	init_monitors();
@@ -196,8 +217,86 @@ void FePresent::init_monitors()
 	// Handle multi-monitors
 	//
 	// We support multi-monitor setups on MS-Windows when in fullscreen or "fillscreen" mode
+	// We also determine display's refresh rate here
 	//
+
+#if defined(SFML_SYSTEM_MACOS)
+	CGDirectDisplayID display_id = CGMainDisplayID();
+	CGDisplayModeRef display_mode = CGDisplayCopyDisplayMode( display_id );
+	size_t refresh_rate = CGDisplayModeGetRefreshRate( display_mode );
+
+	if ( refresh_rate == 0 )
+	{
+		CVDisplayLinkRef display_link;
+		CVDisplayLinkCreateWithCGDisplay( display_id, &display_link );
+		const CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod( display_link );
+		if ( !( time.flags & kCVTimeIsIndefinite ))
+			m_refresh_rate = (int)( (float)time.timeScale / (float)time.timeValue + 0.5f );
+	}
+	else
+		m_refresh_rate = refresh_rate;
+#endif
+
+#if defined(USE_BCM)
+	bcm_host_init();
+	TV_DISPLAY_STATE_T tvstate;
+	if ( vc_tv_get_display_state( &tvstate ) == 0 )
+		m_refresh_rate = tvstate.display.hdmi.frame_rate;
+#endif
+
+#if defined(USE_DRM)
+	#define MAX_DRM_DEVICES 64
+
+	drmDevicePtr devices[MAX_DRM_DEVICES] = { NULL };
+	int num_devices, fd = -1;
+
+	num_devices = drmGetDevices2( 0, devices, MAX_DRM_DEVICES );
+	for ( int i = 0; i < num_devices; i++ )
+	{
+		drmDevicePtr device = devices[i];
+		int ret;
+
+		if ( !( device->available_nodes & ( 1 << DRM_NODE_PRIMARY )))
+			continue;
+
+		int drm_fd = open( device->nodes[DRM_NODE_PRIMARY], O_RDWR | O_CLOEXEC );
+		drmModeRes *p_res = drmModeGetResources( drm_fd );
+
+		if ( p_res )
+			for ( int j = 0; j < p_res->count_connectors; j++ )
+			{
+				drmModeConnector *p_connector = drmModeGetConnector( drm_fd, p_res->connectors[j] );
+				drmModeEncoder *encoder;
+				drmModeCrtc *crtc;
+				encoder = drmModeGetEncoder( drm_fd, p_connector->encoder_id );
+				drmModeModeInfo mode_info;
+				memset( &mode_info, 0, sizeof( drmModeModeInfo ));
+				if ( encoder != NULL )
+				{
+					crtc = drmModeGetCrtc( drm_fd, encoder->crtc_id );
+					drmModeFreeEncoder( encoder );
+					if ( crtc != NULL )
+					{
+						if ( crtc->mode_valid )
+							m_refresh_rate = crtc->mode.vrefresh;
+						drmModeFreeCrtc( crtc );
+					}
+				}
+			}
+		close( drm_fd );
+	}
+	drmFreeDevices( devices, num_devices );
+#endif
+
 #if defined(SFML_SYSTEM_WINDOWS)
+	DEVMODE devMode;
+	memset( &devMode, 0, sizeof(DEVMODE) );
+	devMode.dmSize = sizeof(DEVMODE);
+	devMode.dmDriverExtra = 0;
+
+	if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &devMode ) != 0 )
+		m_refresh_rate = devMode.dmDisplayFrequency;
+
 	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
 		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
 	{
@@ -226,13 +325,17 @@ void FePresent::init_monitors()
 			(*itr).transform *= correction;
 	}
 	else
-#elif defined(USE_XINERAMA)
+#elif defined(USE_XLIB)
 	if ( 1 )
 	{
 		Display *xdisp = XOpenDisplay( NULL );
-		int num=0;
+		Window root = RootWindow( xdisp, 0 );
+		XRRScreenConfiguration *xconf = XRRGetScreenInfo( xdisp, root );
+		m_refresh_rate = XRRConfigCurrentRate( xconf );
+#if defined(USE_XINERAMA)
+		int num = 0;
+		XineramaScreenInfo *si = XineramaQueryScreens( xdisp, &num );
 
-		XineramaScreenInfo *si=XineramaQueryScreens( xdisp, &num );
 		if ( si )
 		{
 			if (( m_feSettings->get_info_bool( FeSettings::MultiMon ) )
@@ -268,6 +371,7 @@ void FePresent::init_monitors()
 		}
 
 		XFree( si );
+#endif
 		XCloseDisplay( xdisp );
 	}
 	else
@@ -294,6 +398,14 @@ void FePresent::init_monitors()
 	ASSERT( m_mon.size() > 0 );
 
 	m_layoutSize = m_mon[0].size;
+
+	if ( m_refresh_rate == 0 )
+	{
+		FeLog() << "Failed to detect the refresh rate. Defaulting to 60 Hz" << std::endl;
+		m_refresh_rate = 60;
+	}
+	else
+		FeDebug() << "Monitor's Refresh Rate: " << m_refresh_rate << " Hz" << std::endl;
 }
 
 FePresent::~FePresent()
