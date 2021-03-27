@@ -1507,7 +1507,7 @@ FeShader *FePresent::get_empty_shader()
 void FePresent::set_search_rule( const char *s )
 {
 	m_feSettings->set_search_rule( s );
-	update_to_new_list( 0 );
+	update_to_new_list( 0, true );
 }
 
 const char *FePresent::get_search_rule()
