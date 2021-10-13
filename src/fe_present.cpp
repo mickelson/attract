@@ -363,8 +363,8 @@ void FePresent::init_monitors()
 			{
 				FeMonitor mon(
 					si[0].screen_number,
-					si[0].width,
-					si[0].height );
+					m_window.get_win().getSize().x,
+					m_window.get_win().getSize().y);
 
 				m_mon.push_back( mon );
 			}
