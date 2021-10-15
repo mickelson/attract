@@ -188,6 +188,7 @@ endif()
 
 add_executable(attract ${attract_SOURCES})
 target_link_libraries(attract ${attract_LIBS})
+set_target_properties(attract PROPERTIES LINK_FLAGS_RELEASE -s)
 
 install(TARGETS attract
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
