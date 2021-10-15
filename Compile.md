@@ -66,7 +66,7 @@ distributions.  Other distributions should have similar packages available.
    config directory.  By default, this config directory is located in
    `$HOME/.attract` on Linux/FreeBSD systems.
 
-   NOTE: The Attract-Mode tries to follow the [GNU standards for installation
+   NOTE: Attract-Mode tries to follow the [GNU standards for installation
    directories][GNUInstallDirs].
    If you want to change the location where Attract-Mode looks for its default
    data from `/usr/local/share/attract` you may change these values by running
@@ -135,17 +135,19 @@ compile on an OS that supports [MXE] such as Linux, FreeBSD or OS X.
 
 3. Extract the Attract-Mode source to your system.
 
-4. From the directory you extracted the source into, run the following:
+4. From the directory you extracted the source into, run the following to make
+   a 32-bit build:
 
-           mkdir build
-           cd build
-           i686-w64-mingw32.static-cmake .. && make -j3
+           i686-w64-mingw32.static-cmake -B build/win32
+           i686-w64-mingw32.static-cmake --build build/win32 -j 4
 
-   to build the 32-bit version of Attract-Mode. To build 64-bit, run:
+   To make a 64-bit build:
 
-           x86_64-w64-mingw32.static-cmake .. && make -j3
+           x86_64-w64-mingw32.static-cmake -B build/win64
+           x86_64-w64-mingw32.static-cmake --build build/w64 -j 4
 
-   This step will create the "attract.exe" executable file.
+   This step will create the "attract.exe" executable file under `src/` of
+   the build directory.
 
 5. Copy the contents of the config directory from the Attract-Mode source
    directory and the executable you just built into the same directory on your
