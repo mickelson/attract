@@ -1,6 +1,5 @@
 include_directories(
     ${PROJECT_BINARY_DIR}
-    ${SFML_INCLUDE_DIR}
 )
 
 set(attract_SOURCES
@@ -83,13 +82,9 @@ if(WIN32)
         list(APPEND sfmlcomponents main)
     endif()
 endif()
-find_package(SFML 2 COMPONENTS ${sfmlcomponents} REQUIRED)
+find_package(SFML 2.5 COMPONENTS ${sfmlcomponents} REQUIRED)
 
-if(SFML_STATIC_LIBRARIES)
-    list(APPEND attract_LIBS ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
-else()
-    list(APPEND attract_LIBS ${SFML_LIBRARIES})
-endif()
+list(APPEND attract_LIBS sfml-graphics sfml-window sfml-system)
 
 #### END: Required
 
@@ -117,7 +112,7 @@ if(NOT NO_MOVIE)
     endif()
     list(APPEND attract_SOURCES media.hpp media.cpp)
     include_directories(${FFMPEG_INCLUDE_DIRS})
-    if(WIN32)
+    if(WIN32 AND (LIBTYPE_STATIC OR NOT BUILD_SHARED_LIBS))
         list(APPEND attract_LIBS audiolib ${FFMPEG_STATIC_LIBRARIES})
     else()
         list(APPEND attract_LIBS audiolib ${FFMPEG_LIBRARIES})
@@ -129,6 +124,7 @@ endif()
 if (USE_LIBCURL)
     list(APPEND attract_LIBS ${CURL_LIBRARIES})
     include_directories(${CURL_INCLUDE_DIRS})
+    add_definitions(${CURL_CFLAGS})
     list(APPEND attract_SOURCES fe_net.cpp fe_net.hpp)
 endif()
 
@@ -141,8 +137,9 @@ endif()
 
 # LibArchive support
 if(USE_LIBARCHIVE)
-    list(APPEND attract_LIBS ${LibArchive_LIBRARIES})
-    include_directories(${LibArchive_INCLUDE_DIRS})
+    list(APPEND attract_LIBS ${LIBARCHIVE_LIBRARIES})
+    include_directories(${LIBARCHIVE_INCLUDE_DIRS})
+    add_definitions(${LIBARCHIVE_CFLAGS})
 else()
     include_directories(${CMAKE_SOURCE_DIR}/extlibs/miniz)
 endif()
@@ -168,17 +165,15 @@ endif()
 
 if(WIN32)
     enable_language(RC)
-    list(APPEND attract_LIBS nvapi)
+    list(APPEND attract_LIBS nvapi dwmapi)
     list(APPEND attract_SOURCES attract.rc)
     if(WINDOWS_CONSOLE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mconsole")
-    else
+    else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--subsystem,windows")
     endif()
     set(CMAKE_EXE_LINKER_FLAGS "-static")
 endif()
-
-#### END: Platforms ####
 
 add_executable(attract ${attract_SOURCES})
 target_link_libraries(attract ${attract_LIBS})

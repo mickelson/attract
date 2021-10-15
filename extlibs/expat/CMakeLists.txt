@@ -1,10 +1,7 @@
 include(CheckFunctionExists)
 
-check_function_exists(memmove MEMMOVE_EXISTS)
-if(MEMMOVE_EXISTS)
-    add_definitions("-DHAVE_MEMMOVE")
-else()
-    message(FATAL_ERROR "memmove not supported")
+if(NOT WIN32)
+  add_definitions("-DXML_DEV_URANDON -DHAVE_MEMMOVE")
 endif()
 
 set(expat_SOURCES

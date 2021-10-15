@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.9 FATAL_ERROR)
 
-set(FE_VERSION "v2.0.0")
+set(FE_VERSION "v2.6.1")
 
 project(attract)
 
@@ -17,6 +17,7 @@ include(InstallRequiredSystemLibraries)
 include(GetGitRevisionDescription)
 include(CheckIncludeFile)
 include(TargetArch)
+include(FindPkgConfig)
 
 target_architecture(CMAKE_TARGET_ARCHITECTURES)
 string(TOUPPER ${CMAKE_SYSTEM_NAME} TARGET_SYSTEM)
@@ -31,9 +32,7 @@ message(STATUS "Target: ${CMAKE_SYSTEM_NAME} ${CMAKE_TARGET_ARCHITECTURES}")
 
 option(NO_MOVIE       "Disable movie support (ffmpeg)" OFF)
 option(NO_SWF         "Disable SWF support (gameswf)" OFF)
-option(USE_FONTCONFIG "FontConfig support" ON)
 option(USE_LIBARCHIVE "Archive library support" ON)
-option(USE_XINERAMA   "Xinerama support" ON)
 option(USE_GLES       "GLES instead of GL" OFF)
 option(USE_LIBCURL    "Libcurl support" ON)
 option(FE_DEBUG       "Debug" OFF)
@@ -41,6 +40,11 @@ option(FE_RPI         "Build for Raspberry PI" OFF)
 
 if(WIN32)
     option(WINDOWS_CONSOLE "Enable console on Windows" OFF)
+    set(XINERAMA_FOUND OFF)
+    set(FONTCONFIG_FOUND OFF)
+else()
+    option(USE_FONTCONFIG "FontConfig support" ON)
+    option(USE_XINERAMA   "Xinerama support" ON)
 endif()
 
 if(FE_RPI)
@@ -57,9 +61,8 @@ endif()
 set(USE_XINERAMA ${XINERAMA_FOUND})
 
 if(USE_LIBARCHIVE)
-    find_package(LibArchive)
+    pkg_search_module(LIBARCHIVE REQUIRED libarchive)
 endif()
-set(USE_LIBARCHIVE ${LibArchive_Found})
 
 if(USE_FONTCONFIG AND NOT WIN32)
     find_package(FontConfig)
@@ -67,9 +70,8 @@ endif()
 set(USE_FONTCONFIG ${FONTCONFIG_FOUND})
 
 if(USE_LIBCURL)
-    find_package(CURL)
+    pkg_search_module(CURL REQUIRED libcurl)
 endif()
-set(USE_LIBCURL ${CURL_FOUND})
 #### END: Options ####
 
 #### BEGIN: Version ####
