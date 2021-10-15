@@ -175,6 +175,9 @@ if(APPLE)
 endif()
 
 if(WIN32)
+    # SFML links OpenGL32, but on case sensitive filesystems that's not always the name.
+    set_property(TARGET OpenGL PROPERTY INTERFACE_LINK_LIBRARIES)
+    sfml_bind_dependency(TARGET OpenGL FRIENDLY_NAME "OpenGL" SEARCH_NAMES "OpenGL32" "opengl32")
     enable_language(RC)
     list(APPEND attract_LIBS nvapi dwmapi)
     list(APPEND attract_SOURCES attract.rc)
