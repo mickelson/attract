@@ -144,10 +144,21 @@ else()
     include_directories(${CMAKE_SOURCE_DIR}/extlibs/miniz)
 endif()
 
-# Xinerama support
-if(USE_XINERAMA)
-    list(APPEND attract_LIBS ${XINERAMA_LIBRARIES} X11)
-    include_directories(${XINERAMA_INCLUDE_DIRS})
+# X11 support
+if(USE_XLIB)
+    list(APPEND attract_LIBS ${X11_LIBRARIES} Xrandr)
+    include_directories(${X11_INCLUDE_DIRS})
+    if(USE_XINERAMA)
+        list(APPEND attract_LIBS ${XINERAMA_LIBRARIES})
+        include_directories(${XINERAMA_INCLUDE_DIRS})
+    endif()
+endif()
+
+# DRM support
+if(USE_DRM)
+    list(APPEND attract_LIBS ${LIBDRM_LIBRARIES} ${GBM_LIBRARIES})
+    include_directories(${LIBDRM_INCLUDE_DIRS} ${GBM_INCLUDE_DIRS})
+    add_definitions(${LIBDRM_CFLAGS} ${GBM_CFLAGS})
 endif()
 
 #### END: Features ####

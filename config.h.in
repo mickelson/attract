@@ -15,10 +15,15 @@
 #cmakedefine NO_SWF
 #cmakedefine USE_FONTCONFIG
 #cmakedefine USE_LIBARCHIVE
+#cmakedefine USE_XLIB
 #cmakedefine USE_XINERAMA
 #cmakedefine USE_GLES
+#cmakedefine USE_MMAL
+#cmakedefine USE_DRM
 #cmakedefine FE_DEBUG
 #cmakedefine FE_RPI
+#cmakedefine FE_HWACCEL_VAAPI
+#cmakedefine FE_HWACCEL_VDPAU
 
 #define DATA_PATH         "@DATA_PATH@"
 
