@@ -2,8 +2,6 @@ set(INCLUDE_DIRS
     "${CMAKE_CURRENT_LIST_DIR}/include"
 )
 
-file(GLOB_RECURSE rapidjson_SOURCES *.h)
-
-add_library(rapidjson INTERFACE ${rapidjson_SOURCES})
+add_library(rapidjson INTERFACE)
 
 target_include_directories(rapidjson INTERFACE ${INCLUDE_DIRS})
