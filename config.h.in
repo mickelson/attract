@@ -20,6 +20,7 @@
 #cmakedefine USE_GLES
 #cmakedefine USE_MMAL
 #cmakedefine USE_DRM
+#cmakedefine USE_LIBCURL
 #cmakedefine FE_DEBUG
 #cmakedefine FE_HWACCEL_VAAPI
 #cmakedefine FE_HWACCEL_VDPAU
