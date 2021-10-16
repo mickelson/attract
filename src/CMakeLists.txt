@@ -146,8 +146,8 @@ endif()
 
 # X11 support
 if(USE_XLIB)
-    list(APPEND attract_LIBS ${X11_LIBRARIES} Xrandr)
-    include_directories(${X11_INCLUDE_DIRS})
+    list(APPEND attract_LIBS ${X11_LIBRARIES} ${XRANDR_LIBRARIES})
+    include_directories(${X11_INCLUDE_DIRS} ${XRANDR_INCLUDE_DIRS})
     if(USE_XINERAMA)
         list(APPEND attract_LIBS ${XINERAMA_LIBRARIES})
         include_directories(${XINERAMA_INCLUDE_DIRS})
