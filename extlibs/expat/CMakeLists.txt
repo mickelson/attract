@@ -1,7 +1,7 @@
 include(CheckFunctionExists)
 
 if(NOT WIN32)
-  add_definitions("-DXML_DEV_URANDON -DHAVE_MEMMOVE")
+  add_definitions("-DXML_DEV_URANDOM -DHAVE_MEMMOVE")
 endif()
 
 set(expat_SOURCES
