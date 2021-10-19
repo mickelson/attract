@@ -79,7 +79,7 @@ Provided all dependncies are met then run dpkg-buildpackage from a terminal in t
 	dpkg-buildpackage -b --no-sign
 
 If you are compiling for a different release of Debian (eg. Target = Debian 10, Compiling on Debian 11) then
-you will need to setup an environment for sbuild. See https://wiki.debian.org/sbuild
+you will need to setup an environment for sbuild. See https://wiki.debian.org/sbuild (And a .sbuildrc file)
 Then run sbuild from a terminal in the source folder.
 
 	sbuild
