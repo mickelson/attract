@@ -70,6 +70,20 @@ distributions.  Other distributions should have similar packages available.
    data from `/usr/local/share/attract` you should change these values
    appropriately before running the `make` and `make install` commands.
 
+Debian:
+-------
+A debian package may be built using either dpkg-buildpackage or sbuild using the existing source/debian folder.
+dpkg-buildpackage can be used on the target system, sbuild is useful when building for an alternate release.
+Provided all dependncies are met then run dpkg-buildpackage from a terminal in the source folder.
+
+	dpkg-buildpackage -b --no-sign
+
+If you are compiling for a different release of Debian (eg. Target = Debian 10, Compiling on Debian 11) then
+you will need to setup an environment for sbuild. See https://wiki.debian.org/sbuild
+Then run sbuild from a terminal in the source folder.
+
+	sbuild
+
 OS X:
 -----
 
