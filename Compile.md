@@ -82,7 +82,7 @@ If you are compiling for a different release of Debian (eg. Target = Debian 10, 
 you will need to setup an environment for sbuild. See https://wiki.debian.org/sbuild (And a .sbuildrc file)
 Then run sbuild from a terminal in the source folder.
 
-	sbuild
+	sbuild -d buster
 
 OS X:
 -----
