@@ -76,10 +76,10 @@ A debian package may be built using either dpkg-buildpackage or sbuild using the
 dpkg-buildpackage can be used on the target system, sbuild is useful when building for an alternate release.
 Provided all dependncies are met then run dpkg-buildpackage from a terminal in the source folder.
 
-	dpkg-buildpackage -b --no-sign
+	dpkg-buildpackage --sanitize-env --no-sign -b -rfakeroot
 
 If you are compiling for a different release of Debian (eg. Target = Debian 10, Compiling on Debian 11) then
-you will need to setup an environment for sbuild. See https://wiki.debian.org/sbuild (And a .sbuildrc file)
+you will need to setup an environment for sbuild. See https://wiki.debian.org/sbuild
 Then run sbuild from a terminal in the source folder.
 
 	sbuild -d buster
