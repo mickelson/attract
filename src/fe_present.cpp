@@ -195,6 +195,7 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWi
 	m_defaultFont( defaultfont ),
 	m_baseRotation( FeSettings::RotateNone ),
 	m_toggleRotation( FeSettings::RotateNone ),
+	m_refresh_rate( 0 ),
 	m_playMovies( true ),
 	m_user_page_size( -1 ),
 	m_preserve_aspect( false ),
@@ -202,8 +203,7 @@ FePresent::FePresent( FeSettings *fesettings, FeFontContainer &defaultfont, FeWi
 	m_listBox( NULL ),
 	m_emptyShader( NULL ),
 	m_overlay_caption( NULL ),
-	m_overlay_lb( NULL ),
-	m_refresh_rate( 0 )
+	m_overlay_lb( NULL )
 {
 	m_layoutFontName = m_feSettings->get_info( FeSettings::DefaultFont );
 	init_monitors();
@@ -326,13 +326,18 @@ void FePresent::init_monitors()
 	}
 	else
 #elif defined(USE_XLIB)
-	if ( 1 )
+
+	Display *xdisp = XOpenDisplay( NULL );
+	Window root = RootWindow( xdisp, 0 );
+	XRRScreenConfiguration *xconf = XRRGetScreenInfo( xdisp, root );
+	m_refresh_rate = XRRConfigCurrentRate( xconf );
+
+#if !defined(USE_XINERAMA)
+	XCloseDisplay( xdisp );
+#else
+	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
+		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
 	{
-		Display *xdisp = XOpenDisplay( NULL );
-		Window root = RootWindow( xdisp, 0 );
-		XRRScreenConfiguration *xconf = XRRGetScreenInfo( xdisp, root );
-		m_refresh_rate = XRRConfigCurrentRate( xconf );
-#if defined(USE_XINERAMA)
 		int num = 0;
 		XineramaScreenInfo *si = XineramaQueryScreens( xdisp, &num );
 
@@ -371,10 +376,10 @@ void FePresent::init_monitors()
 		}
 
 		XFree( si );
-#endif
 		XCloseDisplay( xdisp );
 	}
 	else
+#endif
 #endif
 	{
 		FeMonitor mc( 0, m_window.get_win().getSize().x, m_window.get_win().getSize().y );
