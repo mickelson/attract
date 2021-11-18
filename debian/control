@@ -3,7 +3,7 @@ Section: games
 Priority: optional
 Maintainer: Andrew Mickelson <andrew@attractmode.org>
 Build-Depends: debhelper (>= 9), pkgconf, git,
- libarchive-dev, libavcodec-dev, libavformat-dev, libavresample-dev,
+ libarchive-dev, libavcodec-dev, libavformat-dev, libswresample-dev,
  libavutil-dev, libfontconfig-dev, libfreetype6-dev, libglu-dev,
  libjpeg62-turbo-dev | libjpeg-turbo8-dev,
  libxrandr-dev, libopenal-dev, libsfml-dev, libswscale-dev, libxinerama-dev,
