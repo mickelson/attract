@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"
 #include "swf.hpp"
 #include "zip.hpp"
 

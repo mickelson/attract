@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"
 #include "fe_image.hpp"
 #include "fe_util.hpp"
 #include "fe_settings.hpp"

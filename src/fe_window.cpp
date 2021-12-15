@@ -21,6 +21,7 @@
  */
 
 
+#include "config.h"
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
 #include "fe_window.hpp"

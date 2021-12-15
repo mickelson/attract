@@ -48,7 +48,7 @@ namespace gameswf
 
 	// stack access/manipulation
 	// @@ TODO do more checking on these
-	struct vm_stack : private array<as_value>
+	struct vm_stack : protected array<as_value>
 	{
 		vm_stack() :
 			m_stack_size(0)

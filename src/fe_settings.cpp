@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"
 #include "fe_util.hpp"
 #include "fe_settings.hpp"
 #include "fe_present.hpp"
@@ -39,7 +40,7 @@
 #include <SFML/Config.hpp>
 
 #ifdef USE_FONTCONFIG
-#include <fontconfig/fontconfig.h>
+#include <fontconfig.h>
 #endif
 
 #ifndef NO_MOVIE
@@ -107,12 +108,7 @@ const char *FE_FONT_EXTENSIONS[]		=
 	NULL
 };
 
-#ifdef DATA_PATH
 const char *FE_DATA_PATH = DATA_PATH;
-#else
-const char *FE_DATA_PATH = NULL;
-#endif
-
 const char *FE_CFG_FILE					= "attract.cfg";
 const char *FE_STATE_FILE				= "attract.am";
 const char *FE_SCREENSAVER_FILE		= "screensaver.nut";

@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"
 #include "fe_shader.hpp"
 #include "fe_presentable.hpp"
 #include "fe_image.hpp"

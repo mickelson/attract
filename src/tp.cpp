@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"
 #include "tp.hpp"
 #include <iostream>
 #include <cmath>
