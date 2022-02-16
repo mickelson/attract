@@ -120,7 +120,6 @@ private:
 
 	FeMedia( const FeMedia & );
 	FeMedia &operator=( const FeMedia & );
-	static void init_av();
 	float m_aspect_ratio;
 };
 
