@@ -30,8 +30,6 @@
 class FeMediaImp;
 class FeAudioImp;
 class FeVideoImp;
-struct AVCodec;
-struct AVCodecContext;
 
 namespace sf
 {
@@ -110,13 +108,10 @@ protected:
 	bool read_packet();
 	bool end_of_file();
 
-	void try_hw_accel( AVCodecContext *& ctx, AVCodec *&dec );
-
 private:
 	FeMediaImp *m_imp;
 	FeAudioImp *m_audio;
 	FeVideoImp *m_video;
-	static std::string g_decoder;
 
 	FeMedia( const FeMedia & );
 	FeMedia &operator=( const FeMedia & );
