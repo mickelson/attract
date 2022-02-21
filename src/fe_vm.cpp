@@ -374,7 +374,7 @@ void FeVM::set_overlay( FeOverlay *feo )
 	m_overlay = feo;
 }
 
-bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
+bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, ManyMouseEvent &mmev, bool &from_ui, int &evp )
 {
 	from_ui=false;
 
@@ -383,7 +383,7 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
 		c = (FeInputMap::Command)m_posted_commands.front();
 		m_posted_commands.pop();
 		ev.type = sf::Event::Count;
-
+		evp = EventProvider::SFML;
 		return true;
 	}
 	else if ( m_window.pollEvent( ev ) )
@@ -397,10 +397,30 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
 
 		c = m_feSettings->map_input( ev );
 
+
 		if ( c != FeInputMap::LAST_COMMAND )
 			m_last_ui_cmd = m_layoutTimer.getElapsedTime();
 
 		from_ui = true;
+		evp = EventProvider::SFML;
+		return true;
+	}
+	else if ( ManyMouse_PollEvent( &mmev ) )
+	{
+		int t = m_layoutTimer.getElapsedTime().asMilliseconds();
+
+		// Debounce to stop multiples when triggered by a key combo
+		//
+		if ( t - m_last_ui_cmd.asMilliseconds() < 30 )
+			return false;
+
+		c = m_feSettings->map_input( mmev );
+
+		if ( c != FeInputMap::LAST_COMMAND )
+			m_last_ui_cmd = m_layoutTimer.getElapsedTime();
+
+		from_ui = true;
+		evp = EventProvider::MANYMOUSE;
 		return true;
 	}
 

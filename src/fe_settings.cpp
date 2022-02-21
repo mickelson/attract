@@ -263,7 +263,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_last_launch_filter( 0 ),
 	m_last_launch_rom( 0 ),
 	m_joy_thresh( 75 ),
-	m_mouse_thresh( 10 ),
+	m_mouse_thresh( 50 ),
 	m_current_search_index( 0 ),
 	m_displays_menu_exit( true ),
 	m_hide_brackets( false ),
@@ -851,6 +851,11 @@ void FeSettings::load_state()
 FeInputMap::Command FeSettings::map_input( const sf::Event &e )
 {
 	return m_inputmap.map_input( e, m_mousecap_rect, m_joy_thresh );
+}
+
+FeInputMap::Command FeSettings::map_input( const ManyMouseEvent &mme )
+{
+	return m_inputmap.map_input( mme, m_mousecap_rect, m_mouse_thresh );
 }
 
 FeInputMap::Command FeSettings::input_conflict_check( const FeInputMapEntry &e )

@@ -117,7 +117,7 @@ public:
 	void set_overlay( FeOverlay *feo );
 
 	void flag_redraw() { m_redraw_triggered = true; };
-	bool poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui );
+	bool poll_command( FeInputMap::Command &c, sf::Event &ev, ManyMouseEvent &mmev, bool &from_ui, int &evp );
 	void clear(); // override of base class clear()
 
 	void update_to_new_list( int var=0, bool reset_display=false, bool suppress_transition=false ); // NOTE: override virtual function from FePresent
