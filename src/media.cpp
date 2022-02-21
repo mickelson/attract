@@ -145,7 +145,7 @@ public:
 	bool at_end;					// set when at the end of our input
 	bool far_behind;
 	AVCodecContext *codec_ctx;
-	AVCodec *codec;
+	const AVCodec *codec;
 	int stream_id;
 
 	FeBaseStream();
@@ -1061,7 +1061,7 @@ bool FeMedia::open( const std::string &archive,
 	if ( m_imp->m_type & Audio )
 	{
 		int stream_id( -1 );
-		AVCodec *dec;
+		const AVCodec *dec;
 		stream_id = av_find_best_stream( m_imp->m_format_ctx, AVMEDIA_TYPE_AUDIO,
 			-1, -1, &dec, 0 );
 
@@ -1119,7 +1119,7 @@ bool FeMedia::open( const std::string &archive,
 		std::string prev_dec_name;
 		int av_result( -1 );
 		int stream_id( -1 );
-		AVCodec *dec;
+		const AVCodec *dec;
 
 		stream_id = av_find_best_stream( m_imp->m_format_ctx, AVMEDIA_TYPE_VIDEO,
 					-1, -1, &dec, 0 );
@@ -1481,7 +1481,7 @@ void FeMedia::set_current_decoder( const std::string &l )
 //
 // Try to use a hardware accelerated decoder where readily available...
 //
-void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, AVCodec *&dec )
+void FeMedia::try_hw_accel( AVCodecContext *&codec_ctx, const AVCodec *&dec )
 {
 	if ( g_decoder.empty() || ( g_decoder.compare( "software" ) == 0 ))
 		return;

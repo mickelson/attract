@@ -110,7 +110,7 @@ protected:
 	bool read_packet();
 	bool end_of_file();
 
-	void try_hw_accel( AVCodecContext *& ctx, AVCodec *&dec );
+	void try_hw_accel( AVCodecContext *& ctx, const AVCodec *&dec );
 
 private:
 	FeMediaImp *m_imp;
