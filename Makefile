@@ -616,7 +616,12 @@ $(AUDIO_OBJ_DIR):
 NOWIDE_OBJ_DIR = $(OBJ_DIR)/nowidelib
 
 NOWIDEOBJS= \
-	$(NOWIDE_OBJ_DIR)/iostream.o
+	$(NOWIDE_OBJ_DIR)/iostream.o \
+	$(NOWIDE_OBJ_DIR)/filebuf.o \
+	$(NOWIDE_OBJ_DIR)/cstdio.o \
+	$(NOWIDE_OBJ_DIR)/cstdlib.o \
+	$(NOWIDE_OBJ_DIR)/console_buffer.o \
+	$(NOWIDE_OBJ_DIR)/stat.o
 
 $(OBJ_DIR)/libnowide.a: $(NOWIDEOBJS) | $(NOWIDE_OBJ_DIR)
 	$(AR_MSG)
