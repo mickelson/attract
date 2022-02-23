@@ -29,6 +29,8 @@
 #include "zip.hpp"
 #include "image_loader.hpp"
 
+#include <cstring>
+
 #ifndef NO_MOVIE
 #include "media.hpp"
 #endif

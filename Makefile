@@ -238,10 +238,6 @@ else
 	-lsfml-system
 endif
 
-ifeq ($(FE_MACOSX_COMPILE),1)
-  LIBS += -framework OpenGL -ljpeg
-endif
-
 ifneq ($(NO_SWF),1)
  _DEP += swf.hpp
  _OBJ += swf.o
@@ -250,17 +246,11 @@ ifneq ($(NO_SWF),1)
  ifneq ($(FE_WINDOWS_COMPILE),1)
   ifneq ($(FE_MACOSX_COMPILE),1)
    CFLAGS += -Wl,--export-dynamic
-   ifeq ($(USE_GLES),1)
-    GLES_LIB ?= -lGLESv1_CM
-    LIBS += -ldl $(GLES_LIB)
-   else
-    LIBS += -ldl -lGL
-   endif
+   LIBS += -ldl
    TEMP_LIBS += freetype2
    CFLAGS += $(shell $(PKG_CONFIG) --cflags --silence-errors freetype2)
   endif
  else
-  LIBS += -lopengl32
   TEMP_LIBS += freetype2
  endif
 
@@ -341,6 +331,22 @@ ifeq ($(USE_GLES),1)
  endif
 endif
 
+ifeq ($(FE_MACOSX_COMPILE),1)
+  LIBS += -framework OpenGL -ljpeg
+else
+ ifeq ($(FE_WINDOWS_COMPILE),1)
+  LIBS += -lopengl32
+ else
+  ifeq ($(USE_GLES),1)
+   GLES_LIB ?= -lGLESv1_CM
+   LIBS += $(GLES_LIB)
+  else
+   LIBS += -lGL
+  endif
+ endif
+endif
+
+
 ifeq ($(USE_MMAL),1)
  FE_FLAGS += -DUSE_MMAL
 endif
@@ -349,7 +355,7 @@ ifeq ($(USE_XLIB),1)
  FE_FLAGS += -DUSE_XLIB
  LIBS += -lX11 -lXrandr
 
-ifeq ($(USE_XINERAMA),1)
+ ifeq ($(USE_XINERAMA),1)
   FE_FLAGS += -DUSE_XINERAMA
   LIBS += -lXinerama
  endif

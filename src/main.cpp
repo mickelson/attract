@@ -35,6 +35,10 @@
 #include <cstdlib>
 #include "nowide/args.hpp"
 
+#ifdef USE_LIBCURL
+#include <curl/curl.h>
+#endif
+
 #ifndef NO_MOVIE
 #include <Audio/AudioDevice.hpp>
 #endif
@@ -53,10 +57,6 @@ extern "C"
 __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
-#endif
-
-#ifdef USE_LIBCURL
-#include <curl/curl.h>
 #endif
 
 void process_args( int argc, char *argv[],
