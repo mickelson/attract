@@ -80,7 +80,7 @@ namespace
 
 			return true; // return false to cancel callbacks
 		}
-		catch( Sqrat::Exception e )
+		catch( const Sqrat::Exception &e )
 		{
 			FeLog() << "Script Error: " << e.Message() << std::endl;
 		}
@@ -146,7 +146,7 @@ namespace
 			sc.Run();
 			FeDebug() << "Done script: " << path_to_run << std::endl;
 		}
-		catch(Sqrat:: Exception e )
+		catch( const Sqrat::Exception &e )
 		{
 			if ( !silent )
 				FeLog() << "Script Error in " << path_to_run
@@ -255,7 +255,7 @@ namespace
 				sc.CompileString( temp );
 				sc.Run();
 			}
-			catch ( Sqrat::Exception e )
+			catch ( const Sqrat::Exception &e )
 			{
 				FeLog() << "Error compiling " << name << " string: [" << nv << "] - " << e.Message() << std::endl;
 			}
@@ -315,7 +315,6 @@ const char *FeVM::transitionTypeStrings[] =
 
 FeVM::FeVM( FeSettings &fes, FeFontContainer &defaultfont, FeWindow &wnd, FeSound &ambient_sound, bool console_input )
 	: FePresent( &fes, defaultfont, wnd ),
-	m_window( wnd ),
 	m_overlay( NULL ),
 	m_ambient_sound( ambient_sound ),
 	m_redraw_triggered( false ),
@@ -1077,7 +1076,7 @@ bool FeVM::on_new_layout()
 
 	if ( skip_layout )
 	{
-		FeDisplayInfo *di = m_feSettings->get_display(
+		di = m_feSettings->get_display(
 			m_feSettings->get_current_display_index() );
 
 		if ( di )
@@ -1098,7 +1097,7 @@ bool FeVM::on_new_layout()
 	//
 	const std::vector< FePlugInfo > &plugins = m_feSettings->get_plugins();
 
-	for ( int i=0; i<(int)plugins.size(); i++ )
+	for ( i=0; i<(int)plugins.size(); i++ )
 	{
 		// Don't run disabled plugins...
 		if ( plugins[i].get_enabled() == false )
@@ -1168,7 +1167,7 @@ bool FeVM::process_console_input()
 
 		retval = true;
 	}
-	catch( Sqrat::Exception e )
+	catch( const Sqrat::Exception &e )
 	{
 		FeLog() << "Error: " << script << " - " << e.Message() << std::endl;
 	}
@@ -1196,7 +1195,7 @@ bool FeVM::on_tick()
 			if ( !func.IsNull() )
 				func.Execute( m_layoutTimer.getElapsedTime().asMilliseconds() );
 		}
-		catch( Exception &e )
+		catch( const Exception &e )
 		{
 			FeLog() << "Script Error in tick function: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
@@ -1260,7 +1259,7 @@ void FeVM::on_transition(
 						ttimer.getElapsedTime().asMilliseconds() );
 				}
 			}
-			catch( Exception &e )
+			catch( const Exception &e )
 			{
 				FeLog() << "Script Error in transition function: " << (*itr)->m_fn
 						<< " - " << e.Message() << std::endl;
@@ -1326,7 +1325,7 @@ bool FeVM::script_handle_event( FeInputMap::Command c )
 					&& ( func.Evaluate<bool>( FeInputMap::commandStrings[ c ] )))
 				return true;
 		}
-		catch( Exception &e )
+		catch( const Exception &e )
 		{
 			FeLog() << "Script Error in signal handler: " << (*itr).m_fn << " - "
 					<< e.Message() << std::endl;
@@ -1501,7 +1500,7 @@ void FePresent::script_process_magic_strings( std::string &str,
 				pos += TOK_LEN;
 			}
 		}
-		catch( Sqrat::Exception &e )
+		catch( const Sqrat::Exception &e )
 		{
 			FeLog() << "Script Error in magic string function: "
 				<< magic << " - "
@@ -1709,7 +1708,7 @@ void FeVM::script_run_config_function(
 		{
 			help_msg = func.Evaluate<const char *>( cb_get_config() );
 		}
-		catch( Sqrat::Exception &e )
+		catch( const Sqrat::Exception &e )
 		{
 			return_message = "Script error";
 			FeLog() << "Script Error in " << script_file
@@ -1816,7 +1815,7 @@ void FeVM::script_get_config_options(
 				if ( !otmp.empty() )
 					order = as_int( otmp );
 
-				std::multimap<int,FeMenuOpt>::iterator it;
+				std::multimap<int,FeMenuOpt>::iterator itx;
 				if ( !options.empty() )
 				{
 					std::vector<std::string> options_list;
@@ -1828,15 +1827,15 @@ void FeVM::script_get_config_options(
 						options_list.push_back( temp );
 					} while ( pos < options.size() );
 
-					it = my_opts.insert( std::pair <int, FeMenuOpt>(
+					itx = my_opts.insert( std::pair <int, FeMenuOpt>(
 						order,
 						FeMenuOpt(Opt::LIST, label, value, help, 0, key ) ) );
 
-					(*it).second.append_vlist( options_list );
+					(*itx).second.append_vlist( options_list );
 				}
 				else if ( config_str_to_bool( is_input ) )
 				{
-					it = my_opts.insert(
+					itx = my_opts.insert(
 						std::pair <int, FeMenuOpt>(
 							order,
 							FeMenuOpt(Opt::RELOAD, label, value, help, 1, key ) ) );
@@ -1846,14 +1845,14 @@ void FeVM::script_get_config_options(
 					FeMenuOpt temp_opt(Opt::SUBMENU, label, "", help, 2, key );
 					temp_opt.opaque_str = value;
 
-					it = my_opts.insert(
+					itx = my_opts.insert(
 						std::pair <int, FeMenuOpt>(
 							order,
 							temp_opt ) );
 				}
 				else
 				{
-					it = my_opts.insert(
+					itx = my_opts.insert(
 						std::pair <int, FeMenuOpt>(
 							order,
 							FeMenuOpt(Opt::EDIT, label, value, help, 0, key ) ) );
@@ -1869,9 +1868,9 @@ void FeVM::script_get_config_options(
 
 				if ( config_str_to_bool( per_display_str ) )
 				{
-					std::string temp = (*it).second.opaque_str;
-					(*it).second.opaque_str = "%";
-					(*it).second.opaque_str += temp;
+					std::string temp = (*itx).second.opaque_str;
+					(*itx).second.opaque_str = "%";
+					(*itx).second.opaque_str += temp;
 				}
 			}
 
@@ -1960,7 +1959,7 @@ bool FeVM::setup_wizard()
 		// Overwrite emulator config file with template which has just been generated
 		//
 		FeEmulatorInfo emu( *itr );
-		std::string fname = (*itr);
+		fname = (*itr);
 		fname += FE_EMULATOR_FILE_EXTENSION;
 
 		emu.load_from_file( read_base + fname );

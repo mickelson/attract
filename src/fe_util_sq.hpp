@@ -31,25 +31,25 @@
 //
 bool fe_get_object_string(
 	HSQUIRRELVM vm,
-	HSQOBJECT obj,
+	const HSQOBJECT &obj,
 	std::string &out_string);
 
 bool fe_get_attribute_string(
 	HSQUIRRELVM vm,
-	HSQOBJECT obj,
+	const HSQOBJECT &obj,
 	const std::string &key,
 	const std::string &attribute,
 	std::string & out_string);
 
 int fe_obj_compare(
 	HSQUIRRELVM vm,
-	HSQOBJECT obj1,
-	HSQOBJECT obj2 );
+	const HSQOBJECT &obj1,
+	const HSQOBJECT &obj2 );
 
 int fe_get_num_params(
 	HSQUIRRELVM vm,
-	HSQOBJECT func,
-	HSQOBJECT env );
+	const HSQOBJECT &func,
+	const HSQOBJECT &env );
 
 void fe_register_global_func(
 	HSQUIRRELVM vm,

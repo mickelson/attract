@@ -97,7 +97,7 @@ public:
 		while ( !m_items.empty() )
 		{
 			list_iterator_t last = m_items.end();
-			last--;
+			--last;
 
 			{
 				sf::Lock l( g_mutex );
@@ -167,7 +167,7 @@ private:
 		while ( !m_items.empty() && ( m_current_bytes > m_max_bytes ) )
 		{
 			list_iterator_t last = m_items.end();
-			last--;
+			--last;
 
 			size_t lsize = last->second->get_bytes();
 
@@ -602,7 +602,7 @@ int FeImageLoader::cache_count()
 
 const char *FeImageLoader::cache_get_name_at( int pos )
 {
-	if ( !m_imp->m_cache || ( pos < 0 ) || ( pos >= m_imp->m_cache->get_count() ) )
+	if ( !m_imp->m_cache || ( pos < 0 ) || ( pos >= (int)m_imp->m_cache->get_count() ) )
 		return "";
 
 	return m_imp->m_cache->get_name_at( pos );
@@ -610,7 +610,7 @@ const char *FeImageLoader::cache_get_name_at( int pos )
 
 int FeImageLoader::cache_get_size_at( int pos )
 {
-	if ( !m_imp->m_cache || ( pos < 0 ) || ( pos >= m_imp->m_cache->get_count() ) )
+	if ( !m_imp->m_cache || ( pos < 0 ) || ( pos >= (int)m_imp->m_cache->get_count() ) )
 		return 0;
 
 	return m_imp->m_cache->get_size_at( pos );

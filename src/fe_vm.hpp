@@ -83,7 +83,6 @@ private:
 		FromToFrontend=2
 	};
 
-	FeWindow &m_window;
 	FeOverlay *m_overlay;
 	FeSound &m_ambient_sound;
 

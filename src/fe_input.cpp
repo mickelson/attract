@@ -1627,11 +1627,10 @@ bool FeSoundInfo::get_sound( FeInputMap::Command c, std::string &name ) const
 	if (( !m_mute ) && ( m_sound_vol > 0 ))
 	{
 		std::map<FeInputMap::Command, std::string>::const_iterator it;
+		it = m_sounds.find( c );
 
-   	it = m_sounds.find( c );
-
-   	if ( it == m_sounds.end() )
-     		return false;
+		if ( it == m_sounds.end() )
+			return false;
 
 		name = (*it).second;
 	}

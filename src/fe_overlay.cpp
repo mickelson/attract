@@ -66,7 +66,7 @@ public:
 };
 
 FeConfigContextImp::FeConfigContextImp( FeSettings &fes, FeOverlay &feo )
-	: FeConfigContext( fes ), m_feo( feo )
+	: FeConfigContext( fes ), m_feo( feo ), exit_sel( 0 )
 {
 }
 

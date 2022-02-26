@@ -26,7 +26,7 @@
 
 bool fe_get_object_string(
 	HSQUIRRELVM vm,
-	HSQOBJECT obj,
+	const HSQOBJECT &obj,
 	std::string &out_string )
 {
 	sq_pushobject(vm, obj);
@@ -43,7 +43,7 @@ bool fe_get_object_string(
 
 bool fe_get_attribute_string(
 	HSQUIRRELVM vm,
-	HSQOBJECT obj,
+	const HSQOBJECT &obj,
 	const std::string &key,
 	const std::string &attribute,
 	std::string & out_string )
@@ -80,8 +80,8 @@ bool fe_get_attribute_string(
 
 int fe_obj_compare(
 	HSQUIRRELVM vm,
-	HSQOBJECT obj1,
-	HSQOBJECT obj2 )
+	const HSQOBJECT &obj1,
+	const HSQOBJECT &obj2 )
 {
 	sq_pushobject(vm, obj2);
 	sq_pushobject(vm, obj1);
@@ -92,8 +92,8 @@ int fe_obj_compare(
 
 int fe_get_num_params(
 	HSQUIRRELVM vm,
-	HSQOBJECT func,
-	HSQOBJECT env )
+	const HSQOBJECT &func,
+	const HSQOBJECT &env )
 {
 	sq_pushobject( vm, func );
 	sq_pushobject( vm, env );

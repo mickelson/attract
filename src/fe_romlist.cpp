@@ -141,7 +141,8 @@ FeRomList::FeRomList( const std::string &config_path )
 	m_config_path( config_path ),
 	m_fav_changed( false ),
 	m_tags_changed( false ),
-	m_availability_checked( false )
+	m_availability_checked( false ),
+	m_global_filtered_out_count( 0 )
 {
 }
 

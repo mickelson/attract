@@ -49,7 +49,7 @@ namespace {
 		{
 			size_t rs;
 			char buf[256];
-			while ( (rs = read( m_pfd[0], buf, sizeof( buf-1 ) )) > 0 )
+			while ( (rs = read( m_pfd[0], buf, sizeof( buf )-1 )) > 0 )
 			{
 				if ( buf[ rs - 1 ] == '\n' )
 				{
