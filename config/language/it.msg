@@ -423,6 +423,7 @@ Delete shortcut '$1'?;Delete shortcut '$1'?
 Delete this Shortcut;Delete this Shortcut
 Edit Shortcut;Edit Shortcut
 Exit Message;Exit Message
+Group Clones;Group Clones
 Image Cache Size;Image Cache Size
 Insert Command Shortcut;Insert Command Shortcut
 Insert Display Shortcut;Insert Display Shortcut
@@ -439,6 +440,7 @@ Press Hotkey;Press Hotkey
 Select template to use for emulator settings;Select template to use for emulator settings
 _help_emu_pause_hotkey;Set a global hotkey to pause the emulator.  When pressed, Attract-Mode will pause the emulator process and return to the frontend. The emulator process can be resumed by selecting the same game again in the frontend.
 _help_exit_message;Alternate message to exit the frontend [i.e. "Shut Down System"]
+_help_group_clones;Group all clones of a game under one single list entry
 _help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_image_cache_mbytes;Configure the maximum size of Attract-Mode's internal image cache (in megabytes)
 _help_joystick_map;Map the frontend's joystick slots to specifically named joystick/gamepad devices attached to your computer (You can use this to force the frontend to always use 'Microsoft X-Box 360 pad' as Joystick 0, for example.)

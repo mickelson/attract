@@ -128,6 +128,7 @@ General;General
 Generate Collection/Rom List;Generate Collection/Rom List
 Generating Rom List: $1%;Generating Rom List: $1%
 Global Filter;Global Filter
+Group Clones;Group Clones
 Hide Brackets in Game Title;Hide Brackets in Game Title
 Image Cache Size;Image Cache Size
 Info Source/Scraper;Info Source/Scraper
@@ -357,6 +358,7 @@ _help_game_edit;Edit this game information
 _help_game_overview;Edit game overview
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
 _help_generator_build;Generate romlist with the selected emulator(s)
+_help_group_clones;Group all clones of a game under one single list entry
 _help_hide_brackets;Hide text in brackets when showing game titles
 _help_image_cache_mbytes;Configure the maximum size of Attract-Mode's internal image cache (in megabytes)
 _help_input_action;

@@ -137,9 +137,9 @@ Insert Display Shortcut;插入顯示介面捷徑
 Insert Game Entry;插入遊戲項目
 Insert Menu Entry;插入選單項目
 Intro;啟動視訊
+Joystick $1;搖桿 $1
 Joystick Mappings;搖桿映射
 Joystick Threshold;搖桿靈敏度
-Joystick $1;搖桿 $1
 Jump to Next Display;跳到下一個顯示介面
 Language;語言
 Launch Last Game;最後執行的遊戲
@@ -163,8 +163,8 @@ Next Page;下一頁
 No;否
 No Sort;不排序
 No Wrap;不循環
-None;皆否
 Non-Blocking Mode Wait;非阻塞等待模式
+None;皆否
 OR;或
 Overview;簡介
 Overwrite existing '$1' list?;要覆寫現有的「$1」清單嗎？
@@ -176,8 +176,8 @@ Players;遊戲人數
 Please Wait;請稍待
 Plug-ins;外掛
 Power Saving;省電模式
-Press Input;請按下要使用的輸入按鍵
 Press Hotkey;請按下要使用的熱鍵
+Press Input;請按下要使用的輸入按鍵
 Previous Display;上一個顯示介面
 Previous Favourite;上一個我的最愛
 Previous Filter;上一個遊戲過濾
@@ -210,10 +210,10 @@ Screen Saver Timeout;螢幕保護啟動時間
 Screenshot;螢幕截圖
 Select;選擇
 Select template to use for emulator settings;選擇模擬器設定模板
-Show in Cycle;顯示在顯示介面循環裡
-Show in Menu;顯示在主選單
 Show Displays Menu;顯示主選單
 Show Last Selection (Default);顯示最後選擇的項目 (預設)
+Show in Cycle;顯示在顯示介面循環裡
+Show in Menu;顯示在主選單
 Sort By;排序方式
 Sound;聲音
 Sound Volume;聲音音量
@@ -236,8 +236,8 @@ Track Usage;記錄遊戲時間/次數
 Up;上移
 Video Decoder;視訊解碼器
 Window;視窗模式
-Window Mode;顯示模式
 Window (No Border);視窗模式 (無邊框)
+Window Mode;顯示模式
 Working Directory;工作目錄
 Wrap within Display (Default);循環至第一個遊戲過濾 (預設)
 Wrote $1 entries to Collection/Rom List;寫入 $1 項目至收藏集/遊戲清單
@@ -250,7 +250,7 @@ equals;等於
 multi;多個
 
 #
-# Help message strings
+# Help messages
 #
 _help_art;一種提供給畫面佈局使用的插圖資源
 _help_art_add;新增插圖資源 (遊戲招牌插圖、遊戲捉圖、其它...)
@@ -356,9 +356,10 @@ _help_game_custom_executable;設定此項目將會替這個遊戲覆寫預設的
 _help_game_delete;從遊戲清單刪除這個遊戲
 _help_game_edit;編輯這個遊戲的資訊
 _help_game_overview;編輯遊戲簡介
-_help_generator_opt;設定要為哪些模擬器建立遊戲清單
 _help_generator_build;開始為已選擇的模擬器建立遊戲清單
+_help_generator_opt;設定要為哪些模擬器建立遊戲清單
 _help_hide_brackets;顯示遊戲標題時隱藏括號內容
+_help_hide_console;啟動時隱藏主控台視窗 (註: 這僅在從 Windows 介面啟動 Attract-Mode 時能正常運作，若從命令提示字元視窗啟動 (例: 批次檔)，這個處理程式將始終附加並輸出到這個命令提示字元視窗)
 _help_image_cache_mbytes;設定 Attract-Mode 內部影像快取最大值大小 (以 MB 為單位)
 _help_input_action;目前所設定的 Attract-Mode 操作控制
 _help_input_add;新增一個輸入映射給這個操作控制使用
@@ -376,6 +377,7 @@ _help_plugin_command;這個外掛所關聯的外部執行檔
 _help_plugin_enabled;設定這個外掛是否要啟用
 _help_plugin_sel;設定外掛
 _help_plugins;設定目前存在的外掛
+_help_power_saving;僅在需要時才重新繪製螢幕進而達成省電 (可能造成一些畫面佈局動畫卡頓或在 Linux 系統畫面凍結)
 _help_rule_comp;這個過濾規則的比對方式
 _help_rule_delete;刪除這個過濾規則
 _help_rule_target;設定所要過濾的遊戲資訊內容
@@ -389,10 +391,10 @@ _help_scrape_wheels;設定是否要搜刮遊戲圖標 (輪播插圖)
 _help_scraper;設定插圖搜刮設定選項
 _help_screen_saver;設定螢幕保護
 _help_screen_saver_timeout;設定切換至螢幕保護模式前的等待秒數 (0 為停用)
-_help_shortcut_label_edit;編輯這個捷徑的標題名稱
-_help_shortcut_target_edit;編輯這個捷徑的目標顯示介面
 _help_shortcut_artwork_name_edit;提供要與此捷徑關聯的插圖名稱 (Attract-Modend 將會在顯示這個捷徑時嘗試使用這個名稱載入插圖資源)
 _help_shortcut_delete;從遊戲清單刪除這個捷徑
+_help_shortcut_label_edit;編輯這個捷徑的標題名稱
+_help_shortcut_target_edit;編輯這個捷徑的目標顯示介面
 _help_sound;設定聲音音量、操作事件聲音對映及環境音效
 _help_sound_sel;分配這個操作事件所要使用的音訊檔案
 _help_startup_mode;設定 Attract-Mode 啟動時所要顯示的選單項目
@@ -400,21 +402,24 @@ _help_track_usage;設定 Attract-Mode 是否要記錄使用狀況 (每個遊戲�
 _help_video_decoder;設定視訊播放時所要使用的解碼器 (若存在多個解碼器)
 _help_volume;音量值為 0 到 100 (0 為靜音)
 _help_window_mode;設定 Attract-Mode 所要使用的顯示模式
-_help_hide_console;啟動時隱藏主控台視窗 (註: 這僅在從 Windows 介面啟動 Attract-Mode 時能正常運作，若從命令提示字元視窗啟動 (例: 批次檔)，這個處理程式將始終附加並輸出到這個命令提示字元視窗)
-_help_power_saving;僅在需要時才重新繪製螢幕進而達成省電 (可能造成一些畫面佈局動畫卡頓或在 Linux 系統畫面凍結)
 _sort_regexp;^(Vs\. The |The |Vs\. )
 
 #
 # Extra strings provided by translation
 #
 'Displays Menu' Options;主選單選項
-Series;系列遊戲
-Region;遊戲區域
-Rating;遊戲評比
 Back (Exit);返回 (結束)
-Up (Previous Game);↑ (上一個遊戲)
 Down (Next Game);↓ (下一個遊戲)
 Left (Previous Page);← (上一頁)
+Rating;遊戲評比
+Region;遊戲區域
 Right (Next Page);→ (下一頁)
+Series;系列遊戲
+Up (Previous Game);↑ (上一個遊戲)
 
 #@DONE_TRANSLATED
+#
+# Strings still needing translation
+#
+Group Clones;Group Clones
+_help_group_clones;Group all clones of a game under one single list entry

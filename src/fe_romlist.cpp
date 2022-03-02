@@ -137,12 +137,11 @@ const char FeRomListSorter::get_first_letter( const FeRomInfo *one_info )
 }
 
 FeRomList::FeRomList( const std::string &config_path )
-	: m_global_filter_ptr( NULL ),
-	m_config_path( config_path ),
+	: m_config_path( config_path ),
 	m_fav_changed( false ),
 	m_tags_changed( false ),
 	m_availability_checked( false ),
-	m_global_filtered_out_count( 0 )
+	m_group_clones( false )
 {
 }
 
@@ -156,13 +155,13 @@ void FeRomList::init_as_empty_list()
 	m_romlist_name.clear();
 	m_list.clear();
 	m_filtered_list.clear();
-	m_filtered_list.push_back( std::vector< FeRomInfo *>()  ); // there always has to be at least one filter
+	m_filtered_list.push_back( FeFilterEntry()  ); // there always has to be at least one filter
 	m_tags.clear();
 	m_availability_checked = false;
+	m_group_clones = false;
 	m_fav_changed=false;
 	m_tags_changed=false;
 
-	m_global_filter_ptr=NULL;
 	m_extra_favs.clear();
 	m_extra_tags.clear();
 }
@@ -177,33 +176,17 @@ bool FeRomList::load_romlist( const std::string &path,
 	const std::string &romlist_name,
 	const std::string &user_path,
 	const std::string &stat_path,
-	FeDisplayInfo &display )
+	FeDisplayInfo &display,
+	bool group_clones )
 {
 	m_user_path = user_path;
 	m_romlist_name = romlist_name;
 
 	m_list.clear();
 	m_availability_checked = false;
+	m_group_clones = group_clones;
 
-	m_global_filter_ptr = NULL;
-	m_global_filtered_out_count = 0;
-
-	FeFilter *first_filter = display.get_global_filter();
-	if ( first_filter )
-	{
-		first_filter->init();
-
-		if ( !first_filter->test_for_target( FeRomInfo::FileIsAvailable )
-			&& !first_filter->test_for_target( FeRomInfo::Favourite )
-			&& !first_filter->test_for_target( FeRomInfo::Tags ) )
-		{
-			// If the global filter doesn't care about file availability,
-			// favourites or tags then we can apply it right up front when we
-			// load the romlist.  We signal this by setting m_global_filter_ptr
-			m_global_filter_ptr = first_filter;
-			first_filter = NULL;
-		}
-	}
+	int global_filtered_out_count = 0;
 
 	sf::Clock load_timer;
 
@@ -298,9 +281,12 @@ bool FeRomList::load_romlist( const std::string &path,
 		}
 	}
 
-	// Apply global filter if it hasn't been applied already
+	// Apply global filter
+	FeFilter *first_filter = display.get_global_filter();
 	if ( first_filter )
 	{
+		first_filter->init();
+
 		if ( first_filter->test_for_target( FeRomInfo::FileIsAvailable ) )
 			get_file_availability();
 
@@ -347,7 +333,7 @@ bool FeRomList::load_romlist( const std::string &path,
 					}
 				}
 
-				m_global_filtered_out_count++;
+				global_filtered_out_count++;
 				++it;
 			}
 		}
@@ -367,40 +353,108 @@ bool FeRomList::load_romlist( const std::string &path,
 
 	FeLog() << " - Loaded master romlist '" << m_romlist_name
 			<< "' in " << load_timer.getElapsedTime().asMilliseconds()
-			<< " ms (" << m_list.size() << " entries kept, " << m_global_filtered_out_count
+			<< " ms (" << m_list.size() << " entries kept, " << global_filtered_out_count
 			<< " discarded)" << std::endl;
 
 	create_filters( display );
 	return retval;
 }
 
-void FeRomList::build_single_filter_list( FeFilter *f,
-	std::vector< FeRomInfo *> &result )
+namespace
 {
+	bool fe_not_clone( const FeRomInfo &r )
+	{
+		return r.get_info( FeRomInfo::Cloneof ).empty();
+	}
+};
+
+void FeRomList::build_single_filter_list( FeFilter *f,
+	FeFilterEntry &result )
+{
+	if ( m_group_clones )
+	{
+		// If we are grouping by clones, partition the list so that clones
+		// are at the back of the list.
+		//
+		std::stable_partition( m_list.begin(), m_list.end(), fe_not_clone );
+	}
+
 	if ( f )
 	{
 		if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
-			result.reserve( f->get_size() );
+			result.filter_list.reserve( f->get_size() );
 
 		if ( f->test_for_target( FeRomInfo::FileIsAvailable ) )
 			get_file_availability();
 
 		f->init();
+
 		for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+		{
 			if ( f->apply_filter( *itr ) )
-				result.push_back( &( *itr ) );
+			{
+				if ( m_group_clones )
+				{
+					std::string id = (*itr).get_info( FeRomInfo::Cloneof );
+					if ( id.empty() )
+						id = (*itr).get_info( FeRomInfo::Romname );
+
+					std::map<std::string,std::vector<FeRomInfo *> >::iterator it;
+					it = result.clone_group.find( id );
+
+					if ( it == result.clone_group.end() )
+					{
+						result.filter_list.push_back( &( *itr ) );
+
+						it = result.clone_group.insert( it,
+							std::pair< std::string, std::vector < FeRomInfo * > >(
+								id,
+								std::vector<FeRomInfo *>() ) );
+					}
+					(*it).second.push_back( &( *itr ) );
+				}
+				else
+					result.filter_list.push_back( &( *itr ) );
+			}
+		}
 	}
 	else // no filter situation, so we just add the entire list...
 	{
-		result.reserve( m_list.size() );
-		for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
-			result.push_back( &( *itr ) );
+		result.filter_list.reserve( m_list.size() );
+		if ( m_group_clones )
+		{
+			std::string last_name, this_name;
+			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+			{
+				std::string id = (*itr).get_info( FeRomInfo::Cloneof );
+				if ( id.empty() )
+					id = (*itr).get_info( FeRomInfo::Romname );
+
+				std::map<std::string,std::vector<FeRomInfo *> >::iterator it;
+				it = result.clone_group.find( id );
+
+				if ( it == result.clone_group.end() )
+				{
+					result.filter_list.push_back( &( *itr ) );
+					it = result.clone_group.insert( it,
+						std::pair< std::string, std::vector < FeRomInfo * > >(
+							id,
+							std::vector<FeRomInfo *>() ) );
+				}
+				(*it).second.push_back( &( *itr ) );
+			}
+		}
+		else
+		{
+			for ( FeRomInfoListType::iterator itr=m_list.begin(); itr!=m_list.end(); ++itr )
+				result.filter_list.push_back( &( *itr ) );
+		}
 	}
 
 	if ( f )
 	{
 		// track the size of the filtered list in our filter info object
-		f->set_size( result.size() );
+		f->set_size( result.filter_list.size() );
 
 		//
 		// Sort and/or prune now if configured for this filter
@@ -411,20 +465,52 @@ void FeRomList::build_single_filter_list( FeFilter *f,
 
 		if ( sort_by != FeRomInfo::LAST_INDEX )
 		{
-			std::stable_sort( result.begin(), result.end(),
+			std::stable_sort( result.filter_list.begin(),
+				result.filter_list.end(),
 				FeRomListSorter2( sort_by, rev ) );
+
+			std::map< std::string, std::vector < FeRomInfo * > >::iterator itg;
+			for ( itg= result.clone_group.begin(); itg != result.clone_group.end(); ++itg )
+			{
+				std::stable_sort( (*itg).second.begin(), (*itg).second.end(),
+					FeRomListSorter2( sort_by, rev ) );
+			}
 		}
 		else if ( rev != false )
-			std::reverse( result.begin(), result.end() );
+			std::reverse( result.filter_list.begin(), result.filter_list.end() );
 
-		if (( list_limit != 0 ) && ( (int)result.size() > abs( list_limit ) ))
+		if (( list_limit != 0 ) && ( (int)result.filter_list.size() > abs( list_limit ) ))
 		{
 			if ( list_limit > 0 )
-				result.erase( result.begin() + list_limit, result.end() );
+				result.filter_list.erase( result.filter_list.begin() + list_limit, result.filter_list.end() );
 			else
-				result.erase( result.begin(), result.end() + list_limit );
+				result.filter_list.erase( result.filter_list.begin(), result.filter_list.end() + list_limit );
 		}
 	}
+}
+
+void FeRomList::get_clone_group( int filter_idx, int idx, std::vector < FeRomInfo * > &group )
+{
+	FeRomInfo &ri = lookup( filter_idx, idx );
+
+	std::string id;
+	id = ri.get_info( FeRomInfo::Cloneof );
+
+	if ( id.empty() )
+		id = ri.get_info( FeRomInfo::Romname );
+
+	std::map< std::string, std::vector < FeRomInfo * > >::iterator it;
+
+	it = m_filtered_list[filter_idx].clone_group.find( id );
+	if ( it != m_filtered_list[filter_idx].clone_group.end() )
+	{
+		std::vector<FeRomInfo *>::iterator itr;
+
+		for ( itr= (*it).second.begin(); itr != (*it).second.end(); ++itr )
+			group.push_back( (*itr) );
+	}
+	else
+		group.push_back( &ri );
 }
 
 void FeRomList::create_filters(
@@ -449,7 +535,7 @@ void FeRomList::create_filters(
 
 	for ( int i=0; i<filters_count; i++ )
 	{
-		m_filtered_list.push_back( std::vector< FeRomInfo *>()  );
+		m_filtered_list.push_back( FeFilterEntry()  );
 
 		build_single_filter_list( display.get_filter( i ),
 			m_filtered_list[i] );
@@ -466,13 +552,9 @@ int FeRomList::process_setting( const std::string &setting,
 {
 	FeRomInfo next_rom( setting );
 	next_rom.process_setting( setting, value, fn );
+	m_list.push_back( next_rom );
 
-	if (( !m_global_filter_ptr ) || ( m_global_filter_ptr->apply_filter( next_rom ) ))
-		m_list.push_back( next_rom );
-	else
-		m_global_filtered_out_count++;
-
-   return 0;
+	return 0;
 }
 
 void FeRomList::save_state()

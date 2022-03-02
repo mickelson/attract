@@ -265,6 +265,7 @@ int main(int argc, char *argv[])
 			&& ( !soundsys.is_sound_event_playing( FeInputMap::Select ) ))
 		{
 			const std::string &emu_name = feSettings.get_rom_info( 0, 0, FeRomInfo::Emulator );
+
 			if ( emu_name.compare( 0, 1, "@" ) == 0 )
 			{
 				if ( emu_name.size() > 1 )
@@ -304,8 +305,16 @@ int main(int argc, char *argv[])
 							feVM.update_to_new_list( 0, true );
 					}
 				}
+				launch_game=false;
 			}
-			else
+
+			if ( launch_game && feSettings.switch_to_clone_group() )
+			{
+				feVM.update_to_new_list( 0, true );
+				launch_game=false;
+			}
+
+			if ( launch_game )
 			{
 				soundsys.stop();
 
@@ -323,6 +332,9 @@ int main(int argc, char *argv[])
 
 				soundsys.sound_event( FeInputMap::EventGameReturn );
 				soundsys.play_ambient();
+
+				if ( feSettings.switch_from_clone_group() )
+					feVM.update_to_new_list( 0, true );
 
 				has_focus=true;
 			}

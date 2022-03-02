@@ -117,6 +117,7 @@ public:
 		ScreenSaverTimeout,
 		DisplaysMenuExit,
 		HideBrackets,
+		GroupClones,
 		StartupMode,
 		ConfirmFavourites,
 		ConfirmExit,
@@ -205,11 +206,14 @@ private:
 	int m_last_launch_display;
 	int m_last_launch_filter;
 	int m_last_launch_rom;
+	int m_last_launch_clone; // only used if group_clones is on.  tracks the index of the clone that is launched
+	int m_clone_index; // >= 0 if a clone group is being shown, otherwise -1
 	int m_joy_thresh;		// [1..100], 100=least sensitive
 	int m_mouse_thresh;	// [1..100], 100=least sensitive
 	int m_current_search_index; // used when custom searching *AND* when showing 'Displays Menu' w/ custom layout
 	bool m_displays_menu_exit;
 	bool m_hide_brackets;
+	bool m_group_clones;
 	StartupModeType m_startup_mode;
 	bool m_confirm_favs;
 	bool m_confirm_exit;
@@ -362,6 +366,9 @@ public:
 	//
 	void set_search_rule( const std::string &rule );
 	const std::string &get_search_rule() const;
+
+	bool switch_to_clone_group( int index = -1 ); // set index to the index of the clone to select.  -1=default
+	bool switch_from_clone_group();
 
 	bool select_last_launch();
 	bool is_last_launch( int filter_offset, int index_offset );

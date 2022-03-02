@@ -357,6 +357,7 @@ Exception Edit;Exception Edit
 Exit Message;Exit Message
 Extra;Extra
 FileIsAvailable;FileIsAvailable
+Group Clones;Group Clones
 Image Cache Size;Image Cache Size
 Insert Command Shortcut;Insert Command Shortcut
 Insert Display Shortcut;Insert Display Shortcut
@@ -420,6 +421,7 @@ _help_game_edit;Edit this game information
 _help_game_overview;Edit game overview
 _help_generator_build;Generate romlist with the selected emulator(s)
 _help_generator_opt;Set whether this emulator is to be included in the generated romlist
+_help_group_clones;Group all clones of a game under one single list entry
 _help_hide_console;Hide console on startup. Note that this only works if starting Attract-Mode from a Windows GUI. If started from an existing console window (e.g. a batch file) then the process will always "attach" to the existing console and output to it.
 _help_image_cache_mbytes;Configure the maximum size of Attract-Mode's internal image cache (in megabytes)
 _help_input_action;

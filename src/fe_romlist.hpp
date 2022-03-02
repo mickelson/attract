@@ -63,11 +63,26 @@ public:
 	bool operator()( const FeRomInfo *one, const FeRomInfo *two ) const { return m_sorter.operator()(*one,*two); };
 };
 
+class FeFilterEntry
+{
+public:
+	// for each filter, store a pointer to the m_list entries in that filter
+	//
+	std::vector < FeRomInfo * > filter_list;
+
+	// If clone grouping is on, this stores each clone group
+	//
+	std::map< std::string, std::vector < FeRomInfo * > > clone_group;
+
+	void clear() { filter_list.clear(); clone_group.clear(); };
+
+};
+
 class FeRomList : public FeBaseConfigurable
 {
 private:
 	FeRomInfoListType m_list; // this is where we keep the info on all the games available for the current display
-	std::vector<std::vector<FeRomInfo * > > m_filtered_list; // for each filter, store a pointer to the m_list entries in that filter
+	std::vector< FeFilterEntry > m_filtered_list;
 	std::vector<FeEmulatorInfo> m_emulators; // we keep the emulator info here because we need it for checking file availability
 
 	std::map<std::string, bool> m_tags; // bool is flag of whether the tag has been changed
@@ -81,6 +96,7 @@ private:
 	bool m_fav_changed;
 	bool m_tags_changed;
 	bool m_availability_checked;
+	bool m_group_clones;
 	int m_global_filtered_out_count; // for keeping stats during load
 
 	FeRomList( const FeRomList & );
@@ -88,7 +104,7 @@ private:
 
 	// helper function for building a single filter's list.  Used by create_filters() and fix_filters()
 	//
-	void build_single_filter_list( FeFilter *f, std::vector< FeRomInfo *> &result );
+	void build_single_filter_list( FeFilter *f, FeFilterEntry &result );
 
 	// Fixes m_filtered_list as needed using the filters in the given "display", with the
 	// assumption that the specified "target" attribute for all games might have been changed
@@ -110,7 +126,8 @@ public:
 		const std::string &romlist_name,
 		const std::string &user_path,
 		const std::string &stat_path,
-		FeDisplayInfo &display );
+		FeDisplayInfo &display,
+		bool group_clones );
 
 	void create_filters( FeDisplayInfo &display ); // called by load_romlist()
 
@@ -126,10 +143,12 @@ public:
 		std::vector< std::pair<std::string, bool> > &tags_list ) const;
 	bool set_tag( FeRomInfo &rom, FeDisplayInfo &display, const std::string &tag, bool flag );
 
-	bool is_filter_empty( int filter_idx ) const { return m_filtered_list[filter_idx].empty(); };
-	int filter_size( int filter_idx ) const { return (int)m_filtered_list[filter_idx].size(); };
-	const FeRomInfo &lookup( int filter_idx, int idx) const { return *(m_filtered_list[filter_idx][idx]); };
-	FeRomInfo &lookup( int filter_idx, int idx) { return *(m_filtered_list[filter_idx][idx]); };
+	bool is_filter_empty( int filter_idx ) const { return m_filtered_list[filter_idx].filter_list.empty(); };
+	int filter_size( int filter_idx ) const { return (int)m_filtered_list[filter_idx].filter_list.size(); };
+	const FeRomInfo &lookup( int filter_idx, int idx) const { return *(m_filtered_list[filter_idx].filter_list[idx]); };
+	FeRomInfo &lookup( int filter_idx, int idx) { return *(m_filtered_list[filter_idx].filter_list[idx]); };
+
+	void get_clone_group( int filter_idx, int idx, std::vector < FeRomInfo * > &group );
 
 	FeRomInfoListType &get_list() { return m_list; };
 

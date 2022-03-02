@@ -158,8 +158,8 @@ function attracman_transition( ttype, var, ttime )
 {
 	if ( ttype == Transition.ToNewList )
 	{
-		if (( fe.list.sort_by != Info.NoSort )
-				&& ( fe.list.sort_by != Info.Title ))
+		if (( fe.filters[fe.list.filter_index].sort_by != Info.NoSort )
+			&& ( fe.filters[fe.list.filter_index].sort_by != Info.Title ))
 		{
 			lb.width = 157;
 			sort_lb.visible = true;
@@ -169,6 +169,11 @@ function attracman_transition( ttype, var, ttime )
 			lb.width = 192;
 			sort_lb.visible = false;
 		}
+
+		if ( fe.list.search_rule.len() > 0 )
+			main_caption.msg = "[DisplayName] ([Search])";
+		else
+			main_caption.msg = "[DisplayName]";
 	}
 	return false;
 }

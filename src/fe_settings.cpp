@@ -262,11 +262,14 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_last_launch_display( 0 ),
 	m_last_launch_filter( 0 ),
 	m_last_launch_rom( 0 ),
+	m_last_launch_clone( -1 ),
+	m_clone_index( -1 ),
 	m_joy_thresh( 75 ),
 	m_mouse_thresh( 10 ),
 	m_current_search_index( 0 ),
 	m_displays_menu_exit( true ),
 	m_hide_brackets( false ),
+	m_group_clones( false ),
 	m_startup_mode( ShowLastSelection ),
 	m_confirm_favs( true ),
 	m_confirm_exit( true ),
@@ -405,6 +408,7 @@ const char *FeSettings::configSettingStrings[] =
 	"screen_saver_timeout",
 	"displays_menu_exit",
 	"hide_brackets",
+	"group_clones",
 	"startup_mode",
 	"confirm_favourites",
 	"confirm_exit",
@@ -666,7 +670,8 @@ void FeSettings::init_display()
 				romlist_name,
 				user_path,
 				stat_path,
-				m_displays[m_current_display] ) == false )
+				m_displays[m_current_display],
+				m_group_clones ) == false )
 		FeLog() << "Error opening romlist: " << romlist_name << std::endl;
 
 	// Setup m_current_layout_params with all the parameters for our current layout, including
@@ -729,8 +734,12 @@ void FeSettings::save_state()
 	{
 		outfile << display_idx << ";"
 			<< m_last_launch_display << "," << m_last_launch_filter
-			<< "," << m_last_launch_rom << ";" << m_menu_layout_file
-			<< std::endl;
+			<< "," << m_last_launch_rom;
+
+		if ( m_last_launch_clone >= 0 )
+			outfile << "," << m_last_launch_clone;
+
+		outfile << ";" << m_menu_layout_file << std::endl;
 
 		for ( std::vector<FeDisplayInfo>::const_iterator itl=m_displays.begin();
 					itl != m_displays.end(); ++itl )
@@ -778,6 +787,7 @@ void FeSettings::load_state()
 				case 0: m_last_launch_display = temp; break;
 				case 1: m_last_launch_filter = temp; break;
 				case 2: m_last_launch_rom = temp; break;
+				case 3: m_last_launch_clone = temp; break;
 			}
 			i++;
 		}
@@ -986,9 +996,12 @@ int FeSettings::get_rom_index( int filter_index, int offset ) const
 
 void FeSettings::set_search_rule( const std::string &rule_str )
 {
+	FeDebug() << "set_search_rule = '" << rule_str << "'" << std::endl;
+
 	m_current_search.clear();
 	m_current_search_index=0;
 	m_current_search_str.clear();
+	m_clone_index = -1;
 
 	if ( rule_str.empty() )
 		return;
@@ -1009,6 +1022,87 @@ void FeSettings::set_search_rule( const std::string &rule_str )
 
 	if ( !m_current_search.empty() )
 		m_current_search_str = rule_str;
+}
+
+bool FeSettings::switch_to_clone_group( int idx )
+{
+	// check if we aren't grouping clones of if we are already showing
+	// the clone list (in which case we return false)
+	if (( !m_group_clones ) || ( m_clone_index >= 0 ))
+		return false;
+
+	int fi = get_current_filter_index();
+	int ri = get_rom_index( fi, 0 );
+
+	// Check if we have a seach going on...
+	if ( !m_current_search.empty() )
+	{
+		//
+		// Search results are temporary, so if we are currently
+		// showing search results we need to find the selected game
+		// in the filter itself (without the search applied)
+		//
+		FeRomInfo *rom = get_rom_absolute( fi, ri );
+
+		for ( int i=0; i<m_rl.filter_size( fi ); i++ )
+		{
+			if ( m_rl.lookup( fi, i ) == *rom )
+			{
+				ri = i;
+				break;
+			}
+		}
+	}
+
+	std::vector < FeRomInfo * > group;
+	m_rl.get_clone_group( fi, ri, group );
+
+	if ( group.size() > 1 )
+	{
+		const std::string &t = m_rl.lookup(fi, ri).get_info( FeRomInfo::Title );
+
+		if ( idx >= 0 )
+		{
+			// if a specific idx value was provided, select that index
+			m_current_search_index = idx;
+		}
+		else
+		{
+			// if no idx was provided, default select the entry with the same
+			// title as the clone group
+			m_current_search_index=0;
+
+			for ( int i=0; i < group.size(); i++ )
+			{
+				if ( t.compare( group[i]->get_info( FeRomInfo::Title ) ) == 0 )
+					m_current_search_index = i;
+			}
+		}
+
+		m_current_search.swap( group );
+		m_current_search_str = name_with_brackets_stripped( t );
+		m_clone_index = ri;
+
+		FeDebug() << "Switched to clone group '" << t << "' size=" << m_current_search.size() << std::endl;
+		return true;
+	}
+
+	return false;
+}
+
+bool FeSettings::switch_from_clone_group()
+{
+	if ( m_clone_index < 0 )
+		return false;
+
+	int filter_index = get_current_filter_index();
+	int rom_index = m_clone_index;
+
+	// Need to clear search rule before set_current_selection()
+	set_search_rule( "" );
+
+	set_current_selection( filter_index, rom_index  );
+	return true;
 }
 
 const std::string &FeSettings::get_search_rule() const
@@ -1479,7 +1573,7 @@ int FeSettings::get_display_index_from_name( const std::string &n ) const
 // if rom_index < 0, then the rom index is left unchanged and only the filter index is changed
 void FeSettings::set_current_selection( int filter_index, int rom_index )
 {
-	// handle situation where we are currently showing a search result
+	// handle situation where we are currently showing a search result or clone group
 	//
 	if (( m_current_display < 0 )
 		|| ( !m_current_search.empty()
@@ -1829,6 +1923,10 @@ bool FeSettings::select_last_launch()
 
 	set_search_rule( "" );
 	set_current_selection( m_last_launch_filter, m_last_launch_rom );
+
+	if (( m_group_clones ) && ( m_last_launch_clone >= 0 ))
+		switch_to_clone_group( m_last_launch_clone );
+
 	return retval;
 }
 
@@ -2084,22 +2182,34 @@ void FeSettings::prep_for_launch( std::string &command,
 
 	m_last_launch_display = get_current_display_index();
 	m_last_launch_filter = filter_index;
+	m_last_launch_rom = 0;
+	m_last_launch_clone = -1;
 
 	if ( !m_current_search.empty()
 			&& ( get_current_filter_index() == filter_index ))
 	{
-		//
-		// Search results are temporary, so if we are currently
-		// showing search results we need to find the selected game
-		// in the filter itself (without the search applied)
-		//
-		m_last_launch_rom = 0;
-		for ( int i=0; i<m_rl.filter_size( filter_index ); i++ )
+		if ( m_clone_index >= 0 )
 		{
-			if ( m_rl.lookup( filter_index, i ) == *rom )
+			//
+			// Running from a clone group
+			m_last_launch_rom = m_clone_index;
+			m_last_launch_clone = rom_index;
+
+		}
+		else
+		{
+			//
+			// Search results are temporary, so if we are currently
+			// showing search results we need to find the selected game
+			// in the filter itself (without the search applied)
+			//
+			for ( int i=0; i<m_rl.filter_size( filter_index ); i++ )
 			{
-				m_last_launch_rom = i;
-				break;
+				if ( m_rl.lookup( filter_index, i ) == *rom )
+				{
+					m_last_launch_rom = i;
+					break;
+				}
 			}
 		}
 	}
@@ -2410,7 +2520,11 @@ void FeSettings::do_text_substitutions_absolute( std::string &str, int filter_in
 			rep = get_rom_info_absolute( filter_index,
 				rom_index, FeRomInfo::Title );
 			if (( m_hide_brackets ) && ( i == 7 )) // 7 == Title
-				rep = name_with_brackets_stripped( rep );
+			{
+				// Don't strip brackets when showing a clones group
+				if ( m_clone_index < 0 )
+					rep = name_with_brackets_stripped( rep );
+			}
 			break;
 
 		case 9: // "PlayedTime"
@@ -2739,6 +2853,7 @@ const std::string FeSettings::get_info( int index ) const
 
 	case DisplaysMenuExit:
 	case HideBrackets:
+	case GroupClones:
 	case ConfirmFavourites:
 	case ConfirmExit:
 	case TrackUsage:
@@ -2784,6 +2899,8 @@ bool FeSettings::get_info_bool( int index ) const
 		return m_displays_menu_exit;
 	case HideBrackets:
 		return m_hide_brackets;
+	case GroupClones:
+		return m_group_clones;
 	case ConfirmFavourites:
 		return m_confirm_favs;
 	case ConfirmExit:
@@ -2866,6 +2983,10 @@ bool FeSettings::set_info( int index, const std::string &value )
 
 	case HideBrackets:
 		m_hide_brackets = config_str_to_bool( value );
+		break;
+
+	case GroupClones:
+		m_group_clones = config_str_to_bool( value );
 		break;
 
 	case StartupMode:

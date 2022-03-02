@@ -1967,6 +1967,12 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 	ctx.back_opt().append_vlist( bool_opts );
 
 	ctx.add_optl( Opt::LIST,
+			"Group Clones",
+			ctx.fe_settings.get_info_bool( FeSettings::GroupClones ) ? bool_opts[0] : bool_opts[1],
+			"_help_group_clones" );
+	ctx.back_opt().append_vlist( bool_opts );
+
+	ctx.add_optl( Opt::LIST,
 			"Confirm Favourites",
 			ctx.fe_settings.get_info_bool( FeSettings::ConfirmFavourites ) ? bool_opts[0] : bool_opts[1],
 			"_help_confirm_favs" );
@@ -2068,6 +2074,9 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 #endif
 
 	ctx.fe_settings.set_info( FeSettings::HideBrackets,
+			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
+
+	ctx.fe_settings.set_info( FeSettings::GroupClones,
 			ctx.opt_list[i++].get_vindex() == 0 ? FE_CFG_YES_STR : FE_CFG_NO_STR );
 
 	ctx.fe_settings.set_info( FeSettings::ConfirmFavourites,
