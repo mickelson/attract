@@ -509,6 +509,17 @@ int main(int argc, char *argv[])
 						redraw=true;
 						continue;
 					}
+
+					//
+					// If FE is configured to group clones and is presently showing a group,
+					// then the "Back" UI button goes back to the main romlist...
+					//
+					if (( feSettings.get_info_bool( FeSettings::GroupClones ) )
+						&& ( feSettings.switch_from_clone_group() ))
+					{
+						feVM.update_to_new_list( 0, true );
+						continue;
+					}
 				}
 
 				c = feSettings.get_default_command( c );

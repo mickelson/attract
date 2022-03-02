@@ -158,8 +158,9 @@ function attracman_transition( ttype, var, ttime )
 {
 	if ( ttype == Transition.ToNewList )
 	{
-		if (( fe.filters[fe.list.filter_index].sort_by != Info.NoSort )
-			&& ( fe.filters[fe.list.filter_index].sort_by != Info.Title ))
+		if (( ( fe.filters.len() > 0 )
+			&& ( fe.filters[fe.list.filter_index].sort_by != Info.NoSort )
+			&& ( fe.filters[fe.list.filter_index].sort_by != Info.Title )))
 		{
 			lb.width = 157;
 			sort_lb.visible = true;
