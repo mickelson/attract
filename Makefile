@@ -58,6 +58,9 @@
 #FE_HWACCEL_VAAPI=1
 #FE_HWACCEL_VDPAU=1
 #
+# Uncomment the next line to build attract.debug file with debug symbols
+#ENABLE_DEBUG_SYMBOLS=1
+#
 ###############################
 
 #FE_DEBUG=1
@@ -70,6 +73,7 @@ CC=gcc
 CXX=g++
 CFLAGS=$(EXTRA_CFLAGS)
 STRIP=strip
+OBJCOPY=objcopy
 PKG_CONFIG=pkg-config
 AR=ar
 ARFLAGS=rc
@@ -77,15 +81,16 @@ RM=rm -f
 MD=mkdir -p
 WINDRES=windres
 
-ifndef OPTIMIZE
-OPTIMIZE=2
-endif
+-include attract.mk
+
+OPTIMIZE ?= 2
 
 ifndef VERBOSE
- SILENT=@
+ SILENT = @
  CC_MSG = @echo Compiling $@...
  AR_MSG = @echo Archiving $@...
  EXE_MSG = @echo Creating executable: $@
+ DEBUG_MSG = @echo Writing debug symbols: $@.debug
 endif
 
 ifneq ($(origin TOOLCHAIN),undefined)
@@ -100,11 +105,11 @@ override PKG_CONFIG := $(TOOLCHAIN)-$(PKG_CONFIG)
 override WINDRES := $(TOOLCHAIN)-$(WINDRES)
 endif
 
-prefix=/usr/local
-datarootdir=$(prefix)/share
-datadir=$(datarootdir)
-exec_prefix=$(prefix)
-bindir=$(exec_prefix)/bin
+prefix ?= /usr/local
+datarootdir ?= $(prefix)/share
+datadir ?= $(datarootdir)
+exec_prefix ?= $(prefix)
+bindir ?= $(exec_prefix)/bin
 
 DATA_PATH:=$(datadir)/attract/
 EXE_BASE=attract
@@ -112,7 +117,7 @@ EXE_EXT=
 OBJ_DIR=obj
 SRC_DIR=src
 EXTLIBS_DIR=extlibs
-FE_FLAGS=
+FE_FLAGS :=
 
 _DEP =\
 	fe_base.hpp \
@@ -305,8 +310,9 @@ endif
 # Now process the various settings...
 #
 ifeq ($(FE_DEBUG),1)
- CFLAGS += -g -Wall
+ CFLAGS += -Wall
  FE_FLAGS += -DFE_DEBUG
+ ENABLE_DEBUG_SYMBOLS=1
 else
  CFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
@@ -395,6 +401,30 @@ ifeq ($(USE_LIBCURL),1)
  TEMP_LIBS += libcurl
  _DEP += fe_net.hpp
  _OBJ += fe_net.o
+endif
+
+ifeq ($(ENABLE_DEBUG_SYMBOLS),1)
+ CFLAGS += -g
+ #
+ # libs for pretty output from backward-cpp
+ #
+ ifeq ($(shell $(PKG_CONFIG) --exists libdw && echo "1" || echo "0"), 1)
+  TEMP_LIBS += libdw
+  CFLAGS +=-DBACKWARD_HAS_DW=1
+  _OBJ += backward.o
+ else
+  ifeq ($(shell $(PKG_CONFIG) --exists libbfd && echo "1" || echo "0"), 1)
+   TEMP_LIBS += libbfd
+   CFLAGS +=-g -DBACKWARD_HAS_BFD=1
+   _OBJ += backward.o
+  else
+   ifeq ($(shell $(PKG_CONFIG) --exists libdwarf && echo "1" || echo "0"), 1)
+    TEMP_LIBS += libdwarf
+    CFLAGS += -DBACKWARD_HAS_DWARF=1
+    _OBJ += backward.o
+   endif
+  endif
+ endif
 endif
 
 ifeq ($(NO_MOVIE),1)
@@ -497,8 +527,13 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 
 $(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
 	$(EXE_MSG)
-	$(SILENT)$(CXX) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
-ifneq ($(FE_DEBUG),1)
+	$(CXX) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
+ifeq ($(ENABLE_DEBUG_SYMBOLS),1)
+	$(DEBUG_MSG)
+	$(SILENT)$(OBJCOPY) --only-keep-debug $@ $@.debug
+	$(SILENT)$(STRIP) --strip-debug --strip-unneeded $@
+	$(SILENT)$(OBJCOPY) --add-gnu-debuglink=$@.debug $@
+else
 	$(SILENT)$(STRIP) $@
 endif
 
@@ -777,4 +812,4 @@ smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core
 
 clean:
-	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(NOWIDE_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core
+	-$(RM) $(OBJ_DIR)/*.o $(EXPAT_OBJ_DIR)/*.o $(SQUIRREL_OBJ_DIR)/*.o $(SQSTDLIB_OBJ_DIR)/*.o $(AUDIO_OBJ_DIR)/*.o $(NOWIDE_OBJ_DIR)/*.o $(GSBASE_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/*.o $(GAMESWF_OBJ_DIR)/gameswf_as_classes/*.o $(OBJ_DIR)/*.a $(OBJ_DIR)/*.res *~ core attract attract.debug

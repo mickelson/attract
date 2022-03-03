@@ -34,6 +34,7 @@ distributions.  Other distributions should have similar packages available.
       - Xinerama (for multiple monitor support).
       - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
       - Libcurl (for network info/artwork scraping).
+      - Libdw, libbfd or libdwarf (for a pretty stack trace if we crash).
 
 2. Extract the Attract-Mode source to your system.
 
