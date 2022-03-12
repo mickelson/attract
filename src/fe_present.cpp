@@ -56,6 +56,7 @@
 #include <stdio.h>
 #include <xf86drm.h>
 #include <xf86drmMode.h>
+#include <string.h>
 #endif
 
 #ifdef SFML_SYSTEM_MACOS
