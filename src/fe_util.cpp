@@ -73,6 +73,7 @@
 
 #ifdef USE_XLIB
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
  #ifdef USE_XINERAMA
  #include <X11/extensions/Xinerama.h>
  #endif
@@ -1127,11 +1128,11 @@ bool run_program( const std::string &prog,
 	if (( NULL != callback ) && ( block ))
 	{
 		const int BUFF_SIZE = 2048;
-		char buffer[ BUFF_SIZE*2 ];
+		char buffer[ BUFF_SIZE*2+1 ];
 		char *ibuf=buffer;
 		DWORD bytes_read;
 
-		while ( block && ( ReadFile( child_output_read, ibuf, BUFF_SIZE-1, &bytes_read, NULL ) != 0 ))
+		while ( block && ( ReadFile( child_output_read, ibuf, BUFF_SIZE, &bytes_read, NULL ) != 0 ))
 		{
 			ibuf[bytes_read]=0;
 
@@ -1141,9 +1142,9 @@ bool run_program( const std::string &prog,
 			char *obuf = buffer;
 			char *c = strchr( obuf, '\n' );
 
-			while ( c || ( strlen( obuf ) > BUFF_SIZE-1 ) )
+			while ( c || ( strlen( obuf ) > BUFF_SIZE ) )
 			{
-				int olen = BUFF_SIZE-1;
+				int olen = BUFF_SIZE;
 				if ( c )
 					olen = c - obuf + 1;
 
@@ -1503,6 +1504,41 @@ void set_x11_foreground_window( unsigned long w )
 	XFlush( xdisp );
 
 	FeDebug() << "Raised and changed window input focus to: " << (unsigned long)wnd << std::endl;
+}
+
+void set_x11_fullscreen_state( unsigned long w )
+{
+	::Display *xdisp = XOpenDisplay( NULL );
+	Window wnd = (Window)w;
+
+	Atom netWmBypassCompositor = XInternAtom( xdisp, "_NET_WM_BYPASS_COMPOSITOR", True );
+	if ( netWmBypassCompositor )
+	{
+		unsigned long bypassCompositor = 1;
+
+		XChangeProperty( xdisp, wnd, netWmBypassCompositor,
+			XA_CARDINAL, 32, PropModeReplace, (unsigned char *)(&bypassCompositor), 1 );
+	}
+
+	Atom netWmState = XInternAtom( xdisp, "_NET_WM_STATE", False );
+	Atom netWmStateFullscreen = XInternAtom( xdisp, "_NET_WM_STATE_FULLSCREEN", False );
+
+	XEvent event;
+	std::memset( &event, 0, sizeof(event) );
+	event.type = ClientMessage;
+	event.xclient.window = wnd;
+	event.xclient.format = 32;
+	event.xclient.message_type = netWmState;
+	event.xclient.data.l[0] = 1;
+	event.xclient.data.l[1] = (long)netWmStateFullscreen;
+	event.xclient.data.l[2] = 0;
+	event.xclient.data.l[3] = 1;
+
+	int result = XSendEvent( xdisp, DefaultRootWindow( xdisp ), False,
+			SubstructureNotifyMask | SubstructureRedirectMask,
+			&event );
+
+	XFlush( xdisp );
 }
 #endif
 

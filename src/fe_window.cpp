@@ -348,6 +348,11 @@ void FeWindow::initial_create()
 	}
 #endif
 
+#if defined(USE_XLIB)
+	if ( m_win_mode == FeSettings::Default )
+		set_x11_fullscreen_state( m_window->getSystemHandle() );
+#endif
+
 	// Known issue: Linux Mint 18.3 Cinnamon w/ SFML 2.5.1, position isn't being set
 	// (Window always winds up at 0,0)
 	m_window->setPosition( wpos );

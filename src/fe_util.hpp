@@ -287,6 +287,9 @@ void get_x11_primary_screen_size( unsigned int &width, unsigned int &height );
 
 // set foreground window to the specified window.
 void set_x11_foreground_window( unsigned long w );
+
+// set window with fullscreen wm hint.
+void set_x11_fullscreen_state( unsigned long w );
 #endif
 
 #ifndef NO_MOVIE
