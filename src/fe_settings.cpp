@@ -275,7 +275,7 @@ FeSettings::FeSettings( const std::string &config_path,
 	m_confirm_exit( true ),
 	m_track_usage( true ),
 	m_multimon( false ),
-#if defined(FORCE_FULLSCREEN)
+#if defined(SFML_SYSTEM_LINUX) || defined(FORCE_FULLSCREEN)
 	m_window_mode( Fullscreen ),
 #else
 	m_window_mode( Default ),
