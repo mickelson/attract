@@ -30,10 +30,6 @@ extern "C"
 }
 #endif
 
-#ifndef NO_SWF
-#include "gameswf/gameswf.h"
-#endif
-
 #include <iomanip>
 #include "nowide/fstream.hpp"
 #include "nowide/iostream.hpp"
@@ -75,11 +71,6 @@ namespace {
 		}
 	}
 #endif
-
-	void gs_log_callback( bool error, const char *message )
-	{
-		FeLog() << "gameswf: " << message;
-	}
 };
 
 std::ostream &FeDebug()
@@ -123,16 +114,11 @@ void fe_set_log_level( enum FeLogLevel f )
 		av_log_set_level( ( f == FeLog_Debug ) ? AV_LOG_VERBOSE : AV_LOG_ERROR );
 	}
 #endif
-#ifndef NO_SWF
-	if ( f == FeLog_Silent )
-		gameswf::register_log_callback( NULL );
-	else
-	{
-		gameswf::register_log_callback( gs_log_callback );
+}
 
-		gameswf::set_verbose_action( f == FeLog_Debug );
-	}
-#endif
+enum FeLogLevel fe_get_log_level()
+{
+	return g_log_level;
 }
 
 void fe_print_version()

@@ -49,6 +49,7 @@ std::ostream &FeLog();
 std::ostream &FeDebug();
 void fe_set_log_file( const std::string & );
 void fe_set_log_level( enum FeLogLevel );
+enum FeLogLevel fe_get_log_level();
 void fe_print_version();
 
 class FeBaseConfigurable

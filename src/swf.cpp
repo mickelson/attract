@@ -61,11 +61,26 @@ namespace
 			return new tu_file(url, "rb");
 	}
 
+        void gs_log_callback( bool error, const char *message )
+        {
+                FeLog() << "gameswf: " << message;
+        }
+
 	void open_swf()
 	{
 		if ( swf_count == 0 )
 		{
 			FeDebug() << "Initializing game_swf renderer" << std::endl;
+
+			enum FeLogLevel ll = fe_get_log_level();
+			if ( ll == FeLog_Silent )
+				gameswf::register_log_callback( NULL );
+			else
+			{
+				gameswf::register_log_callback( gs_log_callback );
+				gameswf::set_verbose_action( ll == FeLog_Debug );
+				gameswf::set_verbose_parse( ll == FeLog_Debug );
+			}
 
 #ifdef USE_GLES
 			swf_render = gameswf::create_render_handler_ogles();
@@ -199,12 +214,6 @@ bool FeSwf::open_from_file( const std::string &file )
 
 	m_imp->play = new gameswf::player();
 	m_imp->play->set_separate_thread( true );
-
-#ifdef FE_DEBUG
-	m_imp->play->verbose_action( true );
-	m_imp->play->verbose_parse( true );
-//	m_imp->play->set_log_bitmap_info( true );
-#endif
 
 	m_imp->root = m_imp->play->load_file( file.c_str() );
 
