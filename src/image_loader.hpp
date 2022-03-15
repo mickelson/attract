@@ -90,8 +90,10 @@ public:
 	// set the cache size for the image loader's cache of uncompressed images (in bytes)
 	static void set_cache_size( size_t cache_size );
 
+#ifndef NO_MOVIE
 	// destroy vid (on our background thread which will wait on the video threads to stop)
 	void reap_video( FeMedia *vid );
+#endif
 
 	//
 	// Script interface functions

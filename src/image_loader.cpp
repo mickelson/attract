@@ -35,7 +35,10 @@
 #include "fe_base.hpp" // logging
 #include "fe_file.hpp"
 #include "zip.hpp"
+
+#ifndef NO_MOVIE
 #include "media.hpp"
+#endif
 
 #include "image_loader.hpp"
 
@@ -60,7 +63,6 @@ namespace
 		sf::InputStream* stream = static_cast<sf::InputStream*>(user);
 		return stream->tell() >= stream->getSize();
 	}
-
 	sf::Mutex g_mutex;
 
 #ifdef FE_DEBUG
@@ -219,12 +221,13 @@ public:
 
 			m_in.pop();
 		}
-
+#ifndef NO_MOVIE
 		while ( !m_vid.empty() )
 		{
 			delete m_vid.front();
 			m_vid.pop();
 		}
+#endif
 	}
 
 	void run_thread()
@@ -259,10 +262,12 @@ public:
 			}
 			else
 			{
+#ifndef NO_MOVIE
 				FeMedia *vid = get_vid_to_reap();
 				if ( vid )
 					delete vid;
 				else
+#endif
 					sf::sleep( sf::milliseconds( 10 ) );
 			}
 		}
@@ -275,11 +280,13 @@ public:
 		m_in.push( std::pair< std::string, FeImageLoaderEntry * >( n, e ) );
 	}
 
+#ifndef NO_MOVIE
 	void reap_video( FeMedia *vid )
 	{
 		sf::Lock l( g_mutex );
 		m_vid.push( vid );
 	}
+#endif
 
 private:
 	std::pair < std::string, FeImageLoaderEntry * > get_next()
@@ -295,6 +302,7 @@ private:
 		return std::pair < std::string, FeImageLoaderEntry *>( "", NULL );
 	}
 
+#ifndef NO_MOVIE
 	FeMedia *get_vid_to_reap()
 	{
 		sf::Lock l( g_mutex );
@@ -306,12 +314,15 @@ private:
 		}
 		return NULL;
 	}
+#endif
 
 	sf::Thread m_thread;
 	bool m_run;
 
 	std::queue< std::pair < std::string, FeImageLoaderEntry * > > m_in;
+#ifndef NO_MOVIE
 	std::queue< FeMedia * > m_vid;
+#endif
 };
 
 class FeImageLoaderImp
@@ -392,13 +403,14 @@ bool FeImageLoaderEntry::dec_ref()
 }
 
 FeImageLoader::FeImageLoader()
+	: m_imp( NULL )
 {
-	m_imp = new FeImageLoaderImp;
 }
 
 FeImageLoader::~FeImageLoader()
 {
-	delete m_imp;
+	if ( m_imp )
+		delete m_imp;
 }
 
 bool FeImageLoader::load_image_from_file( const std::string &fn, FeImageLoaderEntry **e )
@@ -501,18 +513,25 @@ bool FeImageLoader::check_loaded( FeImageLoaderEntry *e )
 	return ( e && e->m_loaded );
 }
 
+#ifndef NO_MOVIE
 void FeImageLoader::reap_video( FeMedia *vid )
 {
 	vid->signal_stop();
 
 	FeImageLoader &il = get_ref();
-	il.m_imp->m_bg_loader.reap_video( vid );
+	if ( il.m_imp )
+		il.m_imp->m_bg_loader.reap_video( vid );
 }
+#endif
 
 FeImageLoader &FeImageLoader::get_ref()
 {
-	static FeImageLoader loader;
-	return loader;
+	static FeImageLoader g_image_loader;
+
+	if ( !g_image_loader.m_imp )
+		g_image_loader.m_imp = new FeImageLoaderImp();
+
+	return g_image_loader;
 }
 
 void FeImageLoader::set_cache_size( size_t s )
