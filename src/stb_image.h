@@ -385,7 +385,7 @@ typedef unsigned char stbi_uc;
 typedef unsigned short stbi_us;
 
 #ifdef __cplusplus
-extern "C" {
+//extern "C" {
 #endif
 
 #ifndef STBIDEF
@@ -533,7 +533,7 @@ STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const ch
 
 
 #ifdef __cplusplus
-}
+//}
 #endif
 
 //
