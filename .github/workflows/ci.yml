@@ -19,28 +19,28 @@ jobs:
             name: "Ubuntu GCC",
             os: ubuntu-latest,
             cc: "gcc",
-            cxx: "g++"
+            cxx: "g++",
             cxxpackage: "g++"
           }
         - {
             name: "Ubuntu GCC 7",
             os: ubuntu-latest,
             cc: "gcc-7",
-            cxx: "g++-7"
+            cxx: "g++-7",
             cxxpackage: "g++-7"
           }
         - {
             name: "Ubuntu Clang",
             os: ubuntu-latest,
             cc: "clang",
-            cxx: "clang++"
+            cxx: "clang++",
             cxxpackage: "clang++"
           }
         - {
             name: "macOS Clang",
             os: macos-latest,
             cc: "clang",
-            cxx: "clang++"
+            cxx: "clang++",
             cxxpackage: "clang++"
           }
             
