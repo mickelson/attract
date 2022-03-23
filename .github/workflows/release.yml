@@ -1,9 +1,9 @@
-name: Draft Release
-
 on:
-  create
-  #  tags:
-  #  - 'v[0-9]+.[0-9]+.[0-9]+'
+  create:
+  tags:
+    - 'v[0-9]+.[0-9]+.[0-9]+'
+
+name: Draft Release
 
 jobs:
   draft_release:
@@ -36,54 +36,54 @@ jobs:
           body_path: release.txt
           draft: true
           prerelease: false
-   mxe:
-     name: Windows Release (MXE)
-     runs-on: ubuntu-18.04
-     continue-on-error: false
-     needs: draft_release
-     steps:
-       - uses: actions/checkout@v2
+  mxe:
+    name: Windows Release (MXE)
+    runs-on: ubuntu-18.04
+    continue-on-error: false
+    needs: draft_release
+    steps:
+      - uses: actions/checkout@v2
 
-       - name: Add MXE Repository to Apt
-         uses: myci-actions/add-deb-repo@4
-         with:
-           repo: deb http://pkg.mxe.cc/repos/apt bionic main
-           repo-name: mxe
-           keys: ${{ secrets.MXE_REPO_KEY }}
-           key-server: keyserver.ubuntu.com
+      - name: Add MXE Repository to Apt
+        uses: myci-actions/add-deb-repo@4
+        with:
+          repo: deb http://pkg.mxe.cc/repos/apt bionic main
+          repo-name: mxe
+          keys: ${{ secrets.MXE_REPO_KEY }}
+          key-server: keyserver.ubuntu.com
 
-       - name: Install MXE Build Environment
-         run: |
-           sudo apt-get update
-           sudo apt-get install \
-             nasm \
-             libtool \
-             libtool-bin \
-             gperf \
-             lzip \
-             intltool \
-             mxe-i686-w64-mingw32.static-sfml \
-             mxe-i686-w64-mingw32.static-ffmpeg \
-             mxe-i686-w64-mingw32.static-libarchive \
-             mxe-i686-w64-mingw32.static-curl \
-             mxe-x86-64-w64-mings32.static-sfml \
-             mxe-x86-64-w64-mings32.static-ffmpeg \
-             mxe-x86-64-w64-mings32.static-libarchive \
-             mxe-x86-64-w64-mings32.static-curl
-           echo /usr/lib/mxe/usr/bin >> $GITHUB_PATH
+      - name: Install MXE Build Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+            nasm \
+            libtool \
+            libtool-bin \
+            gperf \
+            lzip \
+            intltool \
+            mxe-i686-w64-mingw32.static-sfml \
+            mxe-i686-w64-mingw32.static-ffmpeg \
+            mxe-i686-w64-mingw32.static-libarchive \
+            mxe-i686-w64-mingw32.static-curl \
+            mxe-x86-64-w64-mings32.static-sfml \
+            mxe-x86-64-w64-mings32.static-ffmpeg \
+            mxe-x86-64-w64-mings32.static-libarchive \
+            mxe-x86-64-w64-mings32.static-curl
+          echo /usr/lib/mxe/usr/bin >> $GITHUB_PATH
 
-       - name: MXE Package
-         run: util/win/create-pkg.sh
+      - name: MXE Package
+        run: util/win/create-pkg.sh
 
-       - name: Upload Windows Release Asset
-         uses: actions/upload-release-asset@v1
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         with:
-           upload_url: ${{ needs.draft_release.outputs.upload_url }}
-           asset_path: ./attract-*.zip
-           asset_name: attract-*.zip
-           asset_content_type: application/zip
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.draft_release.outputs.upload_url }}
+          asset_path: ./attract-*.zip
+          asset_name: attract-*.zip
+          asset_content_type: application/zip
 
    macosx:
      name: MacOS Release
