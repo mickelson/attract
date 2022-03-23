@@ -1,9 +1,9 @@
+name: Draft Release
+
 on:
   create:
     tags:
       - '[0-9]*'
-
-name: Draft Release
 
 jobs:
   draft_release:
