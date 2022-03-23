@@ -71,7 +71,9 @@ FE_VERSION=v2.6.2
 
 CC=gcc
 CXX=g++
-CFLAGS=$(EXTRA_CFLAGS)
+CFLAGS=
+CXXFLAGS=-std=c++11
+CPPFLAGS=
 STRIP=strip
 OBJCOPY=objcopy
 PKG_CONFIG=pkg-config
@@ -233,7 +235,7 @@ ifeq ($(WINDOWS_STATIC),1)
   SFML_PC="sfml-system sfml-window sfml-graphics"
  endif
  LIBS += $(shell $(PKG_CONFIG) --static --libs $(SFML_PC))
- CFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags $(SFML_PC))
+ CPPFLAGS += -DSFML_STATIC $(shell $(PKG_CONFIG) --static --cflags $(SFML_PC))
  FE_WINDOWS_COMPILE=1
 
 else
@@ -250,10 +252,10 @@ ifneq ($(NO_SWF),1)
 
  ifneq ($(FE_WINDOWS_COMPILE),1)
   ifneq ($(FE_MACOSX_COMPILE),1)
-   CFLAGS += -Wl,--export-dynamic
+   CPPFLAGS += -Wl,--export-dynamic
    LIBS += -ldl
    TEMP_LIBS += freetype2
-   CFLAGS += $(shell $(PKG_CONFIG) --cflags --silence-errors freetype2)
+   CPPFLAGS += $(shell $(PKG_CONFIG) --cflags --silence-errors freetype2)
   endif
  else
   TEMP_LIBS += freetype2
@@ -270,15 +272,15 @@ ifeq ($(FE_WINDOWS_COMPILE),1)
   LIBS += -ldwmapi
  endif
  ifeq ($(WINDOWS_CONSOLE),1)
-  CFLAGS += -mconsole
+  CPPFLAGS += -mconsole
   FE_FLAGS += -DWINDOWS_CONSOLE
  else
-  CFLAGS += -Wl,--subsystem,windows
+  CPPFLAGS += -Wl,--subsystem,windows
  endif
 
  EXE_EXT = .exe
 else
- CFLAGS += -DDATA_PATH=\"$(DATA_PATH)\"
+ CPPFLAGS += -DDATA_PATH=\"$(DATA_PATH)\"
 endif
 
 #
@@ -310,11 +312,11 @@ endif
 # Now process the various settings...
 #
 ifeq ($(FE_DEBUG),1)
- CFLAGS += -Wall
+ CPPFLAGS += -Wall
  FE_FLAGS += -DFE_DEBUG
  ENABLE_DEBUG_SYMBOLS=1
 else
- CFLAGS += -O$(OPTIMIZE) -DNDEBUG
+ CPPFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
 
 ifeq ($(USE_GLES),1)
@@ -325,7 +327,7 @@ ifeq ($(USE_GLES),1)
  #
  ifneq ($(USE_VC4),1)
   ifneq ("$(wildcard /opt/vc/include/bcm_host.h)","")
-   CFLAGS += -I/opt/vc/include -L/opt/vc/lib
+   CPPFLAGS += -I/opt/vc/include -L/opt/vc/lib
    ifneq ("$(wildcard /opt/vc/lib/libbrcmGLESv2.so)","")
     FE_FLAGS += -DUSE_BCM
     GLES_LIB := -lbrcmGLESv2
@@ -393,7 +395,7 @@ ifeq ($(USE_LIBARCHIVE),1)
  TEMP_LIBS += libarchive
  LIBS += -lz
 else
- CFLAGS += -I$(EXTLIBS_DIR)/miniz
+ CPPFLAGS += -I$(EXTLIBS_DIR)/miniz
 endif
 
 ifeq ($(USE_LIBCURL),1)
@@ -404,23 +406,23 @@ ifeq ($(USE_LIBCURL),1)
 endif
 
 ifeq ($(ENABLE_DEBUG_SYMBOLS),1)
- CFLAGS += -g
+ CPPFLAGS += -g
  #
  # libs for pretty output from backward-cpp
  #
  ifeq ($(shell $(PKG_CONFIG) --exists libdw && echo "1" || echo "0"), 1)
   TEMP_LIBS += libdw
-  CFLAGS +=-DBACKWARD_HAS_DW=1
+  CPPFLAGS +=-DBACKWARD_HAS_DW=1
   _OBJ += backward.o
  else
   ifeq ($(shell $(PKG_CONFIG) --exists libbfd && echo "1" || echo "0"), 1)
    TEMP_LIBS += libbfd
-   CFLAGS +=-g -DBACKWARD_HAS_BFD=1
+   CPPFLAGS +=-g -DBACKWARD_HAS_BFD=1
    _OBJ += backward.o
   else
    ifeq ($(shell $(PKG_CONFIG) --exists libdwarf && echo "1" || echo "0"), 1)
     TEMP_LIBS += libdwarf
-    CFLAGS += -DBACKWARD_HAS_DWARF=1
+    CPPFLAGS += -DBACKWARD_HAS_DWARF=1
     _OBJ += backward.o
    endif
   endif
@@ -457,19 +459,19 @@ else
  _DEP += media.hpp
  _OBJ += media.o
 
- CFLAGS += -I$(EXTLIBS_DIR)/audio/include
+ CPPFLAGS += -I$(EXTLIBS_DIR)/audio/include
  AUDIO = $(OBJ_DIR)/libaudio.a
 endif
 
-CFLAGS += -D__STDC_CONSTANT_MACROS
+CPPFLAGS += -D__STDC_CONSTANT_MACROS
 
 LIBS := $(LIBS) $(shell $(PKG_CONFIG) --libs $(TEMP_LIBS))
-CFLAGS := $(CFLAGS) $(shell $(PKG_CONFIG) --cflags $(TEMP_LIBS))
+CPPFLAGS := $(CPPFLAGS) $(shell $(PKG_CONFIG) --cflags $(TEMP_LIBS))
 
 EXE = $(EXE_BASE)$(EXE_EXT)
 
 ifeq ($(BUILD_EXPAT),1)
- CFLAGS += -I$(EXTLIBS_DIR)/expat
+ CPPFLAGS += -I$(EXTLIBS_DIR)/expat
  EXPAT = $(OBJ_DIR)/libexpat.a
  ifneq ($(FE_WINDOWS_COMPILE),1)
   EXPAT_FLAGS = -DXML_DEV_URANDOM -DHAVE_MEMMOVE
@@ -479,7 +481,7 @@ else
  EXPAT =
 endif
 
-CFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide -I$(EXTLIBS_DIR)/nvapi -I$(EXTLIBS_DIR)/rapidjson/include
+CPPFLAGS += -I$(EXTLIBS_DIR)/squirrel/include -I$(EXTLIBS_DIR)/sqrat/include -I$(EXTLIBS_DIR)/nowide -I$(EXTLIBS_DIR)/nvapi -I$(EXTLIBS_DIR)/rapidjson/include
 SQUIRREL = $(OBJ_DIR)/libsquirrel.a $(OBJ_DIR)/libsqstdlib.a
 
 # Our nowide "lib" is only needed on Windows systems
@@ -490,11 +492,11 @@ endif
 ifeq ($(NO_SWF),1)
  FE_FLAGS += -DNO_SWF
 else
- CFLAGS += -I$(EXTLIBS_DIR)/gameswf
+ CPPFLAGS += -I$(EXTLIBS_DIR)/gameswf
  SQUIRREL += $(OBJ_DIR)/libgameswf.a
 endif
 
-$(info flags:$(CFLAGS) $(FE_FLAGS))
+$(info flags: $(CXXFLAGS) $(CPPFLAGS) $(FE_FLAGS))
 
 OBJ = $(patsubst %,$(OBJ_DIR)/%,$(_OBJ))
 DEP = $(patsubst %,$(SRC_DIR)/%,$(_DEP))
@@ -519,15 +521,15 @@ $(OBJ_DIR)/%.res: $(SRC_DIR)/%.rc | $(OBJ_DIR)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CXX) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
+	$(SILENT)$(CXX) -c -o $@ $< $(CXXFLAGS) $(CPPFLAGS) $(FE_FLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CC) -c -o $@ $< $(CFLAGS) $(FE_FLAGS)
+	$(SILENT)$(CC) -c -o $@ $< $(CFLAGS) $(CPPFLAGS) $(FE_FLAGS)
 
 $(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
 	$(EXE_MSG)
-	$(CXX) -o $@ $^ $(CFLAGS) $(FE_FLAGS) $(LIBS)
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(CPPFLAGS) $(FE_FLAGS) $(LIBS)
 ifeq ($(ENABLE_DEBUG_SYMBOLS),1)
 	$(DEBUG_MSG)
 	$(SILENT)$(OBJCOPY) --only-keep-debug $@ $@.debug
@@ -560,7 +562,7 @@ $(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
 
 $(EXPAT_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/expat/%.c | $(EXPAT_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) $(EXPAT_FLAGS)
+	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS) $(EXPAT_FLAGS)
 
 $(EXPAT_OBJ_DIR):
 	$(MD) $@
@@ -591,7 +593,7 @@ $(OBJ_DIR)/libsquirrel.a: $(SQUIRRELOBJS) | $(SQUIRREL_OBJ_DIR)
 
 $(SQUIRREL_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/squirrel/%.cpp | $(SQUIRREL_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS)
+	$(SILENT)$(CXX) -c $< -o $@ $(CXXFLAGS) $(CPPFLAGS) $(SQUIRREL_FLAGS)
 
 $(SQUIRREL_OBJ_DIR):
 	$(MD) $@
@@ -617,7 +619,7 @@ $(OBJ_DIR)/libsqstdlib.a: $(SQSTDLIBOBJS) | $(SQSTDLIB_OBJ_DIR)
 
 $(SQSTDLIB_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/squirrel/sqstdlib/%.cpp | $(SQSTDLIB_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) $(SQUIRREL_FLAGS)
+	$(SILENT)$(CXX) -c $< -o $@ $(CXXFLAGS) $(CPPFLAGS) $(SQUIRREL_FLAGS)
 
 $(SQSTDLIB_OBJ_DIR):
 	$(MD) $@
@@ -640,7 +642,7 @@ $(OBJ_DIR)/libaudio.a: $(AUDIOOBJS) | $(AUDIO_OBJ_DIR)
 
 $(AUDIO_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/audio/Audio/%.cpp | $(AUDIO_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS)
+	$(SILENT)$(CXX) -c $< -o $@ $(CXXFLAGS) $(CPPFLAGS)
 
 $(AUDIO_OBJ_DIR):
 	$(MD) $@
@@ -664,7 +666,7 @@ $(OBJ_DIR)/libnowide.a: $(NOWIDEOBJS) | $(NOWIDE_OBJ_DIR)
 
 $(NOWIDE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/nowide/%.cpp | $(NOWIDE_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS)
+	$(SILENT)$(CXX) -c $< -o $@ $(CXXFLAGS) $(CPPFLAGS)
 
 $(NOWIDE_OBJ_DIR):
 	$(MD) $@
@@ -783,7 +785,7 @@ $(OBJ_DIR)/libgameswf.a: $(GAMESWFOBJS) | $(GAMESWF_OBJ_DIR) $(GSBASE_OBJ_DIR)
 
 $(GAMESWF_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/gameswf/%.cpp | $(GAMESWF_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
+	$(SILENT)$(CXX) -c $< -o $@ $(CXXFLAGS) $(CPPFLAGS) -Wno-deprecated
 
 $(GAMESWF_OBJ_DIR):
 	$(MD) $@
@@ -791,11 +793,11 @@ $(GAMESWF_OBJ_DIR):
 
 $(GSBASE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/base/%.cpp | $(GSBASE_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CXX) -c $< -o $@ $(CFLAGS) -Wno-deprecated
+	$(SILENT)$(CXX) -c $< -o $@ $(CXXFLAGS) $(CPPFLAGS) -Wno-deprecated
 
 $(GSBASE_OBJ_DIR)/%.o: $(EXTLIBS_DIR)/gameswf/base/%.c | $(GSBASE_OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS)
+	$(SILENT)$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 $(GSBASE_OBJ_DIR):
 	$(MD) $@
