@@ -50,7 +50,7 @@ jobs:
 
     - name: Install Linux Dependencies
       if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install $CC $CXXPACKAGE libopenal-dev zlib1g-dev libfreetype6-dev libjpeg-dev libsfml-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev libavresample-dev libarchive-dev libfontconfig1-dev libxinerama-dev libxrandr-dev freeglut3-dev libcurl4-openssl-dev pkg-config pkgconf fakeroot dpkg dh-make
+      run: sudo apt-get update && sudo apt-get install $CC $CXXPACKAGE libopenal-dev zlib1g-dev libfreetype6-dev libjpeg-dev libsfml-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev libavresample-dev libarchive-dev libfontconfig1-dev libxinerama-dev libxrandr-dev freeglut3-dev libcurl4-openssl-dev pkg-config
 
     - name: Install MacOS Dependencies
       if: runner.os == 'MacOS'
