@@ -23,8 +23,8 @@
 #ifndef FE_NET_HPP
 #define FE_NET_HPP
 
-#include <SFML/System.hpp>
-
+#include <mutex>
+#include <thread>
 #include <deque>
 #include <queue>
 
@@ -74,7 +74,7 @@ class FeNetQueue
 {
 	friend class FeNetWorker;
 private:
-	sf::Mutex m_mutex;
+	std::recursive_mutex m_mutex;
 	std::deque < FeNetTask > m_in_queue;
 	std::queue < FeNetTask > m_out_queue;
 	int m_in_flight;
@@ -108,7 +108,7 @@ public:
 class FeNetWorker
 {
 	FeNetQueue &m_queue;
-	sf::Thread m_thread;
+	std::thread m_thread;
 	bool m_proceed;
 
 	FeNetWorker( const FeNetWorker & );

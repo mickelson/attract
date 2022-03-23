@@ -84,7 +84,7 @@ bool process_q_simple( FeNetQueue &q,
 			}
 		}
 		else
-			sf::sleep( sf::milliseconds( 10 ) );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 
 		if ( c.uiupdate && ( taskc > 0 ) )
 		{

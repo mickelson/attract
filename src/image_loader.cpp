@@ -20,17 +20,15 @@
  *
  */
 
-#include <SFML/System/Mutex.hpp>
 #include <SFML/System/InputStream.hpp>
-#include <SFML/System/Sleep.hpp>
-#include <SFML/System/Thread.hpp>
-#include <SFML/System/Lock.hpp>
-#include <SFML/System/Clock.hpp>
 
 #include <list>
 #include <map>
 #include <queue>
 #include <string>
+#include <mutex>
+#include <thread>
+#include <chrono>
 
 #include "fe_base.hpp" // logging
 #include "fe_file.hpp"
@@ -63,7 +61,7 @@ namespace
 		sf::InputStream* stream = static_cast<sf::InputStream*>(user);
 		return stream->tell() >= stream->getSize();
 	}
-	sf::Mutex g_mutex;
+	std::recursive_mutex g_mutex;
 
 #ifdef FE_DEBUG
 	int g_entry_count=0;
@@ -102,7 +100,7 @@ public:
 			--last;
 
 			{
-				sf::Lock l( g_mutex );
+				std::lock_guard<std::recursive_mutex> l( g_mutex );
 				if ( last->second->dec_ref() )
 					delete last->second;
 			}
@@ -179,7 +177,7 @@ private:
 				m_current_bytes -= lsize;
 
 			{
-				sf::Lock l( g_mutex );
+				std::lock_guard<std::recursive_mutex> l( g_mutex );
 
 				if ( last->second->dec_ref() )
 					delete last->second;
@@ -205,17 +203,18 @@ public:
 		: m_thread( &FeImageLoaderThread::run_thread, this ),
 		m_run( true )
 	{
-		m_thread.launch();
 	};
 
 	~FeImageLoaderThread()
 	{
 		m_run=false;
-		m_thread.wait();
+
+		if ( m_thread.joinable() )
+			m_thread.join();
 
 		while ( !m_in.empty() )
 		{
-			sf::Lock l( g_mutex );
+			std::lock_guard<std::recursive_mutex> l( g_mutex );
 			if ( m_in.front().second->dec_ref() )
 				delete m_in.front().second;
 
@@ -252,7 +251,7 @@ public:
 					FeLog() << "Error loading image: " << e.first << " - " << stbi_failure_reason() << std::endl;
 
 				{
-					sf::Lock l( g_mutex );
+					std::lock_guard<std::recursive_mutex> l( g_mutex );
 					e.second->m_data = data;
 					e.second->m_loaded = true;
 
@@ -268,14 +267,14 @@ public:
 					delete vid;
 				else
 #endif
-					sf::sleep( sf::milliseconds( 10 ) );
+					std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 			}
 		}
 	}
 
 	void add( const std::string &n, FeImageLoaderEntry *e )
 	{
-		sf::Lock l( g_mutex );
+		std::lock_guard<std::recursive_mutex> l( g_mutex );
 		e->add_ref(); // Add ref while we are loading it
 		m_in.push( std::pair< std::string, FeImageLoaderEntry * >( n, e ) );
 	}
@@ -283,7 +282,7 @@ public:
 #ifndef NO_MOVIE
 	void reap_video( FeMedia *vid )
 	{
-		sf::Lock l( g_mutex );
+		std::lock_guard<std::recursive_mutex> l( g_mutex );
 		m_vid.push( vid );
 	}
 #endif
@@ -291,7 +290,7 @@ public:
 private:
 	std::pair < std::string, FeImageLoaderEntry * > get_next()
 	{
-		sf::Lock l( g_mutex );
+		std::lock_guard<std::recursive_mutex> l( g_mutex );
 		if ( !m_in.empty() )
 		{
 			std::pair < std::string, FeImageLoaderEntry * > retval = m_in.front();
@@ -305,7 +304,7 @@ private:
 #ifndef NO_MOVIE
 	FeMedia *get_vid_to_reap()
 	{
-		sf::Lock l( g_mutex );
+		std::lock_guard<std::recursive_mutex> l( g_mutex );
 		if ( !m_vid.empty() )
 		{
 			FeMedia *retval = m_vid.front();
@@ -316,7 +315,7 @@ private:
 	}
 #endif
 
-	sf::Thread m_thread;
+	std::thread m_thread;
 	bool m_run;
 
 	std::queue< std::pair < std::string, FeImageLoaderEntry * > > m_in;
@@ -438,7 +437,7 @@ bool FeImageLoader::internal_load_image( const std::string &key, sf::InputStream
 		FeDebug() << "Image cache hit: " << key << std::endl;
 		delete stream;
 
-		sf::Lock l( g_mutex );
+		std::lock_guard<std::recursive_mutex> l( g_mutex );
 		temp_e->add_ref();
 		*e = temp_e;
 		return temp_e->m_loaded;
@@ -487,7 +486,7 @@ bool FeImageLoader::internal_load_image( const std::string &key, sf::InputStream
 		m_imp->m_cache->put( key, temp_e );
 
 	{
-		sf::Lock l( g_mutex );
+		std::lock_guard<std::recursive_mutex> l( g_mutex );
 		*e = temp_e;
 		(*e)->add_ref();
 	}
@@ -499,7 +498,7 @@ void FeImageLoader::release_entry( FeImageLoaderEntry **e )
 {
 	if ( e )
 	{
-		sf::Lock l( g_mutex );
+		std::lock_guard<std::recursive_mutex> l( g_mutex );
 		if ( *e && (*e)->dec_ref() )
 			delete *e;
 
@@ -509,7 +508,7 @@ void FeImageLoader::release_entry( FeImageLoaderEntry **e )
 
 bool FeImageLoader::check_loaded( FeImageLoaderEntry *e )
 {
-	sf::Lock l( g_mutex );
+	std::lock_guard<std::recursive_mutex> l( g_mutex );
 	return ( e && e->m_loaded );
 }
 

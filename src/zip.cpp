@@ -25,8 +25,7 @@
 #include "fe_base.hpp"
 #include <iostream>
 #include <cstring>
-#include <SFML/System/Mutex.hpp>
-#include <SFML/System/Lock.hpp>
+#include <mutex>
 
 typedef void *(*FE_ZIP_ALLOC_CALLBACK) ( size_t );
 
@@ -38,7 +37,7 @@ namespace
 	//
 	const int CONTENT_CACHE_SIZE = 8;
 	std::vector < std::pair < std::string, std::vector < std::string > > > g_ccache;
-	sf::Mutex g_ccache_mutex;
+	std::recursive_mutex g_ccache_mutex;
 
 	bool check_content_cache( const std::string &archive,
 			std::vector < std::string > &contents )
@@ -199,7 +198,7 @@ bool fe_zip_get_dir(
 	const char *archive,
 	std::vector<std::string> &result )
 {
-	sf::Lock l( g_ccache_mutex );
+	std::lock_guard<std::recursive_mutex> l( g_ccache_mutex );
 	if ( check_content_cache( archive, result ) )
 		return true;
 
@@ -280,7 +279,7 @@ bool fe_zip_get_dir(
 	const char *archive,
 	std::vector<std::string> &result )
 {
-	sf::Lock l( g_ccache_mutex );
+	std::lock_guard<std::recursive_mutex> l( g_ccache_mutex );
 	if ( check_content_cache( archive, result ) )
 		return true;
 

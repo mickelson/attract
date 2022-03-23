@@ -24,7 +24,6 @@
 #include "zip.hpp"
 #include "fe_base.hpp"
 #include "fe_file.hpp"
-#include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
 
 extern "C"
@@ -73,6 +72,9 @@ extern "C"
 
 #include <queue>
 #include <iostream>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 #if (LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( 59, 0, 100 ))
 typedef const AVCodec FeAVCodec;
@@ -133,7 +135,7 @@ public:
 	FeMedia::Type m_type;
 	AVFormatContext *m_format_ctx;
 	AVIOContext *m_io_ctx;
-	sf::Mutex m_read_mutex;
+	std::recursive_mutex m_read_mutex;
 	bool m_read_eof;
 };
 
@@ -147,7 +149,7 @@ private:
 	// Queue containing the next packet to process for this stream
 	//
 	std::queue <AVPacket *> m_packetq;
-	sf::Mutex m_packetq_mutex;
+	std::recursive_mutex m_packetq_mutex;
 
 public:
 	virtual ~FeBaseStream();
@@ -180,7 +182,7 @@ public:
 	ResampleContext *resample_ctx;
 #endif
 	sf::Int16 *audio_buff;
-	sf::Mutex audio_buff_mutex;
+	std::recursive_mutex audio_buff_mutex;
 
 	FeAudioImp();
 	~FeAudioImp();
@@ -199,7 +201,7 @@ private:
 	// Loading the result into an sf::Texture and displaying it is done
 	// on the main thread.
 	//
-	sf::Thread m_video_thread;
+	std::thread m_video_thread;
 	FeMedia *m_parent;
 	sf::Uint8 *rgba_buffer[4];
 	int rgba_linesize[4];
@@ -210,7 +212,7 @@ private:
 #endif
 
 public:
-	bool run_video_thread;
+	std::atomic<bool> run_video_thread;
 	sf::Time time_base;
 	sf::Time max_sleep;
 	sf::Clock video_timer;
@@ -222,7 +224,7 @@ public:
 	// The video thread sets display_frame when the next image frame is decoded.
 	// The main thread then copies the image into the corresponding sf::Texture.
 	//
-	sf::Mutex image_swap_mutex;
+	std::recursive_mutex image_swap_mutex;
 	sf::Uint8 *display_frame;
 
 	FeVideoImp( FeMedia *parent );
@@ -295,7 +297,7 @@ void FeBaseStream::stop()
 
 AVPacket *FeBaseStream::pop_packet()
 {
-	sf::Lock l( m_packetq_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_packetq_mutex );
 
 	if ( m_packetq.empty() )
 		return NULL;
@@ -307,7 +309,7 @@ AVPacket *FeBaseStream::pop_packet()
 
 void FeBaseStream::clear_packet_queue()
 {
-	sf::Lock l( m_packetq_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_packetq_mutex );
 
 	while ( !m_packetq.empty() )
 	{
@@ -319,7 +321,7 @@ void FeBaseStream::clear_packet_queue()
 
 void FeBaseStream::push_packet( AVPacket *pkt )
 {
-	sf::Lock l( m_packetq_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_packetq_mutex );
 	m_packetq.push( pkt );
 }
 
@@ -346,7 +348,7 @@ FeAudioImp::FeAudioImp()
 
 FeAudioImp::~FeAudioImp()
 {
-	sf::Lock l( audio_buff_mutex );
+	std::lock_guard<std::recursive_mutex> l( audio_buff_mutex );
 
 #ifdef DO_RESAMPLE
 	if ( resample_ctx )
@@ -376,7 +378,7 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 	if ( codec_ctx->sample_fmt == AV_SAMPLE_FMT_S16 )
 #endif
 	{
-		sf::Lock l( audio_buff_mutex );
+		std::lock_guard<std::recursive_mutex> l( audio_buff_mutex );
 
 		memcpy( (audio_buff + offset), frame->data[0], data_size );
 		offset += data_size / sizeof( sf::Int16 );
@@ -386,7 +388,7 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 #ifdef DO_RESAMPLE
 	else
 	{
-		sf::Lock l( audio_buff_mutex );
+		std::lock_guard<std::recursive_mutex> l( audio_buff_mutex );
 
 		if ( !resample_ctx )
 		{
@@ -477,7 +479,7 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 
 FeVideoImp::FeVideoImp( FeMedia *p )
 		: FeBaseStream(),
-		m_video_thread( &FeVideoImp::video_thread, this ),
+		m_video_thread(),
 		m_parent( p ),
 		rgba_buffer(),
 		rgba_linesize(),
@@ -562,7 +564,7 @@ void FeVideoImp::play()
 {
 	run_video_thread = true;
 	video_timer.restart();
-	m_video_thread.launch();
+	m_video_thread = std::thread( &FeVideoImp::video_thread, this );
 }
 
 void FeVideoImp::stop()
@@ -570,7 +572,8 @@ void FeVideoImp::stop()
 	if ( run_video_thread )
 		run_video_thread = false;
 
-	m_video_thread.wait();
+	if ( m_video_thread.joinable() )
+		m_video_thread.join();
 
 	FeBaseStream::stop();
 }
@@ -603,7 +606,7 @@ namespace
 
 void FeVideoImp::init_rgba_buffer()
 {
-	sf::Lock l( image_swap_mutex );
+	std::lock_guard<std::recursive_mutex> l( image_swap_mutex );
 
 	if (rgba_buffer[0])
 		av_freep(&rgba_buffer[0]);
@@ -717,7 +720,7 @@ void FeVideoImp::video_thread()
 					}
 				}
 
-				sf::Lock l( image_swap_mutex );
+				std::lock_guard<std::recursive_mutex> l( image_swap_mutex );
 				displayed++;
 
 				sws_scale( sws_ctx, detached_frame->data, detached_frame->linesize,
@@ -836,7 +839,7 @@ the_end:
 	at_end=true;
 
 	{
-		sf::Lock l( image_swap_mutex );
+		std::lock_guard<std::recursive_mutex> l( image_swap_mutex );
 		if (display_frame)
 			display_frame=NULL;
 	}
@@ -1231,7 +1234,7 @@ bool FeMedia::open( const std::string &archive,
 
 bool FeMedia::end_of_file()
 {
-	sf::Lock l(m_imp->m_read_mutex);
+	std::lock_guard<std::recursive_mutex> l( m_imp->m_read_mutex );
 
 	bool retval = ( m_imp->m_read_eof );
 	return retval;
@@ -1239,7 +1242,7 @@ bool FeMedia::end_of_file()
 
 bool FeMedia::read_packet()
 {
-	sf::Lock l(m_imp->m_read_mutex);
+	std::lock_guard<std::recursive_mutex> l( m_imp->m_read_mutex );
 
 	if ( m_imp->m_read_eof )
 		return false;
@@ -1271,7 +1274,7 @@ bool FeMedia::tick()
 
 	if ( m_video )
 	{
-		sf::Lock l( m_video->image_swap_mutex );
+		std::lock_guard<std::recursive_mutex> l( m_video->image_swap_mutex );
 		if ( m_video->display_frame )
 		{
 			m_video->display_texture->update( m_video->display_frame );

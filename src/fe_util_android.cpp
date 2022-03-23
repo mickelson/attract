@@ -24,11 +24,11 @@
 #include <android/native_activity.h>
 #include <android/asset_manager.h>
 
-#include <SFML/System/Thread.hpp>
 #include <SFML/System/NativeActivity.hpp>
 #include <unistd.h>
 #include <string>
 #include <sstream>
+#include <thread>
 
 #include "fe_util_android.hpp"
 #include "fe_util.hpp"
@@ -42,7 +42,7 @@ namespace {
 	{
 	protected:
 		int m_pfd[2];
-		sf::Thread m_logthread;
+		std::thread m_logthread;
 		std::string m_line;
 
 		void log_fn()
@@ -81,8 +81,6 @@ namespace {
 
 			pipe( m_pfd );
 			dup2( m_pfd[1], STDOUT_FILENO );
-
-			m_logthread.launch();
 		}
 
 		~FeAndroidLogger()

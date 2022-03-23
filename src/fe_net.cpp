@@ -25,6 +25,7 @@
 #include "nowide/fstream.hpp"
 #include <iostream>
 #include <cstring>
+#include <chrono>
 
 #include <curl/curl.h>
 
@@ -180,7 +181,7 @@ void FeNetQueue::add_file_task( const std::string &url,
 		const std::string &file_name,
 		bool flag_special )
 {
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 	m_in_queue.push_front( FeNetTask( url, file_name,
 		flag_special ? FeNetTask::SpecialFileTask : FeNetTask::FileTask ) );
 }
@@ -188,7 +189,7 @@ void FeNetQueue::add_file_task( const std::string &url,
 void FeNetQueue::add_buffer_task( const std::string &url,
 		int id )
 {
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 	m_in_queue.push_back( FeNetTask( url, id ) );
 }
 
@@ -196,7 +197,7 @@ bool FeNetQueue::get_next_task( FeNetTask &t )
 {
 	// Grab next task from the input queue
 	//
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 
 	if ( m_in_queue.empty() )
 		return false;
@@ -212,7 +213,7 @@ void FeNetQueue::done_with_task( const FeNetTask &t, bool res )
 {
 	// Queue result
 	//
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 
 	if ( res )
 		m_out_queue.push( t );
@@ -226,7 +227,7 @@ void FeNetQueue::done_with_task( const FeNetTask &t, bool res )
 bool FeNetQueue::pop_completed_task( int &id,
 		std::string &result )
 {
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 	if ( !m_out_queue.empty() )
 	{
 		m_out_queue.front().grab_result( id, result );
@@ -238,7 +239,7 @@ bool FeNetQueue::pop_completed_task( int &id,
 
 void FeNetQueue::abort()
 {
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 
 	while ( !m_in_queue.empty() )
 		m_in_queue.pop_front();
@@ -246,7 +247,7 @@ void FeNetQueue::abort()
 
 bool FeNetQueue::all_done()
 {
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 
 	bool retval = ( m_in_queue.empty() && m_out_queue.empty() && ( m_in_flight == 0 ) );
 	return retval;
@@ -254,7 +255,7 @@ bool FeNetQueue::all_done()
 
 bool FeNetQueue::output_done()
 {
-	sf::Lock l( m_mutex );
+	std::lock_guard<std::recursive_mutex> l( m_mutex );
 
 	bool retval = ( m_out_queue.empty() && ( m_in_flight == 0 ) );
 	return retval;
@@ -265,13 +266,14 @@ FeNetWorker::FeNetWorker( FeNetQueue &queue )
 	m_thread( &FeNetWorker::work_process, this ),
 	m_proceed( true )
 {
-	m_thread.launch();
 }
 
 FeNetWorker::~FeNetWorker()
 {
 	m_proceed = false;
-	m_thread.wait();
+
+	if ( m_thread.joinable() )
+		m_thread.join();
 }
 
 void FeNetWorker::work_process()
@@ -301,7 +303,7 @@ void FeNetWorker::work_process()
 		}
 
 		if ( !res ) // sleep if there is nothing in the queue
-			sf::sleep( sf::milliseconds( 10 ) );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 	}
 
 	FeDebug() << "WORKER thread process completed." << std::endl;

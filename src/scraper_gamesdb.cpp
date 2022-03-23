@@ -1177,7 +1177,7 @@ fail_emu_scrape:
 
 		}
 		else
-			sf::sleep( sf::milliseconds( 10 ) );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 	}
 
 	if ( !my_fuzz_map.empty() )

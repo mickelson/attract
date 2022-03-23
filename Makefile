@@ -345,6 +345,7 @@ else
  ifeq ($(FE_WINDOWS_COMPILE),1)
   LIBS += -lopengl32
  else
+  LIBS += -lpthread
   ifeq ($(USE_GLES),1)
    GLES_LIB ?= -lGLESv1_CM
    LIBS += $(GLES_LIB)
