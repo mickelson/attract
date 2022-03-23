@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Ubuntu GCC",
+            os: ubuntu-latest,
+            cc: "gcc",
+            cxx: "g++"
+            cxxpackage: "g++"
+          }
+        - {
+            name: "Ubuntu GCC 7",
+            os: ubuntu-latest,
+            cc: "gcc-7",
+            cxx: "g++-7"
+            cxxpackage: "g++-7"
+          }
+        - {
+            name: "Ubuntu Clang",
+            os: ubuntu-latest,
+            cc: "clang",
+            cxx: "clang++"
+            cxxpackage: "clang++"
+          }
+        - {
+            name: "macOS Clang",
+            os: macos-latest,
+            cc: "clang",
+            cxx: "clang++"
+            cxxpackage: "clang++"
+          }
+            
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install $CC $CXXPACKAGE libopenal-dev zlib1g-dev libfreetype6-dev libjpeg-dev libsfml-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev libavresample-dev libarchive-dev libfontconfig1-dev libxinerama-dev libxrandr-dev freeglut3-dev libcurl4-openssl-dev pkg-config pkgconf fakeroot dpkg dh-make
+
+    - name: Install MacOS Dependencies
+      if: runner.os == 'MacOS'
+      run: brew update && brew install ffmpeg sfml libarchive curl
+
+    - name: Build
+      env:
+        CC: ${{ matrix.config.cc }}
+        CXX: ${{ matrix.config.cxx }}
+      shell: bash
+      run: make
