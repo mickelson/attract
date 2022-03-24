@@ -6,36 +6,6 @@ on:
 name: Draft Release
 
 jobs:
-        #  draft_release:
-        #    name: Draft Release
-        #    runs-on: ubuntu-latest
-        #    continue-on-error: false
-        #    outputs:
-        #      upload_url: ${{ steps.create_release.outputs.upload_url }}
-        #      tag_name: ${{ steps.tag_name.outputs.tag_name }}
-        #      version: ${{ steps.changelog.outputs.version }}
-        #    steps:
-        #      - uses: actions/checkout@v2
-        #
-        #      - name: Get Tag Name
-        #        id: tag_name
-        #        run: echo ::set-output name=tag_name::${GITHUB_REF/refs\/tags\//}
-        #
-        #      - name: Generate ChangeLog
-        #        id: changelog
-        #        run: util/output-changelog-md.sh >release.txt
-        #
-        #      - name: Create Release
-        #        id: create_release
-        #        uses: actions/create-release@v1
-        #        env:
-        #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        #        with:
-        #          tag_name: ${{ github.ref }}
-        #          release_name: ${{ github.ref }}
-        #          body_path: release.txt
-        #          draft: true
-        #          prerelease: false
   mxebuild:
     name: MXE Release
     runs-on: ubuntu-18.04
