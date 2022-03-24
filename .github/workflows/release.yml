@@ -1,13 +1,15 @@
 on:
   create:
-  tags:
-    - 'v[0-9]+.[0-9]+.[0-9]+'
+
+  push:
+    tags:
+      - 'v*'
 
 name: Draft Release
 
 jobs:
   draft_release:
-    name: Create Release
+    name: Draft Release
     runs-on: ubuntu-latest
     continue-on-error: false
     outputs:
