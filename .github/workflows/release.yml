@@ -18,3 +18,13 @@ jobs:
 
        - name: MacOS Package
          run: util/osx/create-pkg.sh
+
+       - name: Upload MacOS Release Asset
+         uses: actions/upload-release-asset@v1
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         with:
+           upload_url: ${{ needs.draft_release.outputs.upload_url }}
+           asset_path: ./attract-*.dmg
+           asset_name: attract-*.dmg
+           asset_content_type: application/zip
