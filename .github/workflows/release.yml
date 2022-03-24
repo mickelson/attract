@@ -39,7 +39,7 @@ jobs:
         #          draft: true
         #          prerelease: false
   mxe_build:
-    name: Windows Release (MXE)
+    name: MXE Release
     runs-on: ubuntu-18.04
     continue-on-error: false
     #    needs: draft_release
