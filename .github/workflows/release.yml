@@ -36,7 +36,7 @@ jobs:
         #          body_path: release.txt
         #          draft: true
         #          prerelease: false
-  mxe_build:
+  mxebuild:
     name: MXE Release
     runs-on: ubuntu-18.04
     continue-on-error: false
@@ -85,7 +85,7 @@ jobs:
         #          asset_name: attract-*.zip
         #          asset_content_type: application/zip
 
-   macos_build:
+   macosbuild:
      name: MacOS Release
      runs-on: macos-latest
      continue-on-error: false
