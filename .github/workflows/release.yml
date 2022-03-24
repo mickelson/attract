@@ -1,7 +1,5 @@
 on:
   create:
-
-  push:
     tags:
       - 'v*'
 
@@ -18,15 +16,15 @@ jobs:
         #      version: ${{ steps.changelog.outputs.version }}
         #    steps:
         #      - uses: actions/checkout@v2
-
+        #
         #      - name: Get Tag Name
         #        id: tag_name
         #        run: echo ::set-output name=tag_name::${GITHUB_REF/refs\/tags\//}
-
+        #
         #      - name: Generate ChangeLog
         #        id: changelog
         #        run: util/output-changelog-md.sh >release.txt
-
+        #
         #      - name: Create Release
         #        id: create_release
         #        uses: actions/create-release@v1
