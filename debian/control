@@ -14,7 +14,7 @@ Homepage: http://attractmode.org
 Package: attract
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Attract-Mode emulator frontend
+Description: X-Platform Attract-Mode emulator frontend
  Attract-Mode is a graphical frontend for command line emulators such as MAME,
  MESS and Nestopia. It hides the underlying operating system and is intended
  to be controlled with a joystick, gamepad or spin dial, making it ideal for
