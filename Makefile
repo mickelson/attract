@@ -113,7 +113,7 @@ datadir ?= $(datarootdir)
 exec_prefix ?= $(prefix)
 bindir ?= $(exec_prefix)/bin
 
-DATA_PATH:=$(datadir)/attract/
+DATA_PATH ?= $(datadir)/attract/
 EXE_BASE=attract
 EXE_EXT=
 OBJ_DIR=obj

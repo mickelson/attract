@@ -329,58 +329,60 @@ void FePresent::init_monitors()
 #elif defined(USE_XLIB)
 
 	Display *xdisp = XOpenDisplay( NULL );
-	Window root = RootWindow( xdisp, 0 );
-	XRRScreenConfiguration *xconf = XRRGetScreenInfo( xdisp, root );
-	m_refresh_rate = XRRConfigCurrentRate( xconf );
+	if ( !xdisp )
+	{
+		FeLog() << "Unable to open x display" << std::endl;
+	}
+	else
+	{
+		Window root = RootWindow( xdisp, 0 );
+		XRRScreenConfiguration *xconf = XRRGetScreenInfo( xdisp, root );
+		m_refresh_rate = XRRConfigCurrentRate( xconf );
+		XRRFreeScreenConfigInfo( xconf );
+	}
 
-#if !defined(USE_XINERAMA)
+ #if !defined(USE_XINERAMA)
 	XCloseDisplay( xdisp );
-#else
-	if ( m_feSettings->get_info_bool( FeSettings::MultiMon )
+ #else
+	bool set_first=true;
+	if ( xdisp && ( m_feSettings->get_info_bool( FeSettings::MultiMon ) )
 		&& !is_windowed_mode( m_feSettings->get_window_mode() ) )
 	{
 		int num = 0;
 		XineramaScreenInfo *si = XineramaQueryScreens( xdisp, &num );
 
-		if ( si )
+		if ( !si )
 		{
-			if (( m_feSettings->get_info_bool( FeSettings::MultiMon ) )
-					&& ( !is_windowed_mode( m_feSettings->get_window_mode() )))
-			{
-				for ( int i=0; i<num; i++ )
-				{
-					FeMonitor mon(
-						si[i].screen_number,
-						si[i].width,
-						si[i].height );
-
-					mon.transform = sf::Transform().translate(
-						si[i].x_org,
-						si[i].y_org );
-
-					FeDebug() << "Multimon: monitor #" << si[i].screen_number
-						<< ": " << mon.size.x << "x" << mon.size.y << " @ "
-						<< si[i].x_org << "," << si[i].y_org << std::endl;
-
-					m_mon.push_back( mon );
-				}
-			}
-			else
+			FeLog() << "Unable to query Xinerama screens" << std::endl;
+			set_first=true;
+		}
+		else
+		{
+			for ( int i=0; i<num; i++ )
 			{
 				FeMonitor mon(
-					si[0].screen_number,
-					si[0].width,
-					si[0].height );
+					si[i].screen_number,
+					si[i].width,
+					si[i].height );
+
+				mon.transform = sf::Transform().translate(
+					si[i].x_org,
+					si[i].y_org );
+
+				FeDebug() << "Multimon: monitor #" << si[i].screen_number
+					<< ": " << mon.size.x << "x" << mon.size.y << " @ "
+					<< si[i].x_org << "," << si[i].y_org << std::endl;
 
 				m_mon.push_back( mon );
 			}
+			set_first=false;
+			XFree( si );
 		}
 
-		XFree( si );
 		XCloseDisplay( xdisp );
 	}
-	else
-#endif
+	if ( set_first )
+ #endif
 #endif
 	{
 		FeMonitor mc( 0, m_window.get_win().getSize().x, m_window.get_win().getSize().y );
