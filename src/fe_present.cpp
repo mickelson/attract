@@ -378,9 +378,11 @@ void FePresent::init_monitors()
 			set_first=false;
 			XFree( si );
 		}
-
-		XCloseDisplay( xdisp );
 	}
+
+	if ( xdisp )
+		XCloseDisplay( xdisp );
+
 	if ( set_first )
  #endif
 #endif
