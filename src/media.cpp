@@ -165,11 +165,6 @@ public:
 	AVPacket *pop_packet();
 	void push_packet( AVPacket *pkt );
 	void clear_packet_queue();
-
-	// Utility functions to free AV stuff...
-	//
-	static void free_packet( AVPacket *pkt );
-	static void free_frame( AVFrame *frame );
 };
 
 //
@@ -315,7 +310,7 @@ void FeBaseStream::clear_packet_queue()
 	{
 		AVPacket *p = m_packetq.front();
 		m_packetq.pop();
-		free_packet( p );
+		av_packet_free( &p );
 	}
 }
 
@@ -323,18 +318,6 @@ void FeBaseStream::push_packet( AVPacket *pkt )
 {
 	std::lock_guard<std::recursive_mutex> l( m_packetq_mutex );
 	m_packetq.push( pkt );
-}
-
-void FeBaseStream::free_packet( AVPacket *pkt )
-{
-	av_packet_unref( pkt );
-	av_free( pkt );
-}
-
-void FeBaseStream::free_frame( AVFrame *frame )
-{
-	av_frame_unref( frame );
-	av_frame_free( &frame );
 }
 
 FeAudioImp::FeAudioImp()
@@ -365,7 +348,6 @@ FeAudioImp::~FeAudioImp()
 	}
 }
 
-// This function frees the frame
 bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, int &offset )
 {
 	int data_size = av_samples_get_buffer_size(
@@ -396,7 +378,6 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 			if ( !resample_ctx )
 			{
 				FeLog() << "Error allocating audio format converter." << std::endl;
-				free_frame( frame );
 				return false;
 			}
 
@@ -425,7 +406,6 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 				FeLog() << "Error initializing audio format converter, input format="
 					<< av_get_sample_fmt_name( (AVSampleFormat)frame->format )
 					<< ", input sample rate=" << frame->sample_rate << std::endl;
-				free_frame( frame );
 				resample_free( &resample_ctx );
 				resample_ctx = NULL;
 				return false;
@@ -462,7 +442,6 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 			if ( out_samples < 0 )
 			{
 				FeLog() << "Error performing audio conversion." << std::endl;
-				free_frame( frame );
 				return false;
 			}
 			offset += out_samples * codec_ctx->channels;
@@ -472,7 +451,6 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 	}
 #endif
 
-	free_frame( frame );
 	return true;
 }
 
@@ -729,7 +707,7 @@ void FeVideoImp::video_thread()
 
 				display_frame = rgba_buffer[0];
 
-				free_frame( detached_frame );
+				av_frame_free( &detached_frame );
 				detached_frame = NULL;
 
 				do_process = false;
@@ -789,7 +767,7 @@ void FeVideoImp::video_thread()
 							FeLog() << "Error decoding video (receiving frame): "
 								<< buff << std::endl;
 						}
-						free_frame( raw_frame );
+						av_frame_free( &raw_frame );
 					}
 					else
 					{
@@ -814,7 +792,7 @@ void FeVideoImp::video_thread()
 					}
 
 					if ( packet )
-						free_packet( packet );
+						av_packet_free( &packet );
 				}
 			}
 			else if ( !degrading )
@@ -845,7 +823,7 @@ the_end:
 	}
 
 	if ( detached_frame )
-		free_frame( detached_frame );
+		av_frame_free( &detached_frame );
 
 	if ( sws_ctx )
 		sws_freeContext(sws_ctx);
@@ -1247,13 +1225,13 @@ bool FeMedia::read_packet()
 	if ( m_imp->m_read_eof )
 		return false;
 
-	AVPacket *pkt = (AVPacket *)av_malloc( sizeof( *pkt ) );
+	AVPacket *pkt = av_packet_alloc();
 
 	int r = av_read_frame( m_imp->m_format_ctx, pkt );
 	if ( r < 0 )
 	{
 		m_imp->m_read_eof=true;
-		FeBaseStream::free_packet( pkt );
+		av_packet_free( &pkt );
 		return false;
 	}
 
@@ -1262,7 +1240,7 @@ bool FeMedia::read_packet()
 	else if ( ( m_video ) && (pkt->stream_index == m_video->stream_id ) )
 		m_video->push_packet( pkt );
 	else
-		FeBaseStream::free_packet( pkt );
+		av_packet_free( &pkt );
 
 	return true;
 }
@@ -1322,7 +1300,7 @@ bool FeMedia::onGetData( Chunk &data )
 			FeLog() << "Error decoding audio (sending packet): " << buff << std::endl;
 		}
 
-		FeBaseStream::free_packet( packet );
+		av_packet_free( &packet );
 
 		r = AVERROR(EAGAIN);
 
@@ -1330,9 +1308,9 @@ bool FeMedia::onGetData( Chunk &data )
 		// Note that avcodec_receive_frame() may need to return multiple frames per packet
 		// depending on the audio codec.
 		//
+		AVFrame *frame = av_frame_alloc();
 		do
 		{
-			AVFrame *frame = av_frame_alloc();
 			r = avcodec_receive_frame( m_audio->codec_ctx, frame );
 
 			if ( r == 0 )
@@ -1349,7 +1327,11 @@ bool FeMedia::onGetData( Chunk &data )
 					FeLog() << "Error decoding audio (receiving frame): " << buff << std::endl;
 				}
 			}
+			av_frame_unref( frame );
+
 		} while ( r != AVERROR(EAGAIN) );
+
+		av_frame_free( &frame );
 	}
 
 	return true;

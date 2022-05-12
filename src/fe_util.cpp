@@ -1012,6 +1012,7 @@ void unix_wait_process( unsigned int pid, run_program_options_class *opt )
 
 				XUnmapWindow( xdisp, wnd );
 				XFlush( xdisp );
+				XCloseDisplay( xdisp );
 				FeDebug() << "Unmapped window: " << wnd << std::endl;
 
 				// Sleep to let the other process deal with the unmapping of its window
@@ -1502,6 +1503,7 @@ void set_x11_foreground_window( unsigned long w )
 
 	XSetInputFocus( xdisp, wnd, RevertToParent, CurrentTime );
 	XFlush( xdisp );
+	XCloseDisplay( xdisp );
 
 	FeDebug() << "Raised and changed window input focus to: " << (unsigned long)wnd << std::endl;
 }
@@ -1539,6 +1541,7 @@ void set_x11_fullscreen_state( unsigned long w )
 			&event );
 
 	XFlush( xdisp );
+	XCloseDisplay( xdisp );
 }
 #endif
 
@@ -1764,18 +1767,21 @@ std::string get_focus_process()
 				&prop ) != Success )
 	{
 		FeDebug() << "Could not get window property." << std::endl;
+		XCloseDisplay( xdisp );
 		return retval;
 	}
 
 	if ( !prop )
 	{
 		FeDebug() << "Empty window property." << std::endl;
+		XCloseDisplay( xdisp );
 		return retval;
 	}
 
 	int pid = prop[1] * 256;
 	pid += prop[0];
 	XFree( prop );
+	XCloseDisplay( xdisp );
 
 	// Try to get the actual name for the process id
 	//
