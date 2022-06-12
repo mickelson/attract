@@ -744,7 +744,7 @@ void FeVideoImp::video_thread()
 					if ( !m_parent->end_of_file() )
 						m_parent->read_packet();
 					else
-						do_flush = true; // NULL packet will be fed to avcodec_send_packet()
+						goto the_end; // do_flush = true; // NULL packet will be fed to avcodec_send_packet()
 				}
 
 				if (( packet != NULL ) || ( do_flush ))
