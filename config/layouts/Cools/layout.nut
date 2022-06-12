@@ -3,7 +3,7 @@
 // Uses snap, logo and flyer images. Will use title images if desired.
 // 
 // History/changes: too many. I use this so it's forever WIP
-///////////////////////////////////////////////////////// 
+/////////////////////////////////////////////////////////
 // Layout User Options
 class UserConfig {
  </ label="Background Image", help="Choose snap/video snap, title, fanart, user image (bg.jpg in layout folder) or no background", options="snap,video,title,fanart,user,none" /> bg_image = "video";
@@ -36,7 +36,7 @@ function gamename( index_offset ) {
 // Copyright text
 function copyright( index_offset ) {
  local s = split( fe.game_info( Info.Manufacturer, index_offset ), "(" );
- if ( s.len() > 0 ) return "© " + fe.game_info( Info.Year, index_offset ) + " " + s[0];
+ if ( s.len() > 0 ) return "Â© " + fe.game_info( Info.Year, index_offset ) + " " + s[0];
  return "";
 }
 // Returns a random number below 255. Set randrange to higher values to hit closer to 255
