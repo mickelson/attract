@@ -744,7 +744,7 @@ void FeVideoImp::video_thread()
 					if ( !m_parent->end_of_file() )
 						m_parent->read_packet();
 					else
-						goto the_end; // do_flush = true; // NULL packet will be fed to avcodec_send_packet()
+						do_flush = true; // NULL packet will be fed to avcodec_send_packet()
 				}
 
 				if (( packet != NULL ) || ( do_flush ))
@@ -766,7 +766,7 @@ void FeVideoImp::video_thread()
 
 					if ( r != 0 )
 					{
-						if ( r != AVERROR( EAGAIN ))
+						if ( (r != AVERROR( EAGAIN )) && (r != -541478725) ) // -541478725 Animated Gif/Png
 						{
 							char buff[256];
 							av_strerror( r, buff, 256 );
