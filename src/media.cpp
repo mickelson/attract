@@ -766,7 +766,7 @@ void FeVideoImp::video_thread()
 
 					if ( r != 0 )
 					{
-						if ( r != AVERROR( EAGAIN ))
+						if (( r != AVERROR( EAGAIN )) && (!do_flush)) // Ignore EOF on do_flush
 						{
 							char buff[256];
 							av_strerror( r, buff, 256 );
