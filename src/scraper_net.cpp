@@ -178,39 +178,22 @@ bool FeSettings::general_mame_scraper( FeImporterContext &c )
 	if ( !c.emulator.is_mame() )
 		return true;
 
-	const char *MAMEDB = "http://mamedb.blu-ferret.co.uk";
 	const char *ADB = "http://adb.arcadeitalia.net";
 	const char *PNG = ".png";
 
 	if ( m_scrape_marquees )
-	{
-		if ( !simple_scraper( c, MAMEDB,
-				"/marquees/",
-				PNG,
-				"marquee" ) )
-			return false;
-
 		if ( !simple_scraper( c, ADB,
 				"/media/mame.current/marquees/",
 				PNG,
 				"marquee" ) )
 			return false;
-	}
 
 	if ( m_scrape_snaps )
-	{
-		if ( !simple_scraper( c, MAMEDB,
-				"/snap/",
-				PNG,
-				"snap" ) )
-			return false;
-
 		if ( !simple_scraper( c, ADB,
 				"/media/mame.current/ingames/",
 				PNG,
 				"snap" ) )
 			return false;
-	}
 
 	if ( m_scrape_flyers )
 		if ( !simple_scraper( c, ADB,
