@@ -203,6 +203,10 @@ class Grid extends Conveyor
 
 		case "exit":
 		case "exit_no_menu":
+		case "toggle_mute":
+		case "toggle_flip":
+		case "toggle_rotate_left":
+		case "toggle_rotate_right":
 			break;
 		case "select":
 		default:

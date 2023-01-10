@@ -266,6 +266,10 @@ function on_signal( sig )
 	case "prev_filter":
 	case "exit":
 	case "exit_no_menu":
+	case "toggle_mute":
+	case "toggle_flip":
+	case "toggle_rotate_left":
+	case "toggle_rotate_right":
 		break;
 	case "select":
 	default:

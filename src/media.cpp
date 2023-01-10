@@ -546,9 +546,28 @@ bool FeVideoImp::hw_retrieve_data( AVFrame *f )
 
 void FeVideoImp::play()
 {
+	if ( run_video_thread )
+	{
+		// our thread is already playing, so shut it down before
+		// we start it again below
+		run_video_thread = false;
+
+		if ( m_video_thread.joinable() )
+			m_video_thread.join();
+	}
+
 	run_video_thread = true;
 	video_timer.restart();
-	m_video_thread = std::thread( &FeVideoImp::video_thread, this );
+
+	try
+	{
+		m_video_thread = std::thread( &FeVideoImp::video_thread, this );
+	}
+	catch ( const std::system_error &e )
+	{
+		FeLog() << "System error starting video thread.  Code: " << e.code()
+			<< " - " << e.what() << std::endl;
+	}
 }
 
 void FeVideoImp::stop()
