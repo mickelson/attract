@@ -616,7 +616,7 @@ void FeVideoImp::init_rgba_buffer()
 
 	int ret = av_image_alloc(rgba_buffer, rgba_linesize,
 			disptex_width, disptex_height,
-			AV_PIX_FMT_RGBA, 1);
+			AV_PIX_FMT_RGBA, 32);
 
 	if (ret < 0)
 		FeLog() << "Error allocating rgba buffer" << std::endl;
