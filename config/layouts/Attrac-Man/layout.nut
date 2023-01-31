@@ -55,7 +55,7 @@ class UserConfig </ help="Playable layout based on Pac-Man arcade game by Toru I
 	fright_sound="";
 
 	</ label="Artwork Mode", help="How to fit artwork images into their spot...", options="Stretch,Zoom,Preserve Aspect Ratio", order=15 />
-	art_mode="Stretch";
+	art_mode="Zoom";
 }
 
 ::AM_CONFIG <- fe.get_config();
@@ -89,7 +89,8 @@ if ( pres_ar || zoom )
 
 function fix_zoom( ttype, var, ttime )
 {
-	if ( ttype == Transition.EndNavigation )
+	if (( ttype == Transition.EndNavigation )
+		|| ( ttype == Transition.StartLayout ))
 	{
 		if ( snap._front.texture_height > snap._front.texture_width )
 		{
@@ -109,10 +110,13 @@ function fix_zoom( ttype, var, ttime )
 	return false;
 }
 
+// prevent videos from bleeding into the listbox background
+fe.add_image( "blank.png", 23, 95, 194, 194 );
+
 // Create a FadeArt that doesn't do anything on transitions (just timed fading of artwork)
 //
 class MyFade extends FadeArt { function on_transition( ttype, var, ttime ) {return false;}; };
-local lb_bg = MyFade( "fanart", 24, 96, 192, 192 );
+local lb_bg = MyFade( "fanart", 23, 95, 194, 194 );
 
 local sort_lb = fe.add_listbox( 176, 96, 45, 202 );
 sort_lb.rows = 13;
@@ -183,3 +187,6 @@ function attracman_transition( ttype, var, ttime )
 // Now run the game...
 //
 fe.do_nut( "engine.nut" );
+
+// prevent videos from spilling over on left side of playfield
+fe.add_image( "blank.png", 456, 0, 336, 336 );

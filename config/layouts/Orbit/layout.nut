@@ -40,6 +40,7 @@ local my_config = fe.get_config();
 
 fe.layout.width = 800
 fe.layout.height = 600
+fe.layout.preserve_aspect_ratio = true;
 
 const MWIDTH = 280;
 const MHEIGHT = 170;
@@ -160,6 +161,7 @@ if ( my_config[ "static_effect" ] == "Yes" )
 
 	snapbg.set_rgb( 150, 150, 150 );
 	snapbg.alpha = SNAPBG_ALPHA;
+	snapbg.visible = false;
 }
 else
 {
@@ -171,6 +173,7 @@ else
 
 local snap = fe.add_artwork( "snap", 224, 59, 352, 264 );
 snap.trigger = Transition.EndNavigation;
+snap.preserve_aspect_ratio = true;
 
 local overlay_lb = fe.add_listbox( 224, 59, 352, 264 );
 overlay_lb.rows = 10;
@@ -181,6 +184,33 @@ overlay_lb.set_selbg_rgb( 255, 255, 255 );
 overlay_lb.visible=false;
 
 local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
+
+function position_snap_frame()
+{
+	local ar = 1.0;
+	if ( snap.texture_height != 0 )
+		ar = snap.sample_aspect_ratio * snap.texture_width / snap.texture_height;
+
+	if ( ar < 1.0 )
+	{
+		frame.set_pos( 231, 54, 338, 428 );
+		if ( snapbg )
+			snapbg.set_pos( 239, 67, 324, 412 );
+		snap.set_pos( 239, 67, 324, 412 );
+		overlay_lb.set_pos( 239, 67, 324, 412 );
+	}
+	else
+	{
+		frame.set_pos( 166, 77, 468, 354 );
+		if ( snapbg )
+			snapbg.set_pos( 174, 89, 452, 330 );
+		snap.set_pos( 174, 89, 452, 330 );
+		overlay_lb.set_pos( 174, 89, 452, 330 );
+	}
+}
+
+position_snap_frame();
+
 
 //
 // Initialize misc text
@@ -286,6 +316,7 @@ function orbit_transition( ttype, var, ttime )
 	case Transition.ToNewSelection:
 		if ( snapbg )
 		{
+			snapbg.visible=true;
 			if ( snap.file_name.len() > 0 )
 			{
 				if ( ttime < spin_ms )
@@ -308,7 +339,9 @@ function orbit_transition( ttype, var, ttime )
 				return true;
 			}
 			snap.alpha = 255;
+			snapbg.visible=false;
 		}
+		position_snap_frame();
 		break;
 
 	case Transition.StartLayout:
@@ -327,6 +360,8 @@ function orbit_transition( ttype, var, ttime )
 		}
 		if ( snapbg )
 			snapbg.alpha=SNAPBG_ALPHA;
+
+		position_snap_frame();
 		break;
 
 	case Transition.EndLayout:
