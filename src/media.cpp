@@ -1217,7 +1217,8 @@ bool FeMedia::open( const std::string &archive,
 				if ( m_imp->m_format_ctx->streams[stream_id]->sample_aspect_ratio.num != 0 )
 					m_aspect_ratio = av_q2d( m_imp->m_format_ctx->streams[stream_id]->sample_aspect_ratio );
 
-				m_video->disptex_width = codec_ctx->width;
+				// FFALIGN to 32 here to match rgba_buffer's av_image_alloc() alignment
+				m_video->disptex_width = FFALIGN( codec_ctx->width, 32 );
 				m_video->disptex_height = codec_ctx->height;
 
 				m_video->display_texture = outt;
