@@ -17,13 +17,13 @@ class UserConfig {
 	// all displays that use this layout
 	//
 	</ label="Orbit Artwork", help="The artwork to spin into orbit", options="marquee,flyer,wheel", order=1, per_display="true" />
-	orbit_art="marquee";
+	orbit_art="wheel";
 
 	</ label="Bloom Effect", help="Enable Bloom Effect (requires shader support)", options="Yes,No", order=2 />
 	enable_bloom="Yes";
 
 	</ label="Background", help="The filename of the image or video to display in the background", order=3 />
-	bg_image="";
+	bg_image="tunnel.mp4";
 
 	</ label="Satellite Count", help="The number of orbiting artworks", options="5,7,9,11,13,15", order=4 />
 	count="5";
@@ -195,13 +195,13 @@ function position_snap_frame()
 	{
 		frame.set_pos( 231, 54, 338, 428 );
 		if ( snapbg )
-			snapbg.set_pos( 239, 67, 324, 412 );
-		snap.set_pos( 239, 67, 324, 412 );
-		overlay_lb.set_pos( 239, 67, 324, 412 );
+			snapbg.set_pos( 239, 67, 324, 406 );
+		snap.set_pos( 239, 67, 324, 406 );
+		overlay_lb.set_pos( 239, 67, 324, 406 );
 	}
 	else
 	{
-		frame.set_pos( 166, 77, 468, 354 );
+		frame.set_pos( 168, 77, 464, 354 );
 		if ( snapbg )
 			snapbg.set_pos( 174, 89, 452, 330 );
 		snap.set_pos( 174, 89, 452, 330 );
