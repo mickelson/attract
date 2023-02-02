@@ -8,7 +8,7 @@ class UserConfig </ help="Navigation controls: Up/Down (to move up and down) and
 	art="snap";
 
 	</ label="Rows", help="The number of grid rows", options="1,2,3,4,5,6,7,8", order=2 />
-	rows="4";
+	rows="3";
 
 	</ label="Columns", help="The number of grid columns", options="1,2,3,4,5,6,7,8", order=3 />
 	columns="4";
@@ -31,9 +31,6 @@ class UserConfig </ help="Navigation controls: Up/Down (to move up and down) and
 }
 
 fe.load_module( "conveyor" );
-
-fe.layout.width = 800;
-fe.layout.height = 800;
 
 local my_config = fe.get_config();
 local rows = my_config[ "rows" ].tointeger();

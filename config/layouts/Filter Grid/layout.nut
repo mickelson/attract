@@ -11,7 +11,7 @@ class UserConfig {
 	entries="3";
 
 	</ label="Filters", help="The number of filters to show", options="1,2,3,4,5,6,7,8", order=3 />
-	filters="3";
+	filters="4";
 
 	</ label="Flow Direction", help="Select the flow direction for entries", options="Horizontal,Vertical", order=4 />
 	flow="Vertical";
@@ -22,9 +22,6 @@ class UserConfig {
 	</ label="Transition Time", help="The amount of time (in milliseconds) that it takes to scroll to another grid entry", order=6 />
 	ttime="100";
 }
-
-fe.layout.width = 800;
-fe.layout.height = 800;
 
 fe.load_module( "conveyor" );
 
