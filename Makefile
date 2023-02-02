@@ -554,8 +554,7 @@ EXPAT_OBJ_DIR = $(OBJ_DIR)/expat
 EXPATOBJS = \
 	$(EXPAT_OBJ_DIR)/xmlparse.o \
 	$(EXPAT_OBJ_DIR)/xmlrole.o \
-	$(EXPAT_OBJ_DIR)/xmltok.o \
-	$(EXPAT_OBJ_DIR)/loadlibrary.o
+	$(EXPAT_OBJ_DIR)/xmltok.o
 
 $(OBJ_DIR)/libexpat.a: $(EXPATOBJS) | $(EXPAT_OBJ_DIR)
 	$(AR_MSG)
