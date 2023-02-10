@@ -2247,6 +2247,7 @@ void FeSettings::prep_for_launch( std::string &command,
 	for ( itr = paths.begin(); itr != paths.end(); ++itr )
 	{
 		std::string path = emu->clean_path_with_wd( *itr, true );
+		perform_substitution( path, "[name]", rom_name );
 
 		std::vector < std::string > in_list;
 		std::vector < std::string > out_list;
