@@ -581,7 +581,7 @@ void FeListBox::set_rows(int r)
 	//
 	// Don't allow m_rows to ever be zero or negative
 	//
-	if ( m_rows > 0 )
+	if ( r > 0 )
 	{
 		m_rows = r;
 
