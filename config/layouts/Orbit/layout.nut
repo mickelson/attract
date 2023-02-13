@@ -184,6 +184,7 @@ overlay_lb.set_selbg_rgb( 255, 255, 255 );
 overlay_lb.visible=false;
 
 local frame = fe.add_image( "frame.png", 216, 51, 368, 278 );
+frame.visible = false;
 
 function position_snap_frame()
 {
@@ -342,9 +343,10 @@ function orbit_transition( ttype, var, ttime )
 			snapbg.visible=false;
 		}
 		position_snap_frame();
+		frame.visible = true;
 		break;
 
-	case Transition.StartLayout:
+	case Transition.ToNewList:
 	case Transition.FromGame:
 		if ( ttime < 255 )
 		{
@@ -362,6 +364,7 @@ function orbit_transition( ttype, var, ttime )
 			snapbg.alpha=SNAPBG_ALPHA;
 
 		position_snap_frame();
+		frame.visible = true;
 		break;
 
 	case Transition.EndLayout:

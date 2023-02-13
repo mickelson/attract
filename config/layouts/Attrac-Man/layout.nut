@@ -160,7 +160,8 @@ l.set_rgb( 80, 80, 80 );
 fe.add_transition_callback( "attracman_transition" );
 function attracman_transition( ttype, var, ttime )
 {
-	if ( ttype == Transition.ToNewList )
+	if (( ttype == Transition.ToNewList )
+		|| ( ttype == Transition.HideOverlay ))
 	{
 		if (( ( fe.filters.len() > 0 )
 			&& ( fe.filters[fe.list.filter_index].sort_by != Info.NoSort )
@@ -179,6 +180,11 @@ function attracman_transition( ttype, var, ttime )
 			main_caption.msg = "[DisplayName] ([Search])";
 		else
 			main_caption.msg = "[DisplayName]";
+	}
+	else if ( ttype == Transition.ShowOverlay )
+	{
+		lb.width = 192;
+		sort_lb.visible = false;
 	}
 	return false;
 }
