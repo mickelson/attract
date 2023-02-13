@@ -608,8 +608,11 @@ bool FeWindow::run()
 		}
 	}
 
-	if ( m_fes.get_info_bool( FeSettings::TrackUsage ) )
-		m_fes.update_stats( 1, timer.getElapsedTime().asSeconds() );
+	if ( m_fes.update_stats( 1, timer.getElapsedTime().asSeconds() ) )
+	{
+		FePresent *fep = FePresent::script_get_fep();
+		fep->update_to_new_list();
+	}
 
 #if defined(SFML_SYSTEM_LINUX)
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )

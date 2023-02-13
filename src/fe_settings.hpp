@@ -43,7 +43,6 @@ extern const char *FE_ART_EXTENSIONS[];
 
 extern const char *FE_CFG_FILE;
 
-extern const char *FE_ROMLIST_SUBDIR;
 extern const char *FE_SCRAPER_SUBDIR;
 extern const char *FE_LAYOUT_FILE_BASE;
 extern const char *FE_LAYOUT_FILE_EXTENSION;
@@ -523,7 +522,8 @@ public:
 		const FeRomInfo &replacement,		// new rom values
 		UpdateType erase=UpdateEntry );
 
-	void update_stats( int count_incr, int time_incr );
+	// Returns true if the stats update may have altered the current filters
+	bool update_stats( int count_incr, int time_incr );
 
 	//
 	// The frontend maintains extra per game settings/extra info

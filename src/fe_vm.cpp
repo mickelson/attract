@@ -1132,8 +1132,7 @@ bool FeVM::on_new_layout()
 
 	// To avoid frame delay of nested surfaces we have to sort them here
 	// so the most nested ones are redrawn first
-	FePresent *fep = FePresent::script_get_fep();
-	std::stable_sort( fep->m_texturePool.begin(), fep->m_texturePool.end(), nesting_compare );
+	std::stable_sort( m_texturePool.begin(), m_texturePool.end(), nesting_compare );
 
 	return true;
 }

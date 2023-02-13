@@ -120,7 +120,11 @@ void FeRomInfo::load_stats( const std::string &path )
 	m_info[PlayedCount] = "0";
 	m_info[PlayedTime] = "0";
 
-	std::string filename = path + m_info[Romname] + FE_STAT_FILE_EXTENSION;
+	if ( path.empty() )
+		return;
+
+	std::string filename = path + m_info[Emulator] + "/"
+		+ m_info[Romname] + FE_STAT_FILE_EXTENSION;
 	nowide::ifstream myfile( filename.c_str() );
 
 	if ( !myfile.is_open() )
@@ -144,13 +148,17 @@ void FeRomInfo::load_stats( const std::string &path )
 
 void FeRomInfo::update_stats( const std::string &path, int count_incr, int played_incr )
 {
+	load_stats( path );
+
 	int new_count = as_int( m_info[PlayedCount] ) + count_incr;
 	int new_time = as_int( m_info[PlayedTime] ) + played_incr;
 
 	m_info[PlayedCount] = as_str( new_count );
 	m_info[PlayedTime] = as_str( new_time );
 
-	std::string filename = path + m_info[Romname] + FE_STAT_FILE_EXTENSION;
+	confirm_directory( path, m_info[Emulator] );
+	std::string filename = path + m_info[Emulator] + "/"
+		+ m_info[Romname] + FE_STAT_FILE_EXTENSION;
 	nowide::ofstream myfile( filename.c_str() );
 
 	if ( !myfile.is_open() )

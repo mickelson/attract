@@ -35,6 +35,9 @@
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_FAVOURITE_FILE_EXTENSION = ".tag";
 
+const char *FE_ROMLIST_SUBDIR	= "romlists/";
+const char *FE_STATS_SUBDIR                     = "stats/";
+
 SQRex *FeRomListSorter::m_rex = NULL;
 
 void FeRomListSorter::init_title_rex( const std::string &re_mask )
@@ -141,6 +144,7 @@ FeRomList::FeRomList( const std::string &config_path )
 	m_fav_changed( false ),
 	m_tags_changed( false ),
 	m_availability_checked( false ),
+	m_played_stats_checked( false ),
 	m_group_clones( false )
 {
 }
@@ -151,13 +155,13 @@ FeRomList::~FeRomList()
 
 void FeRomList::init_as_empty_list()
 {
-	m_user_path.clear();
 	m_romlist_name.clear();
 	m_list.clear();
 	m_filtered_list.clear();
 	m_filtered_list.push_back( FeFilterEntry()  ); // there always has to be at least one filter
 	m_tags.clear();
 	m_availability_checked = false;
+	m_played_stats_checked = false;
 	m_group_clones = false;
 	m_fav_changed=false;
 	m_tags_changed=false;
@@ -174,16 +178,16 @@ void FeRomList::mark_favs_and_tags_changed()
 
 bool FeRomList::load_romlist( const std::string &path,
 	const std::string &romlist_name,
-	const std::string &user_path,
-	const std::string &stat_path,
 	FeDisplayInfo &display,
-	bool group_clones )
+	bool group_clones,
+	bool load_stats	)
 {
-	m_user_path = user_path;
 	m_romlist_name = romlist_name;
 
 	m_list.clear();
 	m_availability_checked = false;
+	m_played_stats_checked = !load_stats;
+
 	m_group_clones = group_clones;
 
 	int global_filtered_out_count = 0;
@@ -207,7 +211,7 @@ bool FeRomList::load_romlist( const std::string &path,
 	m_extra_favs.clear();
 	m_fav_changed=false;
 
-	std::string load_name( m_user_path + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION );
+	std::string load_name( m_config_path + FE_ROMLIST_SUBDIR + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION );
 	nowide::ifstream myfile( load_name.c_str() );
 
 	if ( myfile.is_open() )
@@ -239,7 +243,7 @@ bool FeRomList::load_romlist( const std::string &path,
 	m_tags.clear();
 	m_extra_tags.clear();
 	m_tags_changed=false;
-	load_name = m_user_path + m_romlist_name + "/";
+	load_name = m_config_path + FE_ROMLIST_SUBDIR + m_romlist_name + "/";
 
 	if ( directory_exists( load_name ) )
 	{
@@ -287,8 +291,13 @@ bool FeRomList::load_romlist( const std::string &path,
 	{
 		first_filter->init();
 
-		if ( first_filter->test_for_target( FeRomInfo::FileIsAvailable ) )
+		if ( first_filter->test_for_target( FeRomInfo::FileIsAvailable )
+				|| ( first_filter->get_sort_by() == FeRomInfo::FileIsAvailable ))
 			get_file_availability();
+
+		if ( first_filter->test_for_target( FeRomInfo::PlayedCount )
+				|| first_filter->test_for_target( FeRomInfo::PlayedTime ) )
+			get_played_stats();
 
 		FeRomInfoListType::iterator last_it=m_list.begin();
 		for ( FeRomInfoListType::iterator it=m_list.begin(); it!=m_list.end(); )
@@ -342,15 +351,6 @@ bool FeRomList::load_romlist( const std::string &path,
 			m_list.erase( last_it, m_list.end() );
 	}
 
-	//
-	// make sure stats are loaded now
-	//
-	if ( !stat_path.empty() )
-	{
-		for ( FeRomInfoListType::iterator it=m_list.begin(); it!=m_list.end(); ++it )
-			(*it).load_stats( stat_path );
-	}
-
 	FeLog() << " - Loaded master romlist '" << m_romlist_name
 			<< "' in " << load_timer.getElapsedTime().asMilliseconds()
 			<< " ms (" << m_list.size() << " entries kept, " << global_filtered_out_count
@@ -384,8 +384,13 @@ void FeRomList::build_single_filter_list( FeFilter *f,
 		if ( f->get_size() > 0 ) // if this is non zero then we've loaded before and know how many to expect
 			result.filter_list.reserve( f->get_size() );
 
-		if ( f->test_for_target( FeRomInfo::FileIsAvailable ) )
+		if (( f->test_for_target( FeRomInfo::FileIsAvailable ) )
+				|| ( f->get_sort_by() == FeRomInfo::FileIsAvailable ))
 			get_file_availability();
+
+		if ( f->test_for_target( FeRomInfo::PlayedCount )
+				|| f->test_for_target( FeRomInfo::PlayedTime ) )
+			get_played_stats();
 
 		f->init();
 
@@ -465,6 +470,10 @@ void FeRomList::build_single_filter_list( FeFilter *f,
 
 		if ( sort_by != FeRomInfo::LAST_INDEX )
 		{
+			if (( sort_by == FeRomInfo::PlayedCount )
+					|| ( sort_by == FeRomInfo::PlayedTime ))
+				get_played_stats();
+
 			std::stable_sort( result.filter_list.begin(),
 				result.filter_list.end(),
 				FeRomListSorter2( sort_by, rev ) );
@@ -565,7 +574,7 @@ void FeRomList::save_state()
 
 void FeRomList::save_favs()
 {
-	if (( !m_fav_changed ) || ( m_user_path.empty() ) || ( m_romlist_name.empty() ))
+	if (( !m_fav_changed ) || ( m_romlist_name.empty() ))
 		return;
 
 	//
@@ -580,7 +589,7 @@ void FeRomList::save_favs()
 	//
 	// Now save the contents of favs list
 	//
-	std::string fname = m_user_path + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION;
+	std::string fname = m_config_path + FE_ROMLIST_SUBDIR + m_romlist_name + FE_FAVOURITE_FILE_EXTENSION;
 
 	if ( m_extra_favs.empty() )
 	{
@@ -601,7 +610,7 @@ void FeRomList::save_favs()
 
 void FeRomList::save_tags()
 {
-	if (( !m_tags_changed ) || ( m_user_path.empty() ) || ( m_romlist_name.empty() ))
+	if (( !m_tags_changed ) || ( m_romlist_name.empty() ))
 		return;
 
 	// First construct a mapping of tags to rom entries
@@ -637,8 +646,9 @@ void FeRomList::save_tags()
 		} while ( pos < my_tags.size() );
 	}
 
-	confirm_directory( m_user_path, m_romlist_name );
-	std::string my_path = m_user_path + m_romlist_name + "/";
+	std::string user_path = m_config_path + FE_ROMLIST_SUBDIR;
+	confirm_directory( user_path, m_romlist_name );
+	std::string my_path = user_path + m_romlist_name + "/";
 
 	//
 	// Now save the tags
@@ -764,7 +774,7 @@ bool FeRomList::fix_filters( FeDisplayInfo &display, FeRomInfo::Index target )
 		FeFilter *f = display.get_filter( i );
 		ASSERT( f );
 
-		if ( f->test_for_target( target ) )
+		if ( f->test_for_target( target ) || ( f->get_sort_by() == target ) )
 		{
 			m_filtered_list[i].clear();
 			build_single_filter_list( f, m_filtered_list[i] );
@@ -808,6 +818,22 @@ void FeRomList::get_file_availability()
 			}
 		}
 	}
+}
+
+void FeRomList::get_played_stats()
+{
+	if ( m_played_stats_checked )
+		return;
+
+	for ( FeRomInfoListType::iterator itr=m_list.begin(); itr != m_list.end(); ++itr )
+		(*itr).load_stats( m_config_path + FE_STATS_SUBDIR );
+
+	m_played_stats_checked = true;
+}
+
+void FeRomList::load_stats( int filter_idx, int idx )
+{
+	lookup( filter_idx, idx ).load_stats( m_config_path + FE_STATS_SUBDIR );
 }
 
 // NOTE: this function is implemented in fe_settings.cpp

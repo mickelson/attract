@@ -128,13 +128,11 @@ const char *FE_PLUGIN_FILE_EXTENSION	= FE_LAYOUT_FILE_EXTENSION;
 const char *FE_GAME_EXTRA_FILE_EXTENSION = ".cfg";
 const char *FE_GAME_OVERVIEW_FILE_EXTENSION = ".txt";
 const char *FE_LAYOUT_SUBDIR			= "layouts/";
-const char *FE_ROMLIST_SUBDIR			= "romlists/";
 const char *FE_SOUND_SUBDIR			= "sounds/";
 const char *FE_SCREENSAVER_SUBDIR		= "screensaver/";
 const char *FE_PLUGIN_SUBDIR 			= "plugins/";
 const char *FE_LANGUAGE_SUBDIR		= "language/";
 const char *FE_MODULES_SUBDIR			= "modules/";
-const char *FE_STATS_SUBDIR			= "stats/";
 const char *FE_LOADER_SUBDIR			= "loader/";
 const char *FE_INTRO_SUBDIR			= "intro/";
 const char *FE_SCRAPER_SUBDIR			= "scraper/";
@@ -645,13 +643,8 @@ void FeSettings::init_display()
 
 	FeLog() << std::endl << "*** Initializing display: '" << get_current_display_title() << "'" << std::endl;
 
-	std::string stat_path;
-	if ( m_track_usage )
-		stat_path = m_config_path + FE_STATS_SUBDIR + romlist_name + "/";
-
 	std::string list_path( m_config_path );
 	list_path += FE_ROMLIST_SUBDIR;
-	std::string user_path( list_path );
 
 	// Check for a romlist in the data path if there isn't one that matches in the
 	// config directory
@@ -668,10 +661,9 @@ void FeSettings::init_display()
 
 	if ( m_rl.load_romlist( list_path,
 				romlist_name,
-				user_path,
-				stat_path,
 				m_displays[m_current_display],
-				m_group_clones ) == false )
+				m_group_clones,
+				m_track_usage ) == false )
 		FeLog() << "Error opening romlist: " << romlist_name << std::endl;
 
 	// Setup m_current_layout_params with all the parameters for our current layout, including
@@ -1136,11 +1128,23 @@ const std::string &FeSettings::get_rom_info_absolute( int filter_index, int rom_
 	if ( index == FeRomInfo::FileIsAvailable )
 		m_rl.get_file_availability();
 
+	// Make sure we have played stats information if user is requesting it.
+	bool load_stats = m_track_usage &&
+		(( index == FeRomInfo::PlayedCount ) || ( index == FeRomInfo::PlayedTime ));
+
 	// handle situation where we are currently showing a search result
 	//
 	if ( !m_current_search.empty()
 			&& ( get_current_filter_index() == filter_index ))
+	{
+		if ( load_stats )
+			m_current_search[ rom_index ]->load_stats( m_config_path + FE_STATS_SUBDIR );
+
 		return m_current_search[ rom_index ]->get_info( index );
+	}
+
+	if ( load_stats )
+		m_rl.load_stats( filter_index, rom_index );
 
 	return m_rl.lookup( filter_index, rom_index ).get_info( index );
 }
@@ -2341,33 +2345,50 @@ void FeSettings::prep_for_launch( std::string &command,
 	save_state();
 }
 
-void FeSettings::update_stats( int play_count, int play_time )
+bool FeSettings::update_stats( int play_count, int play_time )
 {
-	if ( m_current_display < 0 )
-		return;
+	if (( m_current_display < 0 ) || ( !m_track_usage ))
+		return false;
 
 	int filter_index = get_current_filter_index();
 
 	if ( get_filter_size( filter_index ) < 1 )
-		return;
+		return false;
 
 	int rom_index = get_rom_index( filter_index, 0 );
 
 	FeRomInfo *rom = get_rom_absolute( filter_index, rom_index );
 	if ( !rom )
-		return;
-
-	const std::string rl_name = m_displays[m_current_display].get_info( FeDisplayInfo::Romlist );
+		return false;
 
 	std::string path = m_config_path + FE_STATS_SUBDIR;
-	confirm_directory( path, rl_name );
-
-	path += rl_name + "/";
 
 	FeDebug() << "Updating stats: increment play count by " << play_count
 		<< " and play time by " << play_time << " seconds." << std::endl;
 
 	rom->update_stats( path, play_count, play_time );
+
+	bool fixed = m_rl.fix_filters( m_displays[m_current_display], FeRomInfo::PlayedCount );
+	fixed |= m_rl.fix_filters( m_displays[m_current_display], FeRomInfo::PlayedTime );
+
+	if ( fixed && ( &m_rl.lookup( filter_index, rom_index ) != rom ))
+	{
+		// Updating the stats actually moved the index of our current
+		// selection (which can happen when sorting by playtime or playcount)
+		//
+		// So go and correct to the new index now
+		//
+		for ( int i=0; i<m_rl.filter_size( filter_index ); i++ )
+		{
+			if ( m_rl.lookup( filter_index, i ) == *rom )
+			{
+				set_current_selection( filter_index, i );
+				break;
+			}
+		}
+	}
+
+	return fixed;
 }
 
 int FeSettings::exit_command() const
@@ -4337,15 +4358,16 @@ void FeSettings::update_romlist_after_edit(
                 outfile.close();
 	}
 
-	// Clean up stats if the last entry for a game is deleted
+	// Clean up stats file if the last entry for a game is deleted
 	//
 	if (( u_type == EraseEntry ) && !found_similar )
 	{
 		// stats
 		std::string path = m_config_path + FE_STATS_SUBDIR;
-		confirm_directory( path, romlist_name );
+		std::string emu = original.get_info( FeRomInfo::Emulator );
+		confirm_directory( path, emu );
 
-		path += romlist_name + "/";
+		path += emu + "/";
 		path += original.get_info( FeRomInfo::Romname );
 		path += FE_STAT_FILE_EXTENSION;
 

@@ -31,6 +31,8 @@
 
 typedef std::list<FeRomInfo> FeRomInfoListType;
 extern const char *FE_ROMLIST_FILE_EXTENSION;
+extern const char *FE_ROMLIST_SUBDIR;
+extern const char *FE_STATS_SUBDIR;
 
 //
 // Comparison used when sorting/merging FeRomLists
@@ -90,12 +92,12 @@ private:
 	std::multimap< std::string, const char * > m_extra_tags; // store for tags that are filtered out by global filter
 	FeFilter *m_global_filter_ptr; // this will only get set if we are globally filtering out games during the initial load
 
-	std::string m_user_path;
 	std::string m_romlist_name;
 	const std::string &m_config_path;
 	bool m_fav_changed;
 	bool m_tags_changed;
 	bool m_availability_checked;
+	bool m_played_stats_checked;
 	bool m_group_clones;
 	int m_global_filtered_out_count; // for keeping stats during load
 
@@ -106,12 +108,7 @@ private:
 	//
 	void build_single_filter_list( FeFilter *f, FeFilterEntry &result );
 
-	// Fixes m_filtered_list as needed using the filters in the given "display", with the
-	// assumption that the specified "target" attribute for all games might have been changed
-	//
-	// returns true if list changes might have been made
-	//
-	bool fix_filters( FeDisplayInfo &display, FeRomInfo::Index target );
+	void get_played_stats();
 
 	void save_favs();
 	void save_tags();
@@ -124,10 +121,9 @@ public:
 
 	bool load_romlist( const std::string &romlist_path,
 		const std::string &romlist_name,
-		const std::string &user_path,
-		const std::string &stat_path,
 		FeDisplayInfo &display,
-		bool group_clones );
+		bool group_clones,
+		bool load_stats );
 
 	void create_filters( FeDisplayInfo &display ); // called by load_romlist()
 
@@ -153,6 +149,16 @@ public:
 	FeRomInfoListType &get_list() { return m_list; };
 
 	void get_file_availability();
+
+	void load_stats( int filter_idx, int idx );
+
+	// Fixes m_filtered_list as needed using the filters in the given "display", with the
+	// assumption that the specified "target" attribute for all games might have been changed
+	//
+	// returns true if list changes might have been made
+	//
+	bool fix_filters( FeDisplayInfo &display, FeRomInfo::Index target );
+
 
 	FeEmulatorInfo *get_emulator( const std::string & );
 	FeEmulatorInfo *create_emulator( const std::string &, const std::string & );
