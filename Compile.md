@@ -23,7 +23,7 @@ distributions.  Other distributions should have similar packages available.
           * avcodec,
           * swscale,
           * avutil,
-          * swresample or avresample.
+          * swresample.
       - OpenGL and GLU (or OpenGLES for GLES version)
       - JPEG library
       - Make and Package Config

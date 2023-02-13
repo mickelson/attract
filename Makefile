@@ -292,14 +292,6 @@ ifneq ($(FE_WINDOWS_COMPILE),1)
  endif
 endif
 
-ifeq ($(shell $(PKG_CONFIG) --exists libswresample && echo "1" || echo "0"), 1)
- USE_SWRESAMPLE=1
-endif
-
-ifeq ($(shell $(PKG_CONFIG) --exists libavresample && echo "1" || echo "0"), 1)
- USE_AVRESAMPLE=1
-endif
-
 ifeq ($(shell $(PKG_CONFIG) --exists libarchive && echo "1" || echo "0"), 1)
  USE_LIBARCHIVE=1
 endif
@@ -439,22 +431,12 @@ ifeq ($(NO_MOVIE),1)
  endif
  AUDIO =
 else
- TEMP_LIBS += libavformat libavcodec libavutil libswscale
+ TEMP_LIBS += libavformat libavcodec libavutil libswscale libswresample
 
  ifeq ($(FE_MACOSX_COMPILE),1)
   LIBS += -framework OpenAL
  else
   TEMP_LIBS += openal
- endif
-
- ifeq ($(USE_SWRESAMPLE),1)
-  TEMP_LIBS += libswresample
-  FE_FLAGS += -DUSE_SWRESAMPLE
- else
-  ifeq ($(USE_AVRESAMPLE),1)
-  TEMP_LIBS += libavresample
-  FE_FLAGS += -DUSE_AVRESAMPLE
-  endif
  endif
 
  _DEP += media.hpp

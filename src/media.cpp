@@ -32,42 +32,15 @@ extern "C"
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
 #include <libswscale/swscale.h>
+#include <libswresample/swresample.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
 
 #define FE_HWACCEL (LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( 55, 78, 100 ))
 
 #if FE_HWACCEL
 #include <libavutil/hwcontext.h>
 #endif
-
-#if USE_SWRESAMPLE
- #include <libswresample/swresample.h>
- #include <libavutil/opt.h>
- #define DO_RESAMPLE
- #define RESAMPLE_LIB_STR " / swresample "
- #define RESAMPLE_VERSION_MAJOR LIBSWRESAMPLE_VERSION_MAJOR
- #define RESAMPLE_VERSION_MINOR LIBSWRESAMPLE_VERSION_MINOR
- #define RESAMPLE_VERSION_MICRO LIBSWRESAMPLE_VERSION_MICRO
- typedef SwrContext ResampleContext;
- inline void resample_free( ResampleContext **ctx ) { swr_free( ctx ); }
- inline ResampleContext *resample_alloc() { return swr_alloc(); }
- inline int resample_init( ResampleContext *ctx ) { return swr_init( ctx ); }
-#else
- #if USE_AVRESAMPLE
-  #include <libavresample/avresample.h>
-  #include <libavutil/opt.h>
-  #define DO_RESAMPLE
-  #define RESAMPLE_LIB_STR " / avresample "
-  #define RESAMPLE_VERSION_MAJOR LIBAVRESAMPLE_VERSION_MAJOR
-  #define RESAMPLE_VERSION_MINOR LIBAVRESAMPLE_VERSION_MINOR
-  #define RESAMPLE_VERSION_MICRO LIBAVRESAMPLE_VERSION_MICRO
-  typedef AVAudioResampleContext ResampleContext;
-  inline void resample_free( ResampleContext **ctx ) { avresample_free( ctx ); }
-  inline ResampleContext *resample_alloc() { return avresample_alloc_context(); }
-  inline int resample_init( ResampleContext *ctx ) { return avresample_open( ctx ); }
- #endif
-#endif
-
 }
 
 #include <queue>
@@ -116,15 +89,13 @@ void print_ffmpeg_version_info()
 
 		<< " / avutil " << LIBAVUTIL_VERSION_MAJOR
 		<< '.' << LIBAVUTIL_VERSION_MINOR
-		<< '.' << LIBAVUTIL_VERSION_MICRO;
+		<< '.' << LIBAVUTIL_VERSION_MICRO
 
-#ifdef DO_RESAMPLE
-	FeLog() << RESAMPLE_LIB_STR << RESAMPLE_VERSION_MAJOR
-		<< '.' << RESAMPLE_VERSION_MINOR
-		<< '.' << RESAMPLE_VERSION_MICRO;
-#endif
+		<< " / swresample " << LIBSWRESAMPLE_VERSION_MAJOR
+		<< '.' << LIBSWRESAMPLE_VERSION_MINOR
+		<< '.' << LIBSWRESAMPLE_VERSION_MICRO
 
-	FeLog() << std::endl;
+		<< std::endl;
 }
 
 #define MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
@@ -179,9 +150,7 @@ public:
 class FeAudioImp : public FeBaseStream
 {
 public:
-#ifdef DO_RESAMPLE
-	ResampleContext *resample_ctx;
-#endif
+	SwrContext *resample_ctx;
 	sf::Int16 *audio_buff;
 	std::recursive_mutex audio_buff_mutex;
 
@@ -328,9 +297,7 @@ void FeBaseStream::push_packet( AVPacket *pkt )
 
 FeAudioImp::FeAudioImp()
 	: FeBaseStream(),
-#ifdef DO_RESAMPLE
 	resample_ctx( NULL ),
-#endif
 	audio_buff( NULL )
 {
 }
@@ -339,13 +306,11 @@ FeAudioImp::~FeAudioImp()
 {
 	std::lock_guard<std::recursive_mutex> l( audio_buff_mutex );
 
-#ifdef DO_RESAMPLE
 	if ( resample_ctx )
 	{
-		resample_free( &resample_ctx );
+		swr_free( &resample_ctx );
 		resample_ctx = NULL;
 	}
-#endif
 
 	if ( audio_buff )
 	{
@@ -362,9 +327,7 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 		frame->nb_samples,
 		codec_ctx->sample_fmt, 1);
 
-#ifdef DO_RESAMPLE
 	if ( codec_ctx->sample_fmt == AV_SAMPLE_FMT_S16 )
-#endif
 	{
 		std::lock_guard<std::recursive_mutex> l( audio_buff_mutex );
 
@@ -373,14 +336,13 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 		data.sampleCount += data_size / sizeof(sf::Int16);
 		data.samples = audio_buff;
 	}
-#ifdef DO_RESAMPLE
 	else
 	{
 		std::lock_guard<std::recursive_mutex> l( audio_buff_mutex );
 
 		if ( !resample_ctx )
 		{
-			resample_ctx = resample_alloc();
+			resample_ctx = swr_alloc();
 			if ( !resample_ctx )
 			{
 				FeLog() << "Error allocating audio format converter." << std::endl;
@@ -407,12 +369,12 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 				<< ", out_sample_fmt=" << av_get_sample_fmt_name( AV_SAMPLE_FMT_S16 )
 				<< ", out_sample_rate=" << frame->sample_rate << std::endl;
 
-			if ( resample_init( resample_ctx ) < 0 )
+			if ( swr_init( resample_ctx ) < 0 )
 			{
 				FeLog() << "Error initializing audio format converter, input format="
 					<< av_get_sample_fmt_name( (AVSampleFormat)frame->format )
 					<< ", input sample rate=" << frame->sample_rate << std::endl;
-				resample_free( &resample_ctx );
+				swr_free( &resample_ctx );
 				resample_ctx = NULL;
 				return false;
 			}
@@ -428,23 +390,13 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 
 			uint8_t *tmp_ptr = (uint8_t *)(audio_buff + offset);
 
-#ifdef USE_SWRESAMPLE
 			int out_samples = swr_convert(
 				resample_ctx,
 				&tmp_ptr,
 				frame->nb_samples,
 				(const uint8_t **)frame->data,
 				frame->nb_samples );
-#else // USE_AVRESAMPLE
-			int out_samples = avresample_convert(
-				resample_ctx,
-				&tmp_ptr,
-				out_linesize,
-				frame->nb_samples,
-				frame->data,
-				frame->linesize[0],
-				frame->nb_samples );
-#endif
+
 			if ( out_samples < 0 )
 			{
 				FeLog() << "Error performing audio conversion." << std::endl;
@@ -455,7 +407,6 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 			data.samples = audio_buff;
 		}
 	}
-#endif
 
 	return true;
 }
@@ -1119,14 +1070,6 @@ bool FeMedia::open( const std::string &archive,
 					codec_ctx->sample_rate );
 
 				sf::SoundStream::setLoop( false );
-
-#ifndef DO_RESAMPLE
-				if ( codec_ctx->sample_fmt != AV_SAMPLE_FMT_S16 )
-				{
-					FeLog() << "Warning: Attract-Mode was compiled without an audio resampler (libswresample or libavresample)." << std::endl
-						<< "The audio format in " << FORMAT_CTX_URL << " appears to need resampling.  It will likely sound like garbage." << std::endl;
-				}
-#endif
 			}
 		}
 	}
