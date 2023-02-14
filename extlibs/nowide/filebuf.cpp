@@ -1,10 +1,8 @@
 //
-//  Copyright (c) 2020 Alexander Grund
+// Copyright (c) 2020 Alexander Grund
 //
-//  Distributed under the Boost Software License, Version 1.0. (See
-//  accompanying file LICENSE or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
-//
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
 
 #define NOWIDE_SOURCE
 
@@ -20,7 +18,9 @@
 // IMPORTANT: Have these defines BEFORE any #includes
 //            and make sure changes by those macros don't leak into the public interface
 // Make LFS functions available
+#ifndef _LARGEFILE_SOURCE
 #define _LARGEFILE_SOURCE
+#endif
 // Make off_t 64 bits if the macro isn't set
 #ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64

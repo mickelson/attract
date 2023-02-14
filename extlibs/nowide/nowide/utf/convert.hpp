@@ -1,11 +1,10 @@
 //
-//  Copyright (c) 2012 Artyom Beilis (Tonkikh)
-//  Copyright (c) 2020 Alexander Grund
+// Copyright (c) 2012 Artyom Beilis (Tonkikh)
+// Copyright (c) 2020 Alexander Grund
 //
-//  Distributed under the Boost Software License, Version 1.0. (See
-//  accompanying file LICENSE or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
-//
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
+
 #ifndef NOWIDE_UTF_CONVERT_HPP_INCLUDED
 #define NOWIDE_UTF_CONVERT_HPP_INCLUDED
 
@@ -55,7 +54,7 @@ namespace nowide {
                 size_t width = utf_traits<CharOut>::width(c);
                 if(buffer_size < width)
                 {
-                    rv = NULL;
+                    rv = nullptr;
                     break;
                 }
                 buffer = utf_traits<CharOut>::encode(c, buffer);

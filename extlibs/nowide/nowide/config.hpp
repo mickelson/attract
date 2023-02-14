@@ -1,17 +1,19 @@
 //
-//  Copyright (c) 2012 Artyom Beilis (Tonkikh)
-//  Copyright (c) 2020 Alexander Grund
+// Copyright (c) 2012 Artyom Beilis (Tonkikh)
+// Copyright (c) 2019 - 2022 Alexander Grund
 //
-//  Distributed under the Boost Software License, Version 1.0. (See
-//  accompanying file LICENSE or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
-//
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
+
 #ifndef NOWIDE_CONFIG_HPP_INCLUDED
 #define NOWIDE_CONFIG_HPP_INCLUDED
 
+/// @file
+
 #include <nowide/replacement.hpp>
 
-#if(defined(__WIN32) || defined(_WIN32) || defined(WIN32)) && !defined(__CYGWIN__)
+//! @cond Doxygen_Suppress
+#if(defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
 #define NOWIDE_WINDOWS
 #endif
 
@@ -30,38 +32,12 @@
 #ifdef NOWIDE_WINDOWS
 #define NOWIDE_SYMBOL_EXPORT __declspec(dllexport)
 #define NOWIDE_SYMBOL_IMPORT __declspec(dllimport)
+#elif defined(__CYGWIN__) && defined(__GNUC__) && (__GNUC__ >= 4)
+#define NOWIDE_SYMBOL_EXPORT __attribute__((__dllexport__))
+#define NOWIDE_SYMBOL_IMPORT __attribute__((__dllimport__))
 #else
 #define NOWIDE_SYMBOL_EXPORT NOWIDE_SYMBOL_VISIBLE
 #define NOWIDE_SYMBOL_IMPORT
-#endif
-
-#if defined(NOWIDE_DYN_LINK)
-#ifdef NOWIDE_SOURCE
-#define NOWIDE_DECL NOWIDE_SYMBOL_EXPORT
-#else
-#define NOWIDE_DECL NOWIDE_SYMBOL_IMPORT
-#endif // NOWIDE_SOURCE
-#else
-#define NOWIDE_DECL
-#endif // NOWIDE_DYN_LINK
-
-#ifndef NOWIDE_DECL
-#define NOWIDE_DECL
-#endif
-
-#if defined(NOWIDE_WINDOWS)
-#ifdef NOWIDE_USE_FILEBUF_REPLACEMENT
-#undef NOWIDE_USE_FILEBUF_REPLACEMENT
-#endif
-#define NOWIDE_USE_FILEBUF_REPLACEMENT 1
-#elif !defined(NOWIDE_USE_FILEBUF_REPLACEMENT)
-#define NOWIDE_USE_FILEBUF_REPLACEMENT 0
-#endif
-
-#if defined(__GNUC__) && __GNUC__ >= 7
-#define NOWIDE_FALLTHROUGH __attribute__((fallthrough))
-#else
-#define NOWIDE_FALLTHROUGH
 #endif
 
 #if defined __GNUC__
@@ -74,6 +50,58 @@
 #if !defined(NOWIDE_UNLIKELY)
 #define NOWIDE_UNLIKELY(x) x
 #endif
+#endif
+
+#if defined(NOWIDE_DYN_LINK)
+#ifdef NOWIDE_SOURCE
+#define NOWIDE_DECL NOWIDE_SYMBOL_EXPORT
+#else
+#define NOWIDE_DECL NOWIDE_SYMBOL_IMPORT
+#endif // NOWIDE_SOURCE
+#else
+#define NOWIDE_DECL
+#endif // NOWIDE_DYN_LINK
+
+
+//! @endcond
+
+/// @def NOWIDE_USE_WCHAR_OVERLOADS
+/// @brief Whether to use the wchar_t* overloads in fstream-classes.
+///
+/// Enabled by default on Windows and Cygwin as the latter may use wchar_t in filesystem::path.
+#ifndef NOWIDE_USE_WCHAR_OVERLOADS
+#if defined(NOWIDE_WINDOWS) || defined(__CYGWIN__) || defined(NOWIDE_DOXYGEN)
+#define NOWIDE_USE_WCHAR_OVERLOADS 1
+#else
+#define NOWIDE_USE_WCHAR_OVERLOADS 0
+#endif
+#endif
+
+/// @def NOWIDE_USE_FILEBUF_REPLACEMENT
+/// @brief Define to 1 to use the class from <filebuf.hpp> that is used on Windows.
+///
+/// - On Windows: No effect, always overwritten to 1
+/// - Others (including Cygwin): Defaults to the value of #NOWIDE_USE_WCHAR_OVERLOADS if not set.
+///
+/// When set to 0 nowide::basic_filebuf will be an alias for std::basic_filebuf.
+///
+/// Affects nowide::basic_filebuf,
+/// nowide::basic_ofstream, nowide::basic_ifstream, nowide::basic_fstream
+#if defined(NOWIDE_WINDOWS) || defined(NOWIDE_DOXYGEN)
+#ifdef NOWIDE_USE_FILEBUF_REPLACEMENT
+#undef NOWIDE_USE_FILEBUF_REPLACEMENT
+#endif
+#define NOWIDE_USE_FILEBUF_REPLACEMENT 1
+#elif !defined(NOWIDE_USE_FILEBUF_REPLACEMENT)
+#define NOWIDE_USE_FILEBUF_REPLACEMENT NOWIDE_USE_WCHAR_OVERLOADS
+#endif
+
+//! @cond Doxygen_Suppress
+
+#if defined(__GNUC__) && __GNUC__ >= 7
+#define NOWIDE_FALLTHROUGH __attribute__((fallthrough))
+#else
+#define NOWIDE_FALLTHROUGH
 #endif
 
 // The std::codecvt<char16/32_t, char, std::mbstate_t> are deprecated in C++20
@@ -93,5 +121,15 @@
 #define NOWIDE_SUPPRESS_UTF_CODECVT_DEPRECATION_BEGIN
 #define NOWIDE_SUPPRESS_UTF_CODECVT_DEPRECATION_END
 #endif
+
+//! @endcond
+
+///
+/// \brief This namespace includes implementations of the standard library functions and
+/// classes such that they accept UTF-8 strings on Windows.
+/// On other platforms (i.e. not on Windows) those functions and classes are just aliases
+/// of the corresponding ones from the std namespace or behave like them.
+///
+namespace nowide {}
 
 #endif
