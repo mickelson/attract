@@ -39,6 +39,7 @@
  #define NO_MULTIMON
 #endif
 
+extern const char *FE_DEFAULT_FONT;
 extern const char *FE_ART_EXTENSIONS[];
 
 extern const char *FE_CFG_FILE;

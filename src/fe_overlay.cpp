@@ -435,7 +435,11 @@ int FeOverlay::languages_dialog()
 	{
 		// if there is nothing to select, then set what we can and get out of here
 		//
-		m_feSettings.set_language( ll.empty() ? "en" : ll.front().language );
+		std::string fallback = ll.empty() ? "en" : ll.front().language;
+
+		m_feSettings.set_language( fallback );
+		FeLog() << "Error: " << ll.size() << " Language resource(s) found, forcing language to \""
+			<< fallback << "\"." << std::endl;
 		return 0;
 	}
 
@@ -511,15 +515,23 @@ int FeOverlay::languages_dialog()
 	dialog.setTextScale( text_scale );
 	draw_list.push_back( &dialog );
 
+	std::map < std::string, const FeFontContainer * > font_map;
+	for ( std::vector<FeLanguage>::iterator itr=ll.begin(); itr != ll.end(); ++itr )
+	{
+		const FeFontContainer *f = m_fePresent.get_pooled_font( (*itr).font );
+		if ( f )
+			font_map[ (*itr).label ] = f;
+	}
+
 	int sel = current_i;
-	dialog.setLanguageText( sel, ll, &m_fePresent );
+	dialog.setLanguageText( sel, ll, font_map );
 
 	FeEventLoopCtx c( draw_list, sel, -1, ll.size() - 1 );
 	FeFlagMinder fm( m_overlay_is_on );
 
 	init_event_loop( c );
 	while ( event_loop( c ) == false )
-		dialog.setLanguageText( sel, ll, &m_fePresent );
+		dialog.setLanguageText( sel, ll, font_map );
 
 	if ( sel >= 0 )
 	{

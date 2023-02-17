@@ -290,7 +290,7 @@ FeSettings::FeSettings( const std::string &config_path,
 #endif
 	m_scrape_snaps( true ),
 	m_scrape_marquees( true ),
-	m_scrape_flyers( true ),
+	m_scrape_flyers( false ),
 	m_scrape_wheels( true ),
 	m_scrape_fanart( false ),
 	m_scrape_vids( false ),
@@ -2747,16 +2747,23 @@ bool FeSettings::get_font_file( std::string &fpath,
 			FcDefaultSubstitute( pat );
 
 			FcResult res = FcResultNoMatch;
-			FcPattern *font = FcFontMatch( config, pat, &res );
-			if ( font )
+			FcFontSet *fs = FcFontSort( config, pat, false, NULL, &res );
+			if ( fs )
 			{
-				FcChar8 *file = NULL;
-				if ( FcPatternGetString( font, FC_FILE, 0, &file ) == FcResultMatch )
+				for ( int i=0; i < fs->nfont; i++ )
 				{
-					ffile = (char *)file;
-					fc_found = true;
+					FcChar8 *file = NULL;
+					if ( FcPatternGetString( fs->fonts[i], FC_FILE, 0, &file ) == FcResultMatch )
+					{
+						if ( base_compare( (char *)file, fontname ) )
+						{
+							ffile = (char *)file;
+							fc_found = true;
+							break;
+						}
+					}
 				}
-				FcPatternDestroy( font );
+				FcFontSetSortDestroy( fs );
 			}
 			FcPatternDestroy( pat );
 		}
@@ -3639,6 +3646,7 @@ void FeSettings::get_languages_list( std::vector < FeLanguage > &ll ) const
 				&& ( !file_exists( fname ) ))
 			{
 				fname = FE_DATA_PATH;
+				fname += FE_LANGUAGE_SUBDIR;
 				fname += (*itr);
 				fname += FE_LANGUAGE_FILE_EXTENSION;
 			}

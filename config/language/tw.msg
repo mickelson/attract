@@ -1,4 +1,4 @@
-#@繁體中文 (Traditional Chinese);win_font=SourceHanSansTC-Regular,MSJH;mac_font=AppleLiGothic;linux_font=SourceHanSansTC-Regular
+#@繁體中文 (Traditional Chinese);win_font=SourceHanSansTC-Regular,MSJH;mac_font=AppleLiGothic;linux_font=SourceHanSansTC-Regular,NotoSansCJK-Regular
 #
 # Interface strings
 #

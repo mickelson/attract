@@ -27,9 +27,11 @@
 #include "fe_presentable.hpp"
 #include "tp.hpp"
 
+#include <map>
+
 class FeSettings;
-class FePresent;
 class FeLanguage;
+class FeFontContainer;
 
 //
 // The text game list
@@ -85,7 +87,7 @@ public:
 	// special case for the language selection listbox (different fonts)
 	void setLanguageText( const int index,
 			const std::vector<FeLanguage> &list,
-			FePresent *fep );
+			const std::map<std::string, const FeFontContainer *> &fcm );
 
 	int getRowCount() const;
 

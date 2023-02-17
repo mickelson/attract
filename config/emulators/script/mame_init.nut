@@ -143,7 +143,7 @@ class RompathParser
 		if ( temp.len() < 2 )
 			return;
 
-		if ( temp[0] == "homepath" )
+		if (( temp[0] == "homepath" ) && ( temp[1].len() > 2 )) // skip if temp[1] is "." or ".."
 		{
 			local t = split( temp[1], "/\\" );
 			if (( t[0] == "$HOME" ) || ( t[0] == "~" ))

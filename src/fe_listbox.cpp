@@ -293,7 +293,7 @@ void FeListBox::internalSetText( const int index )
 
 void FeListBox::setLanguageText( const int index,
 			const std::vector<FeLanguage> &list,
-			FePresent *fep )
+			const std::map<std::string, const FeFontContainer * > &fcm )
 {
 	m_custom_sel = index;
 
@@ -309,9 +309,12 @@ void FeListBox::setLanguageText( const int index,
 			else
 			{
 				m_texts[i].setString( list[listentry].label );
-				const FeFontContainer *f = fep->get_pooled_font( list[listentry].font );
-				if ( f )
-					m_texts[i].setFont( f->get_font() );
+
+				std::map<std::string, const FeFontContainer *>::const_iterator itr
+					= fcm.find( list[listentry].label );
+
+				if ( itr != fcm.end() )
+					m_texts[i].setFont( (*itr).second->get_font() );
 			}
 		}
 	}

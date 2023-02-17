@@ -2055,7 +2055,12 @@ void FeMiscMenu::get_options( FeConfigContext &ctx )
 bool FeMiscMenu::save( FeConfigContext &ctx )
 {
 	int i=0;
-	ctx.fe_settings.set_language( m_languages[ ctx.opt_list[i++].get_vindex() ].language );
+
+	std::string old_l = ctx.fe_settings.get_info( FeSettings::Language );
+
+	int index_l = ctx.opt_list[i++].get_vindex();
+	std::string new_l = m_languages[ index_l ].language;
+	ctx.fe_settings.set_language( new_l );
 
 #if !defined(FORCE_FULLSCREEN)
 	ctx.fe_settings.set_info( FeSettings::WindowMode,
@@ -2094,8 +2099,31 @@ bool FeMiscMenu::save( FeConfigContext &ctx )
 	ctx.fe_settings.set_info( FeSettings::ExitMessage,
 			ctx.opt_list[i++].get_value() );
 
-	ctx.fe_settings.set_info( FeSettings::DefaultFont,
-			ctx.opt_list[i++].get_value() );
+	std::string old_default_font = ctx.fe_settings.get_info( FeSettings::DefaultFont );
+	std::string new_default_font = ctx.opt_list[i++].get_value();
+
+	ctx.fe_settings.set_info( FeSettings::DefaultFont, new_default_font );
+
+	// Special case when we've changed the language:
+	//
+	// If the user changed the language (but not the default font) then we go and overwrite
+	// the default font now to a font we expect to work with the new language chosen by the user
+	//
+	if (( old_l != new_l ) && ( old_default_font == new_default_font ))
+	{
+		std::string override_default_font = FE_DEFAULT_FONT;
+		for ( std::vector<std::string>::iterator itr=m_languages[ index_l ].font.begin();
+				itr != m_languages[ index_l ].font.end(); ++itr )
+		{
+			std::string temp1, temp2;
+			if ( ctx.fe_settings.get_font_file( temp1, temp2, *itr ) )
+			{
+				override_default_font = *itr;
+				break;
+			}
+		}
+		ctx.fe_settings.set_info( FeSettings::DefaultFont, override_default_font );
+	}
 
 	ctx.fe_settings.set_info( FeSettings::FontPath,
 			ctx.opt_list[i++].get_value() );

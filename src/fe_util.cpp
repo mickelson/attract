@@ -232,6 +232,22 @@ int icompare(
 	return 0;
 }
 
+bool base_compare( const std::string &path,
+		const std::string &base )
+{
+	size_t pos = path.find_last_of( "/\\" );
+	if ( path.size() - pos < base.size() )
+		return false;
+
+	for ( size_t i=0; i < base.size(); i++ )
+	{
+		if ( std::tolower( base[i] ) != std::tolower( path[pos+1+i] ) )
+			return false;
+	}
+
+	return true;
+}
+
 bool file_exists( const std::string &file )
 {
 #ifdef SFML_SYSTEM_WINDOWS

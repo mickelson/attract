@@ -78,6 +78,12 @@ bool tail_compare(
 int icompare( const std::string &one,
 	const std::string &two );
 
+//
+// Case insensitive check if the base filename in the given path is equal to base.
+// (i.e. check the part labeled "BASE" in the following path: "/a/b/c/BASE.ext")
+//
+bool base_compare( const std::string &path, const std::string &base );
+
 typedef bool (*output_callback_fn)( const char *, void * );
 typedef void (*launch_callback_fn)( void * );
 
