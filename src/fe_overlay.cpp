@@ -1963,10 +1963,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 bool FeOverlay::common_exit()
 {
 	if ( !m_feSettings.get_info_bool( FeSettings::ConfirmExit ) )
-	{
-		m_feSettings.exit_command();
 		return true;
-	}
 
 	std::string exit_msg;
 	m_feSettings.get_exit_question( exit_msg );
@@ -1977,13 +1974,5 @@ bool FeOverlay::common_exit()
 	// retval is 0 if the user confirmed exit.
 	// it is <0 if we are being forced to close
 	//
-	if ( retval < 1 )
-	{
-		if ( retval == 0 )
-			m_feSettings.exit_command();
-
-		return true;
-	}
-
-	return false;
+	return ( retval < 1 );
 }
