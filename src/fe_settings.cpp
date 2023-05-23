@@ -2393,7 +2393,7 @@ bool FeSettings::update_stats( int play_count, int play_time )
 
 int FeSettings::exit_command() const
 {
-	int r( -1 );
+	int r( 0 );
 	if ( !m_exit_command.empty() )
 		r = system( m_exit_command.c_str() );
 

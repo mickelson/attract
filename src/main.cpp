@@ -1118,5 +1118,5 @@ int main(int argc, char *argv[])
 #endif
 
 	FeDebug() << "Attract-Mode ended normally" << std::endl;
-	return 0;
+	return feSettings.exit_command();
 }
