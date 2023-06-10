@@ -28,6 +28,12 @@ VERSION=$(git describe --tag | sed 's/-[^-]\{8\}$//')
 BUNDLEVERSION=${VERSION//[v-]/.}; BUNDLEVERSION=${BUNDLEVERSION#"."}
 SHORTVERSION=${LASTTAG//v/}
 
+if [ -z "$1" ]; then
+	EXTRA=${VERSION}
+else
+	EXTRA=$1
+fi
+
 ### begin: make
 PLATFORM=$(uname)
 MAKEOPTS=""
@@ -117,5 +123,5 @@ if [[ "$PLATFORM" != "Darwin" ]]; then
 	dmg dmg "${WORKDMG}" ../attract-${VERSION}.dmg
 else
 	# TODO: mount dmg and set file attributes (volume icon) and create Application symlink
-	hdiutil create -volname "AttractMode" -srcfolder ${SCRATCH}/disk/ -ov -format UDBZ ../attract-${VERSION}.dmg
+	hdiutil create -volname "AttractMode" -srcfolder ${SCRATCH}/disk/ -ov -format UDBZ ../attract-${EXTRA}.dmg
 fi
