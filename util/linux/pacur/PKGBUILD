@@ -8,7 +8,7 @@ targets=(
     "debian-jessie"
 )
 pkgname="attract"
-pkgver="2.5.0"
+pkgver="2.7.0"
 pkgrel="1"
 pkgdesc="Attract-Mode emulator frontend"
 pkgdesclong=(
