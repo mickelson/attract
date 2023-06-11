@@ -27,6 +27,7 @@
 #include <thread>
 #include <deque>
 #include <queue>
+#include <string>
 
 class FeNetWorker;
 
