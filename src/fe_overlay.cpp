@@ -1390,6 +1390,15 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 					&& ( c == ctx.extra_exit ))
 				c = FeInputMap::Exit;
 
+			if ( ev.type == sf::Event::MouseMoved )
+			{
+				if ( m_feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y ) )
+				{
+					sf::Vector2u s = m_wnd.get_win().getSize();
+					sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), m_wnd.get_win() );
+				}
+			}
+
 			switch( c )
 			{
 			case FeInputMap::Back:
@@ -1407,7 +1416,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 				if ( ctx.sel > 0 )
 					ctx.sel--;
-				else
+				else if ( ev.type != sf::Event::MouseMoved )
 					ctx.sel=ctx.max_sel;
 
 				ctx.move_event = ev;
@@ -1423,7 +1432,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 				if ( ctx.sel < ctx.max_sel )
 					ctx.sel++;
-				else
+				else if ( ev.type != sf::Event::MouseMoved )
 					ctx.sel = 0;
 
 				ctx.move_event = ev;
