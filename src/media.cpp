@@ -61,6 +61,9 @@ typedef AVCodec FeAVCodec;
   #define FORMAT_CTX_URL m_imp->m_format_ctx->filename
 #endif
 
+#define HAVE_CH_LAYOUT (LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100))
+#define HAVE_DURATION (LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(58, 2, 100))
+
 void try_hw_accel( AVCodecContext *&codec_ctx, FeAVCodec *&dec );
 
 std::string g_decoder;
@@ -321,9 +324,15 @@ FeAudioImp::~FeAudioImp()
 
 bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, int &offset )
 {
+#if HAVE_CH_LAYOUT
+	int nb_channels = codec_ctx->ch_layout.nb_channels;
+#else
+	int nb_channels = codec_ctx->channels;
+#endif
+
 	int data_size = av_samples_get_buffer_size(
 		NULL,
-		codec_ctx->channels,
+		nb_channels,
 		frame->nb_samples,
 		codec_ctx->sample_fmt, 1);
 
@@ -349,17 +358,27 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 				return false;
 			}
 
+#if HAVE_CH_LAYOUT
+			AVChannelLayout layout;
+			av_channel_layout_copy(&layout, &frame->ch_layout);
+			if (!av_channel_layout_check(&layout)) {
+				av_channel_layout_default(&layout, codec_ctx->ch_layout.nb_channels);
+			}
+			av_opt_set_chlayout(resample_ctx, "in_chlayout", &layout, 0);
+			av_opt_set_chlayout(resample_ctx, "out_chlayout", &layout, 0);
+#else
 			int64_t channel_layout = frame->channel_layout;
 			if ( !channel_layout )
 			{
 				channel_layout = av_get_default_channel_layout(
 						codec_ctx->channels );
 			}
-
 			av_opt_set_int( resample_ctx, "in_channel_layout", channel_layout, 0 );
+			av_opt_set_int( resample_ctx, "out_channel_layout", channel_layout, 0 );
+#endif
+
 			av_opt_set_int( resample_ctx, "in_sample_fmt", frame->format, 0 );
 			av_opt_set_int( resample_ctx, "in_sample_rate", frame->sample_rate, 0 );
-			av_opt_set_int( resample_ctx, "out_channel_layout", channel_layout, 0 );
 			av_opt_set_int( resample_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0 );
 			av_opt_set_int( resample_ctx, "out_sample_rate", frame->sample_rate, 0 );
 
@@ -382,9 +401,15 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 		if ( resample_ctx )
 		{
 			int out_linesize;
+#if HAVE_CH_LAYOUT
+			int nb_channels = codec_ctx->ch_layout.nb_channels;
+#else
+			int nb_channels = codec_ctx->channels;
+#endif
+
 			av_samples_get_buffer_size(
 				&out_linesize,
-				codec_ctx->channels,
+				nb_channels,
 				frame->nb_samples,
 				AV_SAMPLE_FMT_S16, 0 );
 
@@ -402,8 +427,9 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 				FeLog() << "Error performing audio conversion." << std::endl;
 				return false;
 			}
-			offset += out_samples * codec_ctx->channels;
-			data.sampleCount += out_samples * codec_ctx->channels;
+
+			offset += out_samples * nb_channels;
+			data.sampleCount += out_samples * nb_channels;
 			data.samples = audio_buff;
 		}
 	}
@@ -752,15 +778,20 @@ void FeVideoImp::video_thread()
 						if ( raw_frame->pts == AV_NOPTS_VALUE )
 							raw_frame->pts = packet->dts;
 
-// This only works on FFmpeg, exclude libav (it doesn't have pkt_duration
+
 #if (LIBAVUTIL_VERSION_MICRO >= 100 )
+						// This only works on FFmpeg, exclude libav (it doesn't have pkt_duration
 						// Correct for out of bounds pts
 						if ( raw_frame->pts < prev_pts )
 							raw_frame->pts = prev_pts + prev_duration;
 
 						// Track pts and duration if we need to correct next frame
 						prev_pts = raw_frame->pts;
+#if HAVE_DURATION
+						prev_duration = raw_frame->duration;
+#else
 						prev_duration = raw_frame->pkt_duration;
+#endif
 #endif
 
 						detached_frame = raw_frame;
@@ -1065,8 +1096,14 @@ bool FeMedia::open( const std::string &archive,
 					+ AV_INPUT_BUFFER_PADDING_SIZE
 					+ codec_ctx->sample_rate );
 
+#if HAVE_CH_LAYOUT
+				int nb_channels = codec_ctx->ch_layout.nb_channels;
+#else
+				int nb_channels = codec_ctx->channels;
+#endif
+
 				sf::SoundStream::initialize(
-					codec_ctx->channels,
+					nb_channels,
 					codec_ctx->sample_rate );
 
 				sf::SoundStream::setLoop( false );
