@@ -1,6 +1,6 @@
 // Layout by cools / Arcade Otaku
 // For use in a 640x240 resolution
-// We use this strange resolution to enhance the front rendering quality in 15KHz
+// We use this strange resolution to enhance the front rendering quality in 15KHz.
 //
 // Layout User Options
 class UserConfig {
@@ -136,7 +136,7 @@ if (my_config["category_text"]=="Yes"){
  category.align=Align.Left;
  category.alpha=64;
 }
-local copyright=fe.add_text("©[Year] [Manufacturer]",flw-(flh*0.06),flh*0.95,flh*0.85,flh*0.05);
+local copyright=fe.add_text("Â©[Year] [Manufacturer]",flw-(flh*0.06),flh*0.95,flh*0.85,flh*0.05);
 copyright.rotation=-90;
 copyright.align=Align.Left;
 copyright.alpha=64;
