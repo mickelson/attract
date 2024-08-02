@@ -508,7 +508,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEP) | $(OBJ_DIR)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.mm $(DEP) | $(OBJ_DIR)
 	$(CC_MSG)
-	$(SILENT)$(CC) -c -o $@ $< $(CFLAGS) $(CPPFLAGS) $(FE_FLAGS)
+	$(SILENT)$(CXX) -c -o $@ $< $(CXXFLAGS) $(CPPFLAGS) $(FE_FLAGS)
 
 $(EXE): $(OBJ) $(EXPAT) $(SQUIRREL) $(AUDIO)
 	$(EXE_MSG)
