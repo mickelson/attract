@@ -170,5 +170,6 @@ fr;Français
 it;Italiano
 jp;日本語 (Japanese)
 kr;한국어 (Korean)
+pt_br;Português brasileiro
 
 #@DONE_TRANSLATED
