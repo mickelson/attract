@@ -189,6 +189,7 @@ int main(int argc, char *argv[])
 	sf::Clock move_timer;
 	sf::Event move_event;
 	int move_last_triggered( 0 );
+	sf::Vector2i last_mouse_pos;
 
 	// go straight into config mode if there are no lists configured for
 	// display
@@ -358,11 +359,13 @@ int main(int argc, char *argv[])
 					break;
 
 				case sf::Event::MouseMoved:
-					if ( feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y ))
+					if ( (( ev.mouseMove.x != last_mouse_pos.x ) || ( ev.mouseMove.y != last_mouse_pos.y ))
+						&& ( feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y )) )
 					{
 						// We reset the mouse if we are capturing it and it has moved
 						// outside of its bounding box
 						//
+						last_mouse_pos = sf::Vector2i( ev.mouseMove.x, ev.mouseMove.y );
 						sf::Vector2u s = window.get_win().getSize();
 						sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), window.get_win() );
 					}

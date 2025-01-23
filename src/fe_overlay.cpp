@@ -809,18 +809,17 @@ void FeOverlay::input_map_dialog(
 	message.setWordWrap( true );
 	message.setTextScale( text_scale );
 
-	// Make sure the appropriate mouse capture variables are set, in case
-	// the user has just changed the mouse threshold
-	//
-	m_feSettings.init_mouse_capture( s.x, s.y );
-
 	message.setSize( s.x, s.y );
 	message.setString( msg_str );
 
+	// Make sure the appropriate mouse capture variables are set, in case
+	// the user has just changed the mouse threshold
+	//
+	sf::Vector2u win_size = m_wnd.get_win().getSize();
+	m_feSettings.init_mouse_capture( win_size.x, win_size.y );
+
 	// Centre the mouse in case the user is mapping a mouse move event
-	s.x /= 2;
-	s.y /= 2;
-	sf::Mouse::setPosition( sf::Vector2i( s ), m_wnd.get_win() );
+	sf::Mouse::setPosition( sf::Vector2i( win_size.x/2, win_size.y/2 ), m_wnd.get_win() );
 
 	// empty the window event queue
 	sf::Event ev;
@@ -1378,6 +1377,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 	const sf::Transform &t = m_fePresent.get_transform();
 
 	bool redraw=true;
+	sf::Vector2i last_mouse_pos;
 
 	while ( m_wnd.isOpen() )
 	{
@@ -1390,13 +1390,13 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 					&& ( c == ctx.extra_exit ))
 				c = FeInputMap::Exit;
 
-			if ( ev.type == sf::Event::MouseMoved )
+			if ( ( ev.type == sf::Event::MouseMoved )
+				&& ((ev.mouseMove.x != last_mouse_pos.x) || (ev.mouseMove.y != last_mouse_pos.y))
+				&& ( m_feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y ) ) )
 			{
-				if ( m_feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y ) )
-				{
-					sf::Vector2u s = m_wnd.get_win().getSize();
-					sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), m_wnd.get_win() );
-				}
+				last_mouse_pos = sf::Vector2i( ev.mouseMove.x, ev.mouseMove.y );
+				sf::Vector2u s = m_wnd.get_win().getSize();
+				sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), m_wnd.get_win() );
 			}
 
 			switch( c )
@@ -1417,7 +1417,9 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 				if ( ctx.sel > 0 )
 					ctx.sel--;
 				else if ( ev.type != sf::Event::MouseMoved )
-					ctx.sel=ctx.max_sel;
+					ctx.sel = ctx.max_sel;
+				else
+					ctx.sel = 0;
 
 				ctx.move_event = ev;
 				ctx.move_command = FeInputMap::Up;
@@ -1434,6 +1436,8 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 					ctx.sel++;
 				else if ( ev.type != sf::Event::MouseMoved )
 					ctx.sel = 0;
+				else
+					ctx.sel = ctx.max_sel;
 
 				ctx.move_event = ev;
 				ctx.move_command = FeInputMap::Down;

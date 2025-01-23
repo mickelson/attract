@@ -1182,8 +1182,10 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 		}
 		break;
 
+	case sf::Event::MouseMoved:
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 )) // touch support sfml >= 2.2
 	case sf::Event::TouchEnded:
+#endif
 		{
 			m_tracked_keys.insert( index );
 			FeInputMap::Command temp = get_command_from_tracked_keys( joy_thresh );
@@ -1194,7 +1196,6 @@ FeInputMap::Command FeInputMap::map_input( const sf::Event &e, const sf::IntRect
 			return LAST_COMMAND;
 		}
 		break;
-#endif
 
 	default:
 		break;
@@ -1343,8 +1344,11 @@ void FeInputMap::set_mapping( const FeMapping &mapping )
 		{
 			if ( (*iti).compare( temp_str ) == 0 )
 			{
+				if ( m_inputs[i].has_mouse_move() )
+					m_mmove_count--;
+
 				m_inputs.erase( m_inputs.begin() + i );
-				continue;
+				break;
 			}
 		}
 	}
