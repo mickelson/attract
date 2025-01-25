@@ -242,11 +242,8 @@ void FeListXMLParser::start_element(
 		}
 		else if ( strcmp( element, "control" ) == 0 )
 		{
-			std::string type, ways, old_type;
-
-			old_type = (*m_itr).get_info( FeRomInfo::Control );
-			if ( !old_type.empty() )
-				old_type += ",";
+			std::string type, ways;
+			bool keep=true;
 
 			for ( int i=0; attribute[i]; i+=2 )
 			{
@@ -254,44 +251,59 @@ void FeListXMLParser::start_element(
 					type = attribute[i+1];
 				else if ( strcmp( attribute[i], "ways" ) == 0 )
 					ways = attribute[i+1];
+				else if ( strcmp( attribute[i], "player" ) == 0 )
+				{
+					// discard entries for players other than player 1
+					std::string val = attribute[i+1];
+					if ( val.compare( "1" ) != 0 )
+						keep = false;
+				}
 
 				if (( strcmp( attribute[i], "buttons" ) == 0 )
 						&& (*m_itr).get_info( FeRomInfo::Buttons ).empty() )
 					(*m_itr).set_info( FeRomInfo::Buttons, attribute[i+1] );
 			}
 
-			struct my_map_struct { const char *in; const char *out; };
-			my_map_struct my_map[] =
+			if ( keep )
 			{
-				{ "stick", "joystick (analog)" },
-				{ "doublejoy", "double joystick" },
-				{ NULL, NULL }
-			};
-
-			if ( type.compare( "joy" ) == 0 )
-			{
-				// construct the joystick name
-				//
-				type = "joystick (";
-				type += ways;
-				type += "-way)";
-			}
-			else
-			{
-				// we also do a bit of name remapping
-				//
-				int i=0;
-				while ( my_map[i].in != NULL )
+				struct my_map_struct { const char *in; const char *out; };
+				my_map_struct my_map[] =
 				{
-					if ( type.compare( my_map[i].in ) == 0 )
-					{
-						type = my_map[i].out;
-						break;
-					}
-					i++;
+					{ "stick", "joystick (analog)" },
+					{ "doublejoy", "double joystick" },
+					{ NULL, NULL }
+				};
+
+				if ( type.compare( "joy" ) == 0 )
+				{
+					// construct the joystick name
+					//
+					type = "joystick (";
+					type += ways;
+					type += "-way)";
 				}
+				else
+				{
+					// we also do a bit of name remapping
+					//
+					int i=0;
+					while ( my_map[i].in != NULL )
+					{
+						if ( type.compare( my_map[i].in ) == 0 )
+						{
+							type = my_map[i].out;
+							break;
+						}
+						i++;
+					}
+				}
+
+				std::string old_type = (*m_itr).get_info( FeRomInfo::Control );
+				if ( !old_type.empty() )
+					old_type += ",";
+
+				(*m_itr).set_info( FeRomInfo::Control, old_type + type );
 			}
-			(*m_itr).set_info( FeRomInfo::Control, old_type + type );
 		}
 		else if ( strcmp( element, "disk" ) == 0 )
 		{
