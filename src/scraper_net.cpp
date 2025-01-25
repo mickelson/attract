@@ -97,11 +97,70 @@ bool process_q_simple( FeNetQueue &q,
 }
 #endif
 
+class URLBuilder : public URLBuilderBase
+{
+private:
+	std::string m_host;
+	std::string m_pre_req;
+	std::string m_post_req;
+
+public:
+	URLBuilder( const char *host,
+		const char *pre_req,
+		const char *post_req )
+		: URLBuilderBase(),
+		m_host( host ),
+		m_pre_req( pre_req ),
+		m_post_req( post_req )
+	{
+	};
+
+	const std::string get_url( const std::string &rname )
+	{
+		std::string url = m_host;
+
+		url += m_pre_req;
+		url += rname;
+		url += m_post_req;
+
+		return url;
+	};
+};
+
+//
+// Custom url builder for the internet archives mame video snaps at:
+// https://archive.org/download/mame-videos-snaps/
+//
+class IAMameSnapURLBuilder : public URLBuilderBase
+{
+	const std::string get_url( const std::string &rname )
+	{
+		if ( rname.empty() )
+			return "";
+
+		std::string url =
+			"https://archive.org/download/mame-videos-snaps/";
+
+		if ( std::isdigit( rname[0] ) )
+			url += "%23.zip/0";
+		else
+		{
+			char ch = toupper( rname[0] );
+			url += ch;
+			url += ".zip/";
+			url += ch;
+		}
+
+		url += "%2F";
+		url += rname;
+		url += ".mp4";
+
+		return url;
+	};
+};
 
 bool FeSettings::simple_scraper( FeImporterContext &c,
-		const char *host,
-		const char *pre_req,
-		const char *post_req,
+		URLBuilderBase &urlb,
 		const char *art_label,
 		bool is_vid )
 {
@@ -111,8 +170,6 @@ bool FeSettings::simple_scraper( FeImporterContext &c,
 	//
 	ParentMapType parent_map;
 	build_parent_map( parent_map, c.romlist, false );
-
-	FeLog() << " - Scraping " << host << " [" << art_label << "]" << std::endl;
 
 	std::string emu_name = c.emulator.get_info( FeEmulatorInfo::Name );
 	std::string base_path = get_config_dir() + FE_SCRAPER_SUBDIR;
@@ -150,10 +207,7 @@ bool FeSettings::simple_scraper( FeImporterContext &c,
 			al_sub += "/";
 			confirm_directory( base_path, al_sub );
 
-			std::string url = host;
-			url += pre_req;
-			url += rname;
-			url += post_req;
+			const std::string url = urlb.get_url( rname );
 
 			size_t pos = url.find_last_of( "." );
 			if ( pos != std::string::npos )
@@ -182,42 +236,45 @@ bool FeSettings::general_mame_scraper( FeImporterContext &c )
 	const char *PNG = ".png";
 
 	if ( m_scrape_marquees )
-		if ( !simple_scraper( c, ADB,
-				"/media/mame.current/marquees/",
-				PNG,
-				"marquee" ) )
+	{
+		FeLog() << " - Scraping " << ADB << " [marquee]" << std::endl;
+		URLBuilder ub( ADB, "/media/mame.current/marquees/", PNG );
+		if ( !simple_scraper( c, ub, "marquee" ) )
 			return false;
+	}
 
 	if ( m_scrape_snaps )
-		if ( !simple_scraper( c, ADB,
-				"/media/mame.current/ingames/",
-				PNG,
-				"snap" ) )
+	{
+		FeLog() << " - Scraping " << ADB << " [snap]" << std::endl;
+		URLBuilder ub( ADB, "/media/mame.current/ingames/", PNG );
+		if ( !simple_scraper( c, ub, "snap" ) )
 			return false;
+	}
 
 	if ( m_scrape_flyers )
-		if ( !simple_scraper( c, ADB,
-				"/media/mame.current/flyers/",
-				PNG,
-				"flyer" ) )
+	{
+		FeLog() << " - Scraping " << ADB << " [flyer]" << std::endl;
+		URLBuilder ub( ADB, "/media/mame.current/flyers/", PNG );
+		if ( !simple_scraper( c, ub, "flyer" ) )
 			return false;
+	}
 
 	if ( m_scrape_wheels )
-		if ( !simple_scraper( c, ADB,
-				"/media/mame.current/decals/",
-				PNG,
-				"wheel" ) )
+	{
+		FeLog() << " - Scraping " << ADB << " [wheel]" << std::endl;
+		URLBuilder ub( ADB, "/media/mame.current/decals/", PNG );
+		if ( !simple_scraper( c, ub, "wheel" ) )
 			return false;
+	}
 
 
 	if ( m_scrape_vids )
-		if ( !simple_scraper( c,
-				"http://www.progettosnaps.net",
-				"/videosnaps/mp4/",
-				".mp4",
-				"snap",
-				true ) )
+	{
+		FeLog() << " - Scraping archive.org [MAME video snap]" << std::endl;
+		IAMameSnapURLBuilder ub;
+		if ( !simple_scraper( c, ub, "snap", true ) )
 			return false;
+	}
 
 	return true;
 }

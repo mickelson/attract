@@ -84,6 +84,12 @@ public:
 	std::vector< std::string > font;
 };
 
+class URLBuilderBase
+{
+public:
+        virtual const std::string get_url( const std::string &rname )=0;
+};
+
 class FeSettings : public FeBaseConfigurable
 {
 public:
@@ -270,7 +276,7 @@ private:
 		bool image_only,
 		bool ignore_emu );
 
-	bool simple_scraper( FeImporterContext &, const char *, const char *, const char *, const char *, bool = false );
+	bool simple_scraper( FeImporterContext &, URLBuilderBase &, const char *, bool = false );
 	bool general_mame_scraper( FeImporterContext & );
 	bool thegamesdb_scraper( FeImporterContext & );
 	bool apply_xml_import( FeImporterContext & );
