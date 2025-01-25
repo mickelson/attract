@@ -16,14 +16,14 @@ class UserConfig </ help="Integration plug-in for use with the UltraStik360 mapp
 	</ label="Command", help="Path to the mapping executable", order=1 />
 	command="ultrastikcmd";
 
-	</ label="Config Extension", help="The extension of your mapping configuration files", options=".ugc,.um", order=2 />
+	</ label="Config Extension", help="The extension of your mapping configuration files", options=".ugc,.um,.json", order=2 />
 	maps_ext=".ugc";
 
 	</ label="Config Directory", help="The directory that contains your mapping configuration files", order=3 />
 	maps_dir="$HOME/UltraMap/Maps/";
 
 	</ label="Default Config Name", help="The name of your default mapping (minus extension)", order=4 />
-	default_map="8 Way";
+	default_map="joystick (8-way)";
 
 	</ label="Game Info", help="The game info field that corresponds to the name of your mapping configuration files", options="Name,Control", order=5 />
 	maps_info="Name";
@@ -59,17 +59,28 @@ function ultra_plugin_transition( ttype, var, ttime ) {
 	switch ( ttype )
 	{
 	case Transition.ToGame:
+		local val = fe.game_info( maps_info );
+		if ( maps_info == Info.Control )
+		{
+			// if Control contains a comma separated list, find the "joystick" entry (if any)
+			local temp = split( val, "," );
+			foreach ( t in temp )
+			{
+				if (( t.len() > 8 ) && ( t.slice( 0, 8 ).tolower() == "joystick" ))
+				{
+					val = t;
+					break;
+				}
+			}
+		}
+
 		fe.plugin_command( config["command"], 
-			"\"" + maps_dir 
-			+ fe.game_info( maps_info ) 
-			+ config["maps_ext"] + "\"" );
+			"\"" + maps_dir + val + config["maps_ext"] + "\"" );
 		break;
 
 	case Transition.FromGame:
 		fe.plugin_command( config["command"], 
-			"\"" + maps_dir 
-			+ config["default_map"]
-			+ config["maps_ext"] + "\"" );
+			"\"" + maps_dir + config["default_map"] + config["maps_ext"] + "\"" );
 		break;
 	}
 
