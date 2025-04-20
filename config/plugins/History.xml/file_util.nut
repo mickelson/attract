@@ -9,6 +9,52 @@ const READ_BLOCK_SIZE=80960;
 local next_ln_overflow=""; // used by the get_next_ln() function
 local idx_path = FeConfigDirectory + "history.idx/";
 local loaded_idx = {};
+local went_eos_mid_tag = false;
+fe.load_module( "file-format.nut" );
+
+function unescape( str )
+{
+	local escapes = [
+		[ "&quot;", "\"" ],
+		[ "&apos;", "'" ],
+		[ "&amp;", "&" ],
+		[ "&gt;", ">" ],
+		[ "&lt;", "<" ]
+	];
+
+	local temp = "";
+	local pos=0;
+	local newpos=str.find( "&" );
+
+	while ( newpos != null )
+	{
+		temp += str.slice( pos, newpos );
+
+		local found=false;
+		foreach ( e in escapes )
+		{
+			local lngth = e[0].len();
+			if ( str.slice( newpos, newpos + e[0].len() ) == e[0] )
+			{
+				temp += e[1];
+				pos = newpos + e[0].len();
+				found = true;
+				break;
+			}
+		}
+
+		if ( !found )
+		{
+			temp += "&";
+			pos = newpos+1;
+		}
+
+		newpos = str.find( "&", pos );
+	}
+
+	temp += str.slice( pos );
+	return temp;
+}
 
 //
 // Write a single line of output to f
@@ -43,23 +89,48 @@ function get_next_ln( f )
 	return "";
 }
 
-//
-// Scan through f and return the next line starting with a "$"
-//
-function scan_for_ctrl_ln( f )
+// scan past the next xml tag matching ctrl.  If ctrl is null, move beyond the next tag encountered
+// returns name of last tag scanned past
+function scan_past_tag( f, ctrl=null )
 {
-	local char;
+	next_ln_overflow="";
 	while ( !f.eos() )
 	{
-		char = f.readn( 'b' );
-		if (( char == '\n' ) && ( !f.eos() ))
+		local ch = f.readn( 'b' );
+		if ( ch == '<' )
 		{
-			char = f.readn( 'b' );
-			if ( char == '$' )
+			local tag = ch.tochar();
+			while ( !f.eos() )
 			{
-				next_ln_overflow="$";
-				return get_next_ln( f );
+				ch = f.readn( 'b' );
+				if ( ch == '>' )
+					break;
+
+				tag += ch.tochar();
 			}
+
+			if ( f.eos() )
+			{
+				went_eos_mid_tag = true;
+				return "";
+			}
+
+			tag += ch.tochar();
+
+			// Skip past trailing whitespace
+			while ( !f.eos() )
+			{
+				local current=f.tell();
+				ch = f.readn( 'b' );
+				if (( ch != '\n' ) && ( ch != '>' ) && ( ch != ' ' ))
+				{
+					f.seek( current );
+					break;
+				}
+			}
+
+			if (( ctrl == null ) || ( ctrl == tag ))
+				return tag;
 		}
 	}
 	return "";
@@ -85,17 +156,27 @@ function generate_index( config )
 	local indices = {};
 
 	local last_per=0;
+	local last_entry=0;
 
 	//
 	// Get an index for all the entries in history.dat
 	//
 	while ( !histf.eos() )
 	{
+		if ( went_eos_mid_tag )
+		{
+			// reposition so we start right at the <entry> tag we last encountered
+			went_eos_mid_tag = false;
+			histf.seek( last_entry );
+
+		}
+
 		local base_pos = histf.tell();
 		local blb = histf.readblob( READ_BLOCK_SIZE );
 
 		// Update the user with the percentage complete
 		local percent = 100.0 * ( histf.tell().tofloat() / histf.len().tofloat() );
+
 		if ( percent.tointeger() > last_per )
 		{
 			last_per = percent.tointeger();
@@ -107,34 +188,81 @@ function generate_index( config )
 		
 		while ( !blb.eos() )
 		{
-			local line = scan_for_ctrl_ln( blb );
+			// ***HANDLE:***
+			//	<entry>
+			//  		<systems>
+			//			<system name="SYSTEM" game="yes" />
+			//		</systems>
 
-			if ( line.len() < 5 ) // skips $bio, $end
-				continue;
+			// ***OR***
 
-			local eq = line.find( "=", 1 );
-			if ( eq != null )
+			//	<entry>
+			//  		<software>
+			//			<item list="SYSTEM" name="ROM" game="yes" />
+			//			<item list="SYSTEM" name="ROM" game="yes" />
+			//  		</software>
+
+			// ***FOLLOWED BY***
+
+			//  		<text>TEXT TO DISPLAY...
+			//  ... AND IT CONTINUES...
+			//  ... LAST LINE
+			//  		</text>
+			//	</entry>
+			local ctr = scan_past_tag( blb, "<entry>" ); // jump to next <entry>
+			if ( !went_eos_mid_tag )
+				last_entry = base_pos + blb.tell() - 7; // location in file of this <entry>
+			else
+				break;
+
+			local entries = [];
+			local loc=0;
+
+			while ( !blb.eos() && ( ctr != "</entry>") )
 			{
-				local systems = split( line.slice(1,eq), "," );
-				local roms = split( line.slice(eq+1), "," );
-
-				foreach ( s in systems )
+				ctr = scan_past_tag( blb );
+				if (( ctr == "<systems>" ) || ( ctr == "<software>" ))
 				{
-					if ( !indices.rawin( s ) )
-						indices[ s ] <- {};
+					ctr = scan_past_tag( blb );
+					while ( !blb.eos() && ( ctr != "</systems>" ) && (  ctr != "</software>" ) )
+					{
+						local xmlstr = xml.load( ctr );
 
-					if ( config[ "index_clones" ] == "Yes" )
-					{
-						foreach ( r in roms )
-							(indices[ s ])[ r ]
-								<- ( base_pos + blb.tell() );
-					}
-					else if ( roms.len() > 0 )
-					{
-						(indices[ s ])[ roms[0] ]
-							<- ( base_pos + blb.tell() );
+						local skip=false;
+						local system="info";
+						local rom="";
+						foreach ( name,val in xmlstr.attr )
+						{
+							switch (name)
+							{
+							case "game":
+								if ( val == "no" ) skip=true;
+								break;
+							case "list":
+								system = val;
+								break;
+							case "name":
+								rom = val;
+								break;
+							};
+						}
+
+						if ( !skip && ( rom.len() > 0 ) )
+							entries.push( [ system, rom ] );
+
+						ctr = scan_past_tag( blb );
 					}
 				}
+				else if ( ctr == "<text>" )
+					loc = base_pos + blb.tell();
+			}
+
+			foreach ( e in entries )
+			{
+				if (!indices.rawin( e[0] ))
+					indices[ e[0] ] <- {};
+
+				(indices[ e[0] ])[ e[1] ] <- loc;
 			}
 		}
 	}
@@ -173,7 +301,6 @@ function get_history_entry( offset, config )
 	histf.seek( offset );
 
 	local entry = "\n\n"; // a bit of space to start
-	local open_entry = false;
 
 	while ( !histf.eos() )
 	{
@@ -181,28 +308,13 @@ function get_history_entry( offset, config )
 		while ( !blb.eos() )
 		{
 			local line = get_next_ln( blb );
-
-			if ( !open_entry )
+			if ( line == "</text>" )
 			{
-				//
-				// forward to the $bio tag
-				//
-				if (( line.len() < 1 )
-						|| (  line != "$bio" ))
-					continue;
-
-				open_entry = true;
+				entry += "\n\n";
+				return entry;
 			}
-			else
-			{
-				if ( line == "$end" )
-				{
-					entry += "\n\n";
-					return entry;
-				}
-				else if (!(blb.eos() && ( line == "" )))
-					entry += line + "\n";
-			}
+			else if (!(blb.eos() && ( line == "" )))
+				entry += unescape( line ) + "\n";
 		}
 	}
 
@@ -269,7 +381,7 @@ function get_history_offset( sys, rom, alt, cloneof )
 
 	}
 
-	if (( sys.len() != 1 ) || ( sys[0] != "info" ))
+	if (( sys.len() < 1 ) || ( sys[0] != "info" ))
 		return get_history_offset( ["info"], rom, alt, cloneof );
 
 	return -1;

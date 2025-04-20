@@ -69,6 +69,13 @@ return [
 			"source" : "thegamesdb.net"
 		},
 		{
+			"name"   : "flycast",
+			"args"   : "\"[romfilename]\" -config window:fullscreen=yes",
+			"exts"   : ".zip;.cdi;.gdi",
+			"system" : "Sega Dreamcast",
+			"source" : "thegamesdb.net"
+		},
+		{
 			"name"   : "fs-uae",
 			"args"   : "\"[romfilename]\" --fullscreen",
 			"exts"   : ".fs-uae",
@@ -172,7 +179,7 @@ return [
 		{
 			"name"	: "stella",
 			"args"	: "-fullscreen 1 \"[romfilename]\"",
-			"exts"	: ".zip,.gz,.a26,.bin,.rom",
+			"exts"	: ".zip;.gz;.a26;.bin;.rom",
 			"system"	: "Atari 2600",
 			"source" : "thegamesdb.net"
 		},

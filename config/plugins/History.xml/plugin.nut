@@ -1,23 +1,20 @@
 ///////////////////////////////////////////////////
 //
-// Attract-Mode Frontend - History.dat plugin
+// Attract-Mode Frontend - History.xml plugin
 //
 ///////////////////////////////////////////////////
 //
 // Define use configurable settings
 //
-class UserConfig </ help="History.dat viewer for the Attract-Mode frontend" /> {
+class UserConfig </ help="History.xml viewer for the Attract-Mode frontend" /> {
 	</ label="Control", help="The button to press to view history", is_input=true, order=1 />
 	button="H";
 
-	</ label="File Path", help="The full path to the history.dat file", order=2 />
-	dat_path="$HOME/history.dat";
+	</ label="File Path", help="The full path to the history.xml file", order=2 />
+	dat_path="$HOME/mame/history/history.xml";
 
 	</ label="Rows", help="Set the number of rows of text to display in the viewer", order=3 />
 	rows="30";
-
-	</ label="Index Clones", help="Set whether entries for clones should be included in the index.  Enabling this will make the index significantly larger", order=4, options="Yes,No" />
-	index_clones="No";
 
 	</ label="Generate Index", help="Generate the history.dat index now (this can take some time)", is_function=true, order=5 />
 	// Map the config option to the "generate_index" function in "file_util.nut"
@@ -45,6 +42,7 @@ class HistoryViewer extends SubMenu
 	constructor()
 	{
 		base.constructor( config["button"] );
+		fe.add_transition_callback( this, "on_transition" );
 
 		m_text = fe.add_text( "", 0, 0, fe.layout.width, fe.layout.height );
 		m_text.first_line_hint = 0; // enables word wrapping
@@ -101,6 +99,15 @@ class HistoryViewer extends SubMenu
 	function on_scroll_down()
 	{
 		m_text.first_line_hint++;
+	}
+
+	function on_transition( ttype, var, ttime )
+	{
+		if (( ttype == Transition.ToNewSelection )
+			|| ( ttype == Transition.ToNewList ))
+			show( false );
+
+		return false;
 	}
 }
 
