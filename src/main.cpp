@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
 	std::string config_path, cmdln_font, log_file;
 	bool launch_game = false;
 	bool process_console = false;
+	FeInputMap::Command c = FeInputMap::LAST_COMMAND;
 	FeLogLevel log_level = FeLog_Info;
 
 #ifdef USE_LIBCURL
@@ -344,7 +345,6 @@ int main(int argc, char *argv[])
 			redraw=true;
 		}
 
-		FeInputMap::Command c;
 		sf::Event ev;
 		bool from_ui;
 		while ( feVM.poll_command( c, ev, from_ui ) )
@@ -1121,5 +1121,5 @@ int main(int argc, char *argv[])
 #endif
 
 	FeDebug() << "Attract-Mode ended normally" << std::endl;
-	return feSettings.exit_command();
+	return ( ( c == FeInputMap::Exit ) ? feSettings.exit_command() : 0 );
 }
