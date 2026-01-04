@@ -45,6 +45,7 @@ void dump_memory_stats(const char *from, int line, const char *label)
   
 // This does not work with DMALLOC, since the internal data structures
 // differ.
+#ifdef __linux__
 #ifndef USE_DMALLOC
 
 	struct mallinfo mi;
@@ -75,6 +76,7 @@ void dump_memory_stats(const char *from, int line, const char *label)
 	//}  
 
 #endif  // not USE_DMALLOC
+#endif
 
 #endif  // not _WIN32
 }
