@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Generate markdown format changelog
 # from tag (default HEAD) to previous tag

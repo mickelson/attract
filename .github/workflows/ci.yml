@@ -23,13 +23,6 @@ jobs:
             cxxpackage: "g++"
           }
         - {
-            name: "Ubuntu GCC 7",
-            os: ubuntu-latest,
-            cc: "gcc-7",
-            cxx: "g++-7",
-            cxxpackage: "g++-7"
-          }
-        - {
             name: "Ubuntu Clang",
             os: ubuntu-latest,
             cc: "clang",
@@ -43,20 +36,38 @@ jobs:
             cxx: "clang++",
             cxxpackage: "clang++"
           }
+        - {
+            name: "FreeBSD",
+            os: ubuntu-latest,
+            cc: "clang",
+            cxx: "clang++",
+            freebsd: true
+          }
             
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install Linux Dependencies
-      if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install $CC $CXXPACKAGE libopenal-dev zlib1g-dev libfreetype6-dev libjpeg-dev libsfml-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev libswresample-dev libarchive-dev libfontconfig1-dev libxinerama-dev libxrandr-dev freeglut3-dev libcurl4-openssl-dev pkg-config
+      if: runner.os == 'Linux' && !matrix.config.freebsd
+      run: sudo apt-get update && sudo apt-get install ${{ matrix.config.cxxpackage }} libopenal-dev zlib1g-dev libfreetype6-dev libjpeg-dev libsfml-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev libswresample-dev libarchive-dev libfontconfig1-dev libxinerama-dev libxrandr-dev freeglut3-dev libcurl4-openssl-dev pkg-config
 
     - name: Install MacOS Dependencies
-      if: runner.os == 'MacOS'
+      if: runner.os == 'macOS'
       run: brew update && brew install ffmpeg sfml libarchive curl
 
+    - name: Build on FreeBSD
+      if: matrix.config.freebsd
+      uses: vmactions/freebsd-vm@v1
+      with:
+        usesh: true
+        run: |
+          pkg install -y gmake clang pkgconf sfml openal-soft ffmpeg libarchive curl fontconfig libGLU
+          gmake clean
+          gmake
+
     - name: Build
+      if: '!matrix.config.freebsd'
       env:
         CC: ${{ matrix.config.cc }}
         CXX: ${{ matrix.config.cxx }}
