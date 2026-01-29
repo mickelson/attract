@@ -50,7 +50,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install MacOS Dependencies
-        run: brew update && brew install ffmpeg sfml libarchive curl
+        run: brew update && brew install ffmpeg sfml@2 libarchive curl openal-soft mesa-glu pkgconfig
 
       - name: MacOS Package
         run: util/osx/create-pkg.sh ${{ needs.draft_release.outputs.tag_name }}

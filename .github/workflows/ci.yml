@@ -54,7 +54,7 @@ jobs:
 
     - name: Install MacOS Dependencies
       if: runner.os == 'macOS'
-      run: brew update && brew install ffmpeg sfml libarchive curl
+      run: brew update && brew install ffmpeg sfml@2 libarchive curl openal-soft mesa-glu pkgconfig
 
     - name: Build on FreeBSD
       if: matrix.config.freebsd
