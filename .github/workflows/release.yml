@@ -13,17 +13,21 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag_name: ${{ steps.tag_name.outputs.tag_name }}
-      version: ${{ steps.changelog.outputs.version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Get Tag Name
         id: tag_name
-        run: echo ::set-output name=tag_name::${GITHUB_REF/refs\/tags\//}
+        run: echo "tag_name=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
       - name: Generate ChangeLog
         id: changelog
-        run: util/output-changelog-md.sh >release.txt
+        run: |
+          if [ -f util/output-changelog-md.sh ]; then
+            util/output-changelog-md.sh > release.txt
+          else
+            echo "Release ${{ steps.tag_name.outputs.tag_name }}" > release.txt
+          fi
 
       - name: Create Release
         id: create_release
@@ -36,27 +40,59 @@ jobs:
           body_path: release.txt
           draft: true
           prerelease: false
-   macosx:
-     name: MacOS Release
-     runs-on: macos-latest
-     continue-on-error: false
-     needs: draft_release
-     steps:
-       - uses: actions/checkout@v2
 
-       - name: Install MacOS Dependencies
-         run: brew update && brew install ffmpeg sfml libarchive curl
+  macosx:
+    name: MacOS Release
+    runs-on: macos-latest
+    continue-on-error: false
+    needs: draft_release
+    steps:
+      - uses: actions/checkout@v4
 
-       - name: MacOS Package
-         run: util/osx/create-pkg.sh ${{ github.ref }}
+      - name: Install MacOS Dependencies
+        run: brew update && brew install ffmpeg sfml libarchive curl
 
-       - name: Upload Release Asset
-         id: upload-release-asset
-         uses: actions/upload-release-asset@v1
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         with:
-           upload_url: ${{ needs.draft_release.outputs.upload_url }}
-           asset_path: ./attract-${{ github.ref }}.dmg
-           asset_name: attract-${{ github.ref }}.dmg
-           asset_content_type: application/zip
+      - name: MacOS Package
+        run: util/osx/create-pkg.sh ${{ needs.draft_release.outputs.tag_name }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.draft_release.outputs.upload_url }}
+          asset_path: ./attract-${{ needs.draft_release.outputs.tag_name }}.dmg
+          asset_name: attract-${{ needs.draft_release.outputs.tag_name }}.dmg
+          asset_content_type: application/zip
+
+  freebsd:
+    name: FreeBSD Release
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: draft_release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build FreeBSD Release
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          run: |
+            pkg install -y gmake clang pkgconf sfml openal-soft ffmpeg libarchive curl fontconfig libGLU
+            gmake clean
+            gmake
+            mkdir -p attract-freebsd
+            cp attract attract-freebsd/
+            cp -r config attract-freebsd/
+            cp Readme.md License.txt attract-freebsd/
+            tar -czf attract-freebsd-${{ needs.draft_release.outputs.tag_name }}.tar.gz attract-freebsd/
+
+      - name: Upload FreeBSD Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.draft_release.outputs.upload_url }}
+          asset_path: ./attract-freebsd-${{ needs.draft_release.outputs.tag_name }}.tar.gz
+          asset_name: attract-freebsd-${{ needs.draft_release.outputs.tag_name }}.tar.gz
+          asset_content_type: application/gzip

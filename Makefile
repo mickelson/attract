@@ -69,6 +69,10 @@
 
 FE_VERSION=v2.7.0
 
+# Detect operating system
+UNAME_S := $(shell uname -s)
+
+# Default settings
 CC=gcc
 CXX=g++
 CFLAGS=
@@ -82,6 +86,15 @@ ARFLAGS=rc
 RM=rm -f
 MD=mkdir -p
 WINDRES=windres
+
+# FreeBSD-specific settings
+ifeq ($(UNAME_S),FreeBSD)
+CC=clang
+CXX=clang++
+CXXFLAGS=-std=c++14 $(EXTRA_CXXFLAGS)
+PKG_CONFIG=pkgconf
+NO_SWF=1
+endif
 
 -include attract.mk
 
@@ -788,9 +801,16 @@ $(DATA_PATH):
 	$(MD) -p $(DESTDIR)$@
 
 install: $(EXE) $(DATA_PATH)
+ifeq ($(UNAME_S),FreeBSD)
+	mkdir -p $(DESTDIR)$(bindir)
+	install $(EXE) $(DESTDIR)$(bindir)/$(EXE)
+	mkdir -p $(DESTDIR)$(DATA_PATH)
+	cp -r config/* $(DESTDIR)$(DATA_PATH)
+else
 	install -D $(EXE) $(DESTDIR)$(bindir)/$(EXE)
 	mkdir -p $(DESTDIR)$(DATA_PATH)
 	cp -r config/* $(DESTDIR)$(DATA_PATH)
+endif
 
 smallclean:
 	-$(RM) $(OBJ_DIR)/*.o *~ core

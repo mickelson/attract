@@ -17,10 +17,16 @@
 #include <stdlib.h>
 #include <string.h>	// for strcmp and friends
 #include <new>	// for placement new
-
+#ifdef __FreeBSD__
+#include <unordered_map>
+#endif
 
 // If you prefer STL implementations of array<> (i.e. std::vector) and
+#ifdef __FreeBSD__
+// hash<> (i.e. std::unordered_map) instead of home cooking, then put
+#else
 // hash<> (i.e. std::hash_map) instead of home cooking, then put
+#endif
 // -D_TU_USE_STL=1 in your compiler flags, or do it in tu_config.h, or do
 // it right here:
 //#define _TU_USE_STL 1
@@ -71,6 +77,8 @@ public:
 
 #if defined(__APPLE__) || defined(ANDROID)
 #include <ext/hash_map>
+#elif defined(__FreeBSD__)
+#include <unordered_map>
 #else
 #include <hash_map>
 #endif
@@ -120,11 +128,19 @@ public:
 };
 
 
+#ifdef __FreeBSD__
+// hash<> is similar to std::hash_map<>, but now converted to use unordered_map
+#else
 // hash<> is similar to std::hash_map<>
+#endif
 //
 // @@ move this towards a strict subset of std::hash_map<> ?
 template<class T, class U, class hash_functor = fixed_size_hash<T> >
+#ifdef __FreeBSD__
+class hash : public std::unordered_map<T, U, hash_functor>
+#else
 class hash : public __gnu_cxx::hash_map<T, U, hash_functor>
+#endif
 {
 public:
 	// extra convenience interfaces
@@ -139,7 +155,11 @@ public:
 		(*this)[key] = value;
 	}
 
+#ifdef __FreeBSD__
+	bool	is_empty() const { return std::unordered_map<T,U,hash_functor>::empty(); }
+#else
 	bool	is_empty() const { return __gnu_cxx::hash_map<T,U,hash_functor>::empty(); }
+#endif
 
 	bool	get(const T& key, U* value) const
 	// Retrieve the value under the given key.
@@ -153,8 +173,13 @@ public:
 	// If value == NULL, return true or false according to the
 	// presence of the key, but don't touch *value.
 	{
+#ifdef __FreeBSD__
+		typename std::unordered_map<T,U,hash_functor>::const_iterator	it = std::unordered_map<T,U,hash_functor>::find(key);
+		if (it != std::unordered_map<T,U,hash_functor>::end())
+#else
 		typename __gnu_cxx::hash_map<T,U,hash_functor>::const_iterator	it = __gnu_cxx::hash_map<T,U,hash_functor>::find(key);
 		if (it != __gnu_cxx::hash_map<T,U,hash_functor>::end())
+#endif
 		{
 			if (value) *value = it->second;
 			return true;
@@ -165,7 +190,11 @@ public:
 		}
 	}
 
+#ifdef __FreeBSD__
+	void set_capacity( int c ) { std::unordered_map<T,U,hash_functor>::rehash(c); }
+#else
 	void set_capacity( int c ) { __gnu_cxx::hash_map<T,U,hash_functor>::resize(c); }
+#endif
 };
 
 

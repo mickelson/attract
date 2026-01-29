@@ -5,21 +5,40 @@
 
 // Utility/profiling timer.
 
+#ifdef __FreeBSD__
+#include <chrono>
+#else
 #include <sys/timeb.h>	// for ftime()
+#endif
 #include <assert.h>
 #include "base/tu_timer.h"
 
+#ifdef __FreeBSD__
+// static timeb s_start_time;
+static std::chrono::steady_clock::time_point s_start_time;
+#else
 static timeb s_start_time;
+#endif
 void tu_timer::init_timer()
 {
+#ifdef __FreeBSD__
+	s_start_time = std::chrono::steady_clock::now();
+#else
 	ftime(&s_start_time);
+#endif
 }
 
 Uint32 tu_timer::get_ticks()
 {
+#ifdef __FreeBSD__
+	auto now = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - s_start_time).count();
+	return static_cast<int>(elapsed);
+#else
 	struct timeb tv;
 	ftime(&tv);
 	return  (tv.time - s_start_time.time) * 1000 + (tv.millitm - s_start_time.millitm);
+#endif
 }
 
 tu_datetime::tu_datetime()
