@@ -28,6 +28,7 @@
 extern "C"
 {
 #include <libavcodec/avcodec.h>
+#include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 };
 
@@ -1190,25 +1191,26 @@ void ffmpeg_resample( int bpp, int src_width, int src_height, int src_pitch,
 	if ( !ctx )
 		return;
 
-	AVPicture my_pict;
-	avpicture_alloc( &my_pict, fmt, dst_width, dst_height );
+	uint8_t *data[4];
+	int linesizes[4];
+	av_image_alloc(data, linesizes, dst_width, dst_height, fmt, 1);
 
 	const uint8_t *src[4] = { src_data, NULL, NULL, NULL };
 	const int src_stride[4] = { src_pitch, 0, 0, 0 };
 
 	sws_scale( ctx, src, src_stride, 0, src_height,
-		my_pict.data, my_pict.linesize );
+		data, linesizes );
 
 	create_texture( ( bpp == 3 ) ? GL_RGB : GL_RGBA,
-		dst_width, dst_height, my_pict.data[0], 0 );
+		dst_width, dst_height, data[0], 0 );
 
 #if GENERATE_MIPMAPS
 	// Build mipmaps.
-	image::image_base im(my_pict.data[0], dst_width, dst_height, dst_width*bpp);
+	image::image_base im(data[0], dst_width, dst_height, dst_width*bpp);
 	generate_mipmaps(fmt, fmt, bpp, &im);
 #endif // GENERATE_MIPMAPS
 
-	avpicture_free( &my_pict );
+	av_freep( &data[0] );
 	sws_freeContext( ctx );
 }
 
