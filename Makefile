@@ -252,10 +252,7 @@ ifeq ($(WINDOWS_STATIC),1)
  FE_WINDOWS_COMPILE=1
 
 else
-
- LIBS += -lsfml-graphics \
-	-lsfml-window \
-	-lsfml-system
+  TEMP_LIBS += sfml-graphics sfml-window sfml-system
 endif
 
 ifneq ($(NO_SWF),1)
