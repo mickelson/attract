@@ -27,7 +27,7 @@ jobs:
             os: ubuntu-latest,
             cc: "clang",
             cxx: "clang++",
-            cxxpackage: "clang++"
+            cxxpackage: "clang"
           }
         - {
             name: "macOS Clang",
@@ -65,6 +65,15 @@ jobs:
           pkg install -y gmake clang pkgconf sfml openal-soft ffmpeg libarchive curl fontconfig libGLU
           gmake clean
           gmake
+
+    - name: Build on MacOS
+      if: runner.os == 'macOS'
+      env:
+	PKG_CONFIG_PATH: $PKG_CONFIG_PATH:/opt/homebrew/opt/libarchive/lib/pkgconfig:/opt/homebrew/opt/openal-soft/lib/pkgconfig:/opt/homebrew/opt/sfml@2/lib/pkgconfig
+        CC: ${{ matrix.config.cc }}
+        CXX: ${{ matrix.config.cxx }}
+      shell: bash
+      run: make
 
     - name: Build
       if: '!matrix.config.freebsd'
