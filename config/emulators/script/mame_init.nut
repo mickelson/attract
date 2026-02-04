@@ -21,6 +21,7 @@ mame_emu <-
 	"exts"   : ".zip;.7z",
 	"system" : "Arcade",
 	"source" : "listxml",
+	"import_extras"   : "",
 };
 
 // We only keep this at the nes settings if no non-arcade systems are
@@ -391,6 +392,8 @@ if ( ver >= 162 ) // mame and mess merged as of v 162
 ext_files <-
 [
 	"catver.ini",
+	"series.ini",
+	"language.ini",
 	"nplayers.ini"
 ];
 
