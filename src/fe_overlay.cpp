@@ -29,6 +29,8 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cmath>
+#include <cstdint>
+#include <optional>
 
 #ifndef M_PI
    #define M_PI 3.14159265358979323846
@@ -154,7 +156,7 @@ public:
 	int max_sel;		// [in] maximum selection
 
 	int move_count;
-	sf::Event move_event;
+	std::optional<sf::Event> move_event;
 	sf::Clock move_timer;
 	FeInputMap::Command move_command;
 	FeInputMap::Command extra_exit;
@@ -776,7 +778,7 @@ bool FeOverlay::edit_dialog(
 	draw_list.push_back( &message );
 	draw_list.push_back( &tp );
 
-	std::basic_string<sf::Uint32> str;
+	std::basic_string<std::uint32_t> str;
 	sf::Utf8::toUtf32( text.begin(), text.end(), std::back_inserter( str ) );
 
 	FeFlagMinder fm( m_overlay_is_on );
@@ -822,8 +824,7 @@ void FeOverlay::input_map_dialog(
 	sf::Mouse::setPosition( sf::Vector2i( win_size.x/2, win_size.y/2 ), m_wnd.get_win() );
 
 	// empty the window event queue
-	sf::Event ev;
-	while ( m_wnd.pollEvent(ev) )
+	while ( m_wnd.pollEvent() )
 	{
 		// no op
 	}
@@ -847,28 +848,30 @@ void FeOverlay::input_map_dialog(
 	const sf::Transform &t = m_fePresent.get_transform();
 	while ( m_wnd.isOpen() )
 	{
-		while (m_wnd.pollEvent(ev))
+		while ( auto ev = m_wnd.pollEvent() )
 		{
-			if ( ev.type == sf::Event::Closed )
+			if ( ev->is<sf::Event::Closed>() )
 				return;
 
-			if ( multi_mode && ((ev.type == sf::Event::KeyReleased )
-					|| ( ev.type == sf::Event::JoystickButtonReleased )
-					|| ( ev.type == sf::Event::MouseButtonReleased )))
+			if ( multi_mode && ((ev->is<sf::Event::KeyReleased>() )
+					|| ( ev->is<sf::Event::JoystickButtonReleased>() )
+					|| ( ev->is<sf::Event::MouseButtonReleased>() )))
 				done = true;
 			else
 			{
-				FeInputSingle single( ev, mc_rect, joy_thresh );
+				FeInputSingle single( *ev, mc_rect, joy_thresh );
 				if ( single.get_type() != FeInputSingle::Unsupported )
 				{
-					if (( ev.type == sf::Event::KeyPressed )
-							|| ( ev.type == sf::Event::JoystickButtonPressed )
-							|| ( ev.type == sf::Event::MouseButtonPressed ))
+					if (( ev->is<sf::Event::KeyPressed>() )
+							|| ( ev->is<sf::Event::JoystickButtonPressed>() )
+							|| ( ev->is<sf::Event::MouseButtonPressed>() ))
 						multi_mode = true;
-					else if ( ev.type == sf::Event::JoystickMoved )
+					else if ( ev->is<sf::Event::JoystickMoved>() )
 					{
 						multi_mode = true;
-						joystick_moves.insert( std::pair<int,int>( ev.joystickMove.joystickId, ev.joystickMove.axis ) );
+						auto* joyMoved = ev->getIf<sf::Event::JoystickMoved>();
+						if (joyMoved)
+							joystick_moves.insert( std::pair<int,int>( static_cast<int>(joyMoved->joystickId), static_cast<int>(joyMoved->axis) ) );
 					}
 
 					bool dup=false;
@@ -892,13 +895,15 @@ void FeOverlay::input_map_dialog(
 					if ( !multi_mode )
 						done = true;
 				}
-				else if ( ev.type == sf::Event::JoystickMoved )
+				else if ( ev->is<sf::Event::JoystickMoved>() )
 				{
-					// test if a joystick has been released
-					std::pair<int,int> test( ev.joystickMove.joystickId, ev.joystickMove.axis );
-
-					if ( joystick_moves.find( test ) != joystick_moves.end() )
-						done = true;
+					auto* joyMoved = ev->getIf<sf::Event::JoystickMoved>();
+					if (joyMoved)
+					{
+						std::pair<int,int> test( joyMoved->joystickId, static_cast<int>(joyMoved->axis) );
+						if ( joystick_moves.find( test ) != joystick_moves.end() )
+							done = true;
+					}
 				}
 			}
 		}
@@ -1290,7 +1295,7 @@ int FeOverlay::display_config_dialog(
 			else
 			{
 				const std::string &e_str( ctx.curr_opt().get_value() );
-				std::basic_string<sf::Uint32> str;
+				std::basic_string<std::uint32_t> str;
 				sf::Utf8::toUtf32( e_str.begin(), e_str.end(),
 						std::back_inserter( str ) );
 
@@ -1318,10 +1323,9 @@ int FeOverlay::display_config_dialog(
 
 bool FeOverlay::check_for_cancel()
 {
-	sf::Event ev;
-	while (m_wnd.pollEvent(ev))
+	while (const std::optional event = m_wnd.pollEvent())
 	{
-		FeInputMap::Command c = m_feSettings.map_input( ev );
+		FeInputMap::Command c = m_feSettings.map_input( *event );
 
 		if (( c == FeInputMap::Back )
 				|| ( c == FeInputMap::Exit )
@@ -1346,8 +1350,7 @@ void FeOverlay::init_event_loop( FeEventLoopCtx &ctx )
 				|| m_feSettings.get_current_state( FeInputMap::ExitToDesktop )
 				|| m_feSettings.get_current_state( FeInputMap::Select ) ))
 	{
-		sf::Event ev;
-		while (m_wnd.pollEvent(ev))
+		while (m_wnd.pollEvent())
 		{
 		}
 
@@ -1381,22 +1384,25 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 
 	while ( m_wnd.isOpen() )
 	{
-		sf::Event ev;
-		while (m_wnd.pollEvent(ev))
+		while (const std::optional event = m_wnd.pollEvent())
 		{
-			FeInputMap::Command c = m_feSettings.map_input( ev );
+			FeInputMap::Command c = m_feSettings.map_input( *event );
 
 			if (( c != FeInputMap::LAST_COMMAND )
 					&& ( c == ctx.extra_exit ))
 				c = FeInputMap::Exit;
 
-			if ( ( ev.type == sf::Event::MouseMoved )
-				&& ((ev.mouseMove.x != last_mouse_pos.x) || (ev.mouseMove.y != last_mouse_pos.y))
-				&& ( m_feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y ) ) )
+			if ( const auto* mouseMoved = event->getIf<sf::Event::MouseMoved>() )
 			{
-				last_mouse_pos = sf::Vector2i( ev.mouseMove.x, ev.mouseMove.y );
-				sf::Vector2u s = m_wnd.get_win().getSize();
-				sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), m_wnd.get_win() );
+				if ((mouseMoved->position.x != last_mouse_pos.x) || (mouseMoved->position.y != last_mouse_pos.y))
+				{
+					if ( m_feSettings.test_mouse_reset( mouseMoved->position.x, mouseMoved->position.y ) )
+					{
+						last_mouse_pos = sf::Vector2i( mouseMoved->position.x, mouseMoved->position.y );
+						sf::Vector2u s = m_wnd.get_win().getSize();
+						sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), m_wnd.get_win() );
+					}
+				}
 			}
 
 			switch( c )
@@ -1410,36 +1416,36 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 			case FeInputMap::Select:
 				return true;
 			case FeInputMap::Up:
-				if (( ev.type == sf::Event::JoystickMoved )
-						&& ( ctx.move_event.type == sf::Event::JoystickMoved ))
+				if ( event->is<sf::Event::JoystickMoved>()
+						&& ctx.move_event && ctx.move_event->is<sf::Event::JoystickMoved>() )
 					return false;
 
 				if ( ctx.sel > 0 )
 					ctx.sel--;
-				else if ( ev.type != sf::Event::MouseMoved )
+				else if ( !event->is<sf::Event::MouseMoved>() )
 					ctx.sel = ctx.max_sel;
 				else
 					ctx.sel = 0;
 
-				ctx.move_event = ev;
+				ctx.move_event = *event;
 				ctx.move_command = FeInputMap::Up;
 				ctx.move_count = 0;
 				ctx.move_timer.restart();
 				return false;
 
 			case FeInputMap::Down:
-				if (( ev.type == sf::Event::JoystickMoved )
-						&& ( ctx.move_event.type == sf::Event::JoystickMoved ))
+				if ( event->is<sf::Event::JoystickMoved>()
+						&& ctx.move_event && ctx.move_event->is<sf::Event::JoystickMoved>() )
 					return false;
 
 				if ( ctx.sel < ctx.max_sel )
 					ctx.sel++;
-				else if ( ev.type != sf::Event::MouseMoved )
+				else if ( !event->is<sf::Event::MouseMoved>() )
 					ctx.sel = 0;
 				else
 					ctx.sel = ctx.max_sel;
 
-				ctx.move_event = ev;
+				ctx.move_event = *event;
 				ctx.move_command = FeInputMap::Down;
 				ctx.move_count = 0;
 				ctx.move_timer.restart();
@@ -1473,39 +1479,31 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 		{
 			bool cont=false;
 
-			switch ( ctx.move_event.type )
+			if ( ctx.move_event )
 			{
-			case sf::Event::KeyPressed:
-				if ( sf::Keyboard::isKeyPressed( ctx.move_event.key.code ) )
-					cont=true;
-				break;
-
-			case sf::Event::MouseButtonPressed:
-				if ( sf::Mouse::isButtonPressed( ctx.move_event.mouseButton.button ) )
-					cont=true;
-				break;
-
-			case sf::Event::JoystickButtonPressed:
-				if ( sf::Joystick::isButtonPressed(
-						ctx.move_event.joystickButton.joystickId,
-						ctx.move_event.joystickButton.button ) )
-					cont=true;
-				break;
-
-			case sf::Event::JoystickMoved:
+				if ( const auto* keyPressed = ctx.move_event->getIf<sf::Event::KeyPressed>() )
+				{
+					if ( sf::Keyboard::isKeyPressed( keyPressed->code ) )
+						cont=true;
+				}
+				else if ( const auto* mouseButton = ctx.move_event->getIf<sf::Event::MouseButtonPressed>() )
+				{
+					if ( sf::Mouse::isButtonPressed( mouseButton->button ) )
+						cont=true;
+				}
+				else if ( const auto* joyButton = ctx.move_event->getIf<sf::Event::JoystickButtonPressed>() )
+				{
+					if ( sf::Joystick::isButtonPressed( joyButton->joystickId, joyButton->button ) )
+						cont=true;
+				}
+				else if ( const auto* joyMoved = ctx.move_event->getIf<sf::Event::JoystickMoved>() )
 				{
 					sf::Joystick::update();
 
-					float pos = sf::Joystick::getAxisPosition(
-							ctx.move_event.joystickMove.joystickId,
-							ctx.move_event.joystickMove.axis );
+					float pos = sf::Joystick::getAxisPosition( joyMoved->joystickId, joyMoved->axis );
 					if ( std::abs( pos ) > m_feSettings.get_joy_thresh() )
 						cont=true;
 				}
-				break;
-
-			default:
-				break;
 			}
 
 			if ( cont )
@@ -1532,7 +1530,7 @@ bool FeOverlay::event_loop( FeEventLoopCtx &ctx )
 			else
 			{
 				ctx.move_command = FeInputMap::LAST_COMMAND;
-				ctx.move_event = sf::Event();
+				ctx.move_event.reset();
 			}
 		}
 	}
@@ -1665,47 +1663,42 @@ int get_char_idx( unsigned char c )
 };
 
 bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
-			std::basic_string<sf::Uint32> &str, FeTextPrimative *tp )
+			std::basic_string<std::uint32_t> &str, FeTextPrimative *tp )
 {
 	sf::Clock cursor_timer;
 	const sf::Transform &t = m_fePresent.get_transform();
 
 	const sf::Font *font = tp->getFont();
-	sf::Text cursor( "|", *font, tp->getCharacterSize() / tp->getTextScale().x );
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
+	sf::Text cursor( *font, "|", tp->getCharacterSize() / tp->getTextScale().x );
 	cursor.setFillColor( tp->getColor() );
-#else
-	cursor.setColor( tp->getColor() );
-#endif
 	cursor.setStyle( sf::Text::Bold );
 	cursor.setScale( tp->getTextScale() );
 
 	int cursor_pos=str.size();
+	sf::FloatRect bounds = cursor.getLocalBounds();
 	cursor.setPosition( tp->setString( str, cursor_pos ) - sf::Vector2f((
-		cursor.getLocalBounds().width + cursor.getLocalBounds().left - 2.0 ) * cursor.getScale().x,
-		cursor.getLocalBounds().top * cursor.getScale().y / 2.0 ));
+		bounds.size.x + bounds.position.x - 2.0 ) * cursor.getScale().x,
+		bounds.position.y * cursor.getScale().y / 2.0 ));
 
 	bool redraw=true;
 	FeKeyRepeat key_repeat_enabler( m_wnd.get_win() );
 
-	sf::Event joy_guard;
+	std::optional<sf::Event> joy_guard;
 	bool did_delete( false ); // flag if the user just deleted a character using the UI controls
 
 	while ( m_wnd.isOpen() )
 	{
-		sf::Event ev;
-		while (m_wnd.pollEvent(ev))
+		while (const std::optional event = m_wnd.pollEvent())
 		{
-			switch ( ev.type )
+			if ( event->is<sf::Event::Closed>() )
 			{
-			case sf::Event::Closed:
 				return false;
-
-			case sf::Event::TextEntered:
-
+			}
+			else if ( const auto* textEntered = event->getIf<sf::Event::TextEntered>() )
+			{
 				did_delete = false;
 
-				if ( ev.text.unicode == 8 ) // backspace
+				if ( textEntered->unicode == 8 ) // backspace
 				{
 					if ( cursor_pos > 0 )
 					{
@@ -1713,76 +1706,69 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 						cursor_pos--;
 					}
 					redraw = true;
-					break;
 				}
+				else if (( textEntered->unicode >= 32 ) && ( textEntered->unicode != 127 ))
+				{
+					if ( cursor_pos < (int)str.size() )
+						str.insert( cursor_pos, 1, textEntered->unicode );
+					else
+						str += textEntered->unicode;
 
-				//
-				// Don't respond to control characters < 32 (line feeds etc.)
-				// and don't handle 127 (delete) here, it is dealt with as a keypress
-				//
-				if (( ev.text.unicode < 32 ) || ( ev.text.unicode == 127 ))
-					break;
-
-				if ( cursor_pos < (int)str.size() )
-					str.insert( cursor_pos, 1, ev.text.unicode );
-				else
-					str += ev.text.unicode;
-
-				cursor_pos++;
-				redraw = true;
-				break;
-
-			case sf::Event::KeyPressed:
-
+					cursor_pos++;
+					redraw = true;
+				}
+			}
+			else if ( const auto* keyPressed = event->getIf<sf::Event::KeyPressed>() )
+			{
 				did_delete = false;
 
-				switch ( ev.key.code )
+				switch ( keyPressed->code )
 				{
-				case sf::Keyboard::Left:
+				case sf::Keyboard::Key::Left:
 					if ( cursor_pos > 0 )
 						cursor_pos--;
 
 					redraw = true;
 					break;
 
-				case sf::Keyboard::Right:
+				case sf::Keyboard::Key::Right:
 					if ( cursor_pos < (int)str.size() )
 						cursor_pos++;
 
 					redraw = true;
 					break;
 
-				case sf::Keyboard::Return:
+				case sf::Keyboard::Key::Enter:
 					return true;
 
-				case sf::Keyboard::Escape:
+				case sf::Keyboard::Key::Escape:
 					return false;
 
-				case sf::Keyboard::End:
+				case sf::Keyboard::Key::End:
 					cursor_pos = str.size();
 					redraw = true;
 					break;
 
-				case sf::Keyboard::Home:
+				case sf::Keyboard::Key::Home:
 					cursor_pos = 0;
 					redraw = true;
 					break;
 
-				case sf::Keyboard::Delete:
+				case sf::Keyboard::Key::Delete:
 					if ( cursor_pos < (int)str.size() )
 						str.erase( cursor_pos, 1 );
 
 					redraw = true;
 					break;
 
-				case sf::Keyboard::V:
+				case sf::Keyboard::Key::V:
 #ifdef SFML_SYSTEM_MACOS
-					if ( ev.key.system )
+					if ( keyPressed->scancode == sf::Keyboard::Scancode::V )
 #else
-					if ( ev.key.control )
+					if ( keyPressed->scancode == sf::Keyboard::Scancode::V )
 #endif
 					{
-						std::basic_string<sf::Uint32> temp = clipboard_get_content();
+						std::basic_string<std::uint32_t> temp = clipboard_get_content();
 						str.insert( cursor_pos, temp.c_str() );
 						cursor_pos += temp.length();
 					}
@@ -1792,133 +1778,131 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 				default:
 					break;
 				}
-				break;
-
-			default:
+			}
+			else
+			{
 				//
 				// Handle UI actions from non-keyboard input
 				//
+				FeInputMap::Command c = m_feSettings.map_input( *event );
+
+				switch ( c )
 				{
-					FeInputMap::Command c = m_feSettings.map_input( ev );
+				case FeInputMap::Left:
+					if ( event->is<sf::Event::JoystickMoved>()
+							&& joy_guard && joy_guard->is<sf::Event::JoystickMoved>() )
+						break;
 
-					switch ( c )
+					did_delete = false;
+
+					if ( cursor_pos > 0 )
+						cursor_pos--;
+
+					redraw = true;
+
+					if ( event->is<sf::Event::JoystickMoved>() )
+						joy_guard = *event;
+					break;
+
+				case FeInputMap::Right:
+					if ( event->is<sf::Event::JoystickMoved>()
+							&& joy_guard && joy_guard->is<sf::Event::JoystickMoved>() )
+						break;
+
+					did_delete = false;
+
+					if ( cursor_pos < (int)str.size() )
+						cursor_pos++;
+
+					redraw = true;
+
+					if ( event->is<sf::Event::JoystickMoved>() )
+						joy_guard = *event;
+					break;
+
+				case FeInputMap::Up:
+					if ( event->is<sf::Event::JoystickMoved>()
+							&& joy_guard && joy_guard->is<sf::Event::JoystickMoved>() )
+						break;
+
+					if ( cursor_pos < (int)str.size() )
 					{
-					case FeInputMap::Left:
-						if (( ev.type == sf::Event::JoystickMoved )
-								&& ( joy_guard.type == sf::Event::JoystickMoved ))
-							break;
-
-						did_delete = false;
-
-						if ( cursor_pos > 0 )
-							cursor_pos--;
-
-						redraw = true;
-
-						if ( ev.type == sf::Event::JoystickMoved )
-							joy_guard = ev;
-						break;
-
-					case FeInputMap::Right:
-						if (( ev.type == sf::Event::JoystickMoved )
-								&& ( joy_guard.type == sf::Event::JoystickMoved ))
-							break;
-
-						did_delete = false;
-
-						if ( cursor_pos < (int)str.size() )
-							cursor_pos++;
-
-						redraw = true;
-
-						if ( ev.type == sf::Event::JoystickMoved )
-							joy_guard = ev;
-						break;
-
-					case FeInputMap::Up:
-						if (( ev.type == sf::Event::JoystickMoved )
-								&& ( joy_guard.type == sf::Event::JoystickMoved ))
-							break;
-
-						if ( cursor_pos < (int)str.size() )
+						if ( did_delete )
 						{
-							if ( did_delete )
-							{
-								str.insert( cursor_pos, 1, my_char_table[0] );
-								redraw = true;
-								did_delete = false;
-							}
-							else
-							{
-								int idx = get_char_idx( str[cursor_pos] );
-
-								if ( my_char_table[idx+1] )
-								{
-									str[cursor_pos] = my_char_table[idx+1];
-									redraw = true;
-									did_delete = false;
-								}
-							}
-						}
-						else // allow inserting new characters at the end by pressing Up
-						{
-							str += my_char_table[0];
+							str.insert( cursor_pos, 1, my_char_table[0] );
 							redraw = true;
 							did_delete = false;
 						}
-
-						if ( ev.type == sf::Event::JoystickMoved )
-							joy_guard = ev;
-						break;
-
-					case FeInputMap::Down:
-						if (( ev.type == sf::Event::JoystickMoved )
-								&& ( joy_guard.type == sf::Event::JoystickMoved ))
-							break;
-
-						if ( did_delete ) // force user to do something else to confirm delete
-							break;
-
-						if ( cursor_pos < (int)str.size() )
+						else
 						{
 							int idx = get_char_idx( str[cursor_pos] );
 
-							if ( idx > 0 )
+							if ( my_char_table[idx+1] )
 							{
-								str[cursor_pos] = my_char_table[idx-1];
+								str[cursor_pos] = my_char_table[idx+1];
 								redraw = true;
-							}
-							else //if ( idx == 0 )
-							{
-								// Special case allowing the user to delete
-								// a character
-								str.erase( cursor_pos, 1 );
-								redraw = true;
-								did_delete = true;
+								did_delete = false;
 							}
 						}
-
-						if ( ev.type == sf::Event::JoystickMoved )
-							joy_guard = ev;
-						break;
-
-					case FeInputMap::Back:
-						return false;
-
-					case FeInputMap::Select:
-						return true;
-					default:
-						break;
 					}
+					else // allow inserting new characters at the end by pressing Up
+					{
+						str += my_char_table[0];
+						redraw = true;
+						did_delete = false;
+					}
+
+					if ( event->is<sf::Event::JoystickMoved>() )
+						joy_guard = *event;
+					break;
+
+				case FeInputMap::Down:
+					if ( event->is<sf::Event::JoystickMoved>()
+							&& joy_guard && joy_guard->is<sf::Event::JoystickMoved>() )
+						break;
+
+					if ( did_delete ) // force user to do something else to confirm delete
+						break;
+
+					if ( cursor_pos < (int)str.size() )
+					{
+						int idx = get_char_idx( str[cursor_pos] );
+
+						if ( idx > 0 )
+						{
+							str[cursor_pos] = my_char_table[idx-1];
+							redraw = true;
+						}
+						else //if ( idx == 0 )
+						{
+							// Special case allowing the user to delete
+							// a character
+							str.erase( cursor_pos, 1 );
+							redraw = true;
+							did_delete = true;
+						}
+					}
+
+					if ( event->is<sf::Event::JoystickMoved>() )
+						joy_guard = *event;
+					break;
+
+				case FeInputMap::Back:
+					return false;
+
+				case FeInputMap::Select:
+					return true;
+				default:
+					break;
 				}
-			break;
 			}
 
 			if ( redraw )
 			{
+				sf::FloatRect newBounds = cursor.getLocalBounds();
 				cursor.setPosition( tp->setString( str, cursor_pos ) - sf::Vector2f((
-					cursor.getLocalBounds().width + cursor.getLocalBounds().left - 2.0 ) * cursor.getScale().x,
-					cursor.getLocalBounds().top * cursor.getScale().y / 2.0 ));
+					newBounds.size.x + newBounds.position.x - 2.0 ) * cursor.getScale().x,
+					newBounds.position.y * cursor.getScale().y / 2.0 ));
 				cursor_timer.restart();
 			}
 		}
@@ -1940,11 +1924,7 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 
 		int cursor_fade = ( sin( cursor_timer.getElapsedTime().asMilliseconds() / 250.0 * M_PI ) + 1.0 ) * 255;
 
-#if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
 		cursor.setFillColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
-#else
-		cursor.setColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
-#endif
 
 		m_wnd.draw( cursor, t );
 		m_wnd.display();
@@ -1957,16 +1937,17 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 		//
 		// Check if previous joystick move is now done (in which case we clear the guard)
 		//
-		if ( joy_guard.type == sf::Event::JoystickMoved )
+		if ( joy_guard && joy_guard->is<sf::Event::JoystickMoved>() )
 		{
 			sf::Joystick::update();
 
+			const auto* joyMoved = joy_guard->getIf<sf::Event::JoystickMoved>();
 			float pos = sf::Joystick::getAxisPosition(
-				joy_guard.joystickMove.joystickId,
-				joy_guard.joystickMove.axis );
+				joyMoved->joystickId,
+				joyMoved->axis );
 
 			if ( std::abs( pos ) < m_feSettings.get_joy_thresh() )
-				joy_guard = sf::Event();
+				joy_guard.reset();
 		}
 
 	}

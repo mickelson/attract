@@ -25,6 +25,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <cstdint>
 
 class FeTextPrimative : public sf::Drawable
 {
@@ -60,7 +61,7 @@ public:
 	// that WordWrap is set to false (cursor positioning is not supported
 	// with // wordwrapping on)
 	//
-	sf::Vector2f setString( const std::basic_string<sf::Uint32> &t,
+	sf::Vector2f setString( const std::basic_string<std::uint32_t> &t,
 					int cursor_string_pos=-1 ); // no utf-8 conversion
 
 	void setFont( const sf::Font & );
@@ -130,7 +131,7 @@ private:
 	//		[out] last_char		- position of the last character to display
 	//
 	void fit_string(
-			const std::basic_string<sf::Uint32> &s,
+			const std::basic_string<std::uint32_t> &s,
 			int &position,
 			int &first_char,
 			int &last_char );

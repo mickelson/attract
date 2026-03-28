@@ -60,19 +60,19 @@ sf::BlendMode FeBlend::get_blend_mode( int blend_mode )
 
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ))
 		case FeBlend::Subtract:
-			return sf::BlendMode(sf::BlendMode::SrcAlpha, sf::BlendMode::One, sf::BlendMode::ReverseSubtract,
-								 sf::BlendMode::One, sf::BlendMode::One, sf::BlendMode::ReverseSubtract);
+			return sf::BlendMode(sf::BlendMode::Factor::SrcAlpha, sf::BlendMode::Factor::One, sf::BlendMode::Equation::ReverseSubtract,
+								 sf::BlendMode::Factor::One, sf::BlendMode::Factor::One, sf::BlendMode::Equation::ReverseSubtract);
 #endif
 
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 2, 0 ))
 		case FeBlend::Screen:
-			return sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcColor);
+			return sf::BlendMode(sf::BlendMode::Factor::One, sf::BlendMode::Factor::OneMinusSrcColor);
 		case FeBlend::Multiply:
-			return sf::BlendMode(sf::BlendMode::DstColor, sf::BlendMode::OneMinusSrcAlpha);
+			return sf::BlendMode(sf::BlendMode::Factor::DstColor, sf::BlendMode::Factor::OneMinusSrcAlpha);
 		case FeBlend::Overlay:
-			return sf::BlendMode(sf::BlendMode::DstColor, sf::BlendMode::SrcColor);
+			return sf::BlendMode(sf::BlendMode::Factor::DstColor, sf::BlendMode::Factor::SrcColor);
 		case FeBlend::Premultiplied:
-			return sf::BlendMode(sf::BlendMode::One, sf::BlendMode::OneMinusSrcAlpha);
+			return sf::BlendMode(sf::BlendMode::Factor::One, sf::BlendMode::Factor::OneMinusSrcAlpha);
 #endif
 
 		case FeBlend::None:
@@ -101,21 +101,21 @@ sf::Shader* FeBlend::get_default_shader( int blend_mode )
 			if ( !default_shader_multiplied )
 			{
 				default_shader_multiplied = new sf::Shader();
-				default_shader_multiplied->loadFromMemory( DEFAULT_SHADER_GLSL_MULTIPLIED, sf::Shader::Fragment );
+				default_shader_multiplied->loadFromMemory( DEFAULT_SHADER_GLSL_MULTIPLIED, sf::Shader::Type::Fragment );
 			}
 			return default_shader_multiplied;
 		case FeBlend::Overlay:
 			if ( !default_shader_overlay )
 			{
 				default_shader_overlay = new sf::Shader();
-				default_shader_overlay->loadFromMemory( DEFAULT_SHADER_GLSL_OVERLAY, sf::Shader::Fragment );
+				default_shader_overlay->loadFromMemory( DEFAULT_SHADER_GLSL_OVERLAY, sf::Shader::Type::Fragment );
 			}
 			return default_shader_overlay;
 		case FeBlend::Premultiplied:
 			if ( !default_shader_premultiplied )
 			{
 				default_shader_premultiplied = new sf::Shader();
-				default_shader_premultiplied->loadFromMemory( DEFAULT_SHADER_GLSL_PREMULTIPLIED, sf::Shader::Fragment );
+				default_shader_premultiplied->loadFromMemory( DEFAULT_SHADER_GLSL_PREMULTIPLIED, sf::Shader::Type::Fragment );
 			}
 			return default_shader_premultiplied;
 		default:

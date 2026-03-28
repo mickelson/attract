@@ -22,6 +22,7 @@
 
 #include "fe_presentable.hpp"
 #include "fe_present.hpp"
+#include <algorithm>
 
 FeBasePresentable::FeBasePresentable( FePresentableParent &p )
 	: m_parent( p ),
