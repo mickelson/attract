@@ -26,12 +26,22 @@
 #include <vector>
 #include <queue>
 #include <string>
+#include <optional>
 
 #include "fe_input.hpp"
 #include "fe_present.hpp"
 
+#include <SFML/Window/Event.hpp>
+
 #include <sqrat/sqratObject.h>
 #include <sqrat/sqratFunction.h>
+
+struct FePollCommandResult
+{
+	FeInputMap::Command command;
+	bool from_ui;
+	std::optional<sf::Event> event;
+};
 
 class FeWindow;
 class FeOverlay;
@@ -116,7 +126,7 @@ public:
 	void set_overlay( FeOverlay *feo );
 
 	void flag_redraw() { m_redraw_triggered = true; };
-	bool poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui );
+	FePollCommandResult poll_command();
 	void clear(); // override of base class clear()
 
 	void update_to_new_list( int var=0, bool reset_display=false, bool suppress_transition=false ); // NOTE: override virtual function from FePresent

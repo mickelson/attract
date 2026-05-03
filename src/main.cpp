@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 	FeInputMap::Command move_state( FeInputMap::LAST_COMMAND ); // command mapped to the move
 	FeInputMap::Command move_triggered( FeInputMap::LAST_COMMAND ); // "repeatable" command triggered on move (if any)
 	sf::Clock move_timer;
-	sf::Event move_event;
+	std::optional<sf::Event> move_event;
 	int move_last_triggered( 0 );
 	sf::Vector2i last_mouse_pos;
 
@@ -345,72 +345,56 @@ int main(int argc, char *argv[])
 			redraw=true;
 		}
 
-		sf::Event ev;
-		bool from_ui;
-		while ( feVM.poll_command( c, ev, from_ui ) )
+		FePollCommandResult r;
+		while ( ( r = feVM.poll_command() ).command != FeInputMap::LAST_COMMAND || r.event )
 		{
-			//
-			// Special case handling based on event type
-			//
-			switch ( ev.type )
+			if ( r.event )
 			{
-				case sf::Event::Closed:
-					exit_selected = true;
-					break;
+				sf::Event &ev = *r.event;
 
-				case sf::Event::MouseMoved:
-					if ( (( ev.mouseMove.x != last_mouse_pos.x ) || ( ev.mouseMove.y != last_mouse_pos.y ))
-						&& ( feSettings.test_mouse_reset( ev.mouseMove.x, ev.mouseMove.y )) )
+				if ( ev.is<sf::Event::Closed>() )
+				{
+					exit_selected = true;
+				}
+				else if ( ev.is<sf::Event::MouseMoved>() )
+				{
+					auto* mm = ev.getIf<sf::Event::MouseMoved>();
+					if ( (( mm->position.x != last_mouse_pos.x ) || ( mm->position.y != last_mouse_pos.y ))
+						&& ( feSettings.test_mouse_reset( mm->position.x, mm->position.y )) )
 					{
-						// We reset the mouse if we are capturing it and it has moved
-						// outside of its bounding box
-						//
-						last_mouse_pos = sf::Vector2i( ev.mouseMove.x, ev.mouseMove.y );
+						last_mouse_pos = sf::Vector2i( mm->position.x, mm->position.y );
 						sf::Vector2u s = window.get_win().getSize();
 						sf::Mouse::setPosition( sf::Vector2i( s.x / 2, s.y / 2 ), window.get_win() );
 					}
-					break;
-
-				case sf::Event::KeyReleased:
-				case sf::Event::MouseButtonReleased:
-				case sf::Event::JoystickButtonReleased:
-					//
-					// We always want to reset the screen saver on these events,
-					// even if they aren't mapped otherwise (mapped events cause
-					// a reset too)
-					//
-					if (( c == FeInputMap::LAST_COMMAND )
+				}
+				else if ( ev.is<sf::Event::KeyReleased>() ||
+						ev.is<sf::Event::MouseButtonReleased>() ||
+						ev.is<sf::Event::JoystickButtonReleased>() )
+				{
+					if (( r.command == FeInputMap::LAST_COMMAND )
 							&& ( feVM.reset_screen_saver() ))
 						redraw = true;
-					break;
-
-				case sf::Event::GainedFocus:
-				case sf::Event::Resized:
+				}
+				else if ( ev.is<sf::Event::FocusGained>() || ev.is<sf::Event::Resized>() )
+				{
 					redraw = true;
-					break;
-
-
-				case sf::Event::JoystickMoved:
-					if ( c != FeInputMap::LAST_COMMAND )
+				}
+				else if ( ev.is<sf::Event::JoystickMoved>() )
+				{
+					if ( r.command != FeInputMap::LAST_COMMAND )
 					{
-						// Only allow one mapped "Joystick Moved" input through at a time
-						//
 						if ( guard_joyid != -1 )
 							continue;
 
-						guard_joyid = ev.joystickMove.joystickId;
-						guard_axis = ev.joystickMove.axis;
+						auto* jm = ev.getIf<sf::Event::JoystickMoved>();
+						guard_joyid = jm->joystickId;
+						guard_axis = static_cast<int>(jm->axis);
 					}
-					break;
-
-				case sf::Event::JoystickConnected:
-				case sf::Event::JoystickDisconnected:
+				}
+				else if ( ev.is<sf::Event::JoystickConnected>() || ev.is<sf::Event::JoystickDisconnected>() )
+				{
 					feSettings.on_joystick_connect();
-					break;
-
-				case sf::Event::Count:
-				default:
-					break;
+				}
 			}
 
 			// Test if we need to keep the joystick axis guard up
@@ -451,15 +435,15 @@ int main(int argc, char *argv[])
 			// let the signal proceed (and set move_triggered below... at step 2 of 2)
 			//
 			if (( move_state != FeInputMap::LAST_COMMAND )
-					&& ( from_ui || ( move_triggered != FeInputMap::LAST_COMMAND )))
+					&& ( r.from_ui || ( move_triggered != FeInputMap::LAST_COMMAND )))
 				continue;
 
-			if ( from_ui )
+			if ( r.from_ui )
 			{
 				// setup variables to test for when the navigation keys are held down
-				move_state = c;
+				move_state = r.command;
 				move_timer.restart();
-				move_event = ev;
+				move_event = r.event;
 				move_triggered = FeInputMap::LAST_COMMAND;
 			}
 
@@ -590,7 +574,7 @@ int main(int argc, char *argv[])
 			//
 			// ( move_state == LAST_COMMAND ) will catch the regular case with no remapping
 			//
-			if (( !from_ui && ( move_triggered == FeInputMap::LAST_COMMAND ))
+			if (( !r.from_ui && ( move_triggered == FeInputMap::LAST_COMMAND ))
 					|| ( move_state != FeInputMap::LAST_COMMAND ))
 			{
 				if ( FeInputMap::is_repeatable_command( c ) )
@@ -652,7 +636,7 @@ int main(int argc, char *argv[])
 						sf::RenderWindow &w = window.get_win();
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
 						sf::Texture texture;
-						texture.create( w.getSize().x, w.getSize().y );
+						texture.resize( w.getSize() );
 						texture.update( w );
 						sf::Image sshot_img = texture.copyToImage();
 #else
@@ -913,39 +897,35 @@ int main(int argc, char *argv[])
 		{
 			bool cont=false;
 
-			switch ( move_event.type )
+			if ( move_event )
 			{
-			case sf::Event::KeyPressed:
-				if ( sf::Keyboard::isKeyPressed( move_event.key.code ) )
-					cont=true;
-				break;
-
-			case sf::Event::MouseButtonPressed:
-				if ( sf::Mouse::isButtonPressed( move_event.mouseButton.button ) )
-					cont=true;
-				break;
-
-			case sf::Event::JoystickButtonPressed:
-				if ( sf::Joystick::isButtonPressed(
-						move_event.joystickButton.joystickId,
-						move_event.joystickButton.button ) )
-					cont=true;
-				break;
-
-			case sf::Event::JoystickMoved:
+				if ( move_event->is<sf::Event::KeyPressed>() )
+				{
+					const auto* kp = move_event->getIf<sf::Event::KeyPressed>();
+					if ( sf::Keyboard::isKeyPressed( kp->code ) )
+						cont=true;
+				}
+				else if ( move_event->is<sf::Event::MouseButtonPressed>() )
+				{
+					const auto* mb = move_event->getIf<sf::Event::MouseButtonPressed>();
+					if ( sf::Mouse::isButtonPressed( mb->button ) )
+						cont=true;
+				}
+				else if ( move_event->is<sf::Event::JoystickButtonPressed>() )
+				{
+					const auto* jb = move_event->getIf<sf::Event::JoystickButtonPressed>();
+					if ( sf::Joystick::isButtonPressed( jb->joystickId, jb->button ) )
+						cont=true;
+				}
+				else if ( move_event->is<sf::Event::JoystickMoved>() )
 				{
 					sf::Joystick::update();
 
-					float pos = sf::Joystick::getAxisPosition(
-							move_event.joystickMove.joystickId,
-							move_event.joystickMove.axis );
+					const auto* jm = move_event->getIf<sf::Event::JoystickMoved>();
+					float pos = sf::Joystick::getAxisPosition( jm->joystickId, jm->axis );
 					if ( std::abs( pos ) > feSettings.get_joy_thresh() )
 						cont=true;
 				}
-				break;
-
-			default:
-				break;
 			}
 
 			if ( cont )

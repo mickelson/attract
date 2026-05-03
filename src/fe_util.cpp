@@ -40,6 +40,7 @@
 #include <dirent.h>
 
 #include <SFML/Config.hpp>
+#include <SFML/System/Time.hpp>
 #include <SFML/System/Sleep.hpp>
 #include <SFML/System/Clock.hpp>
 
@@ -850,12 +851,12 @@ namespace
 		//
 		sf::Clock t;
 		while (( hotkey.get_current_state( opt->joy_thresh ) )
-			&& ( t.getElapsedTime().asMilliseconds() < TIMEOUT_MS ))
+			&& ( t.getElapsedTime().asMicroseconds() < TIMEOUT_MS * 1000 ))
 		{
 			if ( opt->wait_cb )
 				opt->wait_cb( opt->launch_opaque );
 
-			sf::sleep( sf::milliseconds( 10 ) );
+			sf::sleep( sf::microseconds( 10000 ) );
 		}
 
 		return true;
@@ -929,7 +930,7 @@ void windows_wait_process(
 
 				// Sleep to let the other process deal with the hiding of its window
 				// before we suspend it
-				sf::sleep( sf::milliseconds( 600 ) );
+				sf::sleep( sf::microseconds( 600000 ) );
 
 				// Undocumented windows system call
 				NtSuspendProcess pfn_NtSuspendProcess = (NtSuspendProcess)GetProcAddress(
@@ -978,7 +979,7 @@ void unix_wait_process( unsigned int pid, run_program_options_class *opt )
 				// uses to exit, we often have a problem of losing focus.  Delaying a bit and testing to make sure
 				// the emulator process is still running before sending the kill signal seems to help...
 				//
-				sf::sleep( sf::milliseconds( 100 ) );
+				sf::sleep( sf::microseconds( 100000 ) );
 				if ( kill( pid, 0 ) == 0 )
 				{
 					FeLog() << " - Exit Hotkey pressed, sending SIGTERM signal to process " << pid << std::endl;
@@ -990,10 +991,10 @@ void unix_wait_process( unsigned int pid, run_program_options_class *opt )
 					const int TERM_TIMEOUT = 1500;
 					sf::Clock term_clock;
 
-					while (( term_clock.getElapsedTime().asMilliseconds() < TERM_TIMEOUT )
+					while (( term_clock.getElapsedTime().asMicroseconds() < TERM_TIMEOUT * 1000 )
 						&& ( waitpid( pid, &status, WNOHANG ) == 0 ))
 					{
-						sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
+						sf::sleep( sf::microseconds( POLL_FOR_EXIT_MS * 1000 ) );
 					}
 
 					//
@@ -1033,14 +1034,14 @@ void unix_wait_process( unsigned int pid, run_program_options_class *opt )
 
 				// Sleep to let the other process deal with the unmapping of its window
 				// before we SIGSTOP it
-				sf::sleep( sf::milliseconds( 600 ) );
+				sf::sleep( sf::microseconds( 600000 ) );
 #endif
 				opt->running_pid = pid;
 				kill( pid, SIGSTOP );
 				break; // leave do/while loop
 			}
 
-			sf::sleep( sf::milliseconds( POLL_FOR_EXIT_MS ) );
+			sf::sleep( sf::microseconds( POLL_FOR_EXIT_MS * 1000 ) );
 		}
 		else
 		{
@@ -1403,9 +1404,9 @@ std::string name_with_brackets_stripped( const std::string &name )
 }
 
 
-std::basic_string<sf::Uint32> clipboard_get_content()
+std::basic_string<std::uint32_t> clipboard_get_content()
 {
-	std::basic_string<sf::Uint32> retval;
+	std::basic_string<std::uint32_t> retval;
 
 #ifdef SFML_SYSTEM_MACOS
 	retval = osx_clipboard_get_content();

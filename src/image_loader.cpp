@@ -49,17 +49,24 @@ namespace
 	int read(void* user, char* data, int size)
 	{
 		sf::InputStream* stream = static_cast<sf::InputStream*>(user);
-		return static_cast<int>(stream->read(data, size));
+		auto result = stream->read(data, size);
+		return result ? static_cast<int>(*result) : -1;
 	}
 	void skip(void* user, int size)
 	{
 		sf::InputStream* stream = static_cast<sf::InputStream*>(user);
-		stream->seek(stream->tell() + size);
+		auto pos = stream->tell();
+		if (pos)
+			stream->seek(*pos + size);
 	}
 	int eof(void* user)
 	{
 		sf::InputStream* stream = static_cast<sf::InputStream*>(user);
-		return stream->tell() >= stream->getSize();
+		auto pos = stream->tell();
+		auto size = stream->getSize();
+		if (pos && size)
+			return *pos >= *size;
+		return 1;
 	}
 	std::recursive_mutex g_mutex;
 

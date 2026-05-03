@@ -63,7 +63,7 @@
 
 ////////////////////////////////////////////////////////////
 FeSprite::FeSprite() :
-m_vertices( sf::TrianglesStrip, 4 ),
+m_vertices( sf::PrimitiveType::TriangleStrip, 4 ),
 m_texture    (NULL),
 m_textureRect(),
 m_pinch( 0.f, 0.f ),
@@ -74,7 +74,7 @@ m_skew( 0.f, 0.f )
 
 ////////////////////////////////////////////////////////////
 FeSprite::FeSprite(const sf::Texture& texture) :
-m_vertices( sf::TrianglesStrip, 4 ),
+m_vertices( sf::PrimitiveType::TriangleStrip, 4 ),
 m_texture    (NULL),
 m_textureRect(),
 m_pinch( 0.f, 0.f ),
@@ -86,7 +86,7 @@ m_skew( 0.f, 0.f )
 
 ////////////////////////////////////////////////////////////
 FeSprite::FeSprite(const sf::Texture& texture, const sf::IntRect& rectangle) :
-m_vertices( sf::TrianglesStrip, 4 ),
+m_vertices( sf::PrimitiveType::TriangleStrip, 4 ),
 m_texture    (NULL),
 m_textureRect(),
 m_pinch( 0.f, 0.f ),
@@ -102,7 +102,7 @@ void FeSprite::setTexture(const sf::Texture& texture, bool resetRect)
 {
     // Recompute the texture area if requested, or if there was no valid texture & rect before
     if (resetRect || (!m_texture && (m_textureRect == sf::IntRect())))
-        setTextureRect(sf::IntRect(0, 0, texture.getSize().x, texture.getSize().y));
+        setTextureRect(sf::IntRect({0, 0}, {static_cast<int>(texture.getSize().x), static_cast<int>(texture.getSize().y)}));
 
     // Assign the new texture
     m_texture = &texture;
@@ -153,10 +153,10 @@ const sf::Color& FeSprite::getColor() const
 ////////////////////////////////////////////////////////////
 sf::FloatRect FeSprite::getLocalBounds() const
 {
-    float width = static_cast<float>(std::abs(m_textureRect.width));
-    float height = static_cast<float>(std::abs(m_textureRect.height));
+    float width = static_cast<float>(std::abs(m_textureRect.size.x));
+    float height = static_cast<float>(std::abs(m_textureRect.size.y));
 
-    return sf::FloatRect(0.f, 0.f, width, height);
+    return sf::FloatRect({0.f, 0.f}, {width, height});
 }
 
 
@@ -248,10 +248,10 @@ void FeSprite::updateGeometry()
 	// Compute some values that we will use for applying the
 	// texture coordinates.
 	//
-	float left   = static_cast<float>(m_textureRect.left);
-	float right  = left + m_textureRect.width;
-	float top    = static_cast<float>(m_textureRect.top);
-	float bottom = top + m_textureRect.height;
+	float left   = static_cast<float>(m_textureRect.position.x);
+	float right  = left + m_textureRect.size.x;
+	float top    = static_cast<float>(m_textureRect.position.y);
+	float bottom = top + m_textureRect.size.y;
 	sf::Color vert_colour = m_vertices[0].color;
 
 	sf::Vector2f scale = getScale();
@@ -278,19 +278,19 @@ void FeSprite::updateGeometry()
 		//
 		const int SLICES = 253;
 
-		float bws = (float)bounds.width / SLICES;
+		float bws = (float)bounds.size.x / SLICES;
 		float pys = (float)spinch.y / SLICES;
 		float sys = (float)sskew.y / SLICES;
 		float bpxs = bws - (float)spinch.x * 2 / SLICES;
 
 		m_vertices.resize( SLICES + 3 );
-		m_vertices.setPrimitiveType( sf::TrianglesStrip );
+		m_vertices.setPrimitiveType( sf::PrimitiveType::TriangleStrip );
 
 		//
 		// First do the vertex coordinates
 		//
 		m_vertices[0].position = sf::Vector2f(0, 0 );
-		m_vertices[1].position = sf::Vector2f(sskew.x + spinch.x, bounds.height );
+		m_vertices[1].position = sf::Vector2f(sskew.x + spinch.x, bounds.size.y );
 
 		for ( int i=1; i<SLICES; i++ )
 		{
@@ -302,17 +302,17 @@ void FeSprite::updateGeometry()
 			else
 			{
 				m_vertices[1 + i].position = sf::Vector2f(
-						sskew.x + spinch.x + bpxs * i, bounds.height - ( pys - sys ) * i );
+						sskew.x + spinch.x + bpxs * i, bounds.size.y - ( pys - sys ) * i );
 			}
 		}
-		m_vertices[SLICES + 1].position = sf::Vector2f( bounds.width, spinch.y + sskew.y );
+		m_vertices[SLICES + 1].position = sf::Vector2f( bounds.size.x, spinch.y + sskew.y );
 		m_vertices[SLICES + 2].position = sf::Vector2f(
-						sskew.x + bounds.width - spinch.x, bounds.height - spinch.y + sskew.y );
+						sskew.x + bounds.size.x - spinch.x, bounds.size.y - spinch.y + sskew.y );
 
 		//
 		// Now do the texture coordinates
 		//
-		float tws = (float)m_textureRect.width / SLICES;
+		float tws = (float)m_textureRect.size.x / SLICES;
 
 		m_vertices[0].texCoords = sf::Vector2f(left, top );
 		m_vertices[1].texCoords = sf::Vector2f(left, bottom );
@@ -331,12 +331,12 @@ void FeSprite::updateGeometry()
 		// If we aren't pinching the image, then we draw it on two triangles.
 		//
 		m_vertices.resize( 4 );
-		m_vertices.setPrimitiveType( sf::TrianglesStrip );
+		m_vertices.setPrimitiveType( sf::PrimitiveType::TriangleStrip );
 
 		m_vertices[0].position = sf::Vector2f(0, 0);
-		m_vertices[1].position = sf::Vector2f(sskew.x, bounds.height);
-		m_vertices[2].position = sf::Vector2f(bounds.width, sskew.y );
-		m_vertices[3].position = sf::Vector2f(bounds.width + sskew.x, bounds.height + sskew.y);
+		m_vertices[1].position = sf::Vector2f(sskew.x, bounds.size.y);
+		m_vertices[2].position = sf::Vector2f(bounds.size.x, sskew.y );
+		m_vertices[3].position = sf::Vector2f(bounds.size.x + sskew.x, bounds.size.y + sskew.y);
 
 		m_vertices[0].texCoords = sf::Vector2f(left, top);
 		m_vertices[1].texCoords = sf::Vector2f(left, bottom);

@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <ctime>
 #include <stdarg.h>
+#include <algorithm>
 
 const char *FE_SCRIPT_NV_FILE = "script.nv";
 
@@ -123,13 +124,13 @@ namespace
 				// problem...
 				//
 				int i=0;
-				while (( i < zip.getSize() ) && ( d[i] < 32 ))
+				while (( i < zip.getSize().value() ) && ( d[i] < 32 ))
 					i++;
 
-				if ( i == zip.getSize() )
+				if ( i == zip.getSize().value() )
 					return false;
 
-				std::string str( &(d[i]), zip.getSize()-i );
+				std::string str( &(d[i]), zip.getSize().value()-i );
 				sc.CompileString( str );
 			}
 			else
@@ -373,37 +374,37 @@ void FeVM::set_overlay( FeOverlay *feo )
 	m_overlay = feo;
 }
 
-bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
+FePollCommandResult FeVM::poll_command()
 {
-	from_ui=false;
+	FePollCommandResult r;
+	r.from_ui = false;
 
 	if ( !m_posted_commands.empty() )
 	{
-		c = (FeInputMap::Command)m_posted_commands.front();
+		r.command = (FeInputMap::Command)m_posted_commands.front();
 		m_posted_commands.pop();
-		ev.type = sf::Event::Count;
 
-		return true;
+		return r;
 	}
-	else if ( m_window.pollEvent( ev ) )
+
+	std::optional<sf::Event> ev = m_window.pollEvent();
+	if ( ev )
 	{
 		int t = m_layoutTimer.getElapsedTime().asMilliseconds();
 
-		// Debounce to stop multiples when triggered by a key combo
-		//
 		if ( t - m_last_ui_cmd.asMilliseconds() < 30 )
-			return false;
+			return FePollCommandResult(); // empty result
 
-		c = m_feSettings->map_input( ev );
+		r.command = m_feSettings->map_input( *ev );
 
-		if ( c != FeInputMap::LAST_COMMAND )
+		if ( r.command != FeInputMap::LAST_COMMAND )
 			m_last_ui_cmd = m_layoutTimer.getElapsedTime();
 
-		from_ui = true;
-		return true;
+		r.from_ui = true;
+		r.event = ev;
 	}
 
-	return false;
+	return r;
 }
 
 void FeVM::clear()
@@ -1297,8 +1298,7 @@ void FeVM::on_transition(
 			// TODO: It is probably a good idea to do this for
 			// every platform... needs investigation.
 			//
-			sf::Event ev;
-			while (m_window.pollEvent(ev))
+			while (m_window.pollEvent())
 			{
 				//sf::sleep( sf::milliseconds( 10 ) );
 			}
