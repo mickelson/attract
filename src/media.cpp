@@ -615,6 +615,7 @@ void FeVideoImp::video_thread()
 	SwsContext *sws_ctx = NULL;
 
 	sf::Time wait_time;
+	sf::Time half_frame_offset = sf::milliseconds( 8 );
 
 	if (!rgba_buffer[0])
 	{
@@ -644,8 +645,10 @@ void FeVideoImp::video_thread()
 		//
 		if ( detached_frame )
 		{
-			wait_time = (sf::Int64)detached_frame->pts * time_base
-					- m_parent->get_video_time();
+
+		wait_time = sf::seconds( detached_frame->pts
+					* av_q2d( m_parent->m_imp->m_format_ctx->streams[stream_id]->time_base ))
+					- m_parent->get_video_time() + half_frame_offset;
 
 			if ( wait_time < max_sleep )
 			{
@@ -1263,8 +1266,8 @@ bool FeMedia::tick()
 		{
 			m_video->display_texture->update( m_video->display_frame );
 			m_video->display_frame = NULL;
-			return true;
 		}
+		return true;
 	}
 
 	return false;
