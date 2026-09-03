@@ -27,10 +27,10 @@ distributions.  Other distributions should have similar packages available.
       - OpenGL and GLU (or OpenGLES for GLES version)
       - JPEG library
       - Make and Package Config
+      - Fontconfig (to assist with finding fonts).
       - Xrandr
 
    * Optional:
-      - Fontconfig (to assist with finding fonts).
       - Xinerama (for multiple monitor support).
       - libarchive (for .7z, .rar, .tar.gz and .tar.bz2 archive support).
       - Libcurl (for network info/artwork scraping).

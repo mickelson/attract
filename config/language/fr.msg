@@ -314,8 +314,8 @@ XML Mode;Mode XML
 en;Anglais
 es;Español
 fr;Français
-jp;Japonais
-kr;Coréen
+ja;Japonais
+ka;Coréen
 _help_autolaunch_last_game;Lancer automatiquement au démarrage le dernier jeu joué
 _help_control_previous_page;Définit le(s) contrôle(s) qui incrémente(nt) la séléction d'une page
 

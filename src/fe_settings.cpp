@@ -246,8 +246,7 @@ const char *FeSettings::startupDispTokens[] =
 	NULL
 };
 
-FeSettings::FeSettings( const std::string &config_path,
-				const std::string &cmdln_font )
+FeSettings::FeSettings( const std::string &config_path )
 	:  m_rl( m_config_path ),
 	m_inputmap(),
 	m_saver_params( FeLayoutInfo::ScreenSaver ),
@@ -318,8 +317,6 @@ FeSettings::FeSettings( const std::string &config_path,
 #endif
 			(m_config_path[m_config_path.size()-1] != '/') )
 		m_config_path += '/';
-
-	m_default_font = cmdln_font;
 }
 
 void FeSettings::clear()
@@ -383,12 +380,6 @@ void FeSettings::load()
 	// Make sure we have some keyboard mappings
 	//
 	m_inputmap.initialize_mappings();
-
-	// If we haven't got our font yet from the config file
-	// or command line then set to the default value now
-	//
-	if ( m_default_font.empty() )
-		m_default_font = FE_DEFAULT_FONT;
 
 	// If no menu prompt is configured, default to calling it "Displays Menu" (in current language)
 	//
@@ -502,13 +493,7 @@ int FeSettings::process_setting( const std::string &setting,
 	else if ( setting.compare( otherSettingStrings[8] ) == 0 ) // menu_config
 		m_current_config_object = &m_display_menu_per_display_params;
 	else if ( setting.compare( configSettingStrings[DefaultFont] ) == 0 ) // default_font
-	{
-		// Special case for the default font, we don't want to set it here
-		// if it was already specified at the command line
-		//
-		if ( m_default_font.empty() ) // don't overwrite command line font
-			m_default_font = value;
-	}
+		m_default_font = value;
 	else
 	{
 		int i=0;
@@ -1064,7 +1049,7 @@ bool FeSettings::switch_to_clone_group( int idx )
 			// title as the clone group
 			m_current_search_index=0;
 
-			for ( int i=0; i < group.size(); i++ )
+			for ( size_t i=0; i < group.size(); i++ )
 			{
 				if ( t.compare( group[i]->get_info( FeRomInfo::Title ) ) == 0 )
 					m_current_search_index = i;
@@ -2705,18 +2690,99 @@ void FeSettings::get_list_of_emulators( std::vector<std::string> &emu_list, bool
 	std::sort( emu_list.begin(), emu_list.end() );
 }
 
+#ifdef USE_FONTCONFIG
+namespace {
+	bool check_font_config( const char *fc_name, const char *name, const char *lang, std::string &ffile )
+	{
+		FcConfig *config = FcConfigGetCurrent();
+
+		FcPattern *pat = FcPatternBuild( 0,
+			fc_name, FcTypeString, name,
+			(char *)0 );
+
+		if ( lang )
+		{
+			FcLangSet *ls = FcLangSetCreate();
+			if ( ls )
+			{
+				FcLangSetAdd( ls, (const FcChar8 *)lang );
+				FcPatternAddLangSet( pat, FC_LANG, ls );
+				FcLangSetDestroy( ls );
+			}
+		}
+
+		FcObjectSet *os = FcObjectSetBuild( FC_FILE, (char *)0 );
+		FcFontSet *fs = FcFontList( config, pat, os );
+
+		bool fc_found = false;
+		if ( fs )
+		{
+			for ( int i=0; i < fs->nfont; i++ )
+			{
+				FcChar8 *val = NULL;
+				if ( (FcPatternGetString( fs->fonts[i], FC_FILE, 0, &val) == FcResultMatch) )
+				{
+					ffile = (char *)val;
+					fc_found = true;
+					break;
+				}
+			}
+			FcFontSetDestroy( fs );
+		}
+
+		FcPatternDestroy( pat );
+		FcObjectSetDestroy( os );
+		FcConfigDestroy( config );
+
+		return fc_found;
+	}
+}
+#endif
+
+bool FeSettings::get_default_font_file( std::string &fpath,
+	std::string &ffile ) const
+{
+
+	if ( !m_default_font.empty() )
+	{
+		if ( get_font_file( fpath, ffile, m_default_font ) )
+		{
+			FeDebug() << " - Using default font (" << m_default_font  << "): "
+				<< fpath << ffile << std::endl;
+			return true;
+		}
+
+		FeLog() << "Error, could not find configured default font: " << m_default_font << std::endl;
+	}
+
+	if ( get_font_file( fpath, ffile, FE_DEFAULT_FONT ) )
+	{
+		FeLog() << " - Using fallback default font (" << FE_DEFAULT_FONT  << "): "
+			<< fpath << ffile << std::endl;
+		return true;
+	}
+
+	FeLog() << "Error, could not find fallback font: " << FE_DEFAULT_FONT  << std::endl;
+
+#ifdef USE_FONTCONFIG
+	//
+	// Last ditch effort, grab the first truetype font reported by Fontconfig
+	//
+	if (( check_font_config( FC_FONTFORMAT, "TrueType", m_language.c_str(), ffile ) )
+		|| ( check_font_config( FC_FONTFORMAT, "TrueType", NULL, ffile ) ))
+	{
+		FeLog() << "Falling back to first truetype font found: " << fpath << ffile << std::endl;
+		return true;
+	}
+#endif
+
+	return false;
+}
+
 bool FeSettings::get_font_file( std::string &fpath,
 	std::string &ffile,
 	const std::string &fontname ) const
 {
-	if ( fontname.empty() )
-	{
-		if ( m_default_font.empty() )
-			return false;
-		else
-			return get_font_file( fpath, ffile, m_default_font );
-	}
-
 	//
 	// First check if there is a matching font file in the
 	// layout/plugin directory
@@ -2746,44 +2812,24 @@ bool FeSettings::get_font_file( std::string &fpath,
 	}
 
 #ifdef USE_FONTCONFIG
-	bool fc_found = false;
-	FcConfig *config = FcInitLoadConfigAndFonts();
-	if ( config )
-	{
-		FcPattern *pat = FcNameParse( (const FcChar8 *)(fontname.c_str()) );
-		if ( pat )
-		{
-			FcConfigSubstitute( config, pat, FcMatchPattern );
-			FcDefaultSubstitute( pat );
+	//
+	// Try to match the font's fullname in Fontconfig
+	//
+	if (( check_font_config( FC_FULLNAME, fontname.c_str(), m_language.c_str(), ffile ) )
+			|| ( check_font_config( FC_FULLNAME, fontname.c_str(), NULL, ffile ) ))
+		return true;
 
-			FcResult res = FcResultNoMatch;
-			FcFontSet *fs = FcFontSort( config, pat, false, NULL, &res );
-			if ( fs )
-			{
-				for ( int i=0; i < fs->nfont; i++ )
-				{
-					FcChar8 *file = NULL;
-					if ( FcPatternGetString( fs->fonts[i], FC_FILE, 0, &file ) == FcResultMatch )
-					{
-						if ( base_compare( (char *)file, fontname ) )
-						{
-							ffile = (char *)file;
-							fc_found = true;
-							break;
-						}
-					}
-				}
-				FcFontSetSortDestroy( fs );
-			}
-			FcPatternDestroy( pat );
-		}
-		FcConfigDestroy( config );
-	}
-
-	if ( fc_found )
+	//
+	// Next try to match the font family in Fontconfig
+	//
+	if (( check_font_config( FC_FAMILY, fontname.c_str(), m_language.c_str(), ffile ) )
+			|| ( check_font_config( FC_FAMILY, fontname.c_str(), NULL, ffile ) ))
 		return true;
 #endif
 
+	//
+	// Search the system's font paths for a filename match
+	//
 	std::vector<std::string> path_list;
 	std::vector<std::string>::const_iterator its;
 

@@ -301,8 +301,8 @@ Page Up;1画面上
 XML Mode;XML モード
 en;英語
 fr;フランス語
-jp;日本語
-kr;韓国語
+ja;日本語
+ka;韓国語
 _help_autolaunch_last_game;プラグラムの起動時, 最後にプレイしたゲームを一緒に起動するかを設定します
 _help_control_page_down;1ページ下に移動するキーを設定します
 _help_control_page_up;1ページ上に移動するキーを設定します

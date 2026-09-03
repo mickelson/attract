@@ -1914,7 +1914,7 @@ bool FeVM::setup_wizard()
 	if ( !m_feSettings->get_emulator_setup_script( path, fname ) )
 	{
 		FeLog() << "Unable to get emulator setup script. path=" << path
-			<< ", filaname=" << fname << std::endl;
+			<< ", filename=" << fname << std::endl;
 		return false;
 	}
 

@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	nowide::args a( argc, argv );
 	process_args( argc, argv, config_path, cmdln_font, process_console, log_file, log_level );
 
-	FeSettings feSettings( config_path, cmdln_font );
+	FeSettings feSettings( config_path );
 
 	//
 	// Setup logging
@@ -122,11 +122,22 @@ int main(int argc, char *argv[])
 	feSettings.load();
 
 	std::string def_font_path, def_font_file;
-	if ( feSettings.get_font_file( def_font_path, def_font_file ) == false )
+	if ( !cmdln_font.empty() )
 	{
-		FeLog() << "Error, could not find default font."  << std::endl;
-		return 1;
+		if ( feSettings.get_font_file( def_font_path, def_font_file, cmdln_font ) == false )
+		{
+			FeLog() << "Error could not find font specified at command line: " << cmdln_font
+				<< ", falling back to default font handling." << std::endl;
+		}
 	}
+
+	if ( def_font_file.empty() )
+	{
+		if ( feSettings.get_default_font_file( def_font_path, def_font_file ) == false )
+			return 1;
+	}
+
+	FeDebug() << "Using font file: " << def_font_path << def_font_file << std::endl;
 
 	FeFontContainer def_font;
 	def_font.set_font( def_font_path, def_font_file );
@@ -168,7 +179,7 @@ int main(int argc, char *argv[])
 			exit_selected = true;
 
 		// Font may change depending on the language selected
-		feSettings.get_font_file( def_font_path, def_font_file );
+		feSettings.get_default_font_file( def_font_path, def_font_file );
 		def_font.set_font( def_font_path, def_font_file );
 
 		if ( !exit_selected )
@@ -237,7 +248,7 @@ int main(int argc, char *argv[])
 			{
 				// Settings changed, reload
 				//
-				if ( feSettings.get_font_file( def_font_path, def_font_file ) )
+				if ( feSettings.get_default_font_file( def_font_path, def_font_file ) )
 					def_font.set_font( def_font_path, def_font_file );
 
 				feSettings.set_display(

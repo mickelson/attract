@@ -162,14 +162,15 @@ _sort_regexp;^(Vs\. The |The |Vs\. )
 #
 # Extra strings provided by translation
 #
-cn;中文 (Chinese)
+zh-cn;中文 (Chinese)
+zh-tw;繁體中文 (Traditional Chinese)X
 de;Deutsch
 en;English
 es;Español
 fr;Français
 it;Italiano
-jp;日本語 (Japanese)
-kr;한국어 (Korean)
-pt_br;Português brasileiro
+ja;日本語 (Japanese)
+ka;한국어 (Korean)
+pt-br;Português brasileiro
 
 #@DONE_TRANSLATED

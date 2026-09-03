@@ -239,14 +239,14 @@ Right(Next Display);→（下一界面）
 Scrape mamedb.com (MAME only);搜刮 mamedb.com（仅 MAME）
 Up(Previous Game);↑（上一游戏）
 XML Mode;XML 模式
-cn;中文 (Chinese)
+zh-cn;中文 (Chinese)
 de;Deutsch
 en;English
 es;Español
 font;字体
 fr;Français
-jp;日本語 (Japanese)
-kr;한글 (Korean)
+ja;日本語 (Japanese)
+ka;한글 (Korean)
 
 #@DONE_TRANSLATED
 #

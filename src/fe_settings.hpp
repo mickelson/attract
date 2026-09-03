@@ -295,8 +295,7 @@ private:
 	bool get_game_overview_filepath( const std::string &emu, const std::string &romname, std::string &path );
 
 public:
-	FeSettings( const std::string &config_dir,
-				const std::string &cmdln_font );
+	FeSettings( const std::string &config_dir );
 
 	void load();
 	void save_state();
@@ -481,13 +480,17 @@ public:
 	const std::string &get_config_dir() const;
 	bool config_file_exists() const;
 
+	// get_default_font_file() and get_font_file():
+	//
 	// [out] fpath = if font is in a zip file, this is the path to the zip
 	// [out] ffile = font file to open
-	// [in] fontname = name of font to find.  If empty return default font
+	// [in] fontname = name of font to find
+	//
+	bool get_default_font_file( std::string &fpath, std::string &ffile ) const;
 	bool get_font_file(
 		std::string &fpath,
 		std::string &ffile,
-		const std::string &fontname="" ) const;
+		const std::string &fontname ) const;
 
 	WindowType get_window_mode() const;
 	FilterWrapModeType get_filter_wrap_mode() const;

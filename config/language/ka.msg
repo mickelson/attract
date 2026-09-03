@@ -402,8 +402,8 @@ Page Up;페이지 위로
 XML Mode;XML 모드
 en;영어
 fr;프랑스어
-jp;일본어
-kr;한국어
+ja;일본어
+ka;한국어
 _help_autolaunch_last_game;프로그램 시작 시에, 마지막으로 실행하였던 게임을 바로 재시작할지 여부를 설정합니다
 _help_control_page_down;아래 항목으로 한 페이지 이동하는 키를 설정합니다.
 _help_control_page_up;위 항목으로 한 페이지 이동하는 키를 설정합니다.

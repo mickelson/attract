@@ -347,7 +347,7 @@ void process_args( int argc, char *argv[],
 
 	if ( !task_list.empty() )
 	{
-		FeSettings feSettings( config_path, cmdln_font );
+		FeSettings feSettings( config_path );
 		feSettings.load_from_file( feSettings.get_config_dir() + FE_CFG_FILE );
 
 		int retval = feSettings.build_romlist( task_list, output_name, filter, full );
