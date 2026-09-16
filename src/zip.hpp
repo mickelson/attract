@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 #include <SFML/System/InputStream.hpp>
-#include <SFML/System/NonCopyable.hpp>
+#include <cstdint>
 
 typedef void *(*FE_ZIP_ALLOC_CALLBACK) ( size_t );
 bool fe_zip_open_to_buff(
@@ -64,7 +64,7 @@ bool get_archive_filename_with_base(
 extern const char *FE_ARCHIVE_EXT[];
 bool is_supported_archive( const std::string & );
 
-class FeZipStream : public sf::InputStream, sf::NonCopyable
+class FeZipStream : public sf::InputStream
 {
 public:
 	FeZipStream();
@@ -72,12 +72,15 @@ public:
 
 	~FeZipStream();
 
-	bool open( const std::string &filename );
-	sf::Int64 read( void *data, sf::Int64 size ); // virtual
+	FeZipStream( const FeZipStream& ) = delete;
+	FeZipStream& operator=( const FeZipStream& ) = delete;
 
-	sf::Int64 seek( sf::Int64 position );
-	sf::Int64 tell();
-	sf::Int64 getSize();
+	bool open( const std::string &filename );
+	std::optional<std::size_t> read( void *data, std::size_t size ) override;
+
+	std::optional<std::size_t> seek( std::size_t position ) override;
+	std::optional<std::size_t> tell() override;
+	std::optional<std::size_t> getSize() override;
 	void setArchive( const std::string &archive );
 	char *getData();
 
@@ -86,7 +89,7 @@ private:
 
 	std::string m_archive;
 	std::vector < char > m_data;
-	sf::Int64 m_pos;
+	std::size_t m_pos;
 };
 
 #endif

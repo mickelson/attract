@@ -62,7 +62,7 @@ public:
 
 	void clear();
 	void draw( const sf::Drawable &d, const sf::RenderStates &t=sf::RenderStates::Default );
-	bool pollEvent( sf::Event &e );
+	std::optional<sf::Event> pollEvent();
 
 	sf::RenderWindow &get_win();
 };

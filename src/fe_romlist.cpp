@@ -30,6 +30,7 @@
 #include <squirrel.h>
 #include <sqstdstring.h>
 
+#include <SFML/System/Time.hpp>
 #include <SFML/System/Clock.hpp>
 
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";

@@ -35,45 +35,47 @@ FeFileInputStream::~FeFileInputStream()
 		fclose( m_file );
 }
 
-sf::Int64 FeFileInputStream::read( void *data, sf::Int64 size )
+std::optional<std::size_t> FeFileInputStream::read( void *data, std::size_t size )
 {
 	if ( m_file )
-		return fread( data, 1, (size_t)size, m_file );
+		return fread( data, 1, size, m_file );
 
-	return -1;
+	return std::nullopt;
 }
 
-sf::Int64 FeFileInputStream::seek( sf::Int64 pos )
+std::optional<std::size_t> FeFileInputStream::seek( std::size_t pos )
 {
 	if ( m_file )
 	{
-		if ( fseek( m_file, (size_t)pos, SEEK_SET ) )
-			return -1;
+		if ( fseek( m_file, (long)pos, SEEK_SET ) )
+			return std::nullopt;
 
 		return tell();
 	}
 
-	return -1;
+	return std::nullopt;
 }
 
-sf::Int64 FeFileInputStream::tell()
+std::optional<std::size_t> FeFileInputStream::tell()
 {
 	if ( m_file )
 		return ftell( m_file );
 
-	return -1;
+	return std::nullopt;
 }
 
-sf::Int64 FeFileInputStream::getSize()
+std::optional<std::size_t> FeFileInputStream::getSize()
 {
 	if ( m_file )
 	{
-		sf::Int64 pos = tell();
+		auto pos = tell();
+		if (pos == std::nullopt)
+			return std::nullopt;
 		fseek( m_file, 0, SEEK_END );
-		sf::Int64 size = tell();
-		seek( pos );
+		auto size = tell();
+		seek(*pos);
 		return size;
 	}
 
-	return -1;
+	return std::nullopt;
 }

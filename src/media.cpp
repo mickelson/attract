@@ -48,6 +48,7 @@ extern "C"
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <algorithm>
 
 #if (LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( 59, 0, 100 ))
 typedef const AVCodec FeAVCodec;
@@ -154,7 +155,7 @@ class FeAudioImp : public FeBaseStream
 {
 public:
 	SwrContext *resample_ctx;
-	sf::Int16 *audio_buff;
+	std::int16_t *audio_buff;
 	std::recursive_mutex audio_buff_mutex;
 
 	FeAudioImp();
@@ -176,7 +177,7 @@ private:
 	//
 	std::thread m_video_thread;
 	FeMedia *m_parent;
-	sf::Uint8 *rgba_buffer[4];
+	std::uint8_t *rgba_buffer[4];
 	int rgba_linesize[4];
 
 #if FE_HWACCEL
@@ -198,7 +199,7 @@ public:
 	// The main thread then copies the image into the corresponding sf::Texture.
 	//
 	std::recursive_mutex image_swap_mutex;
-	sf::Uint8 *display_frame;
+	std::uint8_t *display_frame;
 
 	FeVideoImp( FeMedia *parent );
 	~FeVideoImp();
@@ -341,8 +342,8 @@ bool FeAudioImp::process_frame( AVFrame *frame, sf::SoundStream::Chunk &data, in
 		std::lock_guard<std::recursive_mutex> l( audio_buff_mutex );
 
 		memcpy( (audio_buff + offset), frame->data[0], data_size );
-		offset += data_size / sizeof( sf::Int16 );
-		data.sampleCount += data_size / sizeof(sf::Int16);
+		offset += data_size / sizeof( std::int16_t );
+		data.sampleCount += data_size / sizeof(std::int16_t);
 		data.samples = audio_buff;
 	}
 	else
@@ -644,7 +645,7 @@ void FeVideoImp::video_thread()
 		//
 		if ( detached_frame )
 		{
-			wait_time = (sf::Int64)detached_frame->pts * time_base
+			wait_time = (std::int64_t)detached_frame->pts * time_base
 					- m_parent->get_video_time();
 
 			if ( wait_time < max_sleep )
@@ -965,12 +966,12 @@ int fe_media_read( void *opaque, uint8_t *buff, int buff_size )
 {
 	sf::InputStream *z = (sf::InputStream *)opaque;
 
-	sf::Int64 bytes_read = z->read( buff, buff_size );
+	std::optional<std::int64_t> bytes_read = z->read( buff, buff_size );
 
-	if ( bytes_read == 0 )
+	if ( !bytes_read || *bytes_read == 0 )
 		return AVERROR_EOF;
 
-	return bytes_read;
+	return *bytes_read;
 }
 
 // whence: SEEK_SET, SEEK_CUR, SEEK_END, and AVSEEK_SIZE
@@ -981,17 +982,35 @@ int64_t fe_media_seek( void *opaque, int64_t offset, int whence )
 	switch ( whence )
 	{
 	case AVSEEK_SIZE:
-		return z->getSize();
+		{
+			std::optional<std::uint64_t> size = z->getSize();
+			return size ? static_cast<int64_t>(*size) : AVERROR_EOF;
+		}
 
 	case SEEK_CUR:
-		return z->seek( z->tell() + offset );
+		{
+			std::optional<std::uint64_t> pos = z->tell();
+			if ( !pos )
+				return AVERROR_EOF;
+			std::optional<std::uint64_t> newPos = z->seek( *pos + offset );
+			return newPos ? static_cast<int64_t>(*newPos) : AVERROR_EOF;
+		}
 
 	case SEEK_END:
-		return z->seek( z->getSize() + offset );
+		{
+			std::optional<std::uint64_t> size = z->getSize();
+			if ( !size )
+				return AVERROR_EOF;
+			std::optional<std::uint64_t> newPos = z->seek( *size + offset );
+			return newPos ? static_cast<int64_t>(*newPos) : AVERROR_EOF;
+		}
 
 	case SEEK_SET:
 	default:
-		return z->seek( offset );
+		{
+			std::optional<std::uint64_t> newPos = z->seek( offset );
+			return newPos ? static_cast<int64_t>(*newPos) : AVERROR_EOF;
+		}
 	}
 }
 
@@ -1091,7 +1110,7 @@ bool FeMedia::open( const std::string &archive,
 				// TODO: Fix buffer sizing, we allocate way
 				// more than we use
 				//
-				m_audio->audio_buff = (sf::Int16 *)av_malloc(
+				m_audio->audio_buff = (std::int16_t *)av_malloc(
 					MAX_AUDIO_FRAME_SIZE
 					+ AV_INPUT_BUFFER_PADDING_SIZE
 					+ codec_ctx->sample_rate );
@@ -1201,9 +1220,9 @@ bool FeMedia::open( const std::string &archive,
 				m_video->disptex_width = FFALIGN( codec_ctx->width, 32 );
 				m_video->disptex_height = codec_ctx->height;
 
-				m_video->display_texture = outt;
-				if ( outt->getSize() != sf::Vector2u( m_video->disptex_width, m_video->disptex_height ) )
-					m_video->display_texture->create( m_video->disptex_width, m_video->disptex_height );
+m_video->display_texture = outt;
+			if ( outt->getSize() != sf::Vector2u( m_video->disptex_width, m_video->disptex_height ) )
+				m_video->display_texture->resize( sf::Vector2u( m_video->disptex_width, m_video->disptex_height ) );
 
 				m_video->init_rgba_buffer();
 			}

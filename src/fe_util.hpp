@@ -25,6 +25,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 #include <SFML/Config.hpp>
 
 #ifdef FE_DEBUG
@@ -280,7 +281,7 @@ const char *get_OS_string();
 //
 // return the contents of the clipboard (if implemented for OS)
 //
-std::basic_string<sf::Uint32> clipboard_get_content();
+std::basic_string<std::uint32_t> clipboard_get_content();
 
 //
 // We use this in fe_window but implement it here because the XWindows

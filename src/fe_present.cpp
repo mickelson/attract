@@ -121,13 +121,13 @@ void FeFontContainer::set_font( const std::string &p, const std::string &n )
 		zs->open( n );
 		m_stream = zs;
 
-		if ( !m_font.loadFromStream( *m_stream ) )
+		if ( !m_font.openFromStream( *m_stream ) )
 			FeLog() << "Error loading font: " << p << "[" << n << "]" << std::endl;
 	}
 	else
 	{
 		m_stream = new FeFileInputStream( p + n );
-		if ( !m_font.loadFromStream( *m_stream ) )
+		if ( !m_font.openFromStream( *m_stream ) )
 			FeLog() << "Error loading font from file: " << p + n << std::endl;
 	}
 }
@@ -136,7 +136,7 @@ const sf::Font &FeFontContainer::get_font() const
 {
 	if ( m_needs_reload && m_stream )
 	{
-		m_font.loadFromStream( *m_stream );
+		m_font.openFromStream( *m_stream );
 		m_needs_reload=false;
 	}
 
@@ -366,8 +366,7 @@ void FePresent::init_monitors()
 					si[i].height );
 
 				mon.transform = sf::Transform().translate(
-					si[i].x_org,
-					si[i].y_org );
+					sf::Vector2f( si[i].x_org, si[i].y_org ) );
 
 				FeDebug() << "Multimon: monitor #" << si[i].screen_number
 					<< ": " << mon.size.x << "x" << mon.size.y << " @ "
@@ -1283,7 +1282,7 @@ bool FePresent::saver_activation_check()
 	//
 	// THis means the layout is forced by AM to reset after about a month of running
 	//
-	if ( m_layoutTimer.getElapsedTime().asMilliseconds() > std::numeric_limits<sf::Int32>::max() - 10000 )
+	if ( m_layoutTimer.getElapsedTime().asMilliseconds() > std::numeric_limits<std::int32_t>::max() - 10000 )
 		load_layout();
 
 	return false;
@@ -1331,7 +1330,7 @@ void FePresent::pre_run()
 				its != m_sounds.end(); ++its )
 		(*its)->release_audio( true );
 
-	sf::AudioDevice::release_audio( true );
+	// sf::AudioDevice::release_audio( true ); // SFML 3: removed custom audio device management
 #endif
 }
 
@@ -1343,7 +1342,7 @@ void FePresent::post_run()
 	//
 	// Re-establish openAL stuff now that we are back from the emulator
 	//
-	sf::AudioDevice::release_audio( false );
+	// sf::AudioDevice::release_audio( false ); // SFML 3: removed custom audio device management
 
 	for ( std::vector<FeBaseTextureContainer *>::iterator itm=m_texturePool.begin();
 				itm != m_texturePool.end(); ++itm )
@@ -1441,13 +1440,13 @@ void FePresent::set_transforms()
 
 			if ( actualRotation == FeSettings::RotateRight )
 			{
-				m_transform.translate( m_mon[0].size.x - adjust_x, adjust_y );
-				m_transform.rotate(90);
+				m_transform.translate( sf::Vector2f( m_mon[0].size.x - adjust_x, adjust_y ) );
+				m_transform.rotate( sf::degrees(90) );
 			}
 			else
 			{
-				m_transform.translate( adjust_x, m_mon[0].size.y - adjust_y );
-				m_transform.rotate(270);
+				m_transform.translate( sf::Vector2f( adjust_x, m_mon[0].size.y - adjust_y ) );
+				m_transform.rotate( sf::degrees(270) );
 			}
 		}
 		else
@@ -1459,12 +1458,12 @@ void FePresent::set_transforms()
 			float adjust_x = (m_layoutSize.x * m_layoutScale.x - m_mon[0].size.x) / 2;
 			float adjust_y = (m_layoutSize.y * m_layoutScale.y - m_mon[0].size.y) / 2;
 			if ( actualRotation == FeSettings::RotateNone )
-				m_transform.translate( -adjust_x, -adjust_y );
+				m_transform.translate( sf::Vector2f( -adjust_x, -adjust_y ) );
 			else
 			{
 				m_transform.translate(
-						m_mon[0].size.x + adjust_x, m_mon[0].size.y + adjust_y );
-				m_transform.rotate(180);
+						sf::Vector2f( m_mon[0].size.x + adjust_x, m_mon[0].size.y + adjust_y ) );
+				m_transform.rotate( sf::degrees(180) );
 			}
 		}
 	}
@@ -1479,27 +1478,27 @@ void FePresent::set_transforms()
 			break;
 
 		case FeSettings::RotateRight:
-			m_transform.translate( m_mon[0].size.x, 0 );
-			m_transform.scale( (float) m_mon[0].size.x / m_mon[0].size.y,
-				(float) m_mon[0].size.y / m_mon[0].size.x );
-			m_transform.rotate(90);
+			m_transform.translate( sf::Vector2f( m_mon[0].size.x, 0 ) );
+			m_transform.scale( sf::Vector2f( (float) m_mon[0].size.x / m_mon[0].size.y,
+				(float) m_mon[0].size.y / m_mon[0].size.x ) );
+			m_transform.rotate( sf::degrees(90) );
 			break;
 
 		case FeSettings::RotateLeft:
-			m_transform.translate( 0, m_mon[0].size.y );
-			m_transform.scale( (float) m_mon[0].size.x / m_mon[0].size.y,
-				(float) m_mon[0].size.y / m_mon[0].size.x );
-			m_transform.rotate(270);
+			m_transform.translate( sf::Vector2f( 0, m_mon[0].size.y ) );
+			m_transform.scale( sf::Vector2f( (float) m_mon[0].size.x / m_mon[0].size.y,
+				(float) m_mon[0].size.y / m_mon[0].size.x ) );
+			m_transform.rotate( sf::degrees(270) );
 			break;
 
 		case FeSettings::RotateFlip:
-			m_transform.translate( m_mon[0].size.x, m_mon[0].size.y );
-			m_transform.rotate(180);
+			m_transform.translate( sf::Vector2f( m_mon[0].size.x, m_mon[0].size.y ) );
+			m_transform.rotate( sf::degrees(180) );
 			break;
 		}
 	}
 
-	m_transform.scale( m_layoutScale.x, m_layoutScale.y );
+	m_transform.scale( sf::Vector2f( m_layoutScale.x, m_layoutScale.y ) );
 
 	for ( std::vector<FeBasePresentable *>::iterator itr=m_mon[0].elements.begin();
 			itr!=m_mon[0].elements.end(); ++itr )

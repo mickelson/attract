@@ -128,8 +128,11 @@ std::string get_crc( const std::string &full_path,
 				zs.open( *itr );
 
 				char *buff = zs.getData();
-				int size = zs.getSize();
+				std::optional<std::size_t> optSize = zs.getSize();
+				if ( !optSize )
+					return "";
 
+				int size = *optSize;
 				if ( size > MAX_CRC_FILE_SIZE )
 					return "";
 

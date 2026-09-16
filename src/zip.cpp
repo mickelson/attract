@@ -365,13 +365,13 @@ bool FeZipStream::open( const std::string &filename )
 		m_data );
 }
 
-sf::Int64 FeZipStream::read( void *data, sf::Int64 size )
+std::optional<std::size_t> FeZipStream::read( void *data, std::size_t size )
 {
 	if ( m_data.empty() )
-		return -1;
+		return std::nullopt;
 
-	sf::Int64 end_pos = m_pos + size;
-	size_t count = ( end_pos <= (sf::Int64)m_data.size() )
+	std::size_t end_pos = m_pos + size;
+	std::size_t count = ( end_pos <= m_data.size() )
 		? size : ( m_data.size() - m_pos );
 
 	if ( count > 0 )
@@ -383,27 +383,27 @@ sf::Int64 FeZipStream::read( void *data, sf::Int64 size )
 	return count;
 }
 
-sf::Int64 FeZipStream::seek( sf::Int64 position )
+std::optional<std::size_t> FeZipStream::seek( std::size_t position )
 {
 	if ( m_data.empty() )
-		return -1;
+		return std::nullopt;
 
-	m_pos = ( position < (sf::Int64)m_data.size() ) ? position : m_data.size();
+	m_pos = ( position < m_data.size() ) ? position : m_data.size();
 	return m_pos;
 }
 
-sf::Int64 FeZipStream::tell()
+std::optional<std::size_t> FeZipStream::tell()
 {
 	if ( m_data.empty() )
-		return -1;
+		return std::nullopt;
 
 	return m_pos;
 }
 
-sf::Int64 FeZipStream::getSize()
+std::optional<std::size_t> FeZipStream::getSize()
 {
 	if ( m_data.empty() )
-		return -1;
+		return std::nullopt;
 
 	return m_data.size();
 }
