@@ -388,7 +388,7 @@ void FeWindow::initial_create()
 
 void launch_callback( void *o )
 {
-#if defined(SFML_SYSTEM_LINUX)
+#if defined(SFML_SYSTEM_LINUX) || defined(SFML_SYSTEM_FREEBSD)
 	FeWindow *win = (FeWindow *)o;
 	if ( win->m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
@@ -614,7 +614,7 @@ bool FeWindow::run()
 		fep->update_to_new_list();
 	}
 
-#if defined(SFML_SYSTEM_LINUX)
+#if defined(SFML_SYSTEM_LINUX) || defined(SFML_SYSTEM_FREEBSD)
 	if ( m_fes.get_window_mode() == FeSettings::Fullscreen )
 	{
  #if defined(USE_XLIB)
