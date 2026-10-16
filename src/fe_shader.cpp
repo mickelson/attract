@@ -51,7 +51,7 @@ bool FeShader::load( sf::InputStream &sh,
 
 	m_type = t;
 	return m_shader.loadFromStream( sh,
-		(t == Fragment) ? sf::Shader::Fragment : sf::Shader::Vertex );
+		(t == Fragment) ? sf::Shader::Type::Fragment : sf::Shader::Type::Vertex );
 }
 
 bool FeShader::load( const std::string &vert_shader,
@@ -74,7 +74,7 @@ bool FeShader::load( const std::string &sh,
 
 	m_type = t;
 	return m_shader.loadFromFile( sh,
-		(t == Fragment) ? sf::Shader::Fragment : sf::Shader::Vertex );
+		(t == Fragment) ? sf::Shader::Type::Fragment : sf::Shader::Type::Vertex );
 }
 
 void FeShader::set_param( const char *name, float x )

@@ -39,15 +39,15 @@ public:
 		const std::string &str, int x, int y, int w, int h );
 
 	void setFont( const sf::Font & );
-	const sf::Vector2f &getPosition() const;
+	sf::Vector2f getPosition() const;
 	void setPosition( const sf::Vector2f & );
 	void setPosition( int x, int y ) {return setPosition(sf::Vector2f(x,y));};
-	const sf::Vector2f &getSize() const;
+	sf::Vector2f getSize() const;
 	void setSize( const sf::Vector2f & );
 	void setSize( int w, int h ) {return setSize(sf::Vector2f(w,h));};
-	float getRotation() const;
-	void setRotation( float );
-	const sf::Color &getColor() const;
+	sf::Angle getRotation() const;
+	void setRotation( sf::Angle );
+	sf::Color getColor() const;
 	void setColor( const sf::Color & );
 
 	// Overrides from base class:

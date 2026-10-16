@@ -54,9 +54,10 @@ namespace
 
 	static tu_file *swf_file_opener( const char *url )
 	{
+		// Ideally dont use value_or
 		if ( swf_zip )
 			return new tu_file( tu_file::memory_buffer,
-				swf_zip->getSize(), swf_zip->getData() );
+				swf_zip->getSize().value_or(0), swf_zip->getData() );
 		else
 			return new tu_file(url, "rb");
 	}
@@ -220,8 +221,8 @@ bool FeSwf::open_from_file( const std::string &file )
 	if ( m_imp->root == NULL )
 		return false;
 
-	m_texture.create( m_imp->root->get_movie_width(),
-		m_imp->root->get_movie_height() );
+	m_texture.resize({ m_imp->root->get_movie_width(),
+		m_imp->root->get_movie_height() });
 
 	m_texture.setSmooth( true );
 

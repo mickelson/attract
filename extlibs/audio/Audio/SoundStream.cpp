@@ -30,7 +30,7 @@
 #include <Audio/ALCheck.hpp>
 #include <SFML/System/Sleep.hpp>
 #include <SFML/System/Err.hpp>
-#include <SFML/System/Lock.hpp>
+#include <functional>
 
 #ifdef _MSC_VER
     #pragma warning(disable : 4355) // 'this' used in base member initializer list
@@ -41,7 +41,6 @@ namespace sf
 {
 ////////////////////////////////////////////////////////////
 SoundStream::SoundStream() :
-m_thread          (&SoundStream::streamData, this),
 m_isStreaming     (false),
 m_channelCount    (0),
 m_sampleRate      (0),
@@ -62,7 +61,8 @@ SoundStream::~SoundStream()
     m_isStreaming = false;
 
     // Wait for the thread to terminate
-    m_thread.wait();
+	 if (m_thread.joinable())
+		 m_thread.join();
 }
 
 
@@ -108,7 +108,7 @@ void SoundStream::play()
     // Start updating the stream in a separate thread to avoid blocking the application
     m_samplesProcessed = 0;
     m_isStreaming = true;
-    m_thread.launch();
+    m_thread = std::thread(std::bind(&SoundStream::streamData, this));
 }
 
 
@@ -124,7 +124,8 @@ void SoundStream::stop()
 {
     // Wait for the thread to terminate
     m_isStreaming = false;
-    m_thread.wait();
+	 if (m_thread.joinable())
+		 m_thread.join();
 }
 
 void SoundStream::signal_stop()
@@ -169,9 +170,9 @@ void SoundStream::setPlayingOffset(Time timeOffset)
     onSeek(timeOffset);
 
     // Restart streaming
-    m_samplesProcessed = static_cast<Uint64>(timeOffset.asSeconds() * m_sampleRate * m_channelCount);
+    m_samplesProcessed = static_cast<std::uint64_t>(timeOffset.asSeconds() * m_sampleRate * m_channelCount);
     m_isStreaming = true;
-    m_thread.launch();
+    m_thread = std::thread(std::bind(&SoundStream::streamData, this));
 }
 
 
@@ -333,7 +334,7 @@ bool SoundStream::fillAndPushBuffer(unsigned int bufferNum)
         unsigned int buffer = m_buffers[bufferNum];
 
         // Fill the buffer
-        ALsizei size = static_cast<ALsizei>(data.sampleCount) * sizeof(Int16);
+        ALsizei size = static_cast<ALsizei>(data.sampleCount) * sizeof(std::uint16_t);
         alCheck(alBufferData(buffer, m_format, data.samples, size, m_sampleRate));
 
         // Push it into the sound queue

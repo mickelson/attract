@@ -29,7 +29,7 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <Audio/SoundSource.hpp>
-#include <SFML/System/Thread.hpp>
+#include <thread>
 #include <SFML/System/Time.hpp>
 #include <cstdlib>
 
@@ -50,7 +50,7 @@ public :
     ////////////////////////////////////////////////////////////
     struct Chunk
     {
-        const Int16* samples;     ///< Pointer to the audio samples
+        const std::int16_t* samples;     ///< Pointer to the audio samples
         std::size_t  sampleCount; ///< Number of samples pointed by Samples
     };
 
@@ -281,15 +281,15 @@ private :
     ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
-    Thread        m_thread;                  ///< Thread running the background tasks
-    bool          m_isStreaming;             ///< Streaming state (true = playing, false = stopped)
-    unsigned int  m_buffers[BufferCount];    ///< Sound buffers used to store temporary audio data
-    unsigned int  m_channelCount;            ///< Number of channels (1 = mono, 2 = stereo, ...)
-    unsigned int  m_sampleRate;              ///< Frequency (samples / second)
-    Uint32        m_format;                  ///< Format of the internal sound buffers
-    bool          m_loop;                    ///< Loop flag (true to loop, false to play once)
-    Uint64        m_samplesProcessed;        ///< Number of buffers processed since beginning of the stream
-    bool          m_endBuffers[BufferCount]; ///< Each buffer is marked as "end buffer" or not, for proper duration calculation
+    std::thread    m_thread;                  ///< Thread running the background tasks
+    bool           m_isStreaming;             ///< Streaming state (true = playing, false = stopped)
+    unsigned int   m_buffers[BufferCount];    ///< Sound buffers used to store temporary audio data
+    unsigned int   m_channelCount;            ///< Number of channels (1 = mono, 2 = stereo, ...)
+    unsigned int   m_sampleRate;              ///< Frequency (samples / second)
+    std::uint32_t  m_format;                  ///< Format of the internal sound buffers
+    bool           m_loop;                    ///< Loop flag (true to loop, false to play once)
+    std::uint64_t  m_samplesProcessed;        ///< Number of buffers processed since beginning of the stream
+    bool           m_endBuffers[BufferCount]; ///< Each buffer is marked as "end buffer" or not, for proper duration calculation
 };
 
 } // namespace sf

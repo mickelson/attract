@@ -33,6 +33,7 @@
 #include <expat.h>
 
 #include <SFML/System/Clock.hpp>
+#include <SFML/System/Time.hpp>
 
 //
 // Base XML Parser

@@ -28,7 +28,7 @@
 #include "fe_util.hpp"
 
 FeTextPrimative::FeTextPrimative( )
-	: m_texts( 1, sf::Text() ),
+	: m_texts( 1, sf::Text(m_dummyFont) ),
 	m_align( Centre ),
 	m_first_line( -1 ),
 	m_margin( -1 ),
@@ -45,7 +45,7 @@ FeTextPrimative::FeTextPrimative(
 			const sf::Color &bgcolour,
 			unsigned int charactersize,
 			Alignment align )
-	: m_texts( 1, sf::Text() ),
+	: m_texts( 1, sf::Text(*font) ),
 	m_align( align ),
 	m_first_line( -1 ),
 	m_margin( -1 ),
@@ -82,7 +82,7 @@ void FeTextPrimative::setColor( const sf::Color &c )
 #endif
 }
 
-const sf::Color &FeTextPrimative::getColor() const
+sf::Color FeTextPrimative::getColor() const
 {
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
 	return m_texts[0].getFillColor();
@@ -96,13 +96,13 @@ void FeTextPrimative::setBgColor( const sf::Color &c )
 	m_bgRect.setFillColor( c );
 }
 
-const sf::Color &FeTextPrimative::getBgColor() const
+sf::Color FeTextPrimative::getBgColor() const
 {
 	return m_bgRect.getFillColor();
 }
 
 void FeTextPrimative::fit_string(
-			const std::basic_string<sf::Uint32> &s,
+			const std::basic_string<std::uint32_t> &s,
 			int &position,
 			int &first_char,
 			int &last_char )
@@ -126,7 +126,7 @@ void FeTextPrimative::fit_string(
 	const sf::Font *font = getFont();
 	unsigned int charsize = m_texts[0].getCharacterSize();
 	unsigned int spacing = charsize;
-	float width = m_bgRect.getLocalBounds().width / m_texts[0].getScale().x;
+	float width = m_bgRect.getLocalBounds().size.x / m_texts[0].getScale().x;
 
 	int running_total( 0 );
 	int running_width( 0 );
@@ -143,10 +143,10 @@ void FeTextPrimative::fit_string(
 		width -= m_margin * 2.0;
 
 	if ( !edit_mode )
-		running_total = -g->bounds.left;
+		running_total = -g->bounds.position.x;
 
 	// We need to adjust the width to make sure that at least one character is displayed per line
-	width = std::max( width, (float)g->bounds.width );
+	width = std::max( width, (float)g->bounds.size.x );
 
 	while (( running_width <= width ) && (( i < (int)s.size() ) || (( m_first_line < 0 ) && ( j > 0 ))))
 	{
@@ -159,7 +159,7 @@ void FeTextPrimative::fit_string(
 			}
 
 			g = &font->getGlyph( s[i], charsize, false );
-			running_width = std::max( running_width, (int)( running_total + g->bounds.left + g->bounds.width ));
+			running_width = std::max( running_width, (int)( running_total + g->bounds.position.x + g->bounds.size.x ));
 			running_total += g->advance;
 
 			if ( s[i] == L' ' )
@@ -184,7 +184,7 @@ void FeTextPrimative::fit_string(
 			kerning = font->getKerning( s[j], s[std::min( j + 1, (int)s.size() - 1 )], charsize );
 			running_total += kerning;
 			g = &font->getGlyph( s[j], charsize, false );
-			running_width = std::max( running_width, (int)( running_total + g->bounds.left + g->bounds.width ));
+			running_width = std::max( running_width, (int)( running_total + g->bounds.position.x + g->bounds.size.x ));
 			running_total += g->advance;
 		}
 	}
@@ -224,7 +224,7 @@ void FeTextPrimative::setString( const std::string &t )
 	// UTF-8 character encoding is assumed.
 	// Need to convert to UTF-32 before giving string to SFML
 	//
-	std::basic_string<sf::Uint32> tmp;
+	std::basic_string<std::uint32_t> tmp;
 	sf::Utf8::toUtf32( t.begin(), t.end(), std::back_inserter( tmp ));
 
 	// We need to add one trailing space to the string
@@ -236,7 +236,7 @@ void FeTextPrimative::setString( const std::string &t )
 }
 
 sf::Vector2f FeTextPrimative::setString(
-			const std::basic_string<sf::Uint32> &t,
+			const std::basic_string<std::uint32_t> &t,
 			int position )
 {
 	//
@@ -248,8 +248,8 @@ sf::Vector2f FeTextPrimative::setString(
 	if ( m_first_line >= 0 )
 		position = -1;
 
-	if ( m_texts.size() > 1 )
-		m_texts.resize( 1 );
+	while ( m_texts.size() > 1 )
+		m_texts.pop_back();
 
 	const sf::Font *font = getFont();
 
@@ -268,7 +268,8 @@ sf::Vector2f FeTextPrimative::setString(
 		}
 	}
 
-	m_texts[0].setString( t.substr( first_char, last_char - first_char + 1 ));
+	auto str = sf::String::fromUtf32( t.begin() + first_char, t.begin() + last_char + 1 );
+	m_texts[0].setString(str);
 
 	disp_cpos -= first_char;
 
@@ -283,7 +284,7 @@ sf::Vector2f FeTextPrimative::setString(
 		sf::FloatRect rectSize = m_bgRect.getLocalBounds();
 
 		const sf::Glyph *glyph = &font->getGlyph( L'X', m_texts[0].getCharacterSize(), false );
-		float glyphSize = glyph->bounds.height * m_texts[0].getScale().y;
+		float glyphSize = glyph->bounds.size.y * m_texts[0].getScale().y;
 
 		int spacing = getLineSpacingFactored( font, floorf( m_texts[0].getCharacterSize() * m_texts[0].getScale().y ));
 		float default_spacing = font->getLineSpacing( m_texts[0].getCharacterSize() ) * m_texts[0].getScale().y;
@@ -293,12 +294,12 @@ sf::Vector2f FeTextPrimative::setString(
 		if ( m_align & ( Top | Bottom | Middle ))
 		{
 			if ( m_margin < 0 )
-				line_count = std::max( 1, (int)floorf(( rectSize.height + spacing - default_spacing - glyphSize ) / spacing ));
+				line_count = std::max( 1, (int)floorf(( rectSize.size.y + spacing - default_spacing - glyphSize ) / spacing ));
 			else
-				line_count = std::max( 1, (int)floorf(( rectSize.height + spacing - glyphSize - m_margin * 2.0 ) / spacing ));
+				line_count = std::max( 1, (int)floorf(( rectSize.size.y + spacing - glyphSize - m_margin * 2.0 ) / spacing ));
 		}
 		else
-			line_count = std::max( 1, (int)( rectSize.height / spacing ));
+			line_count = std::max( 1, (int)( rectSize.size.y / spacing ));
 
 		//
 		// We break the string to lines here starting from the second line
@@ -309,7 +310,8 @@ sf::Vector2f FeTextPrimative::setString(
 			if ( position >= (int)t.size() ) break;
 			fit_string( t, position, first_char, last_char );
 			m_texts.push_back( m_texts[0] );
-			m_texts.back().setString( t.substr( first_char, last_char - first_char + 1 ));
+			auto str = sf::String::fromUtf32( t.begin() + first_char, t.begin() + last_char + 1 );
+			m_texts.back().setString(str);
 			actual_line_count++;
 		}
 
@@ -349,30 +351,30 @@ void FeTextPrimative::set_positions() const
 
 		// we need to account for the scaling that we have applied to our text...
 		sf::FloatRect textSize = m_texts[i].getLocalBounds();
-		textSize.width *= m_texts[i].getScale().x;
-		textSize.height *= m_texts[i].getScale().y;
-		textSize.left *= m_texts[i].getScale().x;
+		textSize.size.x *= m_texts[i].getScale().x;
+		textSize.size.y *= m_texts[i].getScale().y;
+		textSize.position.x *= m_texts[i].getScale().x;
 
 		// set position x
 		if ( m_align & Left )
 			textPos.x = rectPos.x;
 		else if ( m_align & Right )
-			textPos.x = rectPos.x + floorf( rectSize.width ) - textSize.width;
+			textPos.x = rectPos.x + floorf( rectSize.size.x ) - textSize.size.x;
 		else if ( m_align & Centre )
-			textPos.x = rectPos.x + floorf(( rectSize.width - textSize.width ) / 2.0 );
+			textPos.x = rectPos.x + floorf(( rectSize.size.x - textSize.size.x ) / 2.0 );
 
 		if ( m_align & ( Top | Bottom | Middle ))
-			textPos.x -= textSize.left;
+			textPos.x -= textSize.position.x;
 
 		// set position y
 		if ( m_align & Top )
 			textPos.y = rectPos.y + ceilf( spacing * i - charSize + glyphSize );
 		else if ( m_align & Bottom )
-			textPos.y = rectPos.y + floorf( rectSize.height  - charSize - spacing * ( m_texts.size() - i - 1 ));
+			textPos.y = rectPos.y + floorf( rectSize.size.y  - charSize - spacing * ( m_texts.size() - i - 1 ));
 		else if ( m_align & Middle )
-			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.height + glyphSize - charSize * 2 - spacing * ( m_texts.size() - 1 )) / 2.0 );
+			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.size.y + glyphSize - charSize * 2 - spacing * ( m_texts.size() - 1 )) / 2.0 );
 		else
-			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.height - ( spacing * m_texts.size() )) / 2.0 );
+			textPos.y = rectPos.y + ceilf( spacing * i + ( rectSize.size.y - ( spacing * m_texts.size() )) / 2.0 );
 
 		if ( m_align & Top ) textPos.y += margin;
 		if ( m_align & Bottom ) textPos.y -= margin;
@@ -380,7 +382,7 @@ void FeTextPrimative::set_positions() const
 		if ( m_align & Right ) textPos.x -= margin;
 
 		sf::Transform trans;
-		trans.rotate( m_bgRect.getRotation(), rectPos.x, rectPos.y );
+		trans.rotate( m_bgRect.getRotation(), { rectPos.x, rectPos.y });
 		m_texts[i].setPosition( trans.transformPoint( textPos ) );
 		m_texts[i].setRotation( m_bgRect.getRotation() );
 	}
@@ -395,10 +397,10 @@ int FeTextPrimative::getActualWidth()
 	for ( unsigned int i=0; i < m_texts.size(); i++ )
 	{
 		sf::FloatRect textSize = m_texts[i].getLocalBounds();
-		textSize.width = ceilf( textSize.width * m_texts[i].getScale().x );
+		textSize.size.x = ceilf( textSize.size.x * m_texts[i].getScale().x );
 
-		if ( textSize.width > w )
-			w = textSize.width;
+		if ( textSize.size.x > w )
+			w = textSize.size.x;
 	}
 
 	return (int)w;
@@ -414,7 +416,7 @@ void FeTextPrimative::setFont( const sf::Font &font )
 
 const sf::Font *FeTextPrimative::getFont() const
 {
-	return m_texts[0].getFont();
+	return &m_texts[0].getFont();
 }
 
 void FeTextPrimative::setCharacterSize( unsigned int size )
@@ -435,7 +437,7 @@ unsigned int FeTextPrimative::getGlyphSize() const
 	const sf::Font *font = getFont();
 	const int charSize = m_texts[0].getCharacterSize();
 	const sf::Glyph *glyph = &font->getGlyph( L'X', charSize, false );
-	return floorf(glyph->bounds.height * m_texts[0].getScale().y);
+	return floorf(glyph->bounds.size.y * m_texts[0].getScale().y);
 }
 
 void FeTextPrimative::setCharacterSpacing( float factor )
@@ -475,12 +477,12 @@ int FeTextPrimative::getLineSpacingFactored( const sf::Font *font, int charsize 
 	return std::max( 1, (int)ceilf( font->getLineSpacing( charsize ) * m_line_spacing ));
 }
 
-const sf::Vector2f &FeTextPrimative::getPosition() const
+sf::Vector2f FeTextPrimative::getPosition() const
 {
 	return m_bgRect.getPosition();
 }
 
-const sf::Vector2f &FeTextPrimative::getSize() const
+sf::Vector2f FeTextPrimative::getSize() const
 {
 	return m_bgRect.getSize();
 }
@@ -524,13 +526,13 @@ void FeTextPrimative::setOutlineThickness( int i )
 	m_bgRect.setOutlineThickness( i );
 }
 
-void FeTextPrimative::setRotation( float r )
+void FeTextPrimative::setRotation( sf::Angle r )
 {
 	m_bgRect.setRotation( r );
 	m_needs_pos_set = true;
 }
 
-float FeTextPrimative::getRotation() const
+sf::Angle FeTextPrimative::getRotation() const
 {
 	return m_bgRect.getRotation();
 }
@@ -578,7 +580,7 @@ void FeTextPrimative::setTextScale( const sf::Vector2f &s )
 	m_needs_pos_set = true;
 }
 
-const sf::Vector2f &FeTextPrimative::getTextScale() const
+sf::Vector2f FeTextPrimative::getTextScale() const
 {
 		return m_texts[0].getScale();
 }

@@ -54,14 +54,14 @@ public:
 			int rows );
 
 	void setFont( const sf::Font & );
-	const sf::Vector2f &getPosition() const;
+	sf::Vector2f getPosition() const;
 	void setPosition( const sf::Vector2f & );
 	void setPosition( int x, int y ) {return setPosition(sf::Vector2f(x,y));};
-	const sf::Vector2f &getSize() const;
+	sf::Vector2f getSize() const;
 	void setSize( const sf::Vector2f & );
 	void setSize( int w, int h ) {return setSize(sf::Vector2f(w,h));};
-	float getRotation() const;
-	const sf::Color &getColor() const;
+	sf::Angle getRotation() const;
+	sf::Color getColor() const;
 
 	int getIndexOffset() const;
 	void setIndexOffset( int );
@@ -78,7 +78,7 @@ public:
 
 	FeTextPrimative *setEditMode( bool, sf::Color );
 
-	void setRotation( float );
+	void setRotation( sf::Angle );
 
 	// Set an empty list here to reset control from "custom text" mode
 	void setCustomText( const int index, const std::vector<std::string> &list );
@@ -169,7 +169,7 @@ private:
 	int m_rows;
 	int m_userCharSize;
 	int m_filter_offset;
-	float m_rotation;
+	sf::Angle m_rotation;
 	float m_scale_factor;
 	bool m_scripted;
 

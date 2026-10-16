@@ -35,7 +35,7 @@ FeListBox::FeListBox( FePresentableParent &p, int x, int y, int w, int h )
 	m_rows( 11 ),
 	m_userCharSize( 0 ),
 	m_filter_offset( 0 ),
-	m_rotation( 0.0 ),
+	m_rotation( sf::degrees(0) ),
 	m_scale_factor( 1.0 ),
 	m_scripted( true ),
 	m_custom_sel( -1 )
@@ -63,7 +63,7 @@ FeListBox::FeListBox(
 	m_rows( rows ),
 	m_userCharSize( charactersize ),
 	m_filter_offset( 0 ),
-	m_rotation( 0.0 ),
+	m_rotation( sf::degrees(0) ),
 	m_scale_factor( 1.0 ),
 	m_scripted( false ),
 	m_custom_sel( -1 )
@@ -75,7 +75,7 @@ void FeListBox::setFont( const sf::Font &f )
 	m_base_text.setFont( f );
 }
 
-const sf::Vector2f &FeListBox::getPosition() const
+sf::Vector2f FeListBox::getPosition() const
 {
 	return m_base_text.getPosition();
 }
@@ -88,7 +88,7 @@ void FeListBox::setPosition( const sf::Vector2f &p )
 		FePresent::script_do_update( this );
 }
 
-const sf::Vector2f &FeListBox::getSize() const
+sf::Vector2f FeListBox::getSize() const
 {
 	return m_base_text.getSize();
 }
@@ -101,12 +101,12 @@ void FeListBox::setSize( const sf::Vector2f &s )
 		FePresent::script_do_update( this );
 }
 
-float FeListBox::getRotation() const
+sf::Angle FeListBox::getRotation() const
 {
 	return m_rotation;
 }
 
-const sf::Color &FeListBox::getColor() const
+sf::Color FeListBox::getColor() const
 {
 	return m_base_text.getColor();
 }
@@ -135,7 +135,7 @@ void FeListBox::init_dimensions()
 		m_texts.reserve( m_rows );
 
 	sf::Transform rotater;
-	rotater.rotate( m_rotation, pos.x, pos.y );
+	rotater.rotate( m_rotation, { pos.x, pos.y });
 
 	for ( int i=0; i< m_rows; i++ )
 	{
@@ -147,7 +147,7 @@ void FeListBox::init_dimensions()
 			t.setStyle( m_selStyle );
 		}
 
-		t.setPosition( rotater.transformPoint( pos.x, pos.y+(i*actual_spacing)) );
+		t.setPosition( rotater.transformPoint({ pos.x, pos.y+(i*actual_spacing) }) );
 		t.setSize( size.x, actual_spacing );
 		t.setRotation( m_rotation );
 
@@ -320,7 +320,7 @@ void FeListBox::setLanguageText( const int index,
 	}
 }
 
-void FeListBox::setRotation( float r )
+void FeListBox::setRotation( sf::Angle r )
 {
 	if ( r == m_rotation )
 		return;
