@@ -63,7 +63,7 @@ jobs:
         usesh: true
         run: |
           pkg update -f
-          pkg install -y gmake clang pkgconf sfml openal-soft ffmpeg libarchive curl fontconfig libGLU
+          pkg install -y gmake pkgconf SFML openal-soft ffmpeg libarchive curl fontconfig libGLU
           gmake clean
           gmake
 
