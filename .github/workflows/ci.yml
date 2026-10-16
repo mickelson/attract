@@ -54,7 +54,7 @@ jobs:
 
     - name: Install MacOS Dependencies
       if: runner.os == 'macOS'
-      run: brew update && brew install ffmpeg sfml@2 libarchive curl openal-soft mesa-glu pkgconfig
+      run: brew update && brew install ffmpeg sfml@2 libarchive curl openal-soft mesa-glu pkgconfig jpeg-turbo
 
     - name: Build on FreeBSD
       if: matrix.config.freebsd
@@ -62,7 +62,8 @@ jobs:
       with:
         usesh: true
         run: |
-          pkg install -y gmake clang pkgconf sfml openal-soft ffmpeg libarchive curl fontconfig libGLU
+          pkg update -f
+          pkg install -y gmake pkgconf SFML openal-soft ffmpeg libarchive curl fontconfig libGLU
           gmake clean
           gmake
 
