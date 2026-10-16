@@ -268,7 +268,10 @@ sf::Vector2f FeTextPrimative::setString(
 		}
 	}
 
-	m_texts[0].setString( t.substr( first_char, last_char - first_char + 1 ));
+	{
+		std::basic_string<sf::Uint32> sub( t.substr( first_char, last_char - first_char + 1 ));
+		m_texts[0].setString( sf::String::fromUtf32( sub.begin(), sub.end() ));
+	}
 
 	disp_cpos -= first_char;
 
@@ -309,7 +312,10 @@ sf::Vector2f FeTextPrimative::setString(
 			if ( position >= (int)t.size() ) break;
 			fit_string( t, position, first_char, last_char );
 			m_texts.push_back( m_texts[0] );
-			m_texts.back().setString( t.substr( first_char, last_char - first_char + 1 ));
+			{
+				std::basic_string<sf::Uint32> sub( t.substr( first_char, last_char - first_char + 1 ));
+				m_texts.back().setString( sf::String::fromUtf32( sub.begin(), sub.end() ));
+			}
 			actual_line_count++;
 		}
 
