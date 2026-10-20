@@ -165,7 +165,7 @@ void FeWindow::initial_create()
 #if defined(SFML_SYSTEM_WINDOWS) && !defined(WINDOWS_XP)
 		sf::Style::None,       // FeSettings::Fullscreen
 #else
-		// sf::Style::Fullscreen, // FeSettings::Fullscreen
+		(int)sf::State::Fullscreen, // FeSettings::Fullscreen
 #endif
 		sf::Style::Default,    // FeSettings::Window
 		sf::Style::None        // FeSettings::WindowNoBorder
