@@ -1910,62 +1910,63 @@ bool FeOverlay::edit_loop( std::vector<sf::Drawable *> d,
 					break;
 				}
 			}
+
+			if ( redraw )
+			{
+				cursor.setPosition( tp->setString( str, cursor_pos ) - sf::Vector2f((
+					cursor.getLocalBounds().size.x + cursor.getLocalBounds().position.x - 2.0 ) * cursor.getScale().x,
+					cursor.getLocalBounds().position.y * cursor.getScale().y / 2.0 ));
+				cursor_timer.restart();
+			}
 		}
 
-		if ( redraw )
-		{
-			cursor.setPosition( tp->setString( str, cursor_pos ) - sf::Vector2f((
-				cursor.getLocalBounds().size.x + cursor.getLocalBounds().position.x - 2.0 ) * cursor.getScale().x,
-				cursor.getLocalBounds().position.y * cursor.getScale().y / 2.0 ));
+		if ( m_fePresent.tick() )
+			redraw = true;
+
+		// When left or right is hold reset the timer, so the cursor isn't blinking
+		if ( m_feSettings.get_current_state( FeInputMap::Left ) || m_feSettings.get_current_state( FeInputMap::Right ))
 			cursor_timer.restart();
-		}
-	}
 
-	if ( m_fePresent.tick() )
-		redraw = true;
+		m_fePresent.redraw_surfaces();
+		m_wnd.clear();
+		m_wnd.draw( m_fePresent, t );
 
-	// When left or right is hold reset the timer, so the cursor isn't blinking
-	if ( m_feSettings.get_current_state( FeInputMap::Left ) || m_feSettings.get_current_state( FeInputMap::Right ))
-		cursor_timer.restart();
+		for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
+				itr < d.end(); ++itr )
+			m_wnd.draw( *(*itr), t );
 
-	m_fePresent.redraw_surfaces();
-	m_wnd.clear();
-	m_wnd.draw( m_fePresent, t );
-
-	for ( std::vector<sf::Drawable *>::iterator itr=d.begin();
-			itr < d.end(); ++itr )
-		m_wnd.draw( *(*itr), t );
-
-	int cursor_fade = ( sin( cursor_timer.getElapsedTime().asMilliseconds() / 250.0 * M_PI ) + 1.0 ) * 255;
+		int cursor_fade = ( sin( cursor_timer.getElapsedTime().asMilliseconds() / 250.0 * M_PI ) + 1.0 ) * 255;
 
 #if ( SFML_VERSION_INT >= FE_VERSION_INT( 2, 4, 0 ) )
-	cursor.setFillColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
+		cursor.setFillColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
 #else
-	cursor.setColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
+		cursor.setColor( sf::Color( 255, 255, 255, std::max( 0, std::min( cursor_fade, 255 ))));
 #endif
 
-	m_wnd.draw( cursor, t );
-	m_wnd.display();
+		m_wnd.draw( cursor, t );
+		m_wnd.display();
 
-	if ( !redraw && m_feSettings.get_info_bool( FeSettings::PowerSaving ) )
-		sf::sleep( sf::milliseconds( 30 ) );
+		if ( !redraw && m_feSettings.get_info_bool( FeSettings::PowerSaving ) )
+			sf::sleep( sf::milliseconds( 30 ) );
 
-	redraw = false;
+		redraw = false;
 
-	//
-	// Check if previous joystick move is now done (in which case we clear the guard)
-	//
-	if ( const auto *joy = joy_guard->getIf<sf::Event::JoystickMoved>() )
-	{
-		sf::Joystick::update();
+		//
+		// Check if previous joystick move is now done (in which case we clear the guard)
+		//
+		if ( const auto *joy = joy_guard->getIf<sf::Event::JoystickMoved>() )
+		{
+			sf::Joystick::update();
 
-		float pos = sf::Joystick::getAxisPosition(
-			joy->joystickId,
-			joy->axis );
+			float pos = sf::Joystick::getAxisPosition(
+				joy->joystickId,
+				joy->axis );
 
-		if ( std::abs( pos ) < m_feSettings.get_joy_thresh() )
-			joy_guard.reset();
+			if ( std::abs( pos ) < m_feSettings.get_joy_thresh() )
+				joy_guard.reset();
+		}
 	}
+
 
 	return true;
 }
