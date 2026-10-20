@@ -72,7 +72,7 @@ public:
 	FeInputSingle( Type t, int code );
 
 	// Construct from an SFML event
-	FeInputSingle( const sf::Event &ev, const sf::IntRect &mc_rect, const int joy_thresh );
+	FeInputSingle( const std::optional<sf::Event> &e, const sf::IntRect &mc_rect, const int joy_thresh );
 
 	// Construct from a config string
 	FeInputSingle( const std::string &str );
@@ -184,7 +184,7 @@ public:
 
 	FeInputMap();
 
-	Command map_input( const sf::Event &, const sf::IntRect &mc_rect, const int joy_thresh );
+	Command map_input( const std::optional<sf::Event> &, const sf::IntRect &mc_rect, const int joy_thresh );
 
 	Command input_conflict_check( const FeInputMapEntry &e );
 

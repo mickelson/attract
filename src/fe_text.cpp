@@ -45,7 +45,7 @@ void FeText::setFont( const sf::Font &f )
 	m_draw_text.setFont( f );
 }
 
-const sf::Vector2f &FeText::getPosition() const
+sf::Vector2f FeText::getPosition() const
 {
 	return m_position;
 }
@@ -56,7 +56,7 @@ void FeText::setPosition( const sf::Vector2f &p )
 	FePresent::script_do_update( this );
 }
 
-const sf::Vector2f &FeText::getSize() const
+sf::Vector2f FeText::getSize() const
 {
 	return m_size;
 }
@@ -67,12 +67,12 @@ void FeText::setSize( const sf::Vector2f &s )
 	FePresent::script_do_update( this );
 }
 
-float FeText::getRotation() const
+sf::Angle FeText::getRotation() const
 {
 	return m_draw_text.getRotation();
 }
 
-void FeText::setRotation( float r )
+void FeText::setRotation( sf::Angle r )
 {
 	m_draw_text.setRotation( r );
 	FePresent::script_do_update( this );
@@ -87,7 +87,7 @@ void FeText::setColor( const sf::Color &c )
 	}
 }
 
-const sf::Color &FeText::getColor() const
+sf::Color FeText::getColor() const
 {
 	return m_draw_text.getColor();
 }

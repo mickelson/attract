@@ -25,6 +25,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <cstdint>
 
 class FeTextPrimative : public sf::Drawable
 {
@@ -60,7 +61,7 @@ public:
 	// that WordWrap is set to false (cursor positioning is not supported
 	// with // wordwrapping on)
 	//
-	sf::Vector2f setString( const std::basic_string<sf::Uint32> &t,
+	sf::Vector2f setString( const std::basic_string<std::uint32_t> &t,
 					int cursor_string_pos=-1 ); // no utf-8 conversion
 
 	void setFont( const sf::Font & );
@@ -73,7 +74,7 @@ public:
 	void setSize( int w, int h ) {return setSize(sf::Vector2f(w,h));};
 	void setSize( const sf::Vector2f & );
 	void setStyle( int );
-	void setRotation( float );
+	void setRotation( sf::Angle );
 	void setOutlineColor( const sf::Color & );
 	void setOutlineThickness( int );
 	void setFirstLineHint( int );
@@ -85,26 +86,28 @@ public:
 	void setTextScale( const sf::Vector2f & );
 
 	const sf::Font *getFont() const;
-	const sf::Color &getColor() const;
-	const sf::Color &getBgColor() const;
+	sf::Color getColor() const;
+	sf::Color getBgColor() const;
 	unsigned int getCharacterSize() const;
 	unsigned int getGlyphSize() const;
 	float getCharacterSpacing() const;
 	float getLineSpacing() const;
 	int getLineSpacingFactored( const sf::Font *, int ) const;
 	Alignment getAlignment() const;
-	const sf::Vector2f &getPosition() const;
-	const sf::Vector2f &getSize() const;
-	float getRotation() const;
+	sf::Vector2f getPosition() const;
+	sf::Vector2f getSize() const;
+	sf::Angle getRotation() const;
 	int getStyle() const;
 	int getFirstLineHint() const;
-	const sf::Vector2f &getTextScale() const;
+	sf::Vector2f getTextScale() const;
 	const char *getStringWrapped();
 
 	int getActualWidth(); // return the width of the actual text
 
 private:
 	sf::RectangleShape m_bgRect;
+	// Dummy font to allow for construction without font
+	sf::Font m_dummyFont;
 	mutable std::vector<sf::Text> m_texts;
 	Alignment m_align;
 
@@ -130,7 +133,7 @@ private:
 	//		[out] last_char		- position of the last character to display
 	//
 	void fit_string(
-			const std::basic_string<sf::Uint32> &s,
+			const std::basic_string<std::uint32_t> &s,
 			int &position,
 			int &first_char,
 			int &last_char );

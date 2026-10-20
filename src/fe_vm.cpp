@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <ctime>
 #include <stdarg.h>
+#include <algorithm>
 
 const char *FE_SCRIPT_NV_FILE = "script.nv";
 
@@ -122,15 +123,19 @@ namespace
 				// while CompileFile (below) doesn't seem to have the same
 				// problem...
 				//
-				int i=0;
-				while (( i < zip.getSize() ) && ( d[i] < 32 ))
-					i++;
+				std::optional<std::size_t> size = zip.getSize();
+				if (size.has_value())
+				{
+					int i=0;
+					while (( i < size.value() ) && ( d[i] < 32 ))
+						i++;
 
-				if ( i == zip.getSize() )
-					return false;
+					if ( i == size.value() )
+						return false;
 
-				std::string str( &(d[i]), zip.getSize()-i );
-				sc.CompileString( str );
+					std::string str( &(d[i]), size.value()-i );
+					sc.CompileString( str );
+				}
 			}
 			else
 			{
@@ -373,7 +378,7 @@ void FeVM::set_overlay( FeOverlay *feo )
 	m_overlay = feo;
 }
 
-bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
+bool FeVM::poll_command( FeInputMap::Command &c, std::optional<sf::Event> &ev, bool &from_ui )
 {
 	from_ui=false;
 
@@ -381,7 +386,7 @@ bool FeVM::poll_command( FeInputMap::Command &c, sf::Event &ev, bool &from_ui )
 	{
 		c = (FeInputMap::Command)m_posted_commands.front();
 		m_posted_commands.pop();
-		ev.type = sf::Event::Count;
+		ev.reset();
 
 		return true;
 	}
@@ -1297,7 +1302,7 @@ void FeVM::on_transition(
 			// TODO: It is probably a good idea to do this for
 			// every platform... needs investigation.
 			//
-			sf::Event ev;
+			std::optional<sf::Event> ev;
 			while (m_window.pollEvent(ev))
 			{
 				//sf::sleep( sf::milliseconds( 10 ) );

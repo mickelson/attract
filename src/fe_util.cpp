@@ -42,6 +42,7 @@
 #include <SFML/Config.hpp>
 #include <SFML/System/Sleep.hpp>
 #include <SFML/System/Clock.hpp>
+#include <SFML/System/Time.hpp>
 
 #ifdef USE_LIBARCHIVE
 #include <zlib.h>
@@ -1403,9 +1404,9 @@ std::string name_with_brackets_stripped( const std::string &name )
 }
 
 
-std::basic_string<sf::Uint32> clipboard_get_content()
+std::basic_string<std::uint32_t> clipboard_get_content()
 {
-	std::basic_string<sf::Uint32> retval;
+	std::basic_string<std::uint32_t> retval;
 
 #ifdef SFML_SYSTEM_MACOS
 	retval = osx_clipboard_get_content();

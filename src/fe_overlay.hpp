@@ -26,6 +26,7 @@
 #include <SFML/Graphics.hpp>
 #include "fe_present.hpp"
 #include "fe_window.hpp"
+#include <cstdint>
 
 class FeSettings;
 class FeInputMapEntry;
@@ -64,7 +65,7 @@ private:
 	bool event_loop( FeEventLoopCtx & );
 
 	bool edit_loop( std::vector<sf::Drawable *> draw_list,
-			std::basic_string<sf::Uint32> &str, FeTextPrimative *lb );
+			std::basic_string<std::uint32_t> &str, FeTextPrimative *lb );
 
 public:
 	FeOverlay( FeWindow &wnd,

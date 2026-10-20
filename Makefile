@@ -76,7 +76,7 @@ UNAME_S := $(shell uname -s)
 CC=gcc
 CXX=g++
 CFLAGS=
-CXXFLAGS=-std=c++11 $(EXTRA_CXXFLAGS)
+CXXFLAGS=-std=c++17 $(EXTRA_CXXFLAGS)
 CPPFLAGS=
 STRIP=strip
 OBJCOPY=objcopy

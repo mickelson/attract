@@ -49,12 +49,14 @@ namespace
 	int read(void* user, char* data, int size)
 	{
 		sf::InputStream* stream = static_cast<sf::InputStream*>(user);
-		return static_cast<int>(stream->read(data, size));
+		// Should ideally be done in a better way
+		return static_cast<int>(stream->read(data, size).value_or(0));
 	}
 	void skip(void* user, int size)
 	{
 		sf::InputStream* stream = static_cast<sf::InputStream*>(user);
-		stream->seek(stream->tell() + size);
+		// Should ideally be done in a better way
+		stream->seek(stream->tell().value_or(0) + size);
 	}
 	int eof(void* user)
 	{

@@ -31,6 +31,7 @@
 #include <sqstdstring.h>
 
 #include <SFML/System/Clock.hpp>
+#include <SFML/System/Time.hpp>
 
 const char *FE_ROMLIST_FILE_EXTENSION	= ".txt";
 const char *FE_FAVOURITE_FILE_EXTENSION = ".tag";
