@@ -330,6 +330,7 @@ FeInputSingle::FeInputSingle( const std::optional<sf::Event> &e, const sf::IntRe
 		else if ( const auto *joyMoved = e->getIf<sf::Event::JoystickMoved>() )
 		{
 			if ( std::abs( joyMoved->position ) > joy_thresh )
+			{
 				switch ( joyMoved->axis )
 				{
 					case sf::Joystick::Axis::X:
@@ -386,6 +387,7 @@ FeInputSingle::FeInputSingle( const std::optional<sf::Event> &e, const sf::IntRe
 
 				m_type = (Type)(Joystick0 + joymap2feid( joyMoved->joystickId ) );
 			}
+		}
 
 		else if ( const auto *mouseMove = e->getIf<sf::Event::MouseMoved>() )
 		{
@@ -1180,9 +1182,6 @@ FeInputMap::Command FeInputMap::map_input( const std::optional<sf::Event> &e, co
 			std::optional<sf::Event> te;
 			if ( const auto *keyReleased = e->getIf<sf::Event::KeyReleased>() )
 			{
-				//
-				// Test that this is a release of a tracked key (button)
-				//
 				te = std::make_optional<sf::Event>( sf::Event::KeyPressed() );
 				auto &keyPressed = *te->getIf<sf::Event::KeyPressed>();
 				keyPressed.alt = keyReleased->alt;
